@@ -36,8 +36,7 @@ interface CreateConnectorModalProps {
   onCreateConnector: (data: {
     name: string;
     type: TConnectorType;
-    surveyId?: string;
-    elementIds?: string[];
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
   surveys: TUnifySurvey[];
@@ -67,7 +66,7 @@ const getDialogDescription = (
 };
 
 const getNextStepButtonLabel = (type: TConnectorType | null, t: (key: string) => string): string => {
-  if (type === "formbricks") return t("environments.unify.select_elements");
+  if (type === "formbricks") return t("environments.unify.select_questions");
   if (type === "csv") return t("environments.unify.configure_import");
   return t("environments.unify.create_mapping");
 };
@@ -83,44 +82,64 @@ const getCreateDisabled = (
   return !allRequiredMapped;
 };
 
-interface HistoricalImportSectionProps {
-  responseCount: number;
-  elementCount: number;
-  totalFeedbackRecords: number;
-  importHistorical: boolean;
-  onImportHistoricalChange: (checked: boolean) => void;
+interface AggregateImportSectionProps {
+  surveyEntries: {
+    surveyId: string;
+    surveyName: string;
+    responseCount: number;
+    elementCount: number;
+    importHistorical: boolean;
+  }[];
+  onImportHistoricalChange: (surveyId: string, checked: boolean) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 }
 
-const HistoricalImportSection = ({
-  responseCount,
-  elementCount,
-  totalFeedbackRecords,
-  importHistorical,
+const AggregateImportSection = ({
+  surveyEntries,
   onImportHistoricalChange,
   t,
-}: HistoricalImportSectionProps) => (
-  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-    <p className="mb-2 text-xs text-amber-800">
-      {t("environments.unify.existing_responses_info", {
-        responseCount,
-        elementCount,
-        total: totalFeedbackRecords,
-      })}
-    </p>
-    <label className="flex cursor-pointer items-center gap-2">
-      <input
-        type="checkbox"
-        checked={importHistorical}
-        onChange={(e) => onImportHistoricalChange(e.target.checked)}
-        className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-      />
-      <span className="text-sm font-medium text-amber-900">
-        {t("environments.unify.import_existing_responses")}
-      </span>
-    </label>
-  </div>
-);
+}: AggregateImportSectionProps) => {
+  const totalRecords = surveyEntries.reduce((sum, e) => sum + e.responseCount * e.elementCount, 0);
+  const checkedCount = surveyEntries.filter((e) => e.importHistorical).length;
+
+  const checkedTotal = surveyEntries
+    .filter((e) => e.importHistorical)
+    .reduce((sum, e) => sum + e.responseCount * e.elementCount, 0);
+
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div className="space-y-2">
+        {surveyEntries.map((entry) => (
+          <label key={entry.surveyId} className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={entry.importHistorical}
+              onChange={(e) => onImportHistoricalChange(entry.surveyId, e.target.checked)}
+              className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+            />
+            <span className="text-xs text-amber-800">
+              {t("environments.unify.survey_import_line", {
+                surveyName: entry.surveyName,
+                responseCount: entry.responseCount,
+                questionCount: entry.elementCount,
+                total: entry.responseCount * entry.elementCount,
+              })}
+            </span>
+          </label>
+        ))}
+      </div>
+      {surveyEntries.length > 1 && (
+        <p className="mt-3 border-t border-amber-200 pt-2 text-xs font-medium text-amber-900">
+          {t("environments.unify.total_feedback_records", {
+            checked: checkedTotal,
+            total: totalRecords,
+            surveyCount: checkedCount,
+          })}
+        </p>
+      )}
+    </div>
+  );
+};
 
 export const CreateConnectorModal = ({
   open,
@@ -142,33 +161,33 @@ export const CreateConnectorModal = ({
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
 
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
-  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
+  const [elementIdsBySurvey, setElementIdsBySurvey] = useState<Record<string, string[]>>({});
 
-  const [responseCount, setResponseCount] = useState<number | null>(null);
-  const [importHistorical, setImportHistorical] = useState(false);
+  const selectedElementIds = selectedSurveyId ? (elementIdsBySurvey[selectedSurveyId] ?? []) : [];
+
+  const [responseCountBySurvey, setResponseCountBySurvey] = useState<Record<string, number | null>>({});
+  const [importHistoricalBySurvey, setImportHistoricalBySurvey] = useState<Record<string, boolean>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
-      setResponseCount(null);
+      if (responseCountBySurvey[surveyId] !== undefined) return;
       try {
         const result = await getResponseCountAction({ surveyId, environmentId });
         if (result?.data !== undefined) {
-          setResponseCount(result.data);
+          setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: result.data ?? null }));
         }
       } catch {
-        setResponseCount(null);
+        setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: null }));
       }
     },
-    [environmentId]
+    [environmentId, responseCountBySurvey]
   );
 
   useEffect(() => {
     if (selectedSurveyId && selectedType === "formbricks") {
       fetchResponseCount(selectedSurveyId);
-    } else {
-      setResponseCount(null);
     }
   }, [selectedSurveyId, selectedType, fetchResponseCount]);
 
@@ -179,9 +198,9 @@ export const CreateConnectorModal = ({
     setMappings([]);
     setSourceFields([]);
     setSelectedSurveyId(null);
-    setSelectedElementIds([]);
-    setResponseCount(null);
-    setImportHistorical(false);
+    setElementIdsBySurvey({});
+    setResponseCountBySurvey({});
+    setImportHistoricalBySurvey({});
     setIsImporting(false);
     setIsCreating(false);
   };
@@ -206,28 +225,39 @@ export const CreateConnectorModal = ({
 
   const handleSurveySelect = (surveyId: string | null) => {
     setSelectedSurveyId(surveyId);
-    setImportHistorical(false);
   };
 
   const handleElementToggle = (elementId: string) => {
-    setSelectedElementIds((prev) =>
-      prev.includes(elementId) ? prev.filter((id) => id !== elementId) : [...prev, elementId]
-    );
+    if (!selectedSurveyId) return;
+    setElementIdsBySurvey((prev) => {
+      const current = prev[selectedSurveyId] ?? [];
+      return {
+        ...prev,
+        [selectedSurveyId]: current.includes(elementId)
+          ? current.filter((id) => id !== elementId)
+          : [...current, elementId],
+      };
+    });
   };
 
   const handleSelectAllElements = (surveyId: string) => {
     const survey = surveys.find((s) => s.id === surveyId);
     if (survey) {
-      setSelectedElementIds(
-        survey.elements
+      setElementIdsBySurvey((prev) => ({
+        ...prev,
+        [surveyId]: survey.elements
           .filter((e) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(e.type))
-          .map((e) => e.id)
-      );
+          .map((e) => e.id),
+      }));
     }
   };
 
   const handleDeselectAllElements = () => {
-    setSelectedElementIds([]);
+    if (!selectedSurveyId) return;
+    setElementIdsBySurvey((prev) => ({
+      ...prev,
+      [selectedSurveyId]: [],
+    }));
   };
 
   const handleBack = () => {
@@ -238,21 +268,49 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleHistoricalImport = async (connectorId: string, surveyId: string) => {
+  const getSurveyMappings = () =>
+    Object.entries(elementIdsBySurvey)
+      .filter(([, ids]) => ids.length > 0)
+      .map(([surveyId, elementIds]) => ({ surveyId, elementIds }));
+
+  const handleHistoricalImports = async (connectorId: string) => {
+    const surveysToImport = Object.entries(importHistoricalBySurvey)
+      .filter(([surveyId, checked]) => checked && (elementIdsBySurvey[surveyId]?.length ?? 0) > 0)
+      .map(([surveyId]) => surveyId);
+
+    if (surveysToImport.length === 0) return;
+
     setIsImporting(true);
-    const importResult = await importHistoricalResponsesAction({ connectorId, environmentId, surveyId });
+    let totalSuccesses = 0;
+    let totalFailures = 0;
+    let totalSkipped = 0;
+
+    for (const surveyId of surveysToImport) {
+      const importResult = await importHistoricalResponsesAction({
+        connectorId,
+        environmentId,
+        surveyId,
+      });
+
+      if (importResult?.data) {
+        totalSuccesses += importResult.data.successes;
+        totalFailures += importResult.data.failures;
+        totalSkipped += importResult.data.skipped;
+      } else {
+        toast.error(getFormattedErrorMessage(importResult));
+      }
+    }
+
     setIsImporting(false);
 
-    if (importResult?.data) {
+    if (totalSuccesses > 0 || totalFailures > 0) {
       toast.success(
         t("environments.unify.historical_import_complete", {
-          successes: importResult.data.successes,
-          failures: importResult.data.failures,
-          skipped: importResult.data.skipped,
+          successes: totalSuccesses,
+          failures: totalFailures,
+          skipped: totalSkipped,
         })
       );
-    } else {
-      toast.error(getFormattedErrorMessage(importResult));
     }
   };
 
@@ -261,16 +319,17 @@ export const CreateConnectorModal = ({
 
     setIsCreating(true);
 
+    const surveyMappings = getSurveyMappings();
+
     const connectorId = await onCreateConnector({
       name: connectorName.trim(),
       type: selectedType,
-      surveyId: selectedType === "formbricks" ? (selectedSurveyId ?? undefined) : undefined,
-      elementIds: selectedType === "formbricks" ? selectedElementIds : undefined,
+      surveyMappings: selectedType === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
       fieldMappings: selectedType !== "formbricks" && mappings.length > 0 ? mappings : undefined,
     });
 
-    if (connectorId && importHistorical && selectedSurveyId && selectedType === "formbricks") {
-      await handleHistoricalImport(connectorId, selectedSurveyId);
+    if (connectorId && selectedType === "formbricks") {
+      await handleHistoricalImports(connectorId);
     }
 
     setIsCreating(false);
@@ -283,8 +342,8 @@ export const CreateConnectorModal = ({
     mappings.some((m) => m.targetFieldId === field.id && (m.sourceFieldId || m.staticValue))
   );
 
-  const isFormbricksValid =
-    selectedType === "formbricks" && selectedSurveyId && selectedElementIds.length > 0;
+  const hasAnyElementSelections = Object.values(elementIdsBySurvey).some((ids) => ids.length > 0);
+  const isFormbricksValid = selectedType === "formbricks" && hasAnyElementSelections;
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
 
   const handleLoadSourceFields = () => {
@@ -293,11 +352,6 @@ export const CreateConnectorModal = ({
       setSourceFields(fields);
     }
   };
-
-  const totalFeedbackRecords =
-    responseCount !== null && selectedElementIds.length > 0
-      ? responseCount * selectedElementIds.length
-      : null;
 
   return (
     <>
@@ -353,19 +407,30 @@ export const CreateConnectorModal = ({
                   />
                 </div>
 
-                {responseCount !== null &&
-                  responseCount > 0 &&
-                  selectedElementIds.length > 0 &&
-                  totalFeedbackRecords !== null && (
-                    <HistoricalImportSection
-                      responseCount={responseCount}
-                      elementCount={selectedElementIds.length}
-                      totalFeedbackRecords={totalFeedbackRecords}
-                      importHistorical={importHistorical}
-                      onImportHistoricalChange={setImportHistorical}
+                {(() => {
+                  const entries = Object.entries(elementIdsBySurvey)
+                    .filter(([, ids]) => ids.length > 0)
+                    .map(([surveyId, ids]) => ({
+                      surveyId,
+                      surveyName: surveys.find((s) => s.id === surveyId)?.name ?? surveyId,
+                      responseCount: responseCountBySurvey[surveyId] ?? 0,
+                      elementCount: ids.length,
+                      importHistorical: importHistoricalBySurvey[surveyId] ?? false,
+                    }))
+                    .filter((e) => e.responseCount > 0);
+
+                  if (entries.length === 0) return null;
+
+                  return (
+                    <AggregateImportSection
+                      surveyEntries={entries}
+                      onImportHistoricalChange={(surveyId, checked) => {
+                        setImportHistoricalBySurvey((prev) => ({ ...prev, [surveyId]: checked }));
+                      }}
                       t={t}
                     />
-                  )}
+                  );
+                })()}
               </div>
             )}
 

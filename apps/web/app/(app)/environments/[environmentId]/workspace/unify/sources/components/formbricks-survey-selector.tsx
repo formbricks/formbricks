@@ -1,18 +1,9 @@
 "use client";
 
-import {
-  CheckCircle2Icon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  CircleIcon,
-  FileTextIcon,
-  MessageSquareTextIcon,
-  StarIcon,
-} from "lucide-react";
-import { useState } from "react";
+import { CheckIcon, ChevronRightIcon, FileTextIcon, MessageSquareTextIcon, StarIcon } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Badge } from "@/modules/ui/components/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
@@ -28,7 +19,7 @@ interface FormbricksSurveySelectorProps {
   onDeselectAllElements: () => void;
 }
 
-function getElementIcon(type: string) {
+const getElementIcon = (type: TSurveyElementTypeEnum) => {
   switch (type) {
     case "openText":
       return <MessageSquareTextIcon className="h-4 w-4 text-slate-500" />;
@@ -38,13 +29,13 @@ function getElementIcon(type: string) {
     default:
       return <FileTextIcon className="h-4 w-4 text-slate-500" />;
   }
-}
-
-const isUnsupportedType = (type: string): boolean => {
-  return (UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(type);
 };
 
-export function FormbricksSurveySelector({
+const isUnsupportedType = (type: TSurveyElementTypeEnum): boolean => {
+  return UNSUPPORTED_CONNECTOR_ELEMENT_TYPES.includes(type);
+};
+
+export const FormbricksSurveySelector = ({
   surveys,
   selectedSurveyId,
   selectedElementIds,
@@ -52,9 +43,8 @@ export function FormbricksSurveySelector({
   onElementToggle,
   onSelectAllElements,
   onDeselectAllElements,
-}: FormbricksSurveySelectorProps) {
+}: FormbricksSurveySelectorProps) => {
   const { t } = useTranslation();
-  const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
 
   const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
   const supportedElements = selectedSurvey?.elements.filter((e) => !isUnsupportedType(e.type)) ?? [];
@@ -62,12 +52,8 @@ export function FormbricksSurveySelector({
     supportedElements.length > 0 && supportedElements.every((e) => selectedElementIds.includes(e.id));
 
   const handleSurveyClick = (survey: TUnifySurvey) => {
-    if (selectedSurveyId === survey.id) {
-      setExpandedSurveyId(expandedSurveyId === survey.id ? null : survey.id);
-    } else {
+    if (selectedSurveyId !== survey.id) {
       onSurveySelect(survey.id);
-      onDeselectAllElements();
-      setExpandedSurveyId(survey.id);
     }
   };
 
@@ -108,7 +94,6 @@ export function FormbricksSurveySelector({
           ) : (
             surveys.map((survey) => {
               const isSelected = selectedSurveyId === survey.id;
-              const isExpanded = expandedSurveyId === survey.id;
 
               return (
                 <div key={survey.id}>
@@ -120,25 +105,18 @@ export function FormbricksSurveySelector({
                         ? "border-brand-dark bg-slate-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
-                      {isExpanded ? (
-                        <ChevronDownIcon className="h-4 w-4 text-slate-600" />
-                      ) : (
-                        <ChevronRightIcon className="h-4 w-4 text-slate-600" />
-                      )}
-                    </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-900">{survey.name}</span>
                         {getStatusBadge(survey.status)}
                       </div>
                       <p className="text-xs text-slate-500">
-                        {t("environments.unify.n_supported_elements", {
+                        {t("environments.unify.n_supported_questions", {
                           count: getSupportedElementCount(survey),
                         })}
                       </p>
                     </div>
-                    {isSelected && <CheckCircle2Icon className="text-brand-dark h-5 w-5" />}
+                    {isSelected && <ChevronRightIcon className="text-brand-dark h-5 w-5 shrink-0" />}
                   </button>
                 </div>
               );
@@ -150,7 +128,7 @@ export function FormbricksSurveySelector({
       {/* Right: Element Selection */}
       <div className="flex flex-col gap-3 overflow-hidden">
         <div className="flex shrink-0 items-center justify-between">
-          <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_elements")}</h4>
+          <h4 className="text-sm font-medium text-slate-700">{t("environments.unify.select_questions")}</h4>
           {selectedSurvey && supportedElements.length > 0 && (
             <button
               type="button"
@@ -168,12 +146,12 @@ export function FormbricksSurveySelector({
         {!selectedSurvey ? (
           <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
             <p className="text-sm text-slate-500">
-              {t("environments.unify.select_a_survey_to_see_elements")}
+              {t("environments.unify.select_a_survey_to_see_questions")}
             </p>
           </div>
         ) : selectedSurvey.elements.length === 0 ? (
           <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-            <p className="text-sm text-slate-500">{t("environments.unify.survey_has_no_elements")}</p>
+            <p className="text-sm text-slate-500">{t("environments.unify.survey_has_no_questions")}</p>
           </div>
         ) : (
           <div className="space-y-2 overflow-y-auto pr-1">
@@ -210,17 +188,9 @@ export function FormbricksSurveySelector({
                       <p className={`text-sm ${unsupported ? "text-slate-400" : "text-slate-900"}`}>
                         {element.headline}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs ${unsupported ? "text-slate-300" : "text-slate-500"}`}>
-                          {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
-                        </span>
-                        {element.required && (
-                          <span className="text-xs text-red-500">
-                            <CircleIcon className="inline h-1.5 w-1.5 fill-current" />{" "}
-                            {t("environments.unify.required")}
-                          </span>
-                        )}
-                      </div>
+                      <span className={`text-xs ${unsupported ? "text-slate-300" : "text-slate-500"}`}>
+                        {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
+                      </span>
                     </div>
                   </button>
                 );
@@ -244,8 +214,8 @@ export function FormbricksSurveySelector({
                   <Trans
                     i18nKey={
                       selectedElementIds.length === 1
-                        ? "environments.unify.element_selected"
-                        : "environments.unify.elements_selected"
+                        ? "environments.unify.question_selected"
+                        : "environments.unify.questions_selected"
                     }
                     values={{ count: selectedElementIds.length }}
                     components={{ strong: <strong /> }}
@@ -258,4 +228,4 @@ export function FormbricksSurveySelector({
       </div>
     </div>
   );
-}
+};
