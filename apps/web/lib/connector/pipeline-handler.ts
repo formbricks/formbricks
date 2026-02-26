@@ -2,7 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { createFeedbackRecordsBatch } from "./hub-client";
+import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getConnectorsBySurveyId, updateConnector } from "./service";
 import { transformResponseToFeedbackRecords } from "./transform";
 
