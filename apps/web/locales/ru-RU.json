@@ -112,6 +112,7 @@
     "link_expired_description": "Ссылка, которой вы воспользовались, больше не действительна."
   },
   "common": {
+    "Filter": "Фильтр",
     "accepted": "Принято",
     "account": "Аккаунт",
     "account_settings": "Настройки аккаунта",

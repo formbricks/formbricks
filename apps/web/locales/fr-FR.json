@@ -112,6 +112,7 @@
     "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
+    "Filter": "Filtrer",
     "accepted": "Accepté",
     "account": "Compte",
     "account_settings": "Paramètres du compte",
