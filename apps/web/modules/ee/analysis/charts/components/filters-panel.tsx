@@ -26,6 +26,19 @@ interface FiltersPanelProps {
   hideTitle?: boolean;
 }
 
+const fieldOptions = [
+  ...FEEDBACK_FIELDS.dimensions.map((d) => ({
+    value: d.id,
+    label: d.label,
+    type: d.type,
+  })),
+  ...FEEDBACK_FIELDS.measures.map((m) => ({
+    value: m.id,
+    label: m.label,
+    type: "number" as TFilterFieldType,
+  })),
+];
+
 export function FiltersPanel({
   filters,
   filterLogic,
@@ -34,18 +47,6 @@ export function FiltersPanel({
   hideTitle = false,
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
-  const fieldOptions = [
-    ...FEEDBACK_FIELDS.dimensions.map((d) => ({
-      value: d.id,
-      label: d.label,
-      type: d.type,
-    })),
-    ...FEEDBACK_FIELDS.measures.map((m) => ({
-      value: m.id,
-      label: m.label,
-      type: "number" as TFilterFieldType,
-    })),
-  ];
 
   const handleAddFilter = () => {
     const firstField = fieldOptions[0];
@@ -77,77 +78,30 @@ export function FiltersPanel({
     const field = getFieldById(filter.field);
     const fieldType = (field?.type || "string") as TFilterFieldType;
 
-    // For set/notSet operators, no value input needed
     if (filter.operator === "set" || filter.operator === "notSet") {
       return null;
     }
 
-    // For number fields with comparison operators, use number input
-    if (
+    const isNumericInput =
       fieldType === "number" &&
       (filter.operator === "gt" ||
         filter.operator === "gte" ||
         filter.operator === "lt" ||
-        filter.operator === "lte")
-    ) {
-      return (
-        <Input
-          type="number"
-          placeholder={t("environments.analysis.charts.enter_value")}
-          value={filter.values?.[0] ?? ""}
-          onChange={(e) =>
-            handleUpdateFilter(index, {
-              values: e.target.value ? [Number(e.target.value)] : null,
-            })
-          }
-          className="w-[150px] bg-white"
-        />
-      );
-    }
+        filter.operator === "lte");
 
-    // For equals/notEquals with string fields, allow single value
-    if ((filter.operator === "equals" || filter.operator === "notEquals") && fieldType === "string") {
-      return (
-        <Input
-          placeholder={t("environments.analysis.charts.enter_value")}
-          value={filter.values?.[0] ?? ""}
-          onChange={(e) =>
-            handleUpdateFilter(index, {
-              values: e.target.value ? [e.target.value] : null,
-            })
-          }
-          className="w-[200px] bg-white"
-        />
-      );
-    }
-
-    // For contains/notContains, allow multiple values (multi-select)
-    if (filter.operator === "contains" || filter.operator === "notContains") {
-      return (
-        <Input
-          placeholder={t("environments.analysis.charts.enter_value")}
-          value={filter.values?.[0] ?? ""}
-          onChange={(e) =>
-            handleUpdateFilter(index, {
-              values: e.target.value ? [e.target.value] : null,
-            })
-          }
-          className="w-[200px] bg-white"
-        />
-      );
-    }
-
-    // Default: single value input
     return (
       <Input
+        type={isNumericInput ? "number" : "text"}
         placeholder={t("environments.analysis.charts.enter_value")}
         value={filter.values?.[0] ?? ""}
-        onChange={(e) =>
-          handleUpdateFilter(index, {
-            values: e.target.value ? [e.target.value] : null,
-          })
-        }
-        className="w-[200px]"
+        onChange={(e) => {
+          let values: string[] | number[] | null = null;
+          if (e.target.value) {
+            values = isNumericInput ? [Number(e.target.value)] : [e.target.value];
+          }
+          handleUpdateFilter(index, { values });
+        }}
+        className={isNumericInput ? "w-[150px] bg-white" : "w-[200px] bg-white"}
       />
     );
   };

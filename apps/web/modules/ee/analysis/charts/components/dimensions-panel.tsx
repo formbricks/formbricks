@@ -11,16 +11,17 @@ interface DimensionsPanelProps {
   hideTitle?: boolean;
 }
 
+const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
+  value: d.id,
+  label: [d.label, d.description].filter(Boolean).join(" - "),
+}));
+
 export function DimensionsPanel({
   selectedDimensions,
   onDimensionsChange,
   hideTitle = false,
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
-  const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
-    value: d.id,
-    label: [d.label, d.description].filter(Boolean).join(" - "),
-  }));
 
   return (
     <div className="w-full space-y-2">
