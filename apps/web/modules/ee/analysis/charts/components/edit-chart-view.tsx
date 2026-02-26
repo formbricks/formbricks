@@ -8,7 +8,7 @@ import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
-import { useCreateChartDialog } from "@/modules/ee/analysis/charts/hooks/use-create-chart-dialog";
+import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
@@ -60,7 +60,7 @@ export function EditChartView({
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
     handleClose,
-  } = useCreateChartDialog({ open, onOpenChange, environmentId, chartId, initialChart, onSuccess });
+  } = useChartDialog({ open, onOpenChange, environmentId, chartId, initialChart, onSuccess });
 
   if (isLoadingChart && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
@@ -70,13 +70,18 @@ export function EditChartView({
     return (
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
         <DialogContent width="wide">
-          <DialogTitle>{t("common.error")}</DialogTitle>
-          <div className="flex flex-col items-center justify-center gap-4 py-8">
-            <p className="text-sm text-red-600">{chartLoadError}</p>
-            <Button variant="outline" onClick={handleClose}>
-              {t("common.close")}
-            </Button>
-          </div>
+          <DialogHeader>
+            <DialogTitle>{t("common.error")}</DialogTitle>
+            <DialogDescription />
+          </DialogHeader>
+          <DialogBody>
+            <div className="flex flex-col items-center justify-center gap-4 py-8">
+              <p className="text-sm text-red-600">{chartLoadError}</p>
+              <Button variant="outline" onClick={handleClose}>
+                {t("common.close")}
+              </Button>
+            </div>
+          </DialogBody>
         </DialogContent>
       </Dialog>
     );

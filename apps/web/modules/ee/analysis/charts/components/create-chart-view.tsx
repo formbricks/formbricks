@@ -10,7 +10,7 @@ import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
-import { useCreateChartDialog } from "@/modules/ee/analysis/charts/hooks/use-create-chart-dialog";
+import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
 import {
   Dialog,
   DialogBody,
@@ -53,7 +53,7 @@ export function CreateChartView({
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
     handleClose,
-  } = useCreateChartDialog({ open, onOpenChange, environmentId, onSuccess });
+  } = useChartDialog({ open, onOpenChange, environmentId, onSuccess });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
 

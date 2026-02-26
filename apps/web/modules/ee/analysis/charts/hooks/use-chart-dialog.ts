@@ -15,7 +15,7 @@ import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import type { AnalyticsResponse, TChartType, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
-export interface UseCreateChartDialogProps {
+export interface UseChartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   environmentId: string;
@@ -25,14 +25,14 @@ export interface UseCreateChartDialogProps {
   onSuccess?: () => void;
 }
 
-export function useCreateChartDialog({
+export function useChartDialog({
   open,
   onOpenChange,
   environmentId,
   chartId,
   initialChart,
   onSuccess,
-}: Readonly<UseCreateChartDialogProps>) {
+}: Readonly<UseChartDialogProps>) {
   const { t } = useTranslation();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
@@ -201,16 +201,17 @@ export function useCreateChartDialog({
           },
         });
 
-        if (result?.data) {
-          setCurrentChartId(result.data.id);
-          toast.success(t("environments.analysis.charts.chart_saved_successfully"));
-          setIsSaveDialogOpen(false);
-          onOpenChange(false);
-          router.refresh();
-        } else {
+        if (!result?.data) {
           const errorMessage = getFormattedErrorMessage(result);
           toast.error(errorMessage);
+          return;
         }
+
+        setCurrentChartId(result.data.id);
+        toast.success(t("environments.analysis.charts.chart_saved_successfully"));
+        setIsSaveDialogOpen(false);
+        onOpenChange(false);
+        router.refresh();
       }
     } catch (error: unknown) {
       const message =
