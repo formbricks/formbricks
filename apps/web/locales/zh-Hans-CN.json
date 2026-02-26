@@ -2082,6 +2082,7 @@
       "import_csv_data": "导入 CSV 数据",
       "import_rows": "导入{count}行数据",
       "importing_data": "正在导入数据…",
+      "importing_historical_data": "正在导入历史数据…",
       "invalid_enum_values": "映射到 {field} 的列中存在无效值",
       "invalid_values_found": "发现：{values}（行：{rows}）{extra}",
       "load_sample_csv": "加载示例 CSV",

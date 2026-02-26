@@ -412,7 +412,9 @@ export const CreateConnectorModal = ({
             <div className="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/80">
               <div className="flex flex-col items-center gap-3">
                 <Loader2Icon className="h-8 w-8 animate-spin text-slate-500" />
-                <p className="text-sm font-medium text-slate-700">{t("environments.unify.importing_data")}</p>
+                <p className="text-sm font-medium text-slate-700">
+                  {t("environments.unify.importing_historical_data")}
+                </p>
               </div>
             </div>
           )}

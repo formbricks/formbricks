@@ -138,8 +138,6 @@ export function ConnectorRowDropdown({
               </>
             )}
 
-            <DropdownMenuSeparator />
-
             <DropdownMenuItem>
               <button
                 type="button"

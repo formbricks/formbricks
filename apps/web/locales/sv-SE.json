@@ -2082,6 +2082,7 @@
       "import_csv_data": "Importera CSV-data",
       "import_rows": "Importera {count} rader",
       "importing_data": "Importerar data...",
+      "importing_historical_data": "Importerar historisk data...",
       "invalid_enum_values": "Ogiltiga värden i kolumnen som är kopplad till {field}",
       "invalid_values_found": "Hittade: {values} (rader: {rows}) {extra}",
       "load_sample_csv": "Ladda exempel-CSV",

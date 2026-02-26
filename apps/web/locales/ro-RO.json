@@ -2082,6 +2082,7 @@
       "import_csv_data": "Importă date CSV",
       "import_rows": "Importă {count, plural, one {# rând} few {# rânduri} other {# de rânduri}}",
       "importing_data": "Se importă datele...",
+      "importing_historical_data": "Se importă datele istorice...",
       "invalid_enum_values": "Valori invalide în coloana mapată la {field}",
       "invalid_values_found": "Găsite: {values} (rânduri: {rows}) {extra}",
       "load_sample_csv": "Încarcă un CSV de exemplu",

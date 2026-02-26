@@ -2082,6 +2082,7 @@
       "import_csv_data": "CSVデータをインポート",
       "import_rows": "{count}行をインポート",
       "importing_data": "データをインポート中...",
+      "importing_historical_data": "過去のデータをインポート中...",
       "invalid_enum_values": "{field}にマッピングされた列に無効な値があります",
       "invalid_values_found": "検出された値: {values}（行: {rows}）{extra}",
       "load_sample_csv": "サンプルCSVを読み込む",

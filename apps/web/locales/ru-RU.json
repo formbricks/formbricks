@@ -2082,6 +2082,7 @@
       "import_csv_data": "Импортировать данные CSV",
       "import_rows": "Импортировать {count, plural, one {# строку} few {# строки} many {# строк} other {# строки}}",
       "importing_data": "Импорт данных...",
+      "importing_historical_data": "Импорт исторических данных...",
       "invalid_enum_values": "Недопустимые значения в столбце, сопоставленном с {field}",
       "invalid_values_found": "Найдено: {values} (строки: {rows}) {extra}",
       "load_sample_csv": "Загрузить пример CSV",

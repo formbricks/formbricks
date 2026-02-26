@@ -2082,6 +2082,7 @@
       "import_csv_data": "Importar datos CSV",
       "import_rows": "Importar {count} filas",
       "importing_data": "Importando datos...",
+      "importing_historical_data": "Importando datos históricos...",
       "invalid_enum_values": "Valores no válidos en la columna asignada a {field}",
       "invalid_values_found": "Encontrados: {values} (filas: {rows}) {extra}",
       "load_sample_csv": "Cargar CSV de muestra",

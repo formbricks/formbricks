@@ -2082,6 +2082,7 @@
       "import_csv_data": "匯入 CSV 資料",
       "import_rows": "匯入 {count} 筆資料",
       "importing_data": "正在匯入資料…",
+      "importing_historical_data": "正在匯入歷史資料…",
       "invalid_enum_values": "對應到 {field} 欄位的值無效",
       "invalid_values_found": "發現：{values}（列：{rows}）{extra}",
       "load_sample_csv": "載入範例 CSV",

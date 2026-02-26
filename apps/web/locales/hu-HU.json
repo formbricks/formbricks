@@ -2082,6 +2082,7 @@
       "import_csv_data": "CSV adatok importálása",
       "import_rows": "{count} sor importálása",
       "importing_data": "Adatok importálása...",
+      "importing_historical_data": "Történeti adatok importálása...",
       "invalid_enum_values": "Érvénytelen értékek a(z) {field} mezőhöz rendelt oszlopban",
       "invalid_values_found": "Talált értékek: {values} (sorok: {rows}) {extra}",
       "load_sample_csv": "Minta CSV betöltése",

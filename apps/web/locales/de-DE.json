@@ -2082,6 +2082,7 @@
       "import_csv_data": "CSV-Daten importieren",
       "import_rows": "{count, plural, one {1 Zeile importieren} other {# Zeilen importieren}}",
       "importing_data": "Daten werden importiert...",
+      "importing_historical_data": "Historische Daten werden importiert...",
       "invalid_enum_values": "Ungültige Werte in Spalte, die auf {field} gemappt ist",
       "invalid_values_found": "Gefunden: {values} (Zeilen: {rows}) {extra}",
       "load_sample_csv": "Beispiel-CSV laden",

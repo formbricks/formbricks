@@ -2082,6 +2082,7 @@
       "import_csv_data": "CSV-gegevens importeren",
       "import_rows": "{count, plural, one {Importeer 1 rij} other {Importeer # rijen}}",
       "importing_data": "Gegevens importeren...",
+      "importing_historical_data": "Historische gegevens importeren...",
       "invalid_enum_values": "Ongeldige waarden in kolom gekoppeld aan {field}",
       "invalid_values_found": "Gevonden: {values} (rijen: {rows}) {extra}",
       "load_sample_csv": "Voorbeeld-CSV laden",
