@@ -50,11 +50,12 @@ const mockConnector = {
   status: "active" as const,
   environmentId: ENV_ID,
   lastSyncAt: null,
-  errorMessage: null,
+  createdBy: null,
 };
 
-const mockConnectorWithMappings = {
+const mockConnectorWithMappingsFromDb = {
   ...mockConnector,
+  creator: null,
   formbricksMappings: [
     {
       id: "mapping-1",
@@ -70,13 +71,20 @@ const mockConnectorWithMappings = {
   fieldMappings: [],
 };
 
+const mockConnectorWithMappings = {
+  ...mockConnector,
+  creatorName: null,
+  formbricksMappings: mockConnectorWithMappingsFromDb.formbricksMappings,
+  fieldMappings: [],
+};
+
 describe("getConnectorsWithMappings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("returns connectors for the given environment", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([mockConnectorWithMappings] as never);
+    vi.mocked(prisma.connector.findMany).mockResolvedValue([mockConnectorWithMappingsFromDb] as never);
 
     const result = await getConnectorsWithMappings(ENV_ID);
 
@@ -128,7 +136,7 @@ describe("getConnectorsBySurveyId", () => {
   });
 
   test("returns active formbricks connectors linked to the survey", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([mockConnectorWithMappings] as never);
+    vi.mocked(prisma.connector.findMany).mockResolvedValue([mockConnectorWithMappingsFromDb] as never);
 
     const result = await getConnectorsBySurveyId(SURVEY_ID);
 
@@ -290,7 +298,7 @@ describe("createConnectorWithMappings", () => {
   test("creates connector without mappings", async () => {
     const tx = setupTransaction();
     tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, environmentId: ENV_ID });
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappings);
+    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
     const result = await createConnectorWithMappings(ENV_ID, { name: "New", type: "formbricks" });
 
@@ -308,7 +316,7 @@ describe("createConnectorWithMappings", () => {
     const tx = setupTransaction();
     tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, environmentId: ENV_ID });
     tx.connectorFormbricksMapping.create.mockResolvedValue({});
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappings);
+    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
     await createConnectorWithMappings(
       ENV_ID,
@@ -426,7 +434,7 @@ describe("updateConnectorWithMappings", () => {
   test("updates connector name without changing mappings", async () => {
     const tx = setupTransaction();
     tx.connector.update.mockResolvedValue(undefined);
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappings);
+    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
     const result = await updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "Updated" });
 
@@ -446,7 +454,7 @@ describe("updateConnectorWithMappings", () => {
     tx.connector.update.mockResolvedValue(undefined);
     tx.connectorFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.connectorFormbricksMapping.create.mockResolvedValue({});
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappings);
+    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
     await updateConnectorWithMappings(
       CONNECTOR_ID,

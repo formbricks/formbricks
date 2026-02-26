@@ -870,6 +870,7 @@ model User {
   /// [Locale]
   locale                    String           @default("en-US")
   surveys                   Survey[]
+  connectors                Connector[]
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean          @default(true)
@@ -1037,7 +1038,7 @@ enum HubFieldType {
 /// @property id - Unique identifier for the connector
 /// @property name - Display name for the connector
 /// @property type - Type of connector (formbricks, webhook, csv, email, slack)
-/// @property status - Current state of the connector (active, paused, error)
+/// @property status - Current state of the connector (active, paused)
 /// @property environment - The environment this connector belongs to
 /// @property config - Type-specific configuration (e.g., webhook secret, S3 config)
 /// @property formbricksMappings - Element mappings for Formbricks connectors
@@ -1054,7 +1055,8 @@ model Connector {
   formbricksMappings ConnectorFormbricksMapping[]
   fieldMappings      ConnectorFieldMapping[]
   lastSyncAt         DateTime?                    @map(name: "last_sync_at")
-  errorMessage       String?                      @map(name: "error_message")
+  createdBy          String?                      @map(name: "created_by")
+  creator            User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@unique([id, environmentId])
   @@unique([environmentId, name])

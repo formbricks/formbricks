@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TSurveyElementTypeEnum } from "./surveys/constants";
 
 // Connector type enum
 export const ZConnectorType = z.enum(["formbricks", "csv"]);
@@ -54,7 +55,7 @@ export const ZConnector = z.object({
   status: ZConnectorStatus,
   environmentId: z.string().cuid2(),
   lastSyncAt: z.date().nullable(),
-  errorMessage: z.string().nullable(),
+  createdBy: z.string().nullable(),
 });
 export type TConnector = z.infer<typeof ZConnector>;
 
@@ -85,6 +86,7 @@ export type TConnectorFieldMapping = z.infer<typeof ZConnectorFieldMapping>;
 export const ZConnectorWithMappings = ZConnector.extend({
   formbricksMappings: z.array(ZConnectorFormbricksMapping),
   fieldMappings: z.array(ZConnectorFieldMapping),
+  creatorName: z.string().nullable().optional(),
 });
 export type TConnectorWithMappings = z.infer<typeof ZConnectorWithMappings>;
 
@@ -92,6 +94,7 @@ export type TConnectorWithMappings = z.infer<typeof ZConnectorWithMappings>;
 export const ZConnectorCreateInput = z.object({
   name: z.string().min(1),
   type: ZConnectorType,
+  createdBy: z.string().cuid2().optional(),
 });
 export type TConnectorCreateInput = z.infer<typeof ZConnectorCreateInput>;
 
@@ -116,12 +119,21 @@ export type TConnectorFieldMappingCreateInput = z.infer<typeof ZConnectorFieldMa
 export const ZConnectorUpdateInput = z.object({
   name: z.string().min(1).optional(),
   status: ZConnectorStatus.optional(),
-  errorMessage: z.string().nullable().optional(),
   lastSyncAt: z.date().nullable().optional(),
 });
 export type TConnectorUpdateInput = z.infer<typeof ZConnectorUpdateInput>;
 
-// Element type to Hub field type mapping helper
+// Element types that cannot be mapped to Hub fields
+export const UNSUPPORTED_CONNECTOR_ELEMENT_TYPES: readonly TSurveyElementTypeEnum[] = [
+  TSurveyElementTypeEnum.ContactInfo,
+  TSurveyElementTypeEnum.Address,
+  TSurveyElementTypeEnum.Cal,
+  TSurveyElementTypeEnum.CTA,
+  TSurveyElementTypeEnum.FileUpload,
+  TSurveyElementTypeEnum.Consent,
+] as const;
+
+// Element type to Hub field type mapping helper (only supported types)
 export const ELEMENT_TYPE_TO_HUB_FIELD_TYPE: Record<string, THubFieldType> = {
   openText: "text",
   nps: "nps",
@@ -129,15 +141,9 @@ export const ELEMENT_TYPE_TO_HUB_FIELD_TYPE: Record<string, THubFieldType> = {
   multipleChoiceSingle: "categorical",
   multipleChoiceMulti: "categorical",
   date: "date",
-  consent: "boolean",
   matrix: "categorical",
   ranking: "categorical",
   pictureSelection: "categorical",
-  contactInfo: "text",
-  address: "text",
-  fileUpload: "text",
-  cal: "text",
-  cta: "boolean",
 };
 
 // Helper function to get Hub field type from element type

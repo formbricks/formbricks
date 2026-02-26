@@ -8,6 +8,7 @@ import { TConnectorType, TConnectorWithMappings, THubTargetField } from "@formbr
 import {
   createConnectorWithMappingsAction,
   deleteConnectorAction,
+  duplicateConnectorAction,
   updateConnectorWithMappingsAction,
 } from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -38,10 +39,9 @@ export function ConnectorsSection({
   const handleCreateConnector = async (data: {
     name: string;
     type: TConnectorType;
-    surveyId?: string;
-    elementIds?: string[];
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
-  }) => {
+  }): Promise<string | undefined> => {
     const result = await createConnectorWithMappingsAction({
       environmentId,
       connectorInput: {
@@ -49,9 +49,7 @@ export function ConnectorsSection({
         type: data.type,
       },
       formbricksMappings:
-        data.type === "formbricks" && data.surveyId && data.elementIds?.length
-          ? { surveyId: data.surveyId, elementIds: data.elementIds }
-          : undefined,
+        data.type === "formbricks" && data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings:
         data.type !== "formbricks" && data.fieldMappings?.length
           ? data.fieldMappings.map((m) => ({
@@ -64,19 +62,19 @@ export function ConnectorsSection({
 
     if (!result?.data) {
       toast.error(getFormattedErrorMessage(result));
-      return;
+      return undefined;
     }
 
     toast.success(t("environments.unify.connector_created_successfully"));
     router.refresh();
+    return result.data.id;
   };
 
   const handleUpdateConnector = async (data: {
     connectorId: string;
     environmentId: string;
     name: string;
-    surveyId?: string;
-    elementIds?: string[];
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => {
     const result = await updateConnectorWithMappingsAction({
@@ -85,10 +83,7 @@ export function ConnectorsSection({
       connectorInput: {
         name: data.name,
       },
-      formbricksMappings:
-        data.surveyId && data.elementIds?.length
-          ? { surveyId: data.surveyId, elementIds: data.elementIds }
-          : undefined,
+      formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings: data.fieldMappings?.length
         ? data.fieldMappings.map((m) => ({
             sourceFieldId: m.sourceFieldId || "",
@@ -107,7 +102,7 @@ export function ConnectorsSection({
     router.refresh();
   };
 
-  const handleDeleteConnector = async (connectorId: string) => {
+  const handleDeleteConnector = async (connectorId: string): Promise<void> => {
     const result = await deleteConnectorAction({ connectorId, environmentId });
 
     if (!result?.data) {
@@ -116,6 +111,38 @@ export function ConnectorsSection({
     }
 
     toast.success(t("environments.unify.connector_deleted_successfully"));
+    router.refresh();
+  };
+
+  const handleDuplicateConnector = async (connector: TConnectorWithMappings): Promise<void> => {
+    const result = await duplicateConnectorAction({
+      connectorId: connector.id,
+      environmentId,
+    });
+
+    if (!result?.data) {
+      toast.error(getFormattedErrorMessage(result));
+      return;
+    }
+
+    toast.success(t("environments.unify.connector_duplicated_successfully"));
+    router.refresh();
+  };
+
+  const handleToggleStatus = async (connector: TConnectorWithMappings): Promise<void> => {
+    const newStatus = connector.status === "active" ? "paused" : "active";
+    const result = await updateConnectorWithMappingsAction({
+      connectorId: connector.id,
+      environmentId,
+      connectorInput: { status: newStatus },
+    });
+
+    if (!result?.data) {
+      toast.error(getFormattedErrorMessage(result));
+      return;
+    }
+
+    toast.success(t("environments.unify.connector_status_updated_successfully"));
     router.refresh();
   };
 
@@ -129,6 +156,7 @@ export function ConnectorsSection({
             onOpenChange={setIsCreateModalOpen}
             onCreateConnector={handleCreateConnector}
             surveys={initialSurveys}
+            environmentId={environmentId}
           />
         }>
         <UnifyConfigNavigation environmentId={environmentId} />
@@ -138,6 +166,9 @@ export function ConnectorsSection({
         <ConnectorsTable
           connectors={initialConnectors}
           onConnectorClick={setEditingConnector}
+          onDuplicate={handleDuplicateConnector}
+          onToggleStatus={handleToggleStatus}
+          onDelete={handleDeleteConnector}
           isLoading={false}
         />
       </div>
@@ -147,7 +178,6 @@ export function ConnectorsSection({
         open={editingConnector !== null}
         onOpenChange={(open) => !open && setEditingConnector(null)}
         onUpdateConnector={handleUpdateConnector}
-        onDeleteConnector={handleDeleteConnector}
         surveys={initialSurveys}
       />
     </PageContentWrapper>

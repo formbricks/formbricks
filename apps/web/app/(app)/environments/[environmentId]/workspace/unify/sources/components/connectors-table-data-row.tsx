@@ -2,8 +2,9 @@
 
 import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TConnectorStatus, TConnectorType } from "@formbricks/types/connector";
+import { TConnectorStatus, TConnectorType, TConnectorWithMappings } from "@formbricks/types/connector";
 import { Badge } from "@/modules/ui/components/badge";
+import { ConnectorRowDropdown } from "./connector-row-dropdown";
 
 const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: 60, unit: "seconds" },
@@ -15,7 +16,7 @@ const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUn
   { amount: Number.POSITIVE_INFINITY, unit: "years" },
 ];
 
-function getRelativeTime(date: Date, locale: string): string {
+function getRelativeTime(date: Date, locale: string) {
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   let duration = (date.getTime() - Date.now()) / 1000;
 
@@ -30,13 +31,11 @@ function getRelativeTime(date: Date, locale: string): string {
 }
 
 interface ConnectorsTableDataRowProps {
-  id: string;
-  name: string;
-  type: TConnectorType;
-  status: TConnectorStatus;
-  mappingsCount: number;
-  createdAt: Date;
-  onClick: () => void;
+  connector: TConnectorWithMappings;
+  onEdit: () => void;
+  onDuplicate: () => Promise<void>;
+  onToggleStatus: () => Promise<void>;
+  onDelete: () => Promise<void>;
 }
 
 function getConnectorIcon(type: TConnectorType) {
@@ -57,13 +56,11 @@ const STATUS_BADGE_TYPE: Record<TConnectorStatus, "success" | "warning" | "error
 };
 
 export function ConnectorsTableDataRow({
-  id,
-  name,
-  type,
-  status,
-  mappingsCount,
-  createdAt,
-  onClick,
+  connector,
+  onEdit,
+  onDuplicate,
+  onToggleStatus,
+  onDelete,
 }: ConnectorsTableDataRowProps) {
   const { t, i18n } = useTranslation();
 
@@ -91,33 +88,45 @@ export function ConnectorsTableDataRow({
 
   return (
     <div
-      key={id}
       role="button"
       tabIndex={0}
       className="grid h-12 min-h-12 cursor-pointer grid-cols-12 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-50"
-      onClick={onClick}
+      onClick={onEdit}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          onClick();
+          onEdit();
         }
       }}>
-      <div className="col-span-2 flex items-center gap-2 pl-4">
-        {getConnectorIcon(type)}
-        <span className="hidden truncate text-xs text-slate-500 sm:inline">
-          {getConnectorTypeLabel(type)}
-        </span>
+      <div className="col-span-1 flex items-center gap-2 pl-4" title={getConnectorTypeLabel(connector.type)}>
+        {getConnectorIcon(connector.type)}
       </div>
-      <div className="col-span-4 flex items-center">
-        <span className="truncate text-sm font-medium text-slate-900">{name}</span>
+      <div className="col-span-3 flex items-center">
+        <span className="truncate text-sm font-medium text-slate-900">{connector.name}</span>
       </div>
-      <div className="col-span-2 hidden items-center justify-center sm:flex">
-        <Badge text={getStatusLabel(status)} type={STATUS_BADGE_TYPE[status]} size="tiny" />
+      <div className="col-span-1 hidden items-center justify-center sm:flex">
+        <Badge
+          text={getStatusLabel(connector.status)}
+          type={STATUS_BADGE_TYPE[connector.status]}
+          size="tiny"
+        />
       </div>
-      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-600 sm:flex">
-        {mappingsCount} {mappingsCount === 1 ? t("environments.unify.field") : t("environments.unify.fields")}
+      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
+        {getRelativeTime(connector.createdAt, i18n.language)}
       </div>
-      <div className="col-span-2 hidden items-center justify-end pr-4 text-sm text-slate-500 sm:flex">
-        {getRelativeTime(createdAt, i18n.language)}
+      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
+        {getRelativeTime(connector.updatedAt, i18n.language)}
+      </div>
+      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
+        <span className="truncate">{connector.creatorName ?? "—"}</span>
+      </div>
+      <div className="col-span-1 flex items-center justify-end pr-2">
+        <ConnectorRowDropdown
+          connector={connector}
+          onEdit={onEdit}
+          onDuplicate={onDuplicate}
+          onToggleStatus={onToggleStatus}
+          onDelete={onDelete}
+        />
       </div>
     </div>
   );

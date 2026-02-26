@@ -1,29 +1,26 @@
 import "server-only";
 import { TConnectorFormbricksMapping, THubFieldType } from "@formbricks/types/connector";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseData, TResponseDataValue } from "@formbricks/types/responses";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { FeedbackRecordCreateParams } from "@/modules/hub";
 
-type TResponseValue = string | number | string[] | Record<string, string> | undefined;
-
-type TSurveyElement = ReturnType<typeof getElementsFromBlocks>[number];
-
-const getHeadlineFromElement = (element: TSurveyElement | undefined): string => {
+const getHeadlineFromElement = (element?: TSurveyElement): string => {
   if (!element?.headline) return "Untitled";
   const raw = getLocalizedValue(element.headline, "default");
   return getTextContent(raw) || "Untitled";
 };
 
-function extractResponseValue(responseData: TResponse["data"], elementId: string): TResponseValue {
+function extractResponseValue(responseData: TResponseData, elementId: string): TResponseDataValue {
   if (!responseData || typeof responseData !== "object") return undefined;
-  return (responseData as Record<string, TResponseValue>)[elementId];
+  return responseData[elementId];
 }
 
 const convertValueToHubFields = (
-  value: TResponseValue,
+  value: TResponseDataValue,
   hubFieldType: THubFieldType
 ): Partial<
   Pick<FeedbackRecordCreateParams, "value_text" | "value_number" | "value_boolean" | "value_date">
