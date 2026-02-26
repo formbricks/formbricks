@@ -6,13 +6,14 @@ import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
+const MAX_DISPLAY_ROWS = 50;
 interface DataViewerProps {
   data: TChartDataRow[];
 }
 
 export function DataViewer({ data }: Readonly<DataViewerProps>) {
   const { t } = useTranslation();
-  if (!data || data.length === 0) {
+  if (!data || data.length === 0 || Object.keys(data[0]).length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <p className="text-sm text-gray-500">{t("environments.analysis.charts.no_data_available")}</p>
@@ -21,7 +22,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
   }
 
   const columns = Object.keys(data[0]);
-  const displayData = data.slice(0, 50);
+  const displayData = data.slice(0, MAX_DISPLAY_ROWS);
 
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -36,7 +37,10 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
           <thead className="bg-gray-100">
             <tr>
               {columns.map((key) => (
-                <th key={key} className="border-b border-gray-200 px-3 py-2 text-left font-semibold">
+                <th
+                  key={key}
+                  scope="col"
+                  className="border-b border-gray-200 px-3 py-2 text-left font-semibold">
                   {formatCubeColumnHeader(key)}
                 </th>
               ))}
@@ -44,7 +48,8 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
           </thead>
           <tbody>
             {displayData.map((row, index) => {
-              const rowKey = Object.values(row)[0] ? String(Object.values(row)[0]) : `row-${index}`;
+              const firstValue = Object.values(row)[0];
+              const rowKey = firstValue ? String(firstValue) : `row-${index}`;
               return (
                 <tr key={`data-row-${rowKey}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
                   {Object.entries(row).map(([key, value]) => (
@@ -57,9 +62,12 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
             })}
           </tbody>
         </table>
-        {data.length > 50 && (
+        {data.length > MAX_DISPLAY_ROWS && (
           <div className="px-3 py-2 text-xs text-gray-500">
-            {t("environments.analysis.charts.showing_first_n_of", { n: 50, count: data.length })}
+            {t("environments.analysis.charts.showing_first_n_of", {
+              n: MAX_DISPLAY_ROWS,
+              count: data.length,
+            })}
           </div>
         )}
       </div>
