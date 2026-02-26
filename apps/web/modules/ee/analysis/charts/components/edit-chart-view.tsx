@@ -5,9 +5,13 @@ import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/ad
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { ChartBuilderGuide } from "@/modules/ee/analysis/charts/components/chart-builder-guide";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
+import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
-import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
+import { useCreateChartDialog } from "@/modules/ee/analysis/charts/hooks/use-create-chart-dialog";
+import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
+import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
   DialogBody,
@@ -20,53 +24,68 @@ import { Input } from "@/modules/ui/components/input";
 
 interface EditChartViewProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   environmentId: string;
-  chartData: AnalyticsResponse | null;
-  /** Query from initialChart when chartData is still loading */
-  initialQuery?: AnalyticsResponse["query"];
-  isLoadingChart?: boolean;
-  chartLoadError?: string | null;
-  chartName: string;
-  onChartNameChange: (name: string) => void;
-  selectedChartType: TChartType;
-  onChartTypeChange: (type: TChartType) => void;
-  onChartGenerated: (data: AnalyticsResponse) => void;
-  dashboards: Array<{ id: string; name: string }>;
-  selectedDashboardId: string;
-  onDashboardSelect: (id: string) => void;
-  onAddToDashboard: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-  isAddToDashboardDialogOpen: boolean;
-  onAddToDashboardDialogOpenChange: (open: boolean) => void;
+  chartId: string;
+  initialChart?: TChartWithCreator;
+  onSuccess?: () => void;
 }
 
 export function EditChartView({
   open,
-  onClose,
+  onOpenChange,
   environmentId,
-  chartData,
-  initialQuery,
-  isLoadingChart = false,
-  chartLoadError,
-  chartName,
-  onChartNameChange,
-  selectedChartType,
-  onChartTypeChange,
-  onChartGenerated,
-  dashboards,
-  selectedDashboardId,
-  onDashboardSelect,
-  onAddToDashboard,
-  onSave,
-  isSaving,
-  isAddToDashboardDialogOpen,
-  onAddToDashboardDialogOpenChange,
+  chartId,
+  initialChart,
+  onSuccess,
 }: Readonly<EditChartViewProps>) {
   const { t } = useTranslation();
+
+  const {
+    chartData,
+    initialQuery,
+    isLoadingChart,
+    chartLoadError,
+    chartName,
+    setChartName,
+    selectedChartType,
+    handleChartTypeChange,
+    handleChartGenerated,
+    dashboards,
+    selectedDashboardId,
+    setSelectedDashboardId,
+    handleAddToDashboard,
+    handleSaveChart,
+    isSaving,
+    isAddToDashboardDialogOpen,
+    setIsAddToDashboardDialogOpen,
+    handleClose,
+  } = useCreateChartDialog({ open, onOpenChange, environmentId, chartId, initialChart, onSuccess });
+
+  if (isLoadingChart && !initialChart) {
+    return <ChartDialogLoadingView open={open} onClose={handleClose} />;
+  }
+
+  if (!isLoadingChart && !chartData && !initialChart && chartLoadError) {
+    return (
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+        <DialogContent width="wide">
+          <DialogTitle>{t("common.error")}</DialogTitle>
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            <p className="text-sm text-red-600">{chartLoadError}</p>
+            <Button variant="outline" onClick={handleClose}>
+              {t("common.close")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  const chartType = selectedChartType ?? DEFAULT_CHART_TYPE;
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto" width="wide">
         <DialogHeader>
           <DialogTitle>{t("environments.analysis.charts.edit_chart_title")}</DialogTitle>
@@ -81,42 +100,39 @@ export function EditChartView({
               <Input
                 id="edit-chart-name"
                 value={chartName}
-                onChange={(e) => onChartNameChange(e.target.value)}
+                onChange={(e) => setChartName(e.target.value)}
                 placeholder={t("environments.analysis.charts.chart_name_placeholder")}
                 className="w-full"
               />
             </div>
             <div className="space-y-2">
               <ChartBuilderGuide />
-              <ManualChartBuilder
-                selectedChartType={selectedChartType}
-                onChartTypeSelect={onChartTypeChange}
-              />
+              <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
             </div>
             <AdvancedChartBuilder
               environmentId={environmentId}
-              chartType={selectedChartType}
+              chartType={chartType}
               initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}
-              onChartGenerated={onChartGenerated}
+              onChartGenerated={handleChartGenerated}
             />
             <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
           </div>
         </DialogBody>
         <ChartDialogFooter
-          onSaveClick={onSave}
-          onAddToDashboardClick={() => onAddToDashboardDialogOpenChange(true)}
+          onSaveClick={handleSaveChart}
+          onAddToDashboardClick={() => setIsAddToDashboardDialogOpen(true)}
           isSaving={isSaving}
         />
         <AddToDashboardDialog
           isOpen={isAddToDashboardDialogOpen}
-          onOpenChange={onAddToDashboardDialogOpenChange}
+          onOpenChange={setIsAddToDashboardDialogOpen}
           chartName={chartName}
-          onChartNameChange={onChartNameChange}
+          onChartNameChange={setChartName}
           dashboards={dashboards}
           selectedDashboardId={selectedDashboardId}
-          onDashboardSelect={onDashboardSelect}
-          onConfirm={onAddToDashboard}
+          onDashboardSelect={setSelectedDashboardId}
+          onConfirm={handleAddToDashboard}
           isSaving={isSaving}
         />
       </DialogContent>

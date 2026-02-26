@@ -22,7 +22,6 @@ export interface UseCreateChartDialogProps {
   chartId?: string;
   /** Pre-loaded chart metadata; when provided for edit, skips getChartAction */
   initialChart?: TChartWithCreator;
-  defaultDashboardId?: string;
   onSuccess?: () => void;
 }
 
@@ -32,7 +31,6 @@ export function useCreateChartDialog({
   environmentId,
   chartId,
   initialChart,
-  defaultDashboardId,
   onSuccess,
 }: Readonly<UseCreateChartDialogProps>) {
   const { t } = useTranslation();
@@ -42,7 +40,7 @@ export function useCreateChartDialog({
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedDashboardId, setSelectedDashboardId] = useState<string>(defaultDashboardId ?? "");
+  const [selectedDashboardId, setSelectedDashboardId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
@@ -62,6 +60,8 @@ export function useCreateChartDialog({
   }, [isAddToDashboardDialogOpen, environmentId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (open && chartId) {
       const chartMetadata = initialChart?.id === chartId ? initialChart : undefined;
 
@@ -79,6 +79,8 @@ export function useCreateChartDialog({
           environmentId,
           query,
         });
+
+        if (cancelled) return;
 
         if (queryResult?.serverError) {
           const errorMsg =
@@ -110,6 +112,8 @@ export function useCreateChartDialog({
       } else {
         getChartAction({ environmentId, chartId })
           .then(async (result) => {
+            if (cancelled) return;
+
             if (result?.data) {
               const chart = result.data;
               setChartName(chart.name);
@@ -117,11 +121,16 @@ export function useCreateChartDialog({
               setCurrentChartId(chart.id);
               await loadChartData(chart.query, chart.type);
             } else if (result?.serverError) {
-              toast.error(getFormattedErrorMessage(result));
+              const errorMsg =
+                getFormattedErrorMessage(result) || t("environments.analysis.charts.failed_to_load_chart");
+              toast.error(errorMsg);
+              setChartLoadError(errorMsg);
               setIsLoadingChart(false);
             }
           })
           .catch((error: unknown) => {
+            if (cancelled) return;
+
             const message =
               error instanceof Error ? error.message : t("environments.analysis.charts.failed_to_load_chart");
             toast.error(message);
@@ -135,12 +144,18 @@ export function useCreateChartDialog({
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
     }
-  }, [open, chartId, environmentId, initialChart]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, chartId, environmentId, initialChart, t]);
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
     if (!currentChartId) {
-      setChartName(data.chartType ? `Chart ${new Date().toLocaleString()}` : "");
+      setChartName(
+        data.chartType ? `${t("environments.analysis.charts.chart")} ${new Date().toLocaleString()}` : ""
+      );
     }
     setSelectedChartType(data.chartType);
   };
@@ -283,6 +298,7 @@ export function useCreateChartDialog({
       setChartName("");
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
+      setChartLoadError(null);
       onOpenChange(false);
     }
   };
