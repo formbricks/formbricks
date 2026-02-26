@@ -79,6 +79,97 @@ export const FormbricksSurveySelector = ({
   const getSupportedElementCount = (survey: TUnifySurvey) =>
     survey.elements.filter((e) => !isUnsupportedType(e.type)).length;
 
+  const getElementButtonClassName = (unsupported: boolean, isSelected: boolean): string => {
+    if (unsupported) return "cursor-not-allowed border-slate-100 bg-slate-50 opacity-50";
+    if (isSelected) return "border-green-300 bg-green-50";
+    return "border-slate-200 bg-white hover:border-slate-300";
+  };
+
+  const getCheckboxClassName = (unsupported: boolean, isSelected: boolean): string => {
+    if (unsupported) return "border border-slate-200 bg-slate-100";
+    if (isSelected) return "bg-green-500 text-white";
+    return "border border-slate-300 bg-white";
+  };
+
+  const renderElementPanel = () => {
+    if (!selectedSurvey) {
+      return (
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
+          <p className="text-sm text-slate-500">{t("environments.unify.select_a_survey_to_see_questions")}</p>
+        </div>
+      );
+    }
+
+    if (selectedSurvey.elements.length === 0) {
+      return (
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
+          <p className="text-sm text-slate-500">{t("environments.unify.survey_has_no_questions")}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2 overflow-y-auto pr-1">
+        <TooltipProvider delayDuration={200}>
+          {selectedSurvey.elements.map((element) => {
+            const isSelected = selectedElementIds.includes(element.id);
+            const unsupported = isUnsupportedType(element.type);
+
+            const button = (
+              <button
+                key={element.id}
+                type="button"
+                disabled={unsupported}
+                onClick={() => onElementToggle(element.id)}
+                className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${getElementButtonClassName(unsupported, isSelected)}`}>
+                <div
+                  className={`flex h-5 w-5 items-center justify-center rounded ${getCheckboxClassName(unsupported, isSelected)}`}>
+                  {isSelected && !unsupported && <CheckIcon className="h-3 w-3" />}
+                </div>
+                <div className="flex items-center gap-2">{getElementIcon(element.type)}</div>
+                <div className="flex-1">
+                  <p className={`text-sm ${unsupported ? "text-slate-400" : "text-slate-900"}`}>
+                    {element.headline}
+                  </p>
+                  <span className={`text-xs ${unsupported ? "text-slate-300" : "text-slate-500"}`}>
+                    {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
+                  </span>
+                </div>
+              </button>
+            );
+
+            if (unsupported) {
+              return (
+                <Tooltip key={element.id}>
+                  <TooltipTrigger asChild>{button}</TooltipTrigger>
+                  <TooltipContent>{t("environments.unify.question_type_not_supported")}</TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return button;
+          })}
+        </TooltipProvider>
+
+        {selectedElementIds.length > 0 && (
+          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <p className="text-xs text-blue-700">
+              <Trans
+                i18nKey={
+                  selectedElementIds.length === 1
+                    ? "environments.unify.question_selected"
+                    : "environments.unify.questions_selected"
+                }
+                values={{ count: selectedElementIds.length }}
+                components={{ strong: <strong /> }}
+              />
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="grid h-[50vh] grid-cols-2 gap-6">
       {/* Left: Survey List */}
@@ -143,88 +234,7 @@ export const FormbricksSurveySelector = ({
           )}
         </div>
 
-        {!selectedSurvey ? (
-          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-            <p className="text-sm text-slate-500">
-              {t("environments.unify.select_a_survey_to_see_questions")}
-            </p>
-          </div>
-        ) : selectedSurvey.elements.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-            <p className="text-sm text-slate-500">{t("environments.unify.survey_has_no_questions")}</p>
-          </div>
-        ) : (
-          <div className="space-y-2 overflow-y-auto pr-1">
-            <TooltipProvider delayDuration={200}>
-              {selectedSurvey.elements.map((element) => {
-                const isSelected = selectedElementIds.includes(element.id);
-                const unsupported = isUnsupportedType(element.type);
-
-                const button = (
-                  <button
-                    key={element.id}
-                    type="button"
-                    disabled={unsupported}
-                    onClick={() => onElementToggle(element.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                      unsupported
-                        ? "cursor-not-allowed border-slate-100 bg-slate-50 opacity-50"
-                        : isSelected
-                          ? "border-green-300 bg-green-50"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                    }`}>
-                    <div
-                      className={`flex h-5 w-5 items-center justify-center rounded ${
-                        unsupported
-                          ? "border border-slate-200 bg-slate-100"
-                          : isSelected
-                            ? "bg-green-500 text-white"
-                            : "border border-slate-300 bg-white"
-                      }`}>
-                      {isSelected && !unsupported && <CheckIcon className="h-3 w-3" />}
-                    </div>
-                    <div className="flex items-center gap-2">{getElementIcon(element.type)}</div>
-                    <div className="flex-1">
-                      <p className={`text-sm ${unsupported ? "text-slate-400" : "text-slate-900"}`}>
-                        {element.headline}
-                      </p>
-                      <span className={`text-xs ${unsupported ? "text-slate-300" : "text-slate-500"}`}>
-                        {getTSurveyElementTypeEnumName(element.type, t) ?? element.type}
-                      </span>
-                    </div>
-                  </button>
-                );
-
-                if (unsupported) {
-                  return (
-                    <Tooltip key={element.id}>
-                      <TooltipTrigger asChild>{button}</TooltipTrigger>
-                      <TooltipContent>{t("environments.unify.question_type_not_supported")}</TooltipContent>
-                    </Tooltip>
-                  );
-                }
-
-                return button;
-              })}
-            </TooltipProvider>
-
-            {selectedElementIds.length > 0 && (
-              <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <p className="text-xs text-blue-700">
-                  <Trans
-                    i18nKey={
-                      selectedElementIds.length === 1
-                        ? "environments.unify.question_selected"
-                        : "environments.unify.questions_selected"
-                    }
-                    values={{ count: selectedElementIds.length }}
-                    components={{ strong: <strong /> }}
-                  />
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+        {renderElementPanel()}
       </div>
     </div>
   );
