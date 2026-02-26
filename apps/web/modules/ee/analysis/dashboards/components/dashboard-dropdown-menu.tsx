@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -27,7 +28,7 @@ export const DashboardDropdownMenu = ({
   dashboardName,
 }: Readonly<DashboardDropdownMenuProps>) => {
   const { t } = useTranslation();
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
@@ -53,7 +54,7 @@ export const DashboardDropdownMenu = ({
     try {
       const result = await deleteDashboardAction({ environmentId, dashboardId });
       if (result?.data) {
-        setDeleteDialogOpen(false);
+        setIsDeleteDialogOpen(false);
         toast.success(t("environments.analysis.dashboards.delete_success"));
       } else {
         toast.error(result?.serverError || t("environments.analysis.dashboards.delete_failed"));
@@ -69,49 +70,36 @@ export const DashboardDropdownMenu = ({
     <div data-testid={`${dashboardName.toLowerCase().split(" ").join("-")}-dashboard-actions`}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
-          <button type="button" className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
+          <Button variant="outline" className="px-2">
             <span className="sr-only">{t("common.open_options")}</span>
-            <MoreVertical className="h-4 w-4" aria-hidden="true" />
-          </button>
+            <MoreVertical className="size-4" aria-hidden="true" />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <Link
-                className="flex w-full items-center"
-                href={`/environments/${environmentId}/analysis/dashboards/${dashboardId}`}>
-                <SquarePenIcon className="mr-2 size-4" />
+            <DropdownMenuItem icon={<SquarePenIcon className="size-4" />} asChild>
+              <Link href={`/environments/${environmentId}/analysis/dashboards/${dashboardId}`}>
                 {t("common.edit")}
               </Link>
             </DropdownMenuItem>
 
-            <DropdownMenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center"
-                disabled={isDuplicating}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsDropDownOpen(false);
-                  handleDuplicateDashboard();
-                }}>
-                <CopyIcon className="mr-2 h-4 w-4" />
-                {t("common.duplicate")}
-              </button>
+            <DropdownMenuItem
+              icon={<CopyIcon className="size-4" />}
+              disabled={isDuplicating}
+              onClick={() => {
+                setIsDropDownOpen(false);
+                handleDuplicateDashboard();
+              }}>
+              {t("common.duplicate")}
             </DropdownMenuItem>
 
-            <DropdownMenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsDropDownOpen(false);
-                  setDeleteDialogOpen(true);
-                }}>
-                <TrashIcon className="mr-2 h-4 w-4" />
-                {t("common.delete")}
-              </button>
+            <DropdownMenuItem
+              icon={<TrashIcon className="size-4" />}
+              onClick={() => {
+                setIsDropDownOpen(false);
+                setIsDeleteDialogOpen(true);
+              }}>
+              {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -120,7 +108,7 @@ export const DashboardDropdownMenu = ({
       <DeleteDialog
         deleteWhat={t("common.dashboard")}
         open={isDeleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
+        setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteDashboard}
         text={t("environments.analysis.dashboards.delete_confirmation")}
         isDeleting={isDeleting}
