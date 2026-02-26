@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Line, LineChart, Pie, PieChart } from "recharts";
-import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
+import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
   CHART_BRAND_DARK,
@@ -24,10 +24,9 @@ interface ChartRendererProps {
   chartType: TChartType;
   data: TChartDataRow[];
   query: TChartQuery;
-  config?: TChartConfig;
 }
 
-export function ChartRenderer({ chartType, data, query, config }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({ chartType, data, query }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
 
   if (!data || data.length === 0) {
@@ -79,8 +78,7 @@ export function ChartRenderer({ chartType, data, query, config }: Readonly<Chart
           dataKeys={dataKeys}
           chartConfig={chartConfig}
           showLegend={isMultiMeasure}
-          chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}
-          visualConfig={config}>
+          chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
           {dataKeys.map((key, i) => (
             <Bar
               key={key}
@@ -99,8 +97,7 @@ export function ChartRenderer({ chartType, data, query, config }: Readonly<Chart
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}
-          visualConfig={config}>
+          showLegend={isMultiMeasure}>
           {dataKeys.map((key, i) => {
             const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
             return (
@@ -125,8 +122,7 @@ export function ChartRenderer({ chartType, data, query, config }: Readonly<Chart
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}
-          visualConfig={config}>
+          showLegend={isMultiMeasure}>
           {dataKeys.map((key, i) => (
             <Area
               key={key}
@@ -186,7 +182,7 @@ export function ChartRenderer({ chartType, data, query, config }: Readonly<Chart
         data.length === 1
           ? Number(data[0]?.[dataKey]) || 0
           : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
-      const formatted = `${config?.prefix ?? ""}${total.toLocaleString()}${config?.suffix ?? ""}`;
+      const formatted = total.toLocaleString();
       return (
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
