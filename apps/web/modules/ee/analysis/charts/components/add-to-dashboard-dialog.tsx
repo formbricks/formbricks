@@ -27,7 +27,7 @@ interface AddToDashboardDialogProps {
   chartName: string;
   onChartNameChange: (name: string) => void;
   dashboards: Array<{ id: string; name: string }>;
-  selectedDashboardId: string;
+  selectedDashboardId: string | undefined;
   onDashboardSelect: (id: string) => void;
   onConfirm: () => void;
   isSaving: boolean;
