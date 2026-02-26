@@ -6,6 +6,16 @@ import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 export const CHART_BRAND_DARK = "#00C4B8";
 export const CHART_BRAND_LIGHT = "#00E6CA";
 
+/** Palette for multi-measure charts (grouped/stacked bars, multi-series line/area). */
+export const CHART_MEASURE_COLORS = [
+  CHART_BRAND_DARK,
+  "#6366f1", // indigo
+  "#f59e0b", // amber
+  "#ef4444", // red
+  "#8b5cf6", // violet
+  "#14b8a6", // teal
+];
+
 /** Validate a chart type string, defaulting to "bar" if unrecognised. */
 export const resolveChartType = (raw: string): TChartType => {
   const parsed = ZChartType.safeParse(raw);

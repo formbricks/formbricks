@@ -176,16 +176,14 @@ export function FiltersPanel({
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
         {filters.map((filter, index) => {
           const field = getFieldById(filter.field);
           const fieldType = (field?.type || "string") as "string" | "number" | "time";
           const operators = getFilterOperatorsForType(fieldType);
 
           return (
-            <div
-              key={filter.operator + index}
-              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
+            <div key={filter.operator + index} className="flex items-center gap-2">
               <Select
                 value={filter.field}
                 onValueChange={(value) => {

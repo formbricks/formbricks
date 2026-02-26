@@ -20,14 +20,20 @@ import {
 import { TChartQuery } from "@formbricks/types/analysis";
 import {
   CHART_BRAND_DARK,
-  CHART_BRAND_LIGHT,
+  CHART_MEASURE_COLORS,
   formatCellValue,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/modules/ui/components/chart";
 
 function formatXAxisTick(value: unknown): string {
   if (value == null) return "";
@@ -40,14 +46,19 @@ function formatXAxisTick(value: unknown): string {
   return str;
 }
 
-function ChartTooltipRow({ value, dataKey }: Readonly<{ value: unknown; dataKey: string }>) {
+function ChartTooltipRow({
+  value,
+  dataKey,
+  color,
+}: Readonly<{ value: unknown; dataKey: string; color?: string }>) {
+  const indicatorColor = color ?? CHART_BRAND_DARK;
   return (
     <>
       <div
         className="h-2.5 w-2.5 shrink-0 rounded-[2px] border border-current"
         style={{
-          backgroundColor: CHART_BRAND_DARK,
-          borderColor: CHART_BRAND_DARK,
+          backgroundColor: indicatorColor,
+          borderColor: indicatorColor,
         }}
       />
       <div className="flex flex-1 items-center justify-between leading-none">
@@ -65,31 +76,53 @@ function createTooltipFormatter(dataKey: string) {
   return Formatter;
 }
 
-/** Tooltip content for bar/line/area charts with formatted label and value. Extracted to avoid inline component definitions. */
-function CartesianChartTooltip({ dataKey }: Readonly<{ dataKey: string }>) {
+/** Tooltip content for single-measure Cartesian charts. */
+function SingleMeasureTooltip({ dataKey }: Readonly<{ dataKey: string }>) {
   return <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={createTooltipFormatter(dataKey)} />;
 }
 
-/** Shared layout for bar, line, and area charts to avoid duplicating grid/axis/tooltip boilerplate. */
+/** Tooltip formatter for multi-measure charts; uses each payload item's dataKey and color. */
+function multiMeasureTooltipFormatter(
+  value: unknown,
+  name: string,
+  item: { dataKey?: string; color?: string; payload?: { fill?: string } }
+) {
+  const key = item?.dataKey ?? name;
+  const color = item?.color ?? item?.payload?.fill;
+  return <ChartTooltipRow value={value} dataKey={key} color={color} />;
+}
+
+/** Shared layout for bar, line, and area charts. Supports single or multiple measures. */
 function CartesianChart({
   data,
   xAxisKey,
-  dataKey,
+  dataKeys,
   chartConfig,
   chart: Chart,
   children,
+  showLegend = false,
+  chartProps = {},
 }: Readonly<{
   data: TChartDataRow[];
   xAxisKey: string;
-  dataKey: string;
+  dataKeys: string[];
   chartConfig: ChartConfig;
   chart: ElementType;
   children: ReactNode;
+  showLegend?: boolean;
+  chartProps?: Record<string, unknown>;
 }>) {
+  const isMultiMeasure = dataKeys.length > 1;
+  const tooltipContent = isMultiMeasure ? (
+    <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={multiMeasureTooltipFormatter} />
+  ) : (
+    <SingleMeasureTooltip dataKey={dataKeys[0]} />
+  );
+
   return (
     <div className="h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <Chart data={data}>
+        <Chart data={data} {...chartProps}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey={xAxisKey}
@@ -99,7 +132,8 @@ function CartesianChart({
             tickFormatter={formatXAxisTick}
           />
           <YAxis tickLine={false} axisLine={false} />
-          <ChartTooltip content={<CartesianChartTooltip dataKey={dataKey} />} />
+          <ChartTooltip content={tooltipContent} />
+          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
         </Chart>
       </ChartContainer>
@@ -124,18 +158,28 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     );
   }
 
-  const dataKey = query.measures?.[0] ?? Object.keys(data[0])[0] ?? "value";
+  const rowKeys = Object.keys(data[0] ?? {});
+  const measureIds = query.measures?.filter((m) => rowKeys.includes(m)) ?? [];
+  const dataKeys =
+    measureIds.length > 0
+      ? measureIds
+      : [rowKeys.find((k) => k !== query.dimensions?.[0]) ?? rowKeys[0]].filter(Boolean);
   const xAxisKey =
     query.dimensions?.[0] ??
     query.timeDimensions?.[0]?.dimension ??
-    Object.keys(data[0]).find((k) => k !== dataKey) ??
+    rowKeys.find((k) => !dataKeys.includes(k)) ??
     "key";
-  const chartConfig: ChartConfig = {
-    [dataKey]: {
-      label: formatCubeColumnHeader(dataKey),
-      color: CHART_BRAND_DARK,
-    },
-  };
+  const chartConfig: ChartConfig = Object.fromEntries(
+    dataKeys.map((key, i) => [
+      key,
+      {
+        label: formatCubeColumnHeader(key),
+        color: CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
+      },
+    ])
+  );
+  const dataKey = dataKeys[0] ?? "value";
+  const isMultiMeasure = dataKeys.length > 1;
 
   switch (chartType) {
     case "bar":
@@ -144,9 +188,18 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           chart={BarChart}
           data={data}
           xAxisKey={xAxisKey}
-          dataKey={dataKey}
-          chartConfig={chartConfig}>
-          <Bar dataKey={dataKey} fill={CHART_BRAND_DARK} radius={4} />
+          dataKeys={dataKeys}
+          chartConfig={chartConfig}
+          showLegend={isMultiMeasure}
+          chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
+          {dataKeys.map((key, i) => (
+            <Bar
+              key={key}
+              dataKey={key}
+              fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
+              radius={4}
+            />
+          ))}
         </CartesianChart>
       );
     case "line":
@@ -155,16 +208,23 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           chart={LineChart}
           data={data}
           xAxisKey={xAxisKey}
-          dataKey={dataKey}
-          chartConfig={chartConfig}>
-          <Line
-            type="monotone"
-            dataKey={dataKey}
-            stroke={CHART_BRAND_DARK}
-            strokeWidth={3}
-            dot={{ fill: CHART_BRAND_DARK, r: 4 }}
-            activeDot={{ r: 6 }}
-          />
+          dataKeys={dataKeys}
+          chartConfig={chartConfig}
+          showLegend={isMultiMeasure}>
+          {dataKeys.map((key, i) => {
+            const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
+            return (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stroke={color}
+                strokeWidth={3}
+                dot={{ fill: color, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            );
+          })}
         </CartesianChart>
       );
     case "area":
@@ -173,16 +233,20 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           chart={AreaChart}
           data={data}
           xAxisKey={xAxisKey}
-          dataKey={dataKey}
-          chartConfig={chartConfig}>
-          <Area
-            type="monotone"
-            dataKey={dataKey}
-            stroke={CHART_BRAND_DARK}
-            fill={CHART_BRAND_LIGHT}
-            fillOpacity={0.4}
-            strokeWidth={2}
-          />
+          dataKeys={dataKeys}
+          chartConfig={chartConfig}
+          showLegend={isMultiMeasure}>
+          {dataKeys.map((key, i) => (
+            <Area
+              key={key}
+              type="monotone"
+              dataKey={key}
+              stroke={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
+              fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i]}
+              fillOpacity={0.4}
+              strokeWidth={2}
+            />
+          ))}
         </CartesianChart>
       );
     case "pie": {
