@@ -10,7 +10,7 @@ import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
-import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
+import { useCreateChartDialog } from "@/modules/ee/analysis/charts/hooks/use-create-chart-dialog";
 import {
   Dialog,
   DialogBody,
@@ -22,50 +22,39 @@ import {
 
 interface CreateChartViewProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   environmentId: string;
-  chartId?: string;
-  chartData: AnalyticsResponse | null;
-  chartName: string;
-  onChartNameChange: (name: string) => void;
-  selectedChartType?: TChartType;
-  onSelectedChartTypeChange: (type: TChartType) => void;
-  onChartGenerated: (data: AnalyticsResponse) => void;
-  dashboards: Array<{ id: string; name: string }>;
-  selectedDashboardId: string;
-  onDashboardSelect: (id: string) => void;
-  onAddToDashboard: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-  isSaveDialogOpen: boolean;
-  onSaveDialogOpenChange: (open: boolean) => void;
-  isAddToDashboardDialogOpen: boolean;
-  onAddToDashboardDialogOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function CreateChartView({
   open,
-  onClose,
+  onOpenChange,
   environmentId,
-  chartId,
-  chartData,
-  chartName,
-  onChartNameChange,
-  selectedChartType,
-  onSelectedChartTypeChange,
-  onChartGenerated,
-  dashboards,
-  selectedDashboardId,
-  onDashboardSelect,
-  onAddToDashboard,
-  onSave,
-  isSaving,
-  isSaveDialogOpen,
-  onSaveDialogOpenChange,
-  isAddToDashboardDialogOpen,
-  onAddToDashboardDialogOpenChange,
+  onSuccess,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
+
+  const {
+    chartData,
+    chartName,
+    setChartName,
+    selectedChartType,
+    handleChartTypeChange,
+    handleChartGenerated,
+    dashboards,
+    selectedDashboardId,
+    setSelectedDashboardId,
+    handleAddToDashboard,
+    handleSaveChart,
+    isSaving,
+    isSaveDialogOpen,
+    setIsSaveDialogOpen,
+    isAddToDashboardDialogOpen,
+    setIsAddToDashboardDialogOpen,
+    handleClose,
+  } = useCreateChartDialog({ open, onOpenChange, environmentId, onSuccess });
+
   const chartPreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,28 +63,16 @@ export function CreateChartView({
     }
   }, [chartData]);
 
-  const handleAdvancedChartGenerated = (data: AnalyticsResponse) => {
-    onChartGenerated(data);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto" width="wide">
         <DialogHeader>
-          <DialogTitle>
-            {chartId
-              ? t("environments.analysis.charts.edit_chart_title")
-              : t("environments.analysis.charts.create_chart")}
-          </DialogTitle>
-          <DialogDescription>
-            {chartId
-              ? t("environments.analysis.charts.edit_chart_description")
-              : t("environments.analysis.charts.create_chart_description")}
-          </DialogDescription>
+          <DialogTitle>{t("environments.analysis.charts.create_chart")}</DialogTitle>
+          <DialogDescription>{t("environments.analysis.charts.create_chart_description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="grid gap-4">
-            <AIQuerySection environmentId={environmentId} onChartGenerated={onChartGenerated} />
+            <AIQuerySection environmentId={environmentId} onChartGenerated={handleChartGenerated} />
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -112,7 +89,7 @@ export function CreateChartView({
               <ChartBuilderGuide />
               <ManualChartBuilder
                 selectedChartType={selectedChartType}
-                onChartTypeSelect={onSelectedChartTypeChange}
+                onChartTypeSelect={handleChartTypeChange}
               />
             </div>
 
@@ -122,7 +99,7 @@ export function CreateChartView({
                 chartType={selectedChartType}
                 initialQuery={chartData?.query}
                 hidePreview={true}
-                onChartGenerated={handleAdvancedChartGenerated}
+                onChartGenerated={handleChartGenerated}
               />
             )}
 
@@ -137,27 +114,27 @@ export function CreateChartView({
         {chartData && (
           <>
             <ChartDialogFooter
-              onSaveClick={() => onSaveDialogOpenChange(true)}
-              onAddToDashboardClick={() => onAddToDashboardDialogOpenChange(true)}
+              onSaveClick={() => setIsSaveDialogOpen(true)}
+              onAddToDashboardClick={() => setIsAddToDashboardDialogOpen(true)}
               isSaving={isSaving}
             />
             <SaveChartDialog
               open={isSaveDialogOpen}
-              onOpenChange={onSaveDialogOpenChange}
+              onOpenChange={setIsSaveDialogOpen}
               chartName={chartName}
-              onChartNameChange={onChartNameChange}
-              onSave={onSave}
+              onChartNameChange={setChartName}
+              onSave={handleSaveChart}
               isSaving={isSaving}
             />
             <AddToDashboardDialog
               isOpen={isAddToDashboardDialogOpen}
-              onOpenChange={onAddToDashboardDialogOpenChange}
+              onOpenChange={setIsAddToDashboardDialogOpen}
               chartName={chartName}
-              onChartNameChange={onChartNameChange}
+              onChartNameChange={setChartName}
               dashboards={dashboards}
               selectedDashboardId={selectedDashboardId}
-              onDashboardSelect={onDashboardSelect}
-              onConfirm={onAddToDashboard}
+              onDashboardSelect={setSelectedDashboardId}
+              onConfirm={handleAddToDashboard}
               isSaving={isSaving}
             />
           </>
