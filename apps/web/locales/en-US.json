@@ -750,6 +750,7 @@
         "run_query": "Run Query",
         "save_chart": "Save Chart",
         "save_chart_dialog_title": "Save Chart",
+        "select_dimensions": "Select dimensions...",
         "select_field": "Select field",
         "select_measures": "Select measures...",
         "select_preset": "Select preset",

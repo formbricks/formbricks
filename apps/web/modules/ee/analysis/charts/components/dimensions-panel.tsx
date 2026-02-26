@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
+import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
 interface DimensionsPanelProps {
@@ -29,12 +30,12 @@ export function DimensionsPanel({
         </h3>
       )}
       <div className="space-y-2">
-        <label className="text-sm">{t("environments.analysis.charts.group_by")}</label>
+        <Label className="text-sm">{t("environments.analysis.charts.group_by")}</Label>
         <MultiSelect
           options={dimensionOptions}
           value={selectedDimensions}
           onChange={onDimensionsChange}
-          placeholder={t("environments.analysis.charts.select_measures")}
+          placeholder={t("environments.analysis.charts.select_dimensions")}
         />
         <p className="text-sm text-gray-500">{t("environments.analysis.charts.group_by_description")}</p>
       </div>
