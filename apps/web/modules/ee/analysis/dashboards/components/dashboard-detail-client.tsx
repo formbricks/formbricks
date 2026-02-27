@@ -9,10 +9,11 @@ import "react-grid-layout/css/styles.css";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
+import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { TDashboardDetail, TDashboardWidget } from "../../types/analysis";
 import { updateDashboardAction, updateWidgetLayoutsAction } from "../actions";
 import { DashboardControlBar } from "./dashboard-control-bar";
 import { DashboardPageHeader } from "./dashboard-page-header";
@@ -25,7 +26,7 @@ const ROW_HEIGHT = 80;
 interface DashboardDetailClientProps {
   environmentId: string;
   dashboard: TDashboardDetail;
-  widgetDataPromises: Map<string, Promise<{ data: Record<string, unknown>[] } | { error: string }>>;
+  widgetDataPromises: Map<string, Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>>;
   isReadOnly: boolean;
 }
 
@@ -93,7 +94,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
   dataPromise,
 }: Readonly<{
   widget: TDashboardWidget;
-  dataPromise?: Promise<{ data: Record<string, unknown>[] } | { error: string }>;
+  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
 }>) {
   if (widget.chart && dataPromise) {
     return (
@@ -103,7 +104,11 @@ const MemoizedWidgetContent = memo(function WidgetContent({
             <DashboardWidgetSkeleton />
           </Delay>
         }>
-        <DashboardWidgetData dataPromise={dataPromise} chartType={widget.chart.type} />
+        <DashboardWidgetData
+          dataPromise={dataPromise}
+          chartType={widget.chart.type}
+          query={widget.chart.query}
+        />
       </Suspense>
     );
   }
@@ -118,7 +123,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
 }: Readonly<{
   widget: TDashboardWidget;
   isEditing: boolean;
-  dataPromise?: Promise<{ data: Record<string, unknown>[] } | { error: string }>;
+  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
   onRemove?: () => void;
 }>) {
   const title = widget.title || widget.chart?.name || "Widget";

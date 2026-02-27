@@ -31,7 +31,7 @@ export type TChartUpdateInput = z.infer<typeof ZChartUpdateInput>;
 export const ZChart = z.object({
   id: ZId,
   name: z.string(),
-  type: z.string(),
+  type: ZChartType,
   query: ZChartQuery,
   config: ZChartConfig,
   createdAt: z.date(),
