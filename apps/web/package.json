@@ -102,7 +102,7 @@
     "lexical": "0.36.2",
     "lodash": "4.17.23",
     "lucide-react": "0.507.0",
-    "markdown-it": "14.1.0",
+    "markdown-it": "14.1.1",
     "mime-types": "3.0.1",
     "next": "16.1.6",
     "next-auth": "4.24.12",
@@ -135,7 +135,7 @@
     "tailwindcss": "3.4.17",
     "ua-parser-js": "2.0.3",
     "uuid": "11.1.0",
-    "webpack": "5.99.8",
+    "webpack": "5.104.1",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "zod": "3.25.76",
     "zod-openapi": "4.2.4"
