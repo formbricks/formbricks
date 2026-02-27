@@ -4,6 +4,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -18,6 +19,12 @@ export const PricingPage = async (props) => {
   if (!IS_FORMBRICKS_CLOUD) {
     notFound();
   }
+
+  const syncedBilling = await getOrganizationBillingWithReadThroughSync(organization.id);
+  const organizationWithSyncedBilling = {
+    ...organization,
+    billing: (syncedBilling ?? organization.billing) as typeof organization.billing,
+  };
 
   const [responseCount, projectCount] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
@@ -38,7 +45,7 @@ export const PricingPage = async (props) => {
       </PageHeader>
 
       <PricingTable
-        organization={organization}
+        organization={organizationWithSyncedBilling}
         environmentId={params.environmentId}
         responseCount={responseCount}
         projectCount={projectCount}

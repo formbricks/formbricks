@@ -1,4 +1,5 @@
 import "server-only";
+import Stripe from "stripe";
 import { type CacheKey, createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -12,7 +13,6 @@ import {
   type TCloudStripePlan,
   getCloudPlanFromProductId,
   getLegacyPlanFromCloudPlan,
-  getLimitsFromCloudPlan,
 } from "./stripe-catalog";
 import { stripeClient } from "./stripe-client";
 
@@ -23,8 +23,19 @@ type TBillingJson = Omit<TOrganizationBilling, "periodStart"> & {
   periodStart?: string | Date | null;
 };
 
+type TResponseMeteringProjection = {
+  usagePriceId: string | null;
+  includedResponses: number | null;
+  overageUnitAmountCents: number | null;
+  currency: string | null;
+};
+
 const getBillingCacheKey = (organizationId: string) =>
   createCacheKey.organization.billing(organizationId) as CacheKey;
+
+export const invalidateOrganizationBillingCache = async (organizationId: string): Promise<void> => {
+  await cache.del([getBillingCacheKey(organizationId)]);
+};
 
 const toIsoStringOrNull = (date: Date | null | undefined): string | null =>
   date ? date.toISOString() : null;
@@ -66,6 +77,87 @@ const listAllActiveEntitlements = async (customerId: string): Promise<string[]> 
   } while (startingAfter);
 
   return [...new Set(featureLookupKeys)];
+};
+
+const parseMaxNumericEntitlementLimit = (features: string[], prefix: string): number | null => {
+  let maxValue: number | null = null;
+
+  for (const feature of features) {
+    if (!feature.startsWith(prefix)) continue;
+    const rawValue = feature.slice(prefix.length);
+    if (!/^\d+$/.test(rawValue)) continue;
+    const parsed = Number.parseInt(rawValue, 10);
+    if (Number.isNaN(parsed)) continue;
+    maxValue = maxValue === null ? parsed : Math.max(maxValue, parsed);
+  }
+
+  return maxValue;
+};
+
+const getResponseUsagePriceLookupKeyForPlan = (plan: TCloudStripePlan): string | null => {
+  if (plan === "pro") return CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_USAGE_RESPONSES;
+  if (plan === "scale") return CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_USAGE_RESPONSES;
+  return null;
+};
+
+const isResponseUsagePrice = (price: Stripe.Price, plan: TCloudStripePlan): boolean => {
+  const expectedLookupKey = getResponseUsagePriceLookupKeyForPlan(plan);
+  if (!expectedLookupKey) return false;
+  return price.lookup_key === expectedLookupKey;
+};
+
+const parseGraduatedResponseMeteringFromPrice = (price: Stripe.Price): TResponseMeteringProjection | null => {
+  if (price.recurring?.usage_type !== "metered") return null;
+  if (price.billing_scheme !== "tiered" || price.tiers_mode !== "graduated" || !price.tiers?.length) {
+    return null;
+  }
+
+  const sortedTiers = [...price.tiers].sort((a, b) => {
+    const aUpTo = a.up_to ?? Number.POSITIVE_INFINITY;
+    const bUpTo = b.up_to ?? Number.POSITIVE_INFINITY;
+    return aUpTo - bUpTo;
+  });
+
+  let includedResponses: number | null = null;
+  let overageUnitAmountCents: number | null = null;
+
+  for (const tier of sortedTiers) {
+    const unitAmount = tier.unit_amount;
+    const upTo = tier.up_to;
+
+    if (unitAmount === 0 && typeof upTo === "number") {
+      includedResponses = Math.max(includedResponses ?? 0, upTo);
+      continue;
+    }
+
+    if (typeof unitAmount === "number" && unitAmount > 0) {
+      overageUnitAmountCents = unitAmount;
+      break;
+    }
+  }
+
+  return {
+    usagePriceId: price.id,
+    includedResponses,
+    overageUnitAmountCents,
+    currency: price.currency ?? null,
+  };
+};
+
+const resolveResponseMeteringProjection = (
+  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>,
+  cloudPlan: TCloudStripePlan
+): TResponseMeteringProjection | null => {
+  if (!subscription) return null;
+
+  const meteredItem = subscription.items.data.find((item) => {
+    const price = item.price as Stripe.Price;
+    return isResponseUsagePrice(price, cloudPlan);
+  });
+
+  if (!meteredItem) return null;
+
+  return parseGraduatedResponseMeteringFromPrice(meteredItem.price as Stripe.Price);
 };
 
 const getSubscriptionTopPlanLevel = (
@@ -216,7 +308,7 @@ export const ensureStripeCustomerForOrganization = async (
     },
   });
 
-  await cache.del([getBillingCacheKey(organization.id)]);
+  await invalidateOrganizationBillingCache(organization.id);
   return { customerId: customer.id };
 };
 
@@ -258,9 +350,44 @@ export const syncOrganizationBillingFromStripe = async (
 
   const cloudPlan = resolveCloudPlanFromSubscription(subscription);
   const legacyPlan = getLegacyPlanFromCloudPlan(cloudPlan);
-  const limits = getLimitsFromCloudPlan(cloudPlan);
   const period = resolveBillingPeriod(subscription);
   const periodStart = resolvePeriodStart(subscription);
+  const previousLimits = billing.limits;
+  const workspaceLimitFromEntitlements = parseMaxNumericEntitlementLimit(
+    featureLookupKeys,
+    "workspace-limit-"
+  );
+  const responsesIncludedFromEntitlements = parseMaxNumericEntitlementLimit(
+    featureLookupKeys,
+    "responses-included-"
+  );
+  const responseMeteringProjection = resolveResponseMeteringProjection(subscription, cloudPlan);
+
+  const projectsLimit = workspaceLimitFromEntitlements ?? previousLimits?.projects ?? null;
+
+  if (workspaceLimitFromEntitlements === null && previousLimits?.projects == null) {
+    logger.warn(
+      { organizationId, customerId, cloudPlan, featureLookupKeys },
+      "No workspace limit entitlement found in Stripe entitlements; preserving previous projects limit"
+    );
+  }
+
+  const responsesIncludedLimit =
+    responsesIncludedFromEntitlements ??
+    responseMeteringProjection?.includedResponses ??
+    previousLimits?.monthly?.responses ??
+    null;
+
+  if (
+    responsesIncludedFromEntitlements === null &&
+    responseMeteringProjection?.includedResponses == null &&
+    previousLimits?.monthly?.responses == null
+  ) {
+    logger.warn(
+      { organizationId, customerId, cloudPlan, featureLookupKeys },
+      "No responses included entitlement or metered price tier found; preserving previous responses included limit"
+    );
+  }
 
   const updatedBilling: TBillingJson = {
     ...billing,
@@ -268,9 +395,9 @@ export const syncOrganizationBillingFromStripe = async (
     plan: legacyPlan,
     period,
     limits: {
-      projects: limits.projects,
+      projects: projectsLimit,
       monthly: {
-        responses: limits.responses,
+        responses: responsesIncludedLimit,
         // MIU/contact metering is out of scope for the current cloud billing rollout.
         // Keep the legacy field for compatibility but do not sync a contact limit from Stripe.
         miu: null,
@@ -278,9 +405,11 @@ export const syncOrganizationBillingFromStripe = async (
     },
     periodStart: periodStart.toISOString(),
     stripe: {
+      ...(billing.stripe ?? {}),
       plan: cloudPlan,
       subscriptionId: subscription?.id ?? null,
       features: featureLookupKeys,
+      responseMetering: responseMeteringProjection ?? billing.stripe?.responseMetering,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot.lastSyncedEventId ?? null,
@@ -294,7 +423,7 @@ export const syncOrganizationBillingFromStripe = async (
     },
   });
 
-  await cache.del([getBillingCacheKey(organizationId)]);
+  await invalidateOrganizationBillingCache(organizationId);
   return updatedBilling;
 };
 

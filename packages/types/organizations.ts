@@ -14,6 +14,14 @@ export const ZOrganizationBillingMode = z.enum(["stripe", "legacy"]);
 export type TOrganizationBillingMode = z.infer<typeof ZOrganizationBillingMode>;
 
 export const ZOrganizationStripeBilling = z.object({
+  responseMetering: z
+    .object({
+      usagePriceId: z.string().nullable().optional(),
+      includedResponses: z.number().nullable().optional(),
+      overageUnitAmountCents: z.number().nullable().optional(),
+      currency: z.string().nullable().optional(),
+    })
+    .optional(),
   plan: ZCloudBillingPlan.optional(),
   subscriptionId: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),

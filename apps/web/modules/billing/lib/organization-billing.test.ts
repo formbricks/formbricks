@@ -231,6 +231,21 @@ describe("organization-billing", () => {
                   recurring: { usage_type: "licensed", interval: "year" },
                 },
               },
+              {
+                price: {
+                  id: "price_pro_usage_responses_live",
+                  lookup_key: "price_pro_usage_responses",
+                  product: { id: "prod_pro" },
+                  currency: "usd",
+                  billing_scheme: "tiered",
+                  tiers_mode: "graduated",
+                  tiers: [
+                    { unit_amount: 0, up_to: 2000 },
+                    { unit_amount: 8, up_to: null },
+                  ],
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
             ],
           },
         },
@@ -238,6 +253,8 @@ describe("organization-billing", () => {
     });
     mocks.entitlementsList.mockResolvedValue({
       data: [
+        { id: "ent_0", lookup_key: "workspace-limit-5" },
+        { id: "ent_00", lookup_key: "responses-included-2000" },
         { id: "ent_1", lookup_key: "custom-links-in-surveys" },
         { id: "ent_2", lookup_key: "custom-links-in-surveys" },
         { id: "ent_3", lookup_key: null },
@@ -255,7 +272,7 @@ describe("organization-billing", () => {
           plan: "startup",
           period: "yearly",
           limits: {
-            projects: 3,
+            projects: 5,
             monthly: {
               responses: 2000,
               miu: null,
@@ -264,7 +281,12 @@ describe("organization-billing", () => {
           stripe: expect.objectContaining({
             plan: "pro",
             subscriptionId: "sub_1",
-            features: ["custom-links-in-surveys"],
+            features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
+            responseMetering: expect.objectContaining({
+              includedResponses: 2000,
+              overageUnitAmountCents: 8,
+              currency: "usd",
+            }),
             lastSyncedEventId: "evt_new",
             lastStripeEventCreatedAt: expect.any(String),
             lastSyncedAt: expect.any(String),
@@ -273,7 +295,11 @@ describe("organization-billing", () => {
       },
     });
     expect(result?.stripe?.plan).toBe("pro");
-    expect(result?.stripe?.features).toEqual(["custom-links-in-surveys"]);
+    expect(result?.stripe?.features).toEqual([
+      "workspace-limit-5",
+      "responses-included-2000",
+      "custom-links-in-surveys",
+    ]);
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 

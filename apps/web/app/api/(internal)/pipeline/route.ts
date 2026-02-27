@@ -15,6 +15,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { recordResponseCreatedMeterEvent } from "@/modules/billing/lib/metering";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendResponseFinishedEmail } from "@/modules/email";
@@ -281,6 +282,12 @@ export const POST = async (request: Request) => {
     });
   }
   if (event === "responseCreated") {
+    await recordResponseCreatedMeterEvent({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      responseId: response.id,
+      createdAt: response.createdAt,
+    });
+
     // Send telemetry events
     await sendTelemetryEvents();
   }

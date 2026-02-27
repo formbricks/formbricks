@@ -34,12 +34,13 @@ export const SurveyStatusDropdown = ({
     const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
 
     if (updateSurveyActionResponse?.data) {
+      const resultingStatus = updateSurveyActionResponse.data.status;
       toast.success(
-        status === "inProgress"
+        resultingStatus === "inProgress"
           ? t("common.survey_live")
-          : status === "paused"
+          : resultingStatus === "paused"
             ? t("common.survey_paused")
-            : status === "completed"
+            : resultingStatus === "completed"
               ? t("common.survey_completed")
               : ""
       );
@@ -50,7 +51,9 @@ export const SurveyStatusDropdown = ({
       toast.error(errorMessage);
     }
 
-    if (updateLocalSurveyStatus) updateLocalSurveyStatus(status);
+    if (updateLocalSurveyStatus) {
+      updateLocalSurveyStatus(updateSurveyActionResponse?.data?.status ?? status);
+    }
   };
 
   return (

@@ -32,6 +32,14 @@ export const ZOrganizationBilling = z.object({
   stripe: z
     .object({
       billingMode: z.enum(["stripe", "legacy"]).optional(),
+      responseMetering: z
+        .object({
+          usagePriceId: z.string().nullable().optional(),
+          includedResponses: z.number().nullable().optional(),
+          overageUnitAmountCents: z.number().nullable().optional(),
+          currency: z.string().nullable().optional(),
+        })
+        .optional(),
       plan: z.enum(["hobby", "pro", "scale", "trial", "unknown"]).optional(),
       subscriptionId: z.string().nullable().optional(),
       features: z.array(z.string()).optional(),

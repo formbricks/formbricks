@@ -19,7 +19,7 @@ export const checkSpamProtectionPermission = async (organizationId: string): Pro
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationBilling.plan);
+  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationBilling.plan, organizationId);
   if (!isSpamProtectionEnabled) {
     throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
   }

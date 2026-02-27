@@ -1,6 +1,7 @@
 import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as constants from "@/lib/constants";
+import * as featureAccessModule from "@/modules/billing/lib/feature-access";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import * as licenseModule from "./license";
 import {
@@ -20,6 +21,7 @@ import {
 } from "./utils";
 
 vi.mock("@/lib/constants");
+vi.mock("@/modules/billing/lib/feature-access");
 vi.mock("./license");
 
 const mockOrganization = {
@@ -70,6 +72,7 @@ describe("License Utils", () => {
     // Set default mocks for license
     vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
     vi.mocked(licenseModule.getLicenseFeatures).mockResolvedValue(defaultFeatures);
+    vi.mocked(featureAccessModule.hasCloudEntitlementWithLicenseGuard).mockResolvedValue(false);
   });
 
   describe("getRemoveBrandingPermission", () => {

@@ -3,8 +3,7 @@ import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { TJsEnvironmentState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
-import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
-import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
+import { IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getEnvironmentStateData } from "./data";
 
 /**
@@ -22,8 +21,7 @@ export const getEnvironmentState = async (
   return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
-      const { environment, organization, surveys, actionClasses } =
-        await getEnvironmentStateData(environmentId);
+      const { environment, surveys, actionClasses } = await getEnvironmentStateData(environmentId);
 
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
@@ -34,18 +32,9 @@ export const getEnvironmentState = async (
         });
       }
 
-      // Check monthly response limits for Formbricks Cloud
-      let isMonthlyResponsesLimitReached = false;
-      if (IS_FORMBRICKS_CLOUD) {
-        const monthlyResponseLimit = organization.billing.limits.monthly.responses;
-        const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
-        isMonthlyResponsesLimitReached =
-          monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
-      }
-
       // Build the response data
       const data: TJsEnvironmentState["data"] = {
-        surveys: !isMonthlyResponsesLimitReached ? surveys : [],
+        surveys,
         actionClasses,
         project: environment.project,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
