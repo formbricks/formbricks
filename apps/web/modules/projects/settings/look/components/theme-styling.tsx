@@ -274,9 +274,7 @@ export const ThemeStyling = ({
                 survey={previewSurvey(project.name, t)}
                 project={{
                   ...project,
-                  styling: form.watch("allowStyleOverwrite")
-                    ? { ...form.watch(), brandColor: { light: previewBrandColor } }
-                    : STYLE_DEFAULTS,
+                  styling: { ...form.watch(), brandColor: { light: previewBrandColor } },
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}

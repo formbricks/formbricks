@@ -330,6 +330,14 @@ export const FormStylingSettings = ({
                 label={t("environments.workspace.look.advanced_styling_field_option_label")}
                 description={t("environments.workspace.look.advanced_styling_field_option_label_description")}
               />
+              <ColorField
+                form={form}
+                name="optionBorderColor.light"
+                label={t("environments.workspace.look.advanced_styling_field_option_border")}
+                description={t(
+                  "environments.workspace.look.advanced_styling_field_option_border_description"
+                )}
+              />
               <DimensionInput
                 form={form}
                 name="optionBorderRadius"

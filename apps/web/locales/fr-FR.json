@@ -112,7 +112,6 @@
     "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
-    "Filter": "Filtrer",
     "accepted": "Accepté",
     "account": "Compte",
     "account_settings": "Paramètres du compte",
@@ -2184,6 +2183,8 @@
         "advanced_styling_field_input_text_description": "Colore le texte saisi dans les champs.",
         "advanced_styling_field_option_bg": "Arrière-plan",
         "advanced_styling_field_option_bg_description": "Remplit les éléments d'option.",
+        "advanced_styling_field_option_border": "Couleur de bordure",
+        "advanced_styling_field_option_border_description": "Contours des options de boutons radio et de cases à cocher.",
         "advanced_styling_field_option_border_radius_description": "Arrondit les coins des options.",
         "advanced_styling_field_option_font_size_description": "Ajuste la taille du texte des libellés d'option.",
         "advanced_styling_field_option_label": "Couleur de l'étiquette",
@@ -3003,6 +3004,9 @@
     "preview_survey_question_2_choice_2_label": "Non, merci !",
     "preview_survey_question_2_headline": "Souhaitez-vous être informé ?",
     "preview_survey_question_2_subheader": "Ceci est un exemple de description.",
+    "preview_survey_question_open_text_headline": "Autre chose que vous aimeriez partager ?",
+    "preview_survey_question_open_text_placeholder": "Entrez votre réponse ici...",
+    "preview_survey_question_open_text_subheader": "Vos commentaires nous aident à nous améliorer.",
     "preview_survey_welcome_card_headline": "Bienvenue !",
     "prioritize_features_description": "Identifiez les fonctionnalités dont vos utilisateurs ont le plus et le moins besoin.",
     "prioritize_features_name": "Prioriser les fonctionnalités",

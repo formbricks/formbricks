@@ -198,6 +198,7 @@ checksums:
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
+    common/filter: 626325a05e4c8800f7ede7012b0cadaf
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/first_name: cf040a5d6a9fd696be400380cc99f54b
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
@@ -2065,6 +2066,8 @@ checksums:
     environments/workspace/look/advanced_styling_field_input_text_description: 460450df24ea0cc902710118a5000feb
     environments/workspace/look/advanced_styling_field_option_bg: 0ceaed10d99ed4ad83cb0934ab970174
     environments/workspace/look/advanced_styling_field_option_bg_description: 6cd6ccecbbb9f2f19439d7c682eb67c1
+    environments/workspace/look/advanced_styling_field_option_border: aa478eb148515b6a2637fb144ff72028
+    environments/workspace/look/advanced_styling_field_option_border_description: 8f75b740e8dcb7f6cfeff2e5d5ca7c92
     environments/workspace/look/advanced_styling_field_option_border_radius_description: 23f81c25b2681a7c9e2c4f2e7d2e0656
     environments/workspace/look/advanced_styling_field_option_font_size_description: 5430fd9b08819972f0a613bf3fa659da
     environments/workspace/look/advanced_styling_field_option_label: 2767a5db32742073a01aac16488e93dc
@@ -2846,6 +2849,9 @@ checksums:
     templates/preview_survey_question_2_choice_2_label: 1af148222f327f28cf0db6513de5989e
     templates/preview_survey_question_2_headline: 5cfb173d156555227fbc2c97ad921e72
     templates/preview_survey_question_2_subheader: 2e652d8acd68d072e5a0ae686c4011c0
+    templates/preview_survey_question_open_text_headline: a9509a47e0456ae98ec3ddac3d6fad2c
+    templates/preview_survey_question_open_text_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
+    templates/preview_survey_question_open_text_subheader: 3c7bf09f3f17b02bc2fbbbdb347a5830
     templates/preview_survey_welcome_card_headline: 8778dc41547a2778d0f9482da989fc00
     templates/prioritize_features_description: 1eae41fad0e3947f803d8539081e59ec
     templates/prioritize_features_name: 4ca59ff1f9c319aaa68c3106d820fd6a

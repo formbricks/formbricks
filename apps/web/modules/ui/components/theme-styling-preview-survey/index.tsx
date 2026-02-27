@@ -92,7 +92,7 @@ export const ThemeStylingPreviewSurvey = ({
     },
     shrink: {
       width: ["83.33%"],
-      height: ["660px"],
+      height: ["700px"],
     },
   };
 
@@ -148,7 +148,6 @@ export const ThemeStylingPreviewSurvey = ({
         }
         className={cn(
           "relative z-10 flex w-5/6 flex-col rounded-lg border border-slate-300 shadow-xl",
-          "h-[660px] max-h-[95%]",
           isAppSurvey ? "bg-slate-200" : "overflow-y-auto bg-white"
         )}>
         <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">

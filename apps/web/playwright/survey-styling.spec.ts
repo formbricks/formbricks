@@ -132,6 +132,7 @@ test.describe("Survey Styling", async () => {
     await openAccordion(page, "Options (Radio/Checkbox)");
     await setColor(page, "Background", "dddddd");
     await setColor(page, "Label Color", "111111");
+    await setColor(page, "Border Color", "999999");
     // Note: Border Radius is reused, but we can set it here to be sure
     await setDimension(page, "Border Radius", "6");
     await setDimension(page, "Padding X", "12");
@@ -142,6 +143,7 @@ test.describe("Survey Styling", async () => {
     css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
     expect(css).toContain("--fb-option-bg-color: #dddddd");
     expect(css).toContain("--fb-option-label-color: #111111");
+    expect(css).toContain("--fb-option-border-color: #999999");
     expect(css).toContain("--fb-option-border-radius: 6px");
     expect(css).toContain("--fb-option-padding-x: 12px");
     expect(css).toContain("--fb-option-padding-y: 8px");

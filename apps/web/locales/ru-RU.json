@@ -112,7 +112,6 @@
     "link_expired_description": "Ссылка, которой вы воспользовались, больше не действительна."
   },
   "common": {
-    "Filter": "Фильтр",
     "accepted": "Принято",
     "account": "Аккаунт",
     "account_settings": "Настройки аккаунта",
@@ -2184,6 +2183,8 @@
         "advanced_styling_field_input_text_description": "Задаёт цвет введённого текста в полях.",
         "advanced_styling_field_option_bg": "Фон",
         "advanced_styling_field_option_bg_description": "Заливает фон элементов опций.",
+        "advanced_styling_field_option_border": "Цвет границы",
+        "advanced_styling_field_option_border_description": "Обводка для вариантов radio и checkbox.",
         "advanced_styling_field_option_border_radius_description": "Скругляет углы опций.",
         "advanced_styling_field_option_font_size_description": "Изменяет размер текста метки опции.",
         "advanced_styling_field_option_label": "Цвет метки",
@@ -3003,6 +3004,9 @@
     "preview_survey_question_2_choice_2_label": "Нет, спасибо!",
     "preview_survey_question_2_headline": "Хотите быть в курсе событий?",
     "preview_survey_question_2_subheader": "Это пример описания.",
+    "preview_survey_question_open_text_headline": "Есть ли ещё что-то, чем хочешь поделиться?",
+    "preview_survey_question_open_text_placeholder": "Введи свой ответ здесь...",
+    "preview_survey_question_open_text_subheader": "Твой отзыв помогает нам становиться лучше.",
     "preview_survey_welcome_card_headline": "Добро пожаловать!",
     "prioritize_features_description": "Определите, какие функции наиболее и наименее важны для ваших пользователей.",
     "prioritize_features_name": "Приоритизация функций",
