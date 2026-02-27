@@ -242,7 +242,7 @@ export const ProjectSettings = ({
         <SurveyInline
           appUrl={publicDomain}
           isPreviewMode={true}
-          survey={previewSurvey(projectName || "my Product", t)}
+          survey={previewSurvey(projectName || t("common.my_product"), t)}
           styling={previewStyling}
           isBrandingEnabled={false}
           languageCode="default"
