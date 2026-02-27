@@ -220,7 +220,6 @@ export const duplicateDashboard = async (
           widgets: {
             create: source.widgets.map((widget) => ({
               chartId: widget.chartId,
-              title: widget.title,
               layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 3 },
               order: widget.order,
             })),
@@ -250,41 +249,47 @@ export const updateWidgetLayouts = async (
   validateInputs([dashboardId, ZId], [projectId, ZId]);
 
   try {
-    const dashboard = await prisma.dashboard.findFirst({
-      where: { id: dashboardId, projectId },
-      include: { widgets: { select: { id: true } } },
-    });
+    return await prisma.$transaction(
+      async (tx) => {
+        const dashboard = await tx.dashboard.findFirst({
+          where: { id: dashboardId, projectId },
+          include: { widgets: { select: { id: true } } },
+        });
 
-    if (!dashboard) {
-      throw new ResourceNotFoundError("Dashboard", dashboardId);
-    }
+        if (!dashboard) {
+          throw new ResourceNotFoundError("Dashboard", dashboardId);
+        }
 
-    const existingWidgetIds = new Set(dashboard.widgets.map((w) => w.id));
-    const updatedWidgetIds = new Set(widgets.map((w) => w.id));
+        const existingWidgetIds = new Set(dashboard.widgets.map((w) => w.id));
+        const updatedWidgetIds = new Set(widgets.map((w) => w.id));
+        const invalidIds = widgets.filter((w) => !existingWidgetIds.has(w.id)).map((w) => w.id);
+        if (invalidIds.length > 0) {
+          throw new InvalidInputError(`Invalid widget IDs: ${invalidIds.join(", ")}`);
+        }
 
-    const invalidIds = widgets.filter((w) => !existingWidgetIds.has(w.id)).map((w) => w.id);
-    if (invalidIds.length > 0) {
-      throw new InvalidInputError(`Invalid widget IDs: ${invalidIds.join(", ")}`);
-    }
+        const removedWidgetIds = dashboard.widgets
+          .filter((w) => !updatedWidgetIds.has(w.id))
+          .map((w) => w.id);
 
-    const removedWidgetIds = dashboard.widgets.filter((w) => !updatedWidgetIds.has(w.id)).map((w) => w.id);
+        await Promise.all([
+          ...widgets.map((widget) =>
+            tx.dashboardWidget.update({
+              where: { id: widget.id },
+              data: {
+                layout: widget.layout,
+                order: widget.order,
+              },
+            })
+          ),
+          ...(removedWidgetIds.length > 0
+            ? [tx.dashboardWidget.deleteMany({ where: { id: { in: removedWidgetIds } } })]
+            : []),
+        ]);
 
-    await prisma.$transaction([
-      ...widgets.map((widget) =>
-        prisma.dashboardWidget.update({
-          where: { id: widget.id },
-          data: {
-            layout: widget.layout,
-            order: widget.order,
-          },
-        })
-      ),
-      ...(removedWidgetIds.length > 0
-        ? [prisma.dashboardWidget.deleteMany({ where: { id: { in: removedWidgetIds } } })]
-        : []),
-    ]);
-
-    return { widgetCount: widgets.length };
+        return { widgetCount: widgets.length };
+      },
+      { isolationLevel: "Serializable" }
+    );
   } catch (error) {
     if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
@@ -326,7 +331,10 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
         ]);
 
         const bottomY = existingWidgets.reduce((max, w) => {
-          const layout = w.layout as { y: number; h: number };
+          const layout =
+            typeof w.layout === "object" && w.layout !== null
+              ? (w.layout as Partial<{ y: number; h: number }>)
+              : {};
           return Math.max(max, (layout.y ?? 0) + (layout.h ?? 0));
         }, 0);
 
@@ -334,7 +342,6 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
           data: {
             dashboardId: data.dashboardId,
             chartId: data.chartId,
-            title: data.title,
             layout: { ...data.layout, y: bottomY },
             order: (maxOrder._max.order ?? -1) + 1,
           },

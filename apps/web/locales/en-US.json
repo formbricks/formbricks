@@ -293,6 +293,7 @@
     "mobile_overlay_surveys_look_good": "Do not worry – your surveys look great on every device and screen size!",
     "mobile_overlay_title": "Oops, tiny screen detected!",
     "months": "months",
+    "more_options": "More options",
     "move_down": "Move down",
     "move_up": "Move up",
     "multiple_languages": "Multiple languages",
@@ -812,6 +813,7 @@
         "no_charts_to_add_message": "No charts to add to this dashboard.",
         "no_dashboards_found": "No dashboards found.",
         "no_data_description": "There is currently no information to display. Add charts to build your dashboard.",
+        "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",
         "no_data_title": "No Data",
         "please_enter_name": "Please enter a dashboard name",
         "widget_layouts_save_failed": "Failed to update widget layouts"

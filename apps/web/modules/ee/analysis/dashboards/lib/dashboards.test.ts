@@ -238,14 +238,12 @@ describe("Dashboard Service", () => {
       {
         id: "widget-1",
         chartId: mockChartId,
-        title: "Widget 1",
         layout: { x: 0, y: 0, w: 4, h: 3 },
         order: 0,
       },
       {
         id: "widget-2",
         chartId: "chart-2",
-        title: null,
         layout: { x: 4, y: 0, w: 4, h: 3 },
         order: 1,
       },
@@ -279,13 +277,11 @@ describe("Dashboard Service", () => {
             create: [
               {
                 chartId: mockChartId,
-                title: "Widget 1",
                 layout: { x: 0, y: 0, w: 4, h: 3 },
                 order: 0,
               },
               {
                 chartId: "chart-2",
-                title: null,
                 layout: { x: 4, y: 0, w: 4, h: 3 },
                 order: 1,
               },
@@ -462,7 +458,6 @@ describe("Dashboard Service", () => {
       id: "widget-abc-123",
       dashboardId: mockDashboardId,
       chartId: mockChartId,
-      title: "My Widget",
       layout: mockLayout,
       order: 0,
     };
@@ -479,7 +474,6 @@ describe("Dashboard Service", () => {
         dashboardId: mockDashboardId,
         chartId: mockChartId,
         projectId: mockProjectId,
-        title: "My Widget",
         layout: mockLayout,
       });
 
@@ -488,7 +482,6 @@ describe("Dashboard Service", () => {
         data: {
           dashboardId: mockDashboardId,
           chartId: mockChartId,
-          title: "My Widget",
           layout: mockLayout,
           order: 0,
         },

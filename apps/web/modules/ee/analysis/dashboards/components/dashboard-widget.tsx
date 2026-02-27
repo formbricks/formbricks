@@ -39,6 +39,7 @@ export function DashboardWidget({ title, children, isEditing, onRemove }: Readon
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                aria-label={t("common.more_options")}
                 className="ml-2 shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}>

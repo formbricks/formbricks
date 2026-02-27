@@ -1076,8 +1076,7 @@ model Dashboard {
 ///
 /// @property id - Unique identifier for the widget
 /// @property dashboard - The dashboard this widget belongs to
-/// @property title - Optional title for the widget
-/// @property chart - The chart displayed in this widget
+/// @property chart - The chart displayed in this widget (chart name is used for display)
 /// @property layout - Grid layout configuration (x, y, width, height)
 /// @property order - Display order within the dashboard
 model DashboardWidget {
@@ -1086,7 +1085,6 @@ model DashboardWidget {
   updatedAt   DateTime  @updatedAt @map(name: "updated_at")
   dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
   dashboardId String
-  title       String?
   chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
   chartId     String
   /// [WidgetLayout] - Grid layout: { x, y, w, h }

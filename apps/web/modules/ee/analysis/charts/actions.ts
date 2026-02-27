@@ -203,8 +203,8 @@ export const getChartsAction = authenticatedActionClient
       parsedInput: z.infer<typeof ZGetChartsAction>;
     }) => {
       await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
-
-      return getCharts(parsedInput.environmentId);
+      const charts = await getCharts(parsedInput.environmentId);
+      return charts;
     }
   );
 

@@ -88,7 +88,6 @@ export const ZAddWidgetInput = z.object({
   dashboardId: ZId,
   chartId: ZId,
   projectId: ZId,
-  title: z.string().optional(),
   layout: ZWidgetLayout,
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
@@ -99,7 +98,6 @@ export type TDashboardWidget = {
   id: string;
   dashboardId: string;
   chartId: string;
-  title: string | null;
   layout: TWidgetLayout;
   order: number;
   chart: TChart;

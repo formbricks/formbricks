@@ -126,7 +126,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
   onRemove?: () => void;
 }>) {
-  const title = widget.title || widget.chart?.name || "Widget";
+  const title = widget.chart.name;
 
   return (
     <DashboardWidget title={title} isEditing={isEditing} onRemove={onRemove}>
@@ -162,13 +162,19 @@ export function DashboardDetailClient({
 
   const layout = useMemo(() => widgetsToLayout(widgets), [widgets]);
 
-  const handleInteractionEnd = useCallback((finalLayout: Layout) => {
-    setDraftWidgets((current) => applyLayoutToWidgets(current ?? [], finalLayout));
-  }, []);
+  const handleInteractionEnd = useCallback(
+    (finalLayout: Layout) => {
+      setDraftWidgets((current) => applyLayoutToWidgets(current ?? dashboard.widgets, finalLayout));
+    },
+    [dashboard.widgets]
+  );
 
-  const handleRemoveWidget = useCallback((widgetId: string) => {
-    setDraftWidgets((current) => (current ?? []).filter((w) => w.id !== widgetId));
-  }, []);
+  const handleRemoveWidget = useCallback(
+    (widgetId: string) => {
+      setDraftWidgets((current) => (current ?? dashboard.widgets).filter((w) => w.id !== widgetId));
+    },
+    [dashboard.widgets]
+  );
 
   const handleCancel = useCallback(() => {
     setName(dashboard.name);
@@ -242,8 +248,6 @@ export function DashboardDetailClient({
 
   return (
     <PageContentWrapper>
-      {/* eslint-disable-next-line react/no-danger */}
-      {/* <style dangerouslySetInnerHTML={{ __html: gridStyles }} />  */}
       <GoBackButton url={`/environments/${environmentId}/analysis/dashboards`} />
       <DashboardPageHeader
         name={name}
@@ -271,11 +275,7 @@ export function DashboardDetailClient({
 
       <section>
         {isEmpty ? (
-          <EmptyState
-            text={`${t("environments.analysis.dashboards.no_data_title")}. ${t(
-              "environments.analysis.dashboards.no_data_description"
-            )}`}
-          />
+          <EmptyState text={t("environments.analysis.dashboards.no_data_message")} />
         ) : (
           <div ref={containerRef}>
             {mounted && (

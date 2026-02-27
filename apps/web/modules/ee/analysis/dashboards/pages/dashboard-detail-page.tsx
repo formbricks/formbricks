@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -31,19 +32,28 @@ export async function DashboardDetailPage({
   let dashboard;
   try {
     dashboard = await getDashboard(dashboardId, project.id);
-  } catch {
-    return notFound();
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      return notFound();
+    }
+    throw error;
   }
 
   const widgetDataPromises = new Map<string, Promise<WidgetQueryResult>>();
-  for (const widget of dashboard.widgets) {
-    if (widget.chart) {
-      const result = await executeWidgetQuery(widget.chart.query);
-      if (result) {
-        widgetDataPromises.set(widget.id, Promise.resolve(result));
-      }
+  const widgetsWithCharts = dashboard.widgets.filter(
+    (w): w is typeof w & { chart: NonNullable<typeof w.chart> } => !!w.chart
+  );
+  const queryPromises = widgetsWithCharts.map((widget) => ({
+    widgetId: widget.id,
+    promise: executeWidgetQuery(widget.chart.query),
+  }));
+  const results = await Promise.all(queryPromises.map((q) => q.promise));
+  queryPromises.forEach(({ widgetId }, i: number) => {
+    const result = results[i];
+    if (result) {
+      widgetDataPromises.set(widgetId, Promise.resolve(result));
     }
-  }
+  });
 
   return (
     <DashboardDetailClient

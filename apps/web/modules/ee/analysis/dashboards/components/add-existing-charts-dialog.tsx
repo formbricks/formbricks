@@ -76,22 +76,35 @@ export function AddExistingChartsDialog({
 
     setIsAdding(true);
     try {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         selectedChartIds.map((chartId) => addChartToDashboardAction({ environmentId, chartId, dashboardId }))
       );
 
-      const failures = results.filter((r) => !r?.data);
-      if (failures.length > 0) {
-        toast.error(
-          t("environments.analysis.dashboards.charts_add_partial_failure", { count: failures.length })
-        );
+      const fulfilled = results.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof addChartToDashboardAction>>> =>
+          r.status === "fulfilled"
+      );
+      const rejected = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      const successes = fulfilled.filter((r) => r.value?.data);
+      const failures = fulfilled.filter((r) => !r.value?.data).length + rejected.length;
+
+      if (failures > 0) {
+        if (successes.length > 0) {
+          toast.error(t("environments.analysis.dashboards.charts_add_partial_failure", { count: failures }));
+        } else {
+          toast.error(t("environments.analysis.dashboards.charts_add_failed"));
+        }
       } else {
         toast.success(
-          t("environments.analysis.dashboards.charts_added_to_dashboard", { count: selectedChartIds.length })
+          t("environments.analysis.dashboards.charts_added_to_dashboard", {
+            count: selectedChartIds.length,
+          })
         );
       }
 
-      onSuccess();
+      if (successes.length > 0) {
+        onSuccess();
+      }
     } catch {
       toast.error(t("environments.analysis.dashboards.charts_add_failed"));
     } finally {

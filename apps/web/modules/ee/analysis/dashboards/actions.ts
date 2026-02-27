@@ -102,13 +102,15 @@ export const updateDashboardAction = authenticatedActionClient.schema(ZUpdateDas
 const ZUpdateWidgetLayoutsAction = z.object({
   environmentId: ZId,
   dashboardId: ZId,
-  widgets: z.array(
-    z.object({
-      id: z.string(),
-      layout: ZWidgetLayout,
-      order: z.number(),
-    })
-  ),
+  widgets: z
+    .array(
+      z.object({
+        id: ZId,
+        layout: ZWidgetLayout,
+        order: z.number().int().nonnegative(),
+      })
+    )
+    .min(1),
 });
 
 export const updateWidgetLayoutsAction = authenticatedActionClient.schema(ZUpdateWidgetLayoutsAction).action(
@@ -130,7 +132,7 @@ export const updateWidgetLayoutsAction = authenticatedActionClient.schema(ZUpdat
 
       const dashboard = await getDashboard(parsedInput.dashboardId, projectId);
 
-      const result = await updateWidgetLayouts(parsedInput.dashboardId, projectId, parsedInput.widgets);
+      await updateWidgetLayouts(parsedInput.dashboardId, projectId, parsedInput.widgets);
 
       const updatedDashboard = await getDashboard(parsedInput.dashboardId, projectId);
 
@@ -139,7 +141,7 @@ export const updateWidgetLayoutsAction = authenticatedActionClient.schema(ZUpdat
       ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
       ctx.auditLoggingCtx.oldObject = dashboard;
       ctx.auditLoggingCtx.newObject = updatedDashboard;
-      return { success: true, widgetCount: result.widgetCount };
+      return { ok: true };
     }
   )
 );
@@ -259,7 +261,6 @@ const ZAddChartToDashboardAction = z.object({
   environmentId: ZId,
   dashboardId: ZId,
   chartId: ZId,
-  title: z.string().optional(),
   layout: ZWidgetLayout.optional().default({ x: 0, y: 0, w: 4, h: 3 }),
 });
 
@@ -284,7 +285,6 @@ export const addChartToDashboardAction = authenticatedActionClient.schema(ZAddCh
         dashboardId: parsedInput.dashboardId,
         chartId: parsedInput.chartId,
         projectId,
-        title: parsedInput.title,
         layout: parsedInput.layout,
       });
 

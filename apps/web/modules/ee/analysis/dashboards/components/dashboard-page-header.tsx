@@ -27,6 +27,7 @@ export function DashboardPageHeader({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             className="focus:border-brand-dark w-full rounded-md border border-dashed border-slate-300 bg-transparent px-2 py-1 text-3xl font-bold text-slate-800 focus:outline-none focus:ring-0"
+            aria-label={t("environments.analysis.dashboards.dashboard_name_placeholder")}
             placeholder={t("environments.analysis.dashboards.dashboard_name_placeholder")}
           />
         ) : (
