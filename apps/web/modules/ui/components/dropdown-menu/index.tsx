@@ -88,36 +88,19 @@ const DropdownMenuItem: React.ForwardRefExoticComponent<
     inset?: boolean;
     icon?: React.ReactNode;
   }
->(({ className, children, inset, icon, asChild, ...props }, ref) => {
-  const itemClassName = cn(
-    "relative flex w-full cursor-pointer select-none items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-    inset && "pl-8",
-    className
-  );
-  return (
-    <DropdownMenuPrimitive.Item ref={ref} asChild={asChild} className={itemClassName} {...props}>
-      {asChild && React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<{ className?: string }>, {
-            className: cn(
-              "flex w-full items-center gap-x-2",
-              (children as React.ReactElement).props?.className
-            ),
-            children: (
-              <>
-                {icon}
-                {(children as React.ReactElement).props?.children}
-              </>
-            ),
-          })
-        : (icon || children) && (
-            <>
-              {icon}
-              {children}
-            </>
-          )}
-    </DropdownMenuPrimitive.Item>
-  );
-});
+>(({ className, children, inset, icon, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex w-full cursor-pointer select-none items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      inset && "pl-8",
+      className
+    )}
+    {...props}>
+    {icon}
+    {children}
+  </DropdownMenuPrimitive.Item>
+));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
 const DropdownMenuCheckboxItem: React.ComponentType<
