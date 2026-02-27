@@ -1053,21 +1053,19 @@ model Chart {
 ///
 /// @property id - Unique identifier for the dashboard
 /// @property name - Display name of the dashboard
-/// @property description - Optional description
 /// @property project - The project this dashboard belongs to
 /// @property widgets - Charts on this dashboard
 /// @property createdBy - User who created the dashboard
 model Dashboard {
-  id          String            @id @default(cuid())
-  createdAt   DateTime          @default(now()) @map(name: "created_at")
-  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
-  name        String
-  description String?
-  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
-  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy   String?
-  widgets     DashboardWidget[]
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now()) @map(name: "created_at")
+  updatedAt DateTime          @updatedAt @map(name: "updated_at")
+  name      String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  creator   User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy String?
+  widgets   DashboardWidget[]
 
   @@unique([projectId, name])
   @@index([projectId, createdAt])

@@ -775,7 +775,6 @@ async function main(): Promise<void> {
     create: {
       id: SEED_IDS.DASHBOARD_OVERVIEW,
       name: "Overview",
-      description: "High-level metrics across all surveys",
       projectId: project.id,
       createdBy: SEED_IDS.USER_ADMIN,
     },
@@ -788,7 +787,6 @@ async function main(): Promise<void> {
     create: {
       id: SEED_IDS.DASHBOARD_SURVEY_PERF,
       name: "Survey Performance",
-      description: "Detailed survey completion and response metrics",
       projectId: project.id,
       createdBy: SEED_IDS.USER_MANAGER,
     },
