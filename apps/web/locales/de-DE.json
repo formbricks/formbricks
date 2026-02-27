@@ -459,6 +459,7 @@
     "website_survey": "Website-Umfrage",
     "weeks": "Wochen",
     "welcome_card": "Willkommenskarte",
+    "workflows": "Workflows",
     "workspace_configuration": "Projektkonfiguration",
     "workspace_created_successfully": "Projekt erfolgreich erstellt",
     "workspace_creation_description": "Organisieren Sie Umfragen in Projekten für eine bessere Zugriffskontrolle.",
@@ -3250,5 +3251,18 @@
     "usability_question_9_headline": "Ich fühlte mich beim Benutzen des Systems sicher.",
     "usability_rating_description": "Bewerte die wahrgenommene Benutzerfreundlichkeit, indem du die Nutzer bittest, ihre Erfahrung mit deinem Produkt mittels eines standardisierten 10-Fragen-Fragebogens zu bewerten.",
     "usability_score_name": "System Usability Score Survey (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Danke, dass du deine Workflow-Idee mit uns geteilt hast! Wir arbeiten gerade an diesem Feature und dein Feedback hilft uns dabei, genau das zu entwickeln, was du brauchst.",
+    "coming_soon_title": "Wir sind fast da!",
+    "follow_up_label": "Gibt es noch etwas, das du hinzufügen möchtest?",
+    "follow_up_placeholder": "Welche spezifischen Aufgaben möchtest du automatisieren? Gibt es Tools oder Integrationen, die du gerne einbinden würdest?",
+    "generate_button": "Workflow generieren",
+    "heading": "Welchen Workflow möchtest du erstellen?",
+    "placeholder": "Beschreibe den Workflow, den du generieren möchtest...",
+    "subheading": "Generiere deinen Workflow in Sekunden.",
+    "submit_button": "Details hinzufügen",
+    "thank_you_description": "Dein Input hilft uns dabei, das Workflows-Feature zu entwickeln, das du wirklich brauchst. Wir halten dich über unsere Fortschritte auf dem Laufenden.",
+    "thank_you_title": "Danke für dein Feedback!"
   }
 }

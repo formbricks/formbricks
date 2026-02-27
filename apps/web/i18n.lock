@@ -432,6 +432,7 @@ checksums:
     common/website_survey: 17513d25a07b6361768a15ec622b021b
     common/weeks: 545de30df4f44d3f6d1d344af6a10815
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
+    common/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
     common/workspace_configuration: d0a5812d6a97d7724d565b1017c34387
     common/workspace_created_successfully: bf401ae83da954f1db48724e2a8e40f1
     common/workspace_creation_description: aea2f480ba0c54c5cabac72c9c900ddf
@@ -3095,3 +3096,14 @@ checksums:
     templates/usability_question_9_headline: 5850229e97ae97698ce90b330ea49682
     templates/usability_rating_description: 8c4f3818fe830ae544611f816265f1a1
     templates/usability_score_name: 5cbf1172d24dfcb17d979dff6dfdf7e2
+    workflows/coming_soon_description: 1e0621d287924d84fb539afab7372b23
+    workflows/coming_soon_title: d79be80559c70c828cf20811d2ed5039
+    workflows/follow_up_label: 8cafe669370271035aeac8e8cab0f123
+    workflows/follow_up_placeholder: 0c26f9e4f82429acb2ac7525a3e8f24e
+    workflows/generate_button: b194b6172a49af8374a19dd2cf39cfdc
+    workflows/heading: a98a6b14d3e955f38cc16386df9a4111
+    workflows/placeholder: 0d24da3af3b860b8f943c83efdeef227
+    workflows/subheading: ebf5e3b3aeb85e13e843358cc5476f42
+    workflows/submit_button: 7a062f2de02ce60b1d73e510ff1ca094
+    workflows/thank_you_description: 842579609c6bf16a1d6c57a333fd5125
+    workflows/thank_you_title: 07edd8c50685a52c0969d711df26d768

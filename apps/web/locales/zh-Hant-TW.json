@@ -459,6 +459,7 @@
     "website_survey": "網站問卷",
     "weeks": "週",
     "welcome_card": "歡迎卡片",
+    "workflows": "工作流程",
     "workspace_configuration": "工作區設定",
     "workspace_created_successfully": "工作區已成功建立",
     "workspace_creation_description": "將問卷組織在工作區中，以便更好地控管存取權限。",
@@ -3250,5 +3251,18 @@
     "usability_question_9_headline": "使用 系統 時，我 感到 有 信心。",
     "usability_rating_description": "透過使用標準化的 十個問題 問卷，要求使用者評估他們對 您 產品的使用體驗，來衡量感知的 可用性。",
     "usability_score_name": "系統 可用性 分數 (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "感謝你和我們分享你的工作流程想法！我們目前正在設計這個功能，你的回饋將幫助我們打造真正符合你需求的工具。",
+    "coming_soon_title": "快完成囉！",
+    "follow_up_label": "還有什麼想補充的嗎？",
+    "follow_up_placeholder": "你想自動化哪些具體任務？有沒有想要整合的工具或服務？",
+    "generate_button": "產生工作流程",
+    "heading": "你想建立什麼樣的工作流程？",
+    "placeholder": "請描述你想產生的工作流程⋯⋯",
+    "subheading": "幾秒鐘就能產生你的工作流程。",
+    "submit_button": "補充細節",
+    "thank_you_description": "你的意見幫助我們打造真正符合你需求的工作流程功能。我們會隨時更新進度給你。",
+    "thank_you_title": "感謝你的回饋！"
   }
 }

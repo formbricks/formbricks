@@ -459,6 +459,7 @@
     "website_survey": "Inquérito do Website",
     "weeks": "semanas",
     "welcome_card": "Cartão de boas-vindas",
+    "workflows": "Fluxos de trabalho",
     "workspace_configuration": "Configuração do projeto",
     "workspace_created_successfully": "Projeto criado com sucesso",
     "workspace_creation_description": "Organize inquéritos em projetos para melhor controlo de acesso.",
@@ -3250,5 +3251,18 @@
     "usability_question_9_headline": "Eu senti-me confiante ao usar o sistema.",
     "usability_rating_description": "Meça a usabilidade percebida ao solicitar que os utilizadores avaliem a sua experiência com o seu produto usando um questionário padronizado de 10 perguntas.",
     "usability_score_name": "System Usability Score (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Obrigado por partilhar a sua ideia de fluxo de trabalho connosco! Estamos atualmente a desenhar esta funcionalidade e o seu feedback vai ajudar-nos a construir exatamente o que precisa.",
+    "coming_soon_title": "Estamos quase lá!",
+    "follow_up_label": "Há mais alguma coisa que gostaria de acrescentar?",
+    "follow_up_placeholder": "Que tarefas específicas gostaria de automatizar? Alguma ferramenta ou integração que gostaria de incluir?",
+    "generate_button": "Gerar fluxo de trabalho",
+    "heading": "Que fluxo de trabalho quer criar?",
+    "placeholder": "Descreva o fluxo de trabalho que quer gerar...",
+    "subheading": "Gere o seu fluxo de trabalho em segundos.",
+    "submit_button": "Adicionar detalhes",
+    "thank_you_description": "A sua contribuição ajuda-nos a construir a funcionalidade de Fluxos de trabalho de que realmente precisa. Vamos mantê-lo informado sobre o nosso progresso.",
+    "thank_you_title": "Obrigado pelo seu feedback!"
   }
 }

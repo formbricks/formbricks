@@ -459,6 +459,7 @@
     "website_survey": "网站 调查",
     "weeks": "周",
     "welcome_card": "欢迎 卡片",
+    "workflows": "工作流",
     "workspace_configuration": "工作区配置",
     "workspace_created_successfully": "工作区创建成功",
     "workspace_creation_description": "在工作区中组织调查，以便更好地进行访问控制。",
@@ -3250,5 +3251,18 @@
     "usability_question_9_headline": "使用 系统 时 我 感到 自信。",
     "usability_rating_description": "通过要求用户使用标准化的 10 问 调查 来 评价 他们对您产品的体验，以 测量 感知 的 可用性。",
     "usability_score_name": "系统 可用性 得分 ( SUS )"
+  },
+  "workflows": {
+    "coming_soon_description": "感谢你与我们分享你的工作流想法！我们目前正在设计这个功能，你的反馈将帮助我们打造真正适合你的工具。",
+    "coming_soon_title": "我们快完成啦！",
+    "follow_up_label": "你还有其他想补充的吗？",
+    "follow_up_placeholder": "你希望自动化哪些具体任务？有没有想要集成的工具或服务？",
+    "generate_button": "生成工作流",
+    "heading": "你想创建什么样的工作流？",
+    "placeholder": "描述一下你想生成的工作流……",
+    "subheading": "几秒钟生成你的工作流。",
+    "submit_button": "补充细节",
+    "thank_you_description": "你的意见帮助我们打造真正适合你的工作流功能。我们会及时向你汇报进展。",
+    "thank_you_title": "感谢你的反馈！"
   }
 }

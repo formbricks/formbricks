@@ -459,6 +459,7 @@
     "website_survey": "Webbplatsenkät",
     "weeks": "veckor",
     "welcome_card": "Välkomstkort",
+    "workflows": "Arbetsflöden",
     "workspace_configuration": "Arbetsytans konfiguration",
     "workspace_created_successfully": "Arbetsytan har skapats",
     "workspace_creation_description": "Organisera enkäter i arbetsytor för bättre åtkomstkontroll.",
@@ -3250,5 +3251,18 @@
     "usability_question_9_headline": "Jag kände mig trygg när jag använde systemet.",
     "usability_rating_description": "Mät upplevd användbarhet genom att be användare betygsätta sin upplevelse med din produkt med en standardiserad 10-frågors enkät.",
     "usability_score_name": "System Usability Score (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Tack för att du delade din arbetsflödesidé med oss! Vi håller just nu på att designa den här funktionen och din feedback hjälper oss att bygga precis det du behöver.",
+    "coming_soon_title": "Vi är nästan där!",
+    "follow_up_label": "Är det något mer du vill lägga till?",
+    "follow_up_placeholder": "Vilka specifika uppgifter vill du automatisera? Finns det några verktyg eller integrationer du vill ha med?",
+    "generate_button": "Skapa arbetsflöde",
+    "heading": "Vilket arbetsflöde vill du skapa?",
+    "placeholder": "Beskriv arbetsflödet du vill skapa...",
+    "subheading": "Skapa ditt arbetsflöde på några sekunder.",
+    "submit_button": "Lägg till detaljer",
+    "thank_you_description": "Din input hjälper oss att bygga arbetsflödesfunktionen du faktiskt behöver. Vi håller dig uppdaterad om hur det går.",
+    "thank_you_title": "Tack för din feedback!"
   }
 }
