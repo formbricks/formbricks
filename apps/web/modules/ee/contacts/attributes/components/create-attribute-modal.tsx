@@ -250,7 +250,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
                 disabled={!formData.key || !formData.name || !!keyError}
                 loading={isCreating}
                 type="submit">
-                {t("environments.contacts.create_key")}
+                {t("environments.contacts.create_attribute")}
               </Button>
             </DialogFooter>
           </form>

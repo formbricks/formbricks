@@ -71,7 +71,7 @@ export const ContactsTable = ({
 
   // Generate columns
   const columns = useMemo(() => {
-    return generateContactTableColumns(searchValue, data, isReadOnly);
+    return generateContactTableColumns(searchValue, data, isReadOnly, t);
   }, [searchValue, data, isReadOnly]);
 
   // Load saved settings from localStorage

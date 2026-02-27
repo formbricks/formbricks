@@ -37,47 +37,6 @@ export const getSegments = reactCache(
     )
 );
 
-/**
- * Checks if a contact matches a segment using Prisma query
- * This leverages native DB types (valueDate, valueNumber) for accurate comparisons
- * Device filters are evaluated at query build time using the provided deviceType
- */
-const isContactInSegment = async (
-  contactId: string,
-  segmentId: string,
-  filters: TBaseFilters,
-  environmentId: string,
-  deviceType: "phone" | "desktop"
-): Promise<boolean> => {
-  // If no filters, segment matches all contacts
-  if (!filters || filters.length === 0) {
-    return true;
-  }
-
-  const queryResult = await segmentFilterToPrismaQuery(segmentId, filters, environmentId, deviceType);
-
-  if (!queryResult.ok) {
-    logger.warn(
-      { segmentId, environmentId, error: queryResult.error },
-      "Failed to build Prisma query for segment"
-    );
-    return false;
-  }
-
-  const { whereClause } = queryResult.data;
-
-  // Check if this specific contact matches the segment filters
-  const matchingContact = await prisma.contact.findFirst({
-    where: {
-      id: contactId,
-      ...whereClause,
-    },
-    select: { id: true },
-  });
-
-  return matchingContact !== null;
-};
-
 export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
@@ -89,29 +48,58 @@ export const getPersonSegmentIds = async (
 
     const segments = await getSegments(environmentId);
 
-    // fast path; if there are no segments, return an empty array
-    if (!segments || !Array.isArray(segments)) {
+    if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return [];
     }
 
-    // Device filters are evaluated at query build time using the provided deviceType
-    const segmentPromises = segments.map(async (segment) => {
-      const filters = segment.filters;
-      const isIncluded = await isContactInSegment(contactId, segment.id, filters, environmentId, deviceType);
-      return isIncluded ? segment.id : null;
-    });
+    // Phase 1: Build WHERE clauses sequentially to avoid connection pool contention.
+    // segmentFilterToPrismaQuery can itself hit the DB (e.g. unmigrated-row checks),
+    // so running all builds concurrently would saturate the pool.
+    const alwaysMatchIds: string[] = [];
+    const dbChecks: { segmentId: string; whereClause: Prisma.ContactWhereInput }[] = [];
 
-    const results = await Promise.all(segmentPromises);
+    for (const segment of segments) {
+      const filters = segment.filters as TBaseFilters;
 
-    return results.filter((id): id is string => id !== null);
+      if (!filters?.length) {
+        alwaysMatchIds.push(segment.id);
+        continue;
+      }
+
+      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, environmentId, deviceType);
+
+      if (!queryResult.ok) {
+        logger.warn(
+          { segmentId: segment.id, environmentId, error: queryResult.error },
+          "Failed to build Prisma query for segment, skipping"
+        );
+        continue;
+      }
+
+      dbChecks.push({ segmentId: segment.id, whereClause: queryResult.data.whereClause });
+    }
+
+    if (dbChecks.length === 0) {
+      return alwaysMatchIds;
+    }
+
+    // Phase 2: Execute all membership checks in a single transaction.
+    // Uses one connection instead of N concurrent ones, eliminating pool contention.
+    const txResults = await prisma.$transaction(
+      dbChecks.map(({ whereClause }) =>
+        prisma.contact.findFirst({
+          where: { id: contactId, ...whereClause },
+          select: { id: true },
+        })
+      )
+    );
+
+    const matchedIds = dbChecks.filter((_, i) => txResults[i] !== null).map(({ segmentId }) => segmentId);
+
+    return [...alwaysMatchIds, ...matchedIds];
   } catch (error) {
-    // Log error for debugging but don't throw to prevent "segments is not iterable" error
     logger.warn(
-      {
-        environmentId,
-        contactId,
-        error,
-      },
+      { environmentId, contactId, error },
       "Failed to get person segment IDs, returning empty array"
     );
     return [];
