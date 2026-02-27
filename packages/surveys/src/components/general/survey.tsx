@@ -169,7 +169,13 @@ export function Survey({
     );
   }, [survey.variables]);
 
-  const autoFocusEnabled = autoFocus ?? window.self === window.top;
+  const autoFocusEnabled = (() => {
+    try {
+      return autoFocus ?? window.self === window.top;
+    } catch {
+      return autoFocus ?? false;
+    }
+  })();
 
   // Block-based navigation: track current block ID instead of question ID
   const [blockId, setBlockId] = useState(() => {
