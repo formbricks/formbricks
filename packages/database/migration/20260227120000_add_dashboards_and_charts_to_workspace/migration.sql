@@ -75,3 +75,22 @@ ALTER TABLE "public"."DashboardWidget" ADD CONSTRAINT "DashboardWidget_dashboard
 
 -- AddForeignKey
 ALTER TABLE "public"."DashboardWidget" ADD CONSTRAINT "DashboardWidget_chartId_fkey" FOREIGN KEY ("chartId") REFERENCES "public"."Chart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Remove type and content columns if they exist (drift from polymorphic widget schema)
+ALTER TABLE "public"."DashboardWidget" DROP COLUMN IF EXISTS "type";
+ALTER TABLE "public"."DashboardWidget" DROP COLUMN IF EXISTS "content";
+
+-- Remove orphaned widgets and ensure chartId is required
+DELETE FROM "public"."DashboardWidget" WHERE "chartId" IS NULL;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'DashboardWidget' AND column_name = 'chartId' AND is_nullable = 'YES'
+  ) THEN
+    ALTER TABLE "public"."DashboardWidget" ALTER COLUMN "chartId" SET NOT NULL;
+  END IF;
+END $$;
+
+DROP TYPE IF EXISTS "public"."WidgetType";

@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  CheckIcon,
-  LibraryIcon,
-  LockOpenIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  TrashIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckIcon, PencilIcon, PlusIcon, RefreshCwIcon, TrashIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -21,6 +13,7 @@ import { AddExistingChartsDialog } from "./add-existing-charts-dialog";
 interface DashboardControlBarProps {
   environmentId: string;
   dashboardId: string;
+  existingChartIds: string[];
   isEditing: boolean;
   isSaving: boolean;
   hasChanges: boolean;
@@ -34,6 +27,7 @@ interface DashboardControlBarProps {
 export const DashboardControlBar = ({
   environmentId,
   dashboardId,
+  existingChartIds,
   isEditing,
   isSaving,
   hasChanges,
@@ -89,15 +83,9 @@ export const DashboardControlBar = ({
 
   const viewModeActions = [
     {
-      icon: LibraryIcon,
-      tooltip: t("common.add_existing_chart"),
-      onClick: () => setIsAddExistingDialogOpen(true),
-      isVisible: !isReadOnly,
-    },
-    {
       icon: PlusIcon,
-      tooltip: t("common.create_new_chart"),
-      onClick: () => toast(t("common.feature_coming_soon")),
+      tooltip: t("common.add_charts"),
+      onClick: () => setIsAddExistingDialogOpen(true),
       isVisible: !isReadOnly,
     },
     {
@@ -107,8 +95,8 @@ export const DashboardControlBar = ({
       isVisible: true,
     },
     {
-      icon: LockOpenIcon,
-      tooltip: t("common.unlock"),
+      icon: PencilIcon,
+      tooltip: t("common.edit"),
       onClick: onEditToggle,
       isVisible: !isReadOnly,
     },
@@ -136,6 +124,7 @@ export const DashboardControlBar = ({
         onOpenChange={setIsAddExistingDialogOpen}
         environmentId={environmentId}
         dashboardId={dashboardId}
+        existingChartIds={existingChartIds}
         onSuccess={() => {
           setIsAddExistingDialogOpen(false);
           router.refresh();

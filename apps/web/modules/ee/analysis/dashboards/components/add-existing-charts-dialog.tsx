@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getChartsAction } from "@/modules/ee/analysis/charts/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ interface AddExistingChartsDialogProps {
   onOpenChange: (open: boolean) => void;
   environmentId: string;
   dashboardId: string;
+  existingChartIds: string[];
   onSuccess: () => void;
 }
 
@@ -31,50 +33,12 @@ interface ChartOption {
   label: string;
 }
 
-function ChartSelector({
-  isLoading,
-  chartOptions,
-  selectedChartIds,
-  onSelectedChange,
-}: Readonly<{
-  isLoading: boolean;
-  chartOptions: ChartOption[];
-  selectedChartIds: string[];
-  onSelectedChange: (ids: string[]) => void;
-}>) {
-  const { t } = useTranslation();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center rounded-md border px-3 py-2">
-        <Loader2Icon className="h-5 w-5 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
-  if (chartOptions.length === 0) {
-    return (
-      <div className="flex h-20 items-center justify-center">
-        <p className="text-sm text-gray-500">{t("environments.analysis.dashboards.no_charts_exist")}</p>
-      </div>
-    );
-  }
-
-  return (
-    <MultiSelect
-      options={chartOptions}
-      value={selectedChartIds}
-      onChange={onSelectedChange}
-      placeholder={t("common.search_charts")}
-    />
-  );
-}
-
 export function AddExistingChartsDialog({
   open,
   onOpenChange,
   environmentId,
   dashboardId,
+  existingChartIds,
   onSuccess,
 }: Readonly<AddExistingChartsDialogProps>) {
   const { t } = useTranslation();
@@ -92,7 +56,8 @@ export function AddExistingChartsDialog({
       try {
         const result = await getChartsAction({ environmentId });
         if (result?.data) {
-          setChartOptions(result.data.map((chart) => ({ value: chart.id, label: chart.name })));
+          const availableCharts = result.data.filter((chart) => !existingChartIds.includes(chart.id));
+          setChartOptions(availableCharts.map((chart) => ({ value: chart.id, label: chart.name })));
         } else {
           toast.error(result?.serverError || t("environments.analysis.dashboards.charts_load_failed"));
         }
@@ -104,7 +69,7 @@ export function AddExistingChartsDialog({
     };
 
     loadCharts();
-  }, [open, environmentId, t]);
+  }, [open, environmentId, existingChartIds, t]);
 
   const handleAdd = async () => {
     if (selectedChartIds.length === 0) return;
@@ -138,16 +103,33 @@ export function AddExistingChartsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("common.add_existing_chart")}</DialogTitle>
+          <DialogTitle>{t("common.add_charts")}</DialogTitle>
           <DialogDescription>{t("common.add_existing_chart_description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <ChartSelector
-            isLoading={isLoading}
-            chartOptions={chartOptions}
-            selectedChartIds={selectedChartIds}
-            onSelectedChange={setSelectedChartIds}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center rounded-md border px-3 py-2">
+              <Loader2Icon className="h-5 w-5 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            <>
+              {chartOptions.length === 0 && (
+                <Alert variant="info" className="mb-4">
+                  <AlertTitle>{t("environments.analysis.dashboards.no_charts_to_add_message")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.analysis.dashboards.no_charts_available_description")}
+                  </AlertDescription>
+                </Alert>
+              )}
+              <MultiSelect
+                options={chartOptions}
+                value={selectedChartIds}
+                onChange={setSelectedChartIds}
+                placeholder={t("common.search_charts")}
+                disabled={chartOptions.length === 0}
+              />
+            </>
+          )}
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAdding}>

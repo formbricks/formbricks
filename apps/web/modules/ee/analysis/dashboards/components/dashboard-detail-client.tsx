@@ -9,6 +9,7 @@ import "react-grid-layout/css/styles.css";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { TDashboardDetail, TDashboardWidget } from "../../types/analysis";
@@ -18,14 +19,6 @@ import { DashboardPageHeader } from "./dashboard-page-header";
 import { DashboardWidget } from "./dashboard-widget";
 import { DashboardWidgetData } from "./dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "./dashboard-widget-skeleton";
-
-const gridStyles = `
-  .react-grid-item.react-draggable-dragging {
-    opacity: 0.7;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    z-index: 100;
-  }
-`;
 
 const ROW_HEIGHT = 80;
 
@@ -245,7 +238,7 @@ export function DashboardDetailClient({
   return (
     <PageContentWrapper>
       {/* eslint-disable-next-line react/no-danger */}
-      <style dangerouslySetInnerHTML={{ __html: gridStyles }} />
+      {/* <style dangerouslySetInnerHTML={{ __html: gridStyles }} />  */}
       <GoBackButton url={`/environments/${environmentId}/analysis/dashboards`} />
       <DashboardPageHeader
         name={name}
@@ -255,6 +248,7 @@ export function DashboardDetailClient({
           <DashboardControlBar
             environmentId={environmentId}
             dashboardId={dashboard.id}
+            existingChartIds={widgets.map((w) => w.chartId)}
             isEditing={isEditing}
             isSaving={isSaving}
             hasChanges={hasChanges}
@@ -270,19 +264,13 @@ export function DashboardDetailClient({
         }
       />
 
-      <section className="pb-24 pt-6">
+      <section>
         {isEmpty ? (
-          <div className="flex h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white/50">
-            <div className="mb-4 rounded-full bg-gray-100 p-4">
-              <div className="h-12 w-12 rounded-md bg-gray-300 opacity-20" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900">
-              {t("environments.analysis.dashboards.no_data_title")}
-            </h3>
-            <p className="mt-2 max-w-sm text-center text-gray-500">
-              {t("environments.analysis.dashboards.no_data_description")}
-            </p>
-          </div>
+          <EmptyState
+            text={`${t("environments.analysis.dashboards.no_data_title")}. ${t(
+              "environments.analysis.dashboards.no_data_description"
+            )}`}
+          />
         ) : (
           <div ref={containerRef}>
             {mounted && (

@@ -25,7 +25,7 @@ export function DashboardWidget({ title, children, isEditing, onRemove }: Readon
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-sm border border-gray-200 bg-white shadow-sm ring-2 ring-transparent",
+        "flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm ring-2 ring-transparent",
         isEditing && "ring-brand-dark/20 hover:ring-brand-dark/40 transition-shadow"
       )}>
       <div
