@@ -112,7 +112,6 @@
     "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
   },
   "common": {
-    "Filter": "Filtrer",
     "accepted": "Accepté",
     "account": "Compte",
     "account_settings": "Paramètres du compte",
@@ -1445,7 +1444,6 @@
         "follow_ups_modal_updated_successfull_toast": "\"Suivi mis à jour et sera enregistré une fois que vous sauvegarderez le sondage.\"",
         "follow_ups_new": "Nouveau suivi",
         "follow_ups_upgrade_button_text": "Passez à la version supérieure pour activer les relances",
-        "form_styling": "Style de formulaire",
         "formbricks_sdk_is_not_connected": "Le SDK Formbricks n'est pas connecté",
         "four_points": "4 points",
         "heading": "En-tête",
@@ -1664,6 +1662,7 @@
         "survey_completed_subheading": "Cette enquête gratuite et open-source a été fermée",
         "survey_display_settings": "Paramètres d'affichage de l'enquête",
         "survey_placement": "Placement de l'enquête",
+        "survey_styling": "Style de formulaire",
         "survey_trigger": "Déclencheur d'enquête",
         "switch_multi_language_on_to_get_started": "Activez le mode multilingue pour commencer 👉",
         "target_block_not_found": "Bloc cible non trouvé",

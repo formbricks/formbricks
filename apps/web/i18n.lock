@@ -198,6 +198,7 @@ checksums:
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
+    common/filter: 626325a05e4c8800f7ede7012b0cadaf
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/first_name: cf040a5d6a9fd696be400380cc99f54b
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
@@ -1372,7 +1373,6 @@ checksums:
     environments/surveys/edit/follow_ups_modal_updated_successfull_toast: 61204fada3231f4f1fe3866e87e1130a
     environments/surveys/edit/follow_ups_new: 224c779d252b3e75086e4ed456ba2548
     environments/surveys/edit/follow_ups_upgrade_button_text: 4cd167527fc6cdb5b0bfc9b486b142a8
-    environments/surveys/edit/form_styling: 1278a2db4257b5500474161133acc857
     environments/surveys/edit/formbricks_sdk_is_not_connected: 35165b0cac182a98408007a378cc677e
     environments/surveys/edit/four_points: b289628a6b8a6cd0f7d17a14ca6cd7bf
     environments/surveys/edit/heading: 79e9dfa461f38a239d34b9833ca103f1
@@ -1589,6 +1589,7 @@ checksums:
     environments/surveys/edit/survey_completed_subheading: db537c356c3ab6564d24de0d11a0fee2
     environments/surveys/edit/survey_display_settings: 8ed19e6a8e1376f7a1ba037d82c4ae11
     environments/surveys/edit/survey_placement: 083c10f257337f9648bf9d435b18ec2c
+    environments/surveys/edit/survey_styling: 7f96d6563e934e65687b74374a33b1dc
     environments/surveys/edit/survey_trigger: f0c7014a684ca566698b87074fad5579
     environments/surveys/edit/switch_multi_language_on_to_get_started: cca0ef91ee49095da30cd1e3f26c406f
     environments/surveys/edit/target_block_not_found: 0a0c401017ab32364fec2fcbf815d832

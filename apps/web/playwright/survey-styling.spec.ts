@@ -50,8 +50,8 @@ test.describe("Survey Styling", async () => {
       await addCustomStyles.click();
     }
 
-    // --- Form styling ---
-    await openAccordion(page, "Form styling");
+    // --- Survey styling ---
+    await openAccordion(page, "Survey styling");
 
     // 1. Headlines & Descriptions
     await openAccordion(page, "Headlines & Descriptions");
@@ -182,7 +182,7 @@ test.describe("Survey Styling", async () => {
     }
 
     // Set some non-color properties BEFORE suggesting colors, so we can verify they aren't overwritten
-    await openAccordion(page, "Form styling");
+    await openAccordion(page, "Survey styling");
     await openAccordion(page, "Inputs");
     await setDimension(page, "Border Radius", "12");
     await setDimension(page, "Padding Y", "20");
@@ -341,7 +341,7 @@ test.describe("Survey Styling", async () => {
     }
 
     // Apply Overrides
-    await openAccordion(page, "Form styling");
+    await openAccordion(page, "Survey styling");
     await openAccordion(page, "Headlines & Descriptions");
 
     // Override Headline Color (Blue)
