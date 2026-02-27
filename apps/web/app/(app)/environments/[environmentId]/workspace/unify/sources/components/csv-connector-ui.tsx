@@ -1,7 +1,7 @@
 "use client";
 
 import { parse } from "csv-parse/sync";
-import { ArrowUpFromLineIcon, FolderIcon } from "lucide-react";
+import { ArrowUpFromLineIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/modules/ui/components/alert";
@@ -121,14 +121,13 @@ export function CsvConnectorUI({
     return (
       <div className="space-y-4">
         {csvFile && (
-          <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
             <div className="flex items-center gap-2">
-              <FolderIcon className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">{csvFile.name}</span>
-              <Badge text={`${csvPreview.length - 1} rows`} type="success" size="tiny" />
+              <span className="text-sm font-medium text-slate-800">{csvFile.name}</span>
+              <Badge text={`${csvPreview.length - 1} rows`} type="gray" size="tiny" />
             </div>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => {
                 setCsvFile(null);

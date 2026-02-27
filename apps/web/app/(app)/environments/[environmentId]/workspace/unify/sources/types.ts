@@ -50,7 +50,6 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     type: "timestamp",
     required: true,
     description: "When the feedback was originally collected",
-    exampleStaticValues: ["$now"],
   },
   {
     id: "source_type",
@@ -58,7 +57,6 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     type: "string",
     required: true,
     description: "Type of source (e.g., survey, review, support)",
-    exampleStaticValues: ["survey", "review", "support", "email", "qualtrics", "typeform", "intercom"],
   },
   {
     id: "field_id",
@@ -95,7 +93,6 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     type: "string",
     required: false,
     description: "Human-readable source name for display",
-    exampleStaticValues: ["Product Feedback", "Customer Support", "NPS Survey", "Qualtrics Import"],
   },
   {
     id: "field_label",

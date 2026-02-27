@@ -1970,7 +1970,7 @@ checksums:
     environments/unify/feedback_date: 4ada116cc8375dd67483108eeb0ddfe8
     environments/unify/formbricks_surveys: eba2fce04ee68f02626e5509adf7d66a
     environments/unify/historical_import_complete: f46f98bf4db63bf2993bfb234dc95f62
-    environments/unify/hub_feedback_record_fields: d8e7b6bb8b7c45d8bd69e5f32193dde4
+    environments/unify/feedback_record_fields: d8e7b6bb8b7c45d8bd69e5f32193dde4
     environments/unify/import_csv_data: e5f873b0e6116c5144677acf38607f2e
     environments/unify/import_rows: d2963498a7d2766264c4d67db677e8ff
     environments/unify/importing_data: a6d4478379a0faee05cd2c10ffe74984

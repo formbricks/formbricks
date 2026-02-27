@@ -48,9 +48,9 @@ const resolveValue = (
 };
 
 /**
- * Transform a single CSV row into a Hub FeedbackRecord using field mappings.
+ * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
- * Each mapping maps a CSV column (sourceFieldId) or a static value to a Hub target field.
+ * Each mapping maps a CSV column (sourceFieldId) or a static value to a target field.
  * Returns null if required fields (source_type, field_id, field_type) are missing after mapping.
  */
 export const transformCsvRowToFeedbackRecord = (
@@ -82,7 +82,7 @@ export const transformCsvRowToFeedbackRecord = (
 };
 
 /**
- * Transform multiple CSV rows into Hub FeedbackRecords.
+ * Transform multiple CSV rows into FeedbackRecords.
  * Returns the successfully transformed records and a count of skipped rows.
  */
 export const transformCsvRowsToFeedbackRecords = (

@@ -96,7 +96,7 @@ export function MappingUI({ sourceFields, mappings, onMappingsChange, connectorT
         {/* Target Fields Panel */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-slate-700">
-            {t("environments.unify.hub_feedback_record_fields")}
+            {t("environments.unify.feedback_record_fields")}
           </h4>
 
           {/* Required Fields */}

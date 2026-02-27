@@ -74,7 +74,7 @@ const convertValueToHubFields = (
 };
 
 /**
- * Transform a Formbricks survey response into Hub FeedbackRecord payloads.
+ * Transform a Formbricks survey response into FeedbackRecord payloads.
  * Called from the pipeline handler when a response is created/finished.
  */
 export function transformResponseToFeedbackRecords(

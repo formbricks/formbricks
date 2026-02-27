@@ -1,7 +1,7 @@
 "use client";
 
 import { parse } from "csv-parse/sync";
-import { ArrowUpFromLineIcon, FolderIcon, Loader2Icon } from "lucide-react";
+import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -127,13 +127,12 @@ export function CsvImportSection({ connectorId, environmentId, onImportComplete 
 
       {csvFile ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
             <div className="flex items-center gap-2">
-              <FolderIcon className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">{csvFile.name}</span>
-              <Badge text={`${rowCount} rows`} type="success" size="tiny" />
+              <span className="text-sm font-medium text-slate-800">{csvFile.name}</span>
+              <Badge text={`${rowCount} rows`} type="gray" size="tiny" />
             </div>
-            <Button variant="ghost" size="sm" onClick={handleClear} disabled={isImporting}>
+            <Button variant="secondary" size="sm" onClick={handleClear} disabled={isImporting}>
               {t("environments.unify.change_file")}
             </Button>
           </div>
