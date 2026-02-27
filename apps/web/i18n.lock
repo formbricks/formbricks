@@ -1176,6 +1176,7 @@ checksums:
     environments/surveys/edit/add_fallback_placeholder: 0e77ea487ddd7bc7fc2f1574b018dc08
     environments/surveys/edit/add_hidden_field_id: a8f55b51b790cf5f4d898af7770ad1ed
     environments/surveys/edit/add_highlight_border: 66f52b21fbb9aa6561c98a090abaaf8f
+    environments/surveys/edit/add_highlight_border_description: fe548fe03ea10ef5cd9e553d6812b3c2
     environments/surveys/edit/add_logic: f234c9f1393a9ed4792dfbd15838c951
     environments/surveys/edit/add_none_of_the_above: dbe1ada4512d6c3f80c54c8fac107ec6
     environments/surveys/edit/add_option: 143c54f0b201067fe5159284d6daeca2
@@ -1545,7 +1546,7 @@ checksums:
     environments/surveys/edit/response_limits_redirections_and_more: e4f1cf94e56ad0e1b08701158d688802
     environments/surveys/edit/response_options: 2988136d5248d7726583108992dcbaee
     environments/surveys/edit/roundness: 5a161c8f5f258defb57ed1d551737cc4
-    environments/surveys/edit/roundness_description: bde131aa5674836416dcdf2ff517d899
+    environments/surveys/edit/roundness_description: 03940a6871ae43efa4810cba7cadb74b
     environments/surveys/edit/row_used_in_logic_error: f89453ff1b6db77ad84af840fedd9813
     environments/surveys/edit/rows: 8f41f34e6ca28221cf1ebd948af4c151
     environments/surveys/edit/save_and_close: 6ede705b3f82f30269ff3054a5049e34
@@ -2044,7 +2045,7 @@ checksums:
     environments/workspace/look/advanced_styling_field_description_size: a0d51c3ab7dc56320ecedc2b27917842
     environments/workspace/look/advanced_styling_field_description_size_description: ff880ea1beddd1b1ec7416d0b8a69cf3
     environments/workspace/look/advanced_styling_field_description_weight: 514680cc7202ad29835c1cbcde3def1c
-    environments/workspace/look/advanced_styling_field_description_weight_description: 441ac8db1a32557813eb68fbfd759061
+    environments/workspace/look/advanced_styling_field_description_weight_description: aa95bc81b5336a548e256bce49350683
     environments/workspace/look/advanced_styling_field_font_size: ca44d14429b2175a1b194793b4ab8f6b
     environments/workspace/look/advanced_styling_field_font_weight: bfef83778146cf40550df9650d8a07da
     environments/workspace/look/advanced_styling_field_headline_color: 4ccf3935ad90c88ad4add24f498673ce
@@ -2058,7 +2059,7 @@ checksums:
     environments/workspace/look/advanced_styling_field_indicator_bg_description: 7eb3b54a8b331354ec95c0dc1545c620
     environments/workspace/look/advanced_styling_field_input_border_radius_description: 0007f1bb572b35d9a3720daeb7a55617
     environments/workspace/look/advanced_styling_field_input_font_size_description: 5311f95dcbd083623e35c98ea5374c3b
-    environments/workspace/look/advanced_styling_field_input_height_description: e19ec0dc432478def0fd1199ad765e38
+    environments/workspace/look/advanced_styling_field_input_height_description: bb7439d42ec3848a8fa9edb8b001b69a
     environments/workspace/look/advanced_styling_field_input_padding_x_description: 10e14296468321c13fda77fd1ba58dfd
     environments/workspace/look/advanced_styling_field_input_padding_y_description: 98b4aeff2940516d05ea61bdc1211d0d
     environments/workspace/look/advanced_styling_field_input_placeholder_opacity_description: f55a6700884d24014404e58876121ddf
