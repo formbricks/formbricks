@@ -18,13 +18,14 @@ var mockTxChart: { findFirst: ReturnType<typeof vi.fn> }; // NOSONAR / test code
 var mockTxWidget: {
   // NOSONAR / test code
   aggregate: ReturnType<typeof vi.fn>;
+  findMany: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
 };
 
 vi.mock("@formbricks/database", () => {
   const txDash = { findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
   const txChart = { findFirst: vi.fn() };
-  const txWidget = { aggregate: vi.fn(), create: vi.fn() };
+  const txWidget = { aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn() };
   mockTxDashboard = txDash;
   mockTxChart = txChart;
   mockTxWidget = txWidget;
@@ -470,6 +471,7 @@ describe("Dashboard Service", () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
       mockTxWidget.create.mockResolvedValue(mockWidget);
       const { addChartToDashboard } = await import("./dashboards");
 
@@ -497,6 +499,7 @@ describe("Dashboard Service", () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 2 } });
+      mockTxWidget.findMany.mockResolvedValue([{ layout: { y: 0, h: 3 } }]);
       mockTxWidget.create.mockResolvedValue({ ...mockWidget, order: 3 });
       const { addChartToDashboard } = await import("./dashboards");
 
@@ -556,6 +559,7 @@ describe("Dashboard Service", () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
       mockTxWidget.create.mockRejectedValue(makePrismaError(PrismaErrorType.UniqueConstraintViolation));
       vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
         cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
