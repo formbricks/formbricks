@@ -125,6 +125,9 @@ export const FormStylingSettings = ({
                 description={t(
                   "environments.workspace.look.advanced_styling_field_headline_weight_description"
                 )}
+                step={100}
+                min={100}
+                max={900}
               />
               <NumberField
                 form={form}
@@ -133,6 +136,9 @@ export const FormStylingSettings = ({
                 description={t(
                   "environments.workspace.look.advanced_styling_field_description_weight_description"
                 )}
+                step={100}
+                min={100}
+                max={900}
               />
               <ColorField
                 form={form}
@@ -157,6 +163,9 @@ export const FormStylingSettings = ({
                 description={t(
                   "environments.workspace.look.advanced_styling_field_upper_label_weight_description"
                 )}
+                step={100}
+                min={100}
+                max={900}
               />
             </div>
           </StylingSection>
@@ -292,6 +301,9 @@ export const FormStylingSettings = ({
                 description={t(
                   "environments.workspace.look.advanced_styling_field_button_font_weight_description"
                 )}
+                step={100}
+                min={100}
+                max={900}
               />
               <DimensionInput
                 form={form}
