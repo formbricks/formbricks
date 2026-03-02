@@ -23,6 +23,29 @@ if (SENTRY_DSN) {
     // Disable telemetry and additional data collection
     sendDefaultPii: false,
     sendClientReports: false,
+
+    beforeSend(event, hint) {
+      const error = hint.originalException as Error;
+
+      // @ts-expect-error
+      if (error?.digest === "NEXT_NOT_FOUND") {
+        return null;
+      }
+
+      // Filter out TronLink extension errors
+      if (
+        error?.message?.includes("Cannot assign to read only property 'tronLink'") ||
+        event.exception?.values?.some(
+          (exception) =>
+            exception.value?.includes("Cannot assign to read only property 'tronLink'") ||
+            exception.stacktrace?.frames?.some((frame) => frame.filename?.includes("inpage.js"))
+        )
+      ) {
+        return null;
+      }
+
+      return event;
+    },
   });
 } else {
   logger.warn("Sentry DSN not found, Sentry will be disabled on the edge");

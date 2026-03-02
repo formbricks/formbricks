@@ -58,6 +58,18 @@ export const SentryProvider = ({
             return null;
           }
 
+          // Filter out TronLink extension errors
+          if (
+            error?.message?.includes("Cannot assign to read only property 'tronLink'") ||
+            event.exception?.values?.some(
+              (exception) =>
+                exception.value?.includes("Cannot assign to read only property 'tronLink'") ||
+                exception.stacktrace?.frames?.some((frame) => frame.filename?.includes("inpage.js"))
+            )
+          ) {
+            return null;
+          }
+
           return event;
         },
       });
