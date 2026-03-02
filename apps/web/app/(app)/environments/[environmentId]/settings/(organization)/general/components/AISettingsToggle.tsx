@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { updateOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { updateOrganizationAISettingsAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -29,7 +29,7 @@ export const AISettingsToggle = ({ organization, membershipRole }: Readonly<AISe
   const handleSwitchChange = async (checked: boolean) => {
     setIsLoading(true);
     try {
-      const response = await updateOrganizationAction({
+      const response = await updateOrganizationAISettingsAction({
         organizationId: organization.id,
         data: { isAIEnabled: checked },
       });

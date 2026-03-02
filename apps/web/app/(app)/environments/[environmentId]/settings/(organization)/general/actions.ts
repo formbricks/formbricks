@@ -11,48 +11,85 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
-const ZUpdateOrganizationAction = z.object({
+const ZUpdateOrganizationNameAction = z.object({
   organizationId: ZId,
-  data: ZOrganizationUpdateInput.partial().refine(
-    (data) => Object.keys(data ?? {}).length > 0,
-    "At least one field must be provided"
-  ),
+  data: ZOrganizationUpdateInput.pick({ name: true }),
 });
 
-type UpdateOrganizationParsedInput = z.infer<typeof ZUpdateOrganizationAction>;
+export const updateOrganizationNameAction = authenticatedActionClient
+  .schema(ZUpdateOrganizationNameAction)
+  .action(
+    withAuditLogging(
+      "updated",
+      "organization",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: z.infer<typeof ZUpdateOrganizationNameAction>;
+      }) => {
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: parsedInput.organizationId,
+          access: [
+            {
+              type: "organization",
+              schema: ZOrganizationUpdateInput.pick({ name: true }),
+              data: parsedInput.data,
+              roles: ["owner"],
+            },
+          ],
+        });
+        ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+        const oldObject = await getOrganization(parsedInput.organizationId);
+        const result = await updateOrganization(parsedInput.organizationId, parsedInput.data);
+        ctx.auditLoggingCtx.oldObject = oldObject;
+        ctx.auditLoggingCtx.newObject = result;
+        return result;
+      }
+    )
+  );
 
-export const updateOrganizationAction = authenticatedActionClient.schema(ZUpdateOrganizationAction).action(
-  withAuditLogging(
-    "updated",
-    "organization",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: UpdateOrganizationParsedInput;
-    }) => {
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            schema: ZOrganizationUpdateInput.partial(),
-            data: parsedInput.data,
-            roles: ["owner", "manager"],
-          },
-        ],
-      });
-      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      const oldObject = await getOrganization(parsedInput.organizationId);
-      const result = await updateOrganization(parsedInput.organizationId, parsedInput.data);
-      ctx.auditLoggingCtx.oldObject = oldObject;
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
-    }
-  )
-);
+const ZUpdateOrganizationAISettingsAction = z.object({
+  organizationId: ZId,
+  data: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+});
+
+export const updateOrganizationAISettingsAction = authenticatedActionClient
+  .schema(ZUpdateOrganizationAISettingsAction)
+  .action(
+    withAuditLogging(
+      "updated",
+      "organization",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: z.infer<typeof ZUpdateOrganizationAISettingsAction>;
+      }) => {
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: parsedInput.organizationId,
+          access: [
+            {
+              type: "organization",
+              schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+              data: parsedInput.data,
+              roles: ["owner", "manager"],
+            },
+          ],
+        });
+        ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+        const oldObject = await getOrganization(parsedInput.organizationId);
+        const result = await updateOrganization(parsedInput.organizationId, parsedInput.data);
+        ctx.auditLoggingCtx.oldObject = oldObject;
+        ctx.auditLoggingCtx.newObject = result;
+        return result;
+      }
+    )
+  );
 
 const ZDeleteOrganizationAction = z.object({
   organizationId: ZId,
