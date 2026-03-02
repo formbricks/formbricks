@@ -397,7 +397,6 @@ export const getResponseDownloadFile = async (
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",
-      "Notes",
       "Tags",
       ...metaDataFields,
       ...elements.flat(),
