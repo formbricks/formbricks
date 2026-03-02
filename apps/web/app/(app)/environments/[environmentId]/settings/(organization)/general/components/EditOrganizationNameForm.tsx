@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
-import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { updateOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -48,7 +48,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
   const handleUpdateOrganizationName: SubmitHandler<EditOrganizationNameForm> = async (data) => {
     try {
       const name = data.name.trim();
-      const updatedOrganizationResponse = await updateOrganizationNameAction({
+      const updatedOrganizationResponse = await updateOrganizationAction({
         organizationId: organization.id,
         data: { name },
       });

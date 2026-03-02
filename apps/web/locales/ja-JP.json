@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricksの全機能をアンロック。30日間無料。"
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "この組織でAI機能を有効にします。",
+        "ai_settings_updated_successfully": "AI設定が正常に更新されました",
         "bulk_invite_warning_description": "無料プランでは、すべての組織メンバーに常に「オーナー」ロールが割り当てられます。",
         "cannot_delete_only_organization": "これはあなたの唯一の組織です。削除できません。まず新しい組織を作成してください。",
         "cannot_leave_only_organization": "これはあなたの唯一の組織であるため、離れることはできません。まず新しい組織を作成してください。",

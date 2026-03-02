@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "A Formbricks teljes erejének feloldása. 30 napig ingyen."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "AI-alapú funkciók engedélyezése ehhez a szervezethez.",
+        "ai_settings_updated_successfully": "AI beállítások sikeresen frissítve",
         "bulk_invite_warning_description": "Az ingyenes csomagban az összes szervezeti tag mindig a „Tulajdonos” szerephez van hozzárendelve.",
         "cannot_delete_only_organization": "Ez az egyetlen szervezete, nem lehet törölni. Először hozzon létre egy új szervezetet.",
         "cannot_leave_only_organization": "Nem hagyhatja el ezt a szervezetet, mivel ez az egyetlen szervezete. Először hozzon létre egy új szervezetet.",

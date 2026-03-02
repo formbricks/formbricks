@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Schalte die volle Power von Formbricks frei. 30 Tage kostenlos."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Aktiviere KI-gestützte Funktionen für diese Organisation.",
+        "ai_settings_updated_successfully": "KI-Einstellungen erfolgreich aktualisiert",
         "bulk_invite_warning_description": "Bitte beachte, dass im Free-Plan alle Organisationsmitglieder automatisch die Rolle \"Owner\" zugewiesen bekommen, unabhängig von der im CSV-File angegebenen Rolle.",
         "cannot_delete_only_organization": "Das ist deine einzige Organisation, sie kann nicht gelöscht werden. Erstelle zuerst eine neue Organisation.",
         "cannot_leave_only_organization": "Du kannst diese Organisation nicht verlassen, da es deine einzige Organisation ist. Erstelle zuerst eine neue Organisation.",

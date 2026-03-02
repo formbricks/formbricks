@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Откройте все возможности Formbricks. Бесплатно на 30 дней."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Включить функции на базе искусственного интеллекта для этой организации.",
+        "ai_settings_updated_successfully": "Настройки AI успешно обновлены",
         "bulk_invite_warning_description": "В бесплатном тарифе всем участникам организации всегда назначается роль \"Владелец\".",
         "cannot_delete_only_organization": "Это ваша единственная организация, её нельзя удалить. Сначала создайте новую организацию.",
         "cannot_leave_only_organization": "Вы не можете покинуть эту организацию, так как она у вас единственная. Сначала создайте новую организацию.",

@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Deblocați puterea completă a Formbricks. Gratuit timp de 30 de zile."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Activează funcțiile bazate pe AI pentru această organizație.",
+        "ai_settings_updated_successfully": "Setările AI au fost actualizate cu succes",
         "bulk_invite_warning_description": "În planul gratuit, toți membrii organizației sunt întotdeauna alocați rolului „Proprietar”.",
         "cannot_delete_only_organization": "Aceasta este singura ta organizație, nu poate fi ștearsă. Creează mai întâi o nouă organizație.",
         "cannot_leave_only_organization": "Nu poți părăsi această organizație deoarece este singura ta organizație. Creează mai întâi o nouă organizație.",

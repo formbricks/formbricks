@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla kraft. Gratis i 30 dagar."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Aktivera AI-drivna funktioner för den här organisationen.",
+        "ai_settings_updated_successfully": "AI-inställningarna har uppdaterats",
         "bulk_invite_warning_description": "På gratisplanen tilldelas alla organisationsmedlemmar alltid rollen \"Ägare\".",
         "cannot_delete_only_organization": "Detta är din enda organisation, den kan inte tas bort. Skapa en ny organisation först.",
         "cannot_leave_only_organization": "Du kan inte lämna denna organisation eftersom det är din enda organisation. Skapa en ny organisation först.",

@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks. Free for 30 days."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Enable AI-powered features for this organization.",
+        "ai_settings_updated_successfully": "AI settings updated successfully",
         "bulk_invite_warning_description": "On the free plan, all organization members are always assigned the “Owner” role.",
         "cannot_delete_only_organization": "This is your only organization, it cannot be deleted. Create a new organization first.",
         "cannot_leave_only_organization": "You cannot leave this organization as it is your only organization. Create a new organization first.",

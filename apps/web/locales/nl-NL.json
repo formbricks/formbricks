@@ -1243,6 +1243,9 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Ontgrendel de volledige kracht van Formbricks. 30 dagen gratis."
       },
       "general": {
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Schakel AI-functies in voor deze organisatie.",
+        "ai_settings_updated_successfully": "AI-instellingen succesvol bijgewerkt",
         "bulk_invite_warning_description": "Bij het gratis abonnement krijgen alle organisatieleden altijd de rol 'Eigenaar' toegewezen.",
         "cannot_delete_only_organization": "Dit is uw enige organisatie. Deze kan niet worden verwijderd. Maak eerst een nieuwe organisatie aan.",
         "cannot_leave_only_organization": "U kunt deze organisatie niet verlaten, aangezien dit uw enige organisatie is. Maak eerst een nieuwe organisatie aan.",
