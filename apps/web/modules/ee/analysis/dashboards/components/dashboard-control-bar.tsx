@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { deleteDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
+import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
-import { deleteDashboardAction } from "../actions";
-import { AddExistingChartsDialog } from "./add-existing-charts-dialog";
 
 interface DashboardControlBarProps {
   environmentId: string;
@@ -51,12 +52,11 @@ export const DashboardControlBar = ({
         router.push(`/environments/${environmentId}/analysis/dashboards`);
         toast.success(t("environments.analysis.dashboards.delete_success"));
       } else {
-        toast.error(result?.serverError || t("environments.analysis.dashboards.delete_failed"));
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage);
       }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("environments.analysis.dashboards.delete_failed");
-      toast.error(message);
+    } catch {
+      toast.error(t("environments.analysis.dashboards.delete_failed"));
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

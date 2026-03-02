@@ -6,9 +6,9 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
+import { CreateDashboardDialog } from "@/modules/ee/analysis/dashboards/components/create-dashboard-dialog";
 import { Button } from "@/modules/ui/components/button";
-import { createDashboardAction } from "../actions";
-import { CreateDashboardDialog } from "./create-dashboard-dialog";
 
 interface CreateDashboardButtonProps {
   environmentId: string;

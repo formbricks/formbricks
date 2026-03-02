@@ -10,16 +10,17 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
+import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
+import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
+import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
+import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { updateDashboardAction, updateWidgetLayoutsAction } from "../actions";
-import { DashboardControlBar } from "./dashboard-control-bar";
-import { DashboardPageHeader } from "./dashboard-page-header";
-import { DashboardWidget } from "./dashboard-widget";
-import { DashboardWidgetData } from "./dashboard-widget-data";
-import { DashboardWidgetSkeleton } from "./dashboard-widget-skeleton";
 
 const ROW_HEIGHT = 80;
 
@@ -30,7 +31,7 @@ interface DashboardDetailClientProps {
   isReadOnly: boolean;
 }
 
-function widgetsToLayout(widgets: TDashboardWidget[]): LayoutItem[] {
+const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] => {
   return widgets.map((widget) => ({
     i: widget.id,
     x: widget.layout.x,
@@ -42,9 +43,9 @@ function widgetsToLayout(widgets: TDashboardWidget[]): LayoutItem[] {
     maxW: 12,
     maxH: 8,
   }));
-}
+};
 
-function widgetLayoutsChanged(current: TDashboardWidget[], original: TDashboardWidget[]): boolean {
+const widgetLayoutsChanged = (current: TDashboardWidget[], original: TDashboardWidget[]): boolean => {
   if (current.length !== original.length) return true;
   return current.some((widget, i) => {
     const orig = original[i];
@@ -57,9 +58,9 @@ function widgetLayoutsChanged(current: TDashboardWidget[], original: TDashboardW
       widget.order !== orig.order
     );
   });
-}
+};
 
-function applyLayoutToWidgets(widgets: TDashboardWidget[], newLayout: Layout): TDashboardWidget[] {
+const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): TDashboardWidget[] => {
   let changed = false;
   const updated = widgets.map((widget) => {
     const layoutItem = newLayout.find((l) => l.i === widget.id);
@@ -87,33 +88,35 @@ function applyLayoutToWidgets(widgets: TDashboardWidget[], newLayout: Layout): T
   });
 
   return changed ? updated : widgets;
-}
+};
 
-const MemoizedWidgetContent = memo(function WidgetContent({
-  widget,
-  dataPromise,
-}: Readonly<{
-  widget: TDashboardWidget;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
-}>) {
-  if (widget.chart && dataPromise) {
-    return (
-      <Suspense
-        fallback={
-          <Delay ms={200}>
-            <DashboardWidgetSkeleton />
-          </Delay>
-        }>
-        <DashboardWidgetData
-          dataPromise={dataPromise}
-          chartType={widget.chart.type}
-          query={widget.chart.query}
-        />
-      </Suspense>
-    );
+const MemoizedWidgetContent = memo(
+  ({
+    widget,
+    dataPromise,
+  }: Readonly<{
+    widget: TDashboardWidget;
+    dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
+  }>) => {
+    if (widget.chart && dataPromise) {
+      return (
+        <Suspense
+          fallback={
+            <Delay ms={200}>
+              <DashboardWidgetSkeleton />
+            </Delay>
+          }>
+          <DashboardWidgetData
+            dataPromise={dataPromise}
+            chartType={widget.chart.type}
+            query={widget.chart.query}
+          />
+        </Suspense>
+      );
+    }
+    return <DashboardWidgetSkeleton />;
   }
-  return <DashboardWidgetSkeleton />;
-});
+);
 
 const MemoizedWidgetItem = memo(function WidgetItem({
   widget,
@@ -143,7 +146,7 @@ export function DashboardDetailClient({
 }: Readonly<DashboardDetailClientProps>) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { width, containerRef, mounted } = useContainerWidth({ initialWidth: 1200 });
+  const { width, containerRef, mounted } = useContainerWidth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -199,9 +202,8 @@ export function DashboardDetailClient({
         });
 
         if (!dashboardResult?.data) {
-          toast.error(
-            dashboardResult?.serverError || t("environments.analysis.dashboards.dashboard_update_failed")
-          );
+          const errorMessage = getFormattedErrorMessage(dashboardResult);
+          toast.error(errorMessage);
           setIsSaving(false);
           return;
         }
@@ -221,9 +223,8 @@ export function DashboardDetailClient({
         });
 
         if (!widgetsResult?.data) {
-          toast.error(
-            widgetsResult?.serverError || t("environments.analysis.dashboards.widget_layouts_save_failed")
-          );
+          const errorMessage = getFormattedErrorMessage(widgetsResult);
+          toast.error(errorMessage);
           setIsSaving(false);
           return;
         }
@@ -235,10 +236,8 @@ export function DashboardDetailClient({
         setDraftWidgets(null);
         setIsEditing(false);
       });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("environments.analysis.dashboards.dashboard_save_failed");
-      toast.error(message);
+    } catch {
+      toast.error(t("environments.analysis.dashboards.dashboard_save_failed"));
     } finally {
       setIsSaving(false);
     }

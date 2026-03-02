@@ -4,7 +4,9 @@ import { Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getChartsAction } from "@/modules/ee/analysis/charts/actions";
+import { addChartToDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -17,7 +19,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { addChartToDashboardAction } from "../actions";
 
 interface AddExistingChartsDialogProps {
   open: boolean;
@@ -59,7 +60,8 @@ export function AddExistingChartsDialog({
           const availableCharts = result.data.filter((chart) => !existingChartIds.includes(chart.id));
           setChartOptions(availableCharts.map((chart) => ({ value: chart.id, label: chart.name })));
         } else {
-          toast.error(result?.serverError || t("environments.analysis.dashboards.charts_load_failed"));
+          const errorMessage = getFormattedErrorMessage(result);
+          toast.error(errorMessage);
         }
       } catch {
         toast.error(t("environments.analysis.dashboards.charts_load_failed"));

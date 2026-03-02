@@ -1,7 +1,5 @@
 "use server";
 
-// eslint-disable-next-line
-// TODO: remove revalidatePath and use revalidateTag instead once this has become stable: https://nextjs.org/docs/app/api-reference/directives/use-cache#usage
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZWidgetLayout } from "@formbricks/types/analysis";
