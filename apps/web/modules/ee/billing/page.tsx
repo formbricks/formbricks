@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -50,6 +51,8 @@ export const PricingPage = async (props) => {
         responseCount={responseCount}
         projectCount={projectCount}
         hasBillingRights={hasBillingRights}
+        cloudStripePublishableKey={env.CLOUD_STRIPE_PUBLISHABLE_KEY ?? null}
+        cloudStripePricingTableId={env.CLOUD_STRIPE_PRICING_TABLE_ID ?? null}
       />
     </PageContentWrapper>
   );

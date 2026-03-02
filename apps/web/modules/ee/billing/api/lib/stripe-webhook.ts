@@ -46,8 +46,12 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       : null;
   const customerId =
     "customer" in eventObject && typeof eventObject.customer === "string" ? eventObject.customer : null;
+  const clientReferenceId =
+    "client_reference_id" in eventObject && typeof eventObject.client_reference_id === "string"
+      ? eventObject.client_reference_id
+      : null;
 
-  let organizationId = metadataOrgId;
+  let organizationId = metadataOrgId ?? clientReferenceId;
   if (!organizationId && customerId) {
     organizationId = await findOrganizationIdByStripeCustomerId(customerId);
   }
@@ -57,6 +61,9 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       { eventType: event.type, eventId: event.id },
       "Skipping Stripe webhook: organization not resolved"
     );
+    if (event.type === "checkout.session.completed") {
+      return { status: 500, message: "Checkout completed but organization could not be resolved." };
+    }
     return { status: 200, message: { received: true } };
   }
 
@@ -71,6 +78,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       { error, eventId: event.id, organizationId, eventType: event.type },
       "Failed to sync billing snapshot from Stripe webhook"
     );
+    return { status: 500, message: "Stripe webhook processing failed; please retry." };
   }
 
   return { status: 200, message: { received: true } };

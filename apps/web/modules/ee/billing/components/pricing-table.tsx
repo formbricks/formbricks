@@ -15,9 +15,6 @@ import {
 } from "../actions";
 import { BillingSlider } from "./billing-slider";
 
-const STRIPE_MONTHLY_PRICING_TABLE_ID = "prctbl_1T6ZLKCng0KywbKlSUAiFqH5";
-const STRIPE_MONTHLY_PRICING_PUBLISHABLE_KEY =
-  "pk_test_51Sqt6uCng0KywbKlmnLtd8p2B1FfEAcM8O9IDiYdo1F2B6X7VYdMALhrpOU1vDB8SB3ikJshBeHz8Kj9iv89K6j3009S9mmY0h";
 const STRIPE_SUPPORTED_LOCALES = new Set([
   "bg",
   "cs",
@@ -83,6 +80,8 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   hasBillingRights: boolean;
+  cloudStripePublishableKey: string | null;
+  cloudStripePricingTableId: string | null;
 }
 
 const getCurrentCloudPlan = (
@@ -116,6 +115,8 @@ export const PricingTable = ({
   responseCount,
   projectCount,
   hasBillingRights,
+  cloudStripePublishableKey,
+  cloudStripePricingTableId,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -264,14 +265,14 @@ export const PricingTable = ({
           </div>
         </div>
 
-        {hasBillingRights && (
+        {hasBillingRights && cloudStripePublishableKey && cloudStripePricingTableId && (
           <div className="mb-12 w-full">
             <div className="w-full">
               <div className="mx-auto w-full max-w-[1200px]">
                 <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
                 {createElement("stripe-pricing-table", {
-                  "pricing-table-id": STRIPE_MONTHLY_PRICING_TABLE_ID,
-                  "publishable-key": STRIPE_MONTHLY_PRICING_PUBLISHABLE_KEY,
+                  "pricing-table-id": cloudStripePricingTableId,
+                  "publishable-key": cloudStripePublishableKey,
                   ...(stripeLocaleOverride
                     ? {
                         "__locale-override": stripeLocaleOverride,
