@@ -14,6 +14,7 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
@@ -55,7 +56,7 @@ export const GET = withV1ApiWrapper({
       });
 
       return {
-        response: responses.successResponse(surveysWithQuestions),
+        response: responses.successResponse(resolveStorageUrlsInObject(surveysWithQuestions)),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {

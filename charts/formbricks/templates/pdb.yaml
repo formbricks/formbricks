@@ -1,0 +1,37 @@
+{{- if .Values.pdb.enabled }}
+{{- $hasMinAvailable := not (kindIs "invalid" .Values.pdb.minAvailable) -}}
+{{- $hasMaxUnavailable := not (kindIs "invalid" .Values.pdb.maxUnavailable) -}}
+{{- if and $hasMinAvailable $hasMaxUnavailable }}
+  {{- fail "pdb.minAvailable and pdb.maxUnavailable are mutually exclusive; set only one" }}
+{{- end }}
+{{- if not (or $hasMinAvailable $hasMaxUnavailable) }}
+  {{- fail "pdb.enabled is true but neither pdb.minAvailable nor pdb.maxUnavailable is set; set exactly one" }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "formbricks.name" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+    {{- with .Values.pdb.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.pdb.annotations }}
+  annotations:
+    {{- toYaml .Values.pdb.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $hasMinAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- end }}
+  {{- if $hasMaxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+  {{- if .Values.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ .Values.pdb.unhealthyPodEvictionPolicy }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "formbricks.selectorLabels" . | nindent 6 }}
+{{- end }}

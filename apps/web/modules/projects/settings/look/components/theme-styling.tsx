@@ -214,8 +214,8 @@ export const ThemeStyling = ({
                   <div className="flex flex-col gap-1">
                     <Button
                       type="button"
-                      variant="secondary"
-                      className="h-10 w-full justify-center gap-2"
+                      variant="default"
+                      className="h-10 justify-center gap-1"
                       onClick={() => setConfirmSuggestColorsOpen(true)}>
                       <SparklesIcon className="mr-2 h-4 w-4" />
                       {t("environments.workspace.look.suggest_colors")}
@@ -274,9 +274,7 @@ export const ThemeStyling = ({
                 survey={previewSurvey(project.name, t)}
                 project={{
                   ...project,
-                  styling: form.watch("allowStyleOverwrite")
-                    ? { ...form.watch(), brandColor: { light: previewBrandColor } }
-                    : STYLE_DEFAULTS,
+                  styling: { ...form.watch(), brandColor: { light: previewBrandColor } },
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}

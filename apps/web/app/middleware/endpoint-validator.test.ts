@@ -257,6 +257,7 @@ describe("endpoint-validator", () => {
       expect(isAuthProtectedRoute("/api/v1/client/test")).toBe(false);
       expect(isAuthProtectedRoute("/")).toBe(false);
       expect(isAuthProtectedRoute("/s/survey123")).toBe(false);
+      expect(isAuthProtectedRoute("/p/pretty-url")).toBe(false);
       expect(isAuthProtectedRoute("/c/jwt-token")).toBe(false);
       expect(isAuthProtectedRoute("/health")).toBe(false);
     });
@@ -311,6 +312,19 @@ describe("endpoint-validator", () => {
       expect(isPublicDomainRoute("/c/")).toBe(false);
       expect(isPublicDomainRoute("/c")).toBe(false);
       expect(isPublicDomainRoute("/contact/token")).toBe(false);
+    });
+    
+    test("should return true for pretty URL survey routes", () => {
+      expect(isPublicDomainRoute("/p/pretty123")).toBe(true);
+      expect(isPublicDomainRoute("/p/pretty-name-with-dashes")).toBe(true);
+      expect(isPublicDomainRoute("/p/survey_id_with_underscores")).toBe(true);
+      expect(isPublicDomainRoute("/p/abc123def456")).toBe(true);
+    });
+
+    test("should return false for malformed pretty URL survey routes", () => {
+      expect(isPublicDomainRoute("/p/")).toBe(false);
+      expect(isPublicDomainRoute("/p")).toBe(false);
+      expect(isPublicDomainRoute("/pretty/123")).toBe(false);
     });
 
     test("should return true for client API routes", () => {
@@ -375,6 +389,8 @@ describe("endpoint-validator", () => {
       expect(isAdminDomainRoute("/s/survey-id-with-dashes")).toBe(false);
       expect(isAdminDomainRoute("/c/jwt-token")).toBe(false);
       expect(isAdminDomainRoute("/c/very-long-jwt-token-123")).toBe(false);
+      expect(isAdminDomainRoute("/p/pretty123")).toBe(false);
+      expect(isAdminDomainRoute("/p/pretty-name-with-dashes")).toBe(false);
       expect(isAdminDomainRoute("/api/v1/client/test")).toBe(false);
       expect(isAdminDomainRoute("/api/v2/client/other")).toBe(false);
     });
@@ -390,6 +406,7 @@ describe("endpoint-validator", () => {
       test("should allow public routes on public domain", () => {
         expect(isRouteAllowedForDomain("/s/survey123", true)).toBe(true);
         expect(isRouteAllowedForDomain("/c/jwt-token", true)).toBe(true);
+        expect(isRouteAllowedForDomain("/p/pretty123", true)).toBe(true);
         expect(isRouteAllowedForDomain("/api/v1/client/test", true)).toBe(true);
         expect(isRouteAllowedForDomain("/api/v2/client/other", true)).toBe(true);
         expect(isRouteAllowedForDomain("/health", true)).toBe(true);
@@ -426,6 +443,8 @@ describe("endpoint-validator", () => {
         expect(isRouteAllowedForDomain("/s/survey-id-with-dashes", false)).toBe(false);
         expect(isRouteAllowedForDomain("/c/jwt-token", false)).toBe(false);
         expect(isRouteAllowedForDomain("/c/very-long-jwt-token-123", false)).toBe(false);
+        expect(isRouteAllowedForDomain("/p/pretty123", false)).toBe(false);
+        expect(isRouteAllowedForDomain("/p/pretty-name-with-dashes", false)).toBe(false);
         expect(isRouteAllowedForDomain("/api/v1/client/test", false)).toBe(false);
         expect(isRouteAllowedForDomain("/api/v2/client/other", false)).toBe(false);
       });
@@ -440,6 +459,8 @@ describe("endpoint-validator", () => {
       test("should handle paths with query parameters and fragments", () => {
         expect(isRouteAllowedForDomain("/s/survey123?param=value", true)).toBe(true);
         expect(isRouteAllowedForDomain("/s/survey123#section", true)).toBe(true);
+        expect(isRouteAllowedForDomain("/p/pretty123?param=value", true)).toBe(true);
+        expect(isRouteAllowedForDomain("/p/pretty123#section", true)).toBe(true);
         expect(isRouteAllowedForDomain("/environments/123?tab=settings", true)).toBe(false);
         expect(isRouteAllowedForDomain("/environments/123?tab=settings", false)).toBe(true);
       });
@@ -450,6 +471,7 @@ describe("endpoint-validator", () => {
     describe("URL parsing edge cases", () => {
       test("should handle paths with query parameters", () => {
         expect(isPublicDomainRoute("/s/survey123?param=value&other=test")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty123?param=value&other=test")).toBe(true);
         expect(isPublicDomainRoute("/api/v1/client/test?query=data")).toBe(true);
         expect(isPublicDomainRoute("/environments/123?tab=settings")).toBe(false);
         expect(isAuthProtectedRoute("/environments/123?tab=overview")).toBe(true);
@@ -458,12 +480,14 @@ describe("endpoint-validator", () => {
       test("should handle paths with fragments", () => {
         expect(isPublicDomainRoute("/s/survey123#section")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt-token#top")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty123#section")).toBe(true);
         expect(isPublicDomainRoute("/environments/123#overview")).toBe(false);
         expect(isAuthProtectedRoute("/organizations/456#settings")).toBe(true);
       });
 
       test("should handle trailing slashes", () => {
         expect(isPublicDomainRoute("/s/survey123/")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty123/")).toBe(true);
         expect(isPublicDomainRoute("/api/v1/client/test/")).toBe(true);
         expect(isManagementApiRoute("/api/v1/management/test/")).toEqual({
           isManagementApi: true,
@@ -478,6 +502,9 @@ describe("endpoint-validator", () => {
         expect(isPublicDomainRoute("/s/survey123/preview")).toBe(true);
         expect(isPublicDomainRoute("/s/survey123/embed")).toBe(true);
         expect(isPublicDomainRoute("/s/survey123/thank-you")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty123/preview")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty123/embed")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty123/thank-you")).toBe(true);
       });
 
       test("should handle nested client API routes", () => {
@@ -529,6 +556,7 @@ describe("endpoint-validator", () => {
       test("should handle special characters in survey IDs", () => {
         expect(isPublicDomainRoute("/s/survey-123_test.v2")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt.token.with.dots")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty-123_test.v2")).toBe(true);
       });
     });
 
@@ -536,6 +564,7 @@ describe("endpoint-validator", () => {
       test("should properly validate malicious or injection-like URLs", () => {
         // SQL injection-like attempts
         expect(isPublicDomainRoute("/s/'; DROP TABLE users; --")).toBe(true); // Still valid survey ID format
+        expect(isPublicDomainRoute("/p/'; DROP TABLE users; --")).toBe(true);
         expect(isManagementApiRoute("/api/v1/management/'; DROP TABLE users; --")).toEqual({
           isManagementApi: true,
           authenticationMethod: AuthenticationMethod.ApiKey,
@@ -543,10 +572,12 @@ describe("endpoint-validator", () => {
 
         // Path traversal attempts
         expect(isPublicDomainRoute("/s/../../../etc/passwd")).toBe(true); // Still matches pattern
+        expect(isPublicDomainRoute("/p/../../../etc/passwd")).toBe(true);
         expect(isAuthProtectedRoute("/environments/../../../etc/passwd")).toBe(true);
 
         // XSS-like attempts
         expect(isPublicDomainRoute("/s/<script>alert('xss')</script>")).toBe(true);
+        expect(isPublicDomainRoute("/p/<script>alert('xss')</script>")).toBe(true);
         expect(isClientSideApiRoute("/api/v1/client/<script>alert('xss')</script>")).toEqual({
           isClientSideApi: true,
           isRateLimited: true,
@@ -556,6 +587,7 @@ describe("endpoint-validator", () => {
       test("should handle URL encoding", () => {
         expect(isPublicDomainRoute("/s/survey%20123")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt%2Etoken")).toBe(true);
+        expect(isPublicDomainRoute("/p/pretty%20123")).toBe(true);
         expect(isAuthProtectedRoute("/environments%2F123")).toBe(true);
         expect(isManagementApiRoute("/api/v1/management/test%20route")).toEqual({
           isManagementApi: true,
@@ -591,6 +623,7 @@ describe("endpoint-validator", () => {
         // These should not match due to case sensitivity
         expect(isPublicDomainRoute("/S/survey123")).toBe(false);
         expect(isPublicDomainRoute("/C/jwt-token")).toBe(false);
+        expect(isPublicDomainRoute("/P/pretty123")).toBe(false);
         expect(isClientSideApiRoute("/API/V1/CLIENT/test")).toEqual({
           isClientSideApi: false,
           isRateLimited: true,

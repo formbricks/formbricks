@@ -238,6 +238,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Options (Advanced)
   appendCssVariable("option-bg-color", styling.optionBgColor?.light ?? styling.inputColor?.light);
   appendCssVariable("option-label-color", styling.optionLabelColor?.light ?? styling.questionColor?.light);
+  if (styling.optionBorderColor?.light)
+    appendCssVariable("option-border-color", styling.optionBorderColor.light);
   if (styling.optionBorderRadius !== undefined)
     appendCssVariable("option-border-radius", formatDimension(styling.optionBorderRadius));
   if (styling.optionPaddingX !== undefined)
@@ -374,6 +376,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // --- Options ---
   if (styling.optionBorderRadius !== undefined)
     addRule("#fbjs .rounded-option", "  border-radius: var(--fb-option-border-radius) !important;\n");
+  if (styling.optionBorderColor?.light)
+    addRule("#fbjs .border-option-border", "  border-color: var(--fb-option-border-color) !important;\n");
   if (styling.optionBgColor?.light || styling.inputColor?.light)
     addRule("#fbjs .bg-option-bg", "  background-color: var(--fb-option-bg-color) !important;\n");
 

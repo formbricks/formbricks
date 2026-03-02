@@ -12,7 +12,7 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
 export const GET = async (request: NextRequest) =>
@@ -44,7 +44,9 @@ export const GET = async (request: NextRequest) =>
 
       environmentResponses.push(...res.data.data);
 
-      return responses.successResponse({ data: environmentResponses });
+      return responses.successResponse({
+        data: environmentResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) })),
+      });
     },
   });
 

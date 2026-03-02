@@ -168,7 +168,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       <DeleteDialog
         open={isDeleteMemberModalOpen}
         setOpen={setDeleteMemberModalOpen}
-        deleteWhat={`${memberName} ${t("environments.settings.general.from_your_organization")}`}
+        deleteWhat={t("environments.settings.general.from_your_organization", { memberName })}
         onDelete={handleDeleteMember}
         isDeleting={isDeleting}
         text={t("environments.settings.general.delete_member_confirmation")}
