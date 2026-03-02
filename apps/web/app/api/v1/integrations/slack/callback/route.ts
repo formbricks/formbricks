@@ -6,7 +6,7 @@ import {
 } from "@formbricks/types/integration/slack";
 import { responses } from "@/app/lib/api/response";
 import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 
@@ -56,6 +56,7 @@ export const GET = withV1ApiWrapper({
       code,
       client_id: SLACK_CLIENT_ID,
       client_secret: SLACK_CLIENT_SECRET,
+      redirect_uri: SLACK_REDIRECT_URI,
     };
     const formBody: string[] = [];
     for (const property in formData) {

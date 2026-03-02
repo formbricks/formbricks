@@ -228,7 +228,7 @@ export const ProjectSettings = ({
         </FormProvider>
       </div>
 
-      <div className="relative flex h-[30rem] w-1/2 flex-col items-center justify-center space-y-2 rounded-lg border bg-slate-200 shadow">
+      <div className="relative flex w-1/2 flex-col items-center justify-center space-y-2 rounded-lg border bg-slate-200 p-6 shadow">
         {logoUrl && (
           <Image
             src={logoUrl}
@@ -239,18 +239,16 @@ export const ProjectSettings = ({
           />
         )}
         <p className="text-sm text-slate-400">{t("common.preview")}</p>
-        <div className="z-0 h-3/4 w-3/4">
-          <SurveyInline
-            appUrl={publicDomain}
-            isPreviewMode={true}
-            survey={previewSurvey(projectName || "my Product", t)}
-            styling={previewStyling}
-            isBrandingEnabled={false}
-            languageCode="default"
-            onFileUpload={async (file) => file.name}
-            autoFocus={false}
-          />
-        </div>
+        <SurveyInline
+          appUrl={publicDomain}
+          isPreviewMode={true}
+          survey={previewSurvey(projectName || t("common.my_product"), t)}
+          styling={previewStyling}
+          isBrandingEnabled={false}
+          languageCode="default"
+          onFileUpload={async (file) => file.name}
+          autoFocus={false}
+        />
       </div>
       <CreateTeamModal
         open={createTeamModalOpen}

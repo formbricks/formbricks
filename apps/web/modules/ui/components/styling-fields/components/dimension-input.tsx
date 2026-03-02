@@ -32,7 +32,8 @@ export const DimensionInput = ({ form, name, label, description, placeholder }: 
         else if (value.endsWith("rem")) unit = "rem";
         else if (value.endsWith("em")) unit = "em";
       }
-      const numericValue = typeof value === "string" ? Number.parseFloat(value) : value;
+      const parsed = typeof value === "string" ? Number.parseFloat(value) : value;
+      const numericValue = typeof parsed === "number" && Number.isNaN(parsed) ? null : parsed;
 
       return (
         <FormItem className="space-y-1">

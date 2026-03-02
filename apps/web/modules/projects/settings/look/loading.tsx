@@ -52,7 +52,7 @@ export const ProjectLookSettingsLoading = () => {
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
                     <h2 className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.form_styling")}
+                      {t("environments.surveys.edit.survey_styling")}
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
                       {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
@@ -149,7 +149,7 @@ export const ProjectLookSettingsLoading = () => {
               <div className={cn("absolute bottom-3 h-16 w-16 rounded bg-slate-700 sm:right-3")}></div>
             </div>
           </div>
-          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed bg-slate-200 select-none">
+          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
             {t("common.loading")}
           </Button>
         </div>
@@ -159,7 +159,7 @@ export const ProjectLookSettingsLoading = () => {
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
         <div className="w-full items-center">
-          <div className="pointer-events-none flex cursor-not-allowed items-center space-x-2 select-none">
+          <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
             <Switch id="signature" checked={false} />
             <Label htmlFor="signature">{t("environments.workspace.look.show_powered_by_formbricks")}</Label>
           </div>
