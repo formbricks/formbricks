@@ -19,7 +19,11 @@ export const importCsvData = async (
     throw new InvalidInputError("Connector has no field mappings configured");
   }
 
-  const { records, skipped } = transformCsvRowsToFeedbackRecords(csvRows, connector.fieldMappings);
+  const { records, skipped } = transformCsvRowsToFeedbackRecords(
+    csvRows,
+    connector.fieldMappings,
+    connector.environmentId
+  );
 
   let successes = 0;
   let failures = 0;

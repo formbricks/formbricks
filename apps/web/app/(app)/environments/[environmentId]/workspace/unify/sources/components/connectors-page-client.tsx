@@ -159,7 +159,7 @@ export function ConnectorsSection({
             environmentId={environmentId}
           />
         }>
-        <UnifyConfigNavigation environmentId={environmentId} />
+        <UnifyConfigNavigation environmentId={environmentId} activeId="sources" />
       </PageHeader>
 
       <div className="space-y-6">

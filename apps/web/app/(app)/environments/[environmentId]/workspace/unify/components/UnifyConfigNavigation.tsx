@@ -19,7 +19,14 @@ export const UnifyConfigNavigation = ({
 
   const activeId = activeIdProp ?? "sources";
 
-  const navigation = [{ id: "sources", label: t("environments.unify.sources"), href: `${baseHref}/sources` }];
+  const navigation = [
+    { id: "sources", label: t("environments.unify.sources"), href: `${baseHref}/sources` },
+    {
+      id: "feedback-records",
+      label: t("environments.unify.feedback_records"),
+      href: `${baseHref}/feedback-records`,
+    },
+  ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };
