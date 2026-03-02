@@ -174,7 +174,6 @@ export function AdvancedChartBuilder({
                 type: ACTION.SET_TIME_DIMENSION,
                 payload: {
                   dimension: "FeedbackRecords.collectedAt",
-                  granularity: "day",
                   dateRange: "last 30 days",
                 },
               });

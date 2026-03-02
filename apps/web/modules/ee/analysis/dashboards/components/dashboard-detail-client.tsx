@@ -274,11 +274,11 @@ export function DashboardDetailClient({
       />
 
       <section>
-        {isEmpty ? (
-          <EmptyState text={t("environments.analysis.dashboards.no_data_message")} />
-        ) : (
-          <div ref={containerRef}>
-            {mounted && (
+        <div ref={containerRef} className="w-full">
+          {isEmpty ? (
+            <EmptyState text={t("environments.analysis.dashboards.no_data_message")} />
+          ) : (
+            mounted && (
               <ResponsiveGridLayout
                 width={width}
                 layouts={{ lg: layout }}
@@ -310,9 +310,9 @@ export function DashboardDetailClient({
                   </div>
                 ))}
               </ResponsiveGridLayout>
-            )}
-          </div>
-        )}
+            )
+          )}
+        </div>
       </section>
     </PageContentWrapper>
   );

@@ -56,7 +56,6 @@ export function TimeDimensionPanel({
     if (!timeDimension) {
       onTimeDimensionChange({
         dimension: "FeedbackRecords.collectedAt",
-        granularity: "day",
         dateRange: "last 30 days",
       });
       setPresetValue("last 30 days");

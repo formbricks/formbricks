@@ -48,6 +48,23 @@ describe("query-builder", () => {
       ]);
     });
 
+    test("adds time dimension without granularity (filter only)", () => {
+      const config: ChartBuilderState = {
+        selectedMeasures: ["FeedbackRecords.count"],
+        selectedDimensions: [],
+        filters: [],
+        filterLogic: "and",
+        timeDimension: {
+          dimension: "FeedbackRecords.collectedAt",
+          dateRange: "last 30 days",
+        },
+      };
+      const query = buildCubeQuery(config);
+      expect(query.timeDimensions).toEqual([
+        { dimension: "FeedbackRecords.collectedAt", dateRange: "last 30 days" },
+      ]);
+    });
+
     test("adds time dimension with Date array dateRange", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
@@ -158,6 +175,23 @@ describe("query-builder", () => {
       expect(state.timeDimension).toEqual({
         dimension: "FeedbackRecords.collectedAt",
         granularity: "day",
+        dateRange: "last 30 days",
+      });
+    });
+
+    test("parses time dimension without granularity (filter only)", () => {
+      const query = {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            dateRange: "last 30 days",
+          },
+        ],
+      };
+      const state = parseQueryToState(query);
+      expect(state.timeDimension).toEqual({
+        dimension: "FeedbackRecords.collectedAt",
         dateRange: "last 30 days",
       });
     });

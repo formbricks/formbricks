@@ -77,7 +77,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}
+          showLegend
           chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
           {dataKeys.map((key, i) => (
             <Bar
