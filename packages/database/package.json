@@ -52,7 +52,7 @@
     "@prisma/client": "6.14.0",
     "bcryptjs": "2.4.3",
     "uuid": "11.1.0",
-    "zod": "3.24.4",
+    "zod": "3.25.76",
     "zod-openapi": "4.2.4"
   },
   "devDependencies": {

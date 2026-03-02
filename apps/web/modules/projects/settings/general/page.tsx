@@ -1,5 +1,5 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -7,7 +7,6 @@ import { ProjectConfigNavigation } from "@/modules/projects/settings/components/
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import packageJson from "@/package.json";
 import { CustomScriptsForm } from "./components/custom-scripts-form";
 import { DeleteProject } from "./components/delete-project";
 import { EditProjectNameForm } from "./components/edit-project-name-form";
@@ -59,9 +58,6 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
       </SettingsCard>
       <div className="space-y-2">
         <IdBadge id={project.id} label={t("common.workspace_id")} variant="column" />
-        {!IS_FORMBRICKS_CLOUD && !IS_DEVELOPMENT && (
-          <IdBadge id={packageJson.version} label={t("common.formbricks_version")} variant="column" />
-        )}
       </div>
     </PageContentWrapper>
   );

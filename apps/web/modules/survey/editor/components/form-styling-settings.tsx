@@ -67,7 +67,7 @@ export const FormStylingSettings = ({
 
           <div>
             <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-              {t("environments.surveys.edit.form_styling")}
+              {t("environments.surveys.edit.survey_styling")}
             </p>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
               {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
