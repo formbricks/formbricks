@@ -1,21 +1,81 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import Script from "next/script";
+import { createElement, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
+import { TOrganization } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
-import {
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
-  type TCloudUpgradePriceLookupKey,
-} from "@/modules/billing/lib/stripe-catalog";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
-import { getCloudPricingData } from "../api/lib/constants";
+import {
+  createPricingTableCustomerSessionAction,
+  isSubscriptionCancelledAction,
+  manageSubscriptionAction,
+} from "../actions";
 import { BillingSlider } from "./billing-slider";
-import { PricingCard } from "./pricing-card";
+
+const STRIPE_MONTHLY_PRICING_TABLE_ID = "prctbl_1T6ZLKCng0KywbKlSUAiFqH5";
+const STRIPE_MONTHLY_PRICING_PUBLISHABLE_KEY =
+  "pk_test_51Sqt6uCng0KywbKlmnLtd8p2B1FfEAcM8O9IDiYdo1F2B6X7VYdMALhrpOU1vDB8SB3ikJshBeHz8Kj9iv89K6j3009S9mmY0h";
+const STRIPE_SUPPORTED_LOCALES = new Set([
+  "bg",
+  "cs",
+  "da",
+  "de",
+  "el",
+  "en",
+  "en-GB",
+  "es",
+  "es-419",
+  "et",
+  "fi",
+  "fil",
+  "fr",
+  "fr-CA",
+  "hr",
+  "hu",
+  "id",
+  "it",
+  "ja",
+  "ko",
+  "lt",
+  "lv",
+  "ms",
+  "mt",
+  "nb",
+  "nl",
+  "pl",
+  "pt",
+  "pt-BR",
+  "ro",
+  "ru",
+  "sk",
+  "sl",
+  "sv",
+  "th",
+  "tr",
+  "vi",
+  "zh",
+  "zh-HK",
+  "zh-TW",
+]);
+
+const getStripeLocaleOverride = (locale?: string): string | undefined => {
+  if (!locale) return undefined;
+
+  const normalizedLocale = locale.trim();
+  if (STRIPE_SUPPORTED_LOCALES.has(normalizedLocale)) {
+    return normalizedLocale;
+  }
+
+  const baseLocale = normalizedLocale.split("-")[0];
+  if (STRIPE_SUPPORTED_LOCALES.has(baseLocale)) {
+    return baseLocale;
+  }
+
+  return undefined;
+};
 
 interface PricingTableProps {
   organization: TOrganization;
@@ -57,19 +117,18 @@ export const PricingTable = ({
   projectCount,
   hasBillingRights,
 }: PricingTableProps) => {
-  const { t } = useTranslation();
-  const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
-    organization.billing.period ?? "monthly"
-  );
-
-  const handleMonthlyToggle = (period: TOrganizationBillingPeriod) => {
-    setPlanPeriod(period);
-  };
-
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
+  const [pricingTableCustomerSessionClientSecret, setPricingTableCustomerSessionClientSecret] = useState<
+    string | null
+  >(null);
 
   const currentCloudPlan = useMemo(() => getCurrentCloudPlan(organization), [organization]);
+  const stripeLocaleOverride = useMemo(
+    () => getStripeLocaleOverride(i18n.resolvedLanguage ?? i18n.language),
+    [i18n.language, i18n.resolvedLanguage]
+  );
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -83,6 +142,20 @@ export const PricingTable = ({
     checkSubscriptionStatus();
   }, [organization.id]);
 
+  useEffect(() => {
+    if (!hasBillingRights) {
+      setPricingTableCustomerSessionClientSecret(null);
+      return;
+    }
+
+    const loadPricingTableCustomerSession = async () => {
+      const response = await createPricingTableCustomerSessionAction({ environmentId });
+      setPricingTableCustomerSessionClientSecret(response?.data?.clientSecret ?? null);
+    };
+
+    loadPricingTableCustomerSession();
+  }, [environmentId, hasBillingRights]);
+
   const openCustomerPortal = async () => {
     const manageSubscriptionResponse = await manageSubscriptionAction({
       environmentId,
@@ -90,65 +163,6 @@ export const PricingTable = ({
     if (manageSubscriptionResponse?.data && typeof manageSubscriptionResponse.data === "string") {
       router.push(manageSubscriptionResponse.data);
     }
-  };
-
-  const upgradePlan = async (priceLookupKey: TCloudUpgradePriceLookupKey) => {
-    try {
-      const upgradePlanResponse = await upgradePlanAction({
-        environmentId,
-        priceLookupKey,
-      });
-
-      if (!upgradePlanResponse?.data) {
-        throw new Error(t("common.something_went_wrong_please_try_again"));
-      }
-
-      const { status, newPlan, url } = upgradePlanResponse.data;
-
-      if (status !== 200) {
-        throw new Error(t("common.something_went_wrong_please_try_again"));
-      }
-      if (!newPlan) {
-        toast.success(t("environments.settings.billing.plan_upgraded_successfully"));
-      } else if (newPlan && url) {
-        router.push(url);
-      } else {
-        throw new Error(t("common.something_went_wrong_please_try_again"));
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
-      }
-    }
-  };
-
-  const onUpgrade = async (planId: "hobby" | "pro" | "scale") => {
-    if (planId === "hobby") {
-      toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
-      return;
-    }
-
-    if (planId === "pro") {
-      await upgradePlan(
-        planPeriod === "monthly"
-          ? CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY
-          : CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY
-      );
-      return;
-    }
-
-    if (planId === "scale") {
-      await upgradePlan(
-        planPeriod === "monthly"
-          ? CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY
-          : CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_YEARLY
-      );
-      return;
-    }
-
-    toast.error(`${t("environments.settings.billing.unable_to_upgrade_plan")}: ${planId}`);
   };
 
   const responsesUnlimitedCheck =
@@ -251,46 +265,29 @@ export const PricingTable = ({
         </div>
 
         {hasBillingRights && (
-          <div className="mx-auto mb-12">
-            <div className="gap-x-2">
-              <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
-                <button
-                  aria-pressed={planPeriod === "monthly"}
-                  className={`flex-1 rounded-md px-4 py-0.5 text-center ${
-                    planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
-                  }`}
-                  onClick={() => handleMonthlyToggle("monthly")}>
-                  {t("environments.settings.billing.monthly")}
-                </button>
-                <button
-                  aria-pressed={planPeriod === "yearly"}
-                  className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
-                    planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
-                  }`}
-                  onClick={() => handleMonthlyToggle("yearly")}>
-                  {t("environments.settings.billing.annually")}
-                  <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    {t("environments.settings.billing.get_2_months_free")}
-                  </span>
-                </button>
-              </div>
-              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-3">
-                <div
-                  className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
-                  aria-hidden="true"
-                />
-                {getCloudPricingData(t).plans.map((plan) => (
-                  <PricingCard
-                    planPeriod={planPeriod}
-                    key={plan.id}
-                    plan={plan}
-                    onUpgrade={async () => {
-                      await onUpgrade(plan.id);
-                    }}
-                    currentPlan={currentCloudPlan}
-                    onManageSubscription={openCustomerPortal}
-                  />
-                ))}
+          <div className="mb-12 w-full">
+            <div className="w-full">
+              <div className="mx-auto w-full max-w-[1200px]">
+                <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
+                {createElement("stripe-pricing-table", {
+                  "pricing-table-id": STRIPE_MONTHLY_PRICING_TABLE_ID,
+                  "publishable-key": STRIPE_MONTHLY_PRICING_PUBLISHABLE_KEY,
+                  ...(stripeLocaleOverride
+                    ? {
+                        "__locale-override": stripeLocaleOverride,
+                      }
+                    : {}),
+                  ...(pricingTableCustomerSessionClientSecret
+                    ? {
+                        "customer-session-client-secret": pricingTableCustomerSessionClientSecret,
+                      }
+                    : {}),
+                  ...(!pricingTableCustomerSessionClientSecret
+                    ? {
+                        "client-reference-id": organization.id,
+                      }
+                    : {}),
+                })}
               </div>
             </div>
           </div>
