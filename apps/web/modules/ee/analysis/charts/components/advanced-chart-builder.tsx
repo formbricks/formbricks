@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { AdvancedChartPreview } from "@/modules/ee/analysis/charts/components/advanced-chart-preview";
-import { ChartBuilderGuide } from "@/modules/ee/analysis/charts/components/chart-builder-guide";
 import { ChartTypeSelector } from "@/modules/ee/analysis/charts/components/chart-type-selector";
 import { DimensionsPanel } from "@/modules/ee/analysis/charts/components/dimensions-panel";
 import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-panel";
@@ -132,7 +131,6 @@ export function AdvancedChartBuilder({
       <div className="mx-1 space-y-2">
         {!hidePreview && (
           <>
-            <ChartBuilderGuide />
             <ChartTypeSelector selectedChartType={chartType} onChartTypeSelect={() => {}} />
           </>
         )}
@@ -151,7 +149,7 @@ export function AdvancedChartBuilder({
             if (!checked) dispatch({ type: ACTION.SET_DIMENSIONS, payload: [] });
           }}
           htmlId="chart-dimensions-toggle"
-          title={t("environments.analysis.charts.dimensions")}
+          title={t("environments.analysis.charts.group_data")}
           description={t("environments.analysis.charts.dimensions_toggle_description")}
           customContainerClass="mt-2 px-0"
           childrenContainerClass="flex-col gap-3 p-4"
@@ -180,7 +178,7 @@ export function AdvancedChartBuilder({
             }
           }}
           htmlId="chart-time-dimension-toggle"
-          title={t("environments.analysis.charts.time_dimension")}
+          title={t("environments.analysis.charts.time_dimension_title")}
           description={t("environments.analysis.charts.time_dimension_toggle_description")}
           customContainerClass="mt-2 px-0"
           childrenContainerClass="flex-col gap-3 p-4"
@@ -213,7 +211,7 @@ export function AdvancedChartBuilder({
             }
           }}
           htmlId="chart-filters-toggle"
-          title={t("environments.analysis.charts.filters")}
+          title={t("environments.analysis.charts.filter_data")}
           description={t("environments.analysis.charts.filters_toggle_description")}
           customContainerClass="mt-2 px-0"
           childrenContainerClass="flex-col gap-3 p-4"
@@ -227,9 +225,11 @@ export function AdvancedChartBuilder({
           />
         </AdvancedOptionToggle>
 
-        <Button onClick={handleRunQuery} disabled={isLoading || !hasConfigChanged}>
-          {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.generate_chart")}
-        </Button>
+        <div className="flex justify-end">
+          <Button onClick={handleRunQuery} disabled={isLoading || !hasConfigChanged}>
+            {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.create_chart")}
+          </Button>
+        </div>
       </div>
 
       {!hidePreview && (

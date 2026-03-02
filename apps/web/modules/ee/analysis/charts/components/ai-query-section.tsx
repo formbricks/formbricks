@@ -1,6 +1,6 @@
 "use client";
 
-import { ActivityIcon } from "lucide-react";
+import { ActivityIcon, WandSparklesIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -47,36 +47,34 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex flex-col items-center gap-2 text-center">
         <div className="bg-brand-dark/10 flex h-8 w-8 items-center justify-center rounded-full">
           <ActivityIcon className="text-brand-dark h-5 w-5" />
         </div>
-        <div>
-          <h2 className="font-semibold text-gray-900">
-            {t("environments.analysis.charts.ai_query_section_title")}
-          </h2>
-          <p className="text-sm text-gray-500">
-            {t("environments.analysis.charts.ai_query_section_description")}
-          </p>
-        </div>
+        <h2 className="font-semibold text-gray-900">
+          {t("environments.analysis.charts.ai_query_section_title")}
+        </h2>
+        <p className="text-sm text-gray-500">
+          {t("environments.analysis.charts.ai_query_section_description")}
+        </p>
       </div>
 
-      <form className="flex gap-4" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <Input
           autoFocus
           placeholder={t("environments.analysis.charts.ai_query_placeholder")}
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
-          className="flex-1"
           maxLength={2000}
           disabled={isGenerating}
         />
         <Button
           type="submit"
+          variant="default"
           disabled={!userQuery.trim() || isGenerating}
-          loading={isGenerating}
-          className="bg-brand-dark hover:bg-brand-dark/90">
-          {t("common.generate")}
+          loading={isGenerating}>
+          <WandSparklesIcon className="h-4 w-4" />
+          {t("environments.analysis.charts.create_chart_with_ai")}
         </Button>
       </form>
     </div>

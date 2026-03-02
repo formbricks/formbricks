@@ -59,7 +59,7 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
 
   return (
     <>
-      <Button onClick={() => handleOpenChange(true)}>
+      <Button size="sm" onClick={() => handleOpenChange(true)}>
         <PlusIcon className="mr-2 h-4 w-4" />
         {t("environments.analysis.dashboards.create_dashboard")}
       </Button>
