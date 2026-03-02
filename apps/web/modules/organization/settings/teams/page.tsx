@@ -16,7 +16,7 @@ export const TeamsPage = async (props: { params: Promise<{ environmentId: string
 
   const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan, organization.id);
 
   // Check if user has standard user management access (owner/manager)
   const hasStandardUserManagementAccess = getUserManagementAccess(

@@ -15,7 +15,7 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
 
   const { organization, session, project, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan, organization.id);
 
   const user = await getUser(session.user.id);
 

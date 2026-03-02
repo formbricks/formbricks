@@ -298,7 +298,7 @@ export const getEnvironmentLayoutData = reactCache(
 
     // Fetch remaining data in parallel
     const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
-      getAccessControlPermission(organization.billing.plan), // No DB query (logic only)
+      getAccessControlPermission(organization.billing.plan, organization.id),
       getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);

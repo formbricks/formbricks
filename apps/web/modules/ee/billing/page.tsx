@@ -51,8 +51,8 @@ export const PricingPage = async (props) => {
         responseCount={responseCount}
         projectCount={projectCount}
         hasBillingRights={hasBillingRights}
-        cloudStripePublishableKey={env.CLOUD_STRIPE_PUBLISHABLE_KEY ?? null}
-        cloudStripePricingTableId={env.CLOUD_STRIPE_PRICING_TABLE_ID ?? null}
+        stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
+        stripePricingTableId={env.STRIPE_PRICING_TABLE_ID ?? null}
       />
     </PageContentWrapper>
   );

@@ -85,8 +85,8 @@ export const env = createEnv({
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
-    CLOUD_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-    CLOUD_STRIPE_PRICING_TABLE_ID: z.string().optional(),
+    STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+    STRIPE_PRICING_TABLE_ID: z.string().optional(),
     PUBLIC_URL: z
       .string()
       .url()
@@ -204,8 +204,8 @@ export const env = createEnv({
     SMTP_AUTHENTICATED: process.env.SMTP_AUTHENTICATED,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-    CLOUD_STRIPE_PUBLISHABLE_KEY: process.env.CLOUD_STRIPE_PUBLISHABLE_KEY,
-    CLOUD_STRIPE_PRICING_TABLE_ID: process.env.CLOUD_STRIPE_PRICING_TABLE_ID,
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+    STRIPE_PRICING_TABLE_ID: process.env.STRIPE_PRICING_TABLE_ID,
     PUBLIC_URL: process.env.PUBLIC_URL,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,

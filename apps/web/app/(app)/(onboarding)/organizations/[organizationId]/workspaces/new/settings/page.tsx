@@ -42,7 +42,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 
-  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan, organization.id);
 
   if (!organizationTeams) {
     throw new Error(t("common.organization_teams_not_found"));
@@ -69,7 +69,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
       />
       {projects.length >= 1 && (
         <Button
-          className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={"/"}>

@@ -80,8 +80,8 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   hasBillingRights: boolean;
-  cloudStripePublishableKey: string | null;
-  cloudStripePricingTableId: string | null;
+  stripePublishableKey: string | null;
+  stripePricingTableId: string | null;
 }
 
 const getCurrentCloudPlan = (
@@ -115,8 +115,8 @@ export const PricingTable = ({
   responseCount,
   projectCount,
   hasBillingRights,
-  cloudStripePublishableKey,
-  cloudStripePricingTableId,
+  stripePublishableKey,
+  stripePricingTableId,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -126,6 +126,10 @@ export const PricingTable = ({
   >(null);
 
   const currentCloudPlan = useMemo(() => getCurrentCloudPlan(organization), [organization]);
+  const showPricingTable =
+    hasBillingRights && currentCloudPlan === "hobby" && !!stripePublishableKey && !!stripePricingTableId;
+  const canManageSubscription =
+    hasBillingRights && currentCloudPlan !== "hobby" && !!organization.billing.stripeCustomerId;
   const stripeLocaleOverride = useMemo(
     () => getStripeLocaleOverride(i18n.resolvedLanguage ?? i18n.language),
     [i18n.language, i18n.resolvedLanguage]
@@ -144,7 +148,7 @@ export const PricingTable = ({
   }, [organization.id]);
 
   useEffect(() => {
-    if (!hasBillingRights) {
+    if (!showPricingTable) {
       setPricingTableCustomerSessionClientSecret(null);
       return;
     }
@@ -155,7 +159,7 @@ export const PricingTable = ({
     };
 
     loadPricingTableCustomerSession();
-  }, [environmentId, hasBillingRights]);
+  }, [environmentId, showPricingTable]);
 
   const openCustomerPortal = async () => {
     const manageSubscriptionResponse = await manageSubscriptionAction({
@@ -199,14 +203,14 @@ export const PricingTable = ({
               )}
             </h2>
 
-            {organization.billing.stripeCustomerId && currentCloudPlan === "hobby" && (
+            {canManageSubscription && (
               <div className="flex w-full justify-end">
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="default"
                   className="justify-center py-2 shadow-sm"
                   onClick={openCustomerPortal}>
-                  {t("environments.settings.billing.manage_card_details")}
+                  {t("environments.settings.billing.manage_subscription")}
                 </Button>
               </div>
             )}
@@ -265,14 +269,14 @@ export const PricingTable = ({
           </div>
         </div>
 
-        {hasBillingRights && cloudStripePublishableKey && cloudStripePricingTableId && (
+        {showPricingTable && (
           <div className="mb-12 w-full">
             <div className="w-full">
               <div className="mx-auto w-full max-w-[1200px]">
                 <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
                 {createElement("stripe-pricing-table", {
-                  "pricing-table-id": cloudStripePricingTableId,
-                  "publishable-key": cloudStripePublishableKey,
+                  "pricing-table-id": stripePricingTableId,
+                  "publishable-key": stripePublishableKey,
                   ...(stripeLocaleOverride
                     ? {
                         "__locale-override": stripeLocaleOverride,

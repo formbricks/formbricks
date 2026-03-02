@@ -12,15 +12,13 @@ import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/ent
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
-// On Cloud: requires active license and non-FREE plan
+// On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
 // On Self-hosted: requires active license and feature enabled
 const getFeaturePermission = async (
   billingPlan: Organization["billing"]["plan"],
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "removeBranding" | "whitelabel">,
   organizationId?: string
 ): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
-
   if (IS_FORMBRICKS_CLOUD) {
     if (organizationId) {
       return hasCloudEntitlementWithLicenseGuard(
@@ -28,27 +26,21 @@ const getFeaturePermission = async (
         CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING
       );
     }
-    return license.active && billingPlan !== PROJECT_FEATURE_KEYS.FREE;
+    return billingPlan !== PROJECT_FEATURE_KEYS.FREE;
   } else {
+    const license = await getEnterpriseLicense();
     return license.active && !!license.features?.[featureKey];
   }
 };
 
 // Helper function for enterprise features that require CUSTOM plan on Cloud
-// On Cloud: requires active license AND feature enabled in license AND CUSTOM billing plan
+// On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
 // On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
   billingPlan: Organization["billing"]["plan"],
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">,
   organizationId?: string
 ): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
-
-  if (!license.active) return false;
-
-  const isFeatureEnabled = license.features?.[featureKey] ?? false;
-  if (!isFeatureEnabled) return false;
-
   if (IS_FORMBRICKS_CLOUD) {
     if (organizationId) {
       const featureLookupKeyMap: Record<string, string> = {
@@ -64,6 +56,10 @@ const getCustomPlanFeaturePermission = async (
     return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
   }
 
+  const license = await getEnterpriseLicense();
+  if (!license.active) return false;
+  const isFeatureEnabled = license.features?.[featureKey] ?? false;
+  if (!isFeatureEnabled) return false;
   return true;
 };
 
@@ -148,8 +144,6 @@ export const getIsSpamProtectionEnabled = async (
 ): Promise<boolean> => {
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
-  const license = await getEnterpriseLicense();
-
   if (IS_FORMBRICKS_CLOUD) {
     if (organizationId) {
       return hasCloudEntitlementWithLicenseGuard(
@@ -157,11 +151,10 @@ export const getIsSpamProtectionEnabled = async (
         CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.SPAM_PROTECTION
       );
     }
-    return (
-      license.active && !!license.features?.spamProtection && billingPlan === PROJECT_FEATURE_KEYS.CUSTOM
-    );
+    return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
   }
 
+  const license = await getEnterpriseLicense();
   return license.active && !!license.features?.spamProtection;
 };
 

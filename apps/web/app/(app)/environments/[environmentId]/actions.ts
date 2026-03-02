@@ -61,7 +61,10 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
       }
 
       if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-        const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+        const isAccessControlAllowed = await getAccessControlPermission(
+          organization.billing.plan,
+          organization.id
+        );
 
         if (!isAccessControlAllowed) {
           throw new OperationNotAllowedError("You do not have permission to manage roles");

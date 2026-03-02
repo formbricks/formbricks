@@ -29,7 +29,7 @@ const checkQuotasEnabled = async (organizationId: string) => {
   if (!organizationBilling) {
     throw new Error("Organization billing not found");
   }
-  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan, organizationId);
   if (!isQuotasAllowed) {
     throw new OperationNotAllowedError("Quotas are not enabled");
   }
