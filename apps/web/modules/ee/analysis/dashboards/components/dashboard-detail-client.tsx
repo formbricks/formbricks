@@ -90,33 +90,31 @@ const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): T
   return changed ? updated : widgets;
 };
 
-const MemoizedWidgetContent = memo(
-  ({
-    widget,
-    dataPromise,
-  }: Readonly<{
-    widget: TDashboardWidget;
-    dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
-  }>) => {
-    if (widget.chart && dataPromise) {
-      return (
-        <Suspense
-          fallback={
-            <Delay ms={200}>
-              <DashboardWidgetSkeleton />
-            </Delay>
-          }>
-          <DashboardWidgetData
-            dataPromise={dataPromise}
-            chartType={widget.chart.type}
-            query={widget.chart.query}
-          />
-        </Suspense>
-      );
-    }
-    return <DashboardWidgetSkeleton />;
+const MemoizedWidgetContent = memo(function WidgetContent({
+  widget,
+  dataPromise,
+}: Readonly<{
+  widget: TDashboardWidget;
+  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
+}>) {
+  if (widget.chart && dataPromise) {
+    return (
+      <Suspense
+        fallback={
+          <Delay ms={200}>
+            <DashboardWidgetSkeleton />
+          </Delay>
+        }>
+        <DashboardWidgetData
+          dataPromise={dataPromise}
+          chartType={widget.chart.type}
+          query={widget.chart.query}
+        />
+      </Suspense>
+    );
   }
-);
+  return <DashboardWidgetSkeleton />;
+});
 
 const MemoizedWidgetItem = memo(function WidgetItem({
   widget,
