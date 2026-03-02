@@ -227,6 +227,7 @@
     "failed_to_copy_to_clipboard": "Error al copiar al portapapeles",
     "failed_to_load_organizations": "Error al cargar organizaciones",
     "failed_to_load_workspaces": "Error al cargar los proyectos",
+    "failed_to_parse_csv": "Error al analizar el CSV",
     "finish": "Finalizar",
     "follow_these": "Sigue estos",
     "formbricks_version": "Versión de Formbricks",
@@ -2076,7 +2077,7 @@
       "enter_value": "Introduce un valor...",
       "enum": "enum",
       "feedback_date": "Fecha actual",
-      "feedback_record_fields": "Campos de registro de feedback",
+      "feedback_record_fields": "Campos de registro de comentarios",
       "formbricks_surveys": "Formbricks Surveys",
       "historical_import_complete": "Importación completada: {successes} correctas, {failures} fallidas, {skipped} omitidas (sin datos)",
       "import_csv_data": "Importar datos CSV",
@@ -2127,7 +2128,7 @@
       "unify_feedback": "Unificar feedback",
       "update_mapping_description": "Actualiza la configuración de mapeo para esta fuente.",
       "updated_at": "Actualizado el",
-      "upload_csv_data_description": "Sube un archivo CSV para importar datos de feedback.",
+      "upload_csv_data_description": "Sube un archivo CSV para importar datos de comentarios.",
       "upload_csv_file": "Subir archivo CSV"
     },
     "workspace": {

@@ -77,6 +77,25 @@ export function ConnectorRowDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
+            {connector.type === "csv" && (
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsCsvImportDialogOpen(true);
+                    }}>
+                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
+                    {t("environments.unify.import_csv_data")}
+                  </button>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
             <DropdownMenuItem>
               <button
                 type="button"
@@ -118,25 +137,6 @@ export function ConnectorRowDropdown({
                 {isActive ? t("common.disable") : t("common.enable")}
               </button>
             </DropdownMenuItem>
-
-            {connector.type === "csv" && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    className="flex w-full items-center"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      setIsCsvImportDialogOpen(true);
-                    }}>
-                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
-                    {t("environments.unify.import_csv_data")}
-                  </button>
-                </DropdownMenuItem>
-              </>
-            )}
 
             <DropdownMenuItem>
               <button

@@ -227,6 +227,7 @@
     "failed_to_copy_to_clipboard": "Nu s-a reușit copierea în clipboard",
     "failed_to_load_organizations": "Nu s-a reușit încărcarea organizațiilor",
     "failed_to_load_workspaces": "Nu s-au putut încărca workspaces",
+    "failed_to_parse_csv": "Nu s-a putut procesa fișierul CSV",
     "finish": "Finalizează",
     "follow_these": "Urmați acestea",
     "formbricks_version": "Versiunea Formbricks",
@@ -2127,7 +2128,7 @@
       "unify_feedback": "Unify Feedback",
       "update_mapping_description": "Actualizează configurația de mapare pentru această sursă.",
       "updated_at": "Actualizat la",
-      "upload_csv_data_description": "Încarcă un fișier CSV pentru a importa datele de feedback.",
+      "upload_csv_data_description": "Încarcă un fișier CSV pentru a importa date de feedback.",
       "upload_csv_file": "Încarcă fișier CSV"
     },
     "workspace": {

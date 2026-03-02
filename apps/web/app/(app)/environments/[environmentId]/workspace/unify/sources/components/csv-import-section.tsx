@@ -5,12 +5,13 @@ import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { validateCsvFile } from "@/app/(app)/environments/[environmentId]/workspace/unify/sources/utils";
 import { importCsvDataAction } from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { MAX_CSV_VALUES, createFeedbackCSVDataSchema } from "../types";
+import { createFeedbackCSVDataSchema } from "../types";
 
 interface CsvImportSectionProps {
   connectorId: string;
@@ -29,18 +30,10 @@ export function CsvImportSection({ connectorId, environmentId, onImportComplete 
   const processCSVFile = (file: File) => {
     setCsvError("");
 
-    if (!file.name.endsWith(".csv")) {
-      setCsvError(t("environments.unify.csv_files_only"));
-      return;
-    }
+    const validateCSVFileResult = validateCsvFile(file, t);
 
-    if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
-      setCsvError(t("environments.unify.csv_files_only"));
-      return;
-    }
-
-    if (file.size > MAX_CSV_VALUES.FILE_SIZE) {
-      setCsvError(t("environments.unify.csv_file_too_large"));
+    if (!validateCSVFileResult.valid) {
+      setCsvError(validateCSVFileResult.error);
       return;
     }
 
@@ -60,7 +53,7 @@ export function CsvImportSection({ connectorId, environmentId, onImportComplete 
         setRowCount(result.data.length);
       })
       .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : "Failed to parse CSV";
+        const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
         setCsvError(message);
       });
   };

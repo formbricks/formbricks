@@ -227,6 +227,7 @@
     "failed_to_copy_to_clipboard": "Échec de la copie dans le presse-papiers",
     "failed_to_load_organizations": "Échec du chargement des organisations",
     "failed_to_load_workspaces": "Échec du chargement des projets",
+    "failed_to_parse_csv": "Échec de l'analyse du CSV",
     "finish": "Terminer",
     "follow_these": "Suivez ceci",
     "formbricks_version": "Version de Formbricks",
