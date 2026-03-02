@@ -82,7 +82,8 @@ const mockOrganization: TOrganization = {
     },
     periodStart: new Date(),
   },
-  isAIEnabled: false,
+  isAISmartToolsEnabled: false,
+  isAIDataAnalysisEnabled: false,
 };
 
 const mockSurveys: TSurvey[] = [

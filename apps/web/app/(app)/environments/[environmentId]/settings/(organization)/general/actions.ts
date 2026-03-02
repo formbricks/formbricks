@@ -53,7 +53,7 @@ export const updateOrganizationNameAction = authenticatedActionClient
 
 const ZUpdateOrganizationAISettingsAction = z.object({
   organizationId: ZId,
-  data: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+  data: ZOrganizationUpdateInput.pick({ isAISmartToolsEnabled: true, isAIDataAnalysisEnabled: true }),
 });
 
 export const updateOrganizationAISettingsAction = authenticatedActionClient
@@ -75,7 +75,10 @@ export const updateOrganizationAISettingsAction = authenticatedActionClient
           access: [
             {
               type: "organization",
-              schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+              schema: ZOrganizationUpdateInput.pick({
+                isAISmartToolsEnabled: true,
+                isAIDataAnalysisEnabled: true,
+              }),
               data: parsedInput.data,
               roles: ["owner", "manager"],
             },

@@ -26,12 +26,15 @@ export const AISettingsToggle = ({ organization, membershipRole }: Readonly<AISe
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const canEdit = isOwner || isManager;
 
-  const handleSwitchChange = async (checked: boolean) => {
+  const handleToggle = async (
+    field: "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled",
+    checked: boolean
+  ) => {
     setIsLoading(true);
     try {
       const response = await updateOrganizationAISettingsAction({
         organizationId: organization.id,
-        data: { isAIEnabled: checked },
+        data: { [field]: checked },
       });
 
       if (response?.data) {
@@ -50,16 +53,42 @@ export const AISettingsToggle = ({ organization, membershipRole }: Readonly<AISe
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="ai-settings-toggle">{t("environments.settings.general.ai_enabled")}</Label>
+      <div className="flex items-start space-x-2">
         <Switch
-          id="ai-settings-toggle"
-          aria-label={t("environments.settings.general.ai_enabled")}
-          checked={organization.isAIEnabled}
+          id="ai-smart-tools-toggle"
+          className="mt-0.5"
+          checked={organization.isAISmartToolsEnabled}
           disabled={isLoading || !canEdit}
-          onCheckedChange={handleSwitchChange}
+          onCheckedChange={(checked) => handleToggle("isAISmartToolsEnabled", checked)}
         />
+        <div>
+          <Label htmlFor="ai-smart-tools-toggle">
+            {t("environments.settings.general.ai_smart_tools_enabled")}
+          </Label>
+          <p className="text-xs text-slate-500">
+            {t("environments.settings.general.ai_smart_tools_enabled_description")}
+          </p>
+        </div>
       </div>
+
+      <div className="flex items-start space-x-2">
+        <Switch
+          id="ai-data-analysis-toggle"
+          className="mt-0.5"
+          checked={organization.isAIDataAnalysisEnabled}
+          disabled={isLoading || !canEdit}
+          onCheckedChange={(checked) => handleToggle("isAIDataAnalysisEnabled", checked)}
+        />
+        <div>
+          <Label htmlFor="ai-data-analysis-toggle">
+            {t("environments.settings.general.ai_data_analysis_enabled")}
+          </Label>
+          <p className="text-xs text-slate-500">
+            {t("environments.settings.general.ai_data_analysis_enabled_description")}
+          </p>
+        </div>
+      </div>
+
       {!canEdit && (
         <Alert variant="warning">
           <AlertDescription>

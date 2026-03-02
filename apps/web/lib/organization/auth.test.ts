@@ -40,7 +40,8 @@ describe("auth", () => {
             },
             periodStart: new Date(),
           },
-          isAIEnabled: false,
+          isAISmartToolsEnabled: false,
+          isAIDataAnalysisEnabled: false,
         },
       ];
       vi.mocked(getOrganizationsByUserId).mockResolvedValue(mockOrganizations);

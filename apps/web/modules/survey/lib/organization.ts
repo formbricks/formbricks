@@ -29,14 +29,17 @@ export const getOrganizationIdFromEnvironmentId = reactCache(
 );
 
 export const getOrganizationAIKeys = reactCache(
-  async (organizationId: string): Promise<Pick<Organization, "isAIEnabled" | "billing"> | null> => {
+  async (
+    organizationId: string
+  ): Promise<Pick<Organization, "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled" | "billing"> | null> => {
     try {
       const organization = await prisma.organization.findUnique({
         where: {
           id: organizationId,
         },
         select: {
-          isAIEnabled: true,
+          isAISmartToolsEnabled: true,
+          isAIDataAnalysisEnabled: true,
           billing: true,
         },
       });

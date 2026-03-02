@@ -173,7 +173,8 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                 updatedAt: true,
                 name: true,
                 billing: true,
-                isAIEnabled: true,
+                isAISmartToolsEnabled: true,
+                isAIDataAnalysisEnabled: true,
                 whitelabel: true,
                 // Current user's membership only (filtered at DB level)
                 memberships: {
@@ -232,7 +233,8 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         updatedAt: data.project.organization.updatedAt,
         name: data.project.organization.name,
         billing: data.project.organization.billing,
-        isAIEnabled: data.project.organization.isAIEnabled,
+        isAISmartToolsEnabled: data.project.organization.isAISmartToolsEnabled,
+        isAIDataAnalysisEnabled: data.project.organization.isAIDataAnalysisEnabled,
         whitelabel: data.project.organization.whitelabel,
       },
       environments: data.project.environments,

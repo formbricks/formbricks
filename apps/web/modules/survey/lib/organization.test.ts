@@ -82,8 +82,12 @@ describe("getOrganizationAIKeys", () => {
   });
 
   const mockOrgId = "org_test789";
-  const mockOrganizationData: Pick<Organization, "isAIEnabled" | "billing"> = {
-    isAIEnabled: true,
+  const mockOrganizationData: Pick<
+    Organization,
+    "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled" | "billing"
+  > = {
+    isAISmartToolsEnabled: true,
+    isAIDataAnalysisEnabled: true,
     billing: {
       plan: "free",
       stripeCustomerId: null,
@@ -109,7 +113,8 @@ describe("getOrganizationAIKeys", () => {
         id: mockOrgId,
       },
       select: {
-        isAIEnabled: true,
+        isAISmartToolsEnabled: true,
+        isAIDataAnalysisEnabled: true,
         billing: true,
       },
     });
