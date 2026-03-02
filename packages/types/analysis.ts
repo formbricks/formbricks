@@ -10,26 +10,30 @@ const ZCubeTimeDimension = z.object({
   granularity: z.enum(["second", "minute", "hour", "day", "week", "month", "quarter", "year"]).optional(),
 });
 
+export type TTimeDimension = z.infer<typeof ZCubeTimeDimension>;
+
 const ZCubeMemberFilter = z.object({
   member: z.string(),
   operator: z.string(),
   values: z.array(z.string()).optional(),
 });
 
-type TCubeFilter = z.infer<typeof ZCubeMemberFilter> | { and: TCubeFilter[] } | { or: TCubeFilter[] };
+export type TMemberFilter = z.infer<typeof ZCubeMemberFilter>;
 
-const ZCubeFilter: z.ZodType<TCubeFilter> = z.union([
+const ZCubeLogicalFilter: z.ZodType = z.union([
   ZCubeMemberFilter,
-  z.object({ and: z.lazy(() => z.array(ZCubeFilter)) }),
-  z.object({ or: z.lazy(() => z.array(ZCubeFilter)) }),
+  z.object({ and: z.array(z.lazy(() => ZCubeLogicalFilter)) }),
+  z.object({ or: z.array(z.lazy(() => ZCubeLogicalFilter)) }),
 ]);
+
+export type TCubeFilter = TMemberFilter | { and: TCubeFilter[] } | { or: TCubeFilter[] };
 
 export const ZChartQuery = z.object({
   measures: z.array(z.string()).optional(),
   dimensions: z.array(z.string()).optional(),
   segments: z.array(z.string()).optional(),
   timeDimensions: z.array(ZCubeTimeDimension).optional(),
-  filters: z.array(ZCubeFilter).optional(),
+  filters: z.array(ZCubeLogicalFilter).optional(),
   order: z
     .union([z.array(z.tuple([z.string(), z.enum(["asc", "desc"])])), z.record(z.enum(["asc", "desc"]))])
     .optional(),

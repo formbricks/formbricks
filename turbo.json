@@ -207,6 +207,7 @@
         "NEXTAUTH_SECRET",
         "NEXTAUTH_URL",
         "NODE_ENV",
+        "OPENAI_API_KEY",
         "npm_package_version",
         "OIDC_CLIENT_ID",
         "OIDC_CLIENT_SECRET",
@@ -284,6 +285,7 @@
       "outputs": []
     },
     "db:seed": {
+      "cache": false,
       "env": ["ALLOW_SEED"],
       "outputs": []
     },

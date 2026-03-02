@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
-import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/dashboard";
 
-export const ZChartType = z.enum(["area", "bar", "line", "pie", "big_number"]);
+export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number"] as const;
+export const ZChartType = z.enum(CHART_TYPE_IDS);
 export type TChartType = z.infer<typeof ZChartType>;
 
 // ── Chart input schemas ─────────────────────────────────────────────────────
@@ -27,19 +28,30 @@ export type TChartUpdateInput = z.infer<typeof ZChartUpdateInput>;
 
 // ── Chart output type (matches selectChart) ─────────────────────────────────
 
-export type TChart = {
-  id: string;
-  name: string;
-  type: string;
-  query: unknown;
-  config: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export const ZChart = z.object({
+  id: ZId,
+  name: z.string(),
+  type: z.string(),
+  query: ZChartQuery,
+  config: ZChartConfig,
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+export type TChart = z.infer<typeof ZChart>;
 
-export type TChartWithWidgets = TChart & {
-  widgets: { dashboardId: string }[];
-};
+export const ZChartWithCreator = ZChart.extend({
+  creator: z
+    .object({
+      name: z.string().nullable(),
+    })
+    .nullable(),
+});
+export type TChartWithCreator = z.infer<typeof ZChartWithCreator>;
+
+export const ZChartWithWidgets = ZChart.extend({
+  widgets: z.array(z.object({ dashboardId: ZId })),
+});
+export type TChartWithWidgets = z.infer<typeof ZChartWithWidgets>;
 
 // ── Dashboard input schemas ─────────────────────────────────────────────────
 
@@ -83,3 +95,15 @@ export const ZAddWidgetInput = z.object({
   layout: ZWidgetLayout,
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
+
+// ── Charts UI (query execution, AI response) ─────────────────────────────────
+
+/** Row from Cube.js tablePivot - keys are measure/dimension names, values are primitives */
+export type TChartDataRow = Record<string, string | number | null | boolean | undefined>;
+
+export interface AnalyticsResponse {
+  query: z.infer<typeof ZChartQuery>;
+  chartType: TChartType;
+  data?: TChartDataRow[];
+  error?: string;
+}
