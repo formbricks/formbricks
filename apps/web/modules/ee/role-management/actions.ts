@@ -24,7 +24,10 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
     throw new Error("Organization not found");
   }
 
-  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan, organizationId);
+  const isAccessControlAllowed = await getAccessControlPermission({
+    billingPlan: organization.billing.plan,
+    organizationId: organizationId,
+  });
   if (!isAccessControlAllowed) {
     throw new OperationNotAllowedError("Role management is not allowed for this organization");
   }

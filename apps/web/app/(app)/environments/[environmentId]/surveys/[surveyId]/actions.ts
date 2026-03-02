@@ -89,7 +89,10 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan, organizationId);
+    const isQuotasAllowed = await getIsQuotasEnabled({
+      billingPlan: organizationBilling.plan,
+      organizationId: organizationId,
+    });
 
     const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
       getTagsByEnvironmentId(survey.environmentId),
@@ -115,10 +118,10 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
     throw new ResourceNotFoundError("Organization not found", organizationId);
   }
 
-  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(
-    organization.billing.plan,
-    organizationId
-  );
+  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission({
+    billingPlan: organization.billing.plan,
+    organizationId: organizationId,
+  });
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
   }

@@ -19,15 +19,20 @@ vi.mock("@/modules/billing/lib/feature-access", () => ({
   hasCloudEntitlementWithLicenseGuard: vi.fn(),
 }));
 
-vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: true,
-  PROJECT_FEATURE_KEYS: {
-    FREE: "free",
-    PRO: "pro",
-    ENTERPRISE: "enterprise",
-    SCALE: "scale",
-  },
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    IS_FORMBRICKS_CLOUD: true,
+    PROJECT_FEATURE_KEYS: {
+      ...actual.PROJECT_FEATURE_KEYS,
+      FREE: "free",
+      PRO: "pro",
+      ENTERPRISE: "enterprise",
+      SCALE: "scale",
+    },
+  };
+});
 
 describe("checkSpamProtectionPermission", () => {
   const mockOrganizationId = "mock-organization-id";
@@ -68,40 +73,15 @@ describe("checkSpamProtectionPermission", () => {
 });
 
 describe("getExternalUrlsPermission - Formbricks Cloud", () => {
-  test("should return false for free plan in Formbricks Cloud", async () => {
-    const result = await getExternalUrlsPermission("free");
-    expect(result).toBe(false);
-  });
-
-  test("should return true for pro plan in Formbricks Cloud", async () => {
-    const result = await getExternalUrlsPermission("pro");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for enterprise plan in Formbricks Cloud", async () => {
-    const result = await getExternalUrlsPermission("enterprise");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for scale plan in Formbricks Cloud", async () => {
-    const result = await getExternalUrlsPermission("scale");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for any non-free plan string in Formbricks Cloud", async () => {
-    const result = await getExternalUrlsPermission("custom-plan");
-    expect(result).toBe(true);
-  });
-
-  test("should return true when org-aware entitlement checks return true", async () => {
+  test("should return true when both entitlement checks return true", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValue(true);
-    const result = await getExternalUrlsPermission("free", "org_123");
+    const result = await getExternalUrlsPermission({ billingPlan: "free", organizationId: "org_123" });
     expect(result).toBe(true);
   });
 
-  test("should return false when one org-aware entitlement check fails", async () => {
+  test("should return false when one entitlement check fails", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
-    const result = await getExternalUrlsPermission("free", "org_123");
+    const result = await getExternalUrlsPermission({ billingPlan: "free", organizationId: "org_123" });
     expect(result).toBe(false);
   });
 });
@@ -112,7 +92,7 @@ describe("getExternalUrlsPermission - Self-hosted", () => {
     vi.resetModules();
   });
 
-  test("should return true for free plan in self-hosted", async () => {
+  test("should return true in self-hosted deployments", async () => {
     vi.doMock("@/lib/constants", () => ({
       IS_FORMBRICKS_CLOUD: false,
       PROJECT_FEATURE_KEYS: {
@@ -124,71 +104,10 @@ describe("getExternalUrlsPermission - Self-hosted", () => {
     }));
 
     const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
-    const result = await getExternalUrlsPermissionSelfHosted("free");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for pro plan in self-hosted", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      IS_FORMBRICKS_CLOUD: false,
-      PROJECT_FEATURE_KEYS: {
-        FREE: "free",
-        PRO: "pro",
-        ENTERPRISE: "enterprise",
-        SCALE: "scale",
-      },
-    }));
-
-    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
-    const result = await getExternalUrlsPermissionSelfHosted("pro");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for enterprise plan in self-hosted", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      IS_FORMBRICKS_CLOUD: false,
-      PROJECT_FEATURE_KEYS: {
-        FREE: "free",
-        PRO: "pro",
-        ENTERPRISE: "enterprise",
-        SCALE: "scale",
-      },
-    }));
-
-    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
-    const result = await getExternalUrlsPermissionSelfHosted("enterprise");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for scale plan in self-hosted", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      IS_FORMBRICKS_CLOUD: false,
-      PROJECT_FEATURE_KEYS: {
-        FREE: "free",
-        PRO: "pro",
-        ENTERPRISE: "enterprise",
-        SCALE: "scale",
-      },
-    }));
-
-    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
-    const result = await getExternalUrlsPermissionSelfHosted("scale");
-    expect(result).toBe(true);
-  });
-
-  test("should return true for any plan in self-hosted", async () => {
-    vi.doMock("@/lib/constants", () => ({
-      IS_FORMBRICKS_CLOUD: false,
-      PROJECT_FEATURE_KEYS: {
-        FREE: "free",
-        PRO: "pro",
-        ENTERPRISE: "enterprise",
-        SCALE: "scale",
-      },
-    }));
-
-    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
-    const result = await getExternalUrlsPermissionSelfHosted("custom-plan");
+    const result = await getExternalUrlsPermissionSelfHosted({
+      billingPlan: "free",
+      organizationId: "org_123",
+    });
     expect(result).toBe(true);
   });
 });

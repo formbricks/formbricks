@@ -28,7 +28,10 @@ export const checkExternalUrlsPermission = async (
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isExternalUrlsAllowed = await getExternalUrlsPermission(organizationBilling.plan, organizationId);
+  const isExternalUrlsAllowed = await getExternalUrlsPermission({
+    billingPlan: organizationBilling.plan,
+    organizationId: organizationId,
+  });
   if (isExternalUrlsAllowed) {
     return;
   }

@@ -9,30 +9,30 @@ export const checkFeaturePermissions = async (
   organization: TOrganization
 ): Promise<Response | null> => {
   if (surveyData.recaptcha?.enabled) {
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(
-      organization.billing.plan,
-      organization.id
-    );
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled({
+      billingPlan: organization.billing.plan,
+      organizationId: organization.id,
+    });
     if (!isSpamProtectionEnabled) {
       return responses.forbiddenResponse("Spam protection is not enabled for this organization");
     }
   }
 
   if (surveyData.followUps?.length) {
-    const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(
-      organization.billing.plan,
-      organization.id
-    );
+    const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission({
+      billingPlan: organization.billing.plan,
+      organizationId: organization.id,
+    });
     if (!isSurveyFollowUpsEnabled) {
       return responses.forbiddenResponse("Survey follow ups are not allowed for this organization");
     }
   }
 
   if (surveyData.languages?.length) {
-    const isMultiLanguageEnabled = await getMultiLanguagePermission(
-      organization.billing.plan,
-      organization.id
-    );
+    const isMultiLanguageEnabled = await getMultiLanguagePermission({
+      billingPlan: organization.billing.plan,
+      organizationId: organization.id,
+    });
     if (!isMultiLanguageEnabled) {
       return responses.forbiddenResponse("Multi language is not enabled for this organization");
     }

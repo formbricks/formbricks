@@ -303,8 +303,12 @@ export const copySurveyToOtherEnvironment = async (
     if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
     if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+    if (!organization) throw new ResourceNotFoundError("Organization", environmentId);
 
-    const isQuotasAllowed = await getIsQuotasEnabled(organization?.billing.plan, organization?.id);
+    const isQuotasAllowed = await getIsQuotasEnabled({
+      billingPlan: organization.billing.plan,
+      organizationId: organization.id,
+    });
 
     let targetEnvironment: string | null = null;
     let targetProject: TProjectWithLanguages | null = null;

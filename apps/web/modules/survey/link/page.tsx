@@ -116,10 +116,10 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   // Future optimization: Consider caching getMultiLanguagePermission by plan tier
   // since it's a pure computation based on billing plan. Could be memoized at
   // the plan level rather than per-request.
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(
-    environmentContext.organizationBilling.plan,
-    environmentContext.organization.id
-  );
+  const isMultiLanguageAllowed = await getMultiLanguagePermission({
+    billingPlan: environmentContext.organizationBilling.plan,
+    organizationId: environmentContext.organization.id,
+  });
 
   // Fetch responseCount only if needed (depends on survey config)
   const responseCount = survey.welcomeCard.showResponseCount

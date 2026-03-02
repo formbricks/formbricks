@@ -6,6 +6,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -38,6 +39,10 @@ vi.mock("@/lib/survey/utils", () => ({
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
+}));
+
+vi.mock("@/lib/organization/service", () => ({
+  getOrganizationByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/utils", () => ({
@@ -106,6 +111,7 @@ const resetMocks = () => {
   vi.mocked(buildWhereClause).mockClear();
   vi.mocked(doesEnvironmentExist).mockClear();
   vi.mocked(getProjectWithLanguagesByEnvironmentId).mockClear();
+  vi.mocked(getOrganizationByEnvironmentId).mockClear();
   vi.mocked(createId).mockClear();
   vi.mocked(prisma.survey.findMany).mockReset();
   vi.mocked(prisma.survey.findUnique).mockReset();
@@ -502,10 +508,11 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
     vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({
       billing: {
         plan: "free",
       },
+      id: "org_123",
     } as any);
   });
 

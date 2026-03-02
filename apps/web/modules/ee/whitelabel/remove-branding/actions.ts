@@ -51,10 +51,10 @@ export const updateProjectBrandingAction = authenticatedActionClient.schema(ZUpd
         if (!organization) {
           throw new Error("Organization not found");
         }
-        const canRemoveBranding = await getRemoveBrandingPermission(
-          organization.billing.plan,
-          organizationId
-        );
+        const canRemoveBranding = await getRemoveBrandingPermission({
+          billingPlan: organization.billing.plan,
+          organizationId: organizationId,
+        });
 
         if (parsedInput.data.inAppSurveyBranding !== undefined) {
           if (!canRemoveBranding) {

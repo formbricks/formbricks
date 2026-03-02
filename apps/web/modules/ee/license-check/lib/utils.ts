@@ -6,27 +6,30 @@ import {
   IS_RECAPTCHA_CONFIGURED,
   PROJECT_FEATURE_KEYS,
 } from "@/lib/constants";
-import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
+import type { TOrganizationPermissionContext } from "@/modules/billing/lib/organization-permission-context";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
+
+const hasCloudEntitlementWithGuard = async (
+  organizationId: string,
+  featureLookupKey: string
+): Promise<boolean> => {
+  const { hasCloudEntitlementWithLicenseGuard } = await import("@/modules/billing/lib/feature-access");
+  return hasCloudEntitlementWithLicenseGuard(organizationId, featureLookupKey);
+};
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
 // On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
 // On Self-hosted: requires active license and feature enabled
 const getFeaturePermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "removeBranding" | "whitelabel">,
-  organizationId?: string
+  context: TOrganizationPermissionContext,
+  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "removeBranding" | "whitelabel">
 ): Promise<boolean> => {
+  const { organizationId } = context;
+
   if (IS_FORMBRICKS_CLOUD) {
-    if (organizationId) {
-      return hasCloudEntitlementWithLicenseGuard(
-        organizationId,
-        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING
-      );
-    }
-    return billingPlan !== PROJECT_FEATURE_KEYS.FREE;
+    return hasCloudEntitlementWithGuard(organizationId, CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING);
   } else {
     const license = await getEnterpriseLicense();
     return license.active && !!license.features?.[featureKey];
@@ -37,21 +40,20 @@ const getFeaturePermission = async (
 // On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
 // On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">,
-  organizationId?: string
+  context: TOrganizationPermissionContext,
+  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
 ): Promise<boolean> => {
+  const { billingPlan, organizationId } = context;
+
   if (IS_FORMBRICKS_CLOUD) {
-    if (organizationId) {
-      const featureLookupKeyMap: Record<string, string> = {
-        accessControl: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.RBAC,
-        quotas: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.QUOTA_MANAGEMENT,
-        multiLanguageSurveys: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.MULTI_LANGUAGE_SURVEYS,
-      };
-      const lookupKey = featureLookupKeyMap[featureKey];
-      if (lookupKey) {
-        return hasCloudEntitlementWithLicenseGuard(organizationId, lookupKey);
-      }
+    const featureLookupKeyMap: Record<string, string> = {
+      accessControl: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.RBAC,
+      quotas: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.QUOTA_MANAGEMENT,
+      multiLanguageSurveys: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.MULTI_LANGUAGE_SURVEYS,
+    };
+    const lookupKey = featureLookupKeyMap[featureKey];
+    if (lookupKey) {
+      return hasCloudEntitlementWithGuard(organizationId, lookupKey);
     }
     return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
   }
@@ -78,17 +80,13 @@ const getSpecificFeatureFlag = async (
 };
 
 export const getRemoveBrandingPermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
+  context: TOrganizationPermissionContext
 ): Promise<boolean> => {
-  return getFeaturePermission(billingPlan, "removeBranding", organizationId);
+  return getFeaturePermission(context, "removeBranding");
 };
 
-export const getWhiteLabelPermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
-): Promise<boolean> => {
-  return getFeaturePermission(billingPlan, "whitelabel", organizationId);
+export const getWhiteLabelPermission = async (context: TOrganizationPermissionContext): Promise<boolean> => {
+  return getFeaturePermission(context, "whitelabel");
 };
 
 export const getBiggerUploadFileSizePermission = async (
@@ -117,11 +115,8 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
 };
 
-export const getIsQuotasEnabled = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
-): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(billingPlan, "quotas", organizationId);
+export const getIsQuotasEnabled = async (context: TOrganizationPermissionContext): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(context, "quotas");
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
@@ -139,19 +134,13 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsSpamProtectionEnabled = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
+  context: TOrganizationPermissionContext
 ): Promise<boolean> => {
+  const { organizationId } = context;
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
   if (IS_FORMBRICKS_CLOUD) {
-    if (organizationId) {
-      return hasCloudEntitlementWithLicenseGuard(
-        organizationId,
-        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.SPAM_PROTECTION
-      );
-    }
-    return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
+    return hasCloudEntitlementWithGuard(organizationId, CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.SPAM_PROTECTION);
   }
 
   const license = await getEnterpriseLicense();
@@ -159,17 +148,15 @@ export const getIsSpamProtectionEnabled = async (
 };
 
 export const getMultiLanguagePermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
+  context: TOrganizationPermissionContext
 ): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(billingPlan, "multiLanguageSurveys", organizationId);
+  return getCustomPlanFeaturePermission(context, "multiLanguageSurveys");
 };
 
 export const getAccessControlPermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
+  context: TOrganizationPermissionContext
 ): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(billingPlan, "accessControl", organizationId);
+  return getCustomPlanFeaturePermission(context, "accessControl");
 };
 
 export const getOrganizationProjectsLimit = async (

@@ -94,7 +94,10 @@ export const checkSurveyValidity = async (
     }
 
     const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(billing.plan, organizationId);
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled({
+      billingPlan: billing.plan,
+      organizationId: organizationId,
+    });
 
     if (!isSpamProtectionEnabled) {
       logger.error("Spam protection is not enabled for this organization");

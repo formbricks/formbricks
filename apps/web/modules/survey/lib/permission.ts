@@ -1,7 +1,7 @@
-import { Organization } from "@prisma/client";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { IS_FORMBRICKS_CLOUD, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
+import type { TOrganizationPermissionContext } from "@/modules/billing/lib/organization-permission-context";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -19,17 +19,21 @@ export const checkSpamProtectionPermission = async (organizationId: string): Pro
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationBilling.plan, organizationId);
+  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled({
+    billingPlan: organizationBilling.plan,
+    organizationId,
+  });
   if (!isSpamProtectionEnabled) {
     throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
   }
 };
 
 export const getExternalUrlsPermission = async (
-  billingPlan: Organization["billing"]["plan"],
-  organizationId?: string
+  context: TOrganizationPermissionContext
 ): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD && organizationId) {
+  const { organizationId } = context;
+
+  if (IS_FORMBRICKS_CLOUD) {
     const [canUseCustomRedirectUrl, canUseCustomLinksInSurveys] = await Promise.all([
       hasCloudEntitlementWithLicenseGuard(
         organizationId,
@@ -44,6 +48,5 @@ export const getExternalUrlsPermission = async (
     return canUseCustomRedirectUrl && canUseCustomLinksInSurveys;
   }
 
-  if (IS_FORMBRICKS_CLOUD) return billingPlan !== PROJECT_FEATURE_KEYS.FREE;
   return true;
 };
