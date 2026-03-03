@@ -995,14 +995,14 @@ test.describe("Testing Survey with advanced logic", async () => {
       const updatedUrl = currentUrl.replace("summary?share=true", "responses");
 
       await page.goto(updatedUrl);
-      await page.waitForSelector("table#response-table");
-
-      await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
+      const responseTable = page.locator("table#response-table");
+      await expect(responseTable).toBeVisible();
+      await expect(responseTable.getByRole("columnheader", { name: /^score$/i })).toBeVisible({
+        timeout: 15000,
+      });
 
       await page.waitForLoadState("networkidle");
       await page.waitForTimeout(5000);
-
-      await page.pause();
 
       // Look for any cell containing "32" or a score-related value
       const scoreCell = page.getByRole("cell").filter({ hasText: /^32/ });
