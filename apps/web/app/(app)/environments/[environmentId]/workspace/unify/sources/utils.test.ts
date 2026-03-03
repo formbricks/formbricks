@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { TSourceField } from "./types";
-import { getConnectorOptions, parseCSVColumnsToFields } from "./utils";
+import { MAX_CSV_VALUES, TSourceField } from "./types";
+import { getConnectorOptions, parseCSVColumnsToFields, validateCsvFile } from "./utils";
 
 const mockT = (key: string) => key;
 
@@ -54,5 +54,58 @@ describe("parseCSVColumnsToFields", () => {
     const result = parseCSVColumnsToFields("rating,comment");
     expect(result[0].sampleValue).toBe("Sample rating");
     expect(result[1].sampleValue).toBe("Sample comment");
+  });
+});
+
+const createMockFile = (name: string, size: number, type: string): File =>
+  new File(["x".repeat(size)], name, { type });
+
+describe("validateCsvFile", () => {
+  test("accepts a valid .csv file", () => {
+    const file = createMockFile("data.csv", 1024, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
+  test("rejects a file without .csv extension", () => {
+    const file = createMockFile("data.xlsx", 1024, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: false, error: "environments.unify.csv_files_only" });
+  });
+
+  test("rejects a file with wrong MIME type", () => {
+    const file = createMockFile("data.csv", 1024, "application/json");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: false, error: "environments.unify.csv_files_only" });
+  });
+
+  test("accepts a .csv file with empty MIME type", () => {
+    const file = createMockFile("data.csv", 1024, "");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
+  test("accepts a .csv file with alternative csv MIME type", () => {
+    const file = createMockFile("report.csv", 512, "application/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
+  test("rejects a file exceeding the size limit", () => {
+    const file = createMockFile("big.csv", MAX_CSV_VALUES.FILE_SIZE + 1, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: false, error: "environments.unify.csv_file_too_large" });
+  });
+
+  test("accepts a file exactly at the size limit", () => {
+    const file = createMockFile("exact.csv", MAX_CSV_VALUES.FILE_SIZE, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
+  test("checks extension before MIME type", () => {
+    const file = createMockFile("data.txt", 100, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: false, error: "environments.unify.csv_files_only" });
   });
 });
