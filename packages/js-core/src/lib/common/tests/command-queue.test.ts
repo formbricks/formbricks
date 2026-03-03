@@ -72,29 +72,68 @@ describe("CommandQueue", () => {
     expect(executionOrder).toEqual(["A", "B", "C"]);
   });
 
-  test("skips execution if checkSetup() fails", async () => {
-    const cmd = vi.fn(async (): Promise<void> => {
+  test("Only blocked commands sleep and do not spin", async () => {
+    const cmd = vi.fn(async (): Promise<Result<void, unknown>> => {
       return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 10);
+        setTimeout(() => resolve({ ok: true, data: undefined }), 10);
       });
     });
 
     // Force checkSetup to fail
     vi.mocked(checkSetup).mockReturnValue({
       ok: false,
-      error: {
-        code: "not_setup",
-        message: "Not setup",
-      },
+      error: { code: "not_setup", message: "Not setup" },
     });
+
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     await queue.add(cmd, CommandType.GeneralAction, true);
     await queue.wait();
 
     // Command should never have been called
     expect(cmd).not.toHaveBeenCalled();
+    // Warn should be called exactly once indicating no infinite spin
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toHaveBeenCalledWith("🧱 Formbricks - Setup not complete. Pausing command.");
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  test("executes blocked commands after Setup command finishes", async () => {
+    const executionOrder: string[] = [];
+
+    const blockedCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("blocked");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+    const setupCmd = vi.fn((): Promise<Result<void, unknown>> => {
+      executionOrder.push("setup");
+      return Promise.resolve({ ok: true, data: undefined });
+    });
+
+    // Mock checkSetup to return false first, then true once setup command executes
+    vi.mocked(checkSetup)
+      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // For blockedCmd initially
+      .mockImplementation(() => {
+        // If setup has run, return true
+        if (executionOrder.includes("setup")) {
+          return { ok: true, data: undefined };
+        }
+        return { ok: false, error: { code: "not_setup", message: "Not setup" } };
+      });
+
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // Add blockedCmd; it will trigger run(), rotate, and sleep
+    void queue.add(blockedCmd, CommandType.GeneralAction, true);
+
+    // Add setupCmd; it will trigger run() again, see Setup (no check), execute it, then see blockedCmd and execute it
+    void queue.add(setupCmd, CommandType.Setup, false);
+
+    await queue.wait();
+
+    expect(executionOrder).toEqual(["setup", "blocked"]);
+    consoleWarnSpy.mockRestore();
   });
 
   test("executes command if checkSetup is false (no check)", async () => {
@@ -221,11 +260,14 @@ describe("CommandQueue", () => {
       return Promise.resolve({ ok: true, data: undefined });
     });
 
-    // Setup check will fail for cmd2
+    // Setup check will fail for cmd2 on its first attempt, but succeed on its second attempt (after cmd3 executes)
     vi.mocked(checkSetup)
       .mockReturnValueOnce({ ok: true, data: undefined }) // for cmd1
-      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // for cmd2
-      .mockReturnValueOnce({ ok: true, data: undefined }); // for cmd3
+      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // for cmd2 (first try)
+      .mockReturnValueOnce({ ok: true, data: undefined }) // for cmd3
+      .mockReturnValueOnce({ ok: true, data: undefined }); // for cmd2 (second try)
+
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     await queue.add(cmd1, CommandType.Setup, true);
     await queue.add(cmd2, CommandType.UserAction, true);
@@ -233,10 +275,12 @@ describe("CommandQueue", () => {
 
     await queue.wait();
 
-    // cmd2 should be skipped due to failed setup check
-    expect(executionOrder).toEqual(["cmd1", "cmd3"]);
+    // cmd2 should be paused, allowing cmd3 to execute, and then cmd2 executes afterward
+    expect(executionOrder).toEqual(["cmd1", "cmd3", "cmd2"]);
     expect(cmd1).toHaveBeenCalled();
-    expect(cmd2).not.toHaveBeenCalled();
+    expect(cmd2).toHaveBeenCalled();
     expect(cmd3).toHaveBeenCalled();
+
+    consoleWarnSpy.mockRestore();
   });
 });

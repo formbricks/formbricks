@@ -73,8 +73,10 @@ export class CommandQueue {
 
   private async run(): Promise<void> {
     this.running = true;
+    let attempts = 0;
+    let cycleLength = this.queue.length;
 
-    while (this.queue.length > 0) {
+    while (this.queue.length > 0 && attempts < cycleLength) {
       const currentItem = this.queue.shift();
 
       if (!currentItem) continue;
@@ -82,7 +84,9 @@ export class CommandQueue {
       if (currentItem.checkSetup) {
         const setupResult = checkSetup();
         if (!setupResult.ok) {
-          console.warn(`🧱 Formbricks - Setup not complete.`);
+          console.warn(`🧱 Formbricks - Setup not complete. Pausing command.`);
+          this.queue.push(currentItem);
+          attempts++;
           continue;
         }
       }
@@ -107,6 +111,9 @@ export class CommandQueue {
       } else if (!result.data.ok) {
         console.error("🧱 Formbricks - Global error: ", result.data.error);
       }
+
+      attempts = 0;
+      cycleLength = this.queue.length;
     }
 
     this.running = false;
