@@ -135,7 +135,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
         });
       });
 
-      const results = [];
+      const results: Awaited<ReturnType<typeof copySurveyToOtherEnvironmentAction>>[] = [];
       for (const item of copyOperationsWithMetadata) {
         const result = await copySurveyToOtherEnvironmentAction({
           surveyId: survey.id,
