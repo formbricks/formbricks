@@ -191,16 +191,12 @@ export const FormbricksSurveySelector = ({
                   <button
                     type="button"
                     onClick={() => handleSurveyClick(survey)}
-                    className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                      isSelected
-                        ? "border-brand-dark bg-slate-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                    className={`flex w-full items-center gap-3 rounded-lg border bg-white p-3 text-left transition-colors ${
+                      isSelected ? "border-brand-dark bg-slate-50" : "border-slate-200 hover:border-slate-300"
                     }`}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-900">{survey.name}</span>
-                        {getStatusBadge(survey.status)}
-                      </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div>{getStatusBadge(survey.status)}</div>
+                      <span className="block truncate text-sm font-medium text-slate-900">{survey.name}</span>
                       <p className="text-xs text-slate-500">
                         {t("environments.unify.n_supported_questions", {
                           count: getSupportedElementCount(survey),

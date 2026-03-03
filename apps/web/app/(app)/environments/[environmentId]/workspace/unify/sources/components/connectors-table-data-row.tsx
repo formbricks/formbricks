@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
+import { FileSpreadsheetIcon, FormIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TConnectorStatus, TConnectorType, TConnectorWithMappings } from "@formbricks/types/connector";
 import { Badge } from "@/modules/ui/components/badge";
@@ -41,11 +41,11 @@ interface ConnectorsTableDataRowProps {
 function getConnectorIcon(type: TConnectorType) {
   switch (type) {
     case "formbricks":
-      return <GlobeIcon className="h-4 w-4 text-slate-500" />;
+      return <FormIcon className="h-4 w-4 text-slate-500" />;
     case "csv":
       return <FileSpreadsheetIcon className="h-4 w-4 text-slate-500" />;
     default:
-      return <GlobeIcon className="h-4 w-4 text-slate-500" />;
+      return <FormIcon className="h-4 w-4 text-slate-500" />;
   }
 }
 

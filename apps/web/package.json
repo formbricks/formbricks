@@ -102,7 +102,7 @@
     "jsonwebtoken": "9.0.2",
     "lexical": "0.36.2",
     "lodash": "4.17.23",
-    "lucide-react": "0.507.0",
+    "lucide-react": "0.576.0",
     "markdown-it": "14.1.0",
     "mime-types": "3.0.1",
     "next": "16.1.6",
