@@ -72,6 +72,13 @@ export const mergeTags = async (
 ): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
   validateInputs([originalTagId, ZId], [newTagId, ZId]);
 
+  if (originalTagId === newTagId) {
+    return err({
+      code: TagError.MERGE_SAME_TAG,
+      message: "Cannot merge a tag into itself",
+    });
+  }
+
   try {
     let originalTag: TTag | null;
 

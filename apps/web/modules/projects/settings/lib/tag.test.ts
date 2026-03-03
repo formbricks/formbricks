@@ -195,6 +195,20 @@ describe("tag lib", () => {
         });
       }
     });
+    test("returns error when merging a tag into itself", async () => {
+      const result = await mergeTags(baseTag.id, baseTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "merge_same_tag",
+          message: "Cannot merge a tag into itself",
+        });
+      }
+
+      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
     test("throws on prisma error", async () => {
       vi.mocked(prisma.tag.findUnique).mockRejectedValueOnce(new Error("fail"));
       const result = await mergeTags(baseTag.id, newTag.id);
