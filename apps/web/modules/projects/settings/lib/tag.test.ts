@@ -152,13 +152,13 @@ describe("tag lib", () => {
         .mockResolvedValueOnce(baseTag as any)
         .mockResolvedValueOnce(newTag as any);
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([{ id: "resp1" }] as any);
-      vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result).toEqual(ok(newTag));
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: baseTag.id } });
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: newTag.id } });
       expect(prisma.response.findMany).toHaveBeenCalled();
-      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
     test("merges tags with no responses with both tags", async () => {
       vi.mocked(prisma.tag.findUnique)

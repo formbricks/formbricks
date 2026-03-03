@@ -103,90 +103,35 @@ export const mergeTags = async (
       });
     }
 
-    // finds all the responses that have both the tags
-    let responsesWithBothTags = await prisma.response.findMany({
+    // Find responses that have both tags to avoid unique constraint violations during merge
+    const responsesWithBothTags = await prisma.response.findMany({
       where: {
-        AND: [
-          {
-            tags: {
-              some: {
-                tagId: {
-                  in: [originalTagId],
-                },
-              },
-            },
-          },
-          {
-            tags: {
-              some: {
-                tagId: {
-                  in: [newTagId],
-                },
-              },
-            },
-          },
-        ],
+        AND: [{ tags: { some: { tagId: originalTagId } } }, { tags: { some: { tagId: newTagId } } }],
       },
+      select: { id: true },
     });
 
-    if (!!responsesWithBothTags?.length) {
-      await Promise.all(
-        responsesWithBothTags.map(async (response) => {
-          await prisma.$transaction([
-            prisma.tagsOnResponses.deleteMany({
-              where: {
-                responseId: response.id,
-                tagId: {
-                  in: [originalTagId, newTagId],
-                },
-              },
-            }),
-
-            prisma.tagsOnResponses.create({
-              data: {
-                responseId: response.id,
-                tagId: newTagId,
-              },
-            }),
-          ]);
-        })
-      );
-
-      await prisma.$transaction([
-        prisma.tagsOnResponses.updateMany({
-          where: {
-            tagId: originalTagId,
-          },
-          data: {
-            tagId: newTagId,
-          },
-        }),
-
-        prisma.tag.delete({
-          where: {
-            id: originalTagId,
-          },
-        }),
-      ]);
-
-      return ok(newTag);
-    }
+    const conflictResponseIds = responsesWithBothTags.map((r) => r.id);
 
     await prisma.$transaction([
+      // Remove originalTag from responses that already have newTag (prevents unique constraint violation)
+      ...(conflictResponseIds.length > 0
+        ? [
+            prisma.tagsOnResponses.deleteMany({
+              where: {
+                responseId: { in: conflictResponseIds },
+                tagId: originalTagId,
+              },
+            }),
+          ]
+        : []),
+      // Move all remaining originalTag associations to newTag
       prisma.tagsOnResponses.updateMany({
-        where: {
-          tagId: originalTagId,
-        },
-        data: {
-          tagId: newTagId,
-        },
+        where: { tagId: originalTagId },
+        data: { tagId: newTagId },
       }),
-
-      prisma.tag.delete({
-        where: {
-          id: originalTagId,
-        },
-      }),
+      // Delete the original tag
+      prisma.tag.delete({ where: { id: originalTagId } }),
     ]);
 
     return ok(newTag);
