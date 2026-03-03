@@ -20,7 +20,7 @@ overrides:
 patchedDependencies:
   next-auth@4.24.13:
     hash: 7ac5717a8d7d2049442182b5d83ab492d33fe774ff51ff5ea3884628b77df87b
-    path: patches/next-auth@4.24.12.patch
+    path: patches/next-auth@4.24.13.patch
 
 importers:
 
