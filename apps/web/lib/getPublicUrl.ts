@@ -1,8 +1,13 @@
 import "server-only";
 import { env } from "./env";
 
+const configuredWebappUrl = env.WEBAPP_URL?.trim() ?? "";
 const WEBAPP_URL =
-  env.WEBAPP_URL ?? (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : "") ?? "http://localhost:3000";
+  configuredWebappUrl !== ""
+    ? configuredWebappUrl
+    : env.VERCEL_URL
+      ? `https://${env.VERCEL_URL}`
+      : "http://localhost:3000";
 
 /**
  * Returns the public domain URL

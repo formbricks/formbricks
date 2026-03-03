@@ -1,5 +1,5 @@
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import dts from "vite-plugin-dts";
 import webPackageJson from "../../apps/web/package.json";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
@@ -29,12 +29,12 @@ export default defineConfig({
   plugins: [
     dts({
       rollupTypes: true,
-    }),
+    }) as any,
     copyCompiledAssetsPlugin({
       filename: "formbricks",
       distDir: resolve(__dirname, "dist"),
       skipDirectoryCheck: true, // Skip checking for subdirectories that might not exist
-    }),
+    }) as any,
   ],
   test: {
     environment: "node",
