@@ -2,11 +2,11 @@
 import { resolve } from "path";
 import dts from "vite-plugin-dts";
 import { defineConfig } from "vitest/config";
-import type { UserConfig as VitestUserConfig } from "vitest/config";
+import type { ViteUserConfig } from "vitest/config";
 import webPackageJson from "../../apps/web/package.json";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
-type VitestPluginOption = NonNullable<VitestUserConfig["plugins"]>[number];
+type VitestPluginOption = NonNullable<ViteUserConfig["plugins"]>[number];
 
 export default defineConfig({
   resolve: {
