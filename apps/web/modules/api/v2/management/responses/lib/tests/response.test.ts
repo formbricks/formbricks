@@ -39,6 +39,7 @@ vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   IS_PRODUCTION: false,
   ENCRYPTION_KEY: "test",
+  STRIPE_API_VERSION: "2026-01-28.clover",
 }));
 
 describe("Response Lib", () => {

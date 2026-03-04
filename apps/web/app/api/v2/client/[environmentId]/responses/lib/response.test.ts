@@ -41,6 +41,7 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "mock-webapp-url",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
+  STRIPE_API_VERSION: "2026-01-28.clover",
 }));
 
 vi.mock("@/lib/organization/service");
