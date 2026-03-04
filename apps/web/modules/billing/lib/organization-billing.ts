@@ -150,14 +150,11 @@ const resolveResponseMeteringProjection = (
 ): TResponseMeteringProjection | null => {
   if (!subscription) return null;
 
-  const meteredItem = subscription.items.data.find((item) => {
-    const price = item.price as Stripe.Price;
-    return isResponseUsagePrice(price, cloudPlan);
-  });
+  const meteredItem = subscription.items.data.find((item) => isResponseUsagePrice(item.price, cloudPlan));
 
   if (!meteredItem) return null;
 
-  return parseGraduatedResponseMeteringFromPrice(meteredItem.price as Stripe.Price);
+  return parseGraduatedResponseMeteringFromPrice(meteredItem.price);
 };
 
 const getSubscriptionTopPlanLevel = (
@@ -301,7 +298,7 @@ export const ensureStripeCustomerForOrganization = async (
         stripeCustomerId: customer.id,
         billingMode: "stripe",
         stripe: {
-          ...(billing.stripe ?? {}),
+          ...billing.stripe,
           lastSyncedAt: new Date().toISOString(),
         },
       },
@@ -331,11 +328,11 @@ export const syncOrganizationBillingFromStripe = async (
   const customerId = billing.stripeCustomerId;
   if (!customerId) return billing;
 
-  const existingStripeSnapshot = billing.stripe ?? {};
-  const previousEventDate = getDateFromBilling(existingStripeSnapshot.lastStripeEventCreatedAt ?? null);
+  const existingStripeSnapshot = billing.stripe;
+  const previousEventDate = getDateFromBilling(existingStripeSnapshot?.lastStripeEventCreatedAt ?? null);
   const incomingEventDate = event ? new Date(event.created * 1000) : null;
 
-  if (event?.id && existingStripeSnapshot.lastSyncedEventId === event.id) {
+  if (event?.id && existingStripeSnapshot?.lastSyncedEventId === event.id) {
     return billing;
   }
 
@@ -405,14 +402,14 @@ export const syncOrganizationBillingFromStripe = async (
     },
     periodStart: periodStart.toISOString(),
     stripe: {
-      ...(billing.stripe ?? {}),
+      ...billing.stripe,
       plan: cloudPlan,
       subscriptionId: subscription?.id ?? null,
       features: featureLookupKeys,
       responseMetering: responseMeteringProjection ?? billing.stripe?.responseMetering,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
-      lastSyncedEventId: event?.id ?? existingStripeSnapshot.lastSyncedEventId ?? null,
+      lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,
     },
   };
 

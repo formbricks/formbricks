@@ -134,6 +134,30 @@ export const PricingTable = ({
     () => getStripeLocaleOverride(i18n.resolvedLanguage ?? i18n.language),
     [i18n.language, i18n.resolvedLanguage]
   );
+  const stripePricingTableProps = useMemo(() => {
+    const props: Record<string, string> = {
+      "pricing-table-id": stripePricingTableId ?? "",
+      "publishable-key": stripePublishableKey ?? "",
+    };
+
+    if (stripeLocaleOverride) {
+      props["__locale-override"] = stripeLocaleOverride;
+    }
+
+    if (pricingTableCustomerSessionClientSecret) {
+      props["customer-session-client-secret"] = pricingTableCustomerSessionClientSecret;
+    } else {
+      props["client-reference-id"] = organization.id;
+    }
+
+    return props;
+  }, [
+    organization.id,
+    pricingTableCustomerSessionClientSecret,
+    stripeLocaleOverride,
+    stripePricingTableId,
+    stripePublishableKey,
+  ]);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -274,25 +298,7 @@ export const PricingTable = ({
             <div className="w-full">
               <div className="mx-auto w-full max-w-[1200px]">
                 <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
-                {createElement("stripe-pricing-table", {
-                  "pricing-table-id": stripePricingTableId,
-                  "publishable-key": stripePublishableKey,
-                  ...(stripeLocaleOverride
-                    ? {
-                        "__locale-override": stripeLocaleOverride,
-                      }
-                    : {}),
-                  ...(pricingTableCustomerSessionClientSecret
-                    ? {
-                        "customer-session-client-secret": pricingTableCustomerSessionClientSecret,
-                      }
-                    : {}),
-                  ...(!pricingTableCustomerSessionClientSecret
-                    ? {
-                        "client-reference-id": organization.id,
-                      }
-                    : {}),
-                })}
+                {createElement("stripe-pricing-table", stripePricingTableProps)}
               </div>
             </div>
           </div>

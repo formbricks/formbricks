@@ -22,6 +22,54 @@ const relevantEvents = new Set([
   "entitlements.active_entitlement_summary.updated",
 ]);
 
+const getMetadataOrganizationId = (eventObject: Stripe.Event.Data.Object): string | null => {
+  if (!("metadata" in eventObject) || !eventObject.metadata) {
+    return null;
+  }
+
+  const { organizationId } = eventObject.metadata as Record<string, unknown>;
+  return typeof organizationId === "string" ? organizationId : null;
+};
+
+const getCustomerId = (eventObject: Stripe.Event.Data.Object): string | null => {
+  if (!("customer" in eventObject) || typeof eventObject.customer !== "string") {
+    return null;
+  }
+
+  return eventObject.customer;
+};
+
+const getClientReferenceId = (eventObject: Stripe.Event.Data.Object): string | null => {
+  if (!("client_reference_id" in eventObject) || typeof eventObject.client_reference_id !== "string") {
+    return null;
+  }
+
+  return eventObject.client_reference_id;
+};
+
+const resolveOrganizationId = async (eventObject: Stripe.Event.Data.Object): Promise<string | null> => {
+  const metadataOrgId = getMetadataOrganizationId(eventObject);
+  if (metadataOrgId) return metadataOrgId;
+
+  const clientReferenceId = getClientReferenceId(eventObject);
+  if (clientReferenceId) return clientReferenceId;
+
+  const customerId = getCustomerId(eventObject);
+  if (!customerId) return null;
+
+  return await findOrganizationIdByStripeCustomerId(customerId);
+};
+
+const getUnresolvedOrganizationResponse = (event: Stripe.Event) => {
+  logger.warn({ eventType: event.type, eventId: event.id }, "Skipping Stripe webhook: organization not resolved");
+
+  if (event.type === "checkout.session.completed") {
+    return { status: 500, message: "Checkout completed but organization could not be resolved." };
+  }
+
+  return { status: 200, message: { received: true } };
+};
+
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;
 
@@ -38,33 +86,10 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   }
 
   const eventObject = event.data.object as Stripe.Event.Data.Object;
-  const metadataOrgId =
-    "metadata" in eventObject &&
-    eventObject.metadata &&
-    typeof (eventObject.metadata as Record<string, unknown>).organizationId === "string"
-      ? ((eventObject.metadata as Record<string, unknown>).organizationId as string)
-      : null;
-  const customerId =
-    "customer" in eventObject && typeof eventObject.customer === "string" ? eventObject.customer : null;
-  const clientReferenceId =
-    "client_reference_id" in eventObject && typeof eventObject.client_reference_id === "string"
-      ? eventObject.client_reference_id
-      : null;
-
-  let organizationId = metadataOrgId ?? clientReferenceId;
-  if (!organizationId && customerId) {
-    organizationId = await findOrganizationIdByStripeCustomerId(customerId);
-  }
+  const organizationId = await resolveOrganizationId(eventObject);
 
   if (!organizationId) {
-    logger.warn(
-      { eventType: event.type, eventId: event.id },
-      "Skipping Stripe webhook: organization not resolved"
-    );
-    if (event.type === "checkout.session.completed") {
-      return { status: 500, message: "Checkout completed but organization could not be resolved." };
-    }
-    return { status: 200, message: { received: true } };
+    return getUnresolvedOrganizationResponse(event);
   }
 
   try {
