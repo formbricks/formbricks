@@ -8,7 +8,7 @@ import { validateCsvFile } from "@/app/(app)/environments/[environmentId]/worksp
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { MAX_CSV_VALUES, TFieldMapping, TSourceField, createFeedbackCSVDataSchema } from "../types";
+import { TFieldMapping, TSourceField, createFeedbackCSVDataSchema } from "../types";
 import { MappingUI } from "./mapping-ui";
 
 interface CsvConnectorUIProps {
