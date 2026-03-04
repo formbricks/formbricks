@@ -2,7 +2,7 @@
 
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { validateCsvFile } from "@/app/(app)/environments/[environmentId]/workspace/unify/sources/utils";
@@ -13,13 +13,33 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { createFeedbackCSVDataSchema } from "../types";
 
+export interface CsvImportState {
+  rowCount: number;
+  isImporting: boolean;
+  hasData: boolean;
+}
+
+export interface CsvImportHandle {
+  import: () => Promise<void>;
+}
+
 interface CsvImportSectionProps {
   connectorId: string;
   environmentId: string;
   onImportComplete?: () => void;
+  onStateChange?: (state: CsvImportState) => void;
+  handleRef?: React.MutableRefObject<CsvImportHandle | null>;
+  renderFooter?: boolean;
 }
 
-export function CsvImportSection({ connectorId, environmentId, onImportComplete }: CsvImportSectionProps) {
+export function CsvImportSection({
+  connectorId,
+  environmentId,
+  onImportComplete,
+  onStateChange,
+  handleRef,
+  renderFooter = true,
+}: CsvImportSectionProps) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [rowCount, setRowCount] = useState(0);
@@ -99,6 +119,17 @@ export function CsvImportSection({ connectorId, environmentId, onImportComplete 
     }
   };
 
+  const handleImportRef = useRef(handleImport);
+  handleImportRef.current = handleImport;
+
+  if (handleRef) {
+    handleRef.current = { import: () => handleImportRef.current() };
+  }
+
+  useEffect(() => {
+    onStateChange?.({ rowCount, isImporting, hasData: parsedData.length > 0 });
+  }, [rowCount, isImporting, parsedData.length, onStateChange]);
+
   const handleClear = () => {
     setCsvFile(null);
     setParsedData([]);
@@ -108,9 +139,9 @@ export function CsvImportSection({ connectorId, environmentId, onImportComplete 
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-        <p className="text-xs text-amber-800">{t("environments.unify.csv_import_duplicate_warning")}</p>
-      </div>
+      <Alert variant="info" size="small">
+        {t("environments.unify.csv_import_duplicate_warning")}
+      </Alert>
 
       {csvError && (
         <Alert variant="error" size="small">
@@ -130,16 +161,18 @@ export function CsvImportSection({ connectorId, environmentId, onImportComplete 
             </Button>
           </div>
 
-          <Button onClick={handleImport} disabled={isImporting} className="w-full">
-            {isImporting ? (
-              <>
-                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                {t("environments.unify.importing_data")}
-              </>
-            ) : (
-              t("environments.unify.import_rows", { count: rowCount })
-            )}
-          </Button>
+          {renderFooter && (
+            <Button onClick={handleImport} disabled={isImporting} className="w-full">
+              {isImporting ? (
+                <>
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  {t("environments.unify.importing_data")}
+                </>
+              ) : (
+                t("environments.unify.import_rows", { count: rowCount })
+              )}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">

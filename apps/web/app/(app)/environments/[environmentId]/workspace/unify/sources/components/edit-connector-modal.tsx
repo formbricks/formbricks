@@ -38,6 +38,7 @@ interface EditConnectorModalProps {
     fieldMappings?: TFieldMapping[];
   }) => Promise<void>;
   surveys: TUnifySurvey[];
+  onOpenCsvImport?: () => void;
 }
 
 const getConnectorIcon = (type: TConnectorType) => {
@@ -79,6 +80,7 @@ export const EditConnectorModal = ({
   onOpenChange,
   onUpdateConnector,
   surveys,
+  onOpenCsvImport,
 }: EditConnectorModalProps) => {
   const { t } = useTranslation();
   const [connectorName, setConnectorName] = useState("");
@@ -271,6 +273,16 @@ export const EditConnectorModal = ({
         </div>
 
         <DialogFooter>
+          {connector.type === "csv" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                handleOpenChange(false);
+                onOpenCsvImport?.();
+              }}>
+              {t("environments.unify.import_feedback")}
+            </Button>
+          )}
           <Button onClick={handleUpdate} disabled={saveChangesDisbaled}>
             {t("environments.unify.save_changes")}
           </Button>

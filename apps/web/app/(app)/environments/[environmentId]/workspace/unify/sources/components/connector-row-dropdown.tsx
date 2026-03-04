@@ -14,13 +14,6 @@ import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -28,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { CsvImportSection } from "./csv-import-section";
+import { CsvImportModal } from "./csv-import-modal";
 
 interface ConnectorRowDropdownProps {
   connector: TConnectorWithMappings;
@@ -164,19 +157,12 @@ export function ConnectorRowDropdown({
       />
 
       {connector.type === "csv" && (
-        <Dialog open={isCsvImportDialogOpen} onOpenChange={setIsCsvImportDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("environments.unify.import_csv_data")}</DialogTitle>
-              <DialogDescription>{t("environments.unify.upload_csv_data_description")}</DialogDescription>
-            </DialogHeader>
-            <CsvImportSection
-              connectorId={connector.id}
-              environmentId={connector.environmentId}
-              onImportComplete={() => setIsCsvImportDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <CsvImportModal
+          open={isCsvImportDialogOpen}
+          onOpenChange={setIsCsvImportDialogOpen}
+          connectorId={connector.id}
+          environmentId={connector.environmentId}
+        />
       )}
     </div>
   );
