@@ -33,6 +33,7 @@ function getRelativeTime(date: Date, locale: string) {
 interface ConnectorsTableDataRowProps {
   connector: TConnectorWithMappings;
   onEdit: () => void;
+  onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -58,6 +59,7 @@ const STATUS_BADGE_TYPE: Record<TConnectorStatus, "success" | "warning" | "error
 export function ConnectorsTableDataRow({
   connector,
   onEdit,
+  onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
@@ -123,6 +125,7 @@ export function ConnectorsTableDataRow({
         <ConnectorRowDropdown
           connector={connector}
           onEdit={onEdit}
+          onCsvImport={onCsvImport}
           onDuplicate={onDuplicate}
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}

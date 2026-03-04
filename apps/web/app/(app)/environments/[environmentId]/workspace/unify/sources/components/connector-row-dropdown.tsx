@@ -21,11 +21,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { CsvImportModal } from "./csv-import-modal";
 
 interface ConnectorRowDropdownProps {
   connector: TConnectorWithMappings;
   onEdit: () => void;
+  onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -34,13 +34,13 @@ interface ConnectorRowDropdownProps {
 export function ConnectorRowDropdown({
   connector,
   onEdit,
+  onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
 }: ConnectorRowDropdownProps) {
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isCsvImportDialogOpen, setIsCsvImportDialogOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -70,7 +70,7 @@ export function ConnectorRowDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            {connector.type === "csv" && (
+            {connector.type === "csv" && onCsvImport && (
               <>
                 <DropdownMenuItem>
                   <button
@@ -79,7 +79,7 @@ export function ConnectorRowDropdown({
                     onClick={(e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      setIsCsvImportDialogOpen(true);
+                      onCsvImport();
                     }}>
                     <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
                     {t("environments.unify.import_csv_data")}
@@ -155,15 +155,6 @@ export function ConnectorRowDropdown({
         onDelete={handleDelete}
         isDeleting={isDeleting}
       />
-
-      {connector.type === "csv" && (
-        <CsvImportModal
-          open={isCsvImportDialogOpen}
-          onOpenChange={setIsCsvImportDialogOpen}
-          connectorId={connector.id}
-          environmentId={connector.environmentId}
-        />
-      )}
     </div>
   );
 }

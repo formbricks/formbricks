@@ -168,6 +168,7 @@ export function ConnectorsSection({
         <ConnectorsTable
           connectors={initialConnectors}
           onConnectorClick={setEditingConnector}
+          onCsvImport={setCsvImportConnector}
           onDuplicate={handleDuplicateConnector}
           onToggleStatus={handleToggleStatus}
           onDelete={handleDeleteConnector}

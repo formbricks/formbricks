@@ -1,8 +1,15 @@
 "use client";
 
-import { Loader2Icon } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { parse } from "csv-parse/sync";
+import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { validateCsvFile } from "@/app/(app)/environments/[environmentId]/workspace/unify/sources/utils";
+import { importCsvDataAction } from "@/lib/connector/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert } from "@/modules/ui/components/alert";
+import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -12,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { CsvImportHandle, CsvImportSection, CsvImportState } from "./csv-import-section";
+import { createFeedbackCSVDataSchema } from "../types";
 
 interface CsvImportModalProps {
   open: boolean;
@@ -30,16 +37,90 @@ export function CsvImportModal({
   onOpenEditConnector,
 }: CsvImportModalProps) {
   const { t } = useTranslation();
-  const importHandleRef = useRef<CsvImportHandle | null>(null);
-  const [importState, setImportState] = useState<CsvImportState>({
-    rowCount: 0,
-    isImporting: false,
-    hasData: false,
-  });
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [rowCount, setRowCount] = useState(0);
+  const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
+  const [csvError, setCsvError] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
 
-  const handleStateChange = useCallback((state: CsvImportState) => {
-    setImportState(state);
-  }, []);
+  const processCSVFile = (file: File) => {
+    setCsvError("");
+
+    const validateCSVFileResult = validateCsvFile(file, t);
+
+    if (!validateCSVFileResult.valid) {
+      setCsvError(validateCSVFileResult.error);
+      return;
+    }
+
+    file
+      .text()
+      .then((csv) => {
+        const records = parse(csv, { columns: true, skip_empty_lines: true });
+        const result = createFeedbackCSVDataSchema(t).safeParse(records);
+
+        if (!result.success) {
+          setCsvError(result.error.errors[0].message);
+          return;
+        }
+
+        setCsvFile(file);
+        setParsedData(result.data);
+        setRowCount(result.data.length);
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
+        setCsvError(message);
+      });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target?.files?.[0];
+    if (file) processCSVFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (file) processCSVFile(file);
+  };
+
+  const handleImport = async () => {
+    if (parsedData.length === 0) return;
+
+    setIsImporting(true);
+    const result = await importCsvDataAction({ connectorId, environmentId, csvData: parsedData });
+    setIsImporting(false);
+
+    if (result?.data) {
+      toast.success(
+        t("environments.unify.csv_import_complete", {
+          successes: result.data.successes,
+          failures: result.data.failures,
+          skipped: result.data.skipped,
+        })
+      );
+      setCsvFile(null);
+      setParsedData([]);
+      setRowCount(0);
+      onOpenChange(false);
+    } else {
+      toast.error(getFormattedErrorMessage(result));
+    }
+  };
+
+  const handleClear = () => {
+    setCsvFile(null);
+    setParsedData([]);
+    setRowCount(0);
+    setCsvError("");
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,14 +129,53 @@ export function CsvImportModal({
           <DialogTitle>{t("environments.unify.import_csv_data")}</DialogTitle>
           <DialogDescription>{t("environments.unify.upload_csv_data_description")}</DialogDescription>
         </DialogHeader>
-        <CsvImportSection
-          connectorId={connectorId}
-          environmentId={environmentId}
-          onImportComplete={() => onOpenChange(false)}
-          onStateChange={handleStateChange}
-          handleRef={importHandleRef}
-          renderFooter={false}
-        />
+
+        <div className="space-y-3">
+          <Alert variant="info" size="small">
+            {t("environments.unify.csv_import_duplicate_warning")}
+          </Alert>
+
+          {csvError && (
+            <Alert variant="error" size="small">
+              {csvError}
+            </Alert>
+          )}
+
+          {csvFile ? (
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-800">{csvFile.name}</span>
+                <Badge text={`${rowCount} rows`} type="gray" size="tiny" />
+              </div>
+              <Button variant="secondary" size="sm" onClick={handleClear} disabled={isImporting}>
+                {t("environments.unify.change_file")}
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">
+              <label
+                htmlFor="csv-import-upload"
+                className="flex cursor-pointer flex-col items-center justify-center"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}>
+                <ArrowUpFromLineIcon className="h-8 w-8 text-slate-400" />
+                <p className="mt-2 text-sm text-slate-600">
+                  <span className="font-semibold">{t("environments.unify.click_to_upload")}</span>{" "}
+                  {t("environments.unify.or_drag_and_drop")}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">{t("environments.unify.csv_files_only")}</p>
+                <input
+                  type="file"
+                  id="csv-import-upload"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
         <DialogFooter>
           {onOpenEditConnector && (
             <Button
@@ -67,16 +187,14 @@ export function CsvImportModal({
               {t("environments.unify.edit_csv_mapping")}
             </Button>
           )}
-          <Button
-            onClick={() => importHandleRef.current?.import()}
-            disabled={!importState.hasData || importState.isImporting}>
-            {importState.isImporting ? (
+          <Button onClick={handleImport} disabled={parsedData.length === 0 || isImporting}>
+            {isImporting ? (
               <>
                 <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                 {t("environments.unify.importing_data")}
               </>
             ) : (
-              t("environments.unify.import_rows", { count: importState.rowCount })
+              t("environments.unify.import_rows", { count: rowCount })
             )}
           </Button>
         </DialogFooter>
