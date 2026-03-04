@@ -19,7 +19,6 @@ const mocks = vi.hoisted(() => ({
   loggerWarn: vi.fn(),
   getCloudPlanFromProductId: vi.fn(),
   getLegacyPlanFromCloudPlan: vi.fn(),
-  getLimitsFromCloudPlan: vi.fn(),
   customersCreate: vi.fn(),
   subscriptionsList: vi.fn(),
   subscriptionsCreate: vi.fn(),
@@ -75,7 +74,6 @@ vi.mock("./stripe-catalog", async (importOriginal) => {
     ...actual,
     getCloudPlanFromProductId: mocks.getCloudPlanFromProductId,
     getLegacyPlanFromCloudPlan: mocks.getLegacyPlanFromCloudPlan,
-    getLimitsFromCloudPlan: mocks.getLimitsFromCloudPlan,
   };
 });
 
@@ -103,11 +101,6 @@ describe("organization-billing", () => {
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
     mocks.getCloudPlanFromProductId.mockReturnValue("pro");
     mocks.getLegacyPlanFromCloudPlan.mockReturnValue("startup");
-    mocks.getLimitsFromCloudPlan.mockReturnValue({
-      projects: 3,
-      responses: 2000,
-      contacts: 5000,
-    });
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.pricesList.mockResolvedValue({
       data: [{ id: "price_hobby_1" }],
@@ -312,11 +305,6 @@ describe("organization-billing", () => {
     mocks.getLegacyPlanFromCloudPlan.mockImplementation((plan: string) =>
       plan === "pro" ? "startup" : "free"
     );
-    mocks.getLimitsFromCloudPlan.mockImplementation((plan: string) =>
-      plan === "pro"
-        ? { projects: 3, responses: 2000, contacts: 5000 }
-        : { projects: 1, responses: 250, contacts: null }
-    );
     mocks.prismaFindUnique.mockResolvedValue({
       id: "org_1",
       billing: { stripeCustomerId: "cus_1", stripe: {} },
@@ -404,6 +392,25 @@ describe("organization-billing", () => {
       { error: expect.any(Error), organizationId: "org_1" },
       "Failed to refresh billing snapshot from Stripe"
     );
+  });
+
+  test("getOrganizationBillingWithReadThroughSync bypasses Redis cache in self-hosted mode", async () => {
+    mocks.isCloud = false;
+    mocks.prismaFindUnique.mockResolvedValue({
+      billing: { plan: "free", stripeCustomerId: null },
+    });
+
+    const result = await getOrganizationBillingWithReadThroughSync("org_1");
+
+    expect(mocks.cacheWithCache).not.toHaveBeenCalled();
+    expect(result).toEqual({ plan: "free", stripeCustomerId: null });
+  });
+
+  test("getOrganizationBillingWithReadThroughSync throws when organization billing is missing", async () => {
+    mocks.prismaFindUnique.mockResolvedValue({ billing: null });
+    mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
+
+    await expect(getOrganizationBillingWithReadThroughSync("org_1")).rejects.toThrow("Organization");
   });
 
   test("findOrganizationIdByStripeCustomerId returns matching organization id", async () => {

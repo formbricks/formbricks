@@ -96,7 +96,15 @@ export const createPricingTableCustomerSessionAction = authenticatedActionClient
     });
 
     const organization = await getOrganization(organizationId);
-    if (!organization?.billing.stripeCustomerId || !stripeClient) {
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", organizationId);
+    }
+
+    if (!organization.billing?.stripeCustomerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+    }
+
+    if (!stripeClient) {
       return { clientSecret: null };
     }
 

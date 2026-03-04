@@ -46,14 +46,14 @@ export const SurveyStatusDropdown = ({
         toast.success(toastMessage);
       }
 
+      if (updateLocalSurveyStatus) {
+        updateLocalSurveyStatus(resultingStatus);
+      }
+
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
       toast.error(errorMessage);
-    }
-
-    if (updateLocalSurveyStatus) {
-      updateLocalSurveyStatus(updateSurveyActionResponse?.data?.status ?? status);
     }
   };
 

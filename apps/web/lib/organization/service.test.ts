@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { BILLING_LIMITS, IS_FORMBRICKS_CLOUD, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
 import {
@@ -37,6 +37,10 @@ vi.mock("@/modules/billing/lib/organization-billing", () => ({
 }));
 
 describe("Organization Service", () => {
+  beforeEach(() => {
+    vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -153,25 +157,27 @@ describe("Organization Service", () => {
 
   describe("createOrganization", () => {
     test("should create organization with default billing settings", async () => {
+      const expectedBilling = {
+        billingMode: (IS_FORMBRICKS_CLOUD ? "stripe" : "legacy") as const,
+        plan: PROJECT_FEATURE_KEYS.FREE,
+        limits: {
+          projects: IS_FORMBRICKS_CLOUD ? 1 : BILLING_LIMITS.FREE.PROJECTS,
+          monthly: {
+            responses: IS_FORMBRICKS_CLOUD ? 250 : BILLING_LIMITS.FREE.RESPONSES,
+            miu: BILLING_LIMITS.FREE.MIU,
+          },
+        },
+        stripeCustomerId: null,
+        periodStart: new Date(),
+        period: "monthly" as const,
+      };
+
       const mockOrganization = {
         id: "org1",
         name: "Test Org",
         createdAt: new Date(),
         updatedAt: new Date(),
-        billing: {
-          billingMode: "stripe" as const,
-          plan: PROJECT_FEATURE_KEYS.FREE,
-          limits: {
-            projects: BILLING_LIMITS.FREE.PROJECTS,
-            monthly: {
-              responses: BILLING_LIMITS.FREE.RESPONSES,
-              miu: BILLING_LIMITS.FREE.MIU,
-            },
-          },
-          stripeCustomerId: null,
-          periodStart: new Date(),
-          period: "monthly" as const,
-        },
+        billing: expectedBilling,
         isAIEnabled: false,
         whitelabel: false,
       };
@@ -185,12 +191,12 @@ describe("Organization Service", () => {
         data: {
           name: "Test Org",
           billing: {
-            billingMode: "stripe",
+            billingMode: IS_FORMBRICKS_CLOUD ? "stripe" : "legacy",
             plan: PROJECT_FEATURE_KEYS.FREE,
             limits: {
-              projects: BILLING_LIMITS.FREE.PROJECTS,
+              projects: IS_FORMBRICKS_CLOUD ? 1 : BILLING_LIMITS.FREE.PROJECTS,
               monthly: {
-                responses: BILLING_LIMITS.FREE.RESPONSES,
+                responses: IS_FORMBRICKS_CLOUD ? 250 : BILLING_LIMITS.FREE.RESPONSES,
                 miu: BILLING_LIMITS.FREE.MIU,
               },
             },
@@ -205,25 +211,27 @@ describe("Organization Service", () => {
     });
 
     test("should still return organization when Stripe setup fails", async () => {
+      const expectedBilling = {
+        billingMode: (IS_FORMBRICKS_CLOUD ? "stripe" : "legacy") as const,
+        plan: PROJECT_FEATURE_KEYS.FREE,
+        limits: {
+          projects: IS_FORMBRICKS_CLOUD ? 1 : BILLING_LIMITS.FREE.PROJECTS,
+          monthly: {
+            responses: IS_FORMBRICKS_CLOUD ? 250 : BILLING_LIMITS.FREE.RESPONSES,
+            miu: BILLING_LIMITS.FREE.MIU,
+          },
+        },
+        stripeCustomerId: null,
+        periodStart: new Date(),
+        period: "monthly" as const,
+      };
+
       const mockOrganization = {
         id: "org1",
         name: "Test Org",
         createdAt: new Date(),
         updatedAt: new Date(),
-        billing: {
-          billingMode: "stripe" as const,
-          plan: PROJECT_FEATURE_KEYS.FREE,
-          limits: {
-            projects: BILLING_LIMITS.FREE.PROJECTS,
-            monthly: {
-              responses: BILLING_LIMITS.FREE.RESPONSES,
-              miu: BILLING_LIMITS.FREE.MIU,
-            },
-          },
-          stripeCustomerId: null,
-          periodStart: new Date(),
-          period: "monthly" as const,
-        },
+        billing: expectedBilling,
         isAIEnabled: false,
         whitelabel: false,
       };

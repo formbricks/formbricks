@@ -1,4 +1,5 @@
 import "server-only";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
@@ -21,7 +22,10 @@ export const hasCloudEntitlement = async (
   if (!IS_FORMBRICKS_CLOUD) return false;
 
   const billing = await getOrganizationBillingWithReadThroughSync(organizationId);
-  const features = billing?.stripe?.features ?? [];
+  if (!billing) {
+    throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+  }
+  const features = billing.stripe?.features ?? [];
 
   return features.includes(featureLookupKey);
 };

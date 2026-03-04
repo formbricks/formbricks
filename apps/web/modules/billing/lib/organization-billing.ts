@@ -212,14 +212,18 @@ const resolveCloudPlanFromSubscription = (
 ) => {
   if (!subscription) return "hobby" as TCloudStripePlan;
 
+  let resolvedPlan: TCloudStripePlan = "unknown";
+
   for (const item of subscription.items.data) {
     const product = item.price.product;
     const productId = typeof product === "string" ? product : product.id;
     const plan = getCloudPlanFromProductId(productId);
-    if (plan !== "unknown") return plan;
+    if (CLOUD_PLAN_LEVEL[plan] > CLOUD_PLAN_LEVEL[resolvedPlan]) {
+      resolvedPlan = plan;
+    }
   }
 
-  return "unknown" as TCloudStripePlan;
+  return resolvedPlan;
 };
 
 const resolveBillingPeriod = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
@@ -430,22 +434,31 @@ const isSnapshotStale = (billing: TBillingJson | null): boolean => {
   return Date.now() - lastSyncedAt.getTime() > BILLING_SYNC_STALE_MS;
 };
 
+const getOrganizationBillingFromDatabase = async (organizationId: string): Promise<TBillingJson | null> => {
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { billing: true },
+  });
+
+  if (!organization) return null;
+  return getBillingOrThrow(organizationId, organization.billing);
+};
+
 export const getOrganizationBillingWithReadThroughSync = async (
   organizationId: string
 ): Promise<TBillingJson | null> => {
+  if (!IS_FORMBRICKS_CLOUD) {
+    // Self-hosted does not need Stripe read-through sync or Redis-backed billing cache.
+    return await getOrganizationBillingFromDatabase(organizationId);
+  }
+
   const cachedBilling = await cache.withCache(
-    async () => {
-      const organization = await prisma.organization.findUnique({
-        where: { id: organizationId },
-        select: { billing: true },
-      });
-      return (organization?.billing ?? null) as TBillingJson | null;
-    },
+    async () => await getOrganizationBillingFromDatabase(organizationId),
     getBillingCacheKey(organizationId),
     BILLING_SYNC_STALE_MS
   );
 
-  if (!IS_FORMBRICKS_CLOUD || !cachedBilling?.stripeCustomerId) {
+  if (!cachedBilling?.stripeCustomerId) {
     return cachedBilling;
   }
 

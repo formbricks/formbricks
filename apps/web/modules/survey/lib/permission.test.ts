@@ -93,6 +93,7 @@ describe("getExternalUrlsPermission - Self-hosted", () => {
   });
 
   test("should return true in self-hosted deployments", async () => {
+    vi.resetModules();
     vi.doMock("@/lib/constants", () => ({
       IS_FORMBRICKS_CLOUD: false,
       PROJECT_FEATURE_KEYS: {

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyQuotaInput } from "@formbricks/types/quota";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -27,7 +27,7 @@ const ZDeleteQuotaAction = z.object({
 const checkQuotasEnabled = async (organizationId: string) => {
   const organizationBilling = await getOrganizationBilling(organizationId);
   if (!organizationBilling) {
-    throw new Error("Organization billing not found");
+    throw new ResourceNotFoundError("OrganizationBilling", organizationId);
   }
   const isQuotasAllowed = await getIsQuotasEnabled({
     billingPlan: organizationBilling.plan,

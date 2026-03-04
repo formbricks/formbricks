@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -22,9 +23,13 @@ export const PricingPage = async (props) => {
   }
 
   const syncedBilling = await getOrganizationBillingWithReadThroughSync(organization.id);
+  if (!syncedBilling) {
+    throw new ResourceNotFoundError("OrganizationBilling", organization.id);
+  }
+
   const organizationWithSyncedBilling = {
     ...organization,
-    billing: (syncedBilling ?? organization.billing) as typeof organization.billing,
+    billing: syncedBilling as typeof organization.billing,
   };
 
   const [responseCount, projectCount] = await Promise.all([

@@ -128,7 +128,7 @@ export const createOrganization = async (
       data: {
         ...organizationInput,
         billing: {
-          billingMode: "stripe",
+          billingMode: IS_FORMBRICKS_CLOUD ? "stripe" : "legacy",
           plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
             projects: IS_FORMBRICKS_CLOUD ? 1 : BILLING_LIMITS.FREE.PROJECTS,
@@ -145,15 +145,13 @@ export const createOrganization = async (
       select,
     });
 
-    // Stripe setup is best-effort but should be attempted before we return.
-    try {
-      await ensureCloudStripeSetupForOrganization(organization.id);
-    } catch (error) {
+    // Stripe setup is best-effort and must not block organization creation.
+    void ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
       logger.warn(
         { error, organizationId: organization.id },
         "Stripe setup failed after organization creation"
       );
-    }
+    });
 
     return organization;
   } catch (error) {

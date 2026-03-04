@@ -29,7 +29,7 @@ describe("feature-access", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.isCloud = true;
-    mocks.getBilling.mockResolvedValue(null);
+    mocks.getBilling.mockResolvedValue({ stripe: { features: [] } });
     mocks.getEnterpriseLicense.mockResolvedValue({ active: true, status: "active", features: {} });
   });
 
@@ -64,6 +64,14 @@ describe("feature-access", () => {
     const result = await hasCloudEntitlement("org_1", "custom-links-in-surveys");
 
     expect(result).toBe(true);
+  });
+
+  test("hasCloudEntitlement throws when billing is missing", async () => {
+    mocks.getBilling.mockResolvedValue(null);
+
+    await expect(hasCloudEntitlement("org_1", "custom-links-in-surveys")).rejects.toThrow(
+      "OrganizationBilling"
+    );
   });
 
   test("hasCloudEntitlementWithLicenseGuard returns false when entitlement is missing", async () => {

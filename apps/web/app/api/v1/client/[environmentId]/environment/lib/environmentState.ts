@@ -43,6 +43,6 @@ export const getEnvironmentState = async (
       return { data };
     },
     createCacheKey.environment.state(environmentId),
-    60 * 1000 // 1 minutes in milliseconds
+    60 * 1000 // 1 minute in milliseconds
   );
 };

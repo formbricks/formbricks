@@ -384,7 +384,7 @@ export const getResponseDownloadFile = async (
     const organizationBilling = await getOrganizationBilling(organizationId);
 
     if (!organizationBilling) {
-      throw new Error("Organization billing not found");
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
     const isQuotasAllowed = await getIsQuotasEnabled({
       billingPlan: organizationBilling.plan,

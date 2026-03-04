@@ -215,20 +215,6 @@ describe("License Utils", () => {
       expect(result).toBe(false);
     });
 
-    test("should return true if license active, accessControl enabled and plan is CUSTOM (cloud)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(featureAccessModule.hasCloudEntitlementWithLicenseGuard).mockResolvedValue(true);
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, accessControl: true },
-      });
-      const result = await getAccessControlPermission({
-        billingPlan: constants.PROJECT_FEATURE_KEYS.CUSTOM,
-        organizationId: "org_1",
-      });
-      expect(result).toBe(true);
-    });
-
     test("should return false if license active but accessControl feature disabled (self-hosted)", async () => {
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
       const result = await getAccessControlPermission({

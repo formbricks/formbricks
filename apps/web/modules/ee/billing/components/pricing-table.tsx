@@ -161,15 +161,24 @@ export const PricingTable = ({
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
-      const isSubscriptionCancelledResponse = await isSubscriptionCancelledAction({
-        organizationId: organization.id,
-      });
-      if (isSubscriptionCancelledResponse?.data) {
-        setCancellingOn(isSubscriptionCancelledResponse.data.date);
+      if (!hasBillingRights || !canManageSubscription) {
+        setCancellingOn(null);
+        return;
+      }
+
+      try {
+        const isSubscriptionCancelledResponse = await isSubscriptionCancelledAction({
+          organizationId: organization.id,
+        });
+        if (isSubscriptionCancelledResponse?.data) {
+          setCancellingOn(isSubscriptionCancelledResponse.data.date);
+        }
+      } catch {
+        // Ignore permission/network failures here and keep rendering billing UI.
       }
     };
     checkSubscriptionStatus();
-  }, [organization.id]);
+  }, [canManageSubscription, hasBillingRights, organization.id]);
 
   useEffect(() => {
     if (!showPricingTable) {

@@ -1,4 +1,6 @@
+import "server-only";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { type TOrganizationBilling } from "@formbricks/types/organizations";
 
 const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
@@ -14,6 +16,22 @@ export const CLOUD_STRIPE_PRODUCT_IDS = {
   SCALE: process.env.CLOUD_STRIPE_PRODUCT_ID_SCALE ?? DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.SCALE,
   TRIAL: process.env.CLOUD_STRIPE_PRODUCT_ID_TRIAL ?? DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.TRIAL,
 } as const;
+
+const cloudStripeProductIdsUsingDefaults = Object.entries(DEFAULT_CLOUD_STRIPE_PRODUCT_IDS).flatMap(
+  ([planKey, defaultProductId]) =>
+    CLOUD_STRIPE_PRODUCT_IDS[planKey as keyof typeof CLOUD_STRIPE_PRODUCT_IDS] === defaultProductId
+      ? [planKey]
+      : []
+);
+
+if (
+  process.env.IS_FORMBRICKS_CLOUD === "1" &&
+  cloudStripeProductIdsUsingDefaults.length > 0 &&
+  process.env.NODE_ENV !== "test"
+) {
+  const message = `Cloud Stripe product IDs are using defaults for: ${cloudStripeProductIdsUsingDefaults.join(", ")}. Configure CLOUD_STRIPE_PRODUCT_ID_* environment variables.`;
+  logger.warn({ cloudStripeProductIdsUsingDefaults }, message);
+}
 
 export const CLOUD_STRIPE_PRICE_LOOKUP_KEYS = {
   HOBBY_MONTHLY: "price_hobby_monthly",
@@ -69,23 +87,4 @@ export const getLegacyPlanFromCloudPlan = (plan: TCloudStripePlan): TOrganizatio
   if (plan === "hobby" || plan === "unknown") return "free";
   if (plan === "pro" || plan === "trial") return "startup";
   return "custom";
-};
-
-export const getLimitsFromCloudPlan = (
-  plan: TCloudStripePlan
-): { projects: number | null; responses: number | null } => {
-  if (plan === "hobby") {
-    return { projects: 1, responses: 250 };
-  }
-
-  if (plan === "pro" || plan === "trial") {
-    return { projects: 3, responses: 2000 };
-  }
-
-  if (plan === "scale") {
-    return { projects: 5, responses: 5000 };
-  }
-
-  // Unknown plans intentionally fall back to hobby limits as the safest default.
-  return { projects: 1, responses: 250 };
 };
