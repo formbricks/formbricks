@@ -1,9 +1,9 @@
 import "server-only";
+import { Prisma } from "@prisma/client";
 import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TOrganizationBilling } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -18,10 +18,6 @@ import { stripeClient } from "./stripe-client";
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
-type TBillingJson = Omit<TOrganizationBilling, "periodStart"> & {
-  periodStart?: string | Date | null;
-};
-
 type TResponseMeteringProjection = {
   usagePriceId: string | null;
   includedResponses: number | null;
@@ -29,10 +25,46 @@ type TResponseMeteringProjection = {
   currency: string | null;
 };
 
+const ORGANIZATION_BILLING_SELECT = {
+  stripeCustomerId: true,
+  limits: true,
+  periodStart: true,
+  stripe: true,
+} satisfies Prisma.OrganizationBillingSelect;
+
+type TOrganizationBillingRecord = Prisma.OrganizationBillingGetPayload<{
+  select: typeof ORGANIZATION_BILLING_SELECT;
+}>;
+
 const getBillingCacheKey = (organizationId: string) => createCacheKey.organization.billing(organizationId);
 
 export const invalidateOrganizationBillingCache = async (organizationId: string): Promise<void> => {
   await cache.del([getBillingCacheKey(organizationId)]);
+};
+
+const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
+  limits: {
+    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    monthly: {
+      responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      miu: 2000,
+    },
+  },
+  stripeCustomerId: null,
+  periodStart: new Date(),
+});
+
+const mapBillingRecord = (billing: TOrganizationBillingRecord | null): TOrganizationBilling | null => {
+  if (!billing) {
+    return null;
+  }
+
+  return {
+    stripeCustomerId: billing.stripeCustomerId,
+    limits: billing.limits as TOrganizationBilling["limits"],
+    periodStart: billing.periodStart,
+    ...(billing.stripe !== null ? { stripe: billing.stripe as TOrganizationBilling["stripe"] } : {}),
+  };
 };
 
 const toIsoStringOrNull = (date: Date | null | undefined): string | null =>
@@ -42,13 +74,6 @@ const getDateFromBilling = (value: string | null | undefined): Date | null => {
   if (!value) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const getBillingOrThrow = (organizationId: string, billing: unknown): TBillingJson => {
-  if (!billing) {
-    throw new ResourceNotFoundError("Organization", organizationId);
-  }
-  return billing as TBillingJson;
 };
 
 const listAllActiveEntitlements = async (customerId: string): Promise<string[]> => {
@@ -257,6 +282,41 @@ const ensureHobbySubscription = async (
   );
 };
 
+const ensureOrganizationBillingRecord = async (
+  organizationId: string
+): Promise<TOrganizationBilling | null> => {
+  const existingBilling = await prisma.organizationBilling.findUnique({
+    where: { organizationId },
+    select: ORGANIZATION_BILLING_SELECT,
+  });
+
+  if (existingBilling) {
+    return mapBillingRecord(existingBilling);
+  }
+
+  const organizationExists = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { id: true },
+  });
+
+  if (!organizationExists) {
+    return null;
+  }
+
+  const defaultBilling = getDefaultOrganizationBilling();
+  const createdBilling = await prisma.organizationBilling.create({
+    data: {
+      organizationId,
+      stripeCustomerId: defaultBilling.stripeCustomerId,
+      limits: defaultBilling.limits,
+      periodStart: defaultBilling.periodStart,
+    },
+    select: ORGANIZATION_BILLING_SELECT,
+  });
+
+  return mapBillingRecord(createdBilling);
+};
+
 export const ensureStripeCustomerForOrganization = async (
   organizationId: string
 ): Promise<{ customerId: string | null }> => {
@@ -266,14 +326,18 @@ export const ensureStripeCustomerForOrganization = async (
 
   const organization = await prisma.organization.findUnique({
     where: { id: organizationId },
-    select: { id: true, name: true, billing: true },
+    select: { id: true, name: true },
   });
 
   if (!organization) {
     return { customerId: null };
   }
 
-  const billing = getBillingOrThrow(organization.id, organization.billing);
+  const billing = await ensureOrganizationBillingRecord(organization.id);
+  if (!billing) {
+    return { customerId: null };
+  }
+
   if (billing.stripeCustomerId) {
     return { customerId: billing.stripeCustomerId };
   }
@@ -286,17 +350,23 @@ export const ensureStripeCustomerForOrganization = async (
     { idempotencyKey: `ensure-customer-${organization.id}` }
   );
 
-  await prisma.organization.update({
-    where: { id: organization.id },
-    data: {
-      billing: {
-        ...billing,
-        stripeCustomerId: customer.id,
-        stripe: {
-          ...billing.stripe,
-          lastSyncedAt: new Date().toISOString(),
-        },
-      },
+  const updatedStripeSnapshot = {
+    ...billing.stripe,
+    lastSyncedAt: new Date().toISOString(),
+  };
+
+  await prisma.organizationBilling.upsert({
+    where: { organizationId: organization.id },
+    create: {
+      organizationId: organization.id,
+      stripeCustomerId: customer.id,
+      limits: billing.limits,
+      periodStart: billing.periodStart,
+      stripe: updatedStripeSnapshot,
+    },
+    update: {
+      stripeCustomerId: customer.id,
+      stripe: updatedStripeSnapshot,
     },
   });
 
@@ -307,19 +377,16 @@ export const ensureStripeCustomerForOrganization = async (
 export const syncOrganizationBillingFromStripe = async (
   organizationId: string,
   event?: { id: string; created: number }
-): Promise<TBillingJson | null> => {
+): Promise<TOrganizationBilling | null> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) {
     return null;
   }
 
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { id: true, billing: true },
-  });
+  const billing = await ensureOrganizationBillingRecord(organizationId);
+  if (!billing) {
+    return null;
+  }
 
-  if (!organization) return null;
-
-  const billing = getBillingOrThrow(organization.id, organization.billing);
   const customerId = billing.stripeCustomerId;
   if (!customerId) return billing;
 
@@ -379,8 +446,7 @@ export const syncOrganizationBillingFromStripe = async (
     );
   }
 
-  const updatedBilling: TBillingJson = {
-    ...billing,
+  const updatedBilling: TOrganizationBilling = {
     stripeCustomerId: customerId,
     limits: {
       projects: projectsLimit,
@@ -390,7 +456,7 @@ export const syncOrganizationBillingFromStripe = async (
         miu: null,
       },
     },
-    periodStart: periodStart.toISOString(),
+    periodStart,
     stripe: {
       ...billing.stripe,
       plan: cloudPlan,
@@ -403,10 +469,13 @@ export const syncOrganizationBillingFromStripe = async (
     },
   };
 
-  await prisma.organization.update({
-    where: { id: organizationId },
+  await prisma.organizationBilling.update({
+    where: { organizationId },
     data: {
-      billing: updatedBilling,
+      stripeCustomerId: updatedBilling.stripeCustomerId,
+      limits: updatedBilling.limits,
+      periodStart: updatedBilling.periodStart,
+      stripe: updatedBilling.stripe,
     },
   });
 
@@ -414,25 +483,21 @@ export const syncOrganizationBillingFromStripe = async (
   return updatedBilling;
 };
 
-const isSnapshotStale = (billing: TBillingJson | null): boolean => {
+const isSnapshotStale = (billing: TOrganizationBilling | null): boolean => {
   const lastSyncedAt = getDateFromBilling(billing?.stripe?.lastSyncedAt ?? null);
   if (!lastSyncedAt) return true;
   return Date.now() - lastSyncedAt.getTime() > BILLING_SYNC_STALE_MS;
 };
 
-const getOrganizationBillingFromDatabase = async (organizationId: string): Promise<TBillingJson | null> => {
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { billing: true },
-  });
-
-  if (!organization) return null;
-  return getBillingOrThrow(organizationId, organization.billing);
+const getOrganizationBillingFromDatabase = async (
+  organizationId: string
+): Promise<TOrganizationBilling | null> => {
+  return await ensureOrganizationBillingRecord(organizationId);
 };
 
 export const getOrganizationBillingWithReadThroughSync = async (
   organizationId: string
-): Promise<TBillingJson | null> => {
+): Promise<TOrganizationBilling | null> => {
   if (!IS_FORMBRICKS_CLOUD) {
     // Self-hosted does not need Stripe read-through sync or Redis-backed billing cache.
     return await getOrganizationBillingFromDatabase(organizationId);
@@ -462,14 +527,16 @@ export const getOrganizationBillingWithReadThroughSync = async (
 };
 
 export const findOrganizationIdByStripeCustomerId = async (customerId: string): Promise<string | null> => {
-  const organization = await prisma.organization.findFirst({
+  const billing = await prisma.organizationBilling.findUnique({
     where: {
-      billing: { path: ["stripeCustomerId"], equals: customerId },
+      stripeCustomerId: customerId,
     },
-    select: { id: true },
+    select: {
+      organizationId: true,
+    },
   });
 
-  return organization?.id ?? null;
+  return billing?.organizationId ?? null;
 };
 
 export const reconcileCloudStripeSubscriptionsForOrganization = async (
@@ -479,15 +546,8 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   const client = stripeClient;
   if (!IS_FORMBRICKS_CLOUD || !client) return;
 
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { id: true, billing: true },
-  });
-
-  if (!organization) return;
-
-  const billing = getBillingOrThrow(organization.id, organization.billing);
-  const customerId = billing.stripeCustomerId;
+  const billing = await getOrganizationBillingFromDatabase(organizationId);
+  const customerId = billing?.stripeCustomerId;
   if (!customerId) return;
 
   const subscriptions = await client.subscriptions.list({
@@ -538,7 +598,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   }
 
   if (subscriptionsWithPlanLevel.length === 0) {
-    await ensureHobbySubscription(organization.id, customerId, idempotencySuffix);
+    await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
   }
 };
 

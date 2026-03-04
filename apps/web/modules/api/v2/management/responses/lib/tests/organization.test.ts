@@ -81,7 +81,16 @@ describe("Organization Lib", () => {
       const result = await getOrganizationBilling(organizationId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
         where: { id: organizationId },
-        select: { billing: true },
+        select: {
+          billing: {
+            select: {
+              stripeCustomerId: true,
+              limits: true,
+              periodStart: true,
+              stripe: true,
+            },
+          },
+        },
       });
       expect(result.ok).toBe(true);
       if (result.ok) {

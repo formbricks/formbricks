@@ -172,7 +172,14 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                billing: true,
+                billing: {
+                  select: {
+                    stripeCustomerId: true,
+                    limits: true,
+                    periodStart: true,
+                    stripe: true,
+                  },
+                },
                 isAIEnabled: true,
                 whitelabel: true,
                 // Current user's membership only (filtered at DB level)
@@ -196,6 +203,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
     });
 
     if (!data) return null;
+
+    if (!data.project.organization.billing) {
+      throw new Error("Organization billing not found");
+    }
 
     // Extract and return properly typed data
     return {

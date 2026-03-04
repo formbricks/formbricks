@@ -1,4 +1,5 @@
-import { Organization, Response } from "@prisma/client";
+import { Response } from "@prisma/client";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 
 export const responseInput: Omit<Response, "id"> = {
@@ -77,7 +78,7 @@ export const response: Response = {
 export const environmentId = "ou9sjm7a7qnilxhhhfszct95";
 export const organizationId = "qybv4vk77pw71vnq9rmfrsvi";
 
-export const organizationBilling: Organization["billing"] = {
+export const organizationBilling: TOrganizationBilling = {
   stripeCustomerId: "cus_P78901234567890123456789",
   limits: {
     monthly: { responses: 100, miu: 1000 },

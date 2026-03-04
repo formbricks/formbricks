@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
@@ -12,9 +11,11 @@ import {
 const mocks = vi.hoisted(() => ({
   isCloud: true,
   getBillingCacheKey: vi.fn(),
-  prismaFindUnique: vi.fn(),
-  prismaUpdate: vi.fn(),
-  prismaFindFirst: vi.fn(),
+  prismaOrganizationFindUnique: vi.fn(),
+  prismaOrganizationBillingFindUnique: vi.fn(),
+  prismaOrganizationBillingCreate: vi.fn(),
+  prismaOrganizationBillingUpsert: vi.fn(),
+  prismaOrganizationBillingUpdate: vi.fn(),
   cacheWithCache: vi.fn(),
   cacheDel: vi.fn(),
   loggerWarn: vi.fn(),
@@ -48,9 +49,13 @@ vi.mock("@formbricks/cache", () => ({
 vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {
-      findUnique: mocks.prismaFindUnique,
-      update: mocks.prismaUpdate,
-      findFirst: mocks.prismaFindFirst,
+      findUnique: mocks.prismaOrganizationFindUnique,
+    },
+    organizationBilling: {
+      findUnique: mocks.prismaOrganizationBillingFindUnique,
+      create: mocks.prismaOrganizationBillingCreate,
+      upsert: mocks.prismaOrganizationBillingUpsert,
+      update: mocks.prismaOrganizationBillingUpdate,
     },
   },
 }));
@@ -104,10 +109,22 @@ describe("organization-billing", () => {
       data: [{ id: "price_hobby_1" }],
     });
     mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+    mocks.prismaOrganizationBillingCreate.mockResolvedValue({
+      stripeCustomerId: null,
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: null,
+    });
   });
 
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
-    mocks.prismaFindUnique.mockResolvedValue(null);
+    mocks.prismaOrganizationFindUnique.mockResolvedValue(null);
 
     const result = await ensureStripeCustomerForOrganization("org_missing");
 
@@ -116,34 +133,46 @@ describe("organization-billing", () => {
   });
 
   test("ensureStripeCustomerForOrganization returns existing customer id", async () => {
-    mocks.prismaFindUnique.mockResolvedValue({
+    mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
-      billing: { stripeCustomerId: "cus_existing" },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_existing",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: null,
     });
 
     const result = await ensureStripeCustomerForOrganization("org_1");
 
     expect(result).toEqual({ customerId: "cus_existing" });
     expect(mocks.customersCreate).not.toHaveBeenCalled();
-    expect(mocks.prismaUpdate).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpsert).not.toHaveBeenCalled();
   });
 
   test("ensureStripeCustomerForOrganization creates and stores a Stripe customer", async () => {
-    mocks.prismaFindUnique.mockResolvedValue({
+    mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
-      billing: {
-        stripeCustomerId: null,
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-            miu: 2000,
-          },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: null,
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
         },
-        periodStart: new Date().toISOString(),
       },
+      periodStart: new Date(),
+      stripe: null,
     });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
 
@@ -157,16 +186,18 @@ describe("organization-billing", () => {
       },
       { idempotencyKey: "ensure-customer-org_1" }
     );
-    expect(mocks.prismaUpdate).toHaveBeenCalledWith({
-      where: { id: "org_1" },
-      data: {
-        billing: expect.objectContaining({
-          stripeCustomerId: "cus_new",
-          stripe: expect.objectContaining({
-            lastSyncedAt: expect.any(String),
-          }),
+    expect(mocks.prismaOrganizationBillingUpsert).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      create: expect.objectContaining({
+        organizationId: "org_1",
+        stripeCustomerId: "cus_new",
+      }),
+      update: expect.objectContaining({
+        stripeCustomerId: "cus_new",
+        stripe: expect.objectContaining({
+          lastSyncedAt: expect.any(String),
         }),
-      },
+      }),
     });
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
@@ -181,9 +212,13 @@ describe("organization-billing", () => {
           miu: 2000,
         },
       },
-      periodStart: new Date().toISOString(),
+      periodStart: new Date(),
     };
-    mocks.prismaFindUnique.mockResolvedValue({ id: "org_1", billing });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      ...billing,
+      periodStart: new Date(),
+      stripe: null,
+    });
 
     const result = await syncOrganizationBillingFromStripe("org_1");
 
@@ -199,11 +234,26 @@ describe("organization-billing", () => {
         lastStripeEventCreatedAt: new Date("2026-02-19T00:00:00.000Z").toISOString(),
       },
     };
-    mocks.prismaFindUnique.mockResolvedValue({ id: "org_1", billing });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      ...billing,
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+    });
 
     const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923200 });
 
-    expect(result).toEqual(billing);
+    expect(result).toEqual(
+      expect.objectContaining({
+        stripeCustomerId: billing.stripeCustomerId,
+        stripe: billing.stripe,
+      })
+    );
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
   });
 
@@ -214,18 +264,42 @@ describe("organization-billing", () => {
         lastStripeEventCreatedAt: "2026-02-20T00:00:00.000Z",
       },
     };
-    mocks.prismaFindUnique.mockResolvedValue({ id: "org_1", billing });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      ...billing,
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: billing.stripe,
+    });
 
     const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_old", created: 1739923200 });
 
-    expect(result).toEqual(billing);
+    expect(result).toEqual(
+      expect.objectContaining({
+        stripeCustomerId: billing.stripeCustomerId,
+        stripe: billing.stripe,
+      })
+    );
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
   });
 
   test("syncOrganizationBillingFromStripe stores normalized stripe snapshot", async () => {
-    mocks.prismaFindUnique.mockResolvedValue({
-      id: "org_1",
-      billing: { stripeCustomerId: "cus_1", stripe: { lastSyncedEventId: null } },
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: { lastSyncedEventId: null },
     });
     mocks.subscriptionsList.mockResolvedValue({
       data: [
@@ -274,32 +348,31 @@ describe("organization-billing", () => {
 
     const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_new", created: 1739923300 });
 
-    expect(mocks.prismaUpdate).toHaveBeenCalledWith({
-      where: { id: "org_1" },
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
       data: {
-        billing: expect.objectContaining({
-          stripeCustomerId: "cus_1",
-          limits: {
-            projects: 5,
-            monthly: {
-              responses: 2000,
-              miu: null,
-            },
+        stripeCustomerId: "cus_1",
+        limits: {
+          projects: 5,
+          monthly: {
+            responses: 2000,
+            miu: null,
           },
-          stripe: expect.objectContaining({
-            plan: "pro",
-            subscriptionId: "sub_1",
-            features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
-            responseMetering: expect.objectContaining({
-              includedResponses: 2000,
-              overageUnitAmountCents: 8,
-              currency: "usd",
-            }),
-            lastSyncedEventId: "evt_new",
-            lastStripeEventCreatedAt: expect.any(String),
-            lastSyncedAt: expect.any(String),
+        },
+        stripe: expect.objectContaining({
+          plan: "pro",
+          subscriptionId: "sub_1",
+          features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
+          responseMetering: expect.objectContaining({
+            includedResponses: 2000,
+            overageUnitAmountCents: 8,
+            currency: "usd",
           }),
+          lastSyncedEventId: "evt_new",
+          lastStripeEventCreatedAt: expect.any(String),
+          lastSyncedAt: expect.any(String),
         }),
+        periodStart: expect.any(Date),
       },
     });
     expect(result?.stripe?.plan).toBe("pro");
@@ -317,9 +390,17 @@ describe("organization-billing", () => {
       if (productId === "prod_pro") return "pro";
       return "unknown";
     });
-    mocks.prismaFindUnique.mockResolvedValue({
-      id: "org_1",
-      billing: { stripeCustomerId: "cus_1", stripe: {} },
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: {},
     });
     mocks.subscriptionsList.mockResolvedValue({
       data: [
@@ -381,7 +462,7 @@ describe("organization-billing", () => {
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
 
     expect(result).toEqual(cachedBilling);
-    expect(mocks.prismaFindUnique).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingFindUnique).not.toHaveBeenCalled();
   });
 
   test("getOrganizationBillingWithReadThroughSync returns fresh cached billing without sync", async () => {
@@ -394,7 +475,7 @@ describe("organization-billing", () => {
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
 
     expect(result).toEqual(cachedBilling);
-    expect(mocks.prismaFindUnique).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingFindUnique).not.toHaveBeenCalled();
   });
 
   test("getOrganizationBillingWithReadThroughSync falls back to cached billing when sync fails", async () => {
@@ -403,7 +484,18 @@ describe("organization-billing", () => {
       stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
     };
     mocks.cacheWithCache.mockResolvedValue(cachedBilling);
-    mocks.prismaFindUnique.mockResolvedValue({ id: "org_1", billing: cachedBilling });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    });
     mocks.subscriptionsList.mockRejectedValue(new Error("stripe down"));
 
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
@@ -417,18 +509,17 @@ describe("organization-billing", () => {
 
   test("getOrganizationBillingWithReadThroughSync bypasses Redis cache in self-hosted mode", async () => {
     mocks.isCloud = false;
-    mocks.prismaFindUnique.mockResolvedValue({
-      billing: {
-        stripeCustomerId: null,
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-            miu: 2000,
-          },
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: null,
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
         },
-        periodStart: new Date().toISOString(),
       },
+      periodStart: new Date(),
+      stripe: null,
     });
 
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
@@ -443,28 +534,28 @@ describe("organization-billing", () => {
           miu: 2000,
         },
       },
-      periodStart: expect.any(String),
+      periodStart: expect.any(Date),
     });
   });
 
-  test("getOrganizationBillingWithReadThroughSync throws when organization billing is missing", async () => {
-    mocks.prismaFindUnique.mockResolvedValue({ billing: null });
+  test("getOrganizationBillingWithReadThroughSync returns null when organization billing is missing", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue(null);
     mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
 
-    await expect(getOrganizationBillingWithReadThroughSync("org_1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(getOrganizationBillingWithReadThroughSync("org_1")).resolves.toBeNull();
   });
 
   test("findOrganizationIdByStripeCustomerId returns matching organization id", async () => {
-    mocks.prismaFindFirst.mockResolvedValue({ id: "org_1" });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({ organizationId: "org_1" });
 
     const result = await findOrganizationIdByStripeCustomerId("cus_1");
 
     expect(result).toBe("org_1");
-    expect(mocks.prismaFindFirst).toHaveBeenCalledWith({
+    expect(mocks.prismaOrganizationBillingFindUnique).toHaveBeenCalledWith({
       where: {
-        billing: { path: ["stripeCustomerId"], equals: "cus_1" },
+        stripeCustomerId: "cus_1",
       },
-      select: { id: true },
+      select: { organizationId: true },
     });
   });
 
@@ -473,29 +564,50 @@ describe("organization-billing", () => {
 
     await ensureCloudStripeSetupForOrganization("org_1");
 
-    expect(mocks.prismaFindUnique).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationFindUnique).not.toHaveBeenCalled();
   });
 
   test("ensureCloudStripeSetupForOrganization provisions hobby subscription when org has no active subscription", async () => {
-    mocks.prismaFindUnique
+    mocks.prismaOrganizationFindUnique.mockResolvedValueOnce({
+      id: "org_1",
+      name: "Org 1",
+    });
+    mocks.prismaOrganizationBillingFindUnique
       .mockResolvedValueOnce({
-        id: "org_1",
-        name: "Org 1",
-        billing: {
-          stripeCustomerId: null,
-          limits: {
-            projects: 3,
-            monthly: {
-              responses: 1500,
-              miu: 2000,
-            },
+        stripeCustomerId: null,
+        limits: {
+          projects: 3,
+          monthly: {
+            responses: 1500,
+            miu: 2000,
           },
-          periodStart: new Date().toISOString(),
         },
+        periodStart: new Date(),
+        stripe: {},
       })
       .mockResolvedValueOnce({
-        id: "org_1",
-        billing: { stripeCustomerId: "cus_new", stripe: {} },
+        stripeCustomerId: "cus_new",
+        limits: {
+          projects: 3,
+          monthly: {
+            responses: 1500,
+            miu: 2000,
+          },
+        },
+        periodStart: new Date(),
+        stripe: {},
+      })
+      .mockResolvedValueOnce({
+        stripeCustomerId: "cus_new",
+        limits: {
+          projects: 3,
+          monthly: {
+            responses: 1500,
+            miu: 2000,
+          },
+        },
+        periodStart: new Date(),
+        stripe: {},
       });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
     mocks.subscriptionsList.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({
@@ -542,9 +654,17 @@ describe("organization-billing", () => {
       if (productId === "prod_pro") return "pro";
       return "unknown";
     });
-    mocks.prismaFindUnique.mockResolvedValue({
-      id: "org_1",
-      billing: { stripeCustomerId: "cus_1", stripe: {} },
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+          miu: 2000,
+        },
+      },
+      periodStart: new Date(),
+      stripe: {},
     });
     mocks.subscriptionsList.mockResolvedValue({
       data: [

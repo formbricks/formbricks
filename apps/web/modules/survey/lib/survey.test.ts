@@ -1,8 +1,9 @@
-import { Organization, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
 import { getOrganizationBilling, getSurvey } from "./survey";
@@ -37,7 +38,7 @@ describe("Survey Library Tests", () => {
         features: { linkSurvey: { status: "active" } },
         subscriptionStatus: "active",
         nextRenewalDate: new Date(),
-      } as unknown as Organization["billing"];
+      } as unknown as TOrganizationBilling;
       vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValueOnce(mockBilling);
 
       const billing = await getOrganizationBilling("org_123");

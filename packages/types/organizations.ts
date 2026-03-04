@@ -20,6 +20,7 @@ export const ZOrganizationStripeBilling = z.object({
   lastSyncedAt: z.string().nullable().optional(),
   lastSyncedEventId: z.string().nullable().optional(),
 });
+export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 
 // responses and miu can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({

@@ -1,7 +1,8 @@
-import { Organization, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
@@ -98,10 +99,10 @@ export const selectSurvey = {
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(
-  async (organizationId: string): Promise<Organization["billing"]> => {
+  async (organizationId: string): Promise<TOrganizationBilling> => {
     const billing = await getOrganizationBillingWithReadThroughSync(organizationId);
     if (!billing) throw new ResourceNotFoundError("Organization", organizationId);
-    return billing as Organization["billing"];
+    return billing;
   }
 );
 

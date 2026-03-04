@@ -8,6 +8,7 @@ import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TOrganization,
+  TOrganizationBilling,
   TOrganizationCreateInput,
   TOrganizationUpdateInput,
   ZOrganizationCreateInput,
@@ -20,15 +21,61 @@ import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
-export const select: Prisma.OrganizationSelect = {
+export const select = {
   id: true,
   createdAt: true,
   updatedAt: true,
   name: true,
-  billing: true,
+  billing: {
+    select: {
+      stripeCustomerId: true,
+      limits: true,
+      periodStart: true,
+      stripe: true,
+    },
+  },
   isAIEnabled: true,
   whitelabel: true,
+} satisfies Prisma.OrganizationSelect;
+
+type TOrganizationWithBilling = Prisma.OrganizationGetPayload<{ select: typeof select }>;
+
+const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
+  limits: {
+    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    monthly: {
+      responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      miu: 2000,
+    },
+  },
+  stripeCustomerId: null,
+  periodStart: new Date(),
+});
+
+const mapOrganizationBilling = (billing: TOrganizationWithBilling["billing"]): TOrganizationBilling => {
+  const defaultBilling = getDefaultOrganizationBilling();
+
+  if (!billing) {
+    return defaultBilling;
+  }
+
+  return {
+    stripeCustomerId: billing.stripeCustomerId,
+    limits: billing.limits as TOrganizationBilling["limits"],
+    periodStart: billing.periodStart,
+    ...(billing.stripe !== null ? { stripe: billing.stripe as TOrganizationBilling["stripe"] } : {}),
+  };
 };
+
+const mapOrganization = (organization: TOrganizationWithBilling): TOrganization => ({
+  id: organization.id,
+  createdAt: organization.createdAt,
+  updatedAt: organization.updatedAt,
+  name: organization.name,
+  billing: mapOrganizationBilling(organization.billing),
+  isAIEnabled: organization.isAIEnabled,
+  whitelabel: organization.whitelabel as TOrganization["whitelabel"],
+});
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;
 export const getOrganizationsByUserIdCacheTag = (userId: string) => `users-${userId}-organizations`;
@@ -55,7 +102,7 @@ export const getOrganizationsByUserId = reactCache(
       if (!organizations) {
         throw new ResourceNotFoundError("Organizations by UserId", userId);
       }
-      return organizations;
+      return organizations.map(mapOrganization);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -86,7 +133,7 @@ export const getOrganizationByEnvironmentId = reactCache(
         select: { ...select, memberships: true }, // include memberships
       });
 
-      return organization;
+      return organization ? mapOrganization(organization) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         logger.error(error, "Error getting organization by environment id");
@@ -108,7 +155,7 @@ export const getOrganization = reactCache(async (organizationId: string): Promis
       },
       select,
     });
-    return organization;
+    return organization ? mapOrganization(organization) : null;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -128,15 +175,7 @@ export const createOrganization = async (
       data: {
         ...organizationInput,
         billing: {
-          limits: {
-            projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
-            monthly: {
-              responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-              miu: 2000,
-            },
-          },
-          stripeCustomerId: null,
-          periodStart: new Date(),
+          create: getDefaultOrganizationBilling(),
         },
       },
       select,
@@ -152,7 +191,7 @@ export const createOrganization = async (
       });
     }
 
-    return organization;
+    return mapOrganization(organization);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -167,16 +206,55 @@ export const updateOrganization = async (
   data: Partial<TOrganizationUpdateInput>
 ): Promise<TOrganization> => {
   try {
-    const updatedOrganization = await prisma.organization.update({
-      where: {
-        id: organizationId,
-      },
-      data,
-      select: { ...select, memberships: true, projects: { select: { environments: true } } }, // include memberships & environments
+    const { billing, ...organizationData } = data;
+
+    const updatedOrganization = await prisma.$transaction(async (tx) => {
+      if (Object.keys(organizationData).length > 0) {
+        await tx.organization.update({
+          where: {
+            id: organizationId,
+          },
+          data: organizationData,
+        });
+      }
+
+      if (billing) {
+        const fallbackBilling = getDefaultOrganizationBilling();
+
+        await tx.organizationBilling.upsert({
+          where: {
+            organizationId,
+          },
+          create: {
+            organizationId,
+            stripeCustomerId: billing.stripeCustomerId,
+            limits: billing.limits,
+            periodStart: billing.periodStart,
+            ...(billing.stripe !== undefined ? { stripe: billing.stripe } : {}),
+          },
+          update: {
+            stripeCustomerId: billing.stripeCustomerId,
+            limits: billing.limits ?? fallbackBilling.limits,
+            periodStart: billing.periodStart ?? fallbackBilling.periodStart,
+            ...(billing.stripe !== undefined ? { stripe: billing.stripe } : {}),
+          },
+        });
+      }
+
+      return tx.organization.findUnique({
+        where: {
+          id: organizationId,
+        },
+        select: { ...select, memberships: true, projects: { select: { environments: true } } }, // include memberships & environments
+      });
     });
 
+    if (!updatedOrganization) {
+      throw new ResourceNotFoundError("Organization", organizationId);
+    }
+
     const organization = {
-      ...updatedOrganization,
+      ...mapOrganization(updatedOrganization),
       memberships: undefined,
       projects: undefined,
     };
@@ -340,7 +418,7 @@ export const getOrganizationsWhereUserIsSingleOwner = reactCache(
       const filteredOrgs = orgs
         .filter((org) => org.memberships.length === 1)
         .map((org) => ({
-          ...org,
+          ...mapOrganization(org),
           memberships: undefined, // Remove memberships from the return object to match TOrganization type
         }));
 

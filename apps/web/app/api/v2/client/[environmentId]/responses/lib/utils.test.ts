@@ -1,6 +1,6 @@
-import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
@@ -99,7 +99,7 @@ const mockResponseInput: TResponseInputV2 = {
   meta: {},
 };
 
-const mockBillingData: Organization["billing"] = {
+const mockBillingData: TOrganizationBilling = {
   limits: {
     monthly: { miu: 0, responses: 0 },
     projects: 3,

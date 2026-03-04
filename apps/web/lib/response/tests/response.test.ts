@@ -42,6 +42,13 @@ const expectedResponseWithoutPerson: TResponse = {
   tags: mockTags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 };
 
+const mockOrganizationBillingRecord = {
+  stripeCustomerId: mockOrganizationOutput.billing.stripeCustomerId,
+  limits: mockOrganizationOutput.billing.limits,
+  periodStart: mockOrganizationOutput.billing.periodStart,
+  stripe: null,
+};
+
 beforeEach(() => {
   // @ts-expect-error
   prisma.response.create.mockImplementation(async (args) => {
@@ -86,6 +93,7 @@ beforeEach(() => {
 
   prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
+  prisma.organizationBilling.findUnique.mockResolvedValue(mockOrganizationBillingRecord as unknown as any);
   prisma.project.findMany.mockResolvedValue([]);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });

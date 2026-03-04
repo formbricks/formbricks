@@ -16,11 +16,15 @@ import {
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     organization: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+    },
+    organizationBilling: {
+      upsert: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -182,15 +186,17 @@ describe("Organization Service", () => {
         data: {
           name: "Test Org",
           billing: {
-            limits: {
-              projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
-              monthly: {
-                responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-                miu: 2000,
+            create: {
+              limits: {
+                projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+                monthly: {
+                  responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+                  miu: 2000,
+                },
               },
+              stripeCustomerId: null,
+              periodStart: expect.any(Date),
             },
-            stripeCustomerId: null,
-            periodStart: expect.any(Date),
           },
         },
         select: organizationSelect,
@@ -280,6 +286,18 @@ describe("Organization Service", () => {
       };
 
       vi.mocked(prisma.organization.update).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.$transaction).mockImplementation(
+        async (fn: any) =>
+          await fn({
+            organization: {
+              update: prisma.organization.update,
+              findUnique: vi.fn().mockResolvedValue(mockOrganization),
+            },
+            organizationBilling: {
+              upsert: prisma.organizationBilling.upsert,
+            },
+          })
+      );
 
       const result = await updateOrganization("org1", { name: "Updated Org" });
 
@@ -305,7 +323,6 @@ describe("Organization Service", () => {
       expect(prisma.organization.update).toHaveBeenCalledWith({
         where: { id: "org1" },
         data: { name: "Updated Org" },
-        select: expect.any(Object),
       });
     });
   });
