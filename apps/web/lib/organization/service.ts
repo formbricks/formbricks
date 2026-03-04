@@ -145,13 +145,15 @@ export const createOrganization = async (
       select,
     });
 
-    // Stripe setup is best-effort and must not block organization creation.
-    void ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
-      logger.warn(
-        { error, organizationId: organization.id },
-        "Stripe setup failed after organization creation"
-      );
-    });
+    if (IS_FORMBRICKS_CLOUD) {
+      // Stripe setup is best-effort and must not block organization creation.
+      void ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
+        logger.warn(
+          { error, organizationId: organization.id },
+          "Stripe setup failed after organization creation"
+        );
+      });
+    }
 
     return organization;
   } catch (error) {

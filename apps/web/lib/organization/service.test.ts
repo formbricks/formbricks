@@ -207,7 +207,11 @@ describe("Organization Service", () => {
         },
         select: organizationSelect,
       });
-      expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
+      if (IS_FORMBRICKS_CLOUD) {
+        expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
+      } else {
+        expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
+      }
     });
 
     test("should still return organization when Stripe setup fails", async () => {
@@ -244,7 +248,11 @@ describe("Organization Service", () => {
       const result = await createOrganization({ name: "Test Org" });
 
       expect(result).toEqual(mockOrganization);
-      expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
+      if (IS_FORMBRICKS_CLOUD) {
+        expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
+      } else {
+        expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
+      }
     });
 
     test("should throw DatabaseError on prisma error", async () => {
