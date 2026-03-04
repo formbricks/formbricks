@@ -28,10 +28,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     throw new Error(t("common.session_not_found"));
   }
 
-  const hasWhiteLabelPermission = await getWhiteLabelPermission({
-    billingPlan: organization.billing.plan,
-    organizationId: organization.id,
-  });
+  const hasWhiteLabelPermission = await getWhiteLabelPermission({ organizationId: organization.id });
   const isOwnerOrManager = isManager || isOwner;
 
   const surveys = await getSurveysWithSlugsByOrganizationId(organization.id);

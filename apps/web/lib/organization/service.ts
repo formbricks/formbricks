@@ -13,7 +13,7 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { BILLING_LIMITS, IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingPeriodStartDate } from "@/lib/utils/billing";
@@ -128,18 +128,15 @@ export const createOrganization = async (
       data: {
         ...organizationInput,
         billing: {
-          billingMode: IS_FORMBRICKS_CLOUD ? "stripe" : "legacy",
-          plan: PROJECT_FEATURE_KEYS.FREE,
           limits: {
-            projects: IS_FORMBRICKS_CLOUD ? 1 : BILLING_LIMITS.FREE.PROJECTS,
+            projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
             monthly: {
-              responses: IS_FORMBRICKS_CLOUD ? 250 : BILLING_LIMITS.FREE.RESPONSES,
-              miu: BILLING_LIMITS.FREE.MIU,
+              responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+              miu: 2000,
             },
           },
           stripeCustomerId: null,
           periodStart: new Date(),
-          period: "monthly",
         },
       },
       select,

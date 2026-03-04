@@ -51,8 +51,6 @@ export const mockOrganization: Organization = {
   },
   billing: {
     stripeCustomerId: null,
-    plan: "free",
-    period: "monthly",
     limits: { monthly: { responses: null, miu: null }, projects: null },
     periodStart: new Date(),
   },

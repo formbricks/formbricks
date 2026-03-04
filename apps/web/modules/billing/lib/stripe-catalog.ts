@@ -1,7 +1,6 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { type TOrganizationBilling } from "@formbricks/types/organizations";
 
 const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
   HOBBY: "prod_ToYKB5ESOMZZk5",
@@ -81,10 +80,4 @@ export const getCloudPlanFromProductId = (productId: string | null | undefined):
   if (productId === CLOUD_STRIPE_PRODUCT_IDS.SCALE) return "scale";
   if (productId === CLOUD_STRIPE_PRODUCT_IDS.TRIAL) return "trial";
   return "unknown";
-};
-
-export const getLegacyPlanFromCloudPlan = (plan: TCloudStripePlan): TOrganizationBilling["plan"] => {
-  if (plan === "hobby" || plan === "unknown") return "free";
-  if (plan === "pro" || plan === "trial") return "startup";
-  return "custom";
 };

@@ -70,7 +70,6 @@ const mockOrganization = {
   name: "Test Org",
   billing: {
     limits: { monthly: { responses: 100 } },
-    plan: "free",
   },
 };
 

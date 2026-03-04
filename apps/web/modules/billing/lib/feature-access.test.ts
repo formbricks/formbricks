@@ -3,8 +3,8 @@ import { hasCloudEntitlement, hasCloudEntitlementWithLicenseGuard } from "./feat
 
 const mocks = vi.hoisted(() => ({
   isCloud: true,
-  getBilling: vi.fn(),
-  getEnterpriseLicense: vi.fn(),
+  hasOrganizationEntitlement: vi.fn(),
+  hasOrganizationEntitlementWithLicenseGuard: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -17,20 +17,17 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   };
 });
 
-vi.mock("./organization-billing", () => ({
-  getOrganizationBillingWithReadThroughSync: mocks.getBilling,
-}));
-
-vi.mock("@/modules/ee/license-check/lib/license", () => ({
-  getEnterpriseLicense: mocks.getEnterpriseLicense,
+vi.mock("@/modules/entitlements/lib/checks", () => ({
+  hasOrganizationEntitlement: mocks.hasOrganizationEntitlement,
+  hasOrganizationEntitlementWithLicenseGuard: mocks.hasOrganizationEntitlementWithLicenseGuard,
 }));
 
 describe("feature-access", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.isCloud = true;
-    mocks.getBilling.mockResolvedValue({ stripe: { features: [] } });
-    mocks.getEnterpriseLicense.mockResolvedValue({ active: true, status: "active", features: {} });
+    mocks.hasOrganizationEntitlement.mockResolvedValue(false);
+    mocks.hasOrganizationEntitlementWithLicenseGuard.mockResolvedValue(false);
   });
 
   test("hasCloudEntitlement returns false outside cloud mode", async () => {
@@ -39,111 +36,43 @@ describe("feature-access", () => {
     const result = await hasCloudEntitlement("org_1", "custom-links-in-surveys");
 
     expect(result).toBe(false);
-    expect(mocks.getBilling).not.toHaveBeenCalled();
+    expect(mocks.hasOrganizationEntitlement).not.toHaveBeenCalled();
   });
 
-  test("hasCloudEntitlement returns false when feature is missing", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["respondent-identification"],
-      },
-    });
-
-    const result = await hasCloudEntitlement("org_1", "custom-links-in-surveys");
-
-    expect(result).toBe(false);
-  });
-
-  test("hasCloudEntitlement returns true when feature exists", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["custom-links-in-surveys"],
-      },
-    });
+  test("hasCloudEntitlement returns delegated value in cloud mode", async () => {
+    mocks.hasOrganizationEntitlement.mockResolvedValueOnce(true);
 
     const result = await hasCloudEntitlement("org_1", "custom-links-in-surveys");
 
     expect(result).toBe(true);
+    expect(mocks.hasOrganizationEntitlement).toHaveBeenCalledWith("org_1", "custom-links-in-surveys");
   });
 
-  test("hasCloudEntitlement throws when billing is missing", async () => {
-    mocks.getBilling.mockResolvedValue(null);
+  test("hasCloudEntitlementWithLicenseGuard returns false outside cloud mode", async () => {
+    mocks.isCloud = false;
 
-    await expect(hasCloudEntitlement("org_1", "custom-links-in-surveys")).rejects.toThrow(
-      "OrganizationBilling"
+    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "rbac");
+
+    expect(result).toBe(false);
+    expect(mocks.hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
+  });
+
+  test("hasCloudEntitlementWithLicenseGuard returns delegated value in cloud mode", async () => {
+    mocks.hasOrganizationEntitlementWithLicenseGuard.mockResolvedValueOnce(true);
+
+    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "rbac");
+
+    expect(result).toBe(true);
+    expect(mocks.hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith("org_1", "rbac");
+  });
+
+  test("hasCloudEntitlementWithLicenseGuard propagates errors from entitlement checks", async () => {
+    mocks.hasOrganizationEntitlementWithLicenseGuard.mockRejectedValueOnce(
+      new Error("entitlement check failed")
     );
-  });
 
-  test("hasCloudEntitlementWithLicenseGuard returns false when entitlement is missing", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["respondent-identification"],
-      },
-    });
-
-    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "custom-links-in-surveys");
-
-    expect(result).toBe(false);
-    expect(mocks.getEnterpriseLicense).not.toHaveBeenCalled();
-  });
-
-  test("hasCloudEntitlementWithLicenseGuard returns false when enterprise license is inactive", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["custom-links-in-surveys"],
-      },
-    });
-    mocks.getEnterpriseLicense.mockResolvedValue({ active: false, status: "expired", features: {} });
-
-    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "custom-links-in-surveys");
-
-    expect(result).toBe(false);
-  });
-
-  test("hasCloudEntitlementWithLicenseGuard skips license feature checks when no key is configured", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["custom-links-in-surveys"],
-      },
-    });
-    mocks.getEnterpriseLicense.mockResolvedValue({ active: false, status: "no-license", features: {} });
-
-    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "custom-links-in-surveys");
-
-    expect(result).toBe(true);
-  });
-
-  test("hasCloudEntitlementWithLicenseGuard returns false when mapped license feature is disabled", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["rbac"],
-      },
-    });
-    mocks.getEnterpriseLicense.mockResolvedValue({
-      active: true,
-      status: "active",
-      features: { accessControl: false },
-    });
-
-    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "rbac");
-
-    expect(result).toBe(false);
-  });
-
-  test("hasCloudEntitlementWithLicenseGuard returns true when mapped license feature is enabled", async () => {
-    mocks.getBilling.mockResolvedValue({
-      stripe: {
-        features: ["rbac"],
-      },
-    });
-    mocks.getEnterpriseLicense.mockResolvedValue({
-      active: true,
-      status: "active",
-      features: { accessControl: true },
-    });
-
-    const result = await hasCloudEntitlementWithLicenseGuard("org_1", "rbac");
-
-    expect(result).toBe(true);
+    await expect(hasCloudEntitlementWithLicenseGuard("org_1", "rbac")).rejects.toThrow(
+      "entitlement check failed"
+    );
   });
 });

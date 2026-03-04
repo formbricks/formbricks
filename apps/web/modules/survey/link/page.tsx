@@ -116,7 +116,6 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   // Future optimization: Cache only when keyed by both billing plan and organization id,
   // as cloud entitlement checks can be organization-specific.
   const isMultiLanguageAllowed = await getMultiLanguagePermission({
-    billingPlan: environmentContext.organizationBilling.plan,
     organizationId: environmentContext.organizationId,
   });
 

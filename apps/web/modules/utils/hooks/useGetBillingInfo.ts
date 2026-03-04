@@ -11,18 +11,20 @@ export const useGetBillingInfo = (organizationId: string) => {
     const getBillingInfo = async () => {
       try {
         setIsLoading(true);
-        const billingInfo = await getOrganizationBillingInfoAction({ organizationId });
+        setError("");
+        const billingResponse = await getOrganizationBillingInfoAction({ organizationId });
 
-        if (billingInfo?.data) {
+        if (billingResponse?.data) {
+          setBillingInfo(billingResponse.data);
           setIsLoading(false);
-          setBillingInfo(billingInfo.data);
+          return;
         }
 
         setError("No billing info found");
         setIsLoading(false);
-      } catch (err: any) {
+      } catch (err) {
         setIsLoading(false);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to fetch billing info");
       }
     };
 

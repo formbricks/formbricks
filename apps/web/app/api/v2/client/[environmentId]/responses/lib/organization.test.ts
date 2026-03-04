@@ -24,9 +24,7 @@ describe("getOrganizationBillingByEnvironmentId", () => {
       monthly: { miu: 0, responses: 0 },
       projects: 3,
     },
-    period: "monthly",
     periodStart: new Date(),
-    plan: "scale",
     stripeCustomerId: "mock-stripe-customer-id",
   };
 

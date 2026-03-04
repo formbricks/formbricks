@@ -26,10 +26,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const hasWhiteLabelPermission = await getWhiteLabelPermission({
-    billingPlan: organization.billing.plan,
-    organizationId: organization.id,
-  });
+  const hasWhiteLabelPermission = await getWhiteLabelPermission({ organizationId: organization.id });
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;

@@ -53,10 +53,7 @@ const Page = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isQuotasAllowed = await getIsQuotasEnabled({
-    billingPlan: organizationBilling.plan,
-    organizationId: organization.id,
-  });
+  const isQuotasAllowed = await getIsQuotasEnabled({ organizationId: organization.id });
   const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
   // Fetch initial responses on the server to prevent duplicate client-side fetch

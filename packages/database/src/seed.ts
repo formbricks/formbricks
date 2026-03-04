@@ -360,12 +360,9 @@ async function main(): Promise<void> {
       id: SEED_IDS.ORGANIZATION,
       name: "Seed Organization",
       billing: {
-        billingMode: process.env.IS_FORMBRICKS_CLOUD === "1" ? "stripe" : "legacy",
-        plan: "free",
         limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
         stripeCustomerId: null,
         periodStart: new Date(),
-        period: "monthly",
       },
     },
   });

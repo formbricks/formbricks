@@ -24,7 +24,11 @@ const mockOrganization = {
   name: "Test Org",
   createdAt: new Date(),
   updatedAt: new Date(),
-  billing: { plan: "free", limits: { monthly: { responses: null } } } as any, // Default no limit
+  billing: {
+    stripeCustomerId: null,
+    limits: { monthly: { responses: null } },
+    periodStart: new Date(),
+  } as any, // Default no limit
 } as unknown as Organization;
 
 const mockResponseInput: TResponseInput = {

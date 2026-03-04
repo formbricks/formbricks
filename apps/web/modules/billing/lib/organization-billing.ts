@@ -12,7 +12,6 @@ import {
   CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
   type TCloudStripePlan,
   getCloudPlanFromProductId,
-  getLegacyPlanFromCloudPlan,
 } from "./stripe-catalog";
 import { stripeClient } from "./stripe-client";
 
@@ -30,8 +29,7 @@ type TResponseMeteringProjection = {
   currency: string | null;
 };
 
-const getBillingCacheKey = (organizationId: string) =>
-  createCacheKey.organization.billing(organizationId);
+const getBillingCacheKey = (organizationId: string) => createCacheKey.organization.billing(organizationId);
 
 export const invalidateOrganizationBillingCache = async (organizationId: string): Promise<void> => {
   await cache.del([getBillingCacheKey(organizationId)]);
@@ -226,12 +224,6 @@ const resolveCloudPlanFromSubscription = (
   return resolvedPlan;
 };
 
-const resolveBillingPeriod = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
-  if (!subscription) return "monthly" as const;
-  const baseItem = subscription.items.data.find((item) => item.price.recurring?.usage_type !== "metered");
-  return baseItem?.price.recurring?.interval === "year" ? ("yearly" as const) : ("monthly" as const);
-};
-
 const resolvePeriodStart = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
   if (!subscription?.current_period_start) return new Date();
   return new Date(subscription.current_period_start * 1000);
@@ -300,7 +292,6 @@ export const ensureStripeCustomerForOrganization = async (
       billing: {
         ...billing,
         stripeCustomerId: customer.id,
-        billingMode: "stripe",
         stripe: {
           ...billing.stripe,
           lastSyncedAt: new Date().toISOString(),
@@ -350,8 +341,6 @@ export const syncOrganizationBillingFromStripe = async (
   ]);
 
   const cloudPlan = resolveCloudPlanFromSubscription(subscription);
-  const legacyPlan = getLegacyPlanFromCloudPlan(cloudPlan);
-  const period = resolveBillingPeriod(subscription);
   const periodStart = resolvePeriodStart(subscription);
   const previousLimits = billing.limits;
   const workspaceLimitFromEntitlements = parseMaxNumericEntitlementLimit(
@@ -393,14 +382,11 @@ export const syncOrganizationBillingFromStripe = async (
   const updatedBilling: TBillingJson = {
     ...billing,
     stripeCustomerId: customerId,
-    plan: legacyPlan,
-    period,
     limits: {
       projects: projectsLimit,
       monthly: {
         responses: responsesIncludedLimit,
         // MIU/contact metering is out of scope for the current cloud billing rollout.
-        // Keep the legacy field for compatibility but do not sync a contact limit from Stripe.
         miu: null,
       },
     },
@@ -478,10 +464,7 @@ export const getOrganizationBillingWithReadThroughSync = async (
 export const findOrganizationIdByStripeCustomerId = async (customerId: string): Promise<string | null> => {
   const organization = await prisma.organization.findFirst({
     where: {
-      OR: [
-        { billing: { path: ["stripeCustomerId"], equals: customerId } },
-        { billing: { path: ["stripe", "customerId"], equals: customerId } },
-      ],
+      billing: { path: ["stripeCustomerId"], equals: customerId },
     },
     select: { id: true },
   });

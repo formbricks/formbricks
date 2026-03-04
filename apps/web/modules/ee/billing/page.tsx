@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
+import { getCloudBillingDisplayContext } from "@/modules/billing/lib/cloud-billing-display";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -22,14 +22,14 @@ export const PricingPage = async (props) => {
     notFound();
   }
 
-  const syncedBilling = await getOrganizationBillingWithReadThroughSync(organization.id);
-  if (!syncedBilling) {
+  const cloudBillingDisplayContext = await getCloudBillingDisplayContext(organization.id);
+  if (!cloudBillingDisplayContext?.billing) {
     throw new ResourceNotFoundError("OrganizationBilling", organization.id);
   }
 
   const organizationWithSyncedBilling = {
     ...organization,
-    billing: syncedBilling as typeof organization.billing,
+    billing: cloudBillingDisplayContext.billing as typeof organization.billing,
   };
 
   const [responseCount, projectCount] = await Promise.all([
@@ -56,6 +56,7 @@ export const PricingPage = async (props) => {
         responseCount={responseCount}
         projectCount={projectCount}
         hasBillingRights={hasBillingRights}
+        currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
         stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
         stripePricingTableId={env.STRIPE_PRICING_TABLE_ID ?? null}
       />

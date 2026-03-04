@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import * as constants from "@/lib/constants";
 import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
 import { getSurveyFollowUpsPermission } from "./utils";
@@ -9,11 +8,6 @@ vi.mock("@/lib/constants", async () => {
   return {
     ...actual,
     IS_FORMBRICKS_CLOUD: true,
-    PROJECT_FEATURE_KEYS: {
-      FREE: "free",
-      STARTUP: "startup",
-      CUSTOM: "custom",
-    },
   };
 });
 
@@ -30,10 +24,7 @@ describe("getSurveyFollowUpsPermission", () => {
   test("should return entitlement status for cloud org-aware checks", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-    const result = await getSurveyFollowUpsPermission({
-      billingPlan: "startup" as TOrganizationBillingPlan,
-      organizationId: "org_123",
-    });
+    const result = await getSurveyFollowUpsPermission({ organizationId: "org_123" });
 
     expect(result).toBe(true);
     expect(hasCloudEntitlementWithLicenseGuard).toHaveBeenCalledWith("org_123", "follow-ups");
@@ -42,29 +33,20 @@ describe("getSurveyFollowUpsPermission", () => {
   test("should return false when cloud entitlement is missing", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(false);
 
-    const result = await getSurveyFollowUpsPermission({
-      billingPlan: "custom" as TOrganizationBillingPlan,
-      organizationId: "org_123",
-    });
+    const result = await getSurveyFollowUpsPermission({ organizationId: "org_123" });
 
     expect(result).toBe(false);
   });
 
   test("should return true when cloud entitlement exists", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
-    const result = await getSurveyFollowUpsPermission({
-      billingPlan: "custom" as TOrganizationBillingPlan,
-      organizationId: "org_123",
-    });
+    const result = await getSurveyFollowUpsPermission({ organizationId: "org_123" });
     expect(result).toBe(true);
   });
 
   test("should return true for any plan when not on Formbricks Cloud", async () => {
     vi.spyOn(constants, "IS_FORMBRICKS_CLOUD", "get").mockReturnValue(false);
-    const result = await getSurveyFollowUpsPermission({
-      billingPlan: "free" as TOrganizationBillingPlan,
-      organizationId: "org_123",
-    });
+    const result = await getSurveyFollowUpsPermission({ organizationId: "org_123" });
     expect(result).toBe(true);
     expect(hasCloudEntitlementWithLicenseGuard).not.toHaveBeenCalled();
   });

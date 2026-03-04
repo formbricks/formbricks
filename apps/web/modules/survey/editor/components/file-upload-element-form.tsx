@@ -61,7 +61,11 @@ export const FileUploadElementForm = ({
       return 10;
     }
 
-    if (billingInfo.plan !== "free") {
+    const hasPaidCloudCapacity =
+      billingInfo.limits.projects === null ||
+      (typeof billingInfo.limits.projects === "number" && billingInfo.limits.projects > 1);
+
+    if (hasPaidCloudCapacity) {
       // 1GB in MB
       return 1024;
     }

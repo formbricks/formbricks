@@ -1,17 +1,8 @@
 import { z } from "zod";
 import { ZStorageUrl } from "./common";
 
-export const ZOrganizationBillingPlan = z.enum(["free", "startup", "custom"]);
-export type TOrganizationBillingPlan = z.infer<typeof ZOrganizationBillingPlan>;
-
-export const ZOrganizationBillingPeriod = z.enum(["monthly", "yearly"]);
-export type TOrganizationBillingPeriod = z.infer<typeof ZOrganizationBillingPeriod>;
-
 export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "trial", "unknown"]);
 export type TCloudBillingPlan = z.infer<typeof ZCloudBillingPlan>;
-
-export const ZOrganizationBillingMode = z.enum(["stripe", "legacy"]);
-export type TOrganizationBillingMode = z.infer<typeof ZOrganizationBillingMode>;
 
 export const ZOrganizationStripeBilling = z.object({
   responseMetering: z
@@ -43,9 +34,6 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  billingMode: ZOrganizationBillingMode.optional().default("stripe"),
-  plan: ZOrganizationBillingPlan.default("free"),
-  period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
     projects: 3,
     monthly: {

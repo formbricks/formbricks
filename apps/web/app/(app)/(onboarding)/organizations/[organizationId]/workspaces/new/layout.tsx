@@ -28,7 +28,7 @@ const OnboardingLayout = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.id);
   const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
 
   if (organizationProjectsCount >= organizationProjectsLimit) {

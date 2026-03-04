@@ -68,9 +68,7 @@ const mockOrganization: TOrganization = {
   createdAt: new Date(),
   updatedAt: new Date(),
   billing: {
-    plan: "free",
     stripeCustomerId: null,
-    period: "monthly",
     limits: {
       projects: 1,
       monthly: {

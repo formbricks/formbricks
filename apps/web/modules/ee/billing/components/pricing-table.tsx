@@ -80,23 +80,10 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   hasBillingRights: boolean;
+  currentCloudPlan: "hobby" | "pro" | "scale" | "trial" | "unknown";
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
 }
-
-const getCurrentCloudPlan = (
-  organization: TOrganization
-): "hobby" | "pro" | "scale" | "trial" | "unknown" => {
-  if (organization.billing?.stripe?.plan) {
-    return organization.billing.stripe.plan;
-  }
-
-  if (organization.billing.plan === "free") return "hobby";
-  if (organization.billing.plan === "startup") return "pro";
-  if (organization.billing.plan === "custom") return "scale";
-
-  return "unknown";
-};
 
 const getCurrentCloudPlanLabel = (
   plan: "hobby" | "pro" | "scale" | "trial" | "unknown",
@@ -115,6 +102,7 @@ export const PricingTable = ({
   responseCount,
   projectCount,
   hasBillingRights,
+  currentCloudPlan,
   stripePublishableKey,
   stripePricingTableId,
 }: PricingTableProps) => {
@@ -125,7 +113,6 @@ export const PricingTable = ({
     string | null
   >(null);
 
-  const currentCloudPlan = useMemo(() => getCurrentCloudPlan(organization), [organization]);
   const showPricingTable =
     hasBillingRights && currentCloudPlan === "hobby" && !!stripePublishableKey && !!stripePricingTableId;
   const canManageSubscription =
@@ -213,7 +200,7 @@ export const PricingTable = ({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col">
           <div className="flex w-full">
-            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
+            <h2 className="mr-2 mb-3 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
               <span className="capitalize">{getCurrentCloudPlanLabel(currentCloudPlan, t)}</span>
               {cancellingOn && (
@@ -278,7 +265,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 flex flex-col gap-4 pb-6",
-                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
+                projectsUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.workspaces")}</p>
               {organization.billing.limits.projects && (

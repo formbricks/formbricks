@@ -305,10 +305,7 @@ export const handleSsoCallback = async ({
         return false;
       }
 
-      const isAccessControlAllowed = await getAccessControlPermission({
-        billingPlan: organization.billing.plan,
-        organizationId: organization.id,
-      });
+      const isAccessControlAllowed = await getAccessControlPermission({ organizationId: organization.id });
       if (!isAccessControlAllowed && !callbackUrl) {
         contextLogger.debug(
           {

@@ -228,18 +228,8 @@ vi.mock("@/lib/constants", () => ({
   DEFAULT_LOCALE: "en-US",
   BREVO_API_KEY: "mock-brevo-api-key",
   ITEMS_PER_PAGE: 30,
-  PROJECT_FEATURE_KEYS: {
-    FREE: "free",
-  },
   FB_LOGO_URL: "mock-fb-logo-url",
   NOTION_RICH_TEXT_LIMIT: 1000,
-  BILLING_LIMITS: {
-    FREE: {
-      PROJECTS: 3,
-      RESPONSES: 1500,
-      MIU: 2000,
-    },
-  },
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "587",
   SMTP_SECURE_ENABLED: false,

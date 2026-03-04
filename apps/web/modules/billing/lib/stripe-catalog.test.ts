@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  CLOUD_STRIPE_PRODUCT_IDS,
-  getCloudPlanFromProductId,
-  getLegacyPlanFromCloudPlan,
-} from "./stripe-catalog";
+import { CLOUD_STRIPE_PRODUCT_IDS, getCloudPlanFromProductId } from "./stripe-catalog";
 
 describe("stripe catalog mapping", () => {
   test("maps known product IDs to cloud plans", () => {
@@ -17,13 +13,5 @@ describe("stripe catalog mapping", () => {
     expect(getCloudPlanFromProductId(null)).toBe("unknown");
     expect(getCloudPlanFromProductId(undefined)).toBe("unknown");
     expect(getCloudPlanFromProductId("prod_unknown")).toBe("unknown");
-  });
-
-  test("maps cloud plan to legacy plan for backward compatibility", () => {
-    expect(getLegacyPlanFromCloudPlan("hobby")).toBe("free");
-    expect(getLegacyPlanFromCloudPlan("pro")).toBe("startup");
-    expect(getLegacyPlanFromCloudPlan("trial")).toBe("startup");
-    expect(getLegacyPlanFromCloudPlan("scale")).toBe("custom");
-    expect(getLegacyPlanFromCloudPlan("unknown")).toBe("free");
   });
 });

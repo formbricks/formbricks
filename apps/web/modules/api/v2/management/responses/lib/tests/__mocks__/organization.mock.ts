@@ -5,8 +5,6 @@ export const environmentId = "oh5cq6yu418itha55vsuj47e";
 
 export const organizationBilling: Organization["billing"] = {
   stripeCustomerId: "cus_P78901234567890123456789",
-  plan: "scale",
-  period: "monthly",
   limits: {
     monthly: { responses: 100, miu: 1000 },
     projects: 1,

@@ -85,9 +85,7 @@ describe("getOrganizationAIKeys", () => {
   const mockOrganizationData: Pick<Organization, "isAIEnabled" | "billing"> = {
     isAIEnabled: true,
     billing: {
-      plan: "free",
       stripeCustomerId: null,
-      period: "monthly",
       periodStart: new Date(),
       limits: {
         monthly: { responses: null, miu: null },

@@ -1,23 +1,11 @@
 import "server-only";
-import { Organization } from "@prisma/client";
-import {
-  AUDIT_LOG_ENABLED,
-  IS_FORMBRICKS_CLOUD,
-  IS_RECAPTCHA_CONFIGURED,
-  PROJECT_FEATURE_KEYS,
-} from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED } from "@/lib/constants";
 import type { TOrganizationPermissionContext } from "@/modules/billing/lib/organization-permission-context";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
-import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
+import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
+import { hasOrganizationEntitlementWithLicenseGuard } from "@/modules/entitlements/lib/checks";
+import { getOrganizationEntitlementsContext } from "@/modules/entitlements/lib/provider";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
-
-const hasCloudEntitlementWithGuard = async (
-  organizationId: string,
-  featureLookupKey: string
-): Promise<boolean> => {
-  const { hasCloudEntitlementWithLicenseGuard } = await import("@/modules/billing/lib/feature-access");
-  return hasCloudEntitlementWithLicenseGuard(organizationId, featureLookupKey);
-};
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
 // On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
@@ -29,7 +17,10 @@ const getFeaturePermission = async (
   const { organizationId } = context;
 
   if (IS_FORMBRICKS_CLOUD) {
-    return hasCloudEntitlementWithGuard(organizationId, CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING);
+    return hasOrganizationEntitlementWithLicenseGuard(
+      organizationId,
+      CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING
+    );
   } else {
     const license = await getEnterpriseLicense();
     return license.active && !!license.features?.[featureKey];
@@ -43,7 +34,7 @@ const getCustomPlanFeaturePermission = async (
   context: TOrganizationPermissionContext,
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
 ): Promise<boolean> => {
-  const { billingPlan, organizationId } = context;
+  const { organizationId } = context;
 
   if (IS_FORMBRICKS_CLOUD) {
     const featureLookupKeyMap: Record<string, string> = {
@@ -53,9 +44,9 @@ const getCustomPlanFeaturePermission = async (
     };
     const lookupKey = featureLookupKeyMap[featureKey];
     if (lookupKey) {
-      return hasCloudEntitlementWithGuard(organizationId, lookupKey);
+      return hasOrganizationEntitlementWithLicenseGuard(organizationId, lookupKey);
     }
-    return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
+    return false;
   }
 
   const license = await getEnterpriseLicense();
@@ -89,14 +80,20 @@ export const getWhiteLabelPermission = async (context: TOrganizationPermissionCo
   return getFeaturePermission(context, "whitelabel");
 };
 
-export const getBiggerUploadFileSizePermission = async (
-  billingPlan: Organization["billing"]["plan"]
-): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
+export const getBiggerUploadFileSizePermission = async (organizationId: string): Promise<boolean> => {
+  const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 
-  if (IS_FORMBRICKS_CLOUD) return billingPlan !== PROJECT_FEATURE_KEYS.FREE && license.active;
-  else if (!IS_FORMBRICKS_CLOUD) return license.active;
-  return false;
+  if (!IS_FORMBRICKS_CLOUD) {
+    return entitlementsContext.licenseStatus === "active";
+  }
+
+  const hasPaidCloudCapacity =
+    entitlementsContext.limits.projects === null ||
+    (typeof entitlementsContext.limits.projects === "number" && entitlementsContext.limits.projects > 1);
+  const licenseAllowsUsage =
+    entitlementsContext.licenseStatus === "active" || entitlementsContext.licenseStatus === "no-license";
+
+  return hasPaidCloudCapacity && licenseAllowsUsage;
 };
 
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
@@ -140,7 +137,10 @@ export const getIsSpamProtectionEnabled = async (
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
   if (IS_FORMBRICKS_CLOUD) {
-    return hasCloudEntitlementWithGuard(organizationId, CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.SPAM_PROTECTION);
+    return hasOrganizationEntitlementWithLicenseGuard(
+      organizationId,
+      CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.SPAM_PROTECTION
+    );
   }
 
   const license = await getEnterpriseLicense();
@@ -159,17 +159,22 @@ export const getAccessControlPermission = async (
   return getCustomPlanFeaturePermission(context, "accessControl");
 };
 
-export const getOrganizationProjectsLimit = async (
-  limits: Organization["billing"]["limits"]
-): Promise<number> => {
-  const license = await getEnterpriseLicense();
-
-  let limit: number;
+export const getOrganizationProjectsLimit = async (organizationId: string): Promise<number> => {
+  const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 
   if (IS_FORMBRICKS_CLOUD) {
-    limit = license.active ? (limits.projects ?? Infinity) : 3;
-  } else {
-    limit = license.active && license.features?.projects != null ? license.features.projects : 3;
+    const cloudLicenseAllowsLimits =
+      entitlementsContext.licenseStatus === "active" || entitlementsContext.licenseStatus === "no-license";
+    if (!cloudLicenseAllowsLimits) return 3;
+    return entitlementsContext.limits.projects ?? Infinity;
   }
-  return limit;
+
+  if (
+    entitlementsContext.licenseStatus === "active" &&
+    entitlementsContext.licenseFeatures?.projects != null
+  ) {
+    return entitlementsContext.licenseFeatures.projects;
+  }
+
+  return 3;
 };

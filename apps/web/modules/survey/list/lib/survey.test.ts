@@ -509,9 +509,7 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
     vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([]);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({
-      billing: {
-        plan: "free",
-      },
+      billing: {},
       id: "org_123",
     } as any);
   });

@@ -146,9 +146,7 @@ describe("Survey Editor Library Tests", () => {
       ownerUserId: "user123",
       billing: {
         stripeCustomerId: "cust_123",
-        plan: "free" as const,
         features: {},
-        period: "monthly" as const,
         periodStart: new Date(),
       },
       isAIEnabled: false,

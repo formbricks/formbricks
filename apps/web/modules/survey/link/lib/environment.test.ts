@@ -37,7 +37,6 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         organization: {
           id: "clh1a2b3c4d5e6f7g8h9k",
           billing: {
-            plan: "free",
             limits: {
               monthly: {
                 responses: 100,
@@ -186,7 +185,6 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         organization: {
           id: "clh1a2b3c4d5e6f7g8h9u",
           billing: {
-            plan: "free",
             limits: {
               monthly: {
                 responses: 100,

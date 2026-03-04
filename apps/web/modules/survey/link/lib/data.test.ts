@@ -416,9 +416,7 @@ describe("data", () => {
 
   describe("getOrganizationBilling", () => {
     const mockBilling = {
-      plan: "pro" as const,
       stripeCustomerId: "cus_123",
-      period: "monthly" as const,
       limits: {
         monthly: {
           responses: 1000,

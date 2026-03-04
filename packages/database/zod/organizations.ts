@@ -10,9 +10,6 @@ export const ZOrganizationWhiteLabel = z.object({
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  billingMode: z.enum(["stripe", "legacy"]).optional().default("stripe"),
-  plan: z.enum(["free", "startup", "scale", "enterprise"]).default("free"),
-  period: z.enum(["monthly", "yearly"]).default("monthly"),
   limits: z
     .object({
       projects: z.number().nullable(),
@@ -31,7 +28,6 @@ export const ZOrganizationBilling = z.object({
   periodStart: z.coerce.date().nullable(),
   stripe: z
     .object({
-      billingMode: z.enum(["stripe", "legacy"]).optional(),
       responseMetering: z
         .object({
           usagePriceId: z.string().nullable().optional(),

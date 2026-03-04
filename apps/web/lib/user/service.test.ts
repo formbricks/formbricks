@@ -62,8 +62,6 @@ describe("User Service", () => {
       updatedAt: new Date(),
       billing: {
         stripeCustomerId: null,
-        plan: "free",
-        period: "monthly",
         limits: {
           projects: 3,
           monthly: {
@@ -82,8 +80,6 @@ describe("User Service", () => {
       updatedAt: new Date(),
       billing: {
         stripeCustomerId: null,
-        plan: "free",
-        period: "monthly",
         limits: {
           projects: 3,
           monthly: {

@@ -41,10 +41,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission({
-    billingPlan: organizationBilling.plan,
-    organizationId: organizationId,
-  });
+  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission({ organizationId: organizationId });
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
   }
