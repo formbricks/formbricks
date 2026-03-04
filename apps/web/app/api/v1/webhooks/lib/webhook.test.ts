@@ -23,6 +23,10 @@ vi.mock("@/lib/crypto", () => ({
   generateWebhookSecret: vi.fn(() => "whsec_test_secret_1234567890"),
 }));
 
+vi.mock("@/lib/utils/validate-webhook-url", () => ({
+  validateWebhookUrl: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("createWebhook", () => {
   afterEach(() => {
     cleanup();

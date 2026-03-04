@@ -15,6 +15,10 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/lib/utils/validate-webhook-url", () => ({
+  validateWebhookUrl: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("getWebhooks", () => {
   const environmentId = "env1";
   const params = {

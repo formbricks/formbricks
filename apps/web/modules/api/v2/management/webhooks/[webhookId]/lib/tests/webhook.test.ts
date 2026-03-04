@@ -18,6 +18,10 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/lib/utils/validate-webhook-url", () => ({
+  validateWebhookUrl: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("getWebhook", () => {
   test("returns ok if webhook is found", async () => {
     vi.mocked(prisma.webhook.findUnique).mockResolvedValueOnce({ id: "123" });
