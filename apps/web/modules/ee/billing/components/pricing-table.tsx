@@ -113,10 +113,11 @@ export const PricingTable = ({
     string | null
   >(null);
 
+  const isUpgradeablePlan = currentCloudPlan === "hobby" || currentCloudPlan === "unknown";
   const showPricingTable =
-    hasBillingRights && currentCloudPlan === "hobby" && !!stripePublishableKey && !!stripePricingTableId;
+    hasBillingRights && isUpgradeablePlan && !!stripePublishableKey && !!stripePricingTableId;
   const canManageSubscription =
-    hasBillingRights && currentCloudPlan !== "hobby" && !!organization.billing.stripeCustomerId;
+    hasBillingRights && !isUpgradeablePlan && !!organization.billing.stripeCustomerId;
   const stripeLocaleOverride = useMemo(
     () => getStripeLocaleOverride(i18n.resolvedLanguage ?? i18n.language),
     [i18n.language, i18n.resolvedLanguage]
@@ -174,11 +175,15 @@ export const PricingTable = ({
     }
 
     const loadPricingTableCustomerSession = async () => {
-      const response = await createPricingTableCustomerSessionAction({ environmentId });
-      setPricingTableCustomerSessionClientSecret(response?.data?.clientSecret ?? null);
+      try {
+        const response = await createPricingTableCustomerSessionAction({ environmentId });
+        setPricingTableCustomerSessionClientSecret(response?.data?.clientSecret ?? null);
+      } catch {
+        setPricingTableCustomerSessionClientSecret(null);
+      }
     };
 
-    loadPricingTableCustomerSession();
+    void loadPricingTableCustomerSession();
   }, [environmentId, showPricingTable]);
 
   const openCustomerPortal = async () => {

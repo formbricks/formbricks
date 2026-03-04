@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -65,7 +65,7 @@ describe("getExternalUrlsPermission - cloud", () => {
 });
 
 describe("getExternalUrlsPermission - self-hosted", () => {
-  afterEach(() => {
+  beforeEach(() => {
     vi.resetModules();
   });
 

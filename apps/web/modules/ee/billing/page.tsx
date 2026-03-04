@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -23,9 +22,6 @@ export const PricingPage = async (props) => {
   }
 
   const cloudBillingDisplayContext = await getCloudBillingDisplayContext(organization.id);
-  if (!cloudBillingDisplayContext?.billing) {
-    throw new ResourceNotFoundError("OrganizationBilling", organization.id);
-  }
 
   const organizationWithSyncedBilling = {
     ...organization,

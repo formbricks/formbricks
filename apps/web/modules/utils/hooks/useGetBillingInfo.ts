@@ -8,27 +8,42 @@ export const useGetBillingInfo = (organizationId: string) => {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
+    let isMounted = true;
+
     const getBillingInfo = async () => {
-      try {
+      if (isMounted) {
+        setBillingInfo(undefined);
         setIsLoading(true);
         setError("");
+      }
+
+      try {
         const billingResponse = await getOrganizationBillingInfoAction({ organizationId });
 
-        if (billingResponse?.data) {
-          setBillingInfo(billingResponse.data);
-          setIsLoading(false);
-          return;
+        if (!billingResponse?.data) {
+          throw new Error(`Missing billing record for organization ${organizationId}`);
         }
 
-        setError("No billing info found");
-        setIsLoading(false);
+        if (isMounted) {
+          setBillingInfo(billingResponse.data);
+        }
       } catch (err) {
-        setIsLoading(false);
-        setError(err instanceof Error ? err.message : "Failed to fetch billing info");
+        if (isMounted) {
+          setBillingInfo(undefined);
+          setError(err instanceof Error ? err.message : "Failed to fetch billing info");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    getBillingInfo();
+    void getBillingInfo();
+
+    return () => {
+      isMounted = false;
+    };
   }, [organizationId]);
 
   return { billingInfo, isLoading, error };

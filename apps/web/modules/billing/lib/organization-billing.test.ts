@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
@@ -450,7 +451,7 @@ describe("organization-billing", () => {
     mocks.prismaFindUnique.mockResolvedValue({ billing: null });
     mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
 
-    await expect(getOrganizationBillingWithReadThroughSync("org_1")).rejects.toThrow("Organization");
+    await expect(getOrganizationBillingWithReadThroughSync("org_1")).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("findOrganizationIdByStripeCustomerId returns matching organization id", async () => {

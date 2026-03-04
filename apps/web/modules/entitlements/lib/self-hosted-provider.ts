@@ -3,14 +3,14 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import type { TOrganizationEntitlementsContext } from "./types";
+import type { TEntitlementFeature, TOrganizationEntitlementsContext } from "./types";
 
 const mapLicenseFeaturesToEntitlements = (
   features: TOrganizationEntitlementsContext["licenseFeatures"]
-): string[] => {
+): TEntitlementFeature[] => {
   if (!features) return [];
 
-  const entitlementKeys: string[] = [];
+  const entitlementKeys: TEntitlementFeature[] = [];
 
   if (features.removeBranding || features.whitelabel) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING);

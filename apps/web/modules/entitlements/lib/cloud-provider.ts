@@ -2,7 +2,7 @@ import "server-only";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import type { TOrganizationEntitlementsContext } from "./types";
+import { type TOrganizationEntitlementsContext, isEntitlementFeature } from "./types";
 
 const toDateOrNull = (value: Date | string | null | undefined): Date | null => {
   if (!value) return null;
@@ -25,7 +25,7 @@ export const getCloudOrganizationEntitlementsContext = async (
   return {
     organizationId,
     source: "cloud_stripe",
-    features: billing.stripe?.features ?? [],
+    features: (billing.stripe?.features ?? []).filter(isEntitlementFeature),
     limits: {
       projects: billing.limits?.projects ?? null,
       monthlyResponses: billing.limits?.monthly?.responses ?? null,

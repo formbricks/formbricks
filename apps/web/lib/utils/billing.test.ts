@@ -36,7 +36,7 @@ describe("getBillingPeriodStartDate", () => {
 
     const result = getBillingPeriodStartDate({
       stripeCustomerId: null,
-      periodStart: null as unknown as Date,
+      periodStart: null,
       limits: {
         projects: 3,
         monthly: {

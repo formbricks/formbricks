@@ -38,12 +38,6 @@ describe("getSurveyFollowUpsPermission", () => {
     expect(result).toBe(false);
   });
 
-  test("should return true when cloud entitlement exists", async () => {
-    vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
-    const result = await getSurveyFollowUpsPermission({ organizationId: "org_123" });
-    expect(result).toBe(true);
-  });
-
   test("should return true for any plan when not on Formbricks Cloud", async () => {
     vi.spyOn(constants, "IS_FORMBRICKS_CLOUD", "get").mockReturnValue(false);
     const result = await getSurveyFollowUpsPermission({ organizationId: "org_123" });

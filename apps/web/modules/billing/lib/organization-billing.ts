@@ -505,6 +505,19 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     planLevel: getSubscriptionTopPlanLevel(subscription),
   }));
 
+  const unknownPlanSubscriptions = subscriptionsWithPlanLevel.filter(
+    ({ planLevel }) => planLevel === CLOUD_PLAN_LEVEL.unknown
+  );
+  if (unknownPlanSubscriptions.length > 0) {
+    logger.warn(
+      {
+        organizationId,
+        subscriptionIds: unknownPlanSubscriptions.map(({ subscription }) => subscription.id),
+      },
+      "Found subscriptions with unknown plan level during reconciliation"
+    );
+  }
+
   const hasPaidOrTrialSubscription = subscriptionsWithPlanLevel.some(
     ({ planLevel }) => planLevel > CLOUD_PLAN_LEVEL.hobby || planLevel === CLOUD_PLAN_LEVEL.unknown
   );

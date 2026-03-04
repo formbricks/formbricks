@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
@@ -26,9 +27,9 @@ const mockOrganization = {
   updatedAt: new Date(),
   billing: {
     stripeCustomerId: null,
-    limits: { monthly: { responses: null } },
+    limits: { projects: 3, monthly: { responses: null, miu: 2000 } },
     periodStart: new Date(),
-  } as any, // Default no limit
+  } as TOrganizationBilling, // Default no limit
 } as unknown as Organization;
 
 const mockResponseInput: TResponseInput = {

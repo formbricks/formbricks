@@ -1,6 +1,7 @@
 import "server-only";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { getOrganizationEntitlementsContext } from "./provider";
+import { isEntitlementFeature } from "./types";
 
 const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLicenseFeatures>> = {
   "hide-branding": "removeBranding",
@@ -15,6 +16,11 @@ export const hasOrganizationEntitlement = async (
   featureLookupKey: string
 ): Promise<boolean> => {
   const context = await getOrganizationEntitlementsContext(organizationId);
+
+  if (!isEntitlementFeature(featureLookupKey)) {
+    return false;
+  }
+
   return context.features.includes(featureLookupKey);
 };
 
@@ -23,6 +29,10 @@ export const hasOrganizationEntitlementWithLicenseGuard = async (
   featureLookupKey: string
 ): Promise<boolean> => {
   const context = await getOrganizationEntitlementsContext(organizationId);
+
+  if (!isEntitlementFeature(featureLookupKey)) {
+    return false;
+  }
 
   if (!context.features.includes(featureLookupKey)) {
     return false;
