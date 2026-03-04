@@ -9,7 +9,7 @@ import {
 } from "@/modules/billing/lib/organization-billing";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
+  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
 });
 
 const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;

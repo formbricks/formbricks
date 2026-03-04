@@ -234,6 +234,7 @@ export const mockOrganizationOutput: TOrganization = {
   updatedAt: currentDate,
   isAIEnabled: false,
   billing: {
+    billingMode: "stripe",
     stripeCustomerId: null,
     plan: "free",
     period: "monthly",

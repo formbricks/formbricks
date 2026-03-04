@@ -1,6 +1,6 @@
 import "server-only";
 import Stripe from "stripe";
-import { type CacheKey, createCacheKey } from "@formbricks/cache";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -31,7 +31,7 @@ type TResponseMeteringProjection = {
 };
 
 const getBillingCacheKey = (organizationId: string) =>
-  createCacheKey.organization.billing(organizationId) as CacheKey;
+  createCacheKey.organization.billing(organizationId);
 
 export const invalidateOrganizationBillingCache = async (organizationId: string): Promise<void> => {
   await cache.del([getBillingCacheKey(organizationId)]);
@@ -173,7 +173,7 @@ const getSubscriptionTopPlanLevel = (
 ): number => {
   if (!subscription) return CLOUD_PLAN_LEVEL.unknown;
 
-  let topLevel = CLOUD_PLAN_LEVEL.unknown;
+  let topLevel: number = CLOUD_PLAN_LEVEL.unknown;
 
   for (const item of subscription.items.data) {
     const product = item.price.product;
@@ -483,7 +483,8 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   organizationId: string,
   idempotencySuffix = "reconcile"
 ): Promise<void> => {
-  if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
+  const client = stripeClient;
+  if (!IS_FORMBRICKS_CLOUD || !client) return;
 
   const organization = await prisma.organization.findUnique({
     where: { id: organizationId },
@@ -496,7 +497,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   const customerId = billing.stripeCustomerId;
   if (!customerId) return;
 
-  const subscriptions = await stripeClient.subscriptions.list({
+  const subscriptions = await client.subscriptions.list({
     customer: customerId,
     status: "all",
     limit: 20,
@@ -522,7 +523,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
 
     await Promise.all(
       hobbySubscriptions.map(({ subscription }) =>
-        stripeClient.subscriptions.cancel(subscription.id, {
+        client.subscriptions.cancel(subscription.id, {
           prorate: false,
         })
       )

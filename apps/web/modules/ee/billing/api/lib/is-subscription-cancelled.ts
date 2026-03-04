@@ -5,7 +5,7 @@ import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
+  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
 });
 
 export const isSubscriptionCancelled = async (

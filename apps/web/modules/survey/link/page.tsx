@@ -118,7 +118,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   // the plan level rather than per-request.
   const isMultiLanguageAllowed = await getMultiLanguagePermission({
     billingPlan: environmentContext.organizationBilling.plan,
-    organizationId: environmentContext.organization.id,
+    organizationId: environmentContext.organizationId,
   });
 
   // Fetch responseCount only if needed (depends on survey config)

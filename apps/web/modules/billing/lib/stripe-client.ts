@@ -5,6 +5,6 @@ import { env } from "@/lib/env";
 
 export const stripeClient = env.STRIPE_SECRET_KEY
   ? new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: STRIPE_API_VERSION,
+      apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
     })
   : null;

@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
+  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
 });
 
 export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
