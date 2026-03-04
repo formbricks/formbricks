@@ -13,7 +13,12 @@ export type TDisplay = z.infer<typeof ZDisplay>;
 export const ZDisplayCreateInput = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
-  userId: z.string().optional(),
+  userId: z
+    .string()
+    .max(255, {
+      message: "User ID cannot exceed 255 characters",
+    })
+    .optional(),
   responseId: z.string().cuid2().optional(),
 });
 

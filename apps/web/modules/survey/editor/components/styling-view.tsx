@@ -97,7 +97,8 @@ export const StylingView = ({
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const handleSuggestColors = () => {
-    const currentBrandColor = form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light;
+    const currentBrandColor =
+      form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
     const suggested = getSuggestedColors(currentBrandColor);
 
     for (const [key, value] of Object.entries(suggested)) {
