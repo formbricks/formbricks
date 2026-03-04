@@ -10,13 +10,18 @@ export const recordResponseCreatedMeterEvent = async (input: {
 }): Promise<void> => {
   if (IS_FORMBRICKS_CLOUD && stripeClient && input.stripeCustomerId) {
     try {
-      const createdAtSeconds =
-        input.createdAt != null ? Math.floor(new Date(input.createdAt).getTime() / 1000) : undefined;
+      let createdAtSeconds: number | undefined;
+
+      if (input.createdAt instanceof Date || typeof input.createdAt === "string") {
+        createdAtSeconds = Math.floor(new Date(input.createdAt).getTime() / 1000);
+      }
 
       await stripeClient.billing.meterEvents.create({
         event_name: "response_created",
         identifier: `response_created:${input.responseId}`,
-        ...(createdAtSeconds && Number.isFinite(createdAtSeconds) ? { timestamp: createdAtSeconds } : {}),
+        ...(typeof createdAtSeconds === "number" && Number.isFinite(createdAtSeconds)
+          ? { timestamp: createdAtSeconds }
+          : {}),
         payload: {
           stripe_customer_id: input.stripeCustomerId,
           value: "1",

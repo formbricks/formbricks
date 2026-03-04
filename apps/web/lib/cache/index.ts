@@ -3,17 +3,15 @@ import { getCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import type { RedisClientType } from "redis";
 
-type CacheKey = string;
-
 type CacheResult<T, E = { code: string }> = { ok: true; data: T } | { ok: false; error: E };
 
 type CacheService = {
-  get<T>(key: CacheKey): Promise<CacheResult<T | null>>;
-  exists(key: CacheKey): Promise<CacheResult<boolean>>;
-  set(key: CacheKey, value: unknown, ttlMs?: number): Promise<CacheResult<void>>;
-  del(keys: CacheKey[]): Promise<CacheResult<void>>;
-  tryLock(key: CacheKey, value: string, ttlMs: number): Promise<CacheResult<boolean>>;
-  withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T>;
+  get<T>(key: string): Promise<CacheResult<T | null>>;
+  exists(key: string): Promise<CacheResult<boolean>>;
+  set(key: string, value: unknown, ttlMs?: number): Promise<CacheResult<void>>;
+  del(keys: string[]): Promise<CacheResult<void>>;
+  tryLock(key: string, value: string, ttlMs: number): Promise<CacheResult<boolean>>;
+  withCache<T>(fn: () => Promise<T>, key: string, ttlMs: number): Promise<T>;
   getRedisClient(): RedisClientType | null;
 };
 
@@ -33,7 +31,7 @@ export const cache = new Proxy({} as AsyncCacheService, {
   get(_target, prop: keyof CacheService) {
     // Special-case: withCache must never fail; fall back to direct fn on init failure.
     if (prop === "withCache") {
-      return async <T>(fn: () => Promise<T>, ...rest: [CacheKey, number]) => {
+      return async <T>(fn: () => Promise<T>, ...rest: [string, number]) => {
         try {
           const cacheServiceResult = await getCacheService();
 
