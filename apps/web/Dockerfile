@@ -89,9 +89,6 @@ RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
 COPY --from=installer /app/apps/web/next.config.mjs .
 RUN chmod 644 ./next.config.mjs
 
-COPY --from=installer /app/apps/web/package.json .
-RUN chmod 644 ./package.json
-
 COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
 RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
