@@ -132,7 +132,7 @@ export const WorkflowsPage = ({ userEmail, organizationName, billingPlan }: Work
             />
             <div className="mt-3 flex items-center justify-between">
               <span
-                className={`text-xs ${promptValue.trim().length >= 100 ? "text-slate-400" : "text-slate-400"}`}>
+                className={`text-xs ${promptValue.trim().length >= 100 ? "text-slate-400" : "text-amber-500"}`}>
                 {promptValue.trim().length} / 100
               </span>
               <Button
