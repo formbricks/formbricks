@@ -32,7 +32,7 @@ const Nav: React.FC<NavProps> = ({ tabs, activeId, setActiveId, activeTabClassNa
             disabled
               ? "cursor-not-allowed text-slate-400"
               : tab.id === activeId
-                ? `border-brand-dark text-primary border-b-2 font-semibold ${activeTabClassName}`
+                ? `border-b-2 border-brand-dark font-semibold text-primary ${activeTabClassName}`
                 : "text-slate-500 hover:text-slate-700"
           )}
           aria-current={tab.id === activeId ? "page" : undefined}>

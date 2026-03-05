@@ -205,7 +205,7 @@ export const PricingTable = ({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col">
           <div className="flex w-full">
-            <h2 className="mr-2 mb-3 inline-flex w-full text-2xl font-bold text-slate-700">
+            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
               <span className="capitalize">{getCurrentCloudPlanLabel(currentCloudPlan, t)}</span>
               {cancellingOn && (
@@ -270,7 +270,7 @@ export const PricingTable = ({
             <div
               className={cn(
                 "relative mx-8 flex flex-col gap-4 pb-6",
-                projectsUnlimitedCheck && "mt-4 mb-0 flex-row pb-0"
+                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.workspaces")}</p>
               {organization.billing.limits.projects && (

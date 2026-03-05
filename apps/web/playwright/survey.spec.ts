@@ -895,16 +895,28 @@ test.describe("Testing Survey with advanced logic", async () => {
         page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[0], exact: true })
+        page.getByRole("columnheader", {
+          name: surveys.createWithLogicAndSubmit.matrix.columns[0],
+          exact: true,
+        })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[1], exact: true })
+        page.getByRole("columnheader", {
+          name: surveys.createWithLogicAndSubmit.matrix.columns[1],
+          exact: true,
+        })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[2], exact: true })
+        page.getByRole("columnheader", {
+          name: surveys.createWithLogicAndSubmit.matrix.columns[2],
+          exact: true,
+        })
       ).toBeVisible();
       await expect(
-        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[3], exact: true })
+        page.getByRole("columnheader", {
+          name: surveys.createWithLogicAndSubmit.matrix.columns[3],
+          exact: true,
+        })
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
