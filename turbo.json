@@ -119,6 +119,9 @@
       "dependsOn": ["@formbricks/ui#build"],
       "persistent": true
     },
+    "@formbricks/web#build": {
+      "dependsOn": ["^build", "@formbricks/js-core#build"]
+    },
     "@formbricks/web#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
