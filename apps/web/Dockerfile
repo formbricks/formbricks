@@ -117,17 +117,13 @@ RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
 
-# Install runtime deps in an isolated temp directory and copy them into node_modules.
-# This avoids npm reading workspace manifests with `workspace:*` in /home/nextjs/package.json.
-RUN mkdir -p /tmp/runtime-deps \
-    && npm install --ignore-scripts --omit=dev --prefix /tmp/runtime-deps \
-      @prisma/adapter-pg@7.4.2 \
-      dotenv@17.3.1 \
-      @paralleldrive/cuid2@3.3.0 \
-      uuid@13.0.0 \
-      zod@4.3.6 \
-    && cp -R /tmp/runtime-deps/node_modules/. ./node_modules/ \
-    && rm -rf /tmp/runtime-deps
+# Install runtime deps required by Prisma v7 adapter-based migrations.
+RUN npm install --ignore-scripts --omit=dev --no-save --no-package-lock \
+    @prisma/adapter-pg@7.4.2 \
+    dotenv@17.3.1 \
+    @paralleldrive/cuid2@3.3.0 \
+    uuid@13.0.0 \
+    zod@4.3.6
 
 # Pino loads transport code in worker threads via dynamic require().
 # Next.js file tracing only traces static imports, missing runtime-loaded files
