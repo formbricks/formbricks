@@ -36,7 +36,7 @@ const MIGRATIONS_DIR = isBuilt
   : path.resolve(__dirname, "../../migration"); // From src/scripts to migration
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 const PRISMA_SCHEMA_PATH = path.resolve(__dirname, "../../schema.prisma");
-const PRISMA_CONFIG_PATH = path.resolve(__dirname, "../../../../prisma.config.ts");
+const PRISMA_CONFIG_PATH = path.resolve(__dirname, "../../prisma.config.ts");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);

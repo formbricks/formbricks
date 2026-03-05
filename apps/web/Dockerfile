@@ -107,6 +107,9 @@ RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
+COPY --from=installer /app/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
+RUN chown nextjs:nextjs ./packages/database/prisma.config.ts && chmod 644 ./packages/database/prisma.config.ts
+
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
@@ -166,6 +169,9 @@ RUN chmod -R 755 ./packages/database/node_modules/split2
 
 COPY --from=installer /app/node_modules/xtend ./packages/database/node_modules/xtend
 RUN chmod -R 755 ./packages/database/node_modules/xtend
+
+COPY --from=installer /app/node_modules/dotenv ./packages/database/node_modules/dotenv
+RUN chmod -R 755 ./packages/database/node_modules/dotenv
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
