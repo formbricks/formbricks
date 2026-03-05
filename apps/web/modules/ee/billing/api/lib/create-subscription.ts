@@ -1,12 +1,7 @@
-import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
-import { STRIPE_API_VERSION, STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
-import { env } from "@/lib/env";
+import { STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
-});
+import { getStripeClient } from "./stripe-client";
 
 export const createSubscription = async (
   organizationId: string,
@@ -14,6 +9,7 @@ export const createSubscription = async (
   priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS
 ) => {
   try {
+    const stripe = getStripeClient();
     const organization = await getOrganization(organizationId);
     if (!organization) throw new Error("Organization not found.");
 

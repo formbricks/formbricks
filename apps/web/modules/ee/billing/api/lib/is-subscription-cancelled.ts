@@ -1,12 +1,6 @@
-import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
-import { STRIPE_API_VERSION } from "@/lib/constants";
-import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
-});
+import { getStripeClient } from "./stripe-client";
 
 export const isSubscriptionCancelled = async (
   organizationId: string
@@ -15,6 +9,7 @@ export const isSubscriptionCancelled = async (
   date: Date | null;
 }> => {
   try {
+    const stripe = getStripeClient();
     const organization = await getOrganization(organizationId);
     if (!organization) throw new Error("Team not found.");
     let isNewTeam =
