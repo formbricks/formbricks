@@ -54,14 +54,15 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
   try {
     await validateWebhookUrl(url);
   } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return err({
+        type: "bad_request",
+        details: [{ field: "url", issue: error.message }],
+      });
+    }
     return err({
-      type: "bad_request",
-      details: [
-        {
-          field: "url",
-          issue: error instanceof InvalidInputError ? error.message : "Invalid webhook URL",
-        },
-      ],
+      type: "internal_server_error",
+      details: [{ field: "url", issue: "Webhook URL validation failed unexpectedly" }],
     });
   }
 

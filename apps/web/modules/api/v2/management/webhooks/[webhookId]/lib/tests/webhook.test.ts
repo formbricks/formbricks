@@ -93,6 +93,20 @@ describe("updateWebhook", () => {
     expect(prisma.webhook.update).not.toHaveBeenCalled();
   });
 
+  test("returns internal_server_error when validateWebhookUrl throws an unexpected error", async () => {
+    vi.mocked(validateWebhookUrl).mockRejectedValueOnce(new Error("unexpected DNS failure"));
+
+    const result = await updateWebhook("123", mockedWebhookUpdateReturn);
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.error.type).toBe("internal_server_error");
+      expect(result.error.details[0].field).toBe("url");
+    }
+
+    expect(prisma.webhook.update).not.toHaveBeenCalled();
+  });
+
   test("returns not_found if record does not exist", async () => {
     vi.mocked(prisma.webhook.update).mockRejectedValueOnce(prismaNotFoundError);
     const result = await updateWebhook("999", mockedWebhookUpdateReturn);

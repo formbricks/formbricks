@@ -119,6 +119,20 @@ describe("createWebhook", () => {
     expect(prisma.webhook.create).not.toHaveBeenCalled();
   });
 
+  test("returns internal_server_error when validateWebhookUrl throws an unexpected error", async () => {
+    vi.mocked(validateWebhookUrl).mockRejectedValueOnce(new Error("unexpected DNS failure"));
+
+    const result = await createWebhook(inputWebhook);
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.error.type).toEqual("internal_server_error");
+      expect(result.error.details[0].field).toEqual("url");
+    }
+
+    expect(prisma.webhook.create).not.toHaveBeenCalled();
+  });
+
   test("returns error when creation fails", async () => {
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(new Error("Creation failed"));
 
