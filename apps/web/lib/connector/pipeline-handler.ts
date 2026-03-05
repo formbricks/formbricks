@@ -26,7 +26,7 @@ const logFailedRecords = (
           detail: result.error.detail,
         },
       },
-      "Failed to create FeedbackRecord in Hub"
+      "Failed to create FeedbackRecord"
     );
   }
 };
@@ -73,7 +73,7 @@ const processConnector = async (
         responseId: response.id,
         feedbackRecordsCreated: successes,
       },
-      `Connector pipeline: Successfully sent ${successes} FeedbackRecords to Hub`
+      `Connector pipeline: Successfully sent ${successes} FeedbackRecords`
     );
   }
 
@@ -86,7 +86,7 @@ const processConnector = async (
  * Handle connector pipeline for a survey response
  *
  * This function is called from the pipeline when a response is created/finished.
- * It looks up active connectors for the survey and sends the response data to the Hub.
+ * It looks up active connectors for the survey and sends the response data.
  *
  * @param response - The survey response
  * @param survey - The survey

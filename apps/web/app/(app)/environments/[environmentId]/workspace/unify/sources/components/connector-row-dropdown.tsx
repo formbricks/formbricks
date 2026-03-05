@@ -1,6 +1,14 @@
 "use client";
 
-import { CopyIcon, MoreVertical, PauseIcon, PlayIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  CopyIcon,
+  FileSpreadsheetIcon,
+  MoreVertical,
+  PauseIcon,
+  PlayIcon,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
@@ -10,12 +18,14 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
 interface ConnectorRowDropdownProps {
   connector: TConnectorWithMappings;
   onEdit: () => void;
+  onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -24,6 +34,7 @@ interface ConnectorRowDropdownProps {
 export function ConnectorRowDropdown({
   connector,
   onEdit,
+  onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
@@ -59,6 +70,25 @@ export function ConnectorRowDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
+            {connector.type === "csv" && onCsvImport && (
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      onCsvImport();
+                    }}>
+                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
+                    {t("environments.unify.import_csv_data")}
+                  </button>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
             <DropdownMenuItem>
               <button
                 type="button"

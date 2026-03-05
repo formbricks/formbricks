@@ -1,7 +1,7 @@
 "use client";
 
 import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TConnectorType, TConnectorWithMappings } from "@formbricks/types/connector";
 import { Button } from "@/modules/ui/components/button";
@@ -15,7 +15,13 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { SAMPLE_CSV_COLUMNS, TFieldMapping, TSourceField, TUnifySurvey } from "../types";
+import {
+  FEEDBACK_RECORD_FIELDS,
+  SAMPLE_CSV_COLUMNS,
+  TFieldMapping,
+  TSourceField,
+  TUnifySurvey,
+} from "../types";
 import { parseCSVColumnsToFields } from "../utils";
 import { FormbricksSurveySelector } from "./formbricks-survey-selector";
 import { MappingUI } from "./mapping-ui";
@@ -32,6 +38,7 @@ interface EditConnectorModalProps {
     fieldMappings?: TFieldMapping[];
   }) => Promise<void>;
   surveys: TUnifySurvey[];
+  onOpenCsvImport?: () => void;
 }
 
 const getConnectorIcon = (type: TConnectorType) => {
@@ -73,6 +80,7 @@ export const EditConnectorModal = ({
   onOpenChange,
   onUpdateConnector,
   surveys,
+  onOpenCsvImport,
 }: EditConnectorModalProps) => {
   const { t } = useTranslation();
   const [connectorName, setConnectorName] = useState("");
@@ -83,6 +91,11 @@ export const EditConnectorModal = ({
   const [elementIdsBySurvey, setElementIdsBySurvey] = useState<Record<string, string[]>>({});
 
   const selectedElementIds = selectedSurveyId ? (elementIdsBySurvey[selectedSurveyId] ?? []) : [];
+
+  const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
+  const allRequiredMapped = requiredFields.every((field) =>
+    mappings.some((m) => m.targetFieldId === field.id && (m.sourceFieldId || m.staticValue))
+  );
 
   useEffect(() => {
     if (connector) {
@@ -189,6 +202,19 @@ export const EditConnectorModal = ({
     handleOpenChange(false);
   };
 
+  const saveChangesDisbaled = useMemo(() => {
+    if (!connector) return true;
+    if (!connectorName.trim()) return true;
+
+    if (connector.type === "formbricks") {
+      return !Object.values(elementIdsBySurvey).some((ids) => ids.length > 0);
+    }
+
+    if (connector.type === "csv") {
+      return !allRequiredMapped;
+    }
+  }, [allRequiredMapped, connector, connectorName, elementIdsBySurvey]);
+
   if (!connector) return null;
 
   return (
@@ -235,7 +261,7 @@ export const EditConnectorModal = ({
               />
             </div>
           ) : (
-            <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               <MappingUI
                 sourceFields={sourceFields}
                 mappings={mappings}
@@ -247,13 +273,17 @@ export const EditConnectorModal = ({
         </div>
 
         <DialogFooter>
-          <Button
-            onClick={handleUpdate}
-            disabled={
-              !connectorName.trim() ||
-              (connector.type === "formbricks" &&
-                !Object.values(elementIdsBySurvey).some((ids) => ids.length > 0))
-            }>
+          {connector.type === "csv" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                handleOpenChange(false);
+                onOpenCsvImport?.();
+              }}>
+              {t("environments.unify.import_feedback")}
+            </Button>
+          )}
+          <Button onClick={handleUpdate} disabled={saveChangesDisbaled}>
             {t("environments.unify.save_changes")}
           </Button>
         </DialogFooter>

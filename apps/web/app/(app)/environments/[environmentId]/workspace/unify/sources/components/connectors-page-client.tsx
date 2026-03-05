@@ -18,6 +18,7 @@ import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
 import { TFieldMapping, TUnifySurvey } from "../types";
 import { ConnectorsTable } from "./connectors-table";
 import { CreateConnectorModal } from "./create-connector-modal";
+import { CsvImportModal } from "./csv-import-modal";
 import { EditConnectorModal } from "./edit-connector-modal";
 
 interface ConnectorsSectionProps {
@@ -35,6 +36,7 @@ export function ConnectorsSection({
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingConnector, setEditingConnector] = useState<TConnectorWithMappings | null>(null);
+  const [csvImportConnector, setCsvImportConnector] = useState<TConnectorWithMappings | null>(null);
 
   const handleCreateConnector = async (data: {
     name: string;
@@ -166,6 +168,7 @@ export function ConnectorsSection({
         <ConnectorsTable
           connectors={initialConnectors}
           onConnectorClick={setEditingConnector}
+          onCsvImport={setCsvImportConnector}
           onDuplicate={handleDuplicateConnector}
           onToggleStatus={handleToggleStatus}
           onDelete={handleDeleteConnector}
@@ -179,7 +182,24 @@ export function ConnectorsSection({
         onOpenChange={(open) => !open && setEditingConnector(null)}
         onUpdateConnector={handleUpdateConnector}
         surveys={initialSurveys}
+        onOpenCsvImport={() => {
+          if (editingConnector) {
+            setCsvImportConnector(editingConnector);
+          }
+        }}
       />
+
+      {csvImportConnector && (
+        <CsvImportModal
+          open={csvImportConnector !== null}
+          onOpenChange={(open) => !open && setCsvImportConnector(null)}
+          connectorId={csvImportConnector.id}
+          environmentId={csvImportConnector.environmentId}
+          onOpenEditConnector={() => {
+            setEditingConnector(csvImportConnector);
+          }}
+        />
+      )}
     </PageContentWrapper>
   );
 }

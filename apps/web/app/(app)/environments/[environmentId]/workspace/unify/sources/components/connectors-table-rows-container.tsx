@@ -5,6 +5,7 @@ import { ConnectorsTableDataRow } from "@/app/(app)/environments/[environmentId]
 interface ConnectorsTableRowsContainerProps {
   connectors: TConnectorWithMappings[];
   onConnectorClick: (connector: TConnectorWithMappings) => void;
+  onCsvImport: (connector: TConnectorWithMappings) => void;
   onDuplicate: (connector: TConnectorWithMappings) => Promise<void>;
   onToggleStatus: (connector: TConnectorWithMappings) => Promise<void>;
   onDelete: (connectorId: string) => Promise<void>;
@@ -13,6 +14,7 @@ interface ConnectorsTableRowsContainerProps {
 export const ConnectorsTableRowsContainer = ({
   connectors,
   onConnectorClick,
+  onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
@@ -34,6 +36,7 @@ export const ConnectorsTableRowsContainer = ({
           key={connector.id}
           connector={connector}
           onEdit={() => onConnectorClick(connector)}
+          onCsvImport={connector.type === "csv" ? () => onCsvImport(connector) : undefined}
           onDuplicate={() => onDuplicate(connector)}
           onToggleStatus={() => onToggleStatus(connector)}
           onDelete={() => onDelete(connector.id)}

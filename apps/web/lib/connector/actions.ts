@@ -25,12 +25,14 @@ import {
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
+import { importCsvData } from "./csv-import";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
   createConnectorWithMappings,
   deleteConnector,
   getConnectorWithMappingsById,
+  updateConnector,
   updateConnectorWithMappings,
 } from "./service";
 
@@ -112,12 +114,32 @@ const ZFormbricksSurveyMapping = z.object({
   elementIds: z.array(z.string()).min(1),
 });
 
-const ZCreateConnectorWithMappingsAction = z.object({
-  environmentId: ZId,
-  connectorInput: ZConnectorCreateInput,
-  formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
-  fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
-});
+const ZCreateConnectorWithMappingsAction = z
+  .object({
+    environmentId: ZId,
+    connectorInput: ZConnectorCreateInput,
+    formbricksMappings: z.array(ZFormbricksSurveyMapping).optional(),
+    fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.connectorInput.type === "formbricks") {
+      if (!data.formbricksMappings?.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["formbricksMappings"],
+          message: "At least one survey mapping is required for Formbricks connectors",
+        });
+      }
+    } else if (data.connectorInput.type === "csv") {
+      if (!data.fieldMappings?.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["fieldMappings"],
+          message: "At least one field mapping is required for CSV connectors",
+        });
+      }
+    }
+  });
 
 export const createConnectorWithMappingsAction = authenticatedActionClient
   .schema(ZCreateConnectorWithMappingsAction)
@@ -385,5 +407,58 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       }
 
       return importHistoricalResponses(connector, survey);
+    }
+  );
+
+const ZImportCsvDataAction = z.object({
+  connectorId: ZId,
+  environmentId: ZId,
+  csvData: z.array(z.record(z.string())).min(1),
+});
+
+export const importCsvDataAction = authenticatedActionClient
+  .schema(ZImportCsvDataAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZImportCsvDataAction>;
+    }) => {
+      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+          },
+        ],
+      });
+
+      const connector = await getConnectorWithMappingsById(
+        parsedInput.connectorId,
+        parsedInput.environmentId
+      );
+      if (!connector) {
+        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+      }
+
+      const result = await importCsvData(connector, parsedInput.csvData);
+
+      if (result.successes > 0) {
+        await updateConnector(parsedInput.connectorId, parsedInput.environmentId, {
+          lastSyncAt: new Date(),
+        });
+      }
+
+      return result;
     }
   );

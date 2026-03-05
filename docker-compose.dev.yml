@@ -3,7 +3,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg18
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
