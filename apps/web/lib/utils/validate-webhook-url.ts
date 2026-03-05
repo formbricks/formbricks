@@ -69,8 +69,23 @@ const isPrivateIP = (ip: string): boolean => {
   return isPrivateIPv4(ip) || isPrivateIPv6(ip);
 };
 
+const DNS_TIMEOUT_MS = 3000;
+
 const resolveHostnameToIPs = (hostname: string): Promise<string[]> => {
   return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const settle = <T>(fn: (value: T) => void, value: T): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(value);
+    };
+
+    const timer = setTimeout(() => {
+      settle(reject, new Error(`DNS resolution timed out for hostname: ${hostname}`));
+    }, DNS_TIMEOUT_MS);
+
     dns.resolve(hostname, (errV4, ipv4Addresses) => {
       const ipv4 = errV4 ? [] : ipv4Addresses;
 
@@ -79,9 +94,9 @@ const resolveHostnameToIPs = (hostname: string): Promise<string[]> => {
         const allAddresses = [...ipv4, ...ipv6];
 
         if (allAddresses.length === 0) {
-          reject(new Error(`DNS resolution failed for hostname: ${hostname}`));
+          settle(reject, new Error(`DNS resolution failed for hostname: ${hostname}`));
         } else {
-          resolve(allAddresses);
+          settle(resolve, allAddresses);
         }
       });
     });
@@ -143,8 +158,13 @@ export const validateWebhookUrl = async (url: string): Promise<void> => {
   let resolvedIPs: string[];
   try {
     resolvedIPs = await resolveHostnameToIPs(hostname);
-  } catch {
-    throw new InvalidInputError(`Could not resolve webhook URL hostname: ${hostname}`);
+  } catch (error) {
+    const isTimeout = error instanceof Error && error.message.includes("timed out");
+    throw new InvalidInputError(
+      isTimeout
+        ? `DNS resolution timed out for webhook URL hostname: ${hostname}`
+        : `Could not resolve webhook URL hostname: ${hostname}`
+    );
   }
 
   for (const ip of resolvedIPs) {
