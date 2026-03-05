@@ -8,6 +8,7 @@ import { ConnectorsTableRowsContainer } from "@/app/(app)/environments/[environm
 interface ConnectorsTableProps {
   connectors: TConnectorWithMappings[];
   onConnectorClick: (connector: TConnectorWithMappings) => void;
+  onCsvImport: (connector: TConnectorWithMappings) => void;
   onDuplicate: (connector: TConnectorWithMappings) => Promise<void>;
   onToggleStatus: (connector: TConnectorWithMappings) => Promise<void>;
   onDelete: (connectorId: string) => Promise<void>;
@@ -17,6 +18,7 @@ interface ConnectorsTableProps {
 export function ConnectorsTable({
   connectors,
   onConnectorClick,
+  onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
@@ -43,6 +45,7 @@ export function ConnectorsTable({
         <ConnectorsTableRowsContainer
           connectors={connectors}
           onConnectorClick={onConnectorClick}
+          onCsvImport={onCsvImport}
           onDuplicate={onDuplicate}
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}

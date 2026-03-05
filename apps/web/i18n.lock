@@ -200,6 +200,7 @@ checksums:
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
+    common/failed_to_parse_csv: 7a3d675ecbb3d15884faf1006a5752d6
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
     common/formbricks_version: d9967c797f3e49ca0cae78bc0ebd19cb
@@ -1957,7 +1958,7 @@ checksums:
     environments/unify/csv_files_only: 920612b537521b14c154f1ac9843e947
     environments/unify/csv_import: ef4060fef24c4fec064987b9d2a9fa4b
     environments/unify/csv_import_complete: e8b6306e62e10c128f6464176ba879dd
-    environments/unify/csv_import_duplicate_warning: 3bedb07a01939d6b4ad93f68b7adf0e5
+    environments/unify/csv_import_duplicate_warning: 56625e4613b93690e95661e5faaa4b27
     environments/unify/csv_inconsistent_columns: b308be183a41a581707eb5c4c0797ad6
     environments/unify/csv_max_records: 21ce7adae30821d40a553bcf37f39bbf
     environments/unify/default_connector_name_csv: ef4060fef24c4fec064987b9d2a9fa4b
@@ -1965,6 +1966,7 @@ checksums:
     environments/unify/deselect_all: facf8871b2e84a454c6bfe40c2821922
     environments/unify/drop_a_field_here: 884f3025e618e0a5dcbcb5567335d1bb
     environments/unify/drop_field_or: 5287a8af30f2961ce5a8f14f73ddc353
+    environments/unify/edit_csv_mapping: 4f3bad444664d58ffe8ace3dc9e200f9
     environments/unify/edit_source_connection: eb42476becc8de3de4ca9626828573f0
     environments/unify/enter_name_for_source: de6d02a0a8ccc99204ad831ca6dcdbd3
     environments/unify/enter_value: 4f068bb59617975c1e546218373122cd
@@ -1977,7 +1979,8 @@ checksums:
     environments/unify/field_type: 2581066dc304c853a4a817c20996fa08
     environments/unify/formbricks_surveys: eba2fce04ee68f02626e5509adf7d66a
     environments/unify/historical_import_complete: f46f98bf4db63bf2993bfb234dc95f62
-    environments/unify/import_csv_data: e5f873b0e6116c5144677acf38607f2e
+    environments/unify/import_csv_data: f05e1d1ed88d528256efe5702df46646
+    environments/unify/import_feedback: f05e1d1ed88d528256efe5702df46646
     environments/unify/import_rows: d2963498a7d2766264c4d67db677e8ff
     environments/unify/importing_data: a6d4478379a0faee05cd2c10ffe74984
     environments/unify/importing_historical_data: f5be578704ec26dc4ec573309e9fff20

@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { THubFieldType } from "@formbricks/types/connector";
-import { FEEDBACK_RECORD_FIELDS, TFieldMapping, TSourceField } from "./types";
+import { FEEDBACK_RECORD_FIELDS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 
 export interface TConnectorOption {
   id: string;
@@ -74,4 +74,20 @@ export const validateEnumMappings = (
   }
 
   return errors;
+};
+
+export const validateCsvFile = (
+  file: File,
+  t: TFunction
+): { valid: true } | { valid: false; error: string } => {
+  if (!file.name.endsWith(".csv")) {
+    return { valid: false, error: t("environments.unify.csv_files_only") };
+  }
+  if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
+    return { valid: false, error: t("environments.unify.csv_files_only") };
+  }
+  if (file.size > MAX_CSV_VALUES.FILE_SIZE) {
+    return { valid: false, error: t("environments.unify.csv_file_too_large") };
+  }
+  return { valid: true };
 };

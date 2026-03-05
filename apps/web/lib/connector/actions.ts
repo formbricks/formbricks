@@ -116,12 +116,32 @@ const ZFormbricksSurveyMapping = z.object({
   elementIds: z.array(z.string()).min(1),
 });
 
-const ZCreateConnectorWithMappingsAction = z.object({
-  environmentId: ZId,
-  connectorInput: ZConnectorCreateInput,
-  formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
-  fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
-});
+const ZCreateConnectorWithMappingsAction = z
+  .object({
+    environmentId: ZId,
+    connectorInput: ZConnectorCreateInput,
+    formbricksMappings: z.array(ZFormbricksSurveyMapping).optional(),
+    fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.connectorInput.type === "formbricks") {
+      if (!data.formbricksMappings?.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["formbricksMappings"],
+          message: "At least one survey mapping is required for Formbricks connectors",
+        });
+      }
+    } else if (data.connectorInput.type === "csv") {
+      if (!data.fieldMappings?.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["fieldMappings"],
+          message: "At least one field mapping is required for CSV connectors",
+        });
+      }
+    }
+  });
 
 export const createConnectorWithMappingsAction = authenticatedActionClient
   .schema(ZCreateConnectorWithMappingsAction)

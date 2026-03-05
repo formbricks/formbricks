@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { cn } from "@/modules/ui/lib/utils";
 import { TFieldMapping, TSourceField, TTargetField } from "../types";
 
 interface DraggableSourceFieldProps {
@@ -87,18 +88,18 @@ export const DroppableTargetField = ({
 
   // Handle enum field type - support both column mapping and static dropdown
   if (field.type === "enum" && field.enumValues) {
-    const hasEnumMapping = mappedSourceField || mapping?.staticValue;
-
     return (
       <div
         ref={setNodeRef}
-        className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-          isActive
-            ? "border-brand-dark bg-slate-100"
-            : hasEnumMapping
-              ? "border-green-300 bg-green-50"
-              : "border-dashed border-slate-300 bg-slate-50"
-        }`}>
+        className={cn(
+          `flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
+            isActive
+              ? "border-brand-dark bg-slate-100"
+              : hasMapping
+                ? "border-green-300 bg-green-50"
+                : "border-dashed border-slate-300 bg-slate-50"
+          }`
+        )}>
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900">{field.name}</span>
@@ -140,13 +141,13 @@ export const DroppableTargetField = ({
     return (
       <div
         ref={setNodeRef}
-        className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-          isActive
-            ? "border-brand-dark bg-slate-100"
-            : hasMapping
-              ? "border-green-300 bg-green-50"
-              : "border-dashed border-slate-300 bg-slate-50"
-        }`}>
+        className={cn(
+          `flex items-center gap-2 rounded-md border p-2 text-sm transition-colors`,
+          isActive && "border-brand-dark bg-slate-100",
+          !isActive && hasMapping
+            ? "border-green-300 bg-green-50"
+            : "border-dashed border-slate-300 bg-slate-50"
+        )}>
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900">{field.name}</span>
@@ -266,13 +267,13 @@ export const DroppableTargetField = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-        isActive
-          ? "border-brand-dark bg-slate-100"
-          : hasDefaultMapping
-            ? "border-green-300 bg-green-50"
-            : "border-dashed border-slate-300 bg-slate-50"
-      }`}>
+      className={cn(
+        "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
+        isActive && "border-brand-dark bg-slate-100",
+        !isActive && hasDefaultMapping
+          ? "border-green-300 bg-green-50"
+          : "border-dashed border-slate-300 bg-slate-50"
+      )}>
       <div className="flex flex-1 flex-col">
         <div className="flex items-center gap-2">
           <span className="font-medium text-slate-900">{field.name}</span>
@@ -325,4 +326,4 @@ export const DroppableTargetField = ({
       </div>
     </div>
   );
-}
+};

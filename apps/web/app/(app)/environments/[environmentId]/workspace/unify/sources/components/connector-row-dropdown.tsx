@@ -14,13 +14,6 @@ import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -28,11 +21,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { CsvImportSection } from "./csv-import-section";
 
 interface ConnectorRowDropdownProps {
   connector: TConnectorWithMappings;
   onEdit: () => void;
+  onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
@@ -41,13 +34,13 @@ interface ConnectorRowDropdownProps {
 export function ConnectorRowDropdown({
   connector,
   onEdit,
+  onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
 }: ConnectorRowDropdownProps) {
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isCsvImportDialogOpen, setIsCsvImportDialogOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -77,6 +70,25 @@ export function ConnectorRowDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
+            {connector.type === "csv" && onCsvImport && (
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      onCsvImport();
+                    }}>
+                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
+                    {t("environments.unify.import_csv_data")}
+                  </button>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
             <DropdownMenuItem>
               <button
                 type="button"
@@ -119,25 +131,6 @@ export function ConnectorRowDropdown({
               </button>
             </DropdownMenuItem>
 
-            {connector.type === "csv" && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    className="flex w-full items-center"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      setIsCsvImportDialogOpen(true);
-                    }}>
-                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
-                    {t("environments.unify.import_csv_data")}
-                  </button>
-                </DropdownMenuItem>
-              </>
-            )}
-
             <DropdownMenuItem>
               <button
                 type="button"
@@ -162,22 +155,6 @@ export function ConnectorRowDropdown({
         onDelete={handleDelete}
         isDeleting={isDeleting}
       />
-
-      {connector.type === "csv" && (
-        <Dialog open={isCsvImportDialogOpen} onOpenChange={setIsCsvImportDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("environments.unify.import_csv_data")}</DialogTitle>
-              <DialogDescription>{t("environments.unify.upload_csv_data_description")}</DialogDescription>
-            </DialogHeader>
-            <CsvImportSection
-              connectorId={connector.id}
-              environmentId={connector.environmentId}
-              onImportComplete={() => setIsCsvImportDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

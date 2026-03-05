@@ -83,7 +83,7 @@ const getCreateDisabled = (
   allRequiredMapped: boolean
 ): boolean => {
   if (type === "formbricks") return !isFormbricksValid;
-  if (type === "csv") return !isCsvValid;
+  if (type === "csv") return !isCsvValid || !allRequiredMapped;
   return !allRequiredMapped;
 };
 
