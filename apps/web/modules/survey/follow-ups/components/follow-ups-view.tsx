@@ -55,7 +55,7 @@ export const FollowUpsView = ({
             },
             {
               text: t("common.learn_more"),
-              href: "https://formbricks.com/docs/follow-ups",
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/email-followups",
             },
           ]}
         />

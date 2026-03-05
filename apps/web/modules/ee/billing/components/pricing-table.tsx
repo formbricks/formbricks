@@ -5,7 +5,7 @@ import Script from "next/script";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
-import { cn } from "@/lib/cn";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -13,7 +13,7 @@ import {
   isSubscriptionCancelledAction,
   manageSubscriptionAction,
 } from "../actions";
-import { BillingSlider } from "./billing-slider";
+import { UsageCard } from "./usage-card";
 
 const STRIPE_SUPPORTED_LOCALES = new Set([
   "bg",
@@ -203,105 +203,90 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex flex-col gap-8">
-        <div className="flex flex-col">
-          <div className="flex w-full">
-            <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
-              {t("environments.settings.billing.current_plan")}:{" "}
-              <span className="capitalize">{getCurrentCloudPlanLabel(currentCloudPlan, t)}</span>
-              {cancellingOn && (
-                <Badge
-                  className="mx-2"
-                  size="normal"
-                  type="warning"
-                  text={`Cancelling: ${
-                    cancellingOn
-                      ? cancellingOn.toLocaleDateString("en-US", {
-                          weekday: "short",
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          timeZone: "UTC",
-                        })
-                      : ""
-                  }`}
-                />
-              )}
-            </h2>
-
-            {canManageSubscription && (
-              <div className="flex w-full justify-end">
-                <Button
-                  size="sm"
-                  variant="default"
-                  className="justify-center py-2 shadow-sm"
-                  onClick={openCustomerPortal}>
-                  {t("environments.settings.billing.manage_subscription")}
-                </Button>
+        <SettingsCard
+          title={t("environments.settings.billing.subscription")}
+          description={t("environments.settings.billing.subscription_description")}
+          buttonInfo={
+            canManageSubscription
+              ? {
+                  text: t("environments.settings.billing.manage_subscription"),
+                  onClick: openCustomerPortal,
+                  variant: "default",
+                }
+              : undefined
+          }>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-semibold text-slate-700">
+                {t("environments.settings.billing.your_plan")}
+              </p>
+              <div className="flex items-center gap-2">
+                <Badge type="success" size="normal" text={getCurrentCloudPlanLabel(currentCloudPlan, t)} />
+                {cancellingOn && (
+                  <Badge
+                    type="warning"
+                    size="normal"
+                    text={`${t("environments.settings.billing.cancelling")}: ${cancellingOn.toLocaleDateString(
+                      "en-US",
+                      {
+                        weekday: "short",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                      }
+                    )}`}
+                  />
+                )}
               </div>
-            )}
-          </div>
-
-          <div className="mt-2 flex flex-col rounded-xl border border-slate-200 bg-white py-4 shadow-sm dark:bg-slate-800">
-            <div
-              className={cn(
-                "relative mx-8 mb-8 flex flex-col gap-4",
-                responsesUnlimitedCheck && "mb-0 flex-row"
-              )}>
-              <p className="text-md font-semibold text-slate-700">{t("common.responses")}</p>
-              {organization.billing.limits.monthly.responses && (
-                <BillingSlider
-                  className="slider-class mb-8"
-                  value={responseCount}
-                  max={organization.billing.limits.monthly.responses * 1.5}
-                  freeTierLimit={organization.billing.limits.monthly.responses}
-                  metric={t("common.responses")}
-                />
-              )}
-
-              {responsesUnlimitedCheck && (
-                <Badge
-                  type="success"
-                  size="normal"
-                  text={t("environments.settings.billing.unlimited_responses")}
-                />
-              )}
             </div>
 
-            <div
-              className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-6",
-                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
-              )}>
-              <p className="text-md font-semibold text-slate-700">{t("common.workspaces")}</p>
-              {organization.billing.limits.projects && (
-                <BillingSlider
-                  className="slider-class mb-8"
-                  value={projectCount}
-                  max={organization.billing.limits.projects * 1.5}
-                  freeTierLimit={organization.billing.limits.projects}
-                  metric={t("common.workspaces")}
-                />
-              )}
+            <UsageCard
+              metric={t("common.responses")}
+              currentCount={responseCount}
+              limit={organization.billing.limits.monthly.responses}
+              isUnlimited={responsesUnlimitedCheck}
+              unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
+            />
 
-              {projectsUnlimitedCheck && (
-                <Badge
-                  type="success"
-                  size="normal"
-                  text={t("environments.settings.billing.unlimited_workspaces")}
-                />
-              )}
+            <UsageCard
+              metric={t("common.workspaces")}
+              currentCount={projectCount}
+              limit={organization.billing.limits.projects}
+              isUnlimited={projectsUnlimitedCheck}
+              unlimitedLabel={t("environments.settings.billing.unlimited_workspaces")}
+            />
+          </div>
+        </SettingsCard>
+
+        {currentCloudPlan === "pro" && (
+          <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-slate-800 p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-6">
+              <div className="flex flex-col gap-1.5">
+                <h3 className="text-lg font-semibold text-white">
+                  {t("environments.settings.billing.scale_banner_title")}
+                </h3>
+                <p className="text-sm text-slate-300">
+                  {t("environments.settings.billing.scale_banner_description")}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+                  <span>&#10003; {t("environments.settings.billing.scale_feature_teams")}</span>
+                  <span>&#10003; {t("environments.settings.billing.scale_feature_api")}</span>
+                  <span>&#10003; {t("environments.settings.billing.scale_feature_quota")}</span>
+                  <span>&#10003; {t("environments.settings.billing.scale_feature_spam")}</span>
+                </div>
+              </div>
+              <Button variant="secondary" size="sm" onClick={openCustomerPortal} className="shrink-0">
+                {t("environments.settings.billing.upgrade")}
+              </Button>
             </div>
           </div>
-        </div>
+        )}
 
         {showPricingTable && (
-          <div className="mb-12 w-full">
-            <div className="w-full">
-              <div className="mx-auto w-full max-w-[1200px]">
-                <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
-                {createElement("stripe-pricing-table", stripePricingTableProps)}
-              </div>
-            </div>
+          <div className="mb-12 w-full max-w-5xl">
+            <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
+            {createElement("stripe-pricing-table", stripePricingTableProps)}
           </div>
         )}
       </div>

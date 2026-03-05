@@ -961,8 +961,10 @@
         "api_keys_description": "Manage API keys to access Formbricks management APIs"
       },
       "billing": {
+        "cancelling": "Cancelling",
         "current": "Current",
         "current_plan": "Current Plan",
+        "current_plan_description": "Your current plan and usage overview",
         "current_tier_limit": "Current Tier Limit",
         "manage_subscription": "Manage Subscription",
         "plan_hobby": "Hobby",
@@ -971,9 +973,19 @@
         "plan_trial": "Trial",
         "plan_unknown": "Unknown",
         "remove_branding": "Remove Branding",
+        "scale_banner_description": "Unlock higher limits, team collaboration, and advanced security features with the Scale plan.",
+        "scale_banner_title": "Ready to scale up?",
+        "scale_feature_api": "Full API Access",
+        "scale_feature_quota": "Quota Management",
+        "scale_feature_spam": "Spam Protection",
+        "scale_feature_teams": "Teams & Access Roles",
+        "subscription": "Subscription",
+        "subscription_description": "Manage your subscription plan and monitor your usage",
         "unlimited_responses": "Unlimited Responses",
         "unlimited_workspaces": "Unlimited Workspaces",
-        "upgrade": "Upgrade"
+        "upgrade": "Upgrade",
+        "used": "used",
+        "your_plan": "Your plan"
       },
       "domain": {
         "customize_favicon_description": "Upload a custom favicon to personalize your link survey experience and strengthen your brand presence.",
