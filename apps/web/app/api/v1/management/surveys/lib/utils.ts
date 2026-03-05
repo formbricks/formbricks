@@ -1,7 +1,7 @@
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
-import { getIsSpamProtectionEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 
 export const checkFeaturePermissions = async (
@@ -19,13 +19,6 @@ export const checkFeaturePermissions = async (
     const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
     if (!isSurveyFollowUpsEnabled) {
       return responses.forbiddenResponse("Survey follow ups are not allowed for this organization");
-    }
-  }
-
-  if (surveyData.languages?.length) {
-    const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
-    if (!isMultiLanguageEnabled) {
-      return responses.forbiddenResponse("Multi language is not enabled for this organization");
     }
   }
 

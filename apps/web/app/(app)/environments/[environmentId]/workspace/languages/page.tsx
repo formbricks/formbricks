@@ -1,3 +1,3 @@
-import { LanguagesPage } from "@/modules/ee/languages/page";
+import { LanguagesPage } from "@/modules/projects/settings/languages/page";
 
 export default LanguagesPage;

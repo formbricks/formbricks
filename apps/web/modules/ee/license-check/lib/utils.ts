@@ -30,7 +30,7 @@ const getFeaturePermission = async (
 // On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
   billingPlan: Organization["billing"]["plan"],
-  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
+  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "quotas">
 ): Promise<boolean> => {
   const license = await getEnterpriseLicense();
 
@@ -130,12 +130,6 @@ export const getIsSpamProtectionEnabled = async (
   }
 
   return license.active && !!license.features?.spamProtection;
-};
-
-export const getMultiLanguagePermission = async (
-  billingPlan: Organization["billing"]["plan"]
-): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(billingPlan, "multiLanguageSurveys");
 };
 
 export const getAccessControlPermission = async (

@@ -15,7 +15,6 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
@@ -153,10 +152,6 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
 
       if (followUps?.length) {
         await checkSurveyFollowUpsPermission(organizationId);
-      }
-
-      if (parsedInput.languages?.length) {
-        await checkMultiLanguagePermission(organizationId);
       }
 
       // Context for audit log
