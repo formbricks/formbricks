@@ -1,6 +1,5 @@
 "use client";
 
-import { ApiKeyPermission } from "@prisma/client";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -11,6 +10,7 @@ import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
 import {
+  type TApiKeyPermission,
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
   TOrganizationProject,
@@ -63,7 +63,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
 
   const handleAddAPIKey = async (data: {
     label: string;
-    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    environmentPermissions: Array<{ environmentId: string; permission: TApiKeyPermission }>;
     organizationAccess: TOrganizationAccess;
   }): Promise<void> => {
     setIsLoading(true);

@@ -1,13 +1,16 @@
 "use client";
 
-import { ApiKeyPermission } from "@prisma/client";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
-import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
+import {
+  API_KEY_PERMISSION_VALUES,
+  type TApiKeyPermission,
+  TOrganizationProject,
+} from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -33,7 +36,7 @@ interface AddApiKeyModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: {
     label: string;
-    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    environmentPermissions: Array<{ environmentId: string; permission: TApiKeyPermission }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
   projects: TOrganizationProject[];
@@ -48,16 +51,12 @@ interface ProjectOption {
 interface PermissionRecord {
   projectId: string;
   environmentId: string;
-  permission: ApiKeyPermission;
+  permission: TApiKeyPermission;
   projectName: string;
   environmentType: string;
 }
 
-const permissionOptions: ApiKeyPermission[] = [
-  ApiKeyPermission.read,
-  ApiKeyPermission.write,
-  ApiKeyPermission.manage,
-];
+const permissionOptions = API_KEY_PERMISSION_VALUES;
 
 export const AddApiKeyModal = ({
   open,
@@ -79,19 +78,19 @@ export const AddApiKeyModal = ({
   const [selectedOrganizationAccess, setSelectedOrganizationAccess] =
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
-  const getInitialPermissions = () => {
+  const getInitialPermissions = (): Record<string, PermissionRecord> => {
     if (projects.length > 0 && projects[0].environments.length > 0) {
       return {
         "permission-0": {
           projectId: projects[0].id,
           environmentId: projects[0].environments[0].id,
-          permission: ApiKeyPermission.read,
+          permission: API_KEY_PERMISSION_VALUES[0],
           projectName: projects[0].name,
           environmentType: projects[0].environments[0].type,
         },
       };
     }
-    return {} as Record<string, PermissionRecord>;
+    return {};
   };
 
   // Initialize with one permission by default
