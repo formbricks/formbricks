@@ -3,7 +3,6 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
@@ -12,6 +11,7 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -22,15 +22,6 @@ import {
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
 } from "./utils";
-
-interface TriggerUpdate {
-  create?: Array<{ actionClassId: string }>;
-  deleteMany?: {
-    actionClassId: {
-      in: string[];
-    };
-  };
-}
 
 export const selectSurvey = {
   id: true,
@@ -115,21 +106,31 @@ export const selectSurvey = {
   slug: true,
 } satisfies Prisma.SurveySelect;
 
-export const checkTriggersValidity = (
-  triggers: TSurvey["triggers"],
-  actionClasses: Array<Pick<TActionClass, "id">>
-) => {
-  if (!triggers) return;
+const getTriggerIds = (triggers: unknown): string[] | null => {
+  if (!triggers) return null;
+  if (!Array.isArray(triggers)) {
+    throw new InvalidInputError("Invalid trigger id");
+  }
+
+  return triggers.map((trigger) => {
+    const actionClassId = (trigger as { actionClass?: { id?: unknown } })?.actionClass?.id;
+    if (typeof actionClassId !== "string") {
+      throw new InvalidInputError("Invalid trigger id");
+    }
+    return actionClassId;
+  });
+};
+
+export const checkTriggersValidity = (triggers: unknown, actionClasses: Array<{ id: string }>) => {
+  const triggerIds = getTriggerIds(triggers);
+  if (!triggerIds) return;
 
   // check if all the triggers are valid
-  triggers.forEach((trigger) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
+  triggerIds.forEach((triggerId) => {
+    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
       throw new InvalidInputError("Invalid trigger id");
     }
   });
-
-  // check if all the triggers are unique
-  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
 
   if (new Set(triggerIds).size !== triggerIds.length) {
     throw new InvalidInputError("Duplicate trigger id");
@@ -137,40 +138,37 @@ export const checkTriggersValidity = (
 };
 
 export const handleTriggerUpdates = (
-  updatedTriggers: TSurvey["triggers"] | null | undefined,
-  currentTriggers: TSurvey["triggers"],
-  actionClasses: Array<Pick<TActionClass, "id">>
+  updatedTriggers: unknown,
+  currentTriggers: unknown,
+  actionClasses: Array<{ id: string }>
 ) => {
-  if (!updatedTriggers) return {};
+  const updatedTriggerIds = getTriggerIds(updatedTriggers);
+  if (!updatedTriggerIds) return {};
+
   checkTriggersValidity(updatedTriggers, actionClasses);
 
-  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
-  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
+  const currentTriggerIds = getTriggerIds(currentTriggers) ?? [];
 
   // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggers = updatedTriggers.filter(
-    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
-  );
+  const addedTriggerIds = updatedTriggerIds.filter((triggerId) => !currentTriggerIds.includes(triggerId));
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter(
-    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
-  );
+  const deletedTriggerIds = currentTriggerIds.filter((triggerId) => !updatedTriggerIds.includes(triggerId));
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
-  if (addedTriggers.length > 0) {
-    triggersUpdate.create = addedTriggers.map((trigger) => ({
-      actionClassId: trigger.actionClass.id,
+  if (addedTriggerIds.length > 0) {
+    triggersUpdate.create = addedTriggerIds.map((triggerId) => ({
+      actionClassId: triggerId,
     }));
   }
 
-  if (deletedTriggers.length > 0) {
+  if (deletedTriggerIds.length > 0) {
     // disconnect the public triggers from the survey
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
+        in: deletedTriggerIds,
       },
     };
   }
