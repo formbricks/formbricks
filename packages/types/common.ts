@@ -70,7 +70,7 @@ export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void
   if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
     ctx.addIssue({
       code: "custom",
-      error: "URL must start with http:// or https://",
+      message: "URL must start with http:// or https://",
     });
   }
 };
@@ -79,7 +79,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {
     ctx.addIssue({
       code: "custom",
-      error: "URL must not contain spaces",
+      message: "URL must not contain spaces",
     });
   }
 
@@ -87,7 +87,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.startsWith("#recall:")) {
     ctx.addIssue({
       code: "custom",
-      error: "URL must not start with a recall value",
+      message: "URL must not start with a recall value",
     });
   }
 
@@ -95,7 +95,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (!url.startsWith("https://") && !url.startsWith("http://localhost") && !url.startsWith("mailto:")) {
     ctx.addIssue({
       code: "custom",
-      error: "URL must start with https:// or mailto:",
+      message: "URL must start with https:// or mailto:",
     });
   }
 
@@ -106,14 +106,14 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
       if (parsed.protocol !== "mailto:") {
         ctx.addIssue({
           code: "custom",
-          error: "Invalid mailto URL format",
+          message: "Invalid mailto URL format",
         });
         return;
       }
     } catch {
       ctx.addIssue({
         code: "custom",
-        error: "Invalid mailto URL format",
+        message: "Invalid mailto URL format",
       });
     }
     return;
@@ -127,7 +127,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     if (hostname.includes("#recall:")) {
       ctx.addIssue({
         code: "custom",
-        error: "Recall information must appear after the domain, not within it",
+        message: "Recall information must appear after the domain, not within it",
       });
       return;
     }
@@ -137,7 +137,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
       const addIssue = (): void => {
         ctx.addIssue({
           code: "custom",
-          error: "URL is not valid",
+          message: "URL is not valid",
         });
       };
 
@@ -223,7 +223,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   } catch {
     ctx.addIssue({
       code: "custom",
-      error: "URL is not valid",
+      message: "URL is not valid",
     });
   }
 };
