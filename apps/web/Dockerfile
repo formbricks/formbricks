@@ -110,12 +110,52 @@ RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./package
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
-# Copy prisma client packages
-COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
-RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
+# Copy Prisma runtime packages (client + driver adapters)
+COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
+RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
 
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
+
+# Prisma v7 adapter-pg runtime dependencies for startup DB migrations.
+COPY --from=installer /app/node_modules/pg ./node_modules/pg
+RUN chmod -R 755 ./node_modules/pg
+
+COPY --from=installer /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
+RUN chmod -R 755 ./node_modules/pg-connection-string
+
+COPY --from=installer /app/node_modules/pg-int8 ./node_modules/pg-int8
+RUN chmod -R 755 ./node_modules/pg-int8
+
+COPY --from=installer /app/node_modules/pg-pool ./node_modules/pg-pool
+RUN chmod -R 755 ./node_modules/pg-pool
+
+COPY --from=installer /app/node_modules/pg-protocol ./node_modules/pg-protocol
+RUN chmod -R 755 ./node_modules/pg-protocol
+
+COPY --from=installer /app/node_modules/pg-types ./node_modules/pg-types
+RUN chmod -R 755 ./node_modules/pg-types
+
+COPY --from=installer /app/node_modules/pgpass ./node_modules/pgpass
+RUN chmod -R 755 ./node_modules/pgpass
+
+COPY --from=installer /app/node_modules/postgres-array ./node_modules/postgres-array
+RUN chmod -R 755 ./node_modules/postgres-array
+
+COPY --from=installer /app/node_modules/postgres-bytea ./node_modules/postgres-bytea
+RUN chmod -R 755 ./node_modules/postgres-bytea
+
+COPY --from=installer /app/node_modules/postgres-date ./node_modules/postgres-date
+RUN chmod -R 755 ./node_modules/postgres-date
+
+COPY --from=installer /app/node_modules/postgres-interval ./node_modules/postgres-interval
+RUN chmod -R 755 ./node_modules/postgres-interval
+
+COPY --from=installer /app/node_modules/split2 ./node_modules/split2
+RUN chmod -R 755 ./node_modules/split2
+
+COPY --from=installer /app/node_modules/xtend ./node_modules/xtend
+RUN chmod -R 755 ./node_modules/xtend
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
