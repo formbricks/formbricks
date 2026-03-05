@@ -120,7 +120,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/workflows`,
         icon: WorkflowIcon,
         isActive: pathname?.includes("/workflows"),
-        isHidden: false,
+        isHidden: !isFormbricksCloud,
       },
       {
         name: t("common.configuration"),
@@ -129,7 +129,7 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/project"),
       },
     ],
-    [t, environment.id, pathname, organization.billing.plan]
+    [t, environment.id, pathname, isFormbricksCloud]
   );
 
   const dropdownNavigation = [

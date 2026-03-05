@@ -179,7 +179,7 @@ export const WorkflowsPage = ({ userEmail, organizationName, billingPlan }: Work
             />
             <div className="mt-4 flex items-center justify-end gap-3">
               <Button variant="ghost" onClick={handleSkipFeedback} className="text-slate-500">
-                Skip
+                {t("common.skip")}
               </Button>
               <Button
                 onClick={handleSubmitFeedback}
