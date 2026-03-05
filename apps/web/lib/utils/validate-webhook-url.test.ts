@@ -220,11 +220,37 @@ describe("validateWebhookUrl", () => {
       );
     });
 
-    test("rejects hostname resolving to IPv4-mapped IPv6 private address", async () => {
+    test("rejects hostname resolving to IPv4-mapped IPv6 private address (dotted)", async () => {
       setupDnsResolution(null, ["::ffff:192.168.1.1"]);
       await expect(validateWebhookUrl("https://mapped.example.com/webhook")).rejects.toThrow(
         "Webhook URL must not point to private or internal IP addresses"
       );
+    });
+
+    test("rejects hostname resolving to IPv4-mapped IPv6 private address (hex-encoded)", async () => {
+      setupDnsResolution(null, ["::ffff:c0a8:0101"]); // 192.168.1.1 in hex
+      await expect(validateWebhookUrl("https://hex-mapped.example.com/webhook")).rejects.toThrow(
+        "Webhook URL must not point to private or internal IP addresses"
+      );
+    });
+
+    test("rejects hex-encoded IPv4-mapped loopback (::ffff:7f00:0001)", async () => {
+      setupDnsResolution(null, ["::ffff:7f00:0001"]); // 127.0.0.1 in hex
+      await expect(validateWebhookUrl("https://hex-loopback.example.com/webhook")).rejects.toThrow(
+        "Webhook URL must not point to private or internal IP addresses"
+      );
+    });
+
+    test("rejects hex-encoded IPv4-mapped metadata endpoint (::ffff:a9fe:a9fe)", async () => {
+      setupDnsResolution(null, ["::ffff:a9fe:a9fe"]); // 169.254.169.254 in hex
+      await expect(validateWebhookUrl("https://hex-metadata.example.com/webhook")).rejects.toThrow(
+        "Webhook URL must not point to private or internal IP addresses"
+      );
+    });
+
+    test("accepts hex-encoded IPv4-mapped public address", async () => {
+      setupDnsResolution(null, ["::ffff:5db8:d822"]); // 93.184.216.34 in hex
+      await expect(validateWebhookUrl("https://hex-public.example.com/webhook")).resolves.toBeUndefined();
     });
 
     test("rejects when any resolved IP is private (mixed public + private)", async () => {

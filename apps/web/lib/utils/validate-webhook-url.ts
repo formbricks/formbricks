@@ -32,20 +32,36 @@ const PRIVATE_IPV6_PREFIXES = [
   "fe80:", // Link-local
   "fc", // Unique local address (ULA, fc00::/7 — covers fc00:: through fdff::)
   "fd", // Unique local address (ULA, fc00::/7 — covers fc00:: through fdff::)
-  "::ffff:127.", // IPv4-mapped loopback
-  "::ffff:10.", // IPv4-mapped Class A private
-  "::ffff:192.168.", // IPv4-mapped Class C private
-  "::ffff:169.254.", // IPv4-mapped link-local
-  ...Array.from({ length: 16 }, (_, i) => `::ffff:172.${16 + i}.`), // IPv4-mapped Class B private
 ];
 
 const isPrivateIPv4 = (ip: string): boolean => {
   return PRIVATE_IPV4_PATTERNS.some((pattern) => pattern.test(ip));
 };
 
+const hexMappedToIPv4 = (hexPart: string): string | null => {
+  const groups = hexPart.split(":");
+  if (groups.length !== 2) return null;
+  const high = Number.parseInt(groups[0], 16);
+  const low = Number.parseInt(groups[1], 16);
+  if (Number.isNaN(high) || Number.isNaN(low) || high > 0xffff || low > 0xffff) return null;
+  return `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+};
+
+const isIPv4Mapped = (normalized: string): boolean => {
+  if (!normalized.startsWith("::ffff:")) return false;
+  const suffix = normalized.slice(7); // strip "::ffff:"
+
+  if (suffix.includes(".")) {
+    return isPrivateIPv4(suffix);
+  }
+  const dotted = hexMappedToIPv4(suffix);
+  return dotted !== null && isPrivateIPv4(dotted);
+};
+
 const isPrivateIPv6 = (ip: string): boolean => {
   const normalized = ip.toLowerCase();
   if (normalized === "::") return true;
+  if (isIPv4Mapped(normalized)) return true;
   return PRIVATE_IPV6_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 };
 
