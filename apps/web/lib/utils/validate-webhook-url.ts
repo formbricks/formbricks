@@ -1,3 +1,4 @@
+import "server-only";
 import dns from "node:dns";
 import { InvalidInputError } from "@formbricks/types/errors";
 
