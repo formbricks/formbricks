@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@formbricks/logger": "workspace:*",
-    "@paralleldrive/cuid2": "3.3.0",
+    "@paralleldrive/cuid2": "2.3.1",
     "@prisma/client": "6.19.2",
     "bcryptjs": "3.0.3",
     "uuid": "13.0.0",

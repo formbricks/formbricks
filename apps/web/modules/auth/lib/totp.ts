@@ -1,15 +1,7 @@
-import { OTP, type OTPVerifyOptions } from "otplib";
-
-type TOTPAuthenticatorOptions = {
-  window?: number | [number, number];
-  period?: OTPVerifyOptions["period"];
-  epoch?: OTPVerifyOptions["epoch"];
-  t0?: OTPVerifyOptions["t0"];
-  algorithm?: OTPVerifyOptions["algorithm"];
-  digits?: OTPVerifyOptions["digits"];
-};
-
-const createTotp = () => new OTP({ strategy: "totp" });
+import { Authenticator } from "@otplib/core";
+import type { AuthenticatorOptions } from "@otplib/core/authenticator";
+import { createDigest, createRandomBytes } from "@otplib/plugin-crypto";
+import { keyDecoder, keyEncoder } from "@otplib/plugin-thirty-two";
 
 /**
  * Checks the validity of a TOTP token using a base32-encoded secret.
@@ -22,19 +14,16 @@ const createTotp = () => new OTP({ strategy: "totp" });
 export const totpAuthenticatorCheck = (
   token: string,
   secret: string,
-  opts: TOTPAuthenticatorOptions = {}
+  opts: Partial<AuthenticatorOptions> = {}
 ) => {
-  const { window = [1, 0], period = 30, ...rest } = opts;
-  const [pastWindow, futureWindow] = Array.isArray(window) ? window : [window, window];
-  const totp = createTotp();
-
-  const result = totp.verifySync({
-    token,
-    secret,
-    period,
-    epochTolerance: [pastWindow * period, futureWindow * period],
+  const { window = [1, 0], ...rest } = opts;
+  const authenticator = new Authenticator({
+    createDigest,
+    createRandomBytes,
+    keyDecoder,
+    keyEncoder,
+    window,
     ...rest,
   });
-
-  return result.valid;
+  return authenticator.check(token, secret);
 };
