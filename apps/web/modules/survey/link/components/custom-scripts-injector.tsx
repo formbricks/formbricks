@@ -58,7 +58,7 @@ export const CustomScriptsInjector = ({
 
         // Copy inline script content
         if (script.textContent) {
-          newScript.textContent = script.textContent;
+          newScript.appendChild(document.createTextNode(script.textContent));
         }
 
         document.head.appendChild(newScript);
