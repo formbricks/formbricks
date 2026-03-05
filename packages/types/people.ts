@@ -2,10 +2,10 @@ import { z } from "zod";
 import { ZAttributes } from "./attributes";
 
 export const ZPerson = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
 });
 
 export const ZPersonTableData = z.object({

@@ -5,36 +5,36 @@ import { ZId } from "./common";
 import { ZProject } from "./project";
 import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
-import { ZSurvey } from "./surveys/types";
+import { ZSurveyBase, surveyRefinement } from "./surveys/types";
 
-export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
-  .pick({
-    id: true,
-    name: true,
-    welcomeCard: true,
-    questions: true,
-    blocks: true,
-    variables: true,
-    type: true,
-    showLanguageSwitch: true,
-    languages: true,
-    endings: true,
-    autoClose: true,
-    styling: true,
-    status: true,
-    segment: true,
-    recontactDays: true,
-    displayLimit: true,
-    displayOption: true,
-    hiddenFields: true,
-    triggers: true,
-    displayPercentage: true,
-    delay: true,
-    projectOverwrites: true,
-    isBackButtonHidden: true,
-    recaptcha: true,
-  })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
+export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
+  id: true,
+  name: true,
+  welcomeCard: true,
+  questions: true,
+  blocks: true,
+  variables: true,
+  type: true,
+  showLanguageSwitch: true,
+  languages: true,
+  endings: true,
+  autoClose: true,
+  styling: true,
+  status: true,
+  segment: true,
+  recontactDays: true,
+  displayLimit: true,
+  displayOption: true,
+  hiddenFields: true,
+  triggers: true,
+  displayPercentage: true,
+  delay: true,
+  projectOverwrites: true,
+  isBackButtonHidden: true,
+  recaptcha: true,
+}).superRefine((survey, ctx) => {
+  surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+});
 
 export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
 
@@ -73,7 +73,7 @@ export const ZJsEnvironmentState = z.object({
 export type TJsEnvironmentState = z.infer<typeof ZJsEnvironmentState>;
 
 export const ZJsSyncInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.cuid(),
 });
 
 export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
@@ -99,14 +99,14 @@ export const ZJsPersonState = z.object({
 export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
 export const ZJsUserIdentifyInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.cuid(),
   userId: z.string().max(255),
 });
 
 export type TJsPersonIdentifyInput = z.infer<typeof ZJsUserIdentifyInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   userId: z.string().min(1).max(255),
 });
 
@@ -126,7 +126,7 @@ export const ZJsPeopleAttributeInput = z.object({
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
 
 export const ZJsActionInput = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   userId: z.string().optional(),
   name: z.string(),
 });
@@ -138,7 +138,7 @@ export const ZJsWesbiteActionInput = ZJsActionInput.omit({ userId: true });
 export type TJsWesbiteActionInput = z.infer<typeof ZJsWesbiteActionInput>;
 
 export const ZJsEnvironmentSyncParams = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.cuid(),
   apiHost: z.string(),
 });
 

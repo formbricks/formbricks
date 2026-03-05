@@ -10,7 +10,7 @@ import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/u
 import { updateSurveySlug } from "@/modules/survey/lib/slug";
 
 const ZUpdateSurveySlugAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   slug: ZSurveySlug,
 });
 
@@ -39,7 +39,7 @@ export const updateSurveySlugAction = authenticatedActionClient
   });
 
 const ZRemoveSurveySlugAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export const removeSurveySlugAction = authenticatedActionClient

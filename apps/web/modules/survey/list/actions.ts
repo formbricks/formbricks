@@ -25,7 +25,7 @@ import {
 } from "@/modules/survey/list/lib/survey";
 
 const ZGetSurveyAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export const getSurveyAction = authenticatedActionClient
@@ -51,8 +51,8 @@ export const getSurveyAction = authenticatedActionClient
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
-  surveyId: z.string().cuid2(),
-  targetEnvironmentId: z.string().cuid2(),
+  surveyId: z.cuid2(),
+  targetEnvironmentId: z.cuid2(),
 });
 
 export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
@@ -141,7 +141,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
   );
 
 const ZGetProjectsByEnvironmentIdAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
 });
 
 export const getProjectsByEnvironmentIdAction = authenticatedActionClient
@@ -168,7 +168,7 @@ export const getProjectsByEnvironmentIdAction = authenticatedActionClient
   });
 
 const ZDeleteSurveyAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export const deleteSurveyAction = authenticatedActionClient.schema(ZDeleteSurveyAction).action(
@@ -201,9 +201,9 @@ export const deleteSurveyAction = authenticatedActionClient.schema(ZDeleteSurvey
 );
 
 const ZGenerateSingleUseIdAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   isEncrypted: z.boolean(),
-  count: z.number().min(1).max(5000).default(1),
+  count: z.number().min(1).max(5000).prefault(1),
 });
 
 export const generateSingleUseIdsAction = authenticatedActionClient
@@ -229,7 +229,7 @@ export const generateSingleUseIdsAction = authenticatedActionClient
   });
 
 const ZGetSurveysAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   limit: z.number().optional(),
   offset: z.number().optional(),
   filterCriteria: ZSurveyFilterCriteria.optional(),

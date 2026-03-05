@@ -1,10 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { logger } from "@formbricks/logger";
+import { createPrismaClient } from "./prisma-client";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 const isProduction = process.env.NODE_ENV === "production";
 const allowSeed = process.env.ALLOW_SEED === "true";

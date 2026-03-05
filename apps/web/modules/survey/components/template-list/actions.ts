@@ -15,7 +15,7 @@ import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZCreateSurveyAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   surveyBody: ZSurveyCreateInput,
 });
 

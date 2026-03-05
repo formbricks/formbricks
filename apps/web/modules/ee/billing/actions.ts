@@ -16,7 +16,7 @@ import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscri
 
 const ZUpgradePlanAction = z.object({
   environmentId: ZId,
-  priceLookupKey: z.nativeEnum(STRIPE_PRICE_LOOKUP_KEYS),
+  priceLookupKey: z.enum(STRIPE_PRICE_LOOKUP_KEYS),
 });
 
 export const upgradePlanAction = authenticatedActionClient.schema(ZUpgradePlanAction).action(

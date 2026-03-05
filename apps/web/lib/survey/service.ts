@@ -1,5 +1,5 @@
 import "server-only";
-import { ActionClass, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -114,7 +114,12 @@ export const selectSurvey = {
   slug: true,
 } satisfies Prisma.SurveySelect;
 
-export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
+type TriggerWithActionClassId = { actionClass: { id: string } };
+
+export const checkTriggersValidity = (
+  triggers: TriggerWithActionClassId[] | null | undefined,
+  actionClasses: Array<{ id: string }>
+) => {
   if (!triggers) return;
 
   // check if all the triggers are valid
@@ -133,14 +138,14 @@ export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClass
 };
 
 export const handleTriggerUpdates = (
-  updatedTriggers: TSurvey["triggers"],
-  currentTriggers: TSurvey["triggers"],
-  actionClasses: ActionClass[]
+  updatedTriggers: TriggerWithActionClassId[] | null | undefined,
+  currentTriggers: TriggerWithActionClassId[] | null | undefined,
+  actionClasses: Array<{ id: string }>
 ) => {
   if (!updatedTriggers) return {};
   checkTriggersValidity(updatedTriggers, actionClasses);
 
-  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
+  const currentTriggerIds = (currentTriggers ?? []).map((trigger) => trigger.actionClass.id);
   const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
 
   // added triggers are triggers that are not in the current triggers and are there in the new triggers
@@ -149,7 +154,7 @@ export const handleTriggerUpdates = (
   );
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter(
+  const deletedTriggers = (currentTriggers ?? []).filter(
     (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
   );
 

@@ -1,63 +1,62 @@
-import { Authenticator } from "@otplib/core";
-import type { AuthenticatorOptions } from "@otplib/core/authenticator";
-import { createDigest, createRandomBytes } from "@otplib/plugin-crypto";
-import { keyDecoder, keyEncoder } from "@otplib/plugin-thirty-two";
+import { OTP } from "otplib";
 import { describe, expect, test, vi } from "vitest";
 import { totpAuthenticatorCheck } from "./totp";
 
-vi.mock("@otplib/core");
-vi.mock("@otplib/plugin-crypto");
-vi.mock("@otplib/plugin-thirty-two");
+vi.mock("otplib", () => ({
+  OTP: vi.fn(),
+}));
 
 describe("totpAuthenticatorCheck", () => {
   const token = "123456";
   const secret = "JBSWY3DPEHPK3PXP";
-  const opts: Partial<AuthenticatorOptions> = { window: [1, 0] };
+  const opts = { window: [1, 0] as [number, number] };
 
   test("should check a TOTP token with a base32-encoded secret", () => {
-    const checkMock = vi.fn().mockReturnValue(true);
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: checkMock,
-    }));
+    const verifySyncMock = vi.fn().mockReturnValue({ valid: true });
+    (OTP as unknown as vi.Mock).mockImplementation(function OTP() {
+      return {
+        verifySync: verifySyncMock,
+      };
+    });
 
     const result = totpAuthenticatorCheck(token, secret, opts);
 
-    expect(Authenticator).toHaveBeenCalledWith({
-      createDigest,
-      createRandomBytes,
-      keyDecoder,
-      keyEncoder,
-      window: [1, 0],
+    expect(verifySyncMock).toHaveBeenCalledWith({
+      token,
+      secret,
+      period: 30,
+      epochTolerance: [30, 0],
     });
-    expect(checkMock).toHaveBeenCalledWith(token, secret);
     expect(result).toBe(true);
   });
 
   test("should use default window if none is provided", () => {
-    const checkMock = vi.fn().mockReturnValue(true);
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: checkMock,
-    }));
+    const verifySyncMock = vi.fn().mockReturnValue({ valid: true });
+    (OTP as unknown as vi.Mock).mockImplementation(function OTP() {
+      return {
+        verifySync: verifySyncMock,
+      };
+    });
 
     const result = totpAuthenticatorCheck(token, secret);
 
-    expect(Authenticator).toHaveBeenCalledWith({
-      createDigest,
-      createRandomBytes,
-      keyDecoder,
-      keyEncoder,
-      window: [1, 0],
+    expect(verifySyncMock).toHaveBeenCalledWith({
+      token,
+      secret,
+      period: 30,
+      epochTolerance: [30, 0],
     });
-    expect(checkMock).toHaveBeenCalledWith(token, secret);
     expect(result).toBe(true);
   });
 
   test("should throw an error for invalid token format", () => {
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: () => {
-        throw new Error("Invalid token format");
-      },
-    }));
+    (OTP as unknown as vi.Mock).mockImplementation(function OTP() {
+      return {
+        verifySync: () => {
+          throw new Error("Invalid token format");
+        },
+      };
+    });
 
     expect(() => {
       totpAuthenticatorCheck("invalidToken", secret);
@@ -65,11 +64,13 @@ describe("totpAuthenticatorCheck", () => {
   });
 
   test("should throw an error for invalid secret format", () => {
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: () => {
-        throw new Error("Invalid secret format");
-      },
-    }));
+    (OTP as unknown as vi.Mock).mockImplementation(function OTP() {
+      return {
+        verifySync: () => {
+          throw new Error("Invalid secret format");
+        },
+      };
+    });
 
     expect(() => {
       totpAuthenticatorCheck(token, "invalidSecret");
@@ -77,10 +78,12 @@ describe("totpAuthenticatorCheck", () => {
   });
 
   test("should return false if token verification fails", () => {
-    const checkMock = vi.fn().mockReturnValue(false);
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: checkMock,
-    }));
+    const verifySyncMock = vi.fn().mockReturnValue({ valid: false });
+    (OTP as unknown as vi.Mock).mockImplementation(function OTP() {
+      return {
+        verifySync: verifySyncMock,
+      };
+    });
 
     const result = totpAuthenticatorCheck(token, secret);
     expect(result).toBe(false);

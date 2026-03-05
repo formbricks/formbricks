@@ -7,7 +7,12 @@ import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 
 const ZCreateEmailTokenAction = z.object({
-  email: z.string().min(5).max(255).email({ message: "Invalid email" }),
+  email: z
+    .email({
+      error: "Invalid email",
+    })
+    .min(5)
+    .max(255),
 });
 
 export const createEmailTokenAction = actionClient

@@ -18,7 +18,7 @@ import {
 import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 
 const ZCreateTeamAction = z.object({
-  organizationId: z.string().cuid(),
+  organizationId: z.cuid(),
   name: z.string().trim().min(1, "Team name is required"),
 });
 

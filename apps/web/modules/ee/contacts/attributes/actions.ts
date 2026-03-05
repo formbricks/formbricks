@@ -20,7 +20,7 @@ import {
 const ZCreateContactAttributeKeyAction = z.object({
   environmentId: ZId,
   key: z.string().refine((val) => isSafeIdentifier(val), {
-    message:
+    error:
       "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
   }),
   name: z.string().optional(),

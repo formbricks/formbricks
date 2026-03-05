@@ -43,10 +43,18 @@ export const IndividualInviteTab = ({
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
-    email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
+    email: z
+      .email({
+        error: "Invalid email",
+      })
+      .min(1, {
+        error: "Email is required",
+      }),
     role: ZOrganizationRole,
     teamIds: showTeamAdminRestrictions
-      ? z.array(ZId).min(1, { message: "Team admins must select at least one team" })
+      ? z.array(ZId).min(1, {
+          error: "Team admins must select at least one team",
+        })
       : z.array(ZId),
   });
 

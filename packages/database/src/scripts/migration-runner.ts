@@ -1,10 +1,11 @@
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { type Prisma, type PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
+import { createPrismaClient } from "../prisma-client";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +26,7 @@ export interface MigrationScript {
   type: "data" | "schema";
 }
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // Determine if we're running from built or source code

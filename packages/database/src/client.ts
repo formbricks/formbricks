@@ -1,12 +1,14 @@
-import { PrismaClient } from "@prisma/client";
+import { type PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "./prisma-client";
 
 const prismaClientSingleton = (): PrismaClient => {
-  return new PrismaClient({
-    datasources: { db: { url: process.env.DATABASE_URL } },
-    ...(process.env.DEBUG === "1" && {
-      log: ["query", "info"],
-    }),
-  });
+  return createPrismaClient(
+    process.env.DEBUG === "1"
+      ? {
+          log: ["query", "info"],
+        }
+      : undefined
+  );
 };
 
 type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;

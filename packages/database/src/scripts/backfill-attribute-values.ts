@@ -18,7 +18,7 @@
  * - Can be stopped and resumed safely (each batch commits independently)
  * - Logs progress throughout
  */
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "../prisma-client";
 
 // Regex patterns matching those used in the migration for consistency
 const NUMBER_PATTERN = "^-?[0-9]+(\\.[0-9]+)?$";
@@ -27,7 +27,7 @@ const ISO_DATE_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2
 // How many attribute keys to process in a single batch
 const KEY_BATCH_SIZE = 10;
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 const SAFE_CAST_FUNCTION_NAME = "_backfill_safe_to_timestamp";
 

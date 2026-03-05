@@ -155,7 +155,7 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
 );
 
 const ZRefetchProjectAction = z.object({
-  projectId: z.string().cuid2(),
+  projectId: z.cuid2(),
 });
 
 export const refetchProjectAction = authenticatedActionClient
@@ -236,7 +236,7 @@ const isValidUnsplashUrl = (url: string): boolean => {
 };
 
 const ZTriggerDownloadUnsplashImageAction = z.object({
-  downloadUrl: z.string().url(),
+  downloadUrl: z.url(),
 });
 
 export const triggerDownloadUnsplashImageAction = actionClient

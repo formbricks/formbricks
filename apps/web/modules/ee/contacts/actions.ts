@@ -23,7 +23,7 @@ import {
 
 const ZGetContactsAction = z.object({
   environmentId: ZId,
-  offset: z.number().int().nonnegative(),
+  offset: z.int().nonnegative(),
   searchValue: z.string().optional(),
 });
 

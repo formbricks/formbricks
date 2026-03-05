@@ -30,7 +30,7 @@ export const sendLinkSurveyEmailAction = actionClient
   });
 
 const ZValidateSurveyPinAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   pin: z.string(),
 });
 
@@ -55,8 +55,8 @@ export const validateSurveyPinAction = actionClient
   });
 
 const ZIsSurveyResponsePresentAction = z.object({
-  surveyId: z.string().cuid2(),
-  email: z.string().email(),
+  surveyId: z.cuid2(),
+  email: z.email(),
 });
 
 export const isSurveyResponsePresentAction = actionClient

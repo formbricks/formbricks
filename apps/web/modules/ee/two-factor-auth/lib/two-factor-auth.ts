@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { authenticator } from "otplib";
+import { generateSecret, generateURI } from "otplib";
 import qrcode from "qrcode";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -19,7 +19,7 @@ export const setupTwoFactorAuth = async (
 }> => {
   // This generates a secret 32 characters in length. Do not modify the number of
   // bytes without updating the sanity checks in the enable and login endpoints.
-  const secret = authenticator.generateSecret(20);
+  const secret = generateSecret({ length: 20 });
 
   // generate backup codes with 10 character length
   const backupCodes = Array.from(Array(10), () => crypto.randomBytes(5).toString("hex"));
@@ -64,7 +64,7 @@ export const setupTwoFactorAuth = async (
   });
 
   const name = user.email || user.name || user.id.toString();
-  const keyUri = authenticator.keyuri(name, "Formbricks", secret);
+  const keyUri = generateURI({ label: name, issuer: "Formbricks", secret });
   const dataUri = await qrcode.toDataURL(keyUri);
 
   return { secret, keyUri, dataUri, backupCodes };

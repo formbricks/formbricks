@@ -7,7 +7,7 @@ import { ZProject } from "@formbricks/types/project";
 
 export const ZApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
-  permission: z.nativeEnum(ApiKeyPermission),
+  permission: z.enum(ApiKeyPermission),
 });
 
 export const ZApiKeyCreateInput = ZApiKey.required({
@@ -45,7 +45,7 @@ export type TOrganizationProject = z.infer<typeof OrganizationProject>;
 
 export const TApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
-  permission: z.nativeEnum(ApiKeyPermission),
+  permission: z.enum(ApiKeyPermission),
 });
 
 export type TApiKeyEnvironmentPermission = z.infer<typeof TApiKeyEnvironmentPermission>;
