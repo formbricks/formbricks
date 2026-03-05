@@ -123,18 +123,12 @@ RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules
 # Install runtime deps in an isolated temp directory and copy them into node_modules.
 # This avoids npm reading workspace manifests with `workspace:*` in /home/nextjs/package.json.
 RUN mkdir -p /tmp/runtime-deps \
-    && printf '%s\n' '{' \
-      '  "name": "runtime-deps",' \
-      '  "private": true,' \
-      '  "dependencies": {' \
-      '    "@prisma/adapter-pg": "7.4.2",' \
-      '    "dotenv": "17.3.1",' \
-      '    "@paralleldrive/cuid2": "3.3.0",' \
-      '    "uuid": "13.0.0",' \
-      '    "zod": "4.3.6"' \
-      '  }' \
-      '}' > /tmp/runtime-deps/package.json \
     && npm install --ignore-scripts --omit=dev --prefix /tmp/runtime-deps \
+      @prisma/adapter-pg@7.4.2 \
+      dotenv@17.3.1 \
+      @paralleldrive/cuid2@3.3.0 \
+      uuid@13.0.0 \
+      zod@4.3.6 \
     && cp -R /tmp/runtime-deps/node_modules/. ./node_modules/ \
     && rm -rf /tmp/runtime-deps
 
