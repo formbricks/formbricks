@@ -116,7 +116,7 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
                             )
                           }>
                           <div
-                            className={`bg-brand-dark h-full ${isFirst ? "rounded-tl-lg" : ""} ${isLast ? "rounded-tr-lg" : ""}`}
+                            className={`h-full bg-brand-dark ${isFirst ? "rounded-tl-lg" : ""} ${isLast ? "rounded-tr-lg" : ""}`}
                             style={{ opacity }}
                           />
                         </ClickableBarSegment>

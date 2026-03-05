@@ -76,7 +76,7 @@ export const PendingDowngradeBanner = ({
               <div className="relative flex flex-col">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
+                    <TriangleAlertIcon className="h-6 w-6 text-error" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-slate-900">

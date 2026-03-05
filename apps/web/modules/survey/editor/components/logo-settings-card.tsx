@@ -124,7 +124,7 @@ export const LogoSettingsCard = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex w-full px-4 py-4">
-          <div className="flex items-center pr-5 pl-2">
+          <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"

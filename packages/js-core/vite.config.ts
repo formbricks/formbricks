@@ -32,7 +32,8 @@ export default defineConfig({
   },
   plugins: [
     dts({
-      rollupTypes: true,
+      rollupTypes: false,
+      insertTypesEntry: true,
     }) as VitestPluginOption,
     copyCompiledAssetsPlugin({
       filename: "formbricks",

@@ -35,15 +35,15 @@
     "scan-translations": "tsx src/scan-translations.ts"
   },
   "dependencies": {
-    "glob": "^11.1.0"
+    "glob": "^13.0.6"
   },
   "devDependencies": {
-    "vite": "6.4.1",
     "@formbricks/config-typescript": "workspace:*",
-    "vitest": "3.2.4",
     "@formbricks/eslint-config": "workspace:*",
-    "vite-plugin-dts": "4.5.4",
     "@types/node": "^22.19.13",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "vite": "6.4.1",
+    "vite-plugin-dts": "4.5.4",
+    "vitest": "3.2.4"
   }
 }
