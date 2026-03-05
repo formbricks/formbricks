@@ -141,7 +141,7 @@ export const SelectedRowSettings = <T,>({
 
   return (
     <>
-      <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
+      <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
         <div className="lowercase">{`${selectedRowCount} ${selectedTypeLabel} ${t("common.selected")}`}</div>
         <Separator />
         <Button
