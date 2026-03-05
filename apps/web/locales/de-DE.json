@@ -2081,7 +2081,7 @@
       "enum": "Enum",
       "failed_to_load_feedback_records": "Feedback-Einträge konnten nicht geladen werden",
       "feedback_date": "Aktuelles Datum",
-      "feedback_record_fields": "Feedback-Eintragsfelder",
+      "feedback_record_fields": "Feedback-Datensatzfelder",
       "feedback_records": "Feedback-Einträge",
       "field_label": "Feldbezeichnung",
       "field_type": "Feldtyp",

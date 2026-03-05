@@ -52,7 +52,7 @@ export const validateEnumMappings = (
     if (!mapping.sourceFieldId || mapping.staticValue) continue;
 
     const targetField = FEEDBACK_RECORD_FIELDS.find((f) => f.id === mapping.targetFieldId);
-    if (!targetField || targetField.type !== "enum" || !targetField.enumValues) continue;
+    if (targetField?.type !== "enum" || !targetField?.enumValues) continue;
 
     const allowedValues = new Set(targetField.enumValues);
     const invalidEntries: { row: number; value: string }[] = [];
