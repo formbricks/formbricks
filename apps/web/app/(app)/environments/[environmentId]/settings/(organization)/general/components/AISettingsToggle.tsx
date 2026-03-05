@@ -9,9 +9,8 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { updateOrganizationAISettingsAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 
 interface AISettingsToggleProps {
   organization: TOrganization;
@@ -52,42 +51,26 @@ export const AISettingsToggle = ({ organization, membershipRole }: Readonly<AISe
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start space-x-2">
-        <Switch
-          id="ai-smart-tools-toggle"
-          className="mt-0.5"
-          checked={organization.isAISmartToolsEnabled}
-          disabled={isLoading || !canEdit}
-          onCheckedChange={(checked) => handleToggle("isAISmartToolsEnabled", checked)}
-        />
-        <div>
-          <Label htmlFor="ai-smart-tools-toggle">
-            {t("environments.settings.general.ai_smart_tools_enabled")}
-          </Label>
-          <p className="text-xs text-slate-500">
-            {t("environments.settings.general.ai_smart_tools_enabled_description")}
-          </p>
-        </div>
-      </div>
+    <div>
+      <AdvancedOptionToggle
+        isChecked={organization.isAISmartToolsEnabled}
+        onToggle={(checked) => handleToggle("isAISmartToolsEnabled", checked)}
+        htmlId="ai-smart-tools-toggle"
+        title={t("environments.settings.general.ai_smart_tools_enabled")}
+        description={t("environments.settings.general.ai_smart_tools_enabled_description")}
+        disabled={isLoading || !canEdit}
+        customContainerClass="px-0"
+      />
 
-      <div className="flex items-start space-x-2">
-        <Switch
-          id="ai-data-analysis-toggle"
-          className="mt-0.5"
-          checked={organization.isAIDataAnalysisEnabled}
-          disabled={isLoading || !canEdit}
-          onCheckedChange={(checked) => handleToggle("isAIDataAnalysisEnabled", checked)}
-        />
-        <div>
-          <Label htmlFor="ai-data-analysis-toggle">
-            {t("environments.settings.general.ai_data_analysis_enabled")}
-          </Label>
-          <p className="text-xs text-slate-500">
-            {t("environments.settings.general.ai_data_analysis_enabled_description")}
-          </p>
-        </div>
-      </div>
+      <AdvancedOptionToggle
+        isChecked={organization.isAIDataAnalysisEnabled}
+        onToggle={(checked) => handleToggle("isAIDataAnalysisEnabled", checked)}
+        htmlId="ai-data-analysis-toggle"
+        title={t("environments.settings.general.ai_data_analysis_enabled")}
+        description={t("environments.settings.general.ai_data_analysis_enabled_description")}
+        disabled={isLoading || !canEdit}
+        customContainerClass="px-0"
+      />
 
       {!canEdit && (
         <Alert variant="warning">
