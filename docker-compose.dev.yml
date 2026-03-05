@@ -3,8 +3,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg18
     volumes:
-      - postgres:/var/lib/postgresql
-      - ./docker/postgres-init-dev:/docker-entrypoint-initdb.d:ro
+      - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
