@@ -45,7 +45,8 @@ export const mockSamlAccount: Account = {
 export const mockOrganization: Organization = {
   id: "org-123",
   name: "Test Organization",
-  isAIEnabled: false,
+  isAISmartToolsEnabled: false,
+  isAIDataAnalysisEnabled: false,
   whitelabel: {
     enabled: false,
   },

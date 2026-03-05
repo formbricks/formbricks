@@ -55,7 +55,8 @@ describe("Organization Service", () => {
           periodStart: new Date(),
           period: "monthly" as const,
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -110,7 +111,8 @@ describe("Organization Service", () => {
             periodStart: new Date(),
             period: "monthly" as const,
           },
-          isAIEnabled: false,
+          isAISmartToolsEnabled: false,
+          isAIDataAnalysisEnabled: false,
           whitelabel: false,
         },
       ];
@@ -163,7 +165,8 @@ describe("Organization Service", () => {
           periodStart: new Date(),
           period: "monthly" as const,
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -224,7 +227,8 @@ describe("Organization Service", () => {
           periodStart: new Date(),
           period: "monthly" as const,
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],
         projects: [
@@ -256,7 +260,8 @@ describe("Organization Service", () => {
           periodStart: expect.any(Date),
           period: "monthly",
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       });
       expect(prisma.organization.update).toHaveBeenCalledWith({

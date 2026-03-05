@@ -73,7 +73,8 @@ describe("User Service", () => {
         },
         periodStart: new Date(),
       },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     },
     {
       id: "org2",
@@ -93,7 +94,8 @@ describe("User Service", () => {
         },
         periodStart: new Date(),
       },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     },
   ];
 

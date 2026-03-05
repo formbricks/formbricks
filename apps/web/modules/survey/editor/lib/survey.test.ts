@@ -151,7 +151,8 @@ describe("Survey Editor Library Tests", () => {
         period: "monthly" as const,
         periodStart: new Date(),
       },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     };
 
     beforeEach(() => {

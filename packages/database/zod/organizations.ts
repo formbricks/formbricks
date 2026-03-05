@@ -37,5 +37,6 @@ export const ZOrganization = z.object({
   name: z.string(),
   whitelabel: ZOrganizationWhiteLabel,
   billing: ZOrganizationBilling as z.ZodType<Organization["billing"]>,
-  isAIEnabled: z.boolean().default(false) as z.ZodType<Organization["isAIEnabled"]>,
+  isAISmartToolsEnabled: z.boolean().default(false) as z.ZodType<Organization["isAISmartToolsEnabled"]>,
+  isAIDataAnalysisEnabled: z.boolean().default(false) as z.ZodType<Organization["isAIDataAnalysisEnabled"]>,
 }) satisfies z.ZodType<Organization>;

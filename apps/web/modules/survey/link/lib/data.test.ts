@@ -454,7 +454,8 @@ describe("data", () => {
       name: "Test Organization",
       billing: mockBilling,
       whitelabel: null,
-      isAIEnabled: true,
+      isAISmartToolsEnabled: true,
+      isAIDataAnalysisEnabled: true,
     };
 
     test("should fetch organization billing successfully", async () => {

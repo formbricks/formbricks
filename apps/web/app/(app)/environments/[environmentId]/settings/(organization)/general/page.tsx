@@ -11,6 +11,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import packageJson from "@/package.json";
 import { SettingsCard } from "../../components/SettingsCard";
+import { AISettingsToggle } from "./components/AISettingsToggle";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 import { SecurityListTip } from "./components/SecurityListTip";
@@ -59,6 +60,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           environmentId={params.environmentId}
           membershipRole={currentUserMembership?.role}
         />
+      </SettingsCard>
+      <SettingsCard
+        title={t("environments.settings.general.ai_enabled")}
+        description={t("environments.settings.general.ai_enabled_description")}>
+        <AISettingsToggle organization={organization} membershipRole={currentUserMembership?.role} />
       </SettingsCard>
       <EmailCustomizationSettings
         organization={organization}

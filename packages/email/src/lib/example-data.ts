@@ -134,7 +134,8 @@ export const exampleData = {
           },
         },
       },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     } as unknown as TOrganization,
   },
 
