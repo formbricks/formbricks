@@ -59,7 +59,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "dotenv-cli": "8.0.0",
-    "glob": "11.1.0",
+    "glob": "13.0.6",
     "prisma": "6.19.2",
     "prisma-json-types-generator": "3.6.2",
     "tsx": "4.21.0",
