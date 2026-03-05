@@ -2,7 +2,8 @@
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
       "dependsOn": ["@formbricks/logger#build"]
@@ -26,9 +27,13 @@
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
+    "@formbricks/email#build": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "@formbricks/i18n-utils#build": {
       "dependsOn": ["^build"],
-      "outputs": ["packages/i18n-utils/dist/**"]
+      "outputs": ["dist/**"]
     },
     "@formbricks/i18n-utils#lint": {
       "dependsOn": ["^lint"]
@@ -48,6 +53,10 @@
     "@formbricks/js-core#lint": {
       "dependsOn": ["@formbricks/database#build"]
     },
+    "@formbricks/logger#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
@@ -58,7 +67,8 @@
       "persistent": true
     },
     "@formbricks/storage#build": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/storage#go": {
       "cache": false,
