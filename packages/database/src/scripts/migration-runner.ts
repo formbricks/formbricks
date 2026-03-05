@@ -36,6 +36,7 @@ const MIGRATIONS_DIR = isBuilt
   : path.resolve(__dirname, "../../migration"); // From src/scripts to migration
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 const PRISMA_SCHEMA_PATH = path.resolve(__dirname, "../../schema.prisma");
+const PRISMA_CONFIG_PATH = path.resolve(__dirname, "../../../../prisma.config.ts");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
@@ -169,9 +170,10 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
         return;
       }
 
-      // Run Prisma migrate
-      // throws when migrate deploy fails
-      await execAsync(`prisma migrate deploy --schema="${PRISMA_SCHEMA_PATH}"`);
+      // Prisma v7 reads datasource URL from prisma.config.ts when removed from schema.prisma.
+      await execAsync(
+        `prisma migrate deploy --config="${PRISMA_CONFIG_PATH}" --schema="${PRISMA_SCHEMA_PATH}"`
+      );
       logger.info(`Successfully applied schema migration: ${migration.name}`);
     } catch (err) {
       logger.error(err, `Schema migration ${migration.name} failed`);
