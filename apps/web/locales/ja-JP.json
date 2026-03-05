@@ -1756,7 +1756,6 @@
         "welcome_message": "ウェルカムメッセージ",
         "without_a_filter_all_of_your_users_can_be_surveyed": "フィルターがなければ、すべてのユーザーがフォームに回答できます。",
         "you_have_not_created_a_segment_yet": "まだセグメントを作成していません",
-        "you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations": "翻訳を使用するには、ワークスペースに2つ以上の言語を設定する必要があります。",
         "your_description_here_recall_information_with": "ここにあなたの説明。@ で情報を呼び出す",
         "your_question_here_recall_information_with": "ここにあなたの質問。@ で情報を呼び出す",
         "your_web_app": "あなたのウェブアプリ",

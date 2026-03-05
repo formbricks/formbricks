@@ -56,7 +56,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   const { t } = useTranslation();
   const environmentId = localSurvey.environmentId;
   const open = activeElementId === "multiLanguage";
-  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
+  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",
     open: false,
@@ -250,16 +250,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               />
             ) : (
               <>
-                {projectLanguages.length <= 1 && (
+                {projectLanguages.length === 0 && (
                   <div className="mb-4 text-sm italic text-slate-500">
-                    {projectLanguages.length === 0
-                      ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
-                      : t(
-                          "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations"
-                        )}
+                    {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
                   </div>
                 )}
-                {projectLanguages.length > 1 && (
+                {projectLanguages.length > 0 && (
                   <div className="space-y-6">
                     {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
                       <div className="text-sm italic text-slate-500">
@@ -276,7 +272,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                           setConfirmationModalInfo={setConfirmationModalInfo}
                           locale={locale}
                         />
-                        {defaultLanguage ? (
+                        {defaultLanguage && projectLanguages.length > 1 ? (
                           <SecondaryLanguageSelect
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}
