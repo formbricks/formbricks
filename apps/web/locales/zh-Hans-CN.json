@@ -1756,7 +1756,6 @@
         "welcome_message": "欢迎 信息",
         "without_a_filter_all_of_your_users_can_be_surveyed": "没有 过滤器 时 ，所有 用户 都可以 被 调查 。",
         "you_have_not_created_a_segment_yet": "您 还没有 创建 段落",
-        "you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations": "要使用翻译功能，您的工作区需设置两种或以上语言。",
         "your_description_here_recall_information_with": "在此输入描述。 调用信息与 @",
         "your_question_here_recall_information_with": "在此输入你的问题。 调用信息与 @",
         "your_web_app": "您的 网页应用",
