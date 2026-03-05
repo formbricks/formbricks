@@ -1756,7 +1756,6 @@
         "welcome_message": "歡迎訊息",
         "without_a_filter_all_of_your_users_can_be_surveyed": "如果沒有篩選器，則可以調查您的所有使用者。",
         "you_have_not_created_a_segment_yet": "您尚未建立區隔",
-        "you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations": "您必須在工作區中設定兩種或以上語言，才能進行翻譯作業。",
         "your_description_here_recall_information_with": "您的描述在這裡。使用 @ 回憶資訊",
         "your_question_here_recall_information_with": "您的問題在這裡。使用 @ 回憶資訊",
         "your_web_app": "您的 Web 應用程式",

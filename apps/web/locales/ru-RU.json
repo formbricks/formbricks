@@ -1756,7 +1756,6 @@
         "welcome_message": "Приветственное сообщение",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Без фильтра все ваши пользователи могут быть опрошены.",
         "you_have_not_created_a_segment_yet": "Вы ещё не создали сегмент",
-        "you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations": "Для работы с переводами необходимо настроить два или более языков в рабочем пространстве.",
         "your_description_here_recall_information_with": "Ваша инструкция здесь. Вспомните информацию с помощью @",
         "your_question_here_recall_information_with": "Ваш вопрос здесь. Вспомните информацию с помощью @",
         "your_web_app": "Ваше веб-приложение",

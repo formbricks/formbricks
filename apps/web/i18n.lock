@@ -1681,7 +1681,6 @@ checksums:
     environments/surveys/edit/welcome_message: 986a434e3895c8ee0b267df95cc40051
     environments/surveys/edit/without_a_filter_all_of_your_users_can_be_surveyed: 451990569c61f25d01044cc45b1ce122
     environments/surveys/edit/you_have_not_created_a_segment_yet: c6658bd1cee9c5c957c675db044708dd
-    environments/surveys/edit/you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations: 04241177ba989ef4c1d8c01e1a7b8541
     environments/surveys/edit/your_description_here_recall_information_with: 60f73a3cc9bdb9afea2166a7db8fd618
     environments/surveys/edit/your_question_here_recall_information_with: 6395bd54f5167830c9d662ba403da167
     environments/surveys/edit/your_web_app: 07234bed03a33330dc50ae9fcf0174f3
