@@ -1,11 +1,10 @@
-import { type Prisma, type PrismaClient } from "@prisma/client";
+import { type Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
-import { createPrismaClient } from "../prisma-client";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +25,7 @@ export interface MigrationScript {
   type: "data" | "schema";
 }
 
-const prisma = createPrismaClient();
+const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // Determine if we're running from built or source code
@@ -36,7 +35,6 @@ const MIGRATIONS_DIR = isBuilt
   : path.resolve(__dirname, "../../migration"); // From src/scripts to migration
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 const PRISMA_SCHEMA_PATH = path.resolve(__dirname, "../../schema.prisma");
-const PRISMA_CONFIG_PATH = path.resolve(__dirname, "../../prisma.config.ts");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
@@ -170,10 +168,9 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
         return;
       }
 
-      // Prisma v7 reads datasource URL from prisma.config.ts when removed from schema.prisma.
-      await execAsync(
-        `prisma migrate deploy --config="${PRISMA_CONFIG_PATH}" --schema="${PRISMA_SCHEMA_PATH}"`
-      );
+      // Run Prisma migrate
+      // throws when migrate deploy fails
+      await execAsync(`prisma migrate deploy --schema="${PRISMA_SCHEMA_PATH}"`);
       logger.info(`Successfully applied schema migration: ${migration.name}`);
     } catch (err) {
       logger.error(err, `Schema migration ${migration.name} failed`);

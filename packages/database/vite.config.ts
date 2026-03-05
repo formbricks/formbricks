@@ -59,9 +59,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
         ],
         external: [
           // External dependencies that should not be bundled
-          "@prisma/adapter-pg",
           "@prisma/client",
-          "dotenv/config",
           "zod",
           "zod-openapi",
           "@paralleldrive/cuid2",

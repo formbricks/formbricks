@@ -89,6 +89,9 @@ RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
 COPY --from=installer /app/apps/web/next.config.mjs .
 RUN chmod 644 ./next.config.mjs
 
+COPY --from=installer /app/apps/web/package.json .
+RUN chmod 644 ./package.json
+
 COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
 RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
@@ -104,26 +107,27 @@ RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
-COPY --from=installer /app/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
-RUN chown nextjs:nextjs ./packages/database/prisma.config.ts && chmod 644 ./packages/database/prisma.config.ts
-
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
-# Copy generated Prisma client runtime
+# Copy prisma client packages
 COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
 RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
 
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
 
-# Install runtime deps required by Prisma v7 adapter-based migrations.
-RUN npm install --ignore-scripts --omit=dev --no-save --no-package-lock \
-    @prisma/adapter-pg@7.4.2 \
-    dotenv@17.3.1 \
-    @paralleldrive/cuid2@3.3.0 \
-    uuid@13.0.0 \
-    zod@4.3.6
+COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
+RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
+
+COPY --from=installer /app/node_modules/uuid ./node_modules/uuid
+RUN chmod -R 755 ./node_modules/uuid
+
+COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+RUN chmod -R 755 ./node_modules/@noble/hashes
+
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
+RUN chmod -R 755 ./node_modules/zod
 
 # Pino loads transport code in worker threads via dynamic require().
 # Next.js file tracing only traces static imports, missing runtime-loaded files
@@ -142,7 +146,7 @@ COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
 
 # Install prisma CLI globally for database migrations and fix permissions for nextjs user
-RUN npm install --ignore-scripts -g prisma@7.4.2 \
+RUN npm install --ignore-scripts -g prisma@6 \
     && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic
