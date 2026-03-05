@@ -9,7 +9,7 @@ import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
+import { extractChoiceIdsFromResponse } from "@/lib/response/client-utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";

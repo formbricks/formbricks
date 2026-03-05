@@ -5,7 +5,7 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
-import { getChoiceIdByValue } from "@/lib/response/utils";
+import { getChoiceIdByValue } from "@/lib/response/client-utils";
 import { processResponseData } from "@/lib/responses";
 import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";

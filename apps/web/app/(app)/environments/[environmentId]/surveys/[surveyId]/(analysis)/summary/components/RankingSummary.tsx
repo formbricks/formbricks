@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyElementSummaryRanking } from "@formbricks/types/surveys/types";
-import { getChoiceIdByValue } from "@/lib/response/utils";
+import { getChoiceIdByValue } from "@/lib/response/client-utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";

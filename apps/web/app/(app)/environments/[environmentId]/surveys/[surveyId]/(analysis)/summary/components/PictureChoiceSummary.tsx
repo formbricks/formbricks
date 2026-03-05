@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyElementSummaryPictureSelection } from "@formbricks/types/surveys/types";
-import { getChoiceIdByValue } from "@/lib/response/utils";
+import { getChoiceIdByValue } from "@/lib/response/client-utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
