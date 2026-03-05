@@ -141,13 +141,13 @@ export const DroppableTargetField = ({
     return (
       <div
         ref={setNodeRef}
-        className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-          isActive
-            ? "border-brand-dark bg-slate-100"
-            : hasMapping
-              ? "border-green-300 bg-green-50"
-              : "border-dashed border-slate-300 bg-slate-50"
-        }`}>
+        className={cn(
+          `flex items-center gap-2 rounded-md border p-2 text-sm transition-colors`,
+          isActive && "border-brand-dark bg-slate-100",
+          !isActive && hasMapping
+            ? "border-green-300 bg-green-50"
+            : "border-dashed border-slate-300 bg-slate-50"
+        )}>
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900">{field.name}</span>
@@ -267,13 +267,13 @@ export const DroppableTargetField = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-        isActive
-          ? "border-brand-dark bg-slate-100"
-          : hasDefaultMapping
-            ? "border-green-300 bg-green-50"
-            : "border-dashed border-slate-300 bg-slate-50"
-      }`}>
+      className={cn(
+        "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
+        isActive && "border-brand-dark bg-slate-100",
+        !isActive && hasDefaultMapping
+          ? "border-green-300 bg-green-50"
+          : "border-dashed border-slate-300 bg-slate-50"
+      )}>
       <div className="flex flex-1 flex-col">
         <div className="flex items-center gap-2">
           <span className="font-medium text-slate-900">{field.name}</span>
