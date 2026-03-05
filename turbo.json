@@ -2,7 +2,8 @@
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
       "dependsOn": ["@formbricks/logger#build"]
@@ -22,6 +23,10 @@
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+    },
+    "@formbricks/email#build": {
+      "dependsOn": ["^build"],
+      "outputs": []
     },
     "@formbricks/i18n-utils#build": {
       "dependsOn": ["^build"],
@@ -45,8 +50,13 @@
     "@formbricks/js-core#lint": {
       "dependsOn": ["@formbricks/database#build"]
     },
+    "@formbricks/logger#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "@formbricks/storage#build": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/storage#go": {
       "cache": false,

@@ -276,7 +276,7 @@ function SingleSelect({
                       disabled={disabled}
                       aria-required={required}
                     />
-                    <span className={cn("ml-3 mr-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+                    <span className={cn("mr-3 ml-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
                   </span>
                   {isOtherSelected ? (
                     <Input

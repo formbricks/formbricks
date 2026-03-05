@@ -44,7 +44,6 @@
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "@trivago/prettier-plugin-sort-imports": "5.2.2",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "3.2.4",
     "terser": "5.46.0",

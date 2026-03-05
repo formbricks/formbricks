@@ -15,7 +15,7 @@ export const EmailChangeWithoutVerificationSuccessPage = async () => {
   }
 
   return (
-    <div className="bg-gradient-radial flex min-h-screen from-slate-200 to-slate-50">
+    <div className="flex min-h-screen bg-gradient-radial from-slate-200 to-slate-50">
       <FormWrapper>
         <h1 className="leading-2 mb-4 text-center font-bold">
           {t("auth.email-change.email_change_success")}

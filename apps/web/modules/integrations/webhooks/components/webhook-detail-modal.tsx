@@ -70,7 +70,7 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
                   type="button"
                   className={`mr-4 px-1 pb-3 focus:outline-none ${
                     activeTab === index
-                      ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                      ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                       : "text-slate-500 hover:text-slate-700"
                   }`}
                   onClick={() => handleTabClick(index)}>
