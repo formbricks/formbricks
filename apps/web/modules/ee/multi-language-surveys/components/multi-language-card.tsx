@@ -188,7 +188,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <p>
           <Languages className="h-6 w-6 rounded-full bg-indigo-500 p-1 text-white" />
@@ -251,7 +251,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             ) : (
               <>
                 {projectLanguages.length <= 1 && (
-                  <div className="mb-4 text-sm text-slate-500 italic">
+                  <div className="mb-4 text-sm italic text-slate-500">
                     {projectLanguages.length === 0
                       ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
                       : t(
@@ -262,7 +262,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 {projectLanguages.length > 1 && (
                   <div className="space-y-6">
                     {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-                      <div className="text-sm text-slate-500 italic">
+                      <div className="text-sm italic text-slate-500">
                         {t("environments.surveys.edit.switch_multi_language_on_to_get_started")}
                       </div>
                     ) : null}

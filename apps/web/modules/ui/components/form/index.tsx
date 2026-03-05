@@ -133,7 +133,7 @@ const FormError = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
     }
 
     return (
-      <p ref={ref} id={formMessageId} className={cn("text-error text-sm", className)} {...props}>
+      <p ref={ref} id={formMessageId} className={cn("text-sm text-error", className)} {...props}>
         {body}
       </p>
     );
