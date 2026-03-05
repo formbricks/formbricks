@@ -146,7 +146,7 @@ COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
 
 # Install prisma CLI globally for database migrations and fix permissions for nextjs user
-RUN npm install --ignore-scripts -g prisma@6 \
+RUN npm install --ignore-scripts -g prisma@7.4.2 \
     && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic
