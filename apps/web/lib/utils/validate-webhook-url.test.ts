@@ -12,22 +12,25 @@ vi.mock("node:dns", () => ({
 const mockResolve = vi.mocked(dns.resolve);
 const mockResolve6 = vi.mocked(dns.resolve6);
 
+type DnsCallback = (err: NodeJS.ErrnoException | null, addresses: string[]) => void;
+
 const setupDnsResolution = (ipv4: string[] | null, ipv6: string[] | null = null): void => {
-  mockResolve.mockImplementation((_hostname, callback: any) => {
+  // dns.resolve/resolve6 have overloaded signatures; we only mock the (hostname, callback) form
+  mockResolve.mockImplementation(((_hostname: string, callback: DnsCallback) => {
     if (ipv4) {
       callback(null, ipv4);
     } else {
-      callback(new Error("ENOTFOUND"));
+      callback(new Error("ENOTFOUND"), []);
     }
-  });
+  }) as never);
 
-  mockResolve6.mockImplementation((_hostname, callback: any) => {
+  mockResolve6.mockImplementation(((_hostname: string, callback: DnsCallback) => {
     if (ipv6) {
       callback(null, ipv6);
     } else {
-      callback(new Error("ENOTFOUND"));
+      callback(new Error("ENOTFOUND"), []);
     }
-  });
+  }) as never);
 };
 
 afterEach(() => {

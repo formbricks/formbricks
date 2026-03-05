@@ -1,6 +1,8 @@
 import { WebhookSource } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { createWebhook, getWebhooks } from "../webhook";
 
@@ -91,6 +93,30 @@ describe("createWebhook", () => {
     if (result.ok) {
       expect(result.data).toEqual(createdWebhook);
     }
+  });
+
+  test("calls validateWebhookUrl with the provided URL", async () => {
+    vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
+
+    await createWebhook(inputWebhook);
+
+    expect(validateWebhookUrl).toHaveBeenCalledWith("http://example.com");
+  });
+
+  test("returns bad_request and skips Prisma create when URL fails SSRF validation", async () => {
+    vi.mocked(validateWebhookUrl).mockRejectedValueOnce(
+      new InvalidInputError("Webhook URL must not point to private or internal IP addresses")
+    );
+
+    const result = await createWebhook(inputWebhook);
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.error.type).toEqual("bad_request");
+      expect(result.error.details[0].field).toEqual("url");
+    }
+
+    expect(prisma.webhook.create).not.toHaveBeenCalled();
   });
 
   test("returns error when creation fails", async () => {
