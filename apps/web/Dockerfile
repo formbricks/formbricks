@@ -120,70 +120,23 @@ RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_
 COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
 RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
 
-# Copy Prisma adapter packages and pg runtime deps scoped to database package.
-# Avoid `npm install` here because workspace package manifests contain `workspace:*` deps.
-COPY --from=installer /app/node_modules/@prisma/adapter-pg ./packages/database/node_modules/@prisma/adapter-pg
-RUN chmod -R 755 ./packages/database/node_modules/@prisma/adapter-pg
-
-COPY --from=installer /app/node_modules/@prisma/driver-adapter-utils ./packages/database/node_modules/@prisma/driver-adapter-utils
-RUN chmod -R 755 ./packages/database/node_modules/@prisma/driver-adapter-utils
-
-COPY --from=installer /app/node_modules/@prisma/debug ./packages/database/node_modules/@prisma/debug
-RUN chmod -R 755 ./packages/database/node_modules/@prisma/debug
-
-COPY --from=installer /app/node_modules/pg ./packages/database/node_modules/pg
-RUN chmod -R 755 ./packages/database/node_modules/pg
-
-COPY --from=installer /app/node_modules/pg-connection-string ./packages/database/node_modules/pg-connection-string
-RUN chmod -R 755 ./packages/database/node_modules/pg-connection-string
-
-COPY --from=installer /app/node_modules/pg-int8 ./packages/database/node_modules/pg-int8
-RUN chmod -R 755 ./packages/database/node_modules/pg-int8
-
-COPY --from=installer /app/node_modules/pg-pool ./packages/database/node_modules/pg-pool
-RUN chmod -R 755 ./packages/database/node_modules/pg-pool
-
-COPY --from=installer /app/node_modules/pg-protocol ./packages/database/node_modules/pg-protocol
-RUN chmod -R 755 ./packages/database/node_modules/pg-protocol
-
-COPY --from=installer /app/node_modules/pg-types ./packages/database/node_modules/pg-types
-RUN chmod -R 755 ./packages/database/node_modules/pg-types
-
-COPY --from=installer /app/node_modules/pgpass ./packages/database/node_modules/pgpass
-RUN chmod -R 755 ./packages/database/node_modules/pgpass
-
-COPY --from=installer /app/node_modules/postgres-array ./packages/database/node_modules/postgres-array
-RUN chmod -R 755 ./packages/database/node_modules/postgres-array
-
-COPY --from=installer /app/node_modules/postgres-bytea ./packages/database/node_modules/postgres-bytea
-RUN chmod -R 755 ./packages/database/node_modules/postgres-bytea
-
-COPY --from=installer /app/node_modules/postgres-date ./packages/database/node_modules/postgres-date
-RUN chmod -R 755 ./packages/database/node_modules/postgres-date
-
-COPY --from=installer /app/node_modules/postgres-interval ./packages/database/node_modules/postgres-interval
-RUN chmod -R 755 ./packages/database/node_modules/postgres-interval
-
-COPY --from=installer /app/node_modules/split2 ./packages/database/node_modules/split2
-RUN chmod -R 755 ./packages/database/node_modules/split2
-
-COPY --from=installer /app/node_modules/xtend ./packages/database/node_modules/xtend
-RUN chmod -R 755 ./packages/database/node_modules/xtend
-
-COPY --from=installer /app/node_modules/dotenv ./packages/database/node_modules/dotenv
-RUN chmod -R 755 ./packages/database/node_modules/dotenv
-
-COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
-RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
-
-COPY --from=installer /app/node_modules/uuid ./node_modules/uuid
-RUN chmod -R 755 ./node_modules/uuid
-
-COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
-RUN chmod -R 755 ./node_modules/@noble/hashes
-
-COPY --from=installer /app/node_modules/zod ./node_modules/zod
-RUN chmod -R 755 ./node_modules/zod
+# Install runtime deps in an isolated temp directory and copy them into node_modules.
+# This avoids npm reading workspace manifests with `workspace:*` in /home/nextjs/package.json.
+RUN mkdir -p /tmp/runtime-deps \
+    && printf '%s\n' '{' \
+      '  "name": "runtime-deps",' \
+      '  "private": true,' \
+      '  "dependencies": {' \
+      '    "@prisma/adapter-pg": "7.4.2",' \
+      '    "dotenv": "17.3.1",' \
+      '    "@paralleldrive/cuid2": "3.3.0",' \
+      '    "uuid": "13.0.0",' \
+      '    "zod": "4.3.6"' \
+      '  }' \
+      '}' > /tmp/runtime-deps/package.json \
+    && npm install --ignore-scripts --omit=dev --prefix /tmp/runtime-deps \
+    && cp -R /tmp/runtime-deps/node_modules/. ./node_modules/ \
+    && rm -rf /tmp/runtime-deps
 
 # Pino loads transport code in worker threads via dynamic require().
 # Next.js file tracing only traces static imports, missing runtime-loaded files
