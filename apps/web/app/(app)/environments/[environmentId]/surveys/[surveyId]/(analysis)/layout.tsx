@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getTranslate } from "@/lingodotdev/server";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 
 type Props = {
   params: Promise<{ surveyId: string; environmentId: string }>;

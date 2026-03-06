@@ -97,9 +97,7 @@ export const TeamsTable = ({
             {userTeams.map((team) => (
               <TableRow key={team.id} id={team.name} className="hover:bg-transparent">
                 <TableCell>{team.name}</TableCell>
-                <TableCell>
-                  {t("common.count_members", { count: team.memberCount })}
-                </TableCell>
+                <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
                 <TableCell>
                   <Badge
                     type="success"
@@ -120,9 +118,7 @@ export const TeamsTable = ({
             {otherTeams.map((team) => (
               <TableRow key={team.id} id={team.name} className="hover:bg-transparent">
                 <TableCell>{team.name}</TableCell>
-                <TableCell>
-                  {t("common.count_members", { count: team.memberCount })}
-                </TableCell>
+                <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
                 <TableCell></TableCell>
                 <TableCell className="flex justify-end">
                   <ManageTeamButton
