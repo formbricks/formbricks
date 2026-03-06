@@ -7,7 +7,7 @@ export const ZIntegrationSlackConfigData = z
     channelId: z.string(),
     channelName: z.string(),
   })
-  .merge(ZIntegrationBaseSurveyData);
+  .extend(ZIntegrationBaseSurveyData.shape);
 
 export type TIntegrationSlackConfigData = z.infer<typeof ZIntegrationSlackConfigData>;
 

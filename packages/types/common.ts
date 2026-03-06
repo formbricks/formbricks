@@ -4,7 +4,7 @@ export const ZBoolean = z.boolean();
 
 export const ZString = z.string();
 
-export const ZUrl = z.string().url();
+export const ZUrl = z.url();
 
 /**
  * Schema for storage URLs that can be either:
@@ -26,7 +26,9 @@ export const ZStorageUrl = z.string().refine(
       return false;
     }
   },
-  { message: "Must be a valid URL or a relative storage path (/storage/...)" }
+  {
+    error: "Must be a valid URL or a relative storage path (/storage/...)",
+  }
 );
 
 export const ZNumber = z.number();
@@ -47,9 +49,9 @@ export const ZOverlay = z.enum(["none", "light", "dark"]);
 
 export type TOverlay = z.infer<typeof ZOverlay>;
 
-export const ZId = z.string().cuid2();
+export const ZId = z.cuid2();
 
-export const ZUuid = z.string().uuid();
+export const ZUuid = z.uuid();
 
 export const getZSafeUrl = z.string().superRefine((url, ctx) => {
   safeUrlRefinement(url, ctx);
@@ -67,7 +69,7 @@ export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void
 
   if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "URL must start with http:// or https://",
     });
   }
@@ -76,7 +78,7 @@ export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "URL must not contain spaces",
     });
   }
@@ -84,7 +86,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   // early recall check for better user feedback
   if (url.startsWith("#recall:")) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "URL must not start with a recall value",
     });
   }
@@ -92,7 +94,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   // Allow localhost for easy recall testing on self-hosted environments and mailto links
   if (!url.startsWith("https://") && !url.startsWith("http://localhost") && !url.startsWith("mailto:")) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "URL must start with https:// or mailto:",
     });
   }
@@ -103,14 +105,14 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
       const parsed = new URL(url);
       if (parsed.protocol !== "mailto:") {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Invalid mailto URL format",
         });
         return;
       }
     } catch {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Invalid mailto URL format",
       });
     }
@@ -124,7 +126,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     // Check if recall information appears in the hostname (not allowed)
     if (hostname.includes("#recall:")) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Recall information must appear after the domain, not within it",
       });
       return;
@@ -134,7 +136,7 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     if (hostname) {
       const addIssue = (): void => {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "URL is not valid",
         });
       };
@@ -220,10 +222,10 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     }
   } catch {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "URL is not valid",
     });
   }
 };
 
-export const ZEmail = z.string().email();
+export const ZEmail = z.email();

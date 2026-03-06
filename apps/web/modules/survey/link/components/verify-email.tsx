@@ -32,7 +32,7 @@ interface VerifyEmailProps {
 }
 
 const ZVerifyEmailInput = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 type TVerifyEmailInput = z.infer<typeof ZVerifyEmailInput>;
 

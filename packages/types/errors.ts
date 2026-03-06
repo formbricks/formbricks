@@ -111,7 +111,7 @@ interface ForbiddenError {
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
 }
 
-export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
+export const ZErrorHandler = z.function({ input: [z.any()], output: z.void() });
 
 export {
   ResourceNotFoundError,

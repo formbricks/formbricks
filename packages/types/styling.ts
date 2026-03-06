@@ -35,7 +35,9 @@ export const ZSurveyStylingBackground = z
 
       return true;
     },
-    { message: "Invalid background" }
+    {
+      error: "Invalid background",
+    }
   );
 
 export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
