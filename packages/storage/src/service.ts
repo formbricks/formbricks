@@ -66,7 +66,7 @@ export const getSignedUploadUrl = async (
       Key: `${filePath}/${fileName}`,
       Fields: {
         "Content-Type": contentType,
-        // "Content-Encoding": "base64",
+        success_action_status: "201",
       },
       Conditions: postConditions,
     });

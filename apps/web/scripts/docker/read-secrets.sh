@@ -1,29 +1,39 @@
 #!/bin/sh
 
 set -eu
+
+# Build-time fallbacks used only when Docker secrets are unavailable (for example
+# in forked PR validations where repository secrets are not exposed).
+DEFAULT_DATABASE_URL="postgresql://test:test@localhost:5432/formbricks"
+DEFAULT_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef"
+DEFAULT_REDIS_URL="redis://localhost:6379"
+
 if [ -f "/run/secrets/database_url" ]; then
   IFS= read -r DATABASE_URL < /run/secrets/database_url || true
-  DATABASE_URL=${DATABASE_URL%$'\n'}
-  export DATABASE_URL
-else
-  echo "DATABASE_URL secret not found. Build will fail because it is required by the application."
 fi
+if [ -z "${DATABASE_URL:-}" ]; then
+  DATABASE_URL="${DEFAULT_DATABASE_URL}"
+  echo "⚠️  DATABASE_URL secret not found or empty. Using build-time fallback value."
+fi
+export DATABASE_URL
 
 if [ -f "/run/secrets/encryption_key" ]; then
   IFS= read -r ENCRYPTION_KEY < /run/secrets/encryption_key || true
-  ENCRYPTION_KEY=${ENCRYPTION_KEY%$'\n'}
-  export ENCRYPTION_KEY
-else
-  echo "ENCRYPTION_KEY secret not found. Build will fail because it is required by the application."
 fi
+if [ -z "${ENCRYPTION_KEY:-}" ]; then
+  ENCRYPTION_KEY="${DEFAULT_ENCRYPTION_KEY}"
+  echo "⚠️  ENCRYPTION_KEY secret not found or empty. Using build-time fallback value."
+fi
+export ENCRYPTION_KEY
 
 if [ -f "/run/secrets/redis_url" ]; then
   IFS= read -r REDIS_URL < /run/secrets/redis_url || true
-  REDIS_URL=${REDIS_URL%$'\n'}
-  export REDIS_URL
-else
-  echo "REDIS_URL secret not found. Build will fail because it is required by the application."
 fi
+if [ -z "${REDIS_URL:-}" ]; then
+  REDIS_URL="${DEFAULT_REDIS_URL}"
+  echo "⚠️  REDIS_URL secret not found or empty. Using build-time fallback value."
+fi
+export REDIS_URL
 
 if [ -f "/run/secrets/sentry_auth_token" ]; then
   # Only upload sourcemaps on amd64 platform to avoid duplicate uploads

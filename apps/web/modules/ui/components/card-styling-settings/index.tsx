@@ -133,58 +133,6 @@ export const CardStylingSettings = ({
             )}
           />
 
-          {(!surveyType || isAppSurvey) && (
-            <div className="flex max-w-xs flex-col gap-4">
-              <div className="flex items-center space-x-1">
-                <FormField
-                  control={form.control}
-                  name="highlightBorderColor"
-                  render={({ field }) => (
-                    <FormItem className="flex w-full flex-col gap-2 space-y-0">
-                      <div className="flex items-center gap-2">
-                        <FormControl>
-                          <Switch
-                            id="highlightBorderColor"
-                            checked={!!field.value}
-                            onCheckedChange={(checked) => {
-                              if (!checked) {
-                                field.onChange(null);
-                                return;
-                              }
-
-                              field.onChange({
-                                light: STYLE_DEFAULTS.highlightBorderColor?.light,
-                              });
-                            }}
-                          />
-                        </FormControl>
-
-                        <div>
-                          <FormLabel>{t("environments.surveys.edit.add_highlight_border")}</FormLabel>
-                        </div>
-                      </div>
-
-                      {!!field.value && (
-                        <FormControl>
-                          <ColorPicker
-                            color={field.value?.light ?? STYLE_DEFAULTS.highlightBorderColor?.light}
-                            onChange={(color: string) =>
-                              field.onChange({
-                                ...field.value,
-                                light: color,
-                              })
-                            }
-                            containerClass="my-0"
-                          />
-                        </FormControl>
-                      )}
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          )}
-
           <FormField
             control={form.control}
             name={"cardArrangement"}
@@ -214,7 +162,62 @@ export const CardStylingSettings = ({
           />
         </div>
 
-        {/* Progress Bar Section (Moved from Advanced) */}
+        {/* Highlight Border Section */}
+        <div className="flex flex-col gap-4 p-6 pt-0">
+          <hr className="text-slate-600" />
+          <div className="my-2">
+            <FormField
+              control={form.control}
+              name="highlightBorderColor"
+              render={({ field }) => (
+                <FormItem className="flex w-full flex-col gap-4 space-y-0">
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Switch
+                        id="highlightBorderColor"
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => {
+                          if (!checked) {
+                            field.onChange(null);
+                            return;
+                          }
+                          field.onChange({
+                            light: STYLE_DEFAULTS.highlightBorderColor?.light,
+                          });
+                        }}
+                      />
+                    </FormControl>
+                    <div>
+                      <FormLabel className="text-sm font-normal">
+                        {t("environments.surveys.edit.add_highlight_border")}
+                      </FormLabel>
+                      <FormDescription className="text-xs">
+                        {t("environments.surveys.edit.add_highlight_border_description")}
+                      </FormDescription>
+                    </div>
+                  </div>
+
+                  {!!field.value && (
+                    <FormControl>
+                      <ColorPicker
+                        color={field.value?.light ?? STYLE_DEFAULTS.highlightBorderColor?.light}
+                        onChange={(color: string) =>
+                          field.onChange({
+                            ...field.value,
+                            light: color,
+                          })
+                        }
+                        containerClass="w-1/2"
+                      />
+                    </FormControl>
+                  )}
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Progress Bar Section */}
         <div className="flex flex-col gap-6 p-6 pt-0">
           <hr className="text-slate-600" />
           <div className="flex flex-col gap-4">

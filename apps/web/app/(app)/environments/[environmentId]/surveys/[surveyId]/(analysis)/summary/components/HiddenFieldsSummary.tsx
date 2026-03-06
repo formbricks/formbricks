@@ -41,8 +41,7 @@ export const HiddenFieldsSummary = ({ environment, elementSummary, locale }: Hid
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxIcon className="mr-2 h-4 w-4" />
-            {elementSummary.responseCount}{" "}
-            {elementSummary.responseCount === 1 ? t("common.response") : t("common.responses")}
+            {t("common.count_responses", { count: elementSummary.responseCount })}
           </div>
         </div>
       </div>

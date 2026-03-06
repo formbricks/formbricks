@@ -203,7 +203,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                   <RadioGroupItem
                     value={option.id}
                     id={`waiting-time-${option.id}`}
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                   />
                   <div>
                     <p className="font-semibold text-slate-700">{option.name}</p>
@@ -273,7 +273,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                   <RadioGroupItem
                     value={option.id}
                     id={`recontact-option-${option.id}`}
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                   />
                   <div>
                     <p className="font-semibold text-slate-700">{option.name}</p>

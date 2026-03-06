@@ -259,7 +259,7 @@ export function ConditionsEditor({
           </DropdownMenu>
         </div>
         {quotaError && isSubmitted && (
-          <p className="text-error mt-2 w-full text-right text-sm">{quotaError}</p>
+          <p className="mt-2 w-full text-right text-sm text-error">{quotaError}</p>
         )}
       </div>
     );

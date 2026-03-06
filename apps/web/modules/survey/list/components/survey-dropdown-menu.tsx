@@ -246,7 +246,7 @@ export const SurveyDropDownMenu = ({
 
       {!isSurveyCreationDeletionDisabled && (
         <DeleteDialog
-          deleteWhat="Survey"
+          deleteWhat={t("common.survey")}
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
