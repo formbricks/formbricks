@@ -143,9 +143,9 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   ]);
 
   // Get multi-language permission
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(
-    environmentContext.organizationBilling.plan
-  );
+  const isMultiLanguageAllowed = await getMultiLanguagePermission({
+    organizationId: environmentContext.organizationId,
+  });
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount

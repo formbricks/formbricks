@@ -34,7 +34,7 @@ export const SingleContactPage = async (props: {
     throw new Error(t("environments.contacts.contact_not_found"));
   }
 
-  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
+  const isQuotasAllowed = await getIsQuotasEnabled({ organizationId: organization.id });
 
   // Derive contact identifier from metadata array
   const getAttributeValue = (key: string): string | undefined => {
@@ -61,7 +61,7 @@ export const SingleContactPage = async (props: {
     <PageContentWrapper>
       <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
       <PageHeader pageTitle={contactIdentifier} cta={getContactControlBar()} />
-      <section className="pb-24 pt-6">
+      <section className="pt-6 pb-24">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ActivitySection

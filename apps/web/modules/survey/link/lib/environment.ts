@@ -69,7 +69,14 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
               organization: {
                 select: {
                   id: true,
-                  billing: true,
+                  billing: {
+                    select: {
+                      stripeCustomerId: true,
+                      limits: true,
+                      periodStart: true,
+                      stripe: true,
+                    },
+                  },
                   whitelabel: true,
                 },
               },
@@ -87,6 +94,10 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
         throw new ResourceNotFoundError("Organization", null);
       }
 
+      if (!environment.project.organization.billing) {
+        throw new ResourceNotFoundError("OrganizationBilling", environment.project.organization.id);
+      }
+
       // Return structured, typed data
       return {
         project: {
@@ -98,7 +109,14 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
           customHeadScripts: environment.project.customHeadScripts,
         },
         organizationId: environment.project.organizationId,
-        organizationBilling: environment.project.organization.billing,
+        organizationBilling: {
+          stripeCustomerId: environment.project.organization.billing.stripeCustomerId,
+          limits: environment.project.organization.billing.limits as TOrganizationBilling["limits"],
+          periodStart: environment.project.organization.billing.periodStart,
+          ...(environment.project.organization.billing.stripe !== null
+            ? { stripe: environment.project.organization.billing.stripe as TOrganizationBilling["stripe"] }
+            : {}),
+        },
         organizationWhitelabel: environment.project.organization.whitelabel ?? null,
       };
     } catch (error) {

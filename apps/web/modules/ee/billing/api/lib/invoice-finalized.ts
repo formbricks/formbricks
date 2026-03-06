@@ -16,7 +16,7 @@ export const handleInvoiceFinalized = async (event: Stripe.Event) => {
 
   try {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-      apiVersion: STRIPE_API_VERSION,
+      apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
     });
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);

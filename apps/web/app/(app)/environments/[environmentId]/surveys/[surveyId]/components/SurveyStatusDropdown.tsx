@@ -34,23 +34,27 @@ export const SurveyStatusDropdown = ({
     const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
 
     if (updateSurveyActionResponse?.data) {
-      toast.success(
-        status === "inProgress"
-          ? t("common.survey_live")
-          : status === "paused"
-            ? t("common.survey_paused")
-            : status === "completed"
-              ? t("common.survey_completed")
-              : ""
-      );
+      const resultingStatus = updateSurveyActionResponse.data.status;
+      const statusToToastMessage: Partial<Record<TSurvey["status"], string>> = {
+        inProgress: t("common.survey_live"),
+        paused: t("common.survey_paused"),
+        completed: t("common.survey_completed"),
+      };
+
+      const toastMessage = statusToToastMessage[resultingStatus];
+      if (toastMessage) {
+        toast.success(toastMessage);
+      }
+
+      if (updateLocalSurveyStatus) {
+        updateLocalSurveyStatus(resultingStatus);
+      }
 
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
       toast.error(errorMessage);
     }
-
-    if (updateLocalSurveyStatus) updateLocalSurveyStatus(status);
   };
 
   return (

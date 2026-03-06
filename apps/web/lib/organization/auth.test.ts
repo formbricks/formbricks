@@ -29,8 +29,6 @@ describe("auth", () => {
           name: "Org 1",
           billing: {
             stripeCustomerId: null,
-            plan: "free",
-            period: "monthly",
             limits: {
               projects: 3,
               monthly: {

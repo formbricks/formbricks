@@ -1,4 +1,4 @@
-import type { Organization } from "@prisma/client";
+import type { Organization, OrganizationBilling } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 
@@ -9,9 +9,8 @@ export const ZOrganizationWhiteLabel = z.object({
 });
 
 export const ZOrganizationBilling = z.object({
+  organizationId: z.string().cuid2(),
   stripeCustomerId: z.string().nullable(),
-  plan: z.enum(["free", "startup", "scale", "enterprise"]).default("free"),
-  period: z.enum(["monthly", "yearly"]).default("monthly"),
   limits: z
     .object({
       projects: z.number().nullable(),
@@ -27,8 +26,28 @@ export const ZOrganizationBilling = z.object({
         miu: 2000,
       },
     }),
-  periodStart: z.coerce.date().nullable(),
-});
+  periodStart: z.coerce.date(),
+  stripe: z
+    .object({
+      responseMetering: z
+        .object({
+          usagePriceId: z.string().nullable().optional(),
+          includedResponses: z.number().nullable().optional(),
+          overageUnitAmountCents: z.number().nullable().optional(),
+          currency: z.string().nullable().optional(),
+        })
+        .optional(),
+      plan: z.enum(["hobby", "pro", "scale", "trial", "unknown"]).optional(),
+      subscriptionId: z.string().nullable().optional(),
+      features: z.array(z.string()).optional(),
+      lastStripeEventCreatedAt: z.string().nullable().optional(),
+      lastSyncedAt: z.string().nullable().optional(),
+      lastSyncedEventId: z.string().nullable().optional(),
+    })
+    .optional(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+}) satisfies z.ZodType<OrganizationBilling>;
 
 export const ZOrganization = z.object({
   id: z.string().cuid2(),
@@ -36,6 +55,5 @@ export const ZOrganization = z.object({
   updatedAt: z.coerce.date(),
   name: z.string(),
   whitelabel: ZOrganizationWhiteLabel,
-  billing: ZOrganizationBilling as z.ZodType<Organization["billing"]>,
   isAIEnabled: z.boolean().default(false) as z.ZodType<Organization["isAIEnabled"]>,
 }) satisfies z.ZodType<Organization>;

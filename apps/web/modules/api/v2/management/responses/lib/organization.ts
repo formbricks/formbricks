@@ -1,6 +1,7 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) => {
@@ -42,15 +43,29 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
         id: organizationId,
       },
       select: {
-        billing: true,
+        billing: {
+          select: {
+            stripeCustomerId: true,
+            limits: true,
+            periodStart: true,
+            stripe: true,
+          },
+        },
       },
     });
 
-    if (!organization) {
+    if (!organization?.billing) {
       return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
     }
 
-    return ok(organization.billing);
+    return ok({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      limits: organization.billing.limits as TOrganizationBilling["limits"],
+      periodStart: organization.billing.periodStart,
+      ...(organization.billing.stripe !== null
+        ? { stripe: organization.billing.stripe as TOrganizationBilling["stripe"] }
+        : {}),
+    });
   } catch (error) {
     return err({
       type: "internal_server_error",

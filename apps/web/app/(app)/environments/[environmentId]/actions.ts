@@ -53,7 +53,7 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
         throw new Error("Organization not found");
       }
 
-      const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
+      const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.id);
       const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
 
       if (organizationProjectsCount >= organizationProjectsLimit) {
@@ -61,7 +61,7 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
       }
 
       if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-        const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+        const isAccessControlAllowed = await getAccessControlPermission({ organizationId: organization.id });
 
         if (!isAccessControlAllowed) {
           throw new OperationNotAllowedError("You do not have permission to manage roles");

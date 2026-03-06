@@ -172,7 +172,14 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                billing: true,
+                billing: {
+                  select: {
+                    stripeCustomerId: true,
+                    limits: true,
+                    periodStart: true,
+                    stripe: true,
+                  },
+                },
                 isAIEnabled: true,
                 whitelabel: true,
                 // Current user's membership only (filtered at DB level)
@@ -196,6 +203,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
     });
 
     if (!data) return null;
+
+    if (!data.project.organization.billing) {
+      throw new Error("Organization billing not found");
+    }
 
     // Extract and return properly typed data
     return {
@@ -298,7 +309,7 @@ export const getEnvironmentLayoutData = reactCache(
 
     // Fetch remaining data in parallel
     const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
-      getAccessControlPermission(organization.billing.plan), // No DB query (logic only)
+      getAccessControlPermission({ organizationId: organization.id }),
       getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);

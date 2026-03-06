@@ -1,11 +1,26 @@
 import { z } from "zod";
 import { ZStorageUrl } from "./common";
 
-export const ZOrganizationBillingPlan = z.enum(["free", "startup", "custom"]);
-export type TOrganizationBillingPlan = z.infer<typeof ZOrganizationBillingPlan>;
+export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "trial", "unknown"]);
+export type TCloudBillingPlan = z.infer<typeof ZCloudBillingPlan>;
 
-export const ZOrganizationBillingPeriod = z.enum(["monthly", "yearly"]);
-export type TOrganizationBillingPeriod = z.infer<typeof ZOrganizationBillingPeriod>;
+export const ZOrganizationStripeBilling = z.object({
+  responseMetering: z
+    .object({
+      usagePriceId: z.string().nullable().optional(),
+      includedResponses: z.number().nullable().optional(),
+      overageUnitAmountCents: z.number().nullable().optional(),
+      currency: z.string().nullable().optional(),
+    })
+    .optional(),
+  plan: ZCloudBillingPlan.optional(),
+  subscriptionId: z.string().nullable().optional(),
+  features: z.array(z.string()).optional(),
+  lastStripeEventCreatedAt: z.string().nullable().optional(),
+  lastSyncedAt: z.string().nullable().optional(),
+  lastSyncedEventId: z.string().nullable().optional(),
+});
+export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 
 // responses and miu can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
@@ -20,8 +35,6 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  plan: ZOrganizationBillingPlan.default("free"),
-  period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
     projects: 3,
     monthly: {
@@ -30,6 +43,7 @@ export const ZOrganizationBilling = z.object({
     },
   }),
   periodStart: z.date(),
+  stripe: ZOrganizationStripeBilling.optional(),
 });
 
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;

@@ -80,11 +80,11 @@ export const SurveyEditorPage = async (props) => {
     isQuotasAllowed,
     isExternalUrlsAllowed,
   ] = await Promise.all([
-    getMultiLanguagePermission(organizationBilling.plan),
-    getSurveyFollowUpsPermission(organizationBilling.plan),
-    getIsSpamProtectionEnabled(organizationBilling.plan),
-    getIsQuotasEnabled(organizationBilling.plan),
-    getExternalUrlsPermission(organizationBilling.plan),
+    getMultiLanguagePermission({ organizationId: projectWithTeamIds.organizationId }),
+    getSurveyFollowUpsPermission({ organizationId: projectWithTeamIds.organizationId }),
+    getIsSpamProtectionEnabled({ organizationId: projectWithTeamIds.organizationId }),
+    getIsQuotasEnabled({ organizationId: projectWithTeamIds.organizationId }),
+    getExternalUrlsPermission({ organizationId: projectWithTeamIds.organizationId }),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];

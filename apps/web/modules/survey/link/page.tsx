@@ -113,12 +113,11 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   ]);
 
   // Stage 3: Get multi-language permission (depends on environmentContext)
-  // Future optimization: Consider caching getMultiLanguagePermission by plan tier
-  // since it's a pure computation based on billing plan. Could be memoized at
-  // the plan level rather than per-request.
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(
-    environmentContext.organizationBilling.plan
-  );
+  // Future optimization: Cache only when keyed by both billing plan and organization id,
+  // as cloud entitlement checks can be organization-specific.
+  const isMultiLanguageAllowed = await getMultiLanguagePermission({
+    organizationId: environmentContext.organizationId,
+  });
 
   // Fetch responseCount only if needed (depends on survey config)
   const responseCount = survey.welcomeCard.showResponseCount

@@ -41,7 +41,6 @@ const mockEnvironmentData = {
     organization: {
       id: "org-123",
       billing: {
-        plan: "free",
         limits: { monthly: { responses: 100 } },
       },
     },
@@ -117,7 +116,6 @@ describe("getEnvironmentStateData", () => {
       organization: {
         id: "org-123",
         billing: {
-          plan: "free",
           limits: { monthly: { responses: 100 } },
         },
       },

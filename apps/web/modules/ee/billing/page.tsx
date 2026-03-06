@@ -1,13 +1,11 @@
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
-import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
-} from "@/lib/organization/service";
+import { env } from "@/lib/env";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getCloudBillingDisplayContext } from "@/modules/billing/lib/cloud-billing-display";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -23,8 +21,14 @@ export const PricingPage = async (props) => {
     notFound();
   }
 
-  const [peopleCount, responseCount, projectCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
+  const cloudBillingDisplayContext = await getCloudBillingDisplayContext(organization.id);
+
+  const organizationWithSyncedBilling = {
+    ...organization,
+    billing: cloudBillingDisplayContext.billing as typeof organization.billing,
+  };
+
+  const [responseCount, projectCount] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
     getOrganizationProjectsCount(organization.id),
   ]);
@@ -43,14 +47,14 @@ export const PricingPage = async (props) => {
       </PageHeader>
 
       <PricingTable
-        organization={organization}
+        organization={organizationWithSyncedBilling}
         environmentId={params.environmentId}
-        peopleCount={peopleCount}
         responseCount={responseCount}
         projectCount={projectCount}
-        stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
-        projectFeatureKeys={PROJECT_FEATURE_KEYS}
         hasBillingRights={hasBillingRights}
+        currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
+        stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
+        stripePricingTableId={env.STRIPE_PRICING_TABLE_ID ?? null}
       />
     </PageContentWrapper>
   );

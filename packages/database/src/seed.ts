@@ -360,12 +360,23 @@ async function main(): Promise<void> {
       id: SEED_IDS.ORGANIZATION,
       name: "Seed Organization",
       billing: {
-        plan: "free",
-        limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
-        stripeCustomerId: null,
-        periodStart: new Date(),
-        period: "monthly",
+        create: {
+          limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
+          stripeCustomerId: null,
+          periodStart: new Date(),
+        },
       },
+    },
+  });
+
+  await prisma.organizationBilling.upsert({
+    where: { organizationId: organization.id },
+    update: {},
+    create: {
+      organizationId: organization.id,
+      limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
+      stripeCustomerId: null,
+      periodStart: new Date(),
     },
   });
 

@@ -6,7 +6,12 @@ import { logger } from "@formbricks/logger";
 import { sendTelemetryEvents } from "./telemetry";
 
 // Mock dependencies
-vi.mock("@formbricks/cache");
+vi.mock("@formbricks/cache", () => ({
+  getCacheService: vi.fn(),
+  createCacheKey: {
+    custom: vi.fn((_namespace: string, key: string) => key),
+  },
+}));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {

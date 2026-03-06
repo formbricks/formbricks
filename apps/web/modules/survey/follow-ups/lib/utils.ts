@@ -1,9 +1,15 @@
-import { Organization } from "@prisma/client";
-import { IS_FORMBRICKS_CLOUD, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
+import type { TOrganizationPermissionContext } from "@/modules/billing/lib/organization-permission-context";
+import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 
 export const getSurveyFollowUpsPermission = async (
-  billingPlan: Organization["billing"]["plan"]
+  context: TOrganizationPermissionContext
 ): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
+  const { organizationId } = context;
+
+  if (IS_FORMBRICKS_CLOUD) {
+    return hasCloudEntitlementWithLicenseGuard(organizationId, CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FOLLOW_UPS);
+  }
   return true;
 };

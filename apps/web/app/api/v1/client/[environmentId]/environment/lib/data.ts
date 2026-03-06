@@ -63,7 +63,14 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             organization: {
               select: {
                 id: true,
-                billing: true,
+                billing: {
+                  select: {
+                    stripeCustomerId: true,
+                    limits: true,
+                    periodStart: true,
+                    stripe: true,
+                  },
+                },
               },
             },
           },
@@ -159,6 +166,10 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
 
     if (!environmentData.project.organization) {
       throw new ResourceNotFoundError("organization", null);
+    }
+
+    if (!environmentData.project.organization.billing) {
+      throw new ResourceNotFoundError("organization billing", environmentData.project.organization.id);
     }
 
     // Transform surveys using existing utility

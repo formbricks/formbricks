@@ -42,7 +42,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 
-  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+  const isAccessControlAllowed = await getAccessControlPermission({ organizationId: organization.id });
 
   if (!organizationTeams) {
     throw new Error(t("common.organization_teams_not_found"));
