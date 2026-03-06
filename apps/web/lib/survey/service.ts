@@ -508,6 +508,7 @@ export const updateSurveyInternal = async (
           newFollowUps.length > 0
             ? {
                 data: newFollowUps.map((followUp) => ({
+                  id: followUp.id,
                   name: followUp.name,
                   trigger: followUp.trigger,
                   action: followUp.action,

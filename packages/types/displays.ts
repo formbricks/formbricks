@@ -13,7 +13,12 @@ export type TDisplay = z.infer<typeof ZDisplay>;
 export const ZDisplayCreateInput = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
-  userId: z.string().optional(),
+  userId: z
+    .string()
+    .max(255, {
+      message: "User ID cannot exceed 255 characters",
+    })
+    .optional(),
   responseId: z.string().cuid2().optional(),
 });
 
@@ -30,3 +35,17 @@ export const ZDisplayFilters = z.object({
 });
 
 export type TDisplayFilters = z.infer<typeof ZDisplayFilters>;
+
+export const ZDisplayWithContact = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  surveyId: z.string(),
+  contact: z
+    .object({
+      id: z.string(),
+      attributes: z.record(z.string()),
+    })
+    .nullable(),
+});
+
+export type TDisplayWithContact = z.infer<typeof ZDisplayWithContact>;

@@ -369,6 +369,7 @@ describe("addCustomThemeToDom", () => {
       // Options
       optionBgColor: { light: "#option-bg" },
       optionLabelColor: { light: "#option-label" },
+      optionBorderColor: { light: "#option-border" },
       optionBorderRadius: 4,
       optionPaddingX: 12,
       optionPaddingY: 8,
@@ -410,6 +411,7 @@ describe("addCustomThemeToDom", () => {
     // Options
     expect(variables["--fb-option-bg-color"]).toBe("#option-bg");
     expect(variables["--fb-option-label-color"]).toBe("#option-label");
+    expect(variables["--fb-option-border-color"]).toBe("#option-border");
     expect(variables["--fb-option-border-radius"]).toBe("4px");
     expect(variables["--fb-option-padding-x"]).toBe("12px");
     expect(variables["--fb-option-padding-y"]).toBe("8px");

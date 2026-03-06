@@ -19,7 +19,7 @@ export const SortOption = ({ option, sortBy, handleSortChange }: SortOptionProps
       }}>
       <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
         <span
-          className={`h-4 w-4 rounded-full border ${sortBy === option.value ? "bg-brand-dark outline-brand-dark border-slate-900 outline" : "border-white"}`}></span>
+          className={`h-4 w-4 rounded-full border ${sortBy === option.value ? "border-slate-900 bg-brand-dark outline outline-brand-dark" : "border-white"}`}></span>
         <p className="font-normal text-white">{option.label}</p>
       </div>
     </DropdownMenuItem>

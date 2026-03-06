@@ -66,10 +66,14 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response") {
-        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId, { decrementQuotas })));
-      } else {
-        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < rowsToBeDeleted.length; i += CHUNK_SIZE) {
+        const chunk = rowsToBeDeleted.slice(i, i + CHUNK_SIZE);
+        if (type === "response") {
+          await Promise.all(chunk.map((rowId) => deleteAction(rowId, { decrementQuotas })));
+        } else {
+          await Promise.all(chunk.map((rowId) => deleteAction(rowId)));
+        }
       }
 
       // Update the row list UI
@@ -141,7 +145,7 @@ export const SelectedRowSettings = <T,>({
 
   return (
     <>
-      <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
+      <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
         <div className="lowercase">{`${selectedRowCount} ${selectedTypeLabel} ${t("common.selected")}`}</div>
         <Separator />
         <Button

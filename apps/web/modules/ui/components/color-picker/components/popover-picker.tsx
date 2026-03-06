@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import { HexColorPicker } from "react-colorful";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface PopoverPickerProps {
   color: string;
@@ -9,33 +9,27 @@ interface PopoverPickerProps {
 }
 
 export const PopoverPicker = ({ color, onChange, disabled = false }: PopoverPickerProps) => {
-  const popover = useRef(null);
-  const [isOpen, toggle] = useState(false);
-
-  const close = useCallback(() => toggle(false), []);
-  useClickOutside(popover, close);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="picker relative">
-      <button
-        id="color-picker"
-        className="h-6 w-10 cursor-pointer rounded border border-slate-200"
-        style={{ backgroundColor: color, opacity: disabled ? 0.5 : 1 }}
-        onClick={(e) => {
-          e.preventDefault();
-          if (!disabled) {
-            toggle(!isOpen);
-          }
-        }}
-      />
-
-      {isOpen && (
-        <div className="absolute right-0 z-20 mt-2 origin-top-right" ref={popover}>
-          <div className="rounded bg-white p-2 shadow-lg">
-            <HexColorPicker color={color} onChange={onChange} />
-          </div>
-        </div>
-      )}
-    </div>
+    <Popover open={isOpen} onOpenChange={disabled ? undefined : setIsOpen}>
+      <PopoverTrigger asChild>
+        <button
+          id="color-picker"
+          type="button"
+          className="h-6 w-10 shrink-0 cursor-pointer rounded border border-slate-200"
+          style={{ backgroundColor: color, opacity: disabled ? 0.5 : 1 }}
+          onClick={(e) => {
+            e.preventDefault();
+            if (!disabled) {
+              setIsOpen((prev) => !prev);
+            }
+          }}
+        />
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-auto p-2">
+        <HexColorPicker color={color} onChange={onChange} />
+      </PopoverContent>
+    </Popover>
   );
 };

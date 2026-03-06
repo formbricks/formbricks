@@ -77,7 +77,7 @@ export const MatrixElementSummary = ({ elementSummary, survey, setFilter }: Matr
                       )}>
                       <button
                         style={{ backgroundColor: `rgba(0,196,184,${getOpacityLevel(percentage)})` }}
-                        className="hover:outline-brand-dark m-1 flex h-full w-40 cursor-pointer items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline"
+                        className="m-1 flex h-full w-40 cursor-pointer items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline hover:outline-brand-dark"
                         onClick={() =>
                           setFilter(
                             elementSummary.element.id,

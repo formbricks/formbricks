@@ -14,7 +14,8 @@ const nextConfig = {
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
-  productionBrowserSourceMaps: true,
+  // Enable source maps only when uploading to Sentry (CI/production); skip for faster local builds
+  productionBrowserSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
   serverExternalPackages: [
     "@aws-sdk",
     "@opentelemetry/api",
