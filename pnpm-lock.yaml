@@ -14,7 +14,7 @@ overrides:
   systeminformation: 5.27.14
   qs: '>=6.14.1'
   preact: '>=10.26.10'
-  fast-xml-parser: '>=5.3.4'
+  fast-xml-parser: 5.3.5
   diff: '>=8.0.3'
   '@isaacs/brace-expansion': '>=5.0.1'
   '@microsoft/api-extractor': '>=7.57.6'
@@ -7701,8 +7701,8 @@ packages:
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
-  fast-xml-parser@5.3.4:
-    resolution: {integrity: sha512-EFd6afGmXlCx8H8WTZHhAoDaWaGyuIBoZJ2mknrNxug+aZKjkp0a0dlars9Izl+jF+7Gu1/5f/2h68cQpe0IiA==}
+  fast-xml-parser@5.3.5:
+    resolution: {integrity: sha512-JeaA2Vm9ffQKp9VjvfzObuMCjUYAp5WDYhRYL5LrBPY/jUDlUtOvDfot0vKSkB9tuX885BDHjtw4fZadD95wnA==}
     hasBin: true
 
   fastest-stable-stringify@2.0.2:
@@ -11727,7 +11727,7 @@ snapshots:
       '@smithy/smithy-client': 4.11.2
       '@smithy/types': 4.12.0
       '@smithy/util-middleware': 4.2.8
-      fast-xml-parser: 5.3.4
+      fast-xml-parser: 5.3.5
       tslib: 2.8.1
 
   '@aws-sdk/core@3.973.17':
@@ -12355,7 +12355,7 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.9':
     dependencies:
       '@smithy/types': 4.13.0
-      fast-xml-parser: 5.3.4
+      fast-xml-parser: 5.3.5
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.2.2': {}
@@ -12442,7 +12442,7 @@ snapshots:
 
   '@azure/core-xml@1.5.0':
     dependencies:
-      fast-xml-parser: 5.3.4
+      fast-xml-parser: 5.3.5
       tslib: 2.8.1
 
   '@azure/identity@4.13.0':
@@ -19773,7 +19773,7 @@ snapshots:
 
   fast-uri@3.1.0: {}
 
-  fast-xml-parser@5.3.4:
+  fast-xml-parser@5.3.5:
     dependencies:
       strnum: 2.1.2
 
