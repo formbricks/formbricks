@@ -1119,9 +1119,7 @@
         "security_list_tip_link": "Regisztráljon itt.",
         "share_invite_link": "Meghívási hivatkozás megosztása",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Ossza meg ezt a hivatkozást, hogy szervezetének tagja csatlakozhasson a szervezetéhez:",
-        "test_email_sent_successfully": "A teszt e-mail sikeresen elküldve",
-        "use_multi_language_surveys_with_a_higher_plan": "Többnyelvű kérdőívek használata egy magasabb csomaggal",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Kérdezze meg felhasználóit különböző nyelveken."
+        "test_email_sent_successfully": "A teszt e-mail sikeresen elküldve"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Automatikus feliratkozás az új kérdőívekre",
@@ -1688,8 +1686,6 @@
         "until_they_submit_a_response": "Kérdezzen, amíg nem küldenek választ",
         "untitled_block": "Névtelen blokk",
         "update_options": "Lehetőségek frissítése",
-        "upgrade_notice_description": "Többnyelvű kérdőívek létrehozása és számos további funkció feloldása",
-        "upgrade_notice_title": "Többnyelvű kérdőívek feloldása egy magasabb csomaggal",
         "upload": "Feltöltés",
         "upload_at_least_2_images": "Töltsön fel legalább 2 képet",
         "upper_label": "Felső címke",
