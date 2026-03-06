@@ -55,7 +55,8 @@ const resolveValue = (
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
-  mappings: TConnectorFieldMapping[]
+  mappings: TConnectorFieldMapping[],
+  tenantId?: string
 ): FeedbackRecordCreateParams | null => {
   const record: Record<string, string | number | boolean | Record<string, unknown> | undefined> = {};
 
@@ -78,6 +79,10 @@ export const transformCsvRowToFeedbackRecord = (
     return null;
   }
 
+  if (tenantId && !record.tenant_id) {
+    record.tenant_id = tenantId;
+  }
+
   return record as unknown as FeedbackRecordCreateParams;
 };
 
@@ -87,13 +92,14 @@ export const transformCsvRowToFeedbackRecord = (
  */
 export const transformCsvRowsToFeedbackRecords = (
   rows: Record<string, string>[],
-  mappings: TConnectorFieldMapping[]
+  mappings: TConnectorFieldMapping[],
+  tenantId?: string
 ): { records: FeedbackRecordCreateParams[]; skipped: number } => {
   const records: FeedbackRecordCreateParams[] = [];
   let skipped = 0;
 
   for (const row of rows) {
-    const record = transformCsvRowToFeedbackRecord(row, mappings);
+    const record = transformCsvRowToFeedbackRecord(row, mappings, tenantId);
     if (record) {
       records.push(record);
     } else {
