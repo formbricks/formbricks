@@ -98,7 +98,7 @@ export const TeamsTable = ({
               <TableRow key={team.id} id={team.name} className="hover:bg-transparent">
                 <TableCell>{team.name}</TableCell>
                 <TableCell>
-                  {team.memberCount} {team.memberCount === 1 ? t("common.member") : t("common.members")}
+                  {t("common.count_members", { count: team.memberCount })}
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -121,7 +121,7 @@ export const TeamsTable = ({
               <TableRow key={team.id} id={team.name} className="hover:bg-transparent">
                 <TableCell>{team.name}</TableCell>
                 <TableCell>
-                  {team.memberCount} {team.memberCount === 1 ? t("common.member") : t("common.members")}
+                  {t("common.count_members", { count: team.memberCount })}
                 </TableCell>
                 <TableCell></TableCell>
                 <TableCell className="flex justify-end">
