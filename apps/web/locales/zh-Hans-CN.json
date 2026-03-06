@@ -209,6 +209,8 @@
     "download": "下载",
     "draft": "草稿",
     "duplicate": "复制",
+    "duplicate_copy": "（副本）",
+    "duplicate_copy_number": "（副本 {copyNumber}）",
     "e_commerce": "电子商务",
     "edit": "编辑",
     "email": "邮箱",

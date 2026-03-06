@@ -209,6 +209,8 @@
     "download": "Скачать",
     "draft": "Черновик",
     "duplicate": "Дублировать",
+    "duplicate_copy": "(копия)",
+    "duplicate_copy_number": "(копия {copyNumber})",
     "e_commerce": "E-Commerce",
     "edit": "Редактировать",
     "email": "Email",

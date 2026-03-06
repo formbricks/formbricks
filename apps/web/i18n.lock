@@ -182,6 +182,8 @@ checksums:
     common/download: 56b7d0834952b39ee394b44bd8179178
     common/draft: e8a92958ad300aacfe46c2bf6644927e
     common/duplicate: 27756566785c2b8463e21582c4bb619b
+    common/duplicate_copy: 68d2201918610ca87c2914b61dc8010f
+    common/duplicate_copy_number: 083cfffd294672043dcbcc4c3dfeac6a
     common/e_commerce: b9584e7d0449a6d1b0c182d7ff14061e
     common/edit: eee7f39ff90b18852afc1671f21fbaa9
     common/email: e7f34943a0c2fb849db1839ff6ef5cb5

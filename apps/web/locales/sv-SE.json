@@ -209,6 +209,8 @@
     "download": "Ladda ner",
     "draft": "Utkast",
     "duplicate": "Duplicera",
+    "duplicate_copy": "(kopia)",
+    "duplicate_copy_number": "(kopia {copyNumber})",
     "e_commerce": "E-handel",
     "edit": "Redigera",
     "email": "E-post",

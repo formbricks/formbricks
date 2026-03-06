@@ -209,6 +209,8 @@
     "download": "ダウンロード",
     "draft": "下書き",
     "duplicate": "複製",
+    "duplicate_copy": "(コピー)",
+    "duplicate_copy_number": "(コピー {copyNumber})",
     "e_commerce": "Eコマース",
     "edit": "編集",
     "email": "メールアドレス",

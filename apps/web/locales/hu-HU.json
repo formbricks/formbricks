@@ -209,6 +209,8 @@
     "download": "Letöltés",
     "draft": "Piszkozat",
     "duplicate": "Kettőzés",
+    "duplicate_copy": "(másolat)",
+    "duplicate_copy_number": "({copyNumber}. másolat)",
     "e_commerce": "E-kereskedelem",
     "edit": "Szerkesztés",
     "email": "E-mail",

@@ -209,6 +209,8 @@
     "download": "Descargar",
     "draft": "Borrador",
     "duplicate": "Duplicar",
+    "duplicate_copy": "(copia)",
+    "duplicate_copy_number": "(copia {copyNumber})",
     "e_commerce": "Comercio electrónico",
     "edit": "Editar",
     "email": "Email",

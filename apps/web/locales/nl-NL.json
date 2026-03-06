@@ -209,6 +209,8 @@
     "download": "Downloaden",
     "draft": "Voorlopige versie",
     "duplicate": "Duplicaat",
+    "duplicate_copy": "(kopie)",
+    "duplicate_copy_number": "(kopie {copyNumber})",
     "e_commerce": "E-commerce",
     "edit": "Bewerking",
     "email": "E-mail",

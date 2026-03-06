@@ -209,6 +209,8 @@
     "download": "下載",
     "draft": "草稿",
     "duplicate": "複製",
+    "duplicate_copy": "（複製）",
+    "duplicate_copy_number": "（複製 {copyNumber}）",
     "e_commerce": "電子商務",
     "edit": "編輯",
     "email": "電子郵件",

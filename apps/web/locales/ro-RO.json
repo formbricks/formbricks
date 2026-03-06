@@ -209,6 +209,8 @@
     "download": "Descărcare",
     "draft": "Schiță",
     "duplicate": "Duplicități",
+    "duplicate_copy": "(copie)",
+    "duplicate_copy_number": "(copie {copyNumber})",
     "e_commerce": "Comerț electronic",
     "edit": "Editare",
     "email": "Email",
