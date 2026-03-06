@@ -178,6 +178,7 @@
     "count_attributes": "{count, plural, one {{count} attribuut} other {{count} attributen}}",
     "count_contacts": "{count, plural, one {{count} contact} other {{count} contacten}}",
     "count_members": "{count, plural, one {{count} lid} other {{count} leden}}",
+    "count_questions": "{count, plural, one {{count} vraag} other {{count} vragen}}",
     "count_responses": "{count, plural, one {{count} reactie} other {{count} reacties}}",
     "count_selections": "{count, plural, one {{count} selectie} other {{count} selecties}}",
     "create_new_organization": "Creëer een nieuwe organisatie",

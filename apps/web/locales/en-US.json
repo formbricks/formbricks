@@ -178,6 +178,7 @@
     "count_attributes": "{count, plural, one {{count} attribute} other {{count} attributes}}",
     "count_contacts": "{count, plural, one {{count} contact} other {{count} contacts}}",
     "count_members": "{count, plural, one {{count} member} other {{count} members}}",
+    "count_questions": "{count, plural, one {{count} question} other {{count} questions}}",
     "count_responses": "{count, plural, one {{count} response} other {{count} responses}}",
     "count_selections": "{count, plural, one {{count} selection} other {{count} selections}}",
     "create_new_organization": "Create new organization",

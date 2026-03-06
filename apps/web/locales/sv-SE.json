@@ -178,6 +178,7 @@
     "count_attributes": "{count, plural, one {{count} attribut} other {{count} attribut}}",
     "count_contacts": "{count, plural, one {{count} kontakt} other {{count} kontakter}}",
     "count_members": "{count, plural, one {{count} medlem} other {{count} medlemmar}}",
+    "count_questions": "{count, plural, one {{count} fråga} other {{count} frågor}}",
     "count_responses": "{count, plural, one {{count} svar} other {{count} svar}}",
     "count_selections": "{count, plural, one {{count} val} other {{count} val}}",
     "create_new_organization": "Skapa ny organisation",

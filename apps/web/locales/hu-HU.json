@@ -178,6 +178,7 @@
     "count_attributes": "{count, plural, one {{count} attribútum} other {{count} attribútum}}",
     "count_contacts": "{count, plural, one {{count} partner} other {{count} partner}}",
     "count_members": "{count, plural, one {{count} tag} other {{count} tag}}",
+    "count_questions": "{count, plural, one {{count} kérdés} other {{count} kérdés}}",
     "count_responses": "{count, plural, one {{count} válasz} other {{count} válasz}}",
     "count_selections": "{count, plural, one {{count} kijelölés} other {{count} kijelölés}}",
     "create_new_organization": "Új szervezet létrehozása",
