@@ -48,8 +48,8 @@
   },
   "dependencies": {
     "@formbricks/logger": "workspace:*",
-    "@paralleldrive/cuid2": "2.2.2",
-    "@prisma/client": "6.14.0",
+    "@paralleldrive/cuid2": "2.3.1",
+    "@prisma/client": "6.19.2",
     "bcryptjs": "2.4.3",
     "uuid": "11.1.0",
     "zod": "3.25.76",
@@ -58,14 +58,12 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@types/bcryptjs": "2.4.6",
     "dotenv-cli": "8.0.0",
-    "glob": "11.1.0",
-    "prisma": "6.14.0",
-    "prisma-json-types-generator": "3.5.4",
-    "ts-node": "10.9.2",
-    "tsx": "4.19.2",
+    "glob": "13.0.6",
+    "prisma": "6.19.2",
+    "prisma-json-types-generator": "3.6.2",
+    "tsx": "4.21.0",
     "vite": "6.4.1",
-    "vite-plugin-dts": "4.5.3"
+    "vite-plugin-dts": "4.5.4"
   }
 }

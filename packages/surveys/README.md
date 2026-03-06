@@ -51,11 +51,9 @@ packages/surveys/
 ### Step-by-Step Setup
 
 1. **Join the Formbricks Team**
-
    - Join the Formbricks team on Lingo.dev
 
 2. **Get Your API Key**
-
    - In the sidebar, go to **Projects** and open the default project
    - Navigate to the **Settings** tab
    - Copy the API key

@@ -1756,7 +1756,6 @@
         "welcome_message": "Mensagem de boas-vindas",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Sem um filtro, todos os seus utilizadores podem ser pesquisados.",
         "you_have_not_created_a_segment_yet": "Ainda não criou um segmento",
-        "you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations": "Precisa de ter dois ou mais idiomas configurados no seu espaço de trabalho para trabalhar com traduções.",
         "your_description_here_recall_information_with": "A sua descrição aqui. Recorde a informação com @",
         "your_question_here_recall_information_with": "A sua pergunta aqui. Recorde a informação com @",
         "your_web_app": "A sua aplicação web",

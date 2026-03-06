@@ -49,7 +49,7 @@ const Page = async (props: XMTemplatePageProps) => {
       <XMTemplateList project={project} user={user} environmentId={environment.id} />
       {projects.length >= 2 && (
         <Button
-          className="absolute top-5 right-5 !mt-0 text-slate-500 hover:text-slate-700"
+          className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"
           asChild>
           <Link href={`/environments/${environment.id}/surveys`}>
