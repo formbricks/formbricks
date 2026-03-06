@@ -46,12 +46,7 @@ export const DashboardsTable = async ({
                     <div className="w-8 flex-shrink-0 text-slate-500">
                       <BarChart3Icon className="h-5 w-5" />
                     </div>
-                    <div className="flex flex-col">
-                      <div className="font-medium text-slate-900">{dashboard.name}</div>
-                      {dashboard.description && (
-                        <div className="text-xs font-medium text-slate-500">{dashboard.description}</div>
-                      )}
-                    </div>
+                    <div className="font-medium text-slate-900">{dashboard.name}</div>
                   </div>
                 </div>
                 <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">

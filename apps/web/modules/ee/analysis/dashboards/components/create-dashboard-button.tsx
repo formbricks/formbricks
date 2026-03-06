@@ -6,9 +6,9 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
+import { CreateDashboardDialog } from "@/modules/ee/analysis/dashboards/components/create-dashboard-dialog";
 import { Button } from "@/modules/ui/components/button";
-import { createDashboardAction } from "../actions";
-import { CreateDashboardDialog } from "./create-dashboard-dialog";
 
 interface CreateDashboardButtonProps {
   environmentId: string;
@@ -19,14 +19,12 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
-  const [dashboardDescription, setDashboardDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const handleOpenChange = (open: boolean) => {
     setIsCreateDialogOpen(open);
     if (!open) {
       setDashboardName("");
-      setDashboardDescription("");
     }
   };
 
@@ -41,7 +39,6 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
       const result = await createDashboardAction({
         environmentId,
         name: dashboardName.trim(),
-        description: dashboardDescription.trim() || undefined,
       });
 
       if (!result?.data) {
@@ -62,7 +59,7 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
 
   return (
     <>
-      <Button onClick={() => handleOpenChange(true)}>
+      <Button size="sm" onClick={() => handleOpenChange(true)}>
         <PlusIcon className="mr-2 h-4 w-4" />
         {t("environments.analysis.dashboards.create_dashboard")}
       </Button>
@@ -71,8 +68,6 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
         onOpenChange={handleOpenChange}
         dashboardName={dashboardName}
         onDashboardNameChange={setDashboardName}
-        dashboardDescription={dashboardDescription}
-        onDashboardDescriptionChange={setDashboardDescription}
         onCreate={handleCreate}
         isCreating={isCreating}
       />

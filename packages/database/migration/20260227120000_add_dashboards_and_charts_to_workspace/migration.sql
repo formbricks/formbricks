@@ -22,7 +22,6 @@ CREATE TABLE "public"."Dashboard" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
-    "description" TEXT,
     "projectId" TEXT NOT NULL,
     "createdBy" TEXT,
 
@@ -35,7 +34,6 @@ CREATE TABLE "public"."DashboardWidget" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "dashboardId" TEXT NOT NULL,
-    "title" TEXT,
     "chartId" TEXT NOT NULL,
     "layout" JSONB NOT NULL DEFAULT '{"x":0,"y":0,"w":4,"h":3}',
     "order" INTEGER NOT NULL DEFAULT 0,

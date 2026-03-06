@@ -1,7 +1,6 @@
 "use client";
 
 import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -44,9 +43,8 @@ export const DashboardDropdownMenu = ({
         toast.success(t("environments.analysis.dashboards.duplicate_success"));
         router.refresh();
       } else {
-        toast.error(
-          getFormattedErrorMessage(result) || t("environments.analysis.dashboards.duplicate_failed")
-        );
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage);
       }
     } catch {
       toast.error(t("environments.analysis.dashboards.duplicate_failed"));
@@ -64,7 +62,8 @@ export const DashboardDropdownMenu = ({
         toast.success(t("environments.analysis.dashboards.delete_success"));
         router.refresh();
       } else {
-        toast.error(getFormattedErrorMessage(result) || t("environments.analysis.dashboards.delete_failed"));
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage);
       }
     } catch {
       toast.error(t("environments.analysis.dashboards.delete_failed"));
@@ -84,10 +83,13 @@ export const DashboardDropdownMenu = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem icon={<SquarePenIcon className="size-4" />} asChild>
-              <Link href={`/environments/${environmentId}/analysis/dashboards/${dashboardId}`}>
-                {t("common.edit")}
-              </Link>
+            <DropdownMenuItem
+              icon={<SquarePenIcon className="size-4" />}
+              onClick={() => {
+                setIsDropDownOpen(false);
+                router.push(`/environments/${environmentId}/analysis/dashboards/${dashboardId}`);
+              }}>
+              {t("common.edit")}
             </DropdownMenuItem>
 
             <DropdownMenuItem
