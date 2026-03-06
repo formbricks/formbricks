@@ -222,7 +222,7 @@ export const SignupForm = ({
                               placeholder="*******"
                               aria-placeholder="password"
                               required
-                              className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
+                              className="block w-full rounded-md shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             />
                             {error?.message && <FormError className="text-left">{error.message}</FormError>}
                           </div>

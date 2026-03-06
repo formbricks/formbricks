@@ -188,7 +188,7 @@ export const VerifyEmail = ({
         {!emailSent && showPreviewQuestions && (
           <div>
             <p className="text-2xl font-bold">{t("s.question_preview")}</p>
-            <div className="bg-opacity-20 mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-700">
+            <div className="mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-4 text-slate-700">
               {questions.map((question, index) => (
                 <p
                   key={index}

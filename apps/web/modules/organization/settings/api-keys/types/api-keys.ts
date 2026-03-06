@@ -50,8 +50,10 @@ export const TApiKeyEnvironmentPermission = z.object({
 
 export type TApiKeyEnvironmentPermission = z.infer<typeof TApiKeyEnvironmentPermission>;
 
-export interface TApiKeyWithEnvironmentPermission
-  extends Pick<ApiKey, "id" | "label" | "createdAt" | "organizationAccess"> {
+export interface TApiKeyWithEnvironmentPermission extends Pick<
+  ApiKey,
+  "id" | "label" | "createdAt" | "organizationAccess"
+> {
   apiKeyEnvironments: TApiKeyEnvironmentPermission[];
 }
 

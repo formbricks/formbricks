@@ -60,6 +60,7 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
     // Options (Radio / Checkbox)
     "optionBgColor.light": inputBg,
     "optionLabelColor.light": questionColor,
+    "optionBorderColor.light": inputBorder,
 
     // Card
     "cardBackgroundColor.light": cardBg,
@@ -138,6 +139,7 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   // Options
   optionBgColor: { light: _colors["optionBgColor.light"] },
   optionLabelColor: { light: _colors["optionLabelColor.light"] },
+  optionBorderColor: { light: _colors["optionBorderColor.light"] },
   optionBorderRadius: 8,
   optionPaddingX: 16,
   optionPaddingY: 16,
@@ -169,6 +171,7 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
   const q = light("questionColor");
   const b = light("brandColor");
   const i = light("inputColor");
+  const inputBorder = light("inputBorderColor");
 
   return {
     ...(q && !saved.elementHeadlineColor && { elementHeadlineColor: { light: q } }),
@@ -179,9 +182,9 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
     ...(b && !saved.buttonBgColor && { buttonBgColor: { light: b } }),
     ...(b && !saved.buttonTextColor && { buttonTextColor: { light: isLight(b) ? "#0f172a" : "#ffffff" } }),
     ...(i && !saved.optionBgColor && { optionBgColor: { light: i } }),
+    ...(inputBorder && !saved.optionBorderColor && { optionBorderColor: { light: inputBorder } }),
     ...(b && !saved.progressIndicatorBgColor && { progressIndicatorBgColor: { light: b } }),
-    ...(b &&
-      !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
+    ...(b && !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
   };
 };
 
@@ -211,6 +214,7 @@ export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_CO
     inputTextColor: { light: colors["inputTextColor.light"] },
     optionBgColor: { light: colors["optionBgColor.light"] },
     optionLabelColor: { light: colors["optionLabelColor.light"] },
+    optionBorderColor: { light: colors["optionBorderColor.light"] },
     cardBackgroundColor: { light: colors["cardBackgroundColor.light"] },
     cardBorderColor: { light: colors["cardBorderColor.light"] },
     highlightBorderColor: { light: colors["highlightBorderColor.light"] },

@@ -304,19 +304,27 @@ export const evaluateNoCodeConfigClick = (
 
   if (!innerHtml && !cssSelector) return false;
 
-  if (innerHtml && targetElement.innerHTML !== innerHtml) return false;
+  // Resolve the element to test: prefer the direct click target, but walk up to
+  // the nearest ancestor that matches the CSS selector (event delegation for nested markup,
+  // e.g. <svg> or <span> inside a <button class="my-btn">).
+  let matchedElement: HTMLElement = targetElement;
 
   if (cssSelector) {
-    // Split selectors that start with a . or # including the . or #
-    const individualSelectors = cssSelector
-      .split(/(?=[.#])/) // split before each . or #
-      .map((sel) => sel.trim()); // remove leftover whitespace
-    for (const selector of individualSelectors) {
-      if (!targetElement.matches(selector)) {
-        return false;
-      }
+    let matchesDirectly = false;
+    try {
+      matchesDirectly = targetElement.matches(cssSelector);
+    } catch {
+      matchesDirectly = false;
+    }
+    if (!matchesDirectly) {
+      const ancestor = targetElement.closest(cssSelector);
+      if (!ancestor) return false;
+      matchedElement = ancestor as HTMLElement;
     }
   }
+
+  // Check innerHtml against the resolved element, not the raw click target
+  if (innerHtml && matchedElement.innerHTML !== innerHtml) return false;
 
   const connector = action.noCodeConfig.urlFiltersConnector ?? "or";
   const isValidUrl = handleUrlFilters(urlFilters, connector);

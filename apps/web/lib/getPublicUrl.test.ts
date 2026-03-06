@@ -1,44 +1,66 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// Mock constants module
 const envMock = {
-  env: {
-    WEBAPP_URL: "http://localhost:3000",
-    PUBLIC_URL: undefined as string | undefined,
-  },
+  WEBAPP_URL: undefined as string | undefined,
+  VERCEL_URL: undefined as string | undefined,
+  PUBLIC_URL: undefined as string | undefined,
 };
 
-vi.mock("@/lib/env", () => envMock);
+vi.mock("./env", () => ({
+  env: envMock,
+}));
+
+const loadGetPublicDomain = async () => {
+  vi.resetModules();
+  const { getPublicDomain } = await import("./getPublicUrl");
+  return getPublicDomain;
+};
 
 describe("getPublicDomain", () => {
   beforeEach(() => {
-    vi.resetModules();
+    envMock.WEBAPP_URL = undefined;
+    envMock.VERCEL_URL = undefined;
+    envMock.PUBLIC_URL = undefined;
   });
 
-  test("should return WEBAPP_URL when PUBLIC_URL is not set", async () => {
-    const { getPublicDomain } = await import("./getPublicUrl");
-    const domain = getPublicDomain();
-    expect(domain).toBe("http://localhost:3000");
+  test("returns trimmed WEBAPP_URL when configured", async () => {
+    envMock.WEBAPP_URL = " https://app.formbricks.com ";
+
+    const getPublicDomain = await loadGetPublicDomain();
+
+    expect(getPublicDomain()).toBe("https://app.formbricks.com");
   });
 
-  test("should return PUBLIC_URL when it is set", async () => {
-    envMock.env.PUBLIC_URL = "https://surveys.example.com";
-    const { getPublicDomain } = await import("./getPublicUrl");
-    const domain = getPublicDomain();
-    expect(domain).toBe("https://surveys.example.com");
+  test("falls back to VERCEL_URL when WEBAPP_URL is empty", async () => {
+    envMock.WEBAPP_URL = "   ";
+    envMock.VERCEL_URL = "preview.formbricks.com";
+
+    const getPublicDomain = await loadGetPublicDomain();
+
+    expect(getPublicDomain()).toBe("https://preview.formbricks.com");
   });
 
-  test("should handle empty string PUBLIC_URL by returning WEBAPP_URL", async () => {
-    envMock.env.PUBLIC_URL = "";
-    const { getPublicDomain } = await import("./getPublicUrl");
-    const domain = getPublicDomain();
-    expect(domain).toBe("http://localhost:3000");
+  test("falls back to localhost when WEBAPP_URL and VERCEL_URL are not set", async () => {
+    const getPublicDomain = await loadGetPublicDomain();
+
+    expect(getPublicDomain()).toBe("http://localhost:3000");
   });
 
-  test("should handle undefined PUBLIC_URL by returning WEBAPP_URL", async () => {
-    envMock.env.PUBLIC_URL = undefined;
-    const { getPublicDomain } = await import("./getPublicUrl");
-    const domain = getPublicDomain();
-    expect(domain).toBe("http://localhost:3000");
+  test("returns PUBLIC_URL when set", async () => {
+    envMock.WEBAPP_URL = "https://app.formbricks.com";
+    envMock.PUBLIC_URL = "https://surveys.formbricks.com";
+
+    const getPublicDomain = await loadGetPublicDomain();
+
+    expect(getPublicDomain()).toBe("https://surveys.formbricks.com");
+  });
+
+  test("falls back to WEBAPP_URL when PUBLIC_URL is empty", async () => {
+    envMock.WEBAPP_URL = "https://app.formbricks.com";
+    envMock.PUBLIC_URL = " ";
+
+    const getPublicDomain = await loadGetPublicDomain();
+
+    expect(getPublicDomain()).toBe("https://app.formbricks.com");
   });
 });

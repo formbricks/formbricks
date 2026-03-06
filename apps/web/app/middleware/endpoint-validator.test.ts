@@ -313,7 +313,7 @@ describe("endpoint-validator", () => {
       expect(isPublicDomainRoute("/c")).toBe(false);
       expect(isPublicDomainRoute("/contact/token")).toBe(false);
     });
-    
+
     test("should return true for pretty URL survey routes", () => {
       expect(isPublicDomainRoute("/p/pretty123")).toBe(true);
       expect(isPublicDomainRoute("/p/pretty-name-with-dashes")).toBe(true);
