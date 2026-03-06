@@ -31,7 +31,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               onClick={() => setActiveId(tab.id)}
               className={cn(
                 tab.id === activeId
-                  ? `border-brand-dark border-b-2 font-semibold text-slate-900 ${activeTabClassName}`
+                  ? `border-b-2 border-brand-dark font-semibold text-slate-900 ${activeTabClassName}`
                   : "text-slate-500 hover:text-slate-700",
                 "flex h-full items-center px-3 text-sm font-medium"
               )}

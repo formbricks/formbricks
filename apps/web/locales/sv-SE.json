@@ -1756,7 +1756,6 @@
         "welcome_message": "Välkomstmeddelande",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Utan ett filter kan alla dina användare enkäteras.",
         "you_have_not_created_a_segment_yet": "Du har inte skapat ett segment ännu",
-        "you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations": "Du måste ha två eller fler språk inställda i din arbetsyta för att kunna arbeta med översättningar.",
         "your_description_here_recall_information_with": "Din beskrivning här. Återkalla information med @",
         "your_question_here_recall_information_with": "Din fråga här. Återkalla information med @",
         "your_web_app": "Din webbapp",
