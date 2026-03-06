@@ -18,7 +18,7 @@ const ZDeleteApiKeyAction = z.object({
   id: ZId,
 });
 
-export const deleteApiKeyAction = authenticatedActionClient.schema(ZDeleteApiKeyAction).action(
+export const deleteApiKeyAction = authenticatedActionClient.inputSchema(ZDeleteApiKeyAction).action(
   withAuditLogging(
     "deleted",
     "apiKey",
@@ -50,7 +50,7 @@ const ZCreateApiKeyAction = z.object({
   apiKeyData: ZApiKeyCreateInput,
 });
 
-export const createApiKeyAction = authenticatedActionClient.schema(ZCreateApiKeyAction).action(
+export const createApiKeyAction = authenticatedActionClient.inputSchema(ZCreateApiKeyAction).action(
   withAuditLogging(
     "created",
     "apiKey",
@@ -81,7 +81,7 @@ const ZUpdateApiKeyAction = z.object({
   apiKeyData: ZApiKeyUpdateInput,
 });
 
-export const updateApiKeyAction = authenticatedActionClient.schema(ZUpdateApiKeyAction).action(
+export const updateApiKeyAction = authenticatedActionClient.inputSchema(ZUpdateApiKeyAction).action(
   withAuditLogging(
     "updated",
     "apiKey",

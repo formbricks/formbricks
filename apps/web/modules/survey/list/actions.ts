@@ -29,7 +29,7 @@ const ZGetSurveyAction = z.object({
 });
 
 export const getSurveyAction = authenticatedActionClient
-  .schema(ZGetSurveyAction)
+  .inputSchema(ZGetSurveyAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -56,7 +56,7 @@ const ZCopySurveyToOtherEnvironmentAction = z.object({
 });
 
 export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
-  .schema(ZCopySurveyToOtherEnvironmentAction)
+  .inputSchema(ZCopySurveyToOtherEnvironmentAction)
   .action(
     withAuditLogging(
       "copiedToOtherEnvironment",
@@ -145,7 +145,7 @@ const ZGetProjectsByEnvironmentIdAction = z.object({
 });
 
 export const getProjectsByEnvironmentIdAction = authenticatedActionClient
-  .schema(ZGetProjectsByEnvironmentIdAction)
+  .inputSchema(ZGetProjectsByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
@@ -171,7 +171,7 @@ const ZDeleteSurveyAction = z.object({
   surveyId: z.cuid2(),
 });
 
-export const deleteSurveyAction = authenticatedActionClient.schema(ZDeleteSurveyAction).action(
+export const deleteSurveyAction = authenticatedActionClient.inputSchema(ZDeleteSurveyAction).action(
   withAuditLogging(
     "deleted",
     "survey",
@@ -207,7 +207,7 @@ const ZGenerateSingleUseIdAction = z.object({
 });
 
 export const generateSingleUseIdsAction = authenticatedActionClient
-  .schema(ZGenerateSingleUseIdAction)
+  .inputSchema(ZGenerateSingleUseIdAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -236,7 +236,7 @@ const ZGetSurveysAction = z.object({
 });
 
 export const getSurveysAction = authenticatedActionClient
-  .schema(ZGetSurveysAction)
+  .inputSchema(ZGetSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

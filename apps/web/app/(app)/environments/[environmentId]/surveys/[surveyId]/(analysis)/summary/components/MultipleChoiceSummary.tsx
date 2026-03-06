@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyElementSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys/types";
-import { getChoiceIdByValue } from "@/lib/response/client-utils";
+import { getChoiceIdByValue } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";

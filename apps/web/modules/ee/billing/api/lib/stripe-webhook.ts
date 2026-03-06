@@ -13,7 +13,8 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   try {
     stripe = getStripeClient();
     webhookSecret = getStripeWebhookSecret();
-  } catch (err) {
+  } catch (err: unknown) {
+    logger.error(err, "Error getting Stripe client or webhook secret");
     logger.warn("Stripe webhook skipped: Stripe is not configured");
     return { status: 503, message: "Stripe webhook is not configured" };
   }

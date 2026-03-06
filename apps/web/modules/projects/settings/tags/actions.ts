@@ -20,7 +20,7 @@ const ZDeleteTagAction = z.object({
   tagId: ZId,
 });
 
-export const deleteTagAction = authenticatedActionClient.schema(ZDeleteTagAction).action(
+export const deleteTagAction = authenticatedActionClient.inputSchema(ZDeleteTagAction).action(
   withAuditLogging(
     "deleted",
     "tag",
@@ -61,7 +61,7 @@ const ZUpdateTagNameAction = z.object({
   name: z.string(),
 });
 
-export const updateTagNameAction = authenticatedActionClient.schema(ZUpdateTagNameAction).action(
+export const updateTagNameAction = authenticatedActionClient.inputSchema(ZUpdateTagNameAction).action(
   withAuditLogging(
     "updated",
     "tag",
@@ -104,7 +104,7 @@ const ZMergeTagsAction = z.object({
   newTagId: ZId,
 });
 
-export const mergeTagsAction = authenticatedActionClient.schema(ZMergeTagsAction).action(
+export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsAction).action(
   withAuditLogging(
     "merged",
     "tag",

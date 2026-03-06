@@ -16,7 +16,7 @@ const ZCreateEmailTokenAction = z.object({
 });
 
 export const createEmailTokenAction = actionClient
-  .schema(ZCreateEmailTokenAction)
+  .inputSchema(ZCreateEmailTokenAction)
   .action(async ({ parsedInput }) => {
     const user = await getUserByEmail(parsedInput.email);
     if (!user) {

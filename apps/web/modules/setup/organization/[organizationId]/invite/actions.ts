@@ -19,7 +19,7 @@ const ZInviteOrganizationMemberAction = z.object({
 });
 
 export const inviteOrganizationMemberAction = authenticatedActionClient
-  .schema(ZInviteOrganizationMemberAction)
+  .inputSchema(ZInviteOrganizationMemberAction)
   .action(
     withAuditLogging(
       "created",

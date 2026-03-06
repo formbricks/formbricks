@@ -8,7 +8,7 @@ import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUser, updateUser } from "@/modules/auth/lib/user";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
-export const verifyEmailChangeAction = actionClient.schema(z.object({ token: z.string() })).action(
+export const verifyEmailChangeAction = actionClient.inputSchema(z.object({ token: z.string() })).action(
   withAuditLogging(
     "updated",
     "user",

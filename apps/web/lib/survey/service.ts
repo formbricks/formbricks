@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -106,14 +106,14 @@ export const selectSurvey = {
   slug: true,
 } satisfies Prisma.SurveySelect;
 
-const getTriggerIds = (triggers: unknown): string[] | null => {
+const getTriggerIds = (triggers: TSurvey["triggers"]): string[] | null => {
   if (!triggers) return null;
   if (!Array.isArray(triggers)) {
     throw new InvalidInputError("Invalid trigger id");
   }
 
   return triggers.map((trigger) => {
-    const actionClassId = (trigger as { actionClass?: { id?: unknown } })?.actionClass?.id;
+    const actionClassId = trigger?.actionClass?.id;
     if (typeof actionClassId !== "string") {
       throw new InvalidInputError("Invalid trigger id");
     }
@@ -121,7 +121,7 @@ const getTriggerIds = (triggers: unknown): string[] | null => {
   });
 };
 
-export const checkTriggersValidity = (triggers: unknown, actionClasses: Array<{ id: string }>) => {
+export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
   const triggerIds = getTriggerIds(triggers);
   if (!triggerIds) return;
 
@@ -138,9 +138,9 @@ export const checkTriggersValidity = (triggers: unknown, actionClasses: Array<{ 
 };
 
 export const handleTriggerUpdates = (
-  updatedTriggers: unknown,
-  currentTriggers: unknown,
-  actionClasses: Array<{ id: string }>
+  updatedTriggers: TSurvey["triggers"],
+  currentTriggers: TSurvey["triggers"],
+  actionClasses: ActionClass[]
 ) => {
   const updatedTriggerIds = getTriggerIds(updatedTriggers);
   if (!updatedTriggerIds) return {};
@@ -602,19 +602,13 @@ export const createSurvey = async (
   );
 
   try {
-    const { createdBy, ...restSurveyBody } = parsedSurveyBody;
-
-    // empty languages array
-    if (!restSurveyBody.languages?.length) {
-      delete restSurveyBody.languages;
-    }
-
+    const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
     const actionClasses = await getActionClasses(parsedEnvironmentId);
 
-    // @ts-expect-error
     let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...restSurveyBody,
-      // TODO: Create with attributeFilters
+      // @ts-expect-error - languages would be undefined in case of empty array
+      languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers
         ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
@@ -785,15 +779,13 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       };
     }
 
-    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
-    // @ts-expect-error
-    const modifiedSurvey: TSurvey = {
-      ...prismaSurvey, // Properties from prismaSurvey
+    const modifiedSurvey = {
+      ...prismaSurvey,
       segment: surveySegment,
       customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
     };
 
-    return modifiedSurvey;
+    return modifiedSurvey as TSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

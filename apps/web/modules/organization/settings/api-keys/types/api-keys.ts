@@ -1,18 +1,12 @@
-import { type ApiKey, type ApiKeyPermission } from "@prisma/client";
+import { type ApiKey, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
 import { ZEnvironment } from "@formbricks/types/environment";
 import { ZProject } from "@formbricks/types/project";
 
-export const API_KEY_PERMISSION_VALUES = [
-  "read",
-  "write",
-  "manage",
-] as const satisfies readonly ApiKeyPermission[];
-
 export const ZApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
-  permission: z.enum(API_KEY_PERMISSION_VALUES),
+  permission: z.enum(ApiKeyPermission),
 });
 
 export const ZApiKeyCreateInput = z.object({
@@ -43,7 +37,7 @@ export type TOrganizationProject = z.infer<typeof OrganizationProject>;
 
 export const TApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
-  permission: z.enum(API_KEY_PERMISSION_VALUES),
+  permission: z.enum(ApiKeyPermission),
 });
 
 export type TApiKeyEnvironmentPermission = z.infer<typeof TApiKeyEnvironmentPermission>;
@@ -64,7 +58,7 @@ const ZApiKeyEnvironmentWithProject = z.object({
   projectId: z.string(),
   projectName: z.string(),
   environmentType: z.string(),
-  permission: z.enum(API_KEY_PERMISSION_VALUES),
+  permission: z.enum(ApiKeyPermission),
   environment: ZEnvironment.extend({
     project: ZProject.pick({ id: true, name: true }),
   }),
@@ -88,4 +82,3 @@ export const ZApiKeyWithEnvironmentAndProject = ZApiKey.extend({
 });
 
 export type TApiKeyWithEnvironmentAndProject = z.infer<typeof ZApiKeyWithEnvironmentAndProject>;
-export type TApiKeyPermission = (typeof API_KEY_PERMISSION_VALUES)[number];

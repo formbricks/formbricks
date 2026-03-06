@@ -16,7 +16,7 @@ const ZResetPasswordAction = z.object({
   password: ZUserPassword,
 });
 
-export const resetPasswordAction = actionClient.schema(ZResetPasswordAction).action(
+export const resetPasswordAction = actionClient.inputSchema(ZResetPasswordAction).action(
   withAuditLogging(
     "updated",
     "user",

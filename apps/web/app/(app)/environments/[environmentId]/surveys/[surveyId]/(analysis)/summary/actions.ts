@@ -22,7 +22,7 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 });
 
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
-  .schema(ZSendEmbedSurveyPreviewEmailAction)
+  .inputSchema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
@@ -69,7 +69,7 @@ const ZResetSurveyAction = z.object({
   projectId: ZId,
 });
 
-export const resetSurveyAction = authenticatedActionClient.schema(ZResetSurveyAction).action(
+export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSurveyAction).action(
   withAuditLogging(
     "updated",
     "survey",
@@ -123,7 +123,7 @@ const ZGetEmailHtmlAction = z.object({
 });
 
 export const getEmailHtmlAction = authenticatedActionClient
-  .schema(ZGetEmailHtmlAction)
+  .inputSchema(ZGetEmailHtmlAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -152,7 +152,7 @@ const ZGeneratePersonalLinksAction = z.object({
 });
 
 export const generatePersonalLinksAction = authenticatedActionClient
-  .schema(ZGeneratePersonalLinksAction)
+  .inputSchema(ZGeneratePersonalLinksAction)
   .action(async ({ ctx, parsedInput }) => {
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
@@ -231,7 +231,7 @@ const ZUpdateSingleUseLinksAction = z.object({
 });
 
 export const updateSingleUseLinksAction = authenticatedActionClient
-  .schema(ZUpdateSingleUseLinksAction)
+  .inputSchema(ZUpdateSingleUseLinksAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

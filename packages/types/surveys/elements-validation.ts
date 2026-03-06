@@ -1,4 +1,4 @@
-import type { IssueData } from "zod";
+import { z } from "zod";
 import type { TI18nString } from "../i18n";
 import type { TSurveyLanguage } from "./types";
 import { getTextContent } from "./validation";
@@ -51,7 +51,7 @@ export const validateElementLabels = (
   blockIndex: number,
   elementIndex: number,
   skipArticle = false
-): IssueData | null => {
+): z.core.$ZodIssue | null => {
   // fieldLabel should contain all the keys present in languages
   for (const language of languages) {
     if (

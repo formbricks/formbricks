@@ -15,7 +15,7 @@ const ZUpdateSurveySlugAction = z.object({
 });
 
 export const updateSurveySlugAction = authenticatedActionClient
-  .schema(ZUpdateSurveySlugAction)
+  .inputSchema(ZUpdateSurveySlugAction)
   .action(async ({ ctx, parsedInput }) => {
     if (IS_FORMBRICKS_CLOUD) {
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");
@@ -43,7 +43,7 @@ const ZRemoveSurveySlugAction = z.object({
 });
 
 export const removeSurveySlugAction = authenticatedActionClient
-  .schema(ZRemoveSurveySlugAction)
+  .inputSchema(ZRemoveSurveySlugAction)
   .action(async ({ ctx, parsedInput }) => {
     if (IS_FORMBRICKS_CLOUD) {
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");

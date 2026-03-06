@@ -15,7 +15,7 @@ import { ZValidationRules } from "./validation-rules";
  * However, we re-export it here so that most consumers (who also need the Zod schemas)
  * can import everything from a single file (`elements.ts`).
  */
-export { TSurveyElementTypeEnum };
+export { TSurveyElementTypeEnum } from "./constants";
 
 // Element ID validation (same rules as questions - USER EDITABLE)
 export const ZSurveyElementId = z.string().superRefine((id, ctx) => {

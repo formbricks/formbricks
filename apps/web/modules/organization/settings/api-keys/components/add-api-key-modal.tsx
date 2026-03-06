@@ -1,16 +1,13 @@
 "use client";
 
+import { ApiKeyPermission } from "@prisma/client";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
-import {
-  API_KEY_PERMISSION_VALUES,
-  type TApiKeyPermission,
-  TOrganizationProject,
-} from "@/modules/organization/settings/api-keys/types/api-keys";
+import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -36,7 +33,7 @@ interface AddApiKeyModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: {
     label: string;
-    environmentPermissions: Array<{ environmentId: string; permission: TApiKeyPermission }>;
+    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
   projects: TOrganizationProject[];
@@ -51,12 +48,12 @@ interface ProjectOption {
 interface PermissionRecord {
   projectId: string;
   environmentId: string;
-  permission: TApiKeyPermission;
+  permission: ApiKeyPermission;
   projectName: string;
   environmentType: string;
 }
 
-const permissionOptions = API_KEY_PERMISSION_VALUES;
+const permissionOptions = [ApiKeyPermission.read, ApiKeyPermission.write, ApiKeyPermission.manage];
 
 export const AddApiKeyModal = ({
   open,
@@ -84,7 +81,7 @@ export const AddApiKeyModal = ({
         "permission-0": {
           projectId: projects[0].id,
           environmentId: projects[0].environments[0].id,
-          permission: API_KEY_PERMISSION_VALUES[0],
+          permission: ApiKeyPermission.read,
           projectName: projects[0].name,
           environmentType: projects[0].environments[0].type,
         },

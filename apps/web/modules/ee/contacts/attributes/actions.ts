@@ -30,7 +30,7 @@ const ZCreateContactAttributeKeyAction = z.object({
 
 type TCreateContactAttributeKeyActionInput = z.infer<typeof ZCreateContactAttributeKeyAction>;
 export const createContactAttributeKeyAction = authenticatedActionClient
-  .schema(ZCreateContactAttributeKeyAction)
+  .inputSchema(ZCreateContactAttributeKeyAction)
   .action(
     withAuditLogging(
       "created",
@@ -85,7 +85,7 @@ const ZUpdateContactAttributeKeyAction = z.object({
 });
 type TUpdateContactAttributeKeyActionInput = z.infer<typeof ZUpdateContactAttributeKeyAction>;
 export const updateContactAttributeKeyAction = authenticatedActionClient
-  .schema(ZUpdateContactAttributeKeyAction)
+  .inputSchema(ZUpdateContactAttributeKeyAction)
   .action(
     withAuditLogging(
       "updated",
@@ -144,7 +144,7 @@ const ZDeleteContactAttributeKeyAction = z.object({
 type TDeleteContactAttributeKeyActionInput = z.infer<typeof ZDeleteContactAttributeKeyAction>;
 
 export const deleteContactAttributeKeyAction = authenticatedActionClient
-  .schema(ZDeleteContactAttributeKeyAction)
+  .inputSchema(ZDeleteContactAttributeKeyAction)
   .action(
     withAuditLogging(
       "deleted",

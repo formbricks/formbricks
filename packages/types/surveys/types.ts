@@ -1,4 +1,4 @@
-import { type ZodIssue, z } from "zod";
+import { z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
@@ -268,7 +268,7 @@ export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 export const ZSurveyRecaptcha = z
   .object({
     enabled: z.boolean(),
-    threshold: z.number().min(0.1).max(0.9).step(0.1),
+    threshold: z.number().min(0.1).max(0.9).multipleOf(0.1),
   })
   .nullable();
 
@@ -946,7 +946,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
     });
   }
 
-  let multiLangIssue: z.IssueData | null;
+  let multiLangIssue: z.core.$ZodRawIssue | null;
 
   // welcome card validations
   if (welcomeCard.enabled) {
@@ -2097,8 +2097,8 @@ const validateConditions = (
   questionIndex: number,
   logicIndex: number,
   conditions: TConditionGroupDeprecated
-): z.ZodIssue[] => {
-  const issues: z.ZodIssue[] = [];
+): z.core.$ZodIssue[] => {
+  const issues: z.core.$ZodIssue[] = [];
 
   const validateSingleCondition = (condition: TSingleConditionDeprecated): void => {
     const { leftOperand, operator, rightOperand } = condition;
@@ -2704,12 +2704,12 @@ const validateActions = (
   questionIndex: number,
   logicIndex: number,
   actions: TSurveyLogicAction[]
-): z.ZodIssue[] => {
+): z.core.$ZodIssue[] => {
   const previousQuestions = survey.questions.filter((_, idx) => idx <= questionIndex);
   const nextQuestions = survey.questions.filter((_, idx) => idx >= questionIndex);
   const nextQuestionsIds = nextQuestions.map((q) => q.id);
 
-  const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
+  const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
       const variable = survey.variables.find((v) => v.id === action.variableId);
 
@@ -2724,7 +2724,7 @@ const validateActions = (
       if (action.value.type === "variable") {
         const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
 
-        if (!selectedVariable || selectedVariable.type !== variable.type) {
+        if (selectedVariable?.type !== variable.type) {
           return {
             code: "custom",
             message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -2836,11 +2836,11 @@ const validateActions = (
     });
   }
 
-  const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue): issue is z.core.$ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
-const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue[] | undefined => {
+const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.core.$ZodIssue[] | undefined => {
   const question = survey.questions[questionIdx];
 
   if (!question.logicFallback) return;
@@ -2890,7 +2890,7 @@ const validateLogic = (
   survey: TSurvey,
   questionIndex: number,
   logic: TSurveyLogicDeprecated[]
-): z.ZodIssue[] => {
+): z.core.$ZodIssue[] => {
   const logicFallbackIssue = validateLogicFallback(survey, questionIndex);
 
   const logicIssues = logic.map((logicItem, logicIndex) => {
@@ -3059,8 +3059,8 @@ const validateBlockConditions = (
   logicIndex: number,
   conditions: TConditionGroup,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
-): z.ZodIssue[] => {
-  const issues: z.ZodIssue[] = [];
+): z.core.$ZodIssue[] => {
+  const issues: z.core.$ZodIssue[] = [];
 
   const validateSingleCondition = (condition: TSingleCondition): void => {
     const { leftOperand, operator, rightOperand } = condition;
@@ -3519,8 +3519,8 @@ const validateBlockActions = (
   actions: TSurveyBlockLogicAction[],
   currentBlock: TSurveyBlock,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
-): z.ZodIssue[] => {
-  const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
+): z.core.$ZodIssue[] => {
+  const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
       const variable = survey.variables.find((v) => v.id === action.variableId);
 
@@ -3535,7 +3535,7 @@ const validateBlockActions = (
       if (action.value.type === "variable") {
         const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
 
-        if (!selectedVariable || selectedVariable.type !== variable.type) {
+        if (selectedVariable?.type !== variable.type) {
           return {
             code: "custom",
             message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
@@ -3665,7 +3665,7 @@ const validateBlockActions = (
     });
   }
 
-  const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue): issue is z.core.$ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
@@ -3673,7 +3673,7 @@ const validateBlockLogicFallback = (
   survey: TSurvey,
   blockIndex: number,
   block: TSurveyBlock
-): z.ZodIssue[] | undefined => {
+): z.core.$ZodIssue[] | undefined => {
   if (!block.logicFallback) return;
 
   if (!block.logic?.length && block.logicFallback) {
@@ -3722,7 +3722,7 @@ const validateBlockLogic = (
   blockIndex: number,
   block: TSurveyBlock,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
-): z.ZodIssue[] => {
+): z.core.$ZodIssue[] => {
   const logicFallbackIssue = validateBlockLogicFallback(survey, blockIndex, block);
 
   if (!block.logic || block.logic.length === 0) {
@@ -3871,7 +3871,7 @@ export interface TSurveyDates {
   updatedAt: TSurvey["updatedAt"];
 }
 
-export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
+export type TSurveyCreateInput = z.infer<typeof ZSurveyCreateInput>;
 
 export type TSurveyEditorTabs = "elements" | "settings" | "styling" | "followUps";
 

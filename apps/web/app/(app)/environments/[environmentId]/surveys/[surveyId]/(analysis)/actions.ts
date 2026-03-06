@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { parse } from "zod/v4/core";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { getDisplaysBySurveyIdWithContact } from "@/lib/display/service";
@@ -23,7 +24,7 @@ const ZGetResponsesAction = z.object({
 });
 
 export const getResponsesAction = authenticatedActionClient
-  .schema(ZGetResponsesAction)
+  .inputSchema(ZGetResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -57,7 +58,7 @@ const ZGetSurveySummaryAction = z.object({
 });
 
 export const getSurveySummaryAction = authenticatedActionClient
-  .schema(ZGetSurveySummaryAction)
+  .inputSchema(ZGetSurveySummaryAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -85,7 +86,7 @@ const ZGetResponseCountAction = z.object({
 });
 
 export const getResponseCountAction = authenticatedActionClient
-  .schema(ZGetResponseCountAction)
+  .inputSchema(ZGetResponseCountAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -115,7 +116,7 @@ const ZGetDisplaysWithContactAction = z.object({
 });
 
 export const getDisplaysWithContactAction = authenticatedActionClient
-  .schema(ZGetDisplaysWithContactAction)
+  .inputSchema(ZGetDisplaysWithContactAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

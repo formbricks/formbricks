@@ -39,7 +39,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const createSurveyAction = authenticatedActionClient.schema(ZCreateSurveyAction).action(
+export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateSurveyAction).action(
   withAuditLogging(
     "created",
     "survey",

@@ -1,5 +1,5 @@
 import { parse } from "node-html-parser";
-import type { IssueData } from "zod";
+import { z } from "zod";
 import type { TI18nString } from "../i18n";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
@@ -118,7 +118,7 @@ export const validateQuestionLabels = (
   languages: TSurveyLanguage[],
   questionIndex: number,
   skipArticle = false
-): IssueData | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
@@ -168,7 +168,7 @@ export const validateCardFieldsForAllLanguages = (
   cardType: "welcome" | "end",
   endingCardIndex?: number,
   skipArticle = false
-): IssueData | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
