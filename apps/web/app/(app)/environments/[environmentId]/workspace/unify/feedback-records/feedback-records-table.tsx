@@ -9,6 +9,7 @@ import {
   TypeIcon,
 } from "lucide-react";
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -102,8 +103,32 @@ export function FeedbackRecordsTable({
     fetchRecords(records.length, true);
   };
 
-  const handleRefresh = () => {
-    fetchRecords(0, false);
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setError(null);
+
+    const toastId = toast.loading(t("environments.unify.refreshing_feedback_records"));
+
+    const result = await listFeedbackRecordsAction({
+      environmentId,
+      limit: RECORDS_PER_PAGE,
+      offset: 0,
+    });
+
+    if (!result?.data) {
+      toast.error(
+        getFormattedErrorMessage(result) ?? t("environments.unify.failed_to_load_feedback_records"),
+        { id: toastId }
+      );
+      setIsRefreshing(false);
+      return;
+    }
+
+    setRecords(result.data.data);
+    setTotal(result.data.total);
+    setIsRefreshing(false);
+    toast.success(t("environments.unify.feedback_records_refreshed"), { id: toastId });
   };
 
   const hasMore = records.length < total;
@@ -122,38 +147,26 @@ export function FeedbackRecordsTable({
     );
   }
 
-  if (records.length === 0 && !isRefreshing) {
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex h-48 flex-col items-center justify-center gap-2 px-4 text-center">
-          <MessageSquareTextIcon className="h-8 w-8 text-slate-400" />
-          <p className="text-sm text-slate-500">{t("environments.unify.no_feedback_records")}</p>
-        </div>
-      </div>
-    );
-  }
+  const isEmpty = records.length === 0 && !isRefreshing;
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          {t("environments.unify.showing_count", { count: records.length, total })}
-        </p>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleRefresh}
-          loading={isRefreshing}
-          className="gap-1.5">
-          <RefreshCwIcon className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      {!isEmpty && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-500">
+            {t("environments.unify.showing_count", { count: records.length, total })}
+          </p>
+          <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+            <RefreshCwIcon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
+              <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
                 <th className="whitespace-nowrap px-4 py-3">{t("environments.unify.collected_at")}</th>
                 <th className="whitespace-nowrap px-4 py-3">{t("environments.unify.source_type")}</th>
                 <th className="whitespace-nowrap px-4 py-3">{t("environments.unify.source_name")}</th>
@@ -163,11 +176,23 @@ export function FeedbackRecordsTable({
                 <th className="whitespace-nowrap px-4 py-3">{t("environments.unify.user_identifier")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {records.map((record) => (
-                <FeedbackRecordRow key={record.id} record={record} locale={i18n.language} />
-              ))}
-            </tbody>
+            {isEmpty ? (
+              <tbody>
+                <tr>
+                  <td colSpan={7}>
+                    <div className="flex h-32 items-center justify-center">
+                      <p className="text-sm text-slate-500">{t("environments.unify.no_feedback_records")}</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            ) : (
+              <tbody className="divide-y divide-slate-100">
+                {records.map((record) => (
+                  <FeedbackRecordRow key={record.id} record={record} locale={i18n.language} />
+                ))}
+              </tbody>
+            )}
           </table>
         </div>
       </div>
