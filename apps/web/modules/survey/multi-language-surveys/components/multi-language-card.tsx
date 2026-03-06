@@ -17,7 +17,6 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { DefaultLanguageSelect } from "./default-language-select";
 import { SecondaryLanguageSelect } from "./secondary-language-select";
 
@@ -27,8 +26,6 @@ interface MultiLanguageCardProps {
   setLocalSurvey: (survey: TSurvey) => void;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
-  isMultiLanguageAllowed?: boolean;
-  isFormbricksCloud: boolean;
   setSelectedLanguageCode: (language: string) => void;
   locale: TUserLocale;
 }
@@ -48,8 +45,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   setActiveElementId,
   setLocalSurvey,
   projectLanguages,
-  isMultiLanguageAllowed,
-  isFormbricksCloud,
   setSelectedLanguageCode,
   locale,
 }) => {
@@ -215,7 +210,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
               <Switch
                 checked={isMultiLanguageActivated}
-                disabled={!isMultiLanguageAllowed || projectLanguages.length === 0}
+                disabled={projectLanguages.length === 0}
                 id="multi-lang-toggle"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -227,88 +222,65 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <div className="space-y-6 pt-3">
-            {!isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-              <UpgradePrompt
-                title={t("environments.surveys.edit.upgrade_notice_title")}
-                description={t("environments.surveys.edit.upgrade_notice_description")}
-                buttons={[
-                  {
-                    text: isFormbricksCloud
-                      ? t("common.start_free_trial")
-                      : t("common.request_trial_license"),
-                    href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
-                      : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
-                  },
-                  {
-                    text: t("common.learn_more"),
-                    href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
-                      : "https://formbricks.com/learn-more-self-hosting-license",
-                  },
-                ]}
-              />
-            ) : (
-              <>
-                {projectLanguages.length === 0 && (
-                  <div className="mb-4 text-sm italic text-slate-500">
-                    {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
-                  </div>
-                )}
-                {projectLanguages.length > 0 && (
-                  <div className="space-y-6">
-                    {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-                      <div className="text-sm italic text-slate-500">
-                        {t("environments.surveys.edit.switch_multi_language_on_to_get_started")}
-                      </div>
-                    ) : null}
+            <>
+              {projectLanguages.length === 0 && (
+                <div className="mb-4 text-sm italic text-slate-500">
+                  {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
+                </div>
+              )}
+              {projectLanguages.length > 0 && (
+                <div className="space-y-6">
+                  {!isMultiLanguageActivated ? (
+                    <div className="text-sm italic text-slate-500">
+                      {t("environments.surveys.edit.switch_multi_language_on_to_get_started")}
+                    </div>
+                  ) : null}
 
-                    {isMultiLanguageActivated ? (
-                      <div className="space-y-6">
-                        <DefaultLanguageSelect
+                  {isMultiLanguageActivated ? (
+                    <div className="space-y-6">
+                      <DefaultLanguageSelect
+                        defaultLanguage={defaultLanguage}
+                        handleDefaultLanguageChange={handleDefaultLanguageChange}
+                        projectLanguages={projectLanguages}
+                        setConfirmationModalInfo={setConfirmationModalInfo}
+                        locale={locale}
+                      />
+                      {defaultLanguage && projectLanguages.length > 1 ? (
+                        <SecondaryLanguageSelect
                           defaultLanguage={defaultLanguage}
-                          handleDefaultLanguageChange={handleDefaultLanguageChange}
+                          localSurvey={localSurvey}
                           projectLanguages={projectLanguages}
-                          setConfirmationModalInfo={setConfirmationModalInfo}
+                          setActiveElementId={setActiveElementId}
+                          setSelectedLanguageCode={setSelectedLanguageCode}
+                          updateSurveyLanguages={updateSurveyLanguages}
                           locale={locale}
                         />
-                        {defaultLanguage && projectLanguages.length > 1 ? (
-                          <SecondaryLanguageSelect
-                            defaultLanguage={defaultLanguage}
-                            localSurvey={localSurvey}
-                            projectLanguages={projectLanguages}
-                            setActiveElementId={setActiveElementId}
-                            setSelectedLanguageCode={setSelectedLanguageCode}
-                            updateSurveyLanguages={updateSurveyLanguages}
-                            locale={locale}
-                          />
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                )}
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
-                <Button asChild size="sm" variant="secondary">
-                  <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
-                    {t("environments.surveys.edit.manage_languages")}
-                    <ArrowUpRight />
-                  </Link>
-                </Button>
-                {isMultiLanguageActivated && (
-                  <AdvancedOptionToggle
-                    customContainerClass="px-0 pt-0"
-                    htmlId="languageSwitch"
-                    disabled={enabledLanguages.length <= 1}
-                    isChecked={!!localSurvey.showLanguageSwitch}
-                    onToggle={handleLanguageSwitchToggle}
-                    title={t("environments.surveys.edit.show_language_switch")}
-                    description={t(
-                      "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
-                    )}
-                    childBorder={true}></AdvancedOptionToggle>
-                )}
-              </>
-            )}
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
+                  {t("environments.surveys.edit.manage_languages")}
+                  <ArrowUpRight />
+                </Link>
+              </Button>
+              {isMultiLanguageActivated && (
+                <AdvancedOptionToggle
+                  customContainerClass="px-0 pt-0"
+                  htmlId="languageSwitch"
+                  disabled={enabledLanguages.length <= 1}
+                  isChecked={!!localSurvey.showLanguageSwitch}
+                  onToggle={handleLanguageSwitchToggle}
+                  title={t("environments.surveys.edit.show_language_switch")}
+                  description={t(
+                    "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
+                  )}
+                  childBorder={true}></AdvancedOptionToggle>
+              )}
+            </>
 
             <ConfirmationModal
               buttonText={confirmationModalInfo.buttonText}
