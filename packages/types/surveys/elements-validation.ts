@@ -51,7 +51,7 @@ export const validateElementLabels = (
   blockIndex: number,
   elementIndex: number,
   skipArticle = false
-): z.core.$ZodIssue | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   for (const language of languages) {
     if (

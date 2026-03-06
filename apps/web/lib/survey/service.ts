@@ -610,7 +610,8 @@ export const createSurvey = async (
       // @ts-expect-error - languages would be undefined in case of empty array
       languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers
-        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
+        ? // @ts-expect-error - triggers' createdAt and updatedAt are actually dates
+          handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };

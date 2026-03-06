@@ -3871,7 +3871,7 @@ export interface TSurveyDates {
   updatedAt: TSurvey["updatedAt"];
 }
 
-export type TSurveyCreateInput = z.infer<typeof ZSurveyCreateInput>;
+export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
 export type TSurveyEditorTabs = "elements" | "settings" | "styling" | "followUps";
 
