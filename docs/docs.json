@@ -99,7 +99,7 @@
                       "xm-and-surveys/surveys/link-surveys/personal-links",
                       "xm-and-surveys/surveys/link-surveys/single-use-links",
                       "xm-and-surveys/surveys/link-surveys/source-tracking",
-                      "xm-and-surveys/surveys/link-surveys/start-at-question",
+                      "xm-and-surveys/surveys/link-surveys/start-at-block",
                       "xm-and-surveys/surveys/link-surveys/verify-email-before-survey",
                       "xm-and-surveys/surveys/link-surveys/market-research-panel",
                       "xm-and-surveys/surveys/link-surveys/pin-protected-surveys",
@@ -516,8 +516,12 @@
       "source": "/docs/link-surveys/global/schedule-start-end-dates"
     },
     {
-      "destination": "/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
+      "destination": "/docs/xm-and-surveys/surveys/link-surveys/start-at-block",
       "source": "/docs/link-surveys/start-at-question"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/surveys/link-surveys/start-at-block",
+      "source": "/docs/xm-and-surveys/surveys/link-surveys/start-at-question"
     },
     {
       "destination": "/docs/xm-and-surveys/surveys/general-features/metadata",

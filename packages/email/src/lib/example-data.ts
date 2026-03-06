@@ -106,7 +106,6 @@ export const exampleData = {
         url: "https://example.com",
       },
       tags: [],
-      notes: [],
       ttc: {},
       singleUseId: null,
       language: "default",

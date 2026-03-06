@@ -110,7 +110,7 @@ export const FollowUpItem = ({
     const newFollowUp = {
       ...followUp,
       id: createId(),
-      name: `${followUp.name} (copy)`,
+      name: `${followUp.name} ${t("common.duplicate_copy")}`,
     };
 
     setLocalSurvey((prev) => ({
@@ -155,7 +155,7 @@ export const FollowUpItem = ({
           </div>
         </button>
 
-        <div className="absolute top-4 right-4 flex items-center">
+        <div className="absolute right-4 top-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"

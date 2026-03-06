@@ -9,7 +9,12 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { STYLE_DEFAULTS, deriveNewFieldsFromLegacy, getSuggestedColors } from "@/lib/styling/constants";
+import {
+  COLOR_DEFAULTS,
+  STYLE_DEFAULTS,
+  deriveNewFieldsFromLegacy,
+  getSuggestedColors,
+} from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -92,7 +97,8 @@ export const StylingView = ({
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const handleSuggestColors = () => {
-    const currentBrandColor = form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light;
+    const currentBrandColor =
+      form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
     const suggested = getSuggestedColors(currentBrandColor);
 
     for (const [key, value] of Object.entries(suggested)) {
@@ -235,7 +241,7 @@ export const StylingView = ({
                     </FormDescription>
                     <FormControl>
                       <ColorPicker
-                        color={field.value ?? STYLE_DEFAULTS.brandColor?.light}
+                        color={field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
                         onChange={(color) => field.onChange(color)}
                         containerClass="w-full"
                       />
@@ -245,8 +251,8 @@ export const StylingView = ({
               />
               <Button
                 type="button"
-                variant="secondary"
-                className="h-10 w-full justify-center gap-2"
+                variant="default"
+                className="h-10 justify-center gap-1"
                 onClick={() => setConfirmSuggestColorsOpen(true)}>
                 <SparklesIcon className="mr-2 h-4 w-4" />
                 {t("environments.workspace.look.suggest_colors")}

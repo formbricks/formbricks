@@ -30,8 +30,7 @@ export const CalSummary = ({ elementSummary, survey }: CalSummaryProps) => {
               </div>
             </div>
             <p className="flex w-32 items-end justify-end text-slate-600">
-              {elementSummary.booked.count}{" "}
-              {elementSummary.booked.count === 1 ? t("common.response") : t("common.responses")}
+              {t("common.count_responses", { count: elementSummary.booked.count })}
             </p>
           </div>
           <ProgressBar barColor="bg-brand-dark" progress={elementSummary.booked.percentage / 100} />
@@ -47,8 +46,7 @@ export const CalSummary = ({ elementSummary, survey }: CalSummaryProps) => {
               </div>
             </div>
             <p className="flex w-32 items-end justify-end text-slate-600">
-              {elementSummary.skipped.count}{" "}
-              {elementSummary.skipped.count === 1 ? t("common.response") : t("common.responses")}
+              {t("common.count_responses", { count: elementSummary.skipped.count })}
             </p>
           </div>
           <ProgressBar barColor="bg-brand-dark" progress={elementSummary.skipped.percentage / 100} />

@@ -184,7 +184,7 @@ export const LoginForm = ({
                             value={field.value}
                             onChange={(email) => field.onChange(email)}
                             placeholder="work@email.com"
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                           />
                           {error?.message && <FormError className="text-left">{error.message}</FormError>}
                         </div>
@@ -207,7 +207,7 @@ export const LoginForm = ({
                             aria-label="password"
                             aria-required="true"
                             required
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 pr-8 shadow-sm sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 pr-8 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />
@@ -221,7 +221,7 @@ export const LoginForm = ({
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
-                      className="hover:text-brand-dark text-xs text-slate-500">
+                      className="text-xs text-slate-500 hover:text-brand-dark">
                       {t("auth.login.forgot_your_password")}
                     </Link>
                   </div>

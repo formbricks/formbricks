@@ -19,7 +19,7 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
           <TooltipTrigger>
             {status === "inProgress" && (
               <span className="relative flex h-3 w-3">
-                <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-green-500 opacity-75"></span>
                 <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
               </span>
             )}
@@ -45,7 +45,7 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
                 <>
                   <span>{t("common.gathering_responses")}</span>
                   <span className="relative flex h-3 w-3">
-                    <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                    <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-green-500 opacity-75"></span>
                     <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
                   </span>
                 </>
@@ -74,7 +74,7 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
       <span>
         {status === "inProgress" && (
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+            <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-green-500 opacity-75"></span>
             <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
           </span>
         )}
