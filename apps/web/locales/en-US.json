@@ -393,6 +393,7 @@
     "show_response_count": "Show response count",
     "shown": "Shown",
     "size": "Size",
+    "skip": "Skip",
     "skipped": "Skipped",
     "skips": "Skips",
     "some_files_failed_to_upload": "Some files failed to upload",
@@ -462,6 +463,7 @@
     "website_survey": "Website Survey",
     "weeks": "weeks",
     "welcome_card": "Welcome card",
+    "workflows": "Workflows",
     "workspace_configuration": "Workspace Configuration",
     "workspace_created_successfully": "Workspace created successfully",
     "workspace_creation_description": "Organize surveys in workspaces for better access control.",
@@ -3259,5 +3261,18 @@
     "usability_question_9_headline": "I felt confident while using the system.",
     "usability_rating_description": "Measure perceived usability by asking users to rate their experience with your product using a standardized 10-question survey.",
     "usability_score_name": "System Usability Score (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Thank you for sharing your workflow idea with us! We are currently designing this feature and your feedback will help us build exactly what you need.",
+    "coming_soon_title": "We are almost there!",
+    "follow_up_label": "Is there anything else you'd like to add?",
+    "follow_up_placeholder": "What specific tasks would you like to automate? Any tools or integrations you'd want included?",
+    "generate_button": "Generate workflow",
+    "heading": "What workflow do you want to create?",
+    "placeholder": "Describe the workflow you want to generate...",
+    "subheading": "Generate your workflow in seconds.",
+    "submit_button": "Add details",
+    "thank_you_description": "Your input helps us build the Workflows feature you actually need. We'll keep you posted on our progress.",
+    "thank_you_title": "Thank you for your feedback!"
   }
 }

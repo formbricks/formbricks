@@ -393,6 +393,7 @@
     "show_response_count": "回答数を表示",
     "shown": "表示済み",
     "size": "サイズ",
+    "skip": "スキップ",
     "skipped": "スキップ済み",
     "skips": "スキップ数",
     "some_files_failed_to_upload": "一部のファイルのアップロードに失敗しました",
@@ -462,6 +463,7 @@
     "website_survey": "ウェブサイトフォーム",
     "weeks": "週間",
     "welcome_card": "ウェルカムカード",
+    "workflows": "ワークフロー",
     "workspace_configuration": "ワークスペース設定",
     "workspace_created_successfully": "ワークスペースが正常に作成されました",
     "workspace_creation_description": "アクセス制御を改善するために、フォームをワークスペースで整理します。",
@@ -3259,5 +3261,18 @@
     "usability_question_9_headline": "システムを使っている間、自信がありました。",
     "usability_rating_description": "標準化された10の質問アンケートを使用して、製品に対するユーザーの体験を評価し、知覚された使いやすさを測定する。",
     "usability_score_name": "システムユーザビリティスコア（SUS）"
+  },
+  "workflows": {
+    "coming_soon_description": "ワークフローのアイデアを共有していただきありがとうございます！現在この機能を設計中で、あなたのフィードバックは私たちが必要とされる機能を構築するのに役立ちます。",
+    "coming_soon_title": "もうすぐ完成です！",
+    "follow_up_label": "他に追加したいことはありますか？",
+    "follow_up_placeholder": "どのような作業を自動化したいですか？含めたいツールや連携機能はありますか？",
+    "generate_button": "ワークフローを生成",
+    "heading": "どのようなワークフローを作成しますか？",
+    "placeholder": "生成したいワークフローを説明してください...",
+    "subheading": "数秒でワークフローを生成します。",
+    "submit_button": "詳細を追加",
+    "thank_you_description": "あなたの意見は、実際に必要とされるワークフロー機能の構築に役立ちます。進捗状況をお知らせします。",
+    "thank_you_title": "フィードバックありがとうございます！"
   }
 }
