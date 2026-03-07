@@ -53,6 +53,8 @@ interface FileUploadProps {
   videoUrl?: string;
   /** Alt text for the image */
   imageAltText?: string;
+  /** Threading function from the caller */
+  t?: TFunction;
   /** Placeholder text for the file upload */
   placeholderText?: string;
 }
@@ -87,7 +89,7 @@ function UploadedFileItem({
             "bg-background hover:bg-accent",
             disabled && "cursor-not-allowed opacity-50"
           )}
-          aria-label={`Delete ${file.name}`}>
+          aria-label={t("common.delete_filename", { filename: file.name })}>
           <X className="text-foreground h-5" />
         </button>
       </div>
@@ -184,7 +186,7 @@ function UploadArea({
           "hover:cursor-pointer",
           disabled && "cursor-not-allowed opacity-50"
         )}
-        aria-label="Upload files by clicking or dragging them here">
+        aria-label={t("common.upload_input_aria_description")}>
         <Upload className="text-input-text h-6" aria-hidden="true" />
         <span
           className="text-input-text font-input-weight m-2"
@@ -202,7 +204,7 @@ function UploadArea({
           onChange={onFileChange}
           disabled={disabled}
           dir={dir}
-          aria-label="File upload"
+          aria-label={t("templates.file_upload")}
           aria-describedby={`${inputId}-label`}
         />
       </button>
@@ -229,7 +231,8 @@ function FileUpload({
   imageUrl,
   videoUrl,
   imageAltText,
-  placeholderText = "Click or drag to upload files",
+  t = mockT,
+  placeholderText = t("emails.click_or_drag_to_upload_files"),
 }: Readonly<FileUploadProps>): React.JSX.Element {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -306,7 +309,7 @@ function FileUpload({
                 <p
                   className="text-muted-foreground font-medium"
                   style={{ fontSize: "var(--fb-input-font-size)" }}>
-                  Uploading...
+                  {t("common.uploading")}
                 </p>
               </div>
             ) : null}

@@ -226,7 +226,7 @@ export const PreviewSurvey = ({
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
-              Preview
+              {t("common.preview")}
             </p>
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetProgress} />
@@ -310,7 +310,7 @@ export const PreviewSurvey = ({
                       setIsFullScreenPreview(true);
                     }
                   }}
-                  aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
+                  aria-label={isFullScreenPreview ? t("environments.surveys.edit.shrink_preview") : t("environments.surveys.edit.expand_preview")}></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
