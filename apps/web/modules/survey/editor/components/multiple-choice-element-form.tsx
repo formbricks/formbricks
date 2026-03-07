@@ -286,7 +286,7 @@ export const MultipleChoiceElementForm = ({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options*</Label>
+        <Label htmlFor="choices">{t("environments.surveys.edit.options")}*</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="multi-choice-choices"

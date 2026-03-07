@@ -232,9 +232,6 @@ export const BlockCard = ({
     zIndex: isDragging ? 10 : 1,
   };
 
-  const blockElementsCount = block.elements.length;
-  const blockElementsCountText = blockElementsCount === 1 ? "question" : "questions";
-
   let blockSidebarColorClass = "";
   if (isBlockInvalid) {
     blockSidebarColorClass = "bg-red-400";
@@ -282,7 +279,7 @@ export const BlockCard = ({
                   <div>
                     <h4 className="text-sm font-medium text-slate-700">{block.name}</h4>
                     <p className="text-xs text-slate-500">
-                      {blockElementsCount} {blockElementsCountText}
+                      {t("common.count_questions", { count: block.elements.length })}
                     </p>
                   </div>
                 </div>
@@ -342,7 +339,7 @@ export const BlockCard = ({
                               <div className="flex grow flex-col justify-center">
                                 {hasMultipleElements && (
                                   <p className="mb-1 text-xs font-medium text-slate-500">
-                                    Question {elementIndex + 1}
+                                    {t("environments.surveys.edit.question_number", { number: elementIndex + 1 })}
                                   </p>
                                 )}
                                 <h3 className="text-sm font-semibold">
