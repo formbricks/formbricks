@@ -71,10 +71,36 @@ export class CommandQueue {
     }
   }
 
+  public isRunning(): boolean {
+    return this.running;
+  }
+
+  public hasPending(): boolean {
+    return this.queue.length > 0;
+  }
+
+  /**
+   * Resume queue processing if the queue has pending items but is not running.
+   * Call this when external state changes (e.g. setup completion) may unblock
+   * previously paused commands.
+   */
+  public resumeIfPaused(): void {
+    if (!this.running && this.queue.length > 0) {
+      this.commandPromise = new Promise((resolve) => {
+        this.resolvePromise = resolve;
+        void this.run();
+      });
+    }
+  }
+
   private async run(): Promise<void> {
     this.running = true;
 
-    while (this.queue.length > 0) {
+    // Track how many commands in a row have failed the setup check.
+    // When consecutiveFailures >= queue.length, every item is blocked — exit.
+    let consecutiveFailures = 0;
+
+    while (this.queue.length > 0 && consecutiveFailures < this.queue.length) {
       const currentItem = this.queue.shift();
 
       if (!currentItem) continue;
@@ -82,10 +108,17 @@ export class CommandQueue {
       if (currentItem.checkSetup) {
         const setupResult = checkSetup();
         if (!setupResult.ok) {
-          console.warn(`🧱 Formbricks - Setup not complete.`);
+          // Preserve the command — push it to the back so it can be retried
+          // once setup completes via resumeIfPaused().
+          console.warn(`🧱 Formbricks - Setup not complete. Pausing command.`);
+          this.queue.push(currentItem);
+          consecutiveFailures++;
           continue;
         }
       }
+
+      // Command will execute — reset the failure streak.
+      consecutiveFailures = 0;
 
       if (currentItem.type === CommandType.GeneralAction) {
         // first check if there are pending updates in the update queue

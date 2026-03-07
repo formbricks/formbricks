@@ -221,11 +221,12 @@ describe("CommandQueue", () => {
       return Promise.resolve({ ok: true, data: undefined });
     });
 
-    // Setup check will fail for cmd2
+    // Setup check will fail for cmd2 on both attempts (it gets rotated to back of queue)
     vi.mocked(checkSetup)
-      .mockReturnValueOnce({ ok: true, data: undefined }) // for cmd1
-      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // for cmd2
-      .mockReturnValueOnce({ ok: true, data: undefined }); // for cmd3
+      .mockReturnValueOnce({ ok: true, data: undefined }) // cmd1 → ok
+      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }) // cmd2 first attempt → fail
+      .mockReturnValueOnce({ ok: true, data: undefined }) // cmd3 → ok
+      .mockReturnValueOnce({ ok: false, error: { code: "not_setup", message: "Not setup" } }); // cmd2 second attempt (rotated) → still fail
 
     await queue.add(cmd1, CommandType.Setup, true);
     await queue.add(cmd2, CommandType.UserAction, true);
@@ -233,7 +234,7 @@ describe("CommandQueue", () => {
 
     await queue.wait();
 
-    // cmd2 should be skipped due to failed setup check
+    // cmd2 failed setup on both attempts — rotated to back, cycle exited before retry succeeds
     expect(executionOrder).toEqual(["cmd1", "cmd3"]);
     expect(cmd1).toHaveBeenCalled();
     expect(cmd2).not.toHaveBeenCalled();

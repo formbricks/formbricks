@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- required for logging */
+import { CommandQueue } from "@/lib/common/command-queue";
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
@@ -317,6 +317,9 @@ export const setup = async (
   addCleanupEventListeners();
 
   setIsSetup(true);
+  // Explicitly wake the command queue so any commands that were paused waiting
+  // for setup can now execute — without relying on external activity to trigger run().
+  CommandQueue.getInstance().resumeIfPaused();
   logger.debug("Set up complete");
 
   return okVoid();
