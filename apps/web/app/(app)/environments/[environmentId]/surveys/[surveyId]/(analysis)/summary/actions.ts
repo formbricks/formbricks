@@ -80,9 +80,12 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZResetSurveyAction>;
     }) => {
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const projectId = await getProjectIdFromSurveyId(parsedInput.surveyId);
+
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
+        organizationId,
         access: [
           {
             type: "organization",
@@ -91,12 +94,12 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
           {
             type: "projectTeam",
             minPermission: "readWrite",
-            projectId: parsedInput.projectId,
+            projectId,
           },
         ],
       });
 
-      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
       ctx.auditLoggingCtx.oldObject = null;
 

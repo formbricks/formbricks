@@ -11,6 +11,7 @@ import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
@@ -43,17 +44,16 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
     "updated",
     "invite",
     async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const currentUserMembership = await getMembershipByUserIdOrganizationId(
-        ctx.user.id,
-        parsedInput.organizationId
-      );
+      const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
+      const currentUserMembership = await getMembershipByUserIdOrganizationId(ctx.user.id, organizationId);
       if (!currentUserMembership) {
         throw new AuthenticationError("User not a member of this organization");
       }
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
+        organizationId,
         access: [
           {
             data: parsedInput.data,
@@ -72,9 +72,9 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
         throw new OperationNotAllowedError("Managers can only invite members");
       }
 
-      await checkRoleManagementPermission(parsedInput.organizationId);
+      await checkRoleManagementPermission(organizationId);
 
-      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
       ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
 
