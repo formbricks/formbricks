@@ -393,6 +393,7 @@
     "show_response_count": "Válaszok számának megjelenítése",
     "shown": "Megjelenítve",
     "size": "Méret",
+    "skip": "Kihagyás",
     "skipped": "Kihagyva",
     "skips": "Kihagyja",
     "some_files_failed_to_upload": "Néhány fájlt nem sikerült feltölteni",
@@ -462,6 +463,7 @@
     "website_survey": "Webhely kérdőív",
     "weeks": "hetek",
     "welcome_card": "Üdvözlő kártya",
+    "workflows": "Munkafolyamatok",
     "workspace_configuration": "Munkaterület beállítása",
     "workspace_created_successfully": "A munkaterület sikeresen létrehozva",
     "workspace_creation_description": "Kérdőívek munkaterületekre szervezése a jobb hozzáférés-vezérlés érdekében.",
@@ -3259,5 +3261,18 @@
     "usability_question_9_headline": "Magabiztosnak éreztem magam a rendszer használata során.",
     "usability_rating_description": "Az érzékelt használhatóság mérése arra kérve a felhasználókat, hogy értékeljék a termékkel kapcsolatos tapasztalataikat egy szabványosított, 10 kérdésből álló kérdőív használatával.",
     "usability_score_name": "Rendszer-használhatósági pontszám (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Köszönjük, hogy megosztotta velünk a munkafolyamat ötletét! Jelenleg ezen a funkción dolgozunk, és a visszajelzése segít nekünk pontosan azt megépíteni, amire szüksége van.",
+    "coming_soon_title": "Majdnem kész vagyunk!",
+    "follow_up_label": "Van még valami, amit hozzá szeretne tenni?",
+    "follow_up_placeholder": "Milyen konkrét feladatokat szeretne automatizálni? Vannak olyan eszközök vagy integrációk, amelyeket szeretne belevenni?",
+    "generate_button": "Munkafolyamat generálása",
+    "heading": "Milyen munkafolyamatot szeretne létrehozni?",
+    "placeholder": "Írja le a munkafolyamatot, amelyet generálni szeretne...",
+    "subheading": "Generálja le a munkafolyamatát másodpercek alatt.",
+    "submit_button": "Részletek hozzáadása",
+    "thank_you_description": "A visszajelzése segít nekünk megépíteni azt a munkafolyamatok funkciót, amelyre tényleg szüksége van. Folyamatosan tájékoztatjuk az előrehaladásról.",
+    "thank_you_title": "Köszönjük a visszajelzését!"
   }
 }

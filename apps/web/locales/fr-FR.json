@@ -393,6 +393,7 @@
     "show_response_count": "Afficher le nombre de réponses",
     "shown": "Montré",
     "size": "Taille",
+    "skip": "Ignorer",
     "skipped": "Passé",
     "skips": "Sauter",
     "some_files_failed_to_upload": "Certains fichiers n'ont pas pu être téléchargés",
@@ -462,6 +463,7 @@
     "website_survey": "Sondage de site web",
     "weeks": "semaines",
     "welcome_card": "Carte de bienvenue",
+    "workflows": "Workflows",
     "workspace_configuration": "Configuration du projet",
     "workspace_created_successfully": "Projet créé avec succès",
     "workspace_creation_description": "Organisez les enquêtes dans des projets pour un meilleur contrôle d'accès.",
@@ -3259,5 +3261,18 @@
     "usability_question_9_headline": "Je me suis senti confiant en utilisant le système.",
     "usability_rating_description": "Mesurez la convivialité perçue en demandant aux utilisateurs d'évaluer leur expérience avec votre produit via un sondage standardisé de 10 questions.",
     "usability_score_name": "Score d'Utilisabilité du Système (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Merci d'avoir partagé votre idée de workflow avec nous ! Nous concevons actuellement cette fonctionnalité et vos retours nous aideront à créer exactement ce dont vous avez besoin.",
+    "coming_soon_title": "Nous y sommes presque !",
+    "follow_up_label": "Y a-t-il autre chose que vous aimeriez ajouter ?",
+    "follow_up_placeholder": "Quelles tâches spécifiques aimeriez-vous automatiser ? Des outils ou intégrations que vous souhaiteriez inclure ?",
+    "generate_button": "Générer le workflow",
+    "heading": "Quel workflow souhaitez-vous créer ?",
+    "placeholder": "Décrivez le workflow que vous souhaitez générer...",
+    "subheading": "Générez votre workflow en quelques secondes.",
+    "submit_button": "Ajouter des détails",
+    "thank_you_description": "Votre contribution nous aide à créer la fonctionnalité Workflows dont vous avez réellement besoin. Nous vous tiendrons informé de nos progrès.",
+    "thank_you_title": "Merci pour vos retours !"
   }
 }
