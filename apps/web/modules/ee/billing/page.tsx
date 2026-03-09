@@ -25,7 +25,7 @@ export const PricingPage = async (props) => {
 
   const organizationWithSyncedBilling = {
     ...organization,
-    billing: cloudBillingDisplayContext.billing as typeof organization.billing,
+    billing: cloudBillingDisplayContext.billing,
   };
 
   const [responseCount, projectCount] = await Promise.all([

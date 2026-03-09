@@ -241,7 +241,7 @@ export const PricingTable = ({
             canManageSubscription
               ? {
                   text: t("environments.settings.billing.manage_subscription"),
-                  onClick: openCustomerPortal,
+                  onClick: () => void openCustomerPortal(),
                   variant: "default",
                 }
               : undefined

@@ -113,12 +113,6 @@ describe("getEnvironmentStateData", () => {
           styling: { allowStyleOverwrite: false },
         },
       },
-      organization: {
-        id: "org-123",
-        billing: {
-          limits: { monthly: { responses: 100 } },
-        },
-      },
       surveys: mockEnvironmentData.surveys,
       actionClasses: mockEnvironmentData.actionClasses,
     });
@@ -147,18 +141,6 @@ describe("getEnvironmentStateData", () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
       ...mockEnvironmentData,
       project: null,
-    } as never);
-
-    await expect(getEnvironmentStateData(environmentId)).rejects.toThrow(ResourceNotFoundError);
-  });
-
-  test("should throw ResourceNotFoundError when organization is not found", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
-      project: {
-        ...mockEnvironmentData.project,
-        organization: null,
-      },
     } as never);
 
     await expect(getEnvironmentStateData(environmentId)).rejects.toThrow(ResourceNotFoundError);
@@ -281,32 +263,11 @@ describe("getEnvironmentStateData", () => {
     expect(result.environment.appSetupCompleted).toBe(false);
   });
 
-  test("should correctly extract organization billing data", async () => {
-    const customBilling = {
-      plan: "enterprise",
-      stripeCustomerId: "cus_123",
-      limits: {
-        monthly: { responses: 10000, miu: 50000 },
-        projects: 100,
-      },
-    };
-
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
-      project: {
-        ...mockEnvironmentData.project,
-        organization: {
-          id: "org-enterprise",
-          billing: customBilling,
-        },
-      },
-    } as never);
+  test("should not include organization in result", async () => {
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironmentData as never);
 
     const result = await getEnvironmentStateData(environmentId);
 
-    expect(result.organization).toEqual({
-      id: "org-enterprise",
-      billing: customBilling,
-    });
+    expect(result).not.toHaveProperty("organization");
   });
 });

@@ -38,9 +38,9 @@ export const getOrganizationBillingByEnvironmentId = reactCache(
         stripeCustomerId: organization.billing.stripeCustomerId,
         limits: organization.billing.limits as TOrganizationBilling["limits"],
         periodStart: organization.billing.periodStart,
-        ...(organization.billing.stripe !== null
-          ? { stripe: organization.billing.stripe as TOrganizationBilling["stripe"] }
-          : {}),
+        ...(organization.billing.stripe === null
+          ? {}
+          : { stripe: organization.billing.stripe as TOrganizationBilling["stripe"] }),
       };
     } catch (error) {
       logger.error(error, "Failed to get organization billing by environment ID");

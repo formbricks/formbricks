@@ -113,9 +113,9 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
           stripeCustomerId: environment.project.organization.billing.stripeCustomerId,
           limits: environment.project.organization.billing.limits as TOrganizationBilling["limits"],
           periodStart: environment.project.organization.billing.periodStart,
-          ...(environment.project.organization.billing.stripe !== null
-            ? { stripe: environment.project.organization.billing.stripe as TOrganizationBilling["stripe"] }
-            : {}),
+          ...(environment.project.organization.billing.stripe === null
+            ? {}
+            : { stripe: environment.project.organization.billing.stripe }),
         },
         organizationWhitelabel: environment.project.organization.whitelabel ?? null,
       };
