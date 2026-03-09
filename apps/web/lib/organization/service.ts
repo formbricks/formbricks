@@ -61,9 +61,9 @@ const mapOrganizationBilling = (billing: TOrganizationWithBilling["billing"]): T
 
   return {
     stripeCustomerId: billing.stripeCustomerId,
-    limits: billing.limits as TOrganizationBilling["limits"],
+    limits: billing.limits,
     periodStart: billing.periodStart,
-    ...(billing.stripe !== null ? { stripe: billing.stripe as TOrganizationBilling["stripe"] } : {}),
+    ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
   };
 };
 
@@ -230,13 +230,13 @@ export const updateOrganization = async (
             stripeCustomerId: billing.stripeCustomerId,
             limits: billing.limits,
             periodStart: billing.periodStart,
-            ...(billing.stripe !== undefined ? { stripe: billing.stripe } : {}),
+            ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
           },
           update: {
             stripeCustomerId: billing.stripeCustomerId,
             limits: billing.limits ?? fallbackBilling.limits,
             periodStart: billing.periodStart ?? fallbackBilling.periodStart,
-            ...(billing.stripe !== undefined ? { stripe: billing.stripe } : {}),
+            ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
           },
         });
       }
