@@ -9,6 +9,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
 import { stripeClient } from "@/modules/billing/lib/stripe-client";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
@@ -126,4 +127,25 @@ export const createPricingTableCustomerSessionAction = authenticatedActionClient
     });
 
     return { clientSecret: customerSession.client_secret ?? null };
+  });
+
+const ZRetryStripeSetupAction = z.object({
+  organizationId: ZId,
+});
+
+export const retryStripeSetupAction = authenticatedActionClient
+  .inputSchema(ZRetryStripeSetupAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    await ensureCloudStripeSetupForOrganization(parsedInput.organizationId);
   });
