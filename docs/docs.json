@@ -240,6 +240,7 @@
                 "pages": [
                   "self-hosting/auth-behavior",
                   "self-hosting/configuration/auth-sso/open-id-connect",
+                  "self-hosting/configuration/auth-sso/keycloak-oidc",
                   "self-hosting/configuration/auth-sso/azure-ad-oauth",
                   "self-hosting/configuration/auth-sso/google-oauth",
                   "self-hosting/configuration/auth-sso/saml-sso"
