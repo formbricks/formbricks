@@ -150,7 +150,9 @@ checksums:
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
     common/count_attributes: 042fba9baffef5afe2c24f13d4f50697
     common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
+    common/count_members: 8cabb9805075f20e3977b919b3b2fdc5
     common/count_responses: 690118a456c01c5b4d437ae82b50b131
+    common/count_selections: c0f581d21468af2f46dad171921f71ba
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
@@ -180,6 +182,8 @@ checksums:
     common/download: 56b7d0834952b39ee394b44bd8179178
     common/draft: e8a92958ad300aacfe46c2bf6644927e
     common/duplicate: 27756566785c2b8463e21582c4bb619b
+    common/duplicate_copy: 68d2201918610ca87c2914b61dc8010f
+    common/duplicate_copy_number: 083cfffd294672043dcbcc4c3dfeac6a
     common/e_commerce: b9584e7d0449a6d1b0c182d7ff14061e
     common/edit: eee7f39ff90b18852afc1671f21fbaa9
     common/email: e7f34943a0c2fb849db1839ff6ef5cb5
@@ -364,6 +368,7 @@ checksums:
     common/show_response_count: 609e5dc7c074d57e711a728fa2f8eb79
     common/shown: 63e4ffb245c05e04b636446c3dbdd8df
     common/size: 227fadeeff951e041ff42031a11a4626
+    common/skip: b7f28dfa2f58b80b149bb82b392d0291
     common/skipped: d496f0f667e1b4364b954db71335d4ef
     common/skips: 99de7579122a3fa6ec5e2a47f3fd8b34
     common/some_files_failed_to_upload: a0e26efeb29ae905257ecf93b112dff0
@@ -433,6 +438,7 @@ checksums:
     common/website_survey: 17513d25a07b6361768a15ec622b021b
     common/weeks: 545de30df4f44d3f6d1d344af6a10815
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
+    common/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
     common/workspace_configuration: d0a5812d6a97d7724d565b1017c34387
     common/workspace_created_successfully: bf401ae83da954f1db48724e2a8e40f1
     common/workspace_creation_description: aea2f480ba0c54c5cabac72c9c900ddf
@@ -1642,7 +1648,6 @@ checksums:
     environments/surveys/edit/welcome_message: 986a434e3895c8ee0b267df95cc40051
     environments/surveys/edit/without_a_filter_all_of_your_users_can_be_surveyed: 451990569c61f25d01044cc45b1ce122
     environments/surveys/edit/you_have_not_created_a_segment_yet: c6658bd1cee9c5c957c675db044708dd
-    environments/surveys/edit/you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations: 04241177ba989ef4c1d8c01e1a7b8541
     environments/surveys/edit/your_description_here_recall_information_with: 60f73a3cc9bdb9afea2166a7db8fd618
     environments/surveys/edit/your_question_here_recall_information_with: 6395bd54f5167830c9d662ba403da167
     environments/surveys/edit/your_web_app: 07234bed03a33330dc50ae9fcf0174f3
@@ -1888,6 +1893,7 @@ checksums:
     environments/surveys/summary/starts: 3153990a4ade414f501a7e63ab771362
     environments/surveys/summary/starts_tooltip: 0a7dd01320490dbbea923053fa1ccad6
     environments/surveys/summary/survey_reset_successfully: f53db36a28980ef4766215cf13f01e51
+    environments/surveys/summary/survey_results: b7d86f636beaee2b4d5746bdda058d07
     environments/surveys/summary/this_month: 50845a38865204a97773c44dcd2ebb90
     environments/surveys/summary/this_quarter: 9c77d94783dff2269c069389122cd7bd
     environments/surveys/summary/this_year: 1e69651c2ac722f8ce138f43cf2e02f9
@@ -3064,3 +3070,14 @@ checksums:
     templates/usability_question_9_headline: 5850229e97ae97698ce90b330ea49682
     templates/usability_rating_description: 8c4f3818fe830ae544611f816265f1a1
     templates/usability_score_name: 5cbf1172d24dfcb17d979dff6dfdf7e2
+    workflows/coming_soon_description: 1e0621d287924d84fb539afab7372b23
+    workflows/coming_soon_title: d79be80559c70c828cf20811d2ed5039
+    workflows/follow_up_label: 8cafe669370271035aeac8e8cab0f123
+    workflows/follow_up_placeholder: 0c26f9e4f82429acb2ac7525a3e8f24e
+    workflows/generate_button: b194b6172a49af8374a19dd2cf39cfdc
+    workflows/heading: a98a6b14d3e955f38cc16386df9a4111
+    workflows/placeholder: 0d24da3af3b860b8f943c83efdeef227
+    workflows/subheading: ebf5e3b3aeb85e13e843358cc5476f42
+    workflows/submit_button: 7a062f2de02ce60b1d73e510ff1ca094
+    workflows/thank_you_description: 842579609c6bf16a1d6c57a333fd5125
+    workflows/thank_you_title: 07edd8c50685a52c0969d711df26d768

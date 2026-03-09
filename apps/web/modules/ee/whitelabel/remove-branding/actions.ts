@@ -19,7 +19,7 @@ const ZUpdateProjectAction = z.object({
   data: ZProjectUpdateBrandingInput,
 });
 
-export const updateProjectBrandingAction = authenticatedActionClient.schema(ZUpdateProjectAction).action(
+export const updateProjectBrandingAction = authenticatedActionClient.inputSchema(ZUpdateProjectAction).action(
   withAuditLogging(
     "updated",
     "project",

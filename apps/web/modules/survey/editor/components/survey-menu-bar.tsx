@@ -191,7 +191,7 @@ export const SurveyMenuBar = ({
   const validateSurveyWithZod = (): boolean => {
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
-      const currentError = localSurveyValidation.error.errors[0];
+      const currentError = localSurveyValidation.error.issues[0];
 
       if (currentError.path[0] === "blocks") {
         const blockIdx = currentError.path[1];

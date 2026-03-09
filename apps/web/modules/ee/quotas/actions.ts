@@ -35,7 +35,7 @@ const checkQuotasEnabled = async (organizationId: string) => {
   }
 };
 
-export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAction).action(
+export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQuotaAction).action(
   withAuditLogging(
     "deleted",
     "quota",
@@ -80,7 +80,7 @@ const ZUpdateQuotaAction = z.object({
   quota: ZSurveyQuotaInput,
 });
 
-export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAction).action(
+export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQuotaAction).action(
   withAuditLogging(
     "updated",
     "quota",
@@ -123,7 +123,7 @@ const ZCreateQuotaAction = z.object({
   quota: ZSurveyQuotaInput,
 });
 
-export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAction).action(
+export const createQuotaAction = authenticatedActionClient.inputSchema(ZCreateQuotaAction).action(
   withAuditLogging(
     "created",
     "quota",
@@ -166,7 +166,7 @@ const ZGetQuotaResponseCountAction = z.object({
 });
 
 export const getQuotaResponseCountAction = authenticatedActionClient
-  .schema(ZGetQuotaResponseCountAction)
+  .inputSchema(ZGetQuotaResponseCountAction)
   .action(
     async ({
       ctx,

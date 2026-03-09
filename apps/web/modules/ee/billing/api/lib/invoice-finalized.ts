@@ -8,7 +8,8 @@ import { getOrganization, updateOrganization } from "@/lib/organization/service"
 export const handleInvoiceFinalized = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice;
 
-  const subscriptionId = invoice.subscription as string;
+  const subscription = invoice.parent?.subscription_details?.subscription;
+  const subscriptionId = typeof subscription === "string" ? subscription : subscription?.id;
   if (!subscriptionId) {
     logger.warn({ invoiceId: invoice.id }, "Invoice finalized without subscription ID");
     return { status: 400, message: "No subscription ID found in invoice" };

@@ -21,19 +21,26 @@ vi.mock("@formbricks/logger", () => ({
 
 // Mock CacheService
 vi.mock("./service", () => ({
-  CacheService: vi.fn().mockImplementation((redis: RedisClient | null = null) => ({
-    get: vi.fn(),
-    set: vi.fn(),
-    del: vi.fn(),
-    exists: vi.fn(),
-    withCache: vi.fn(),
-    getRedisClient: vi.fn().mockImplementation(() => {
-      if (!redis || !redis.isReady || !redis.isOpen) {
+  CacheService: class MockCacheService {
+    private redis: RedisClient | null;
+
+    constructor(redis: RedisClient | null = null) {
+      this.redis = redis;
+    }
+
+    get = vi.fn();
+    set = vi.fn();
+    del = vi.fn();
+    exists = vi.fn();
+    withCache = vi.fn();
+
+    getRedisClient = vi.fn(() => {
+      if (!this.redis || !this.redis.isReady || !this.redis.isOpen) {
         return null;
       }
-      return redis;
-    }),
-  })),
+      return this.redis;
+    });
+  },
 }));
 
 // Create a proper mock interface for Redis client

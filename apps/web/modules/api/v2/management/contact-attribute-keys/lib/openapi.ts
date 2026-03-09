@@ -17,7 +17,7 @@ export const getContactAttributeKeysEndpoint: ZodOpenApiOperationObject = {
   description: "Gets contact attribute keys from the database.",
   tags: ["Management API - Contact Attribute Keys"],
   requestParams: {
-    query: ZGetContactAttributeKeysFilter.sourceType(),
+    query: ZGetContactAttributeKeysFilter,
   },
   responses: {
     "200": {

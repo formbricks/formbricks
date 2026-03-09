@@ -250,8 +250,16 @@ const resolveCloudPlanFromSubscription = (
 };
 
 const resolvePeriodStart = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
-  if (!subscription?.current_period_start) return new Date();
-  return new Date(subscription.current_period_start * 1000);
+  if (!subscription) return new Date();
+
+  const legacyCurrentPeriodStart = (subscription as Stripe.Subscription & { current_period_start?: number })
+    .current_period_start;
+  const periodStartTimestamp =
+    legacyCurrentPeriodStart ??
+    subscription.items.data[0]?.current_period_start ??
+    subscription.billing_cycle_anchor;
+
+  return periodStartTimestamp ? new Date(periodStartTimestamp * 1000) : new Date();
 };
 
 const ensureHobbySubscription = async (

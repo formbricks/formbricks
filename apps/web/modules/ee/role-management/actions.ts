@@ -38,7 +38,7 @@ const ZUpdateInviteAction = z.object({
 
 export type TUpdateInviteAction = z.infer<typeof ZUpdateInviteAction>;
 
-export const updateInviteAction = authenticatedActionClient.schema(ZUpdateInviteAction).action(
+export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateInviteAction).action(
   withAuditLogging(
     "updated",
     "invite",
@@ -92,7 +92,7 @@ const ZUpdateMembershipAction = z.object({
   data: ZMembershipUpdateInput,
 });
 
-export const updateMembershipAction = authenticatedActionClient.schema(ZUpdateMembershipAction).action(
+export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpdateMembershipAction).action(
   withAuditLogging(
     "updated",
     "membership",

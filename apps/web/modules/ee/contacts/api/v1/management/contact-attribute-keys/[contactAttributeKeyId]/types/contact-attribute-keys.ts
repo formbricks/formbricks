@@ -4,7 +4,7 @@ import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 
 export const ZContactAttributeKeyCreateInput = z.object({
   key: z.string().refine((val) => isSafeIdentifier(val), {
-    message:
+    error:
       "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
   }),
   description: z.string().optional(),
@@ -21,7 +21,7 @@ export const ZContactAttributeKeyUpdateInput = z.object({
   key: z
     .string()
     .refine((val) => isSafeIdentifier(val), {
-      message:
+      error:
         "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
     })
     .optional(),

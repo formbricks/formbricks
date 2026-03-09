@@ -81,7 +81,7 @@ export const ActionActivityTab = ({
 
       if (copyName && actionClassNames.includes(copyName)) {
         while (actionClassNames.includes(copyName)) {
-          copyName += " (copy)";
+          copyName += ` ${t("common.duplicate_copy")}`;
         }
       }
 

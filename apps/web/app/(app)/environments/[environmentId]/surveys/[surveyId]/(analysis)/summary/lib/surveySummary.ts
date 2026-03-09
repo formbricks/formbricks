@@ -1095,7 +1095,7 @@ export const getResponsesForSummary = reactCache(
       [limit, ZOptionalNumber],
       [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.string().cuid2().optional()]
+      [cursor, z.cuid2().optional()]
     );
 
     const queryLimit = limit ?? RESPONSES_PER_PAGE;

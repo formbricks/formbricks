@@ -36,7 +36,7 @@ export const validateActionNameUniqueness = (
 ) => {
   if (data.name && actionClassNames.includes(data.name)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["name"],
       message: t("environments.actions.action_with_name_already_exists", { name: data.name }),
     });
@@ -54,7 +54,7 @@ export const validateActionKeyUniqueness = (
 ) => {
   if (data.type === "code" && data.key && actionClassKeys.includes(data.key)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["key"],
       message: t("environments.actions.action_with_key_already_exists", { key: data.key }),
     });
@@ -72,7 +72,7 @@ export const validateCssSelector = (data: TActionClassInput, ctx: z.RefinementCt
     !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["noCodeConfig", "elementSelector", "cssSelector"],
       message: t("environments.actions.invalid_css_selector"),
     });
@@ -91,7 +91,7 @@ export const validateUrlFilterRegex = (data: TActionClassInput, ctx: z.Refinemen
           new RegExp(urlFilter.value);
         } catch {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             path: ["noCodeConfig", "urlFilters", i, "value"],
             message: t("environments.actions.invalid_regex"),
           });

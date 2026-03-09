@@ -2,7 +2,8 @@
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
       "dependsOn": ["@formbricks/logger#build"]
@@ -23,12 +24,13 @@
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
-    "@formbricks/database#setup": {
-      "dependsOn": ["db:up"]
+    "@formbricks/email#build": {
+      "dependsOn": ["^build"],
+      "outputs": []
     },
     "@formbricks/i18n-utils#build": {
       "dependsOn": ["^build"],
-      "outputs": ["packages/i18n-utils/dist/**"]
+      "outputs": ["dist/**"]
     },
     "@formbricks/i18n-utils#lint": {
       "dependsOn": ["^lint"]
@@ -48,17 +50,13 @@
     "@formbricks/js-core#lint": {
       "dependsOn": ["@formbricks/database#build"]
     },
-    "@formbricks/react-native#build": {
-      "dependsOn": ["^build", "@formbricks/database#build"],
+    "@formbricks/logger#build": {
+      "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "@formbricks/react-native#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup"],
-      "persistent": true
-    },
     "@formbricks/storage#build": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/storage#go": {
       "cache": false,
@@ -105,19 +103,6 @@
     },
     "@formbricks/surveys#test:coverage": {
       "dependsOn": ["@formbricks/survey-ui#build"]
-    },
-    "@formbricks/ui#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "@formbricks/ui#build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**"]
-    },
-    "@formbricks/ui#go": {
-      "cache": false,
-      "dependsOn": ["@formbricks/ui#build"],
-      "persistent": true
     },
     "@formbricks/web#go": {
       "cache": false,

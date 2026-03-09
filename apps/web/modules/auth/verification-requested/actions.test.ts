@@ -35,7 +35,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 vi.mock("@/lib/utils/action-client", () => ({
   actionClient: {
-    schema: vi.fn().mockReturnThis(),
+    inputSchema: vi.fn().mockReturnThis(),
     action: vi.fn((fn) => fn),
   },
 }));
@@ -66,7 +66,7 @@ describe("resendVerificationEmailAction", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {

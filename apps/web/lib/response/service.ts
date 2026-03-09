@@ -267,7 +267,7 @@ export const getResponses = reactCache(
       [limit, ZOptionalNumber],
       [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.string().cuid2().optional()]
+      [cursor, z.cuid2().optional()]
     );
 
     limit = limit ?? RESPONSES_PER_PAGE;

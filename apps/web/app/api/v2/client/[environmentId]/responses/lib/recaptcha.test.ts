@@ -101,7 +101,9 @@ describe("verifyRecaptchaToken", () => {
       },
       signal: {},
     };
-    vi.spyOn(global, "AbortController").mockImplementation(() => abortController as any);
+    vi.spyOn(global, "AbortController").mockImplementation(function AbortController() {
+      return abortController as any;
+    });
     (global.fetch as any).mockImplementation(() => new Promise(() => {}));
     verifyRecaptchaToken("token", 0.5);
     vi.advanceTimersByTime(5000);

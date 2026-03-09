@@ -24,7 +24,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
   authenticatedApiClient({
     request,
     schemas: {
-      query: ZGetUsersFilter.sourceType(),
+      query: ZGetUsersFilter,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,

@@ -19,7 +19,7 @@ export const ZOrganizationBilling = z.object({
         miu: z.number().nullable(),
       }),
     })
-    .default({
+    .prefault({
       projects: 3,
       monthly: {
         responses: 1500,

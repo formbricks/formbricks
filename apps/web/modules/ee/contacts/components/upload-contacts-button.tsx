@@ -84,7 +84,7 @@ export const UploadContactsCSVButton = ({
         const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
-          setError(parsedRecords.error.errors[0].message);
+          setError(parsedRecords.error.issues[0].message);
           return;
         }
 

@@ -159,7 +159,7 @@ export const BREVO_LIST_ID = env.BREVO_LIST_ID;
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
-export const STRIPE_API_VERSION = "2026-01-28.clover";
+export const STRIPE_API_VERSION = "2026-02-25.clover";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150;

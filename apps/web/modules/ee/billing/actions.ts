@@ -18,49 +18,57 @@ const ZManageSubscriptionAction = z.object({
   environmentId: ZId,
 });
 
-export const manageSubscriptionAction = authenticatedActionClient.schema(ZManageSubscriptionAction).action(
-  withAuditLogging(
-    "subscriptionAccessed",
-    "organization",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager", "billing"],
-          },
-        ],
-      });
+export const manageSubscriptionAction = authenticatedActionClient
+  .inputSchema(ZManageSubscriptionAction)
+  .action(
+    withAuditLogging(
+      "subscriptionAccessed",
+      "organization",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager", "billing"],
+            },
+          ],
+        });
 
-      const organization = await getOrganization(organizationId);
-      if (!organization) {
-        throw new ResourceNotFoundError("organization", organizationId);
+        const organization = await getOrganization(organizationId);
+        if (!organization) {
+          throw new ResourceNotFoundError("organization", organizationId);
+        }
+
+        if (!organization.billing.stripeCustomerId) {
+          throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+        }
+
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        const result = await createCustomerPortalSession(
+          organization.billing.stripeCustomerId,
+          `${WEBAPP_URL}/environments/${parsedInput.environmentId}/settings/billing`
+        );
+        ctx.auditLoggingCtx.newObject = { portalSession: result };
+        return result;
       }
-
-      if (!organization.billing.stripeCustomerId) {
-        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
-      }
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      const result = await createCustomerPortalSession(
-        organization.billing.stripeCustomerId,
-        `${WEBAPP_URL}/environments/${parsedInput.environmentId}/settings/billing`
-      );
-      ctx.auditLoggingCtx.newObject = { portalSession: result };
-      return result;
-    }
-  )
-);
+    )
+  );
 
 const ZIsSubscriptionCancelledAction = z.object({
   organizationId: ZId,
 });
 
 export const isSubscriptionCancelledAction = authenticatedActionClient
-  .schema(ZIsSubscriptionCancelledAction)
+  .inputSchema(ZIsSubscriptionCancelledAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

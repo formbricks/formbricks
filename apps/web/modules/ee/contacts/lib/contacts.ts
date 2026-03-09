@@ -682,10 +682,18 @@ export const createContactsFromCSV = async (
       environmentId,
     };
 
-    const contactPromises = csvData.map((record) => processCsvRecord(record, processingContext));
+    const CHUNK_SIZE = 50;
+    const allResults: (TContact | null)[] = [];
 
-    const results = await Promise.all(contactPromises);
-    return { contacts: results.filter((contact): contact is TContact => contact !== null) };
+    for (let i = 0; i < csvData.length; i += CHUNK_SIZE) {
+      const chunk = csvData.slice(i, i + CHUNK_SIZE);
+      const chunkResults = await Promise.all(
+        chunk.map((record) => processCsvRecord(record, processingContext))
+      );
+      allResults.push(...chunkResults);
+    }
+
+    return { contacts: allResults.filter((contact): contact is TContact => contact !== null) };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

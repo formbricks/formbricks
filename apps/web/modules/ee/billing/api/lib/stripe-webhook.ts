@@ -1,18 +1,12 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
-import { STRIPE_API_VERSION } from "@/lib/constants";
-import { env } from "@/lib/env";
 import {
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
 } from "@/modules/billing/lib/organization-billing";
+import { getStripeClient, getStripeWebhookSecret } from "./stripe-client";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
-});
-
-const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
 const relevantEvents = new Set([
   "checkout.session.completed",
   "customer.subscription.created",
@@ -61,7 +55,10 @@ const resolveOrganizationId = async (eventObject: Stripe.Event.Data.Object): Pro
 };
 
 const getUnresolvedOrganizationResponse = (event: Stripe.Event) => {
-  logger.warn({ eventType: event.type, eventId: event.id }, "Skipping Stripe webhook: organization not resolved");
+  logger.warn(
+    { eventType: event.type, eventId: event.id },
+    "Skipping Stripe webhook: organization not resolved"
+  );
 
   if (event.type === "checkout.session.completed") {
     return { status: 500, message: "Checkout completed but organization could not be resolved." };
@@ -71,7 +68,18 @@ const getUnresolvedOrganizationResponse = (event: Stripe.Event) => {
 };
 
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
+  let stripe: Stripe;
+  let webhookSecret: string;
   let event: Stripe.Event;
+
+  try {
+    stripe = getStripeClient();
+    webhookSecret = getStripeWebhookSecret();
+  } catch (err: unknown) {
+    logger.error(err, "Error getting Stripe client or webhook secret");
+    logger.warn("Stripe webhook skipped: Stripe is not configured");
+    return { status: 503, message: "Stripe webhook is not configured" };
+  }
 
   try {
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);

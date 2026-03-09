@@ -52,7 +52,7 @@ export const getUser = reactCache(async (id: string): Promise<TUser | null> => {
 });
 
 export const getUserByEmail = reactCache(async (email: string): Promise<TUser | null> => {
-  validateInputs([email, z.string().email()]);
+  validateInputs([email, z.email()]);
 
   try {
     const user = await prisma.user.findFirst({

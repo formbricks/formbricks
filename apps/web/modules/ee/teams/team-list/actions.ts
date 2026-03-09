@@ -18,11 +18,11 @@ import {
 import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 
 const ZCreateTeamAction = z.object({
-  organizationId: z.string().cuid(),
+  organizationId: z.cuid(),
   name: z.string().trim().min(1, "Team name is required"),
 });
 
-export const createTeamAction = authenticatedActionClient.schema(ZCreateTeamAction).action(
+export const createTeamAction = authenticatedActionClient.inputSchema(ZCreateTeamAction).action(
   withAuditLogging(
     "created",
     "team",
@@ -55,7 +55,7 @@ const ZGetTeamDetailsAction = z.object({
 });
 
 export const getTeamDetailsAction = authenticatedActionClient
-  .schema(ZGetTeamDetailsAction)
+  .inputSchema(ZGetTeamDetailsAction)
   .action(async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
 
@@ -84,7 +84,7 @@ const ZDeleteTeamAction = z.object({
   teamId: ZId,
 });
 
-export const deleteTeamAction = authenticatedActionClient.schema(ZDeleteTeamAction).action(
+export const deleteTeamAction = authenticatedActionClient.inputSchema(ZDeleteTeamAction).action(
   withAuditLogging(
     "deleted",
     "team",
@@ -117,7 +117,7 @@ const ZUpdateTeamAction = z.object({
   data: ZTeamSettingsFormSchema,
 });
 
-export const updateTeamDetailsAction = authenticatedActionClient.schema(ZUpdateTeamAction).action(
+export const updateTeamDetailsAction = authenticatedActionClient.inputSchema(ZUpdateTeamAction).action(
   withAuditLogging(
     "updated",
     "team",
@@ -157,7 +157,7 @@ const ZGetTeamRoleAction = z.object({
 });
 
 export const getTeamRoleAction = authenticatedActionClient
-  .schema(ZGetTeamRoleAction)
+  .inputSchema(ZGetTeamRoleAction)
   .action(async ({ ctx, parsedInput }) => {
     return await getTeamRoleByTeamIdUserId(parsedInput.teamId, ctx.user.id);
   });

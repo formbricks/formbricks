@@ -66,10 +66,14 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response") {
-        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId, { decrementQuotas })));
-      } else {
-        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < rowsToBeDeleted.length; i += CHUNK_SIZE) {
+        const chunk = rowsToBeDeleted.slice(i, i + CHUNK_SIZE);
+        if (type === "response") {
+          await Promise.all(chunk.map((rowId) => deleteAction(rowId, { decrementQuotas })));
+        } else {
+          await Promise.all(chunk.map((rowId) => deleteAction(rowId)));
+        }
       }
 
       // Update the row list UI
@@ -132,11 +136,11 @@ export const SelectedRowSettings = <T,>({
 
   let deleteWhatText: string;
   if (type === "response") {
-    deleteWhatText = t("common.count_responses", { value: selectedRowCount });
+    deleteWhatText = t("common.count_responses", { count: selectedRowCount });
   } else if (type === "contact") {
-    deleteWhatText = t("common.count_contacts", { value: selectedRowCount });
+    deleteWhatText = t("common.count_contacts", { count: selectedRowCount });
   } else {
-    deleteWhatText = t("common.count_attributes", { value: selectedRowCount });
+    deleteWhatText = t("common.count_attributes", { count: selectedRowCount });
   }
 
   return (
