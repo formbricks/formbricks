@@ -53,6 +53,7 @@ export const PricingPage = async (props) => {
         projectCount={projectCount}
         hasBillingRights={hasBillingRights}
         currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
+        currentSubscriptionStatus={cloudBillingDisplayContext.currentSubscriptionStatus}
         stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
         stripePricingTableId={env.STRIPE_PRICING_TABLE_ID ?? null}
         isStripeSetupIncomplete={!organizationWithSyncedBilling.billing.stripeCustomerId}

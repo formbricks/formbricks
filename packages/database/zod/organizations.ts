@@ -37,7 +37,20 @@ export const ZOrganizationBilling = z.object({
           currency: z.string().nullable().optional(),
         })
         .optional(),
-      plan: z.enum(["hobby", "pro", "scale", "trial", "unknown"]).optional(),
+      plan: z.enum(["hobby", "pro", "scale", "unknown"]).optional(),
+      subscriptionStatus: z
+        .enum([
+          "trialing",
+          "active",
+          "past_due",
+          "unpaid",
+          "paused",
+          "canceled",
+          "incomplete",
+          "incomplete_expired",
+        ])
+        .nullable()
+        .optional(),
       subscriptionId: z.string().nullable().optional(),
       features: z.array(z.string()).optional(),
       lastStripeEventCreatedAt: z.string().nullable().optional(),

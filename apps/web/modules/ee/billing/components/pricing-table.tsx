@@ -5,7 +5,7 @@ import Script from "next/script";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TOrganization, TOrganizationStripeSubscriptionStatus } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -83,20 +83,20 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   hasBillingRights: boolean;
-  currentCloudPlan: "hobby" | "pro" | "scale" | "trial" | "unknown";
+  currentCloudPlan: "hobby" | "pro" | "scale" | "unknown";
+  currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
   isStripeSetupIncomplete: boolean;
 }
 
 const getCurrentCloudPlanLabel = (
-  plan: "hobby" | "pro" | "scale" | "trial" | "unknown",
+  plan: "hobby" | "pro" | "scale" | "unknown",
   t: (key: string) => string
 ) => {
   if (plan === "hobby") return t("environments.settings.billing.plan_hobby");
   if (plan === "pro") return t("environments.settings.billing.plan_pro");
   if (plan === "scale") return t("environments.settings.billing.plan_scale");
-  if (plan === "trial") return t("environments.settings.billing.plan_trial");
   return t("environments.settings.billing.plan_unknown");
 };
 
@@ -107,6 +107,7 @@ export const PricingTable = ({
   projectCount,
   hasBillingRights,
   currentCloudPlan,
+  currentSubscriptionStatus,
   stripePublishableKey,
   stripePricingTableId,
   isStripeSetupIncomplete,
@@ -253,6 +254,13 @@ export const PricingTable = ({
               </p>
               <div className="flex items-center gap-2">
                 <Badge type="success" size="normal" text={getCurrentCloudPlanLabel(currentCloudPlan, t)} />
+                {currentSubscriptionStatus === "trialing" && (
+                  <Badge
+                    type="warning"
+                    size="normal"
+                    text={t("environments.settings.billing.status_trialing")}
+                  />
+                )}
                 {cancellingOn && (
                   <Badge
                     type="warning"

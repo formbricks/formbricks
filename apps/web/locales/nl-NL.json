@@ -971,9 +971,9 @@
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",
-        "plan_trial": "Proefperiode",
         "plan_unknown": "Onbekend",
         "remove_branding": "Branding verwijderen",
+        "status_trialing": "Proefperiode",
         "unlimited_responses": "Onbeperkte reacties",
         "unlimited_workspaces": "Onbeperkt werkruimtes",
         "upgrade": "Upgraden"

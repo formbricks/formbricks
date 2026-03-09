@@ -971,9 +971,9 @@
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",
-        "plan_trial": "Trial",
         "plan_unknown": "不明",
         "remove_branding": "ブランディングを削除",
+        "status_trialing": "Trial",
         "unlimited_responses": "無制限の回答",
         "unlimited_workspaces": "無制限ワークスペース",
         "upgrade": "アップグレード"

@@ -4,7 +4,10 @@ import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { type TOrganizationBilling } from "@formbricks/types/organizations";
+import {
+  type TOrganizationBilling,
+  type TOrganizationStripeSubscriptionStatus,
+} from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import {
@@ -249,6 +252,12 @@ const resolveCloudPlanFromSubscription = (
   return resolvedPlan;
 };
 
+const resolveSubscriptionStatus = (
+  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>
+): TOrganizationStripeSubscriptionStatus | null => {
+  return subscription?.status ?? null;
+};
+
 const resolvePeriodStart = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
   if (!subscription) return new Date();
 
@@ -416,6 +425,7 @@ export const syncOrganizationBillingFromStripe = async (
   ]);
 
   const cloudPlan = resolveCloudPlanFromSubscription(subscription);
+  const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const periodStart = resolvePeriodStart(subscription);
   const previousLimits = billing.limits;
   const workspaceLimitFromEntitlements = parseMaxNumericEntitlementLimit(
@@ -468,6 +478,7 @@ export const syncOrganizationBillingFromStripe = async (
     stripe: {
       ...billing.stripe,
       plan: cloudPlan,
+      subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
       features: featureLookupKeys,
       responseMetering: responseMeteringProjection ?? billing.stripe?.responseMetering,

@@ -1,8 +1,19 @@
 import { z } from "zod";
 import { ZStorageUrl } from "./common";
 
-export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "trial", "unknown"]);
+export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "unknown"]);
 export type TCloudBillingPlan = z.infer<typeof ZCloudBillingPlan>;
+export const ZOrganizationStripeSubscriptionStatus = z.enum([
+  "trialing",
+  "active",
+  "past_due",
+  "unpaid",
+  "paused",
+  "canceled",
+  "incomplete",
+  "incomplete_expired",
+]);
+export type TOrganizationStripeSubscriptionStatus = z.infer<typeof ZOrganizationStripeSubscriptionStatus>;
 
 export const ZOrganizationStripeBilling = z.object({
   responseMetering: z
@@ -14,6 +25,7 @@ export const ZOrganizationStripeBilling = z.object({
     })
     .optional(),
   plan: ZCloudBillingPlan.optional(),
+  subscriptionStatus: ZOrganizationStripeSubscriptionStatus.nullable().optional(),
   subscriptionId: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),
   lastStripeEventCreatedAt: z.string().nullable().optional(),

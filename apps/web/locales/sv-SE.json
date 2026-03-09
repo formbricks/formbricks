@@ -971,9 +971,9 @@
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Skala",
-        "plan_trial": "Testperiod",
         "plan_unknown": "Okänd",
         "remove_branding": "Ta bort varumärke",
+        "status_trialing": "Testperiod",
         "unlimited_responses": "Obegränsade svar",
         "unlimited_workspaces": "Obegränsat antal arbetsytor",
         "upgrade": "Uppgradera"

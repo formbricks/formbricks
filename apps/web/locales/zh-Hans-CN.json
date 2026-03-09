@@ -971,9 +971,9 @@
         "plan_hobby": "兴趣版",
         "plan_pro": "专业版",
         "plan_scale": "规模版",
-        "plan_trial": "试用版",
         "plan_unknown": "未知",
         "remove_branding": "移除 品牌",
+        "status_trialing": "试用版",
         "unlimited_responses": "无限反馈",
         "unlimited_workspaces": "无限工作区",
         "upgrade": "升级"

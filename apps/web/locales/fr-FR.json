@@ -971,9 +971,9 @@
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",
-        "plan_trial": "Essai",
         "plan_unknown": "Inconnu",
         "remove_branding": "Suppression du logo",
+        "status_trialing": "Essai",
         "unlimited_responses": "Réponses illimitées",
         "unlimited_workspaces": "Projets illimités",
         "upgrade": "Mise à niveau"

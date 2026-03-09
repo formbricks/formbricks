@@ -5,14 +5,12 @@ const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
   HOBBY: "prod_ToYKB5ESOMZZk5",
   PRO: "prod_ToYKQ8WxS3ecgf",
   SCALE: "prod_ToYLW5uCQTMa6v",
-  TRIAL: "prod_TodVcJiEnK5ABK",
 } as const;
 
 export const CLOUD_STRIPE_PRODUCT_IDS = {
   HOBBY: process.env.STRIPE_PRODUCT_ID_HOBBY?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.HOBBY,
   PRO: process.env.STRIPE_PRODUCT_ID_PRO?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.PRO,
   SCALE: process.env.STRIPE_PRODUCT_ID_SCALE?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.SCALE,
-  TRIAL: process.env.STRIPE_PRODUCT_ID_TRIAL?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.TRIAL,
 } as const;
 
 const cloudStripeProductIdsUsingDefaults = Object.entries(DEFAULT_CLOUD_STRIPE_PRODUCT_IDS).flatMap(
@@ -58,7 +56,6 @@ export const CLOUD_PLAN_LEVEL = {
   hobby: 0,
   pro: 1,
   scale: 2,
-  trial: 3,
   unknown: -1,
 } as const;
 
@@ -69,6 +66,5 @@ export const getCloudPlanFromProductId = (productId: string | null | undefined):
   if (productId === CLOUD_STRIPE_PRODUCT_IDS.HOBBY) return "hobby";
   if (productId === CLOUD_STRIPE_PRODUCT_IDS.PRO) return "pro";
   if (productId === CLOUD_STRIPE_PRODUCT_IDS.SCALE) return "scale";
-  if (productId === CLOUD_STRIPE_PRODUCT_IDS.TRIAL) return "trial";
   return "unknown";
 };

@@ -971,9 +971,9 @@
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",
-        "plan_trial": "Prueba",
         "plan_unknown": "Desconocido",
         "remove_branding": "Eliminar marca",
+        "status_trialing": "Prueba",
         "unlimited_responses": "Respuestas ilimitadas",
         "unlimited_workspaces": "Proyectos ilimitados",
         "upgrade": "Actualizar"

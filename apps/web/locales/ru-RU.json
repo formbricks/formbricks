@@ -971,9 +971,9 @@
         "plan_hobby": "Хобби",
         "plan_pro": "Pro",
         "plan_scale": "Scale",
-        "plan_trial": "Пробный",
         "plan_unknown": "Неизвестно",
         "remove_branding": "Удалить брендинг",
+        "status_trialing": "Пробный",
         "unlimited_responses": "Неограниченное количество ответов",
         "unlimited_workspaces": "Неограниченное количество рабочих пространств",
         "upgrade": "Обновить"

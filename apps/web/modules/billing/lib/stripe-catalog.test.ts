@@ -6,7 +6,6 @@ describe("stripe catalog mapping", () => {
     expect(getCloudPlanFromProductId(CLOUD_STRIPE_PRODUCT_IDS.HOBBY)).toBe("hobby");
     expect(getCloudPlanFromProductId(CLOUD_STRIPE_PRODUCT_IDS.PRO)).toBe("pro");
     expect(getCloudPlanFromProductId(CLOUD_STRIPE_PRODUCT_IDS.SCALE)).toBe("scale");
-    expect(getCloudPlanFromProductId(CLOUD_STRIPE_PRODUCT_IDS.TRIAL)).toBe("trial");
   });
 
   test("falls back to unknown for unknown product ID", () => {
