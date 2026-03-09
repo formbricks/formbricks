@@ -1828,7 +1828,7 @@
           "disable_single_use_link_modal_button": "Einmalige Links deaktivieren",
           "disable_single_use_link_modal_description": "Wenn Sie Einweglinks geteilt haben, können die Teilnehmer nicht mehr auf die Umfrage antworten.",
           "generate_and_download_links": "Links generieren und herunterladen",
-          "generate_links_error": "Einmalige Verlinkungen konnten nicht generiert werden. Bitte arbeiten Sie direkt mit der API.",
+          "generate_links_error": "Einmalige Links konnten nicht generiert werden. Bitte arbeiten Sie direkt mit der API.",
           "multi_use_link": "Mehrfach verwendet",
           "multi_use_link_description": "Sammle mehrere Antworten von anonymen Teilnehmern mit einem Link",
           "multi_use_powers_other_channels_description": "Wenn du es deaktivierst, werden auch diese anderen Vertriebskanäle deaktiviert.",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",
+        "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist.",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter hinzugefügt für Antworten, bei denen die Frage {questionIdx} übersprungen wurde",
         "aggregated": "Aggregiert",
         "all_responses_csv": "Alle Antworten (CSV)",
@@ -2166,7 +2166,7 @@
         "advanced_styling_field_description_size": "Schriftgröße der Beschreibung",
         "advanced_styling_field_description_size_description": "Skaliert den Beschreibungstext.",
         "advanced_styling_field_description_weight": "Schriftstärke der Beschreibung",
-        "advanced_styling_field_description_weight_description": "Macht den Beschreibungstext heller oder fetter.",
+        "advanced_styling_field_description_weight_description": "Macht den Beschreibungstext leichter oder fetter.",
         "advanced_styling_field_font_size": "Schriftgröße",
         "advanced_styling_field_font_weight": "Schriftstärke",
         "advanced_styling_field_headline_color": "Überschriftsfarbe",
@@ -2180,7 +2180,7 @@
         "advanced_styling_field_indicator_bg_description": "Färbt den gefüllten Teil des Balkens.",
         "advanced_styling_field_input_border_radius_description": "Rundet die Eingabeecken ab.",
         "advanced_styling_field_input_font_size_description": "Skaliert den eingegebenen Text in Eingabefeldern.",
-        "advanced_styling_field_input_height_description": "Steuert die Mindesthöhe der Eingabe.",
+        "advanced_styling_field_input_height_description": "Bestimmt die Mindesthöhe des Eingabefelds.",
         "advanced_styling_field_input_padding_x_description": "Fügt links und rechts Abstand hinzu.",
         "advanced_styling_field_input_padding_y_description": "Fügt oben und unten Abstand hinzu.",
         "advanced_styling_field_input_placeholder_opacity_description": "Blendet den Platzhaltertext aus.",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "Danke, dass du deine Workflow-Idee mit uns geteilt hast! Wir arbeiten gerade an diesem Feature und dein Feedback hilft uns dabei, genau das zu entwickeln, was du brauchst.",
     "coming_soon_title": "Wir sind fast da!",
     "follow_up_label": "Gibt es noch etwas, das du hinzufügen möchtest?",
-    "follow_up_placeholder": "Welche spezifischen Aufgaben möchtest du automatisieren? Gibt es Tools oder Integrationen, die du gerne einbinden würdest?",
+    "follow_up_placeholder": "Welche konkreten Aufgaben möchten Sie automatisieren? Gibt es Tools oder Integrationen, die Sie einbinden möchten?",
     "generate_button": "Workflow generieren",
     "heading": "Welchen Workflow möchtest du erstellen?",
-    "placeholder": "Beschreibe den Workflow, den du generieren möchtest...",
+    "placeholder": "Beschreiben Sie den Workflow, den Sie erstellen möchten…",
     "subheading": "Generiere deinen Workflow in Sekunden.",
     "submit_button": "Details hinzufügen",
-    "thank_you_description": "Dein Input hilft uns dabei, das Workflows-Feature zu entwickeln, das du wirklich brauchst. Wir halten dich über unsere Fortschritte auf dem Laufenden.",
+    "thank_you_description": "Ihr Feedback hilft uns, die Workflows-Funktion so zu gestalten, wie Sie sie brauchen. Wir halten Sie über unseren Fortschritt auf dem Laufenden.",
     "thank_you_title": "Danke für dein Feedback!"
   }
 }

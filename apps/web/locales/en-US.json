@@ -1828,7 +1828,7 @@
           "disable_single_use_link_modal_button": "Disable single-use links",
           "disable_single_use_link_modal_description": "If you shared single-use links, participants will not be able to respond to the survey any longer.",
           "generate_and_download_links": "Generate & download links",
-          "generate_links_error": "Single use links could not get generated. Please work directly with the API",
+          "generate_links_error": "Single use links could not get generated. Please work directly with the API.",
           "multi_use_link": "Multi-use link",
           "multi_use_link_description": "Collect multiple responses from anonymous respondents with one link.",
           "multi_use_powers_other_channels_description": "If you disable it, these other distribution channels will also get disabled.",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue} ",
+        "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Added filter for responses where answer to question {questionIdx} is skipped",
         "aggregated": "Aggregated",
         "all_responses_csv": "All responses (CSV)",
@@ -2166,7 +2166,7 @@
         "advanced_styling_field_description_size": "Description Font Size",
         "advanced_styling_field_description_size_description": "Scales the description text.",
         "advanced_styling_field_description_weight": "Description Font Weight",
-        "advanced_styling_field_description_weight_description": "Makes descr. text lighter or bolder.",
+        "advanced_styling_field_description_weight_description": "Makes description text lighter or bolder.",
         "advanced_styling_field_font_size": "Font Size",
         "advanced_styling_field_font_weight": "Font Weight",
         "advanced_styling_field_headline_color": "Headline Color",
@@ -2180,7 +2180,7 @@
         "advanced_styling_field_indicator_bg_description": "Colors the filled portion of the bar.",
         "advanced_styling_field_input_border_radius_description": "Rounds the input corners.",
         "advanced_styling_field_input_font_size_description": "Scales the typed text in inputs.",
-        "advanced_styling_field_input_height_description": "Controls the min. height of the input.",
+        "advanced_styling_field_input_height_description": "Controls the minimum height of the input.",
         "advanced_styling_field_input_padding_x_description": "Adds space on the left and right.",
         "advanced_styling_field_input_padding_y_description": "Adds space on the top and bottom.",
         "advanced_styling_field_input_placeholder_opacity_description": "Fades the placeholder hint text.",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "Thank you for sharing your workflow idea with us! We are currently designing this feature and your feedback will help us build exactly what you need.",
     "coming_soon_title": "We are almost there!",
     "follow_up_label": "Is there anything else you'd like to add?",
-    "follow_up_placeholder": "What specific tasks would you like to automate? Any tools or integrations you'd want included?",
+    "follow_up_placeholder": "What specific tasks would you like to automate? Any tools or integrations you would want included?",
     "generate_button": "Generate workflow",
     "heading": "What workflow do you want to create?",
-    "placeholder": "Describe the workflow you want to generate...",
+    "placeholder": "Describe the workflow you want to generate…",
     "subheading": "Generate your workflow in seconds.",
     "submit_button": "Add details",
-    "thank_you_description": "Your input helps us build the Workflows feature you actually need. We'll keep you posted on our progress.",
+    "thank_you_description": "Your input helps us build the Workflows feature you actually need. We will keep you posted on our progress.",
     "thank_you_title": "Thank you for your feedback!"
   }
 }

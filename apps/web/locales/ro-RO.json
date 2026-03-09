@@ -176,9 +176,9 @@
     "copy_code": "Copiază codul",
     "copy_link": "Copiază legătura",
     "count_attributes": "{count, plural, one {{count} atribut} few {{count} atribute} other {{count} de atribute}}",
-    "count_contacts": "{count, plural, one {# contact} other {# contacte} }",
+    "count_contacts": "{count, plural, one {{count} contact} few {{count} contacte} other {{count} de contacte}}",
     "count_members": "{count, plural, one {{count} membru} few {{count} membri} other {{count} de membri}}",
-    "count_responses": "{count, plural, one {# răspuns} other {# răspunsuri} }",
+    "count_responses": "{count, plural, one {{count} răspuns} few {{count} răspunsuri} other {{count} de răspunsuri}}",
     "count_selections": "{count, plural, one {{count} selecție} few {{count} selecții} other {{count} de selecții}}",
     "create_new_organization": "Creează organizație nouă",
     "create_segment": "Creați segment",
@@ -1828,7 +1828,7 @@
           "disable_single_use_link_modal_button": "Dezactivează linkurile de unică folosință",
           "disable_single_use_link_modal_description": "Dacă ați distribuit linkuri de unică folosință, participanții nu vor mai putea răspunde la sondaj.",
           "generate_and_download_links": "Generează și descarcă legături",
-          "generate_links_error": "Link-urile de unică folosință nu au putut fi generate. Vă rugăm să lucrați direct cu API-ul",
+          "generate_links_error": "Legăturile de utilizare unică nu au putut fi generate. Vă rugăm să lucrați direct cu API-ul.",
           "multi_use_link": "Link de utilizare multiplă",
           "multi_use_link_description": "Colectați răspunsuri multiple de la respondenți anonimi cu un singur link.",
           "multi_use_powers_other_channels_description": "Dacă îl dezactivați, aceste alte canale de distribuție vor fi dezactivate și ele.",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Filtru adăugat pentru răspunsuri unde răspunsul la întrebarea {questionIdx} este {filterComboBoxValue} - {filterValue}",
+        "added_filter_for_responses_where_answer_to_question": "S-a adăugat un filtru pentru răspunsurile unde răspunsul la întrebarea {questionIdx} este {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtru adăugat pentru răspunsuri unde răspunsul la întrebarea {questionIdx} este omis",
         "aggregated": "Agregat",
         "all_responses_csv": "Toate răspunsurile (CSV)",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "Îți mulțumim că ai împărtășit cu noi ideea ta de workflow! În prezent, lucrăm la această funcționalitate, iar feedback-ul tău ne ajută să construim exact ce ai nevoie.",
     "coming_soon_title": "Suntem aproape gata!",
     "follow_up_label": "Mai este ceva ce ai vrea să adaugi?",
-    "follow_up_placeholder": "Ce sarcini specifice ai vrea să automatizezi? Există instrumente sau integrări pe care le-ai dori incluse?",
+    "follow_up_placeholder": "Ce sarcini specifice ați dori să automatizați? Există instrumente sau integrări pe care ați dori să le includem?",
     "generate_button": "Generează workflow",
     "heading": "Ce workflow vrei să creezi?",
-    "placeholder": "Descrie workflow-ul pe care vrei să-l generezi...",
+    "placeholder": "Descrieți fluxul de lucru pe care doriți să-l generați…",
     "subheading": "Generează-ți workflow-ul în câteva secunde.",
     "submit_button": "Adaugă detalii",
-    "thank_you_description": "Contribuția ta ne ajută să construim funcția Workflows de care chiar ai nevoie. Te vom ține la curent cu progresul nostru.",
+    "thank_you_description": "Contribuția dvs. ne ajută să dezvoltăm funcția Workflows de care chiar aveți nevoie. Vă vom ține la curent cu progresul nostru.",
     "thank_you_title": "Îți mulțumim pentru feedback!"
   }
 }

@@ -1828,7 +1828,7 @@
           "disable_single_use_link_modal_button": "Desactivar enlaces de uso único",
           "disable_single_use_link_modal_description": "Si has compartido enlaces de uso único, los participantes ya no podrán responder a la encuesta.",
           "generate_and_download_links": "Generar y descargar enlaces",
-          "generate_links_error": "No se pudieron generar enlaces de uso único. Por favor, trabaja directamente con la API",
+          "generate_links_error": "No se pudieron generar los enlaces de un solo uso. Por favor, trabaja directamente con la API.",
           "multi_use_link": "Enlace de uso múltiple",
           "multi_use_link_description": "Recopila múltiples respuestas de encuestados anónimos con un solo enlace.",
           "multi_use_powers_other_channels_description": "Si lo desactivas, estos otros canales de distribución también se desactivarán.",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Filtro añadido para respuestas donde la respuesta a la pregunta {questionIdx} es {filterComboBoxValue} - {filterValue} ",
+        "added_filter_for_responses_where_answer_to_question": "Se ha añadido un filtro para las respuestas donde la respuesta a la pregunta {questionIdx} es {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtro añadido para respuestas donde la respuesta a la pregunta {questionIdx} se ha omitido",
         "aggregated": "Agregado",
         "all_responses_csv": "Todas las respuestas (CSV)",
@@ -2166,7 +2166,7 @@
         "advanced_styling_field_description_size": "Tamaño de fuente de la descripción",
         "advanced_styling_field_description_size_description": "Escala el texto de la descripción.",
         "advanced_styling_field_description_weight": "Grosor de fuente de la descripción",
-        "advanced_styling_field_description_weight_description": "Hace el texto de descripción más ligero o más grueso.",
+        "advanced_styling_field_description_weight_description": "Hace que el texto de la descripción sea más claro o más negrita.",
         "advanced_styling_field_font_size": "Tamaño de fuente",
         "advanced_styling_field_font_weight": "Grosor de fuente",
         "advanced_styling_field_headline_color": "Color del titular",
@@ -2180,7 +2180,7 @@
         "advanced_styling_field_indicator_bg_description": "Colorea la porción rellena de la barra.",
         "advanced_styling_field_input_border_radius_description": "Redondea las esquinas del campo.",
         "advanced_styling_field_input_font_size_description": "Escala el texto escrito en los campos.",
-        "advanced_styling_field_input_height_description": "Controla la altura mínima de la entrada.",
+        "advanced_styling_field_input_height_description": "Controla la altura mínima del campo de entrada.",
         "advanced_styling_field_input_padding_x_description": "Añade espacio a la izquierda y a la derecha.",
         "advanced_styling_field_input_padding_y_description": "Añade espacio en la parte superior e inferior.",
         "advanced_styling_field_input_placeholder_opacity_description": "Atenúa el texto de sugerencia del marcador de posición.",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "¡Gracias por compartir tu idea de flujo de trabajo con nosotros! Actualmente estamos diseñando esta funcionalidad y tus comentarios nos ayudarán a construir exactamente lo que necesitas.",
     "coming_soon_title": "¡Ya casi estamos!",
     "follow_up_label": "¿Hay algo más que te gustaría añadir?",
-    "follow_up_placeholder": "¿Qué tareas específicas te gustaría automatizar? ¿Alguna herramienta o integración que quisieras incluir?",
+    "follow_up_placeholder": "¿Qué tareas específicas te gustaría automatizar? ¿Alguna herramienta o integración que quieras incluir?",
     "generate_button": "Generar flujo de trabajo",
     "heading": "¿Qué flujo de trabajo quieres crear?",
-    "placeholder": "Describe el flujo de trabajo que quieres generar...",
+    "placeholder": "Describe el flujo de trabajo que quieres generar…",
     "subheading": "Genera tu flujo de trabajo en segundos.",
     "submit_button": "Añadir detalles",
-    "thank_you_description": "Tu aportación nos ayuda a construir la funcionalidad de flujos de trabajo que realmente necesitas. Te mantendremos informado sobre nuestro progreso.",
+    "thank_you_description": "Tu aportación nos ayuda a construir la funcionalidad de Flujos de trabajo que realmente necesitas. Te mantendremos informado sobre nuestro progreso.",
     "thank_you_title": "¡Gracias por tus comentarios!"
   }
 }

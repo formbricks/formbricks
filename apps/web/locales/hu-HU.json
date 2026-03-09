@@ -179,7 +179,7 @@
     "count_contacts": "{count, plural, one {{count} partner} other {{count} partner}}",
     "count_members": "{count, plural, one {{count} tag} other {{count} tag}}",
     "count_responses": "{count, plural, one {{count} válasz} other {{count} válasz}}",
-    "count_selections": "{count, plural, one {{count} kijelölés} other {{count} kijelölés}}",
+    "count_selections": "{count, plural, one {{count} kiválasztás} other {{count} kiválasztás}}",
     "create_new_organization": "Új szervezet létrehozása",
     "create_segment": "Szakasz létrehozása",
     "create_survey": "Kérdőív létrehozása",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz {filterComboBoxValue} - {filterValue} ",
+        "added_filter_for_responses_where_answer_to_question": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz {filterComboBoxValue} – {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz kihagyva",
         "aggregated": "Összesített",
         "all_responses_csv": "Összes válasz (CSV)",
@@ -2180,7 +2180,7 @@
         "advanced_styling_field_indicator_bg_description": "Kiszínezi a sáv kitöltött részét.",
         "advanced_styling_field_input_border_radius_description": "Lekerekíti a beviteli mező sarkait.",
         "advanced_styling_field_input_font_size_description": "Átméretezi a beviteli mezőkbe beírt szöveget.",
-        "advanced_styling_field_input_height_description": "Szabályozza a beviteli mező minimális magasságát.",
+        "advanced_styling_field_input_height_description": "A beviteli mező legkisebb magasságát vezérli.",
         "advanced_styling_field_input_padding_x_description": "Térközt ad hozzá balra és jobbra.",
         "advanced_styling_field_input_padding_y_description": "Térközt ad hozzá fent és lent.",
         "advanced_styling_field_input_placeholder_opacity_description": "Elhalványítja a helykitöltő súgószöveget.",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "Köszönjük, hogy megosztotta velünk a munkafolyamat ötletét! Jelenleg ezen a funkción dolgozunk, és a visszajelzése segít nekünk pontosan azt megépíteni, amire szüksége van.",
     "coming_soon_title": "Majdnem kész vagyunk!",
     "follow_up_label": "Van még valami, amit hozzá szeretne tenni?",
-    "follow_up_placeholder": "Milyen konkrét feladatokat szeretne automatizálni? Vannak olyan eszközök vagy integrációk, amelyeket szeretne belevenni?",
+    "follow_up_placeholder": "Milyen konkrét feladatokat szeretne automatizálni? Vannak olyan eszközök vagy integrációk, amelyeket szívesen látna a rendszerben?",
     "generate_button": "Munkafolyamat generálása",
     "heading": "Milyen munkafolyamatot szeretne létrehozni?",
-    "placeholder": "Írja le a munkafolyamatot, amelyet generálni szeretne...",
+    "placeholder": "Mutassa be az előállítani kívánt munkafolyamatot…",
     "subheading": "Generálja le a munkafolyamatát másodpercek alatt.",
     "submit_button": "Részletek hozzáadása",
-    "thank_you_description": "A visszajelzése segít nekünk megépíteni azt a munkafolyamatok funkciót, amelyre tényleg szüksége van. Folyamatosan tájékoztatjuk az előrehaladásról.",
+    "thank_you_description": "A visszajelzése segít nekünk abban, hogy olyan Munkafolyamatok funkciót alakítsunk ki, amelyre valóban szüksége van. Folyamatosan tájékoztatni fogjuk Önt a fejlesztés előrehaladásáról.",
     "thank_you_title": "Köszönjük a visszajelzését!"
   }
 }

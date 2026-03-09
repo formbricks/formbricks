@@ -1828,7 +1828,7 @@
           "disable_single_use_link_modal_button": "Inaktivera engångslänkar",
           "disable_single_use_link_modal_description": "Om du delade engångslänkar kommer deltagarna inte längre att kunna svara på enkäten.",
           "generate_and_download_links": "Generera och ladda ner länkar",
-          "generate_links_error": "Engångslänkar kunde inte genereras. Vänligen arbeta direkt med API:t",
+          "generate_links_error": "Engångslänkar kunde inte genereras. Arbeta direkt med API:et istället.",
           "multi_use_link": "Fleranvändarlänk",
           "multi_use_link_description": "Samla in flera svar från anonyma respondenter med en länk.",
           "multi_use_powers_other_channels_description": "Om du inaktiverar den kommer dessa andra distributionskanaler också att inaktiveras.",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Lade till filter för svar där svar på fråga {questionIdx} är {filterComboBoxValue} - {filterValue} ",
+        "added_filter_for_responses_where_answer_to_question": "Filter har lagts till för svar där svaret på fråga {questionIdx} är {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Lade till filter för svar där svar på fråga {questionIdx} är överhoppad",
         "aggregated": "Aggregerad",
         "all_responses_csv": "Alla svar (CSV)",
@@ -2166,7 +2166,7 @@
         "advanced_styling_field_description_size": "Beskrivningens teckenstorlek",
         "advanced_styling_field_description_size_description": "Ändrar storleken på beskrivningstexten.",
         "advanced_styling_field_description_weight": "Beskrivningens teckentjocklek",
-        "advanced_styling_field_description_weight_description": "Gör beskrivningstexten tunnare eller fetare.",
+        "advanced_styling_field_description_weight_description": "Gör beskrivningstexten ljusare eller fetare.",
         "advanced_styling_field_font_size": "Teckenstorlek",
         "advanced_styling_field_font_weight": "Teckentjocklek",
         "advanced_styling_field_headline_color": "Rubrikfärg",
@@ -2180,7 +2180,7 @@
         "advanced_styling_field_indicator_bg_description": "Färglägger den fyllda delen av stapeln.",
         "advanced_styling_field_input_border_radius_description": "Rundar av hörnen på inmatningsfält.",
         "advanced_styling_field_input_font_size_description": "Ändrar storleken på texten i inmatningsfält.",
-        "advanced_styling_field_input_height_description": "Styr minsta höjden på inmatningsfältet.",
+        "advanced_styling_field_input_height_description": "Styr minimihöjden på inmatningsfältet.",
         "advanced_styling_field_input_padding_x_description": "Lägger till utrymme till vänster och höger.",
         "advanced_styling_field_input_padding_y_description": "Lägger till utrymme upptill och nedtill.",
         "advanced_styling_field_input_placeholder_opacity_description": "Tonar ut platshållartexten.",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "Tack för att du delade din arbetsflödesidé med oss! Vi håller just nu på att designa den här funktionen och din feedback hjälper oss att bygga precis det du behöver.",
     "coming_soon_title": "Vi är nästan där!",
     "follow_up_label": "Är det något mer du vill lägga till?",
-    "follow_up_placeholder": "Vilka specifika uppgifter vill du automatisera? Finns det några verktyg eller integrationer du vill ha med?",
+    "follow_up_placeholder": "Vilka specifika uppgifter vill du automatisera? Några verktyg eller integrationer du vill ha med?",
     "generate_button": "Skapa arbetsflöde",
     "heading": "Vilket arbetsflöde vill du skapa?",
-    "placeholder": "Beskriv arbetsflödet du vill skapa...",
+    "placeholder": "Beskriv det arbetsflöde du vill skapa…",
     "subheading": "Skapa ditt arbetsflöde på några sekunder.",
     "submit_button": "Lägg till detaljer",
-    "thank_you_description": "Din input hjälper oss att bygga arbetsflödesfunktionen du faktiskt behöver. Vi håller dig uppdaterad om hur det går.",
+    "thank_you_description": "Din input hjälper oss att bygga arbetsflödesfunktionen du faktiskt behöver. Vi håller dig uppdaterad om våra framsteg.",
     "thank_you_title": "Tack för din feedback!"
   }
 }

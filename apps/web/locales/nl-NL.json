@@ -1828,7 +1828,7 @@
           "disable_single_use_link_modal_button": "Schakel links voor eenmalig gebruik uit",
           "disable_single_use_link_modal_description": "Als u links voor eenmalig gebruik hebt gedeeld, kunnen deelnemers niet langer op de enquête reageren.",
           "generate_and_download_links": "Genereer en download links",
-          "generate_links_error": "Er konden geen links voor eenmalig gebruik worden gegenereerd. Werk rechtstreeks met de API",
+          "generate_links_error": "Eenmalige links konden niet worden gegenereerd. Werk alstublieft direct met de API.",
           "multi_use_link": "Multifunctionele koppeling",
           "multi_use_link_description": "Verzamel meerdere reacties van anonieme respondenten met één link.",
           "multi_use_powers_other_channels_description": "Als u dit uitschakelt, worden deze andere distributiekanalen ook uitgeschakeld.",
@@ -1939,7 +1939,7 @@
         }
       },
       "summary": {
-        "added_filter_for_responses_where_answer_to_question": "Filter toegevoegd voor antwoorden waarbij het antwoord op vraag {questionIdx} {filterComboBoxValue} - {filterValue} is",
+        "added_filter_for_responses_where_answer_to_question": "Filter toegevoegd voor reacties waar het antwoord op vraag {questionIdx} {filterComboBoxValue} - {filterValue} is",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter toegevoegd voor antwoorden waarbij het antwoord op vraag {questionIdx} wordt overgeslagen",
         "aggregated": "Geaggregeerd",
         "all_responses_csv": "Alle reacties (CSV)",
@@ -2166,7 +2166,7 @@
         "advanced_styling_field_description_size": "Lettergrootte beschrijving",
         "advanced_styling_field_description_size_description": "Schaalt de beschrijvingstekst.",
         "advanced_styling_field_description_weight": "Letterdikte beschrijving",
-        "advanced_styling_field_description_weight_description": "Maakt beschrijvingstekst lichter of vetter.",
+        "advanced_styling_field_description_weight_description": "Maakt de beschrijvingstekst lichter of vetter.",
         "advanced_styling_field_font_size": "Lettergrootte",
         "advanced_styling_field_font_weight": "Letterdikte",
         "advanced_styling_field_headline_color": "Kopkleur",
@@ -2180,7 +2180,7 @@
         "advanced_styling_field_indicator_bg_description": "Kleurt het gevulde deel van de balk.",
         "advanced_styling_field_input_border_radius_description": "Rondt de invoerhoeken af.",
         "advanced_styling_field_input_font_size_description": "Schaalt de getypte tekst in invoervelden.",
-        "advanced_styling_field_input_height_description": "Bepaalt de min. hoogte van het invoerveld.",
+        "advanced_styling_field_input_height_description": "Bepaalt de minimale hoogte van het invoerveld.",
         "advanced_styling_field_input_padding_x_description": "Voegt ruimte toe aan de linker- en rechterkant.",
         "advanced_styling_field_input_padding_y_description": "Voegt ruimte toe aan de boven- en onderkant.",
         "advanced_styling_field_input_placeholder_opacity_description": "Vervaagt de tijdelijke aanwijzingstekst.",
@@ -3266,13 +3266,13 @@
     "coming_soon_description": "Bedankt voor het delen van je workflow-idee met ons! We zijn momenteel bezig met het ontwerpen van deze functie en jouw feedback helpt ons om precies te bouwen wat je nodig hebt.",
     "coming_soon_title": "We zijn er bijna!",
     "follow_up_label": "Is er nog iets dat je wilt toevoegen?",
-    "follow_up_placeholder": "Welke specifieke taken wil je automatiseren? Zijn er tools of integraties die je graag zou willen zien?",
+    "follow_up_placeholder": "Welke specifieke taken wil je automatiseren? Zijn er tools of integraties die je wilt meenemen?",
     "generate_button": "Genereer workflow",
     "heading": "Welke workflow wil je maken?",
-    "placeholder": "Beschrijf de workflow die je wilt genereren...",
+    "placeholder": "Beschrijf de workflow die je wilt genereren…",
     "subheading": "Genereer je workflow in enkele seconden.",
     "submit_button": "Voeg details toe",
-    "thank_you_description": "Jouw input helpt ons om de Workflows-functie te bouwen die je echt nodig hebt. We houden je op de hoogte van onze voortgang.",
+    "thank_you_description": "Jouw input helpt ons om de Workflows-functie te bouwen die jij echt nodig hebt. We houden je op de hoogte van onze voortgang.",
     "thank_you_title": "Bedankt voor je feedback!"
   }
 }
