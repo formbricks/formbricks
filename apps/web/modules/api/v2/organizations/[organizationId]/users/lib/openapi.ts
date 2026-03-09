@@ -17,7 +17,7 @@ export const getUsersEndpoint: ZodOpenApiOperationObject = {
     path: z.object({
       organizationId: ZOrganizationIdSchema,
     }),
-    query: ZGetUsersFilter.sourceType(),
+    query: ZGetUsersFilter,
   },
   tags: ["Organizations API - Users"],
   responses: {

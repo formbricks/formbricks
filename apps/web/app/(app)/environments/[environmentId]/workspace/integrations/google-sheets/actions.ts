@@ -17,7 +17,7 @@ const ZValidateGoogleSheetsConnectionAction = z.object({
 });
 
 export const validateGoogleSheetsConnectionAction = authenticatedActionClient
-  .schema(ZValidateGoogleSheetsConnectionAction)
+  .inputSchema(ZValidateGoogleSheetsConnectionAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -51,7 +51,7 @@ const ZGetSpreadsheetNameByIdAction = z.object({
 });
 
 export const getSpreadsheetNameByIdAction = authenticatedActionClient
-  .schema(ZGetSpreadsheetNameByIdAction)
+  .inputSchema(ZGetSpreadsheetNameByIdAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

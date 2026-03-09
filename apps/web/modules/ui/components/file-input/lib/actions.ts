@@ -8,7 +8,7 @@ const ZConvertHeicToJpegInput = z.object({
 });
 
 export const convertHeicToJpegAction = authenticatedActionClient
-  .schema(ZConvertHeicToJpegInput)
+  .inputSchema(ZConvertHeicToJpegInput)
   .action(async ({ parsedInput }) => {
     if (!parsedInput.file || !parsedInput.file.name.endsWith(".heic")) return parsedInput.file;
 

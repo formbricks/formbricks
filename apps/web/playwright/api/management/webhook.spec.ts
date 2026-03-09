@@ -64,7 +64,7 @@ test.describe("API Tests for Webhooks", () => {
       const webhookBody = {
         environmentId,
         name: "New Webhook",
-        url: "https://examplewebhook.com",
+        url: "https://example.com/webhook",
         source: "user",
         triggers: ["responseFinished"],
         surveyIds: [surveyId],
@@ -104,7 +104,7 @@ test.describe("API Tests for Webhooks", () => {
       const updatedBody = {
         environmentId,
         name: "Updated Webhook",
-        url: "https://updated-webhook-url.com",
+        url: "https://example.com/updated-webhook",
         source: "zapier",
         triggers: ["responseCreated"],
         surveyIds: [surveyId],

@@ -1,15 +1,12 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { BILLING_LIMITS, PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@/lib/constants";
-import { env } from "@/lib/env";
+import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
-});
+import { getStripeClient } from "./stripe-client";
 
 export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
+  const stripe = getStripeClient();
   const checkoutSession = event.data.object as Stripe.Checkout.Session;
   if (!checkoutSession.metadata?.organizationId)
     throw new ResourceNotFoundError("No organizationId found in checkout session", checkoutSession.id);

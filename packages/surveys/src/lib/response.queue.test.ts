@@ -6,10 +6,12 @@ import { ResponseQueue, delay } from "./response-queue";
 import { SurveyState } from "./survey-state";
 
 vi.mock("./api-client", () => ({
-  ApiClient: vi.fn().mockImplementation(() => ({
-    updateResponse: vi.fn(),
-    createResponse: vi.fn(),
-  })),
+  ApiClient: vi.fn(function ApiClient() {
+    return {
+      updateResponse: vi.fn(),
+      createResponse: vi.fn(),
+    };
+  }),
 }));
 
 const getSurveyState: () => SurveyState = () => ({

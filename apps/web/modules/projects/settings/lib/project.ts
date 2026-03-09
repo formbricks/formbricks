@@ -64,7 +64,7 @@ export const updateProject = async (
     return project;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logger.error(error.errors, "Error updating project");
+      logger.error(error.issues, "Error updating project");
     }
     throw new ValidationError("Data validation of project failed");
   }

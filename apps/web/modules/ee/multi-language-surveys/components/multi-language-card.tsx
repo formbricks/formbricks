@@ -56,7 +56,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   const { t } = useTranslation();
   const environmentId = localSurvey.environmentId;
   const open = activeElementId === "multiLanguage";
-  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
+  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",
     open: false,
@@ -188,7 +188,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <p>
           <Languages className="h-6 w-6 rounded-full bg-indigo-500 p-1 text-white" />
@@ -250,19 +250,15 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               />
             ) : (
               <>
-                {projectLanguages.length <= 1 && (
-                  <div className="mb-4 text-sm text-slate-500 italic">
-                    {projectLanguages.length === 0
-                      ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
-                      : t(
-                          "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_workspace_to_work_with_translations"
-                        )}
+                {projectLanguages.length === 0 && (
+                  <div className="mb-4 text-sm italic text-slate-500">
+                    {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
                   </div>
                 )}
-                {projectLanguages.length > 1 && (
+                {projectLanguages.length > 0 && (
                   <div className="space-y-6">
                     {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-                      <div className="text-sm text-slate-500 italic">
+                      <div className="text-sm italic text-slate-500">
                         {t("environments.surveys.edit.switch_multi_language_on_to_get_started")}
                       </div>
                     ) : null}
@@ -276,7 +272,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                           setConfirmationModalInfo={setConfirmationModalInfo}
                           locale={locale}
                         />
-                        {defaultLanguage ? (
+                        {defaultLanguage && projectLanguages.length > 1 ? (
                           <SecondaryLanguageSelect
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}

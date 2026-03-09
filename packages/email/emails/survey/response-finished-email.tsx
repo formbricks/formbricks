@@ -90,7 +90,7 @@ export function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 font-medium break-words whitespace-pre-wrap">
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-medium">
                         {variableResponse}
                       </Text>
                     </Column>
@@ -110,7 +110,7 @@ export function ResponseFinishedEmail({
                       <Text className="mb-2 flex items-center gap-2 text-sm">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 text-sm break-words whitespace-pre-wrap">
+                      <Text className="mt-0 whitespace-pre-wrap break-words text-sm">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>

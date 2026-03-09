@@ -75,7 +75,7 @@ export const MultipleChoiceSummary = ({
           elementSummary.type === "multipleChoiceMulti" ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
               <InboxIcon className="mr-2 h-4 w-4" />
-              {`${elementSummary.selectionCount} ${t("common.selections")}`}
+              {t("common.count_selections", { count: elementSummary.selectionCount })}
             </div>
           ) : undefined
         }
@@ -110,7 +110,7 @@ export const MultipleChoiceSummary = ({
                     </div>
                     <div className="flex w-full space-x-2">
                       <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
-                        {result.count} {result.count === 1 ? t("common.selection") : t("common.selections")}
+                        {t("common.count_selections", { count: result.count })}
                       </p>
                       <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
                         {convertFloatToNDecimal(result.percentage, 2)}%

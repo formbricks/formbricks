@@ -42,7 +42,7 @@ export const checkMultiLanguagePermission = async (organizationId: string) => {
   }
 };
 
-export const createLanguageAction = authenticatedActionClient.schema(ZCreateLanguageAction).action(
+export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreateLanguageAction).action(
   withAuditLogging(
     "created",
     "language",
@@ -82,7 +82,7 @@ const ZDeleteLanguageAction = z.object({
   projectId: ZId,
 });
 
-export const deleteLanguageAction = authenticatedActionClient.schema(ZDeleteLanguageAction).action(
+export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDeleteLanguageAction).action(
   withAuditLogging(
     "deleted",
     "language",
@@ -126,7 +126,7 @@ const ZGetSurveysUsingGivenLanguageAction = z.object({
 });
 
 export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
-  .schema(ZGetSurveysUsingGivenLanguageAction)
+  .inputSchema(ZGetSurveysUsingGivenLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromLanguageId(parsedInput.languageId);
 
@@ -156,7 +156,7 @@ const ZUpdateLanguageAction = z.object({
   languageInput: ZLanguageInput,
 });
 
-export const updateLanguageAction = authenticatedActionClient.schema(ZUpdateLanguageAction).action(
+export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdateLanguageAction).action(
   withAuditLogging(
     "updated",
     "language",

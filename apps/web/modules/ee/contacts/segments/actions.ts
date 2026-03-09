@@ -46,7 +46,7 @@ const checkAdvancedTargetingPermission = async (organizationId: string) => {
   }
 };
 
-export const createSegmentAction = authenticatedActionClient.schema(ZSegmentCreateInput).action(
+export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmentCreateInput).action(
   withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
     if (parsedInput.surveyId) {
       const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
@@ -103,7 +103,7 @@ const ZUpdateSegmentAction = z.object({
   data: ZSegmentUpdateInput,
 });
 
-export const updateSegmentAction = authenticatedActionClient.schema(ZUpdateSegmentAction).action(
+export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdateSegmentAction).action(
   withAuditLogging(
     "updated",
     "segment",
@@ -159,7 +159,7 @@ const ZLoadNewSegmentAction = z.object({
 });
 
 export const loadNewSegmentAction = authenticatedActionClient
-  .schema(ZLoadNewSegmentAction)
+  .inputSchema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
     const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
     const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
@@ -195,7 +195,7 @@ const ZCloneSegmentAction = z.object({
   surveyId: ZId,
 });
 
-export const cloneSegmentAction = authenticatedActionClient.schema(ZCloneSegmentAction).action(
+export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSegmentAction).action(
   withAuditLogging(
     "created",
     "segment",
@@ -241,7 +241,7 @@ const ZDeleteSegmentAction = z.object({
   segmentId: ZId,
 });
 
-export const deleteSegmentAction = authenticatedActionClient.schema(ZDeleteSegmentAction).action(
+export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDeleteSegmentAction).action(
   withAuditLogging("deleted", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
 
@@ -275,42 +275,50 @@ const ZResetSegmentFiltersAction = z.object({
   surveyId: ZId,
 });
 
-export const resetSegmentFiltersAction = authenticatedActionClient.schema(ZResetSegmentFiltersAction).action(
-  withAuditLogging(
-    "updated",
-    "segment",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+export const resetSegmentFiltersAction = authenticatedActionClient
+  .inputSchema(ZResetSegmentFiltersAction)
+  .action(
+    withAuditLogging(
+      "updated",
+      "segment",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          },
-        ],
-      });
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+            {
+              type: "projectTeam",
+              minPermission: "readWrite",
+              projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            },
+          ],
+        });
 
-      await checkAdvancedTargetingPermission(organizationId);
+        await checkAdvancedTargetingPermission(organizationId);
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
+        ctx.auditLoggingCtx.organizationId = organizationId;
 
-      const result = await resetSegmentInSurvey(parsedInput.surveyId);
+        const result = await resetSegmentInSurvey(parsedInput.surveyId);
 
-      ctx.auditLoggingCtx.newObject = result;
-      ctx.auditLoggingCtx.segmentId = result.id;
+        ctx.auditLoggingCtx.newObject = result;
+        ctx.auditLoggingCtx.segmentId = result.id;
 
-      return result;
-    }
-  )
-);
+        return result;
+      }
+    )
+  );
 
 const ZGetDistinctAttributeValuesAction = z.object({
   environmentId: ZId,
@@ -318,7 +326,7 @@ const ZGetDistinctAttributeValuesAction = z.object({
 });
 
 export const getDistinctAttributeValuesAction = authenticatedActionClient
-  .schema(ZGetDistinctAttributeValuesAction)
+  .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

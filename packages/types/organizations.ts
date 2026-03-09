@@ -20,9 +20,9 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  plan: ZOrganizationBillingPlan.default("free"),
-  period: ZOrganizationBillingPeriod.default("monthly"),
-  limits: ZOrganizationBillingPlanLimits.default({
+  plan: ZOrganizationBillingPlan.prefault("free"),
+  period: ZOrganizationBillingPeriod.prefault("monthly"),
+  limits: ZOrganizationBillingPlanLimits.prefault({
     projects: 3,
     monthly: {
       responses: 1500,
@@ -42,19 +42,24 @@ export const ZOrganizationWhitelabel = z.object({
 export type TOrganizationWhitelabel = z.infer<typeof ZOrganizationWhitelabel>;
 
 export const ZOrganization = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  name: z.string({ message: "Organization name is required" }).trim().min(1, {
-    message: "Organization name must be at least 1 character long",
-  }),
+  name: z
+    .string({
+      error: "Organization name is required",
+    })
+    .trim()
+    .min(1, {
+      error: "Organization name must be at least 1 character long",
+    }),
   whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling,
-  isAIEnabled: z.boolean().default(false),
+  isAIEnabled: z.boolean().prefault(false),
 });
 
 export const ZOrganizationCreateInput = z.object({
-  id: z.string().cuid2().optional(),
+  id: z.cuid2().optional(),
   name: z.string(),
 });
 

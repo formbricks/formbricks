@@ -15,7 +15,7 @@ const ZUpdateOrganizationFaviconUrlAction = z.object({
 });
 
 export const updateOrganizationFaviconUrlAction = authenticatedActionClient
-  .schema(ZUpdateOrganizationFaviconUrlAction)
+  .inputSchema(ZUpdateOrganizationFaviconUrlAction)
   .action(
     withAuditLogging(
       "updated",
@@ -55,7 +55,7 @@ const ZRemoveOrganizationFaviconUrlAction = z.object({
 });
 
 export const removeOrganizationFaviconUrlAction = authenticatedActionClient
-  .schema(ZRemoveOrganizationFaviconUrlAction)
+  .inputSchema(ZRemoveOrganizationFaviconUrlAction)
   .action(
     withAuditLogging(
       "updated",

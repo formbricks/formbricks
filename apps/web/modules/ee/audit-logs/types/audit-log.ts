@@ -73,12 +73,12 @@ export const ZAuditLogEventSchema = z.object({
     type: ZAuditTarget,
   }),
   status: ZAuditStatus,
-  timestamp: z.string().datetime(),
+  timestamp: z.iso.datetime(),
   organizationId: z.string(),
   ipAddress: z.string().optional(), // Not using the .ip() here because if we don't enabled it we want to put UNKNOWN_DATA string, to keep the same pattern as the other fields
-  changes: z.record(z.any()).optional(),
+  changes: z.record(z.string(), z.any()).optional(),
   eventId: z.string().optional(),
-  apiUrl: z.string().url().optional(),
+  apiUrl: z.url().optional(),
 });
 
 export type TAuditLogEvent = z.infer<typeof ZAuditLogEventSchema>;

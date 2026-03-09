@@ -15,7 +15,7 @@ const ZResendVerificationEmailAction = z.object({
   email: ZUserEmail,
 });
 
-export const resendVerificationEmailAction = actionClient.schema(ZResendVerificationEmailAction).action(
+export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVerificationEmailAction).action(
   withAuditLogging(
     "verificationEmailSent",
     "user",

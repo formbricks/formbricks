@@ -177,7 +177,7 @@ async function handlePostUserCreation(
   }
 }
 
-export const createUserAction = actionClient.schema(ZCreateUserAction).action(
+export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
   withAuditLogging(
     "created",
     "user",
