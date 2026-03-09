@@ -3263,16 +3263,16 @@
     "usability_score_name": "Rendszer-használhatósági pontszám (SUS)"
   },
   "workflows": {
-    "coming_soon_description": "Köszönjük, hogy megosztotta velünk a munkafolyamat ötletét! Jelenleg ezen a funkción dolgozunk, és a visszajelzése segít nekünk pontosan azt megépíteni, amire szüksége van.",
-    "coming_soon_title": "Majdnem kész vagyunk!",
-    "follow_up_label": "Van még valami, amit hozzá szeretne tenni?",
-    "follow_up_placeholder": "Milyen konkrét feladatokat szeretne automatizálni? Vannak olyan eszközök vagy integrációk, amelyeket szeretne belevenni?",
-    "generate_button": "Munkafolyamat generálása",
+    "coming_soon_description": "Köszönjük, hogy megosztotta velünk a munkafolyamatra vonatkozó ötletét! Jelenleg a funkció kialakításán dolgozunk, és a visszajelzése segít nekünk abban, hogy pontosan azt alkossuk meg, amire szüksége van.",
+    "coming_soon_title": "Már majdnem kész vagyunk!",
+    "follow_up_label": "Van még bármi egyéb, amit hozzá szeretne fűzni?",
+    "follow_up_placeholder": "Milyen konkrét feladatokat szeretne automatizálni? Van olyan eszköz vagy integráció, amelyet szívesen látna a rendszerben?",
+    "generate_button": "Munkafolyamat előállítása",
     "heading": "Milyen munkafolyamatot szeretne létrehozni?",
-    "placeholder": "Írja le a munkafolyamatot, amelyet generálni szeretne...",
-    "subheading": "Generálja le a munkafolyamatát másodpercek alatt.",
+    "placeholder": "Mutassa be az előállítani kívánt munkafolyamatot…",
+    "subheading": "Munkafolyamat előállítása másodpercek alatt.",
     "submit_button": "Részletek hozzáadása",
-    "thank_you_description": "A visszajelzése segít nekünk megépíteni azt a munkafolyamatok funkciót, amelyre tényleg szüksége van. Folyamatosan tájékoztatjuk az előrehaladásról.",
+    "thank_you_description": "A visszajelzése segít nekünk abban, hogy olyan Munkafolyamatok funkciót alakítsunk ki, amelyre valóban szüksége van. Folyamatosan tájékoztatni fogjuk Önt a fejlesztés előrehaladásáról.",
     "thank_you_title": "Köszönjük a visszajelzését!"
   }
 }
