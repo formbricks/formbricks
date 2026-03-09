@@ -1,7 +1,6 @@
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/feature-access";
-import type { TOrganizationPermissionContext } from "@/modules/billing/lib/organization-permission-context";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -12,17 +11,13 @@ import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils
  * @throws {OperationNotAllowedError} If spam protection is not enabled for the organization.
  */
 export const checkSpamProtectionPermission = async (organizationId: string): Promise<void> => {
-  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled({ organizationId });
+  const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationId);
   if (!isSpamProtectionEnabled) {
     throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
   }
 };
 
-export const getExternalUrlsPermission = async (
-  context: TOrganizationPermissionContext
-): Promise<boolean> => {
-  const { organizationId } = context;
-
+export const getExternalUrlsPermission = async (organizationId: string): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
     const [canUseCustomRedirectUrl, canUseCustomLinksInSurveys] = await Promise.all([
       hasCloudEntitlementWithLicenseGuard(

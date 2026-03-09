@@ -1,6 +1,5 @@
 import "server-only";
 import { AUDIT_LOG_ENABLED, IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED } from "@/lib/constants";
-import type { TOrganizationPermissionContext } from "@/modules/billing/lib/organization-permission-context";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { hasOrganizationEntitlementWithLicenseGuard } from "@/modules/entitlements/lib/checks";
@@ -11,11 +10,9 @@ import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 // On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
 // On Self-hosted: requires active license and feature enabled
 const getFeaturePermission = async (
-  context: TOrganizationPermissionContext,
+  organizationId: string,
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "removeBranding" | "whitelabel">
 ): Promise<boolean> => {
-  const { organizationId } = context;
-
   if (IS_FORMBRICKS_CLOUD) {
     return hasOrganizationEntitlementWithLicenseGuard(
       organizationId,
@@ -31,11 +28,9 @@ const getFeaturePermission = async (
 // On Cloud with organizationId: requires Stripe entitlement + enterprise license guard
 // On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
-  context: TOrganizationPermissionContext,
+  organizationId: string,
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
 ): Promise<boolean> => {
-  const { organizationId } = context;
-
   if (IS_FORMBRICKS_CLOUD) {
     const featureLookupKeyMap: Record<string, string> = {
       accessControl: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.RBAC,
@@ -70,14 +65,12 @@ const getSpecificFeatureFlag = async (
   return typeof licenseFeatures[featureKey] === "boolean" ? licenseFeatures[featureKey] : false;
 };
 
-export const getRemoveBrandingPermission = async (
-  context: TOrganizationPermissionContext
-): Promise<boolean> => {
-  return getFeaturePermission(context, "removeBranding");
+export const getRemoveBrandingPermission = async (organizationId: string): Promise<boolean> => {
+  return getFeaturePermission(organizationId, "removeBranding");
 };
 
-export const getWhiteLabelPermission = async (context: TOrganizationPermissionContext): Promise<boolean> => {
-  return getFeaturePermission(context, "whitelabel");
+export const getWhiteLabelPermission = async (organizationId: string): Promise<boolean> => {
+  return getFeaturePermission(organizationId, "whitelabel");
 };
 
 export const getBiggerUploadFileSizePermission = async (organizationId: string): Promise<boolean> => {
@@ -112,8 +105,8 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
 };
 
-export const getIsQuotasEnabled = async (context: TOrganizationPermissionContext): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(context, "quotas");
+export const getIsQuotasEnabled = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "quotas");
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
@@ -130,10 +123,7 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   return licenseFeatures.sso && licenseFeatures.saml;
 };
 
-export const getIsSpamProtectionEnabled = async (
-  context: TOrganizationPermissionContext
-): Promise<boolean> => {
-  const { organizationId } = context;
+export const getIsSpamProtectionEnabled = async (organizationId: string): Promise<boolean> => {
   if (!IS_RECAPTCHA_CONFIGURED) return false;
 
   if (IS_FORMBRICKS_CLOUD) {
@@ -147,16 +137,12 @@ export const getIsSpamProtectionEnabled = async (
   return license.active && !!license.features?.spamProtection;
 };
 
-export const getMultiLanguagePermission = async (
-  context: TOrganizationPermissionContext
-): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(context, "multiLanguageSurveys");
+export const getMultiLanguagePermission = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "multiLanguageSurveys");
 };
 
-export const getAccessControlPermission = async (
-  context: TOrganizationPermissionContext
-): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(context, "accessControl");
+export const getAccessControlPermission = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "accessControl");
 };
 
 export const getOrganizationProjectsLimit = async (organizationId: string): Promise<number> => {

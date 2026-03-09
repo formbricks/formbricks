@@ -1,5 +1,4 @@
 import "server-only";
-import { z } from "zod";
 import { logger } from "@formbricks/logger";
 
 const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
@@ -53,15 +52,6 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   SPAM_PROTECTION: "spam-protection",
   MULTI_LANGUAGE_SURVEYS: "multi-language-surveys",
 } as const;
-
-export const ZCloudUpgradePriceLookupKey = z.enum([
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_MONTHLY,
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_YEARLY,
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_MONTHLY,
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_YEARLY,
-]);
-
-export type TCloudUpgradePriceLookupKey = z.infer<typeof ZCloudUpgradePriceLookupKey>;
 
 export const CLOUD_PLAN_LEVEL = {
   hobby: 0,

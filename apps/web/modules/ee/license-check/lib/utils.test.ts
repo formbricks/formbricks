@@ -107,7 +107,7 @@ describe("License Utils", () => {
         features: { ...defaultFeatures, removeBranding: true },
       });
 
-      const result = await getRemoveBrandingPermission({ organizationId: "org_1" });
+      const result = await getRemoveBrandingPermission("org_1");
 
       expect(result).toBe(true);
     });
@@ -118,7 +118,7 @@ describe("License Utils", () => {
         features: { ...defaultFeatures, whitelabel: true },
       });
 
-      const result = await getWhiteLabelPermission({ organizationId: "org_1" });
+      const result = await getWhiteLabelPermission("org_1");
 
       expect(result).toBe(true);
     });
@@ -127,7 +127,7 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getRemoveBrandingPermission({ organizationId: "org_1" });
+      const result = await getRemoveBrandingPermission("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
@@ -140,7 +140,7 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getWhiteLabelPermission({ organizationId: "org_1" });
+      const result = await getWhiteLabelPermission("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
@@ -155,7 +155,7 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getAccessControlPermission({ organizationId: "org_1" });
+      const result = await getAccessControlPermission("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
@@ -168,7 +168,7 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getMultiLanguagePermission({ organizationId: "org_1" });
+      const result = await getMultiLanguagePermission("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
@@ -181,7 +181,7 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getIsQuotasEnabled({ organizationId: "org_1" });
+      const result = await getIsQuotasEnabled("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
@@ -203,9 +203,9 @@ describe("License Utils", () => {
       });
 
       const [access, multiLanguage, quotas] = await Promise.all([
-        getAccessControlPermission({ organizationId: "org_1" }),
-        getMultiLanguagePermission({ organizationId: "org_1" }),
-        getIsQuotasEnabled({ organizationId: "org_1" }),
+        getAccessControlPermission("org_1"),
+        getMultiLanguagePermission("org_1"),
+        getIsQuotasEnabled("org_1"),
       ]);
 
       expect(access).toBe(true);
@@ -348,7 +348,7 @@ describe("License Utils", () => {
     test("returns false when recaptcha is not configured", async () => {
       vi.mocked(constants).IS_RECAPTCHA_CONFIGURED = false;
 
-      const result = await getIsSpamProtectionEnabled({ organizationId: "org_1" });
+      const result = await getIsSpamProtectionEnabled("org_1");
 
       expect(result).toBe(false);
       expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
@@ -358,7 +358,7 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getIsSpamProtectionEnabled({ organizationId: "org_1" });
+      const result = await getIsSpamProtectionEnabled("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
@@ -374,7 +374,7 @@ describe("License Utils", () => {
         features: { ...defaultFeatures, spamProtection: true },
       });
 
-      const result = await getIsSpamProtectionEnabled({ organizationId: "org_1" });
+      const result = await getIsSpamProtectionEnabled("org_1");
 
       expect(result).toBe(true);
     });

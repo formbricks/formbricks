@@ -61,9 +61,9 @@ const mapBillingRecord = (billing: TOrganizationBillingRecord | null): TOrganiza
 
   return {
     stripeCustomerId: billing.stripeCustomerId,
-    limits: billing.limits as TOrganizationBilling["limits"],
+    limits: billing.limits,
     periodStart: billing.periodStart,
-    ...(billing.stripe !== null ? { stripe: billing.stripe as TOrganizationBilling["stripe"] } : {}),
+    ...(billing.stripe == null ? {} : { stripe: billing.stripe }),
   };
 };
 
