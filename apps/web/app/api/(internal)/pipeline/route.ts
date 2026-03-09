@@ -291,10 +291,12 @@ export const POST = async (request: Request) => {
     });
   }
   if (event === "responseCreated") {
-    await recordResponseCreatedMeterEvent({
+    recordResponseCreatedMeterEvent({
       stripeCustomerId: organization.billing.stripeCustomerId,
       responseId: response.id,
       createdAt: response.createdAt,
+    }).catch((error) => {
+      logger.error({ error, responseId: response.id }, "Failed to record response meter event");
     });
 
     // Send telemetry events
