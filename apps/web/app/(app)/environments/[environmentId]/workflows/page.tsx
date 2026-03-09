@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
-import { getCloudBillingDisplayContext } from "@/modules/billing/lib/cloud-billing-display";
+import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { WorkflowsPage } from "./components/workflows-page";
 

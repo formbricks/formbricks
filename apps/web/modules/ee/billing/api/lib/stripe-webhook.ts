@@ -4,7 +4,7 @@ import {
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
-} from "@/modules/billing/lib/organization-billing";
+} from "@/modules/ee/billing/lib/organization-billing";
 import { getStripeClient, getStripeWebhookSecret } from "./stripe-client";
 
 const relevantEvents = new Set([

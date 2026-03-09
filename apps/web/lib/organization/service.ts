@@ -21,7 +21,7 @@ import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import {
   deleteStripeCustomer,
   ensureCloudStripeSetupForOrganization,
-} from "@/modules/billing/lib/organization-billing";
+} from "@/modules/ee/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
 export const select = {

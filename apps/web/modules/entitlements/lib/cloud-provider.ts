@@ -1,6 +1,6 @@
 import "server-only";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { type TOrganizationEntitlementsContext, isEntitlementFeature } from "./types";
 

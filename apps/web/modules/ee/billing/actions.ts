@@ -9,11 +9,11 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
-import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
-import { stripeClient } from "@/modules/billing/lib/stripe-client";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
+import { stripeClient } from "@/modules/ee/billing/lib/stripe-client";
 
 const ZManageSubscriptionAction = z.object({
   environmentId: ZId,

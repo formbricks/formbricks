@@ -5,7 +5,7 @@ import { env } from "@/lib/env";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getCloudBillingDisplayContext } from "@/modules/billing/lib/cloud-billing-display";
+import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";

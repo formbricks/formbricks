@@ -1,11 +1,11 @@
 import Stripe from "stripe";
 import { describe, expect, test } from "vitest";
-import { getCloudPlanFromProduct } from "./stripe-catalog";
+import { getCloudPlanFromProduct } from "./stripe-plan";
 
 const product = (input: Partial<Stripe.Product> & Pick<Stripe.Product, "id">): Stripe.Product =>
   input as Stripe.Product;
 
-describe("stripe catalog mapping", () => {
+describe("stripe-plan", () => {
   test("maps known product metadata values to cloud plans", () => {
     expect(
       getCloudPlanFromProduct(product({ id: "prod_hobby", metadata: { formbricks_plan: "hobby" } }))

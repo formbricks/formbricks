@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getCloudOrganizationEntitlementsContext } from "./cloud-provider";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/modules/billing/lib/organization-billing", () => ({
+vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
 }));
 

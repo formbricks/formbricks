@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/billing/lib/organization-billing";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import {
   getExistingContactResponse,
@@ -16,7 +16,7 @@ import {
 } from "./data";
 
 // Mock dependencies
-vi.mock("@/modules/billing/lib/organization-billing", () => ({
+vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
 }));
 

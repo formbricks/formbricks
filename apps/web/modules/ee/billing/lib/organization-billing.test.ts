@@ -74,8 +74,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("./stripe-catalog", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./stripe-catalog")>();
+vi.mock("./stripe-plan", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./stripe-plan")>();
   return {
     ...actual,
     getCloudPlanFromProduct: mocks.getCloudPlanFromProduct,
