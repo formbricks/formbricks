@@ -13,14 +13,15 @@ export type TImportResult = { successes: number; failures: number; skipped: numb
 const processBatch = async (
   responses: Awaited<ReturnType<typeof getResponses>>,
   survey: TSurvey,
-  mappings: TConnectorFormbricksMapping[]
+  mappings: TConnectorFormbricksMapping[],
+  tenantId: string
 ): Promise<TImportResult> => {
   let successes = 0;
   let failures = 0;
   const expectedRecords = responses.length * mappings.length;
 
   const allRecords = responses.flatMap((response) =>
-    transformResponseToFeedbackRecords(response, survey, mappings)
+    transformResponseToFeedbackRecords(response, survey, mappings, tenantId)
   );
 
   if (allRecords.length > 0) {
@@ -49,7 +50,12 @@ export const importHistoricalResponses = async (
     const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset);
     if (responses.length === 0) break;
 
-    const batch = await processBatch(responses, survey, connector.formbricksMappings);
+    const batch = await processBatch(
+      responses,
+      survey,
+      connector.formbricksMappings,
+      connector.environmentId
+    );
     successes += batch.successes;
     failures += batch.failures;
     skipped += batch.skipped;

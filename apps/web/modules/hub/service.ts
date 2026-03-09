@@ -2,7 +2,12 @@ import "server-only";
 import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { getHubClient } from "./hub-client";
-import type { FeedbackRecordCreateParams, FeedbackRecordData } from "./types";
+import type {
+  FeedbackRecordCreateParams,
+  FeedbackRecordData,
+  FeedbackRecordListParams,
+  FeedbackRecordListResponse,
+} from "./types";
 
 export type CreateFeedbackRecordResult = {
   data: FeedbackRecordData | null;
@@ -38,6 +43,32 @@ export const createFeedbackRecord = async (
   } catch (err) {
     logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
     return createResultFromError(err);
+  }
+};
+
+export type ListFeedbackRecordsResult = {
+  data: FeedbackRecordListResponse | null;
+  error: { status: number; message: string; detail: string } | null;
+};
+
+/**
+ * List feedback records from the Hub with optional filters and pagination.
+ */
+export const listFeedbackRecords = async (
+  params?: FeedbackRecordListParams
+): Promise<ListFeedbackRecordsResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+  try {
+    const data = await client.feedbackRecords.list(params);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err }, "Hub: listFeedbackRecords failed");
+    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const message = err instanceof Error ? err.message : String(err);
+    return { data: null, error: { status, message, detail: message } };
   }
 };
 

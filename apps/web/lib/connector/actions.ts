@@ -25,6 +25,9 @@ import {
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
+import { getTranslate } from "@/lingodotdev/server";
+import { listFeedbackRecords } from "@/modules/hub/service";
+import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
 import { importHistoricalResponses } from "./import";
 import {
@@ -460,5 +463,63 @@ export const importCsvDataAction = authenticatedActionClient
       }
 
       return result;
+    }
+  );
+
+const ZListFeedbackRecordsAction = z.object({
+  environmentId: ZId,
+  limit: z.number().min(1).max(1000).optional(),
+  offset: z.number().min(0).optional(),
+  sourceType: z.string().optional(),
+  fieldType: z.string().optional(),
+  since: z.string().optional(),
+  until: z.string().optional(),
+});
+
+export const listFeedbackRecordsAction = authenticatedActionClient
+  .schema(ZListFeedbackRecordsAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZListFeedbackRecordsAction>;
+    }): Promise<FeedbackRecordListResponse> => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "read",
+            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          },
+        ],
+      });
+
+      const params: FeedbackRecordListParams = {
+        tenant_id: parsedInput.environmentId,
+        limit: parsedInput.limit ?? 50,
+        offset: parsedInput.offset ?? 0,
+      };
+      if (parsedInput.sourceType) params.source_type = parsedInput.sourceType;
+      if (parsedInput.fieldType) params.field_type = parsedInput.fieldType;
+      if (parsedInput.since) params.since = parsedInput.since;
+      if (parsedInput.until) params.until = parsedInput.until;
+
+      const result = await listFeedbackRecords(params);
+      if (result.error || !result.data) {
+        logger.warn({ error: result.error }, "Failed to list feedback records");
+        const t = await getTranslate();
+        throw new Error(result.error?.message ?? t("environments.unify.failed_to_load_feedback_records"));
+      }
+
+      return result.data;
     }
   );

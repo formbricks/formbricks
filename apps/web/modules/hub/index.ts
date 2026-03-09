@@ -1,3 +1,14 @@
 export { getHubClient } from "./hub-client";
-export { createFeedbackRecord, createFeedbackRecordsBatch, type CreateFeedbackRecordResult } from "./service";
-export type { FeedbackRecordCreateParams, FeedbackRecordData } from "./types";
+export {
+  createFeedbackRecord,
+  createFeedbackRecordsBatch,
+  listFeedbackRecords,
+  type CreateFeedbackRecordResult,
+  type ListFeedbackRecordsResult,
+} from "./service";
+export type {
+  FeedbackRecordCreateParams,
+  FeedbackRecordData,
+  FeedbackRecordListParams,
+  FeedbackRecordListResponse,
+} from "./types";
