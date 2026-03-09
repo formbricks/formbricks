@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createFeedbackRecord, createFeedbackRecordsBatch } from "./service";
+import { createFeedbackRecord, createFeedbackRecordsBatch, listFeedbackRecords } from "./service";
 import type { FeedbackRecordCreateParams } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
@@ -62,6 +62,62 @@ describe("hub service", () => {
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ message: "Network error" });
+    });
+  });
+
+  describe("listFeedbackRecords", () => {
+    test("returns error result when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await listFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({
+        status: 0,
+        message: "HUB_API_KEY is not set; Hub integration is disabled.",
+      });
+    });
+
+    test("returns data when client.list succeeds", async () => {
+      const listResponse = {
+        data: [{ id: "rec-1", field_id: "el-1", field_type: "rating" }],
+        total: 1,
+        limit: 50,
+        offset: 0,
+      };
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { list: vi.fn().mockResolvedValue(listResponse) },
+      } as any);
+
+      const result = await listFeedbackRecords({ tenant_id: "env-1", limit: 50, offset: 0 });
+
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual(listResponse);
+    });
+
+    test("returns error result when client.list throws", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { list: vi.fn().mockRejectedValue(new Error("Network error")) },
+      } as any);
+
+      const result = await listFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: "Network error" });
+    });
+
+    test("returns data when called without params", async () => {
+      const listResponse = { data: [], total: 0, limit: 50, offset: 0 };
+      const listFn = vi.fn().mockResolvedValue(listResponse);
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { list: listFn },
+      } as any);
+
+      const result = await listFeedbackRecords();
+
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual(listResponse);
+      expect(listFn).toHaveBeenCalledWith(undefined);
     });
   });
 
