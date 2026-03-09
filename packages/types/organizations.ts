@@ -44,7 +44,7 @@ export const ZOrganizationBilling = z.object({
       responses: 1500,
     },
   }),
-  periodStart: z.date(),
+  usageCycleAnchor: z.date().nullable(),
   stripe: ZOrganizationStripeBilling.optional(),
 });
 

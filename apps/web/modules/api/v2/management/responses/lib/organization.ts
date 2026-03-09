@@ -2,7 +2,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
-import { getBillingPeriodStartDate } from "@/lib/utils/billing";
+import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) => {
   try {
@@ -47,7 +47,7 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
           select: {
             stripeCustomerId: true,
             limits: true,
-            periodStart: true,
+            usageCycleAnchor: true,
             stripe: true,
           },
         },
@@ -61,7 +61,7 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
     return ok({
       stripeCustomerId: organization.billing.stripeCustomerId,
       limits: organization.billing.limits as TOrganizationBilling["limits"],
-      periodStart: organization.billing.periodStart,
+      usageCycleAnchor: organization.billing.usageCycleAnchor,
       ...(organization.billing.stripe === null ? {} : { stripe: organization.billing.stripe }),
     });
   } catch (error) {
@@ -116,8 +116,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
       return err(billing.error);
     }
 
-    // Determine the start date based on the plan type
-    const startDate = getBillingPeriodStartDate(billing.data);
+    const usageCycleWindow = getBillingUsageCycleWindow(billing.data);
 
     // Get all environment IDs for the organization
     const environmentIdsResult = await getAllEnvironmentsFromOrganizationId(organizationId);
@@ -133,7 +132,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
       where: {
         AND: [
           { survey: { environmentId: { in: environmentIdsResult.data } } },
-          { createdAt: { gte: startDate } },
+          { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
         ],
       },
     });

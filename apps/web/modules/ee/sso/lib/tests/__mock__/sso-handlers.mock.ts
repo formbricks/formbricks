@@ -53,7 +53,7 @@ export const mockOrganization: TOrganization = {
   billing: {
     stripeCustomerId: null,
     limits: { monthly: { responses: null }, projects: null },
-    periodStart: new Date(),
+    usageCycleAnchor: new Date(),
   },
   createdAt: new Date(),
   updatedAt: new Date(),

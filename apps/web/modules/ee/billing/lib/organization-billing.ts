@@ -19,7 +19,7 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "pas
 const ORGANIZATION_BILLING_SELECT = {
   stripeCustomerId: true,
   limits: true,
-  periodStart: true,
+  usageCycleAnchor: true,
   stripe: true,
 } satisfies Prisma.OrganizationBillingSelect;
 
@@ -41,7 +41,7 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     },
   },
   stripeCustomerId: null,
-  periodStart: new Date(),
+  usageCycleAnchor: null,
 });
 
 const mapBillingRecord = (billing: TOrganizationBillingRecord | null): TOrganizationBilling | null => {
@@ -52,7 +52,7 @@ const mapBillingRecord = (billing: TOrganizationBillingRecord | null): TOrganiza
   return {
     stripeCustomerId: billing.stripeCustomerId,
     limits: billing.limits,
-    periodStart: billing.periodStart,
+    usageCycleAnchor: billing.usageCycleAnchor,
     ...(billing.stripe == null ? {} : { stripe: billing.stripe }),
   };
 };
@@ -235,17 +235,12 @@ const resolveSubscriptionStatus = (
   return subscription?.status ?? null;
 };
 
-const resolvePeriodStart = (subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>) => {
-  if (!subscription) return new Date();
+const resolveUsageCycleAnchor = (
+  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>
+): Date | null => {
+  if (!subscription?.billing_cycle_anchor) return null;
 
-  const legacyCurrentPeriodStart = (subscription as Stripe.Subscription & { current_period_start?: number })
-    .current_period_start;
-  const periodStartTimestamp =
-    legacyCurrentPeriodStart ??
-    subscription.items.data[0]?.current_period_start ??
-    subscription.billing_cycle_anchor;
-
-  return periodStartTimestamp ? new Date(periodStartTimestamp * 1000) : new Date();
+  return new Date(subscription.billing_cycle_anchor * 1000);
 };
 
 const ensureHobbySubscription = async (
@@ -323,7 +318,7 @@ const ensureOrganizationBillingRecord = async (
       organizationId,
       stripeCustomerId: defaultBilling.stripeCustomerId,
       limits: defaultBilling.limits,
-      periodStart: defaultBilling.periodStart,
+      usageCycleAnchor: defaultBilling.usageCycleAnchor,
     },
     select: ORGANIZATION_BILLING_SELECT,
   });
@@ -375,7 +370,7 @@ export const ensureStripeCustomerForOrganization = async (
       organizationId: organization.id,
       stripeCustomerId: customer.id,
       limits: billing.limits,
-      periodStart: billing.periodStart,
+      usageCycleAnchor: billing.usageCycleAnchor,
       stripe: updatedStripeSnapshot,
     },
     update: {
@@ -423,7 +418,7 @@ export const syncOrganizationBillingFromStripe = async (
 
   const cloudPlan = resolveCloudPlanFromSubscription(subscription);
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
-  const periodStart = resolvePeriodStart(subscription);
+  const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const previousLimits = billing.limits;
   const workspaceLimitFromEntitlements = parseMaxNumericEntitlementLimit(
     featureLookupKeys,
@@ -461,7 +456,7 @@ export const syncOrganizationBillingFromStripe = async (
         responses: responsesIncludedLimit,
       },
     },
-    periodStart,
+    usageCycleAnchor,
     stripe: {
       ...billing.stripe,
       plan: cloudPlan,
@@ -479,7 +474,7 @@ export const syncOrganizationBillingFromStripe = async (
     data: {
       stripeCustomerId: updatedBilling.stripeCustomerId,
       limits: updatedBilling.limits,
-      periodStart: updatedBilling.periodStart,
+      usageCycleAnchor: updatedBilling.usageCycleAnchor,
       stripe: updatedBilling.stripe,
     },
   });

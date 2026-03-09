@@ -78,7 +78,7 @@ describe("Follow-ups", () => {
         monthly: { responses: 1000 },
         projects: 3,
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripeCustomerId: "cus123",
     },
     whitelabel: {

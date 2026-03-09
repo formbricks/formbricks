@@ -31,7 +31,7 @@ const baseContext: TOrganizationEntitlementsContext = {
   licenseStatus: "no-license",
   licenseFeatures: null,
   stripeCustomerId: "cus_1",
-  periodStart: null,
+  usageCycleAnchor: null,
 };
 
 beforeEach(() => {

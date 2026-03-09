@@ -82,7 +82,7 @@ const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
   licenseStatus: "active",
   licenseFeatures: defaultFeatures,
   stripeCustomerId: "cus_123",
-  periodStart: new Date(),
+  usageCycleAnchor: new Date(),
 };
 
 describe("License Utils", () => {

@@ -83,7 +83,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                     create: {
                       limits: { projects: 3, monthly: { responses: 1500 } },
                       stripeCustomerId: null,
-                      periodStart: new Date(),
+                      usageCycleAnchor: new Date(),
                     },
                   },
                   ...(!params?.withoutProject && {

@@ -35,7 +35,7 @@ describe("auth", () => {
                 responses: 1500,
               },
             },
-            periodStart: new Date(),
+            usageCycleAnchor: new Date(),
           },
           isAIEnabled: false,
         },

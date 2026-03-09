@@ -30,11 +30,11 @@ describe("getCloudOrganizationEntitlementsContext", () => {
   });
 
   test("returns context with billing data", async () => {
-    const periodStart = new Date("2025-01-01");
+    const usageCycleAnchor = new Date("2025-01-01");
     mockGetBilling.mockResolvedValue({
       stripeCustomerId: "cus_1",
       limits: { projects: 5, monthly: { responses: 1000 } },
-      periodStart,
+      usageCycleAnchor,
       stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
     } as any);
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
@@ -49,7 +49,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
-      periodStart,
+      usageCycleAnchor,
     });
   });
 
@@ -57,7 +57,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue({
       stripeCustomerId: null,
       limits: {},
-      periodStart: null,
+      usageCycleAnchor: null,
       stripe: null,
     } as any);
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
@@ -67,28 +67,28 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     expect(result.features).toEqual([]);
     expect(result.limits).toEqual({ projects: null, monthlyResponses: null });
     expect(result.stripeCustomerId).toBeNull();
-    expect(result.periodStart).toBeNull();
+    expect(result.usageCycleAnchor).toBeNull();
   });
 
-  test("parses string periodStart to Date", async () => {
+  test("parses string usageCycleAnchor to Date", async () => {
     mockGetBilling.mockResolvedValue({
       stripeCustomerId: null,
       limits: {},
-      periodStart: "2025-06-15T00:00:00.000Z",
+      usageCycleAnchor: "2025-06-15T00:00:00.000Z",
       stripe: null,
     } as any);
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
-    expect(result.periodStart).toBeInstanceOf(Date);
+    expect(result.usageCycleAnchor).toBeInstanceOf(Date);
   });
 
   test("filters out invalid feature keys from stripe", async () => {
     mockGetBilling.mockResolvedValue({
       stripeCustomerId: null,
       limits: {},
-      periodStart: null,
+      usageCycleAnchor: null,
       stripe: { features: ["rbac", "invalid-feature-xyz"] },
     } as any);
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });

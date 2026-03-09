@@ -33,6 +33,6 @@ export const getCloudOrganizationEntitlementsContext = async (
     licenseStatus: license.status,
     licenseFeatures: license.features,
     stripeCustomerId: billing.stripeCustomerId ?? null,
-    periodStart: toDateOrNull(billing.periodStart),
+    usageCycleAnchor: toDateOrNull(billing.usageCycleAnchor),
   };
 };

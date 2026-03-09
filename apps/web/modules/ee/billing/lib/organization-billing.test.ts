@@ -143,7 +143,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: null,
     });
   });
@@ -170,7 +170,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: null,
     });
 
@@ -194,7 +194,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: null,
     });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
@@ -234,11 +234,11 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
     };
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       ...billing,
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: null,
     });
 
@@ -264,7 +264,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
     });
 
     const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923200 });
@@ -293,7 +293,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: billing.stripe,
     });
 
@@ -317,7 +317,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: { lastSyncedEventId: null },
     });
     mocks.subscriptionsList.mockResolvedValue({
@@ -325,7 +325,7 @@ describe("organization-billing", () => {
         {
           id: "sub_1",
           status: "active",
-          current_period_start: 1739923200,
+          billing_cycle_anchor: 1739923200,
           items: {
             data: [
               {
@@ -370,7 +370,7 @@ describe("organization-billing", () => {
           lastStripeEventCreatedAt: expect.any(String),
           lastSyncedAt: expect.any(String),
         }),
-        periodStart: expect.any(Date),
+        usageCycleAnchor: expect.any(Date),
       },
     });
     expect(result?.stripe?.plan).toBe("pro");
@@ -398,7 +398,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: {},
     });
     mocks.subscriptionsList.mockResolvedValue({
@@ -407,7 +407,7 @@ describe("organization-billing", () => {
           id: "sub_hobby",
           created: 1739923100,
           status: "active",
-          current_period_start: 1739923100,
+          billing_cycle_anchor: 1739923100,
           items: {
             data: [
               {
@@ -423,7 +423,7 @@ describe("organization-billing", () => {
           id: "sub_pro",
           created: 1739923200,
           status: "active",
-          current_period_start: 1739923200,
+          billing_cycle_anchor: 1739923200,
           items: {
             data: [
               {
@@ -453,7 +453,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date().toISOString(),
+      usageCycleAnchor: new Date().toISOString(),
     };
     mocks.cacheWithCache.mockResolvedValue(cachedBilling);
 
@@ -490,7 +490,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
     });
     mocks.subscriptionsList.mockRejectedValue(new Error("stripe down"));
@@ -514,7 +514,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: null,
     });
 
@@ -529,7 +529,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: expect.any(Date),
+      usageCycleAnchor: expect.any(Date),
     });
   });
 
@@ -576,7 +576,7 @@ describe("organization-billing", () => {
             responses: 1500,
           },
         },
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripe: {},
       })
       .mockResolvedValueOnce({
@@ -587,7 +587,7 @@ describe("organization-billing", () => {
             responses: 1500,
           },
         },
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripe: {},
       })
       .mockResolvedValueOnce({
@@ -598,7 +598,7 @@ describe("organization-billing", () => {
             responses: 1500,
           },
         },
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripe: {},
       });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
@@ -608,7 +608,7 @@ describe("organization-billing", () => {
           id: "sub_hobby",
           created: 1739923200,
           status: "active",
-          current_period_start: 1739923200,
+          billing_cycle_anchor: 1739923200,
           items: {
             data: [
               {
@@ -660,7 +660,7 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripe: {},
     });
     mocks.subscriptionsList.mockResolvedValue({

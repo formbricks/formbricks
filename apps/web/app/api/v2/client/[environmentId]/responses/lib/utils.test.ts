@@ -104,7 +104,7 @@ const mockBillingData: TOrganizationBilling = {
     monthly: { responses: 0 },
     projects: 3,
   },
-  periodStart: new Date(),
+  usageCycleAnchor: new Date(),
   stripeCustomerId: "mock-stripe-customer-id",
 };
 

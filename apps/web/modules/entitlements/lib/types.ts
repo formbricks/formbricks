@@ -35,5 +35,5 @@ export type TOrganizationEntitlementsContext = {
   licenseStatus: TEnterpriseLicenseStatusReturn;
   licenseFeatures: TEnterpriseLicenseFeatures | null;
   stripeCustomerId: string | null;
-  periodStart: Date | null;
+  usageCycleAnchor: Date | null;
 };

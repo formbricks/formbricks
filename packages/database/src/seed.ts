@@ -363,7 +363,7 @@ async function main(): Promise<void> {
         create: {
           limits: { projects: 3, monthly: { responses: 1500 } },
           stripeCustomerId: null,
-          periodStart: new Date(),
+          usageCycleAnchor: new Date(),
         },
       },
     },
@@ -376,7 +376,7 @@ async function main(): Promise<void> {
       organizationId: organization.id,
       limits: { projects: 3, monthly: { responses: 1500 } },
       stripeCustomerId: null,
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
     },
   });
 

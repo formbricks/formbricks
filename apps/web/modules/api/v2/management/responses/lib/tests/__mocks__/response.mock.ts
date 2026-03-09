@@ -84,7 +84,7 @@ export const organizationBilling: TOrganizationBilling = {
     monthly: { responses: 100 },
     projects: 1,
   },
-  periodStart: new Date(),
+  usageCycleAnchor: new Date(),
 };
 
 export const responseFilter: TGetResponsesFilter = {

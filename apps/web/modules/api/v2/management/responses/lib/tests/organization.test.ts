@@ -86,7 +86,7 @@ describe("Organization Lib", () => {
             select: {
               stripeCustomerId: true,
               limits: true,
-              periodStart: true,
+              usageCycleAnchor: true,
               stripe: true,
             },
           },
@@ -184,9 +184,9 @@ describe("Organization Lib", () => {
       }
     });
 
-    test("return response count when periodStart is not set", async () => {
+    test("return response count when usageCycleAnchor is not set", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-        billing: { ...organizationBilling, periodStart: null },
+        billing: { ...organizationBilling, usageCycleAnchor: null },
       });
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(organizationEnvironments);
       vi.mocked(prisma.response.aggregate).mockResolvedValue({ _count: { id: 5 } });

@@ -422,7 +422,7 @@ describe("data", () => {
           responses: 1000,
         },
       },
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
     };
 
     test("should fetch organization billing successfully", async () => {

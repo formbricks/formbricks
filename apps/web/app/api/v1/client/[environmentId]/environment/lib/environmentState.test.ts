@@ -75,7 +75,7 @@ const mockOrganization: TOrganization = {
         responses: 100,
       },
     },
-    periodStart: new Date(),
+    usageCycleAnchor: new Date(),
   },
   isAIEnabled: false,
 };

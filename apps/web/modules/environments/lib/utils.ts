@@ -175,7 +175,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                   select: {
                     stripeCustomerId: true,
                     limits: true,
-                    periodStart: true,
+                    usageCycleAnchor: true,
                     stripe: true,
                   },
                 },

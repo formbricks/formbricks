@@ -28,7 +28,7 @@ describe("getFirstOrganization", () => {
       whitelabel: true,
       updatedAt: new Date(),
       billing: {
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripeCustomerId: "cus_123",
         limits: {
           monthly: {

@@ -24,7 +24,7 @@ describe("getOrganizationBillingByEnvironmentId", () => {
       monthly: { responses: 0 },
       projects: 3,
     },
-    periodStart: new Date(),
+    usageCycleAnchor: new Date(),
     stripeCustomerId: "mock-stripe-customer-id",
   };
 
@@ -49,7 +49,7 @@ describe("getOrganizationBillingByEnvironmentId", () => {
           select: {
             stripeCustomerId: true,
             limits: true,
-            periodStart: true,
+            usageCycleAnchor: true,
             stripe: true,
           },
         },

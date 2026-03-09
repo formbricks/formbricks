@@ -42,7 +42,7 @@ export const getOrganizationAIKeys = reactCache(
             select: {
               stripeCustomerId: true,
               limits: true,
-              periodStart: true,
+              usageCycleAnchor: true,
               stripe: true,
             },
           },
@@ -58,7 +58,7 @@ export const getOrganizationAIKeys = reactCache(
         billing: {
           stripeCustomerId: organization.billing.stripeCustomerId,
           limits: organization.billing.limits as TOrganizationBilling["limits"],
-          periodStart: organization.billing.periodStart,
+          usageCycleAnchor: organization.billing.usageCycleAnchor,
           ...(organization.billing.stripe === null ? {} : { stripe: organization.billing.stripe }),
         },
       };

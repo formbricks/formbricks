@@ -17,7 +17,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
-import { getBillingPeriodStartDate } from "@/lib/utils/billing";
+import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import {
   deleteStripeCustomer,
   ensureCloudStripeSetupForOrganization,
@@ -33,7 +33,7 @@ export const select = {
     select: {
       stripeCustomerId: true,
       limits: true,
-      periodStart: true,
+      usageCycleAnchor: true,
       stripe: true,
     },
   },
@@ -51,7 +51,7 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     },
   },
   stripeCustomerId: null,
-  periodStart: new Date(),
+  usageCycleAnchor: null,
 });
 
 const mapOrganizationBilling = (billing: TOrganizationWithBilling["billing"]): TOrganizationBilling => {
@@ -64,7 +64,7 @@ const mapOrganizationBilling = (billing: TOrganizationWithBilling["billing"]): T
   return {
     stripeCustomerId: billing.stripeCustomerId,
     limits: billing.limits,
-    periodStart: billing.periodStart,
+    usageCycleAnchor: billing.usageCycleAnchor,
     ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
   };
 };
@@ -230,13 +230,13 @@ export const updateOrganization = async (
             organizationId,
             stripeCustomerId: billing.stripeCustomerId,
             limits: billing.limits,
-            periodStart: billing.periodStart,
+            usageCycleAnchor: billing.usageCycleAnchor,
             ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
           },
           update: {
             stripeCustomerId: billing.stripeCustomerId,
             limits: billing.limits ?? fallbackBilling.limits,
-            periodStart: billing.periodStart ?? fallbackBilling.periodStart,
+            usageCycleAnchor: billing.usageCycleAnchor ?? fallbackBilling.usageCycleAnchor,
             ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
           },
         });
@@ -333,8 +333,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(
         throw new ResourceNotFoundError("Organization", organizationId);
       }
 
-      // Use the utility function to calculate the start date
-      const startDate = getBillingPeriodStartDate(organization.billing);
+      const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
       // Get all environment IDs for the organization
       const projects = await getProjects(organizationId);
@@ -346,7 +345,10 @@ export const getMonthlyOrganizationResponseCount = reactCache(
           id: true,
         },
         where: {
-          AND: [{ survey: { environmentId: { in: environmentIds } } }, { createdAt: { gte: startDate } }],
+          AND: [
+            { survey: { environmentId: { in: environmentIds } } },
+            { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
+          ],
         },
       });
 

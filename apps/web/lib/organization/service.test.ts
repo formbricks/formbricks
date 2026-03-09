@@ -64,7 +64,7 @@ describe("Organization Service", () => {
             },
           },
           stripeCustomerId: null,
-          periodStart: new Date(),
+          usageCycleAnchor: new Date(),
         },
         isAIEnabled: false,
         whitelabel: false,
@@ -116,7 +116,7 @@ describe("Organization Service", () => {
               },
             },
             stripeCustomerId: null,
-            periodStart: new Date(),
+            usageCycleAnchor: new Date(),
           },
           isAIEnabled: false,
           whitelabel: false,
@@ -161,7 +161,7 @@ describe("Organization Service", () => {
           },
         },
         stripeCustomerId: null,
-        periodStart: new Date(),
+        usageCycleAnchor: null,
       };
 
       const mockOrganization = {
@@ -191,7 +191,7 @@ describe("Organization Service", () => {
                 },
               },
               stripeCustomerId: null,
-              periodStart: expect.any(Date),
+              usageCycleAnchor: null,
             },
           },
         },
@@ -213,7 +213,7 @@ describe("Organization Service", () => {
           },
         },
         stripeCustomerId: null,
-        periodStart: new Date(),
+        usageCycleAnchor: null,
       };
 
       const mockOrganization = {
@@ -267,7 +267,7 @@ describe("Organization Service", () => {
             },
           },
           stripeCustomerId: null,
-          periodStart: new Date(),
+          usageCycleAnchor: new Date(),
         },
         isAIEnabled: false,
         whitelabel: false,
@@ -295,7 +295,7 @@ describe("Organization Service", () => {
 
       const result = await updateOrganization("org1", { name: "Updated Org" });
 
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         id: "org1",
         name: "Updated Org",
         createdAt: expect.any(Date),
@@ -308,7 +308,7 @@ describe("Organization Service", () => {
             },
           },
           stripeCustomerId: null,
-          periodStart: expect.any(Date),
+          usageCycleAnchor: expect.any(Date),
         },
         isAIEnabled: false,
         whitelabel: false,

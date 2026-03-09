@@ -43,7 +43,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,
-      periodStart: null,
+      usageCycleAnchor: null,
     });
   });
 

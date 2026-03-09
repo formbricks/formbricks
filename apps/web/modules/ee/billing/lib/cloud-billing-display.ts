@@ -1,6 +1,7 @@
 import "server-only";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TOrganizationStripeSubscriptionStatus } from "@formbricks/types/organizations";
+import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getOrganizationBillingWithReadThroughSync } from "./organization-billing";
 
 export type TCloudBillingDisplayPlan = "hobby" | "pro" | "scale" | "unknown";
@@ -9,6 +10,8 @@ export type TCloudBillingDisplayContext = {
   organizationId: string;
   currentCloudPlan: TCloudBillingDisplayPlan;
   currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
+  usageCycleStart: Date;
+  usageCycleEnd: Date;
   billing: NonNullable<Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>>;
 };
 
@@ -33,10 +36,14 @@ export const getCloudBillingDisplayContext = async (
     throw new ResourceNotFoundError("OrganizationBilling", organizationId);
   }
 
+  const usageCycleWindow = getBillingUsageCycleWindow(billing);
+
   return {
     organizationId,
     currentCloudPlan: resolveCurrentCloudPlan(billing),
     currentSubscriptionStatus: resolveCurrentSubscriptionStatus(billing),
+    usageCycleStart: usageCycleWindow.start,
+    usageCycleEnd: usageCycleWindow.end,
     billing,
   };
 };

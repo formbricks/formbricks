@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
@@ -11,10 +11,16 @@ vi.mock("./organization-billing", () => ({
 describe("cloud-billing-display", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-10T12:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test("returns billing context with plan from stripe", async () => {
-    const billing = { stripe: { plan: "pro" } };
+    const billing = { stripe: { plan: "pro" }, usageCycleAnchor: new Date("2026-01-15T00:00:00.000Z") };
     mocks.getOrganizationBillingWithReadThroughSync.mockResolvedValue(billing);
 
     const { getCloudBillingDisplayContext } = await import("./cloud-billing-display");
@@ -24,12 +30,14 @@ describe("cloud-billing-display", () => {
       organizationId: "org_1",
       currentCloudPlan: "pro",
       currentSubscriptionStatus: null,
+      usageCycleStart: new Date("2026-01-15T00:00:00.000Z"),
+      usageCycleEnd: new Date("2026-02-15T00:00:00.000Z"),
       billing,
     });
   });
 
   test("returns unknown when stripe is null", async () => {
-    const billing = { stripe: null };
+    const billing = { stripe: null, usageCycleAnchor: null };
     mocks.getOrganizationBillingWithReadThroughSync.mockResolvedValue(billing);
 
     const { getCloudBillingDisplayContext } = await import("./cloud-billing-display");

@@ -683,7 +683,7 @@ model Organization {
 /// @property organizationId - Reference to the organization
 /// @property stripeCustomerId - Stripe customer ID for cloud billing
 /// @property limits - Plan limits used by feature and quota checks
-/// @property periodStart - Start of the current billing period
+/// @property usageCycleAnchor - Stable anchor used to derive the current monthly usage cycle
 /// @property stripe - Stripe synchronization snapshot data
 model OrganizationBilling {
   organizationId   String       @id @map(name: "organization_id")
@@ -691,7 +691,7 @@ model OrganizationBilling {
   stripeCustomerId String?      @unique @map(name: "stripe_customer_id")
   /// [OrganizationBillingPlanLimits]
   limits           Json
-  periodStart      DateTime     @default(now()) @map(name: "period_start")
+  usageCycleAnchor DateTime?    @map(name: "usage_cycle_anchor")
   /// [OrganizationStripeBilling]
   stripe           Json?
   createdAt        DateTime     @default(now()) @map(name: "created_at")

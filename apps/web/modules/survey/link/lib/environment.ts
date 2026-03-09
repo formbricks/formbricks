@@ -73,7 +73,7 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
                     select: {
                       stripeCustomerId: true,
                       limits: true,
-                      periodStart: true,
+                      usageCycleAnchor: true,
                       stripe: true,
                     },
                   },
@@ -112,7 +112,7 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
         organizationBilling: {
           stripeCustomerId: environment.project.organization.billing.stripeCustomerId,
           limits: environment.project.organization.billing.limits as TOrganizationBilling["limits"],
-          periodStart: environment.project.organization.billing.periodStart,
+          usageCycleAnchor: environment.project.organization.billing.usageCycleAnchor,
           ...(environment.project.organization.billing.stripe === null
             ? {}
             : { stripe: environment.project.organization.billing.stripe }),

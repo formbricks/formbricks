@@ -87,7 +87,7 @@ describe("getOrganizationAIKeys", () => {
     isAIEnabled: true,
     billing: {
       stripeCustomerId: null,
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       limits: {
         monthly: { responses: null },
         projects: null,
@@ -111,7 +111,7 @@ describe("getOrganizationAIKeys", () => {
           select: {
             stripeCustomerId: true,
             limits: true,
-            periodStart: true,
+            usageCycleAnchor: true,
             stripe: true,
           },
         },

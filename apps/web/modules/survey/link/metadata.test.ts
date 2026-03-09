@@ -59,7 +59,7 @@ describe("getMetadataForLinkSurvey", () => {
       },
       organizationId: "org-123",
       organizationBilling: {
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripeCustomerId: null,
         limits: { projects: 3, monthly: { responses: 1500 } },
       },

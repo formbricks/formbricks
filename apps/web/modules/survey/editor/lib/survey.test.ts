@@ -147,7 +147,7 @@ describe("Survey Editor Library Tests", () => {
       billing: {
         stripeCustomerId: "cust_123",
         features: {},
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
       },
       isAIEnabled: false,
     };

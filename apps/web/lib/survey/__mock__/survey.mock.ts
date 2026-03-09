@@ -241,7 +241,7 @@ export const mockOrganizationOutput: TOrganization = {
         responses: 1500,
       },
     },
-    periodStart: currentDate,
+    usageCycleAnchor: currentDate,
   },
 };
 

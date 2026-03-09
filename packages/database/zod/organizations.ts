@@ -24,7 +24,7 @@ export const ZOrganizationBilling = z.object({
         responses: 1500,
       },
     }),
-  periodStart: z.coerce.date(),
+  usageCycleAnchor: z.coerce.date().nullable(),
   stripe: z
     .object({
       plan: z.enum(["hobby", "pro", "scale", "unknown"]).optional(),

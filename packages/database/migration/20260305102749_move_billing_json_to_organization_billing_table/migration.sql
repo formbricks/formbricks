@@ -12,7 +12,7 @@ CREATE TABLE "OrganizationBilling" (
     "organization_id" TEXT NOT NULL,
     "stripe_customer_id" TEXT,
     "limits" JSONB NOT NULL,
-    "period_start" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "usage_cycle_anchor" TIMESTAMP(3),
     "stripe" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,

@@ -45,7 +45,7 @@ const expectedResponseWithoutPerson: TResponse = {
 const mockOrganizationBillingRecord = {
   stripeCustomerId: mockOrganizationOutput.billing.stripeCustomerId,
   limits: mockOrganizationOutput.billing.limits,
-  periodStart: mockOrganizationOutput.billing.periodStart,
+  usageCycleAnchor: mockOrganizationOutput.billing.usageCycleAnchor,
   stripe: null,
 };
 
