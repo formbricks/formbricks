@@ -25,6 +25,7 @@ import {
   getProjectIdFromConnectorId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
+import { getTranslate } from "@/lingodotdev/server";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
@@ -513,10 +514,12 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       if (parsedInput.until) params.until = parsedInput.until;
 
       const result = await listFeedbackRecords(params);
-      if (result.error) {
-        logger.warn({ error: result.error }, "Failed to list feedback records from Hub");
-        throw new Error(result.error.message);
+      if (result.error || !result.data) {
+        logger.warn({ error: result.error }, "Failed to list feedback records");
+        const t = await getTranslate();
+        throw new Error(result.error?.message ?? t("environments.unify.failed_to_load_feedback_records"));
       }
-      return result.data!;
+
+      return result.data;
     }
   );

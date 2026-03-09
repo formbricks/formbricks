@@ -1,5 +1,6 @@
 "use client";
 
+import { TFunction } from "i18next";
 import {
   CalendarIcon,
   HashIcon,
@@ -32,13 +33,13 @@ const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
   date: <CalendarIcon className="h-3.5 w-3.5" />,
 };
 
-function formatValue(record: FeedbackRecordData): string {
+const formatValue = (record: FeedbackRecordData, t: TFunction, locale?: string): string => {
   if (record.value_text != null) return record.value_text;
   if (record.value_number != null) return String(record.value_number);
-  if (record.value_boolean != null) return record.value_boolean ? "Yes" : "No";
-  if (record.value_date != null) return new Date(record.value_date).toLocaleDateString();
+  if (record.value_boolean != null) return record.value_boolean ? t("common.yes") : t("common.no");
+  if (record.value_date != null) return new Date(record.value_date).toLocaleDateString(locale);
   return "—";
-}
+};
 
 function formatDate(isoString: string, locale: string): string {
   return new Date(isoString).toLocaleDateString(locale, {
@@ -61,11 +62,11 @@ interface FeedbackRecordsTableProps {
   initialTotal: number;
 }
 
-export function FeedbackRecordsTable({
+export const FeedbackRecordsTable = ({
   environmentId,
   initialRecords,
   initialTotal,
-}: FeedbackRecordsTableProps) {
+}: FeedbackRecordsTableProps) => {
   const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
   const [total, setTotal] = useState(initialTotal);
@@ -156,8 +157,13 @@ export function FeedbackRecordsTable({
           <p className="text-sm text-slate-500">
             {t("environments.unify.showing_count", { count: records.length, total })}
           </p>
-          <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-            <RefreshCwIcon className="h-3.5 w-3.5" />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            aria-label={t("environments.unify.refresh_feedback_records")}>
+            <RefreshCwIcon className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       )}
@@ -189,7 +195,7 @@ export function FeedbackRecordsTable({
             ) : (
               <tbody className="divide-y divide-slate-100">
                 {records.map((record) => (
-                  <FeedbackRecordRow key={record.id} record={record} locale={i18n.language} />
+                  <FeedbackRecordRow key={record.id} record={record} locale={i18n.language} t={t} />
                 ))}
               </tbody>
             )}
@@ -206,10 +212,18 @@ export function FeedbackRecordsTable({
       )}
     </div>
   );
-}
+};
 
-function FeedbackRecordRow({ record, locale }: { record: FeedbackRecordData; locale: string }) {
-  const value = formatValue(record);
+const FeedbackRecordRow = ({
+  record,
+  locale,
+  t,
+}: {
+  record: FeedbackRecordData;
+  locale: string;
+  t: TFunction;
+}) => {
+  const value = formatValue(record, t, locale);
   const isLongValue = value.length > 60;
 
   return (
@@ -253,4 +267,4 @@ function FeedbackRecordRow({ record, locale }: { record: FeedbackRecordData; loc
       </td>
     </tr>
   );
-}
+};

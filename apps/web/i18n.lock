@@ -261,6 +261,7 @@ checksums:
     common/new: 126d036fae5fb6b629728ecb97e6195b
     common/new_version_available: 399ddfc4232712e18ddab2587356b3dc
     common/next: 89ddbcf710eba274963494f312bdc8a9
+    common/no: 8c708225830b06df2d1141c536f2a0d6
     common/no_background_image_found: 4108a781a9022c65671a826d4e299d5b
     common/no_code: f602144ab7d28a5b19a446bf74b4dcc4
     common/no_files_uploaded: c97be829e195a41b2f6b6717b87a232b
@@ -442,6 +443,7 @@ checksums:
     common/workspace_permission_not_found: e94bdff8af51175c5767714f82bb4833
     common/workspaces: 8ba082a84aa35cf851af1cf874b853e2
     common/years: eb4f5fdd2b320bf13e200fd6a6c1abff
+    common/yes: ec580fd11a45779b039466f1e35eed2a
     common/you: db2a4a796b70cc1430d1b21f6ffb6dcb
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
     common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
@@ -1999,6 +2001,7 @@ checksums:
     environments/unify/question_selected: b9ff13b6212874258da911867932dc7d
     environments/unify/question_type_not_supported: 8d9f7554e3b509dfd5307d8d1fef08d7
     environments/unify/questions_selected: 1f13d6fecafa2ce5ea9e6d07078a1d38
+    environments/unify/refresh_feedback_records: c111751e02a7dee57390ed7fb79cfcc6
     environments/unify/refreshing_feedback_records: 2a03b44510ebe19eea6473639e9a7222
     environments/unify/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     environments/unify/save_changes: 53dd9f4f0a4accc822fa5c1f2f6d118a
