@@ -49,7 +49,7 @@ describe("getExternalUrlsPermission - cloud", () => {
   test("returns true when both entitlement checks pass", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValue(true);
 
-    const result = await getExternalUrlsPermission({ organizationId: "org_123" });
+    const result = await getExternalUrlsPermission("org_123");
 
     expect(result).toBe(true);
     expect(hasCloudEntitlementWithLicenseGuard).toHaveBeenCalledTimes(2);
@@ -58,7 +58,7 @@ describe("getExternalUrlsPermission - cloud", () => {
   test("returns false when one entitlement check fails", async () => {
     vi.mocked(hasCloudEntitlementWithLicenseGuard).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
-    const result = await getExternalUrlsPermission({ organizationId: "org_123" });
+    const result = await getExternalUrlsPermission("org_123");
 
     expect(result).toBe(false);
   });
@@ -79,7 +79,7 @@ describe("getExternalUrlsPermission - self-hosted", () => {
     });
 
     const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
-    const result = await getExternalUrlsPermissionSelfHosted({ organizationId: "org_123" });
+    const result = await getExternalUrlsPermissionSelfHosted("org_123");
 
     expect(result).toBe(true);
     expect(hasCloudEntitlementWithLicenseGuard).not.toHaveBeenCalled();

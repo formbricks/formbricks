@@ -55,7 +55,7 @@ export const updateProjectAction = authenticatedActionClient.schema(ZUpdateProje
           throw new Error("Organization not found");
         }
 
-        const canRemoveBranding = await getRemoveBrandingPermission({ organizationId: organizationId });
+        const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
 
         if (parsedInput.data.inAppSurveyBranding !== undefined) {
           if (!canRemoveBranding) {

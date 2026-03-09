@@ -9,21 +9,21 @@ export const checkFeaturePermissions = async (
   organization: TOrganization
 ): Promise<Response | null> => {
   if (surveyData.recaptcha?.enabled) {
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled({ organizationId: organization.id });
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organization.id);
     if (!isSpamProtectionEnabled) {
       return responses.forbiddenResponse("Spam protection is not enabled for this organization");
     }
   }
 
   if (surveyData.followUps?.length) {
-    const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission({ organizationId: organization.id });
+    const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.id);
     if (!isSurveyFollowUpsEnabled) {
       return responses.forbiddenResponse("Survey follow ups are not allowed for this organization");
     }
   }
 
   if (surveyData.languages?.length) {
-    const isMultiLanguageEnabled = await getMultiLanguagePermission({ organizationId: organization.id });
+    const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.id);
     if (!isMultiLanguageEnabled) {
       return responses.forbiddenResponse("Multi language is not enabled for this organization");
     }
