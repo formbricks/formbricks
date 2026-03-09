@@ -31,6 +31,9 @@ export const stripInlineStyles = (html: string): string => {
   // This is more secure than regex-based approaches and handles edge cases properly
   return DOMPurify.sanitize(html, {
     FORBID_ATTR: ["style"],
+    // Preserve the target attribute (e.g. target="_blank" on links) which is not
+    // in DOMPurify's default allow-list but is explicitly required downstream.
+    ADD_ATTR: ["target"],
     // Keep other attributes and tags as-is, only remove style attributes
     KEEP_CONTENT: true,
   });
