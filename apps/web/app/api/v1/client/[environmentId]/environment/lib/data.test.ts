@@ -38,12 +38,6 @@ const mockEnvironmentData = {
     placement: "bottomRight",
     inAppSurveyBranding: true,
     styling: { allowStyleOverwrite: false },
-    organization: {
-      id: "org-123",
-      billing: {
-        limits: { monthly: { responses: 100 } },
-      },
-    },
   },
   actionClasses: [
     {
