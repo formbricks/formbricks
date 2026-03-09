@@ -1,0 +1,191 @@
+---
+title: "Keycloak OIDC"
+description: "Configure Keycloak as an OpenID Connect (OIDC) provider for secure Single Sign-On with your self-hosted Formbricks instance."
+icon: "key-skeleton-left-right"
+---
+
+<Note>Keycloak OIDC is part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license)</Note>
+
+Integrating Keycloak with your Formbricks instance allows users to log in using their existing Keycloak credentials via OpenID Connect. This guide walks you through setting up a Keycloak OIDC client and configuring Formbricks to use it, including automatic user provisioning into a default team.
+
+### Requirements
+
+- A running Keycloak instance with a configured realm and users.
+- A self-hosted Formbricks instance with a valid [Enterprise license](/self-hosting/advanced/license).
+- The Formbricks callback URI: `{WEBAPP_URL}/api/auth/callback/openid`
+
+## Setting up Keycloak OIDC
+
+<Steps>
+  <Step title="Create a new client in Keycloak">
+    - Log in to your Keycloak admin console.
+    - Select the realm you want to use (e.g., `production`).
+    - Navigate to **Clients** in the left menu and click **Create client**.
+    - Set **Client type** to `OpenID Connect`.
+    - Choose a **Client ID** (e.g., `formbricks`) and click **Next**.
+  </Step>
+
+  <Step title="Configure client authentication">
+    - Enable **Client authentication** (this makes the client "confidential" and generates a client secret).
+    - Under **Authentication flow**, ensure **Standard flow** is enabled.
+    - Click **Next**.
+
+    <Note>
+      Formbricks uses PKCE (Proof Key for Code Exchange) for added security. Modern Keycloak versions (21+) support PKCE automatically for confidential clients. No additional PKCE configuration is needed.
+    </Note>
+  </Step>
+
+  <Step title="Set the redirect URI">
+    - Under **Valid redirect URIs**, add your Formbricks callback URI:
+
+    ```
+    https://your-formbricks-domain.com/api/auth/callback/openid
+    ```
+
+    Replace `your-formbricks-domain.com` with your actual Formbricks URL.
+
+    - Click **Save**.
+  </Step>
+
+  <Step title="Copy the client secret">
+    - After saving, go to the **Credentials** tab of your newly created client.
+    - Copy the **Client secret** value — you will need this for the Formbricks configuration.
+  </Step>
+
+  <Step title="Determine the issuer URL">
+    The OIDC issuer URL follows this pattern:
+
+    ```
+    https://your-keycloak-domain.com/realms/your-realm-name
+    ```
+
+    For example, if your Keycloak runs at `login.example.com` and your realm is called `production`:
+
+    ```
+    https://login.example.com/realms/production
+    ```
+
+    <Note>
+      You can verify the issuer URL by navigating to `https://your-keycloak-domain.com/realms/your-realm-name/.well-known/openid-configuration` in your browser. It should return a JSON document with the OIDC discovery endpoints.
+    </Note>
+  </Step>
+
+  <Step title="Configure Formbricks environment variables">
+    Add the following environment variables to your Formbricks `.env` file or `docker-compose.yml`:
+
+    ```yml Formbricks Env for Keycloak OIDC
+    OIDC_CLIENT_ID=formbricks
+    OIDC_CLIENT_SECRET=your-client-secret-here
+    OIDC_ISSUER=https://your-keycloak-domain.com/realms/your-realm-name
+    OIDC_DISPLAY_NAME="Keycloak Login"
+    OIDC_SIGNING_ALGORITHM=RS256
+    ```
+
+    | Variable | Description |
+    | --- | --- |
+    | `OIDC_CLIENT_ID` | The Client ID you chose in Keycloak (e.g., `formbricks`). |
+    | `OIDC_CLIENT_SECRET` | The client secret from the **Credentials** tab. |
+    | `OIDC_ISSUER` | Your Keycloak realm URL (see step above). |
+    | `OIDC_DISPLAY_NAME` | The label shown on the Formbricks login button. |
+    | `OIDC_SIGNING_ALGORITHM` | Optional. Keycloak and Formbricks both default to `RS256`. Only set this if your realm uses a different algorithm. |
+  </Step>
+
+  <Step title="Restart and test">
+    - Restart your Formbricks instance.
+    - The login page should now display a button with your chosen `OIDC_DISPLAY_NAME`.
+    - Click it to authenticate through Keycloak.
+  </Step>
+</Steps>
+
+<Note>
+  To disable email/password login entirely and force all users through Keycloak, set `EMAIL_AUTH_DISABLED=1`. This hides the email/password form on the login page.
+</Note>
+
+## Automatic User Provisioning
+
+By default, new SSO users must be invited by an organization admin before they can access Formbricks. To allow Keycloak users to join automatically and be assigned to a team, configure the following additional environment variables:
+
+```yml Automatic User Provisioning
+AUTH_SKIP_INVITE_FOR_SSO=1
+AUTH_SSO_DEFAULT_TEAM_ID=your-team-id-here
+```
+
+| Variable | Description |
+| --- | --- |
+| `AUTH_SKIP_INVITE_FOR_SSO` | Set to `1` to let SSO users create an account without a manual invite. |
+| `AUTH_SSO_DEFAULT_TEAM_ID` | The ID of the team that new SSO users are automatically added to. The organization is determined from this team. |
+
+### Finding Your Team ID
+
+1. Log in to Formbricks as an admin.
+2. Go to **Organization Settings** → **Teams**.
+3. Click **Manage Team** on the team you want to use as the default.
+4. The Team ID is displayed in the modal.
+
+<Note>
+  The Teams feature requires the **Role-Based Access Control (RBAC)** add-on on your Enterprise license. If you don't see the Teams section in Organization Settings, contact [Formbricks support](mailto:support@formbricks.com) to enable it.
+</Note>
+
+### How It Works
+
+When `AUTH_SKIP_INVITE_FOR_SSO=1` and `AUTH_SSO_DEFAULT_TEAM_ID` are both set:
+
+1. A user authenticates through Keycloak for the first time.
+2. Formbricks creates a new user account.
+3. The user is automatically added as a **member** of the organization that owns the specified team.
+4. The user is assigned to the default team, granting them access to all projects associated with that team.
+
+No manual invitation or admin action is required.
+
+## Full Configuration Example
+
+A complete `.env` configuration for Keycloak OIDC with automatic user provisioning:
+
+```yml Complete Keycloak OIDC Configuration
+OIDC_CLIENT_ID=formbricks
+OIDC_CLIENT_SECRET=your-client-secret-here
+OIDC_ISSUER=https://login.example.com/realms/production
+OIDC_DISPLAY_NAME="Company Login"
+OIDC_SIGNING_ALGORITHM=RS256
+AUTH_SKIP_INVITE_FOR_SSO=1
+AUTH_SSO_DEFAULT_TEAM_ID=your-team-id-here
+# Optional: disable email/password login to force Keycloak-only authentication
+# EMAIL_AUTH_DISABLED=1
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Users see 'No access to Workspaces' after login">
+    This means the user was added to the organization but not assigned to a team. Verify that:
+    - `AUTH_SSO_DEFAULT_TEAM_ID` is set correctly (the env variable name is `AUTH_SSO_DEFAULT_TEAM_ID`, not `DEFAULT_TEAM_ID`).
+    - The Team ID is a valid cuid that exists in your database.
+    - The team is linked to a project via **Project Teams** settings.
+
+    You can verify the team exists by checking your database:
+    ```sql
+    SELECT id, name, "organizationId" FROM "Team" WHERE id = 'your-team-id';
+    ```
+  </Accordion>
+
+  <Accordion title="Users see 'No membership found' after login">
+    Formbricks determines the organization automatically from the `AUTH_SSO_DEFAULT_TEAM_ID` — you do not need to set a separate organization ID. If this error appears:
+    - Verify the team specified in `AUTH_SSO_DEFAULT_TEAM_ID` exists and belongs to the correct organization.
+    - Confirm your Enterprise license includes the RBAC feature (required for Teams).
+    - Ensure the organization has an active billing plan that supports access control.
+  </Accordion>
+
+  <Accordion title="OIDC login button does not appear">
+    - Confirm that `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, and `OIDC_ISSUER` are all set.
+    - Ensure your Formbricks instance has a valid Enterprise license.
+    - Restart the Formbricks container after adding the environment variables.
+  </Accordion>
+
+  <Accordion title="Authentication fails with a redirect error">
+    - Verify the **Valid redirect URI** in your Keycloak client matches exactly: `{WEBAPP_URL}/api/auth/callback/openid`
+    - Check that the OIDC issuer URL is reachable from your Formbricks server. You can test with:
+    ```bash
+    curl https://your-keycloak-domain.com/realms/your-realm-name/.well-known/openid-configuration
+    ```
+  </Accordion>
+</AccordionGroup>
