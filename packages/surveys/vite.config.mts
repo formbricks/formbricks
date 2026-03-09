@@ -1,7 +1,7 @@
 import preact from "@preact/preset-vite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEnv } from "vite";
+import { type PluginOption, loadEnv } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
@@ -27,7 +27,7 @@ const config = ({ mode }) => {
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
     },
-    plugins: [preact(), tsconfigPaths()],
+    plugins: [preact(), tsconfigPaths() as PluginOption],
   };
 
   // Check if we're building the UMD bundle (separate build step)
@@ -53,7 +53,11 @@ const config = ({ mode }) => {
       },
       plugins: [
         ...sharedConfig.plugins,
-        copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
+        copyCompiledAssetsPlugin({
+          filename: "surveys",
+          distDir: resolve(__dirname, "dist"),
+          localesDir: resolve(__dirname, "locales"),
+        }),
       ],
     });
   }
@@ -63,11 +67,7 @@ const config = ({ mode }) => {
     ...sharedConfig,
     test: {
       name: "surveys",
-      environment: "node",
-      environmentMatchGlobs: [
-        ["**/*.test.tsx", "jsdom"],
-        ["**/lib/**/*.test.ts", "jsdom"],
-      ],
+      environment: "jsdom",
       setupFiles: ["./vitestSetup.ts"],
       include: ["**/*.test.ts", "**/*.test.tsx"],
       exclude: ["dist/**", "node_modules/**"],
@@ -109,7 +109,7 @@ const config = ({ mode }) => {
         entryRoot: "src",
       }),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
-      process.env.ANALYZE === "true" && visualizer({ filename: resolve(__dirname, "stats.html"), open: false, gzipSize: true, brotliSize: true }),
+      process.env.ANALYZE === "true" && (visualizer({ filename: resolve(__dirname, "stats.html"), open: false, gzipSize: true, brotliSize: true }) as PluginOption),
     ],
   });
 };

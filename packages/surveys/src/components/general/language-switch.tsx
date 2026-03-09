@@ -5,7 +5,7 @@ import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
-import i18n from "@/lib/i18n.config";
+import i18n, { loadLanguage } from "@/lib/i18n.config";
 import { getLanguageDisplayName } from "@/lib/language-display-name";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn, isRTLLanguage } from "@/lib/utils";
@@ -47,9 +47,11 @@ export function LanguageSwitch({
 
   const handleI18nLanguage = (languageCode: string) => {
     const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
-    if (i18n.language !== calculatedLanguage) {
-      i18n.changeLanguage(calculatedLanguage);
-    }
+    loadLanguage(calculatedLanguage).then(() => {
+      if (i18n.language !== calculatedLanguage) {
+        i18n.changeLanguage(calculatedLanguage);
+      }
+    });
   };
 
   const changeLanguage = (languageCode: string) => {

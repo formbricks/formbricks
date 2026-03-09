@@ -7,6 +7,7 @@ interface CopyCompiledAssetsPluginOptions {
   filename: string;
   distDir: string;
   skipDirectoryCheck?: boolean; // New option to skip checking non-existent directories
+  localesDir?: string; // Optional directory containing locale JSON files to copy
 }
 
 const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
@@ -85,6 +86,22 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
         }
 
         console.log(`Copied ${String(copiedFiles)} files to ${outputDir} (${options.filename})`);
+
+        // Copy locale JSON files if localesDir is specified
+        if (options.localesDir) {
+          const localesOutputDir = path.resolve(outputDir, "locales");
+          await ensureDirectoryExists(localesOutputDir);
+
+          const localeFiles = (await readdir(options.localesDir)).filter(
+            (f) => f.endsWith(".json") && f !== "i18n.json"
+          );
+
+          for (const file of localeFiles) {
+            await copyFile(path.resolve(options.localesDir, file), path.resolve(localesOutputDir, file));
+          }
+
+          console.log(`Copied ${String(localeFiles.length)} locale files to ${localesOutputDir}`);
+        }
       } catch (error) {
         if (options.skipDirectoryCheck) {
           console.error(
