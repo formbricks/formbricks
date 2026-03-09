@@ -77,6 +77,8 @@ const getStripeLocaleOverride = (locale?: string): string | undefined => {
   return undefined;
 };
 
+const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
+
 interface PricingTableProps {
   organization: TOrganization;
   environmentId: string;
@@ -179,6 +181,10 @@ export const PricingTable = ({
     if (!showPricingTable) {
       setPricingTableCustomerSessionClientSecret(null);
       return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
     }
 
     const loadPricingTableCustomerSession = async () => {

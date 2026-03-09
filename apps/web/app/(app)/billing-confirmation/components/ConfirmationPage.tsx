@@ -7,15 +7,34 @@ import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
 interface ConfirmationPageProps {
-  environmentId: string;
+  environmentId?: string;
 }
+
+const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
 
 export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
   const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [resolvedEnvironmentId, setResolvedEnvironmentId] = useState(environmentId ?? null);
+
   useEffect(() => {
     setShowConfetti(true);
-  }, []);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (environmentId) {
+      window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
+      setResolvedEnvironmentId(environmentId);
+      return;
+    }
+
+    const storedEnvironmentId = window.sessionStorage.getItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY);
+    if (storedEnvironmentId) {
+      setResolvedEnvironmentId(storedEnvironmentId);
+    }
+  }, [environmentId]);
 
   return (
     <div className="h-full w-full">
@@ -30,7 +49,12 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
           </p>
         </div>
         <Button asChild className="w-full justify-center">
-          <Link href={`/environments/${environmentId}/settings/billing`}>
+          <Link
+            href={
+              resolvedEnvironmentId
+                ? `/environments/${resolvedEnvironmentId}/settings/billing`
+                : "/environments"
+            }>
             {t("billing_confirmation.back_to_billing_overview")}
           </Link>
         </Button>
