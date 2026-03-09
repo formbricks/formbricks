@@ -19,8 +19,9 @@ const mocks = vi.hoisted(() => ({
   cacheWithCache: vi.fn(),
   cacheDel: vi.fn(),
   loggerWarn: vi.fn(),
-  getCloudPlanFromProductId: vi.fn(),
+  getCloudPlanFromProduct: vi.fn(),
   customersCreate: vi.fn(),
+  productsList: vi.fn(),
   subscriptionsList: vi.fn(),
   subscriptionsCreate: vi.fn(),
   subscriptionsCancel: vi.fn(),
@@ -77,13 +78,14 @@ vi.mock("./stripe-catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./stripe-catalog")>();
   return {
     ...actual,
-    getCloudPlanFromProductId: mocks.getCloudPlanFromProductId,
+    getCloudPlanFromProduct: mocks.getCloudPlanFromProduct,
   };
 });
 
 vi.mock("./stripe-client", () => ({
   stripeClient: {
     customers: { create: mocks.customersCreate },
+    products: { list: mocks.productsList },
     subscriptions: {
       list: mocks.subscriptionsList,
       create: mocks.subscriptionsCreate,
@@ -103,8 +105,17 @@ describe("organization-billing", () => {
     vi.clearAllMocks();
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
-    mocks.getCloudPlanFromProductId.mockReturnValue("pro");
+    mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.productsList.mockResolvedValue({
+      data: [
+        {
+          id: "prod_hobby",
+          metadata: { formbricks_plan: "hobby" },
+          default_price: null,
+        },
+      ],
+    });
     mocks.pricesList.mockResolvedValue({
       data: [{ id: "price_hobby_1" }],
     });
@@ -365,11 +376,13 @@ describe("organization-billing", () => {
   });
 
   test("syncOrganizationBillingFromStripe prefers higher-tier active subscription over hobby", async () => {
-    mocks.getCloudPlanFromProductId.mockImplementation((productId: string) => {
-      if (productId === "prod_hobby") return "hobby";
-      if (productId === "prod_pro") return "pro";
-      return "unknown";
-    });
+    mocks.getCloudPlanFromProduct.mockImplementation(
+      (product: { metadata?: { formbricks_plan?: string } }) => {
+        if (product.metadata?.formbricks_plan === "hobby") return "hobby";
+        if (product.metadata?.formbricks_plan === "pro") return "pro";
+        return "unknown";
+      }
+    );
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
       limits: {
@@ -393,7 +406,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_hobby" },
+                  product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -409,7 +422,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_pro" },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -613,10 +626,14 @@ describe("organization-billing", () => {
 
     await ensureCloudStripeSetupForOrganization("org_1");
 
-    expect(mocks.pricesList).toHaveBeenCalledWith({
-      lookup_keys: ["price_hobby_monthly"],
+    expect(mocks.productsList).toHaveBeenCalledWith({
       active: true,
-      limit: 1,
+      limit: 100,
+    });
+    expect(mocks.pricesList).toHaveBeenCalledWith({
+      product: "prod_hobby",
+      active: true,
+      limit: 100,
     });
     expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
       {
@@ -629,11 +646,13 @@ describe("organization-billing", () => {
   });
 
   test("reconcileCloudStripeSubscriptionsForOrganization cancels hobby when paid subscription is active", async () => {
-    mocks.getCloudPlanFromProductId.mockImplementation((productId: string) => {
-      if (productId === "prod_hobby") return "hobby";
-      if (productId === "prod_pro") return "pro";
-      return "unknown";
-    });
+    mocks.getCloudPlanFromProduct.mockImplementation(
+      (product: { metadata?: { formbricks_plan?: string } }) => {
+        if (product.metadata?.formbricks_plan === "hobby") return "hobby";
+        if (product.metadata?.formbricks_plan === "pro") return "pro";
+        return "unknown";
+      }
+    );
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
       limits: {
@@ -656,7 +675,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_hobby" },
+                  product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                 },
               },
             ],
@@ -670,7 +689,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_pro" },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                 },
               },
             ],

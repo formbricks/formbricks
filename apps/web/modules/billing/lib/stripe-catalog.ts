@@ -1,37 +1,5 @@
 import "server-only";
-import { logger } from "@formbricks/logger";
-
-const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
-  HOBBY: "prod_ToYKB5ESOMZZk5",
-  PRO: "prod_ToYKQ8WxS3ecgf",
-  SCALE: "prod_ToYLW5uCQTMa6v",
-} as const;
-
-export const CLOUD_STRIPE_PRODUCT_IDS = {
-  HOBBY: process.env.STRIPE_PRODUCT_ID_HOBBY?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.HOBBY,
-  PRO: process.env.STRIPE_PRODUCT_ID_PRO?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.PRO,
-  SCALE: process.env.STRIPE_PRODUCT_ID_SCALE?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.SCALE,
-} as const;
-
-const cloudStripeProductIdsUsingDefaults = Object.entries(DEFAULT_CLOUD_STRIPE_PRODUCT_IDS).flatMap(
-  ([planKey, defaultProductId]) =>
-    CLOUD_STRIPE_PRODUCT_IDS[planKey as keyof typeof CLOUD_STRIPE_PRODUCT_IDS] === defaultProductId
-      ? [planKey]
-      : []
-);
-
-if (
-  process.env.IS_FORMBRICKS_CLOUD === "1" &&
-  cloudStripeProductIdsUsingDefaults.length > 0 &&
-  process.env.NODE_ENV !== "test"
-) {
-  const message = `Cloud Stripe product IDs are using defaults for: ${cloudStripeProductIdsUsingDefaults.join(", ")}. Configure STRIPE_PRODUCT_ID_* environment variables.`;
-  logger.warn({ cloudStripeProductIdsUsingDefaults }, message);
-}
-
-export const CLOUD_STRIPE_PRICE_LOOKUP_KEYS = {
-  HOBBY_MONTHLY: "price_hobby_monthly",
-} as const;
+import Stripe from "stripe";
 
 export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   CUSTOM_REDIRECT_URL: "custom-redirect-url",
@@ -54,10 +22,28 @@ export const CLOUD_PLAN_LEVEL = {
 
 export type TCloudStripePlan = keyof typeof CLOUD_PLAN_LEVEL;
 
-export const getCloudPlanFromProductId = (productId: string | null | undefined): TCloudStripePlan => {
-  if (!productId) return "unknown";
-  if (productId === CLOUD_STRIPE_PRODUCT_IDS.HOBBY) return "hobby";
-  if (productId === CLOUD_STRIPE_PRODUCT_IDS.PRO) return "pro";
-  if (productId === CLOUD_STRIPE_PRODUCT_IDS.SCALE) return "scale";
-  return "unknown";
+const CLOUD_PRODUCT_METADATA_TO_PLAN = {
+  hobby: "hobby",
+  pro: "pro",
+  scale: "scale",
+} as const satisfies Record<string, Exclude<TCloudStripePlan, "unknown">>;
+
+const getProductPlanMetadata = (
+  product: string | Stripe.Product | Stripe.DeletedProduct | null | undefined
+): string | null => {
+  if (!product || typeof product === "string" || product.deleted) {
+    return null;
+  }
+
+  return product.metadata.formbricks_plan ?? null;
+};
+
+export const getCloudPlanFromProduct = (
+  product: string | Stripe.Product | Stripe.DeletedProduct | null | undefined
+): TCloudStripePlan => {
+  const metadataPlan = getProductPlanMetadata(product);
+  if (!metadataPlan) return "unknown";
+  return (
+    CLOUD_PRODUCT_METADATA_TO_PLAN[metadataPlan as keyof typeof CLOUD_PRODUCT_METADATA_TO_PLAN] ?? "unknown"
+  );
 };

@@ -10,12 +10,7 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import {
-  CLOUD_PLAN_LEVEL,
-  CLOUD_STRIPE_PRICE_LOOKUP_KEYS,
-  type TCloudStripePlan,
-  getCloudPlanFromProductId,
-} from "./stripe-catalog";
+import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-catalog";
 import { stripeClient } from "./stripe-client";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
@@ -118,7 +113,7 @@ const getSubscriptionTopPlanLevel = (
     items: {
       data: Array<{
         price: {
-          product: string | { id: string };
+          product: string | Stripe.Product | Stripe.DeletedProduct;
         };
       }>;
     };
@@ -129,9 +124,7 @@ const getSubscriptionTopPlanLevel = (
   let topLevel: number = CLOUD_PLAN_LEVEL.unknown;
 
   for (const item of subscription.items.data) {
-    const product = item.price.product;
-    const productId = typeof product === "string" ? product : product.id;
-    const plan = getCloudPlanFromProductId(productId);
+    const plan = getCloudPlanFromProduct(item.price.product);
     topLevel = Math.max(topLevel, CLOUD_PLAN_LEVEL[plan]);
   }
 
@@ -145,6 +138,7 @@ const resolveCurrentSubscription = async (customerId: string) => {
     customer: customerId,
     status: "all",
     limit: 20,
+    expand: ["data.items.data.price.product"],
   });
 
   const preferred = [...subscriptions.data]
@@ -171,9 +165,7 @@ const resolveCloudPlanFromSubscription = (
   let resolvedPlan: TCloudStripePlan = "unknown";
 
   for (const item of subscription.items.data) {
-    const product = item.price.product;
-    const productId = typeof product === "string" ? product : product.id;
-    const plan = getCloudPlanFromProductId(productId);
+    const plan = getCloudPlanFromProduct(item.price.product);
     if (CLOUD_PLAN_LEVEL[plan] > CLOUD_PLAN_LEVEL[resolvedPlan]) {
       resolvedPlan = plan;
     }
@@ -208,15 +200,35 @@ const ensureHobbySubscription = async (
 ): Promise<void> => {
   if (!stripeClient) return;
 
-  const hobbyPrices = await stripeClient.prices.list({
-    lookup_keys: [CLOUD_STRIPE_PRICE_LOOKUP_KEYS.HOBBY_MONTHLY],
+  const products = await stripeClient.products.list({
     active: true,
-    limit: 1,
+    limit: 100,
   });
 
-  const hobbyPrice = hobbyPrices.data[0];
+  const hobbyProduct = products.data.find((product) => product.metadata.formbricks_plan === "hobby");
+  if (!hobbyProduct) {
+    throw new Error("Stripe product metadata formbricks_plan=hobby not found");
+  }
+
+  const defaultPrice =
+    typeof hobbyProduct.default_price === "string" ? null : (hobbyProduct.default_price ?? null);
+
+  const fallbackPrices = await stripeClient.prices.list({
+    product: hobbyProduct.id,
+    active: true,
+    limit: 100,
+  });
+
+  const hobbyPrice =
+    defaultPrice ??
+    fallbackPrices.data.find(
+      (price) => price.recurring?.interval === "month" && price.recurring.usage_type === "licensed"
+    ) ??
+    fallbackPrices.data[0] ??
+    null;
+
   if (!hobbyPrice) {
-    throw new Error(`Stripe price lookup key not found: ${CLOUD_STRIPE_PRICE_LOOKUP_KEYS.HOBBY_MONTHLY}`);
+    throw new Error(`No active price found for Stripe hobby product ${hobbyProduct.id}`);
   }
 
   await stripeClient.subscriptions.create(
@@ -499,6 +511,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     customer: customerId,
     status: "all",
     limit: 20,
+    expand: ["data.items.data.price.product"],
   });
 
   const activeSubscriptions = subscriptions.data.filter((subscription) =>
