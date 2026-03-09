@@ -22,7 +22,7 @@ export const ZTemplate = z.object({
   preset: z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,
-    blocks: ZSurveyBlocks.default([]),
+    blocks: ZSurveyBlocks.prefault([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
   }),

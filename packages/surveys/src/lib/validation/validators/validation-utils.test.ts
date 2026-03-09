@@ -5,7 +5,7 @@ import { validateEmail, validatePhone, validateUrl } from "./validation-utils";
 
 describe("Validation Logic Parity", () => {
   describe("Email Validation", () => {
-    const zodEmail = z.string().email();
+    const zodEmail = z.email();
 
     const testCases = [
       "test@example.com",
@@ -31,7 +31,7 @@ describe("Validation Logic Parity", () => {
   });
 
   describe("URL Validation", () => {
-    const zodUrl = z.string().url();
+    const zodUrl = z.url();
 
     const testCases = [
       "https://example.com",

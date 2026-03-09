@@ -393,6 +393,7 @@
     "show_response_count": "Afișează numărul de răspunsuri",
     "shown": "Afișat",
     "size": "Mărime",
+    "skip": "Omite",
     "skipped": "Sărit",
     "skips": "Salturi",
     "some_files_failed_to_upload": "Unele fișiere nu au reușit să se încarce",
@@ -462,6 +463,7 @@
     "website_survey": "Chestionar despre site",
     "weeks": "săptămâni",
     "welcome_card": "Card de bun venit",
+    "workflows": "Workflows",
     "workspace_configuration": "Configurare workspace",
     "workspace_created_successfully": "Spațiul de lucru a fost creat cu succes",
     "workspace_creation_description": "Organizează sondajele în workspaces pentru un control mai bun al accesului.",
@@ -3259,5 +3261,18 @@
     "usability_question_9_headline": "M-am simțit încrezător în timp ce utilizam sistemul.",
     "usability_rating_description": "Măsurați uzabilitatea percepută cerând utilizatorilor să își evalueze experiența cu produsul dumneavoastră folosind un chestionar standardizat din 10 întrebări.",
     "usability_score_name": "Scor de Uzabilitate al Sistemului (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "Îți mulțumim că ai împărtășit cu noi ideea ta de workflow! În prezent, lucrăm la această funcționalitate, iar feedback-ul tău ne ajută să construim exact ce ai nevoie.",
+    "coming_soon_title": "Suntem aproape gata!",
+    "follow_up_label": "Mai este ceva ce ai vrea să adaugi?",
+    "follow_up_placeholder": "Ce sarcini specifice ai vrea să automatizezi? Există instrumente sau integrări pe care le-ai dori incluse?",
+    "generate_button": "Generează workflow",
+    "heading": "Ce workflow vrei să creezi?",
+    "placeholder": "Descrie workflow-ul pe care vrei să-l generezi...",
+    "subheading": "Generează-ți workflow-ul în câteva secunde.",
+    "submit_button": "Adaugă detalii",
+    "thank_you_description": "Contribuția ta ne ajută să construim funcția Workflows de care chiar ai nevoie. Te vom ține la curent cu progresul nostru.",
+    "thank_you_title": "Îți mulțumim pentru feedback!"
   }
 }

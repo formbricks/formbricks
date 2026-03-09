@@ -15,14 +15,14 @@ export const ZIntegrationAirtableConfigData = z
     baseId: z.string(),
     tableName: z.string(),
   })
-  .merge(ZIntegrationBaseSurveyData);
+  .extend(ZIntegrationBaseSurveyData.shape);
 
 export type TIntegrationAirtableConfigData = z.infer<typeof ZIntegrationAirtableConfigData>;
 
 export const ZIntegrationAirtableConfig = z.object({
   key: ZIntegrationAirtableCredential,
   data: z.array(ZIntegrationAirtableConfigData),
-  email: z.string().email(),
+  email: z.email(),
 });
 
 export type TIntegrationAirtableConfig = z.infer<typeof ZIntegrationAirtableConfig>;

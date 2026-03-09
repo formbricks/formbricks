@@ -5,7 +5,7 @@ export const ZSurveyFollowUpTrigger = z
     type: z.enum(["response", "endings"]),
     properties: z
       .object({
-        endingIds: z.array(z.string().cuid2()),
+        endingIds: z.array(z.cuid2()),
       })
       .nullable(),
   })
@@ -13,7 +13,7 @@ export const ZSurveyFollowUpTrigger = z
     if (trigger.type === "response") {
       if (trigger.properties) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Properties should be null for response type",
         });
       }
@@ -22,7 +22,7 @@ export const ZSurveyFollowUpTrigger = z
     if (trigger.type === "endings") {
       if (!trigger.properties) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Properties must be defined for endings type",
         });
       }
@@ -35,8 +35,8 @@ export const ZSurveyFollowUpAction = z.object({
   type: z.literal("send-email"),
   properties: z.object({
     to: z.string(),
-    from: z.string().email(),
-    replyTo: z.array(z.string().email()),
+    from: z.email(),
+    replyTo: z.array(z.email()),
     subject: z.string(),
     body: z.string(),
     attachResponseData: z.boolean(),
@@ -48,13 +48,13 @@ export const ZSurveyFollowUpAction = z.object({
 export type TSurveyFollowUpAction = z.infer<typeof ZSurveyFollowUpAction>;
 
 export const ZSurveyFollowUp = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
   trigger: ZSurveyFollowUpTrigger,
   action: ZSurveyFollowUpAction,
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export type TSurveyFollowUp = z.infer<typeof ZSurveyFollowUp>;

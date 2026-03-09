@@ -12,7 +12,7 @@ const ZGetSlackChannelsAction = z.object({
 });
 
 export const getSlackChannelsAction = authenticatedActionClient
-  .schema(ZGetSlackChannelsAction)
+  .inputSchema(ZGetSlackChannelsAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

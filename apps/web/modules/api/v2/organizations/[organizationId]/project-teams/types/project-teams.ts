@@ -3,8 +3,8 @@ import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetProjectTeamsFilter = ZGetFilter.extend({
-  teamId: z.string().cuid2().optional(),
-  projectId: z.string().cuid2().optional(),
+  teamId: z.cuid2().optional(),
+  projectId: z.cuid2().optional(),
 }).refine(
   (data) => {
     if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -28,8 +28,8 @@ export const ZProjectTeamInput = ZProjectTeam.pick({
 export type TProjectTeamInput = z.infer<typeof ZProjectTeamInput>;
 
 export const ZGetProjectTeamUpdateFilter = z.object({
-  teamId: z.string().cuid2(),
-  projectId: z.string().cuid2(),
+  teamId: z.cuid2(),
+  projectId: z.cuid2(),
 });
 
 export const ZProjectZTeamUpdateSchema = ZProjectTeam.pick({

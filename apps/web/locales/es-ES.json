@@ -393,6 +393,7 @@
     "show_response_count": "Mostrar recuento de respuestas",
     "shown": "Mostrado",
     "size": "Tamaño",
+    "skip": "Omitir",
     "skipped": "Omitido",
     "skips": "Omisiones",
     "some_files_failed_to_upload": "Algunos archivos no se han podido subir",
@@ -462,6 +463,7 @@
     "website_survey": "Encuesta de sitio web",
     "weeks": "semanas",
     "welcome_card": "Tarjeta de bienvenida",
+    "workflows": "Flujos de trabajo",
     "workspace_configuration": "Configuración del proyecto",
     "workspace_created_successfully": "Proyecto creado correctamente",
     "workspace_creation_description": "Organiza las encuestas en proyectos para un mejor control de acceso.",
@@ -3259,5 +3261,18 @@
     "usability_question_9_headline": "Me sentí seguro mientras usaba el sistema.",
     "usability_rating_description": "Mide la usabilidad percibida pidiendo a los usuarios que valoren su experiencia con tu producto mediante una encuesta estandarizada de 10 preguntas.",
     "usability_score_name": "Puntuación de usabilidad del sistema (SUS)"
+  },
+  "workflows": {
+    "coming_soon_description": "¡Gracias por compartir tu idea de flujo de trabajo con nosotros! Actualmente estamos diseñando esta funcionalidad y tus comentarios nos ayudarán a construir exactamente lo que necesitas.",
+    "coming_soon_title": "¡Ya casi estamos!",
+    "follow_up_label": "¿Hay algo más que te gustaría añadir?",
+    "follow_up_placeholder": "¿Qué tareas específicas te gustaría automatizar? ¿Alguna herramienta o integración que quisieras incluir?",
+    "generate_button": "Generar flujo de trabajo",
+    "heading": "¿Qué flujo de trabajo quieres crear?",
+    "placeholder": "Describe el flujo de trabajo que quieres generar...",
+    "subheading": "Genera tu flujo de trabajo en segundos.",
+    "submit_button": "Añadir detalles",
+    "thank_you_description": "Tu aportación nos ayuda a construir la funcionalidad de flujos de trabajo que realmente necesitas. Te mantendremos informado sobre nuestro progreso.",
+    "thank_you_title": "¡Gracias por tus comentarios!"
   }
 }

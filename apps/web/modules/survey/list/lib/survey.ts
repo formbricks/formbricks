@@ -605,7 +605,7 @@ export const copySurveyToOtherEnvironment = async (
 };
 
 export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, z.string().cuid2()]);
+  validateInputs([environmentId, z.cuid2()]);
   try {
     const surveyCount = await prisma.survey.count({
       where: {

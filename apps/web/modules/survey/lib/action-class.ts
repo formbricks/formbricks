@@ -6,7 +6,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getActionClasses = reactCache(async (environmentId: string): Promise<ActionClass[]> => {
-  validateInputs([environmentId, z.string().cuid2()]);
+  validateInputs([environmentId, z.cuid2()]);
 
   try {
     return await prisma.actionClass.findMany({

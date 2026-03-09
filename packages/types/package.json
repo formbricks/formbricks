@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.2",
-    "zod": "3.25.76",
-    "zod-openapi": "4.2.4",
+    "zod": "4.3.6",
+    "zod-openapi": "5.4.6",
     "node-html-parser": "7.1.0"
   },
   "devDependencies": {

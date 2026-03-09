@@ -519,7 +519,7 @@ describe("CacheService", () => {
       const hangingPromise = new Promise(() => {
         // This promise never resolves to simulate timeout
       });
-      mockRedis.ping.mockImplementation(() => hangingPromise);
+      mockRedis.ping.mockReturnValue(hangingPromise as Promise<string>);
 
       const result = await cacheService.isRedisAvailable();
 

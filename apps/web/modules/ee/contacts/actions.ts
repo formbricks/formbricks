@@ -23,12 +23,12 @@ import {
 
 const ZGetContactsAction = z.object({
   environmentId: ZId,
-  offset: z.number().int().nonnegative(),
+  offset: z.int().nonnegative(),
   searchValue: z.string().optional(),
 });
 
 export const getContactsAction = authenticatedActionClient
-  .schema(ZGetContactsAction)
+  .inputSchema(ZGetContactsAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -53,7 +53,7 @@ const ZContactDeleteAction = z.object({
   contactId: ZId,
 });
 
-export const deleteContactAction = authenticatedActionClient.schema(ZContactDeleteAction).action(
+export const deleteContactAction = authenticatedActionClient.inputSchema(ZContactDeleteAction).action(
   withAuditLogging(
     "deleted",
     "contact",
@@ -95,46 +95,54 @@ const ZCreateContactsFromCSV = z.object({
   attributeMap: ZContactCSVAttributeMap,
 });
 
-export const createContactsFromCSVAction = authenticatedActionClient.schema(ZCreateContactsFromCSV).action(
-  withAuditLogging(
-    "createdFromCSV",
-    "contact",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+export const createContactsFromCSVAction = authenticatedActionClient
+  .inputSchema(ZCreateContactsFromCSV)
+  .action(
+    withAuditLogging(
+      "createdFromCSV",
+      "contact",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner", "manager"],
+            },
+            {
+              type: "projectTeam",
+              projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+              minPermission: "readWrite",
+            },
+          ],
+        });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      const result = await createContactsFromCSV(
-        parsedInput.csvData,
-        parsedInput.environmentId,
-        parsedInput.duplicateContactsAction,
-        parsedInput.attributeMap
-      );
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        const result = await createContactsFromCSV(
+          parsedInput.csvData,
+          parsedInput.environmentId,
+          parsedInput.duplicateContactsAction,
+          parsedInput.attributeMap
+        );
 
-      if ("contacts" in result) {
-        ctx.auditLoggingCtx.newObject = {
-          contacts: result.contacts,
-        };
+        if ("contacts" in result) {
+          ctx.auditLoggingCtx.newObject = {
+            contacts: result.contacts,
+          };
+        }
+
+        return result;
       }
-
-      return result;
-    }
-  )
-);
+    )
+  );
 
 const ZUpdateContactAttributesAction = z.object({
   contactId: ZId,
@@ -143,7 +151,7 @@ const ZUpdateContactAttributesAction = z.object({
 
 export type TUpdateContactAttributesAction = z.infer<typeof ZUpdateContactAttributesAction>;
 export const updateContactAttributesAction = authenticatedActionClient
-  .schema(ZUpdateContactAttributesAction)
+  .inputSchema(ZUpdateContactAttributesAction)
   .action(
     withAuditLogging(
       "updated",

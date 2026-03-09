@@ -72,11 +72,11 @@ export const ZValidationRuleParamsPattern = z.object({
 
 // Use strict() to prevent these empty objects from matching any object in unions
 // Without strict(), z.object({}) is non-strict and accepts extra properties, defeating union discrimination
-export const ZValidationRuleParamsEmail = z.object({}).strict();
+export const ZValidationRuleParamsEmail = z.strictObject({});
 
-export const ZValidationRuleParamsUrl = z.object({}).strict();
+export const ZValidationRuleParamsUrl = z.strictObject({});
 
-export const ZValidationRuleParamsPhone = z.object({}).strict();
+export const ZValidationRuleParamsPhone = z.strictObject({});
 
 export const ZValidationRuleParamsMinValue = z.object({
   min: z.number(),
@@ -140,8 +140,8 @@ export const ZValidationRuleParamsMinRanked = z.object({
   min: z.number().min(1),
 });
 
-export const ZValidationRuleParamsRankAll = z.object({}).strict();
-export const ZValidationRuleParamsAnswerAllRows = z.object({}).strict();
+export const ZValidationRuleParamsRankAll = z.strictObject({});
+export const ZValidationRuleParamsAnswerAllRows = z.strictObject({});
 
 export const ZValidationRuleParamsMinRowsAnswered = z.object({
   min: z.number().min(1),
