@@ -965,10 +965,6 @@
       },
       "billing": {
         "cancelling": "Cancelling",
-        "current": "Current",
-        "current_plan": "Current Plan",
-        "current_plan_description": "Your current plan and usage overview",
-        "current_tier_limit": "Current Tier Limit",
         "manage_subscription": "Manage Subscription",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
@@ -1425,7 +1421,6 @@
         "follow_ups_modal_trigger_type_response": "Respondent completes survey",
         "follow_ups_modal_updated_successfull_toast": "Follow-up updated and will be saved once you save the survey.",
         "follow_ups_new": "New follow-up",
-        "follow_ups_upgrade_button_text": "Upgrade to enable follow-ups",
         "formbricks_sdk_is_not_connected": "Formbricks SDK is not connected",
         "four_points": "4 points",
         "heading": "Heading",

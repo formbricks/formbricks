@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   getCloudPlanFromProduct: vi.fn(),
   customersCreate: vi.fn(),
   productsList: vi.fn(),
+  productsRetrieve: vi.fn(),
   subscriptionsList: vi.fn(),
   subscriptionsCreate: vi.fn(),
   subscriptionsCancel: vi.fn(),
@@ -85,7 +86,10 @@ vi.mock("./stripe-plan", async (importOriginal) => {
 vi.mock("./stripe-client", () => ({
   stripeClient: {
     customers: { create: mocks.customersCreate },
-    products: { list: mocks.productsList },
+    products: {
+      list: mocks.productsList,
+      retrieve: mocks.productsRetrieve,
+    },
     subscriptions: {
       list: mocks.subscriptionsList,
       create: mocks.subscriptionsCreate,
@@ -116,6 +120,17 @@ describe("organization-billing", () => {
         },
       ],
     });
+    mocks.productsRetrieve.mockImplementation(async (productId: string) => ({
+      id: productId,
+      metadata:
+        productId === "prod_hobby"
+          ? { formbricks_plan: "hobby" }
+          : productId === "prod_pro"
+            ? { formbricks_plan: "pro" }
+            : productId === "prod_scale"
+              ? { formbricks_plan: "scale" }
+              : {},
+    }));
     mocks.pricesList.mockResolvedValue({
       data: [{ id: "price_hobby_1" }],
     });

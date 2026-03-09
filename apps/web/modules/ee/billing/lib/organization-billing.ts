@@ -108,6 +108,62 @@ const parseMaxNumericEntitlementLimit = (features: string[], prefix: string): nu
   return maxValue;
 };
 
+const hydrateSubscriptionProducts = async <
+  TSubscription extends {
+    items: {
+      data: Array<{
+        price: {
+          product: string | Stripe.Product | Stripe.DeletedProduct;
+        };
+      }>;
+    };
+  },
+>(
+  subscriptions: TSubscription[]
+): Promise<TSubscription[]> => {
+  if (!stripeClient || subscriptions.length === 0) {
+    return subscriptions;
+  }
+  const client = stripeClient;
+
+  const productIds = [
+    ...new Set(
+      subscriptions.flatMap((subscription) =>
+        subscription.items.data.flatMap((item) =>
+          typeof item.price.product === "string" ? [item.price.product] : []
+        )
+      )
+    ),
+  ];
+
+  if (productIds.length === 0) {
+    return subscriptions;
+  }
+
+  const products = await Promise.all(
+    productIds.map(async (productId) => [productId, await client.products.retrieve(productId)] as const)
+  );
+
+  const productsById = new Map(products);
+
+  return subscriptions.map((subscription) => ({
+    ...subscription,
+    items: {
+      ...subscription.items,
+      data: subscription.items.data.map((item) => ({
+        ...item,
+        price: {
+          ...item.price,
+          product:
+            typeof item.price.product === "string"
+              ? (productsById.get(item.price.product) ?? item.price.product)
+              : item.price.product,
+        },
+      })),
+    },
+  }));
+};
+
 const getSubscriptionTopPlanLevel = (
   subscription: {
     items: {
@@ -138,10 +194,10 @@ const resolveCurrentSubscription = async (customerId: string) => {
     customer: customerId,
     status: "all",
     limit: 20,
-    expand: ["data.items.data.price.product"],
   });
+  const subscriptionsWithProducts = await hydrateSubscriptionProducts(subscriptions.data);
 
-  const preferred = [...subscriptions.data]
+  const preferred = [...subscriptionsWithProducts]
     .filter((subscription) => ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status))
     .sort((left, right) => {
       const leftLevel = getSubscriptionTopPlanLevel(left);
@@ -511,10 +567,10 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     customer: customerId,
     status: "all",
     limit: 20,
-    expand: ["data.items.data.price.product"],
   });
+  const subscriptionsWithProducts = await hydrateSubscriptionProducts(subscriptions.data);
 
-  const activeSubscriptions = subscriptions.data.filter((subscription) =>
+  const activeSubscriptions = subscriptionsWithProducts.filter((subscription) =>
     ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)
   );
 
