@@ -534,6 +534,11 @@ export const getOrganizationBillingWithReadThroughSync = async (
   }
 };
 
+export const deleteStripeCustomer = async (stripeCustomerId: string): Promise<void> => {
+  if (!stripeClient) return;
+  await stripeClient.customers.del(stripeCustomerId);
+};
+
 export const findOrganizationIdByStripeCustomerId = async (customerId: string): Promise<string | null> => {
   const billing = await prisma.organizationBilling.findUnique({
     where: {

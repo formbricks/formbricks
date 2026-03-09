@@ -18,7 +18,10 @@ import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingPeriodStartDate } from "@/lib/utils/billing";
-import { ensureCloudStripeSetupForOrganization } from "@/modules/billing/lib/organization-billing";
+import {
+  deleteStripeCustomer,
+  ensureCloudStripeSetupForOrganization,
+} from "@/modules/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
 export const select = {
@@ -274,13 +277,18 @@ export const updateOrganization = async (
 export const deleteOrganization = async (organizationId: string) => {
   validateInputs([organizationId, ZId]);
   try {
-    await prisma.organization.delete({
+    const deletedOrganization = await prisma.organization.delete({
       where: {
         id: organizationId,
       },
       select: {
         id: true,
         name: true,
+        billing: {
+          select: {
+            stripeCustomerId: true,
+          },
+        },
         memberships: {
           select: {
             userId: true,
@@ -298,6 +306,16 @@ export const deleteOrganization = async (organizationId: string) => {
         },
       },
     });
+
+    const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
+    if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {
+      deleteStripeCustomer(stripeCustomerId).catch((error) => {
+        logger.error(
+          { error, organizationId, stripeCustomerId },
+          "Failed to delete Stripe customer after organization deletion"
+        );
+      });
+    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
