@@ -63,7 +63,7 @@ async function handleEmailUpdate({
   return payload;
 }
 
-export const updateUserAction = authenticatedActionClient.schema(ZUserPersonalInfoUpdateInput).action(
+export const updateUserAction = authenticatedActionClient.inputSchema(ZUserPersonalInfoUpdateInput).action(
   withAuditLogging(
     "updated",
     "user",

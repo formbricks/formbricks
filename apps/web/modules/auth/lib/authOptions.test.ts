@@ -195,6 +195,7 @@ describe("authOptions", () => {
         vi.mocked(applyIPRateLimit).mockRejectedValue(
           new Error("Maximum number of requests reached. Please try again later.")
         );
+        const findUniqueSpy = vi.spyOn(prisma.user, "findUnique");
 
         const credentials = { email: mockUser.email, password: mockPassword };
 
@@ -202,7 +203,7 @@ describe("authOptions", () => {
           "Maximum number of requests reached. Please try again later."
         );
 
-        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(findUniqueSpy).not.toHaveBeenCalled();
       });
 
       test("should use correct rate limit configuration", async () => {
@@ -281,6 +282,7 @@ describe("authOptions", () => {
         vi.mocked(applyIPRateLimit).mockRejectedValue(
           new Error("Maximum number of requests reached. Please try again later.")
         );
+        const findUniqueSpy = vi.spyOn(prisma.user, "findUnique");
 
         const credentials = { token: "sometoken" };
 
@@ -288,7 +290,7 @@ describe("authOptions", () => {
           "Maximum number of requests reached. Please try again later."
         );
 
-        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(findUniqueSpy).not.toHaveBeenCalled();
       });
     });
   });

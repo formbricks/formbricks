@@ -1,26 +1,22 @@
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 
-extendZodWithOpenApi(z);
-
 export const ZContactAttributeKeyIdSchema = z
-  .string()
   .cuid2()
-  .openapi({
-    ref: "contactAttributeKeyId",
-    description: "The ID of the contact attribute key",
+  .meta({
+    id: "contactAttributeKeyId",
     param: {
       name: "id",
       in: "path",
     },
-  });
+  })
+  .describe("The ID of the contact attribute key");
 
 export const ZContactAttributeKeyUpdateSchema = ZContactAttributeKey.pick({
   name: true,
   description: true,
-}).openapi({
-  ref: "contactAttributeKeyUpdate",
+}).meta({
+  id: "contactAttributeKeyUpdate",
   description: "A contact attribute key to update. Key cannot be changed.",
 });
 

@@ -106,7 +106,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         className="h-full w-full cursor-pointer"
         id="howToSendCardTrigger">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pr-5 pl-2">
+          <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -149,14 +149,14 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                     option.comingSoon
                       ? "border-slate-200 bg-slate-50/50"
                       : option.id === localSurvey.type
-                        ? "border-brand-dark cursor-pointer bg-slate-50"
+                        ? "cursor-pointer border-brand-dark bg-slate-50"
                         : "cursor-pointer bg-slate-50"
                   )}
                   id={`howToSendCardOption-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
                     id={option.id}
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                     disabled={option.comingSoon}
                   />
                   <div className="inline-flex items-center">

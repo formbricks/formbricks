@@ -53,11 +53,7 @@ interface PermissionRecord {
   environmentType: string;
 }
 
-const permissionOptions: ApiKeyPermission[] = [
-  ApiKeyPermission.read,
-  ApiKeyPermission.write,
-  ApiKeyPermission.manage,
-];
+const permissionOptions = [ApiKeyPermission.read, ApiKeyPermission.write, ApiKeyPermission.manage];
 
 export const AddApiKeyModal = ({
   open,
@@ -79,7 +75,7 @@ export const AddApiKeyModal = ({
   const [selectedOrganizationAccess, setSelectedOrganizationAccess] =
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
-  const getInitialPermissions = () => {
+  const getInitialPermissions = (): Record<string, PermissionRecord> => {
     if (projects.length > 0 && projects[0].environments.length > 0) {
       return {
         "permission-0": {
@@ -91,7 +87,7 @@ export const AddApiKeyModal = ({
         },
       };
     }
-    return {} as Record<string, PermissionRecord>;
+    return {};
   };
 
   // Initialize with one permission by default

@@ -4854,6 +4854,17 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
             }),
             isDraft: true,
           },
+          {
+            ...buildOpenTextElement({
+              id: "preview-open-text-01",
+              headline: t("templates.preview_survey_question_open_text_headline"),
+              subheader: t("templates.preview_survey_question_open_text_subheader"),
+              placeholder: t("templates.preview_survey_question_open_text_placeholder"),
+              inputType: "text",
+              required: false,
+            }),
+            isDraft: true,
+          },
         ],
         buttonLabel: createI18nString(t("templates.next"), []),
         backButtonLabel: createI18nString(t("templates.preview_survey_question_2_back_button_label"), []),

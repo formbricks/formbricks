@@ -1,4 +1,4 @@
-import cuid2 from "@paralleldrive/cuid2";
+import * as cuid2 from "@paralleldrive/cuid2";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as crypto from "@/lib/crypto";
 import { generateSurveySingleUseId, validateSurveySingleUseId } from "./singleUseSurveys";
@@ -20,10 +20,6 @@ vi.mock("@paralleldrive/cuid2", () => {
   const isCuidMock = vi.fn();
 
   return {
-    default: {
-      createId: createIdMock,
-      isCuid: isCuidMock,
-    },
     createId: createIdMock,
     isCuid: isCuidMock,
   };

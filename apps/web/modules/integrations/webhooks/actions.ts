@@ -29,7 +29,7 @@ const ZCreateWebhookAction = z.object({
   webhookSecret: z.string().optional(),
 });
 
-export const createWebhookAction = authenticatedActionClient.schema(ZCreateWebhookAction).action(
+export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreateWebhookAction).action(
   withAuditLogging(
     "created",
     "webhook",
@@ -66,7 +66,7 @@ const ZDeleteWebhookAction = z.object({
   id: ZId,
 });
 
-export const deleteWebhookAction = authenticatedActionClient.schema(ZDeleteWebhookAction).action(
+export const deleteWebhookAction = authenticatedActionClient.inputSchema(ZDeleteWebhookAction).action(
   withAuditLogging(
     "deleted",
     "webhook",
@@ -103,7 +103,7 @@ const ZUpdateWebhookAction = z.object({
   webhookInput: ZWebhookInput,
 });
 
-export const updateWebhookAction = authenticatedActionClient.schema(ZUpdateWebhookAction).action(
+export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdateWebhookAction).action(
   withAuditLogging(
     "updated",
     "webhook",
@@ -143,7 +143,7 @@ const ZTestEndpointAction = z.object({
 });
 
 export const testEndpointAction = authenticatedActionClient
-  .schema(ZTestEndpointAction)
+  .inputSchema(ZTestEndpointAction)
   .action(async ({ ctx, parsedInput }) => {
     let secret: string | undefined;
 

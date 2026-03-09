@@ -15,7 +15,7 @@ const ZForgotPasswordAction = z.object({
 });
 
 export const forgotPasswordAction = actionClient
-  .schema(ZForgotPasswordAction)
+  .inputSchema(ZForgotPasswordAction)
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.auth.forgotPassword);
 

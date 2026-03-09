@@ -13,7 +13,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 
 const ZForgotPasswordForm = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 
 type TForgotPasswordForm = z.infer<typeof ZForgotPasswordForm>;
@@ -60,7 +60,7 @@ export const ForgotPasswordForm = () => {
                       onChange={(e) => field.onChange(e)}
                       autoComplete="email"
                       required
-                      className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                      className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                     />
                   </FormControl>
                   {error?.message && <FormError className="text-left">{error.message}</FormError>}

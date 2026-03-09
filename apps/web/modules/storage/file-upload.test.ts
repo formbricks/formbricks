@@ -30,7 +30,9 @@ describe("fileUpload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock FileReader
-    global.FileReader = vi.fn(() => mockFileReader) as any;
+    global.FileReader = vi.fn(function FileReader() {
+      return mockFileReader;
+    }) as any;
     global.atob = (base64) => Buffer.from(base64, "base64").toString("binary");
   });
 
@@ -191,7 +193,9 @@ describe("fileUploadModule.toBase64", () => {
       result: "data:text/plain;base64,aGVsbG8=",
     };
 
-    globalThis.FileReader = vi.fn(() => mockFileReaderInstance as unknown as FileReader) as any;
+    globalThis.FileReader = vi.fn(function FileReader() {
+      return mockFileReaderInstance as unknown as FileReader;
+    }) as any;
 
     const promise = fileUploadModule.toBase64(dummyFile);
 
@@ -213,7 +217,9 @@ describe("fileUploadModule.toBase64", () => {
       result: null,
     };
 
-    globalThis.FileReader = vi.fn(() => mockFileReaderInstance as unknown as FileReader) as any;
+    globalThis.FileReader = vi.fn(function FileReader() {
+      return mockFileReaderInstance as unknown as FileReader;
+    }) as any;
 
     const promise = fileUploadModule.toBase64(dummyFile);
 

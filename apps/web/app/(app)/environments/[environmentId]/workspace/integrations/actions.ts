@@ -21,7 +21,7 @@ const ZCreateOrUpdateIntegrationAction = z.object({
 });
 
 export const createOrUpdateIntegrationAction = authenticatedActionClient
-  .schema(ZCreateOrUpdateIntegrationAction)
+  .inputSchema(ZCreateOrUpdateIntegrationAction)
   .action(
     withAuditLogging(
       "createdUpdated",
@@ -67,7 +67,7 @@ const ZDeleteIntegrationAction = z.object({
   integrationId: ZId,
 });
 
-export const deleteIntegrationAction = authenticatedActionClient.schema(ZDeleteIntegrationAction).action(
+export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDeleteIntegrationAction).action(
   withAuditLogging(
     "deleted",
     "integration",

@@ -52,54 +52,41 @@ export const getPersonSegmentIds = async (
       return [];
     }
 
-    // Phase 1: Build all Prisma where clauses concurrently.
-    // This converts segment filters into where clauses without per-contact DB queries.
-    const segmentWithClauses = await Promise.all(
-      segments.map(async (segment) => {
-        const filters = segment.filters as TBaseFilters | null;
-
-        if (!filters || filters.length === 0) {
-          return { segmentId: segment.id, whereClause: {} as Prisma.ContactWhereInput };
-        }
-
-        const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, environmentId, deviceType);
-
-        if (!queryResult.ok) {
-          logger.warn(
-            { segmentId: segment.id, environmentId, error: queryResult.error },
-            "Failed to build Prisma query for segment"
-          );
-          return { segmentId: segment.id, whereClause: null };
-        }
-
-        return { segmentId: segment.id, whereClause: queryResult.data.whereClause };
-      })
-    );
-
-    // Separate segments into: always-match (no filters), needs-DB-check, and failed-to-build
+    // Phase 1: Build WHERE clauses sequentially to avoid connection pool contention.
+    // segmentFilterToPrismaQuery can itself hit the DB (e.g. unmigrated-row checks),
+    // so running all builds concurrently would saturate the pool.
     const alwaysMatchIds: string[] = [];
-    const toCheck: { segmentId: string; whereClause: Prisma.ContactWhereInput }[] = [];
+    const dbChecks: { segmentId: string; whereClause: Prisma.ContactWhereInput }[] = [];
 
-    for (const item of segmentWithClauses) {
-      if (item.whereClause === null) {
+    for (const segment of segments) {
+      const filters = segment.filters as TBaseFilters;
+
+      if (!filters?.length) {
+        alwaysMatchIds.push(segment.id);
         continue;
       }
 
-      if (Object.keys(item.whereClause).length === 0) {
-        alwaysMatchIds.push(item.segmentId);
-      } else {
-        toCheck.push({ segmentId: item.segmentId, whereClause: item.whereClause });
+      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, environmentId, deviceType);
+
+      if (!queryResult.ok) {
+        logger.warn(
+          { segmentId: segment.id, environmentId, error: queryResult.error },
+          "Failed to build Prisma query for segment, skipping"
+        );
+        continue;
       }
+
+      dbChecks.push({ segmentId: segment.id, whereClause: queryResult.data.whereClause });
     }
 
-    if (toCheck.length === 0) {
+    if (dbChecks.length === 0) {
       return alwaysMatchIds;
     }
 
-    // Phase 2: Batch all contact-match checks into a single DB transaction.
-    // Replaces N individual findFirst queries with one batched round-trip.
-    const batchResults = await prisma.$transaction(
-      toCheck.map(({ whereClause }) =>
+    // Phase 2: Execute all membership checks in a single transaction.
+    // Uses one connection instead of N concurrent ones, eliminating pool contention.
+    const txResults = await prisma.$transaction(
+      dbChecks.map(({ whereClause }) =>
         prisma.contact.findFirst({
           where: { id: contactId, ...whereClause },
           select: { id: true },
@@ -107,17 +94,12 @@ export const getPersonSegmentIds = async (
       )
     );
 
-    // Phase 3: Collect matching segment IDs
-    const dbMatchIds = toCheck.filter((_, i) => batchResults[i] !== null).map(({ segmentId }) => segmentId);
+    const matchedIds = dbChecks.filter((_, i) => txResults[i] !== null).map(({ segmentId }) => segmentId);
 
-    return [...alwaysMatchIds, ...dbMatchIds];
+    return [...alwaysMatchIds, ...matchedIds];
   } catch (error) {
     logger.warn(
-      {
-        environmentId,
-        contactId,
-        error,
-      },
+      { environmentId, contactId, error },
       "Failed to get person segment IDs, returning empty array"
     );
     return [];

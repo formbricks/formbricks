@@ -50,7 +50,7 @@ export const GET = withV1ApiWrapper({
           {
             environmentId: params.environmentId,
             url: req.url,
-            validationError: cuidValidation.error.errors[0]?.message,
+            validationError: cuidValidation.error.issues[0]?.message,
           },
           "Invalid CUID v1 format detected"
         );

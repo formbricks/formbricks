@@ -23,7 +23,7 @@ const ZGetResponsesAction = z.object({
 });
 
 export const getResponsesAction = authenticatedActionClient
-  .schema(ZGetResponsesAction)
+  .inputSchema(ZGetResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -57,7 +57,7 @@ const ZGetSurveySummaryAction = z.object({
 });
 
 export const getSurveySummaryAction = authenticatedActionClient
-  .schema(ZGetSurveySummaryAction)
+  .inputSchema(ZGetSurveySummaryAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -85,7 +85,7 @@ const ZGetResponseCountAction = z.object({
 });
 
 export const getResponseCountAction = authenticatedActionClient
-  .schema(ZGetResponseCountAction)
+  .inputSchema(ZGetResponseCountAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -110,12 +110,12 @@ export const getResponseCountAction = authenticatedActionClient
 
 const ZGetDisplaysWithContactAction = z.object({
   surveyId: ZId,
-  limit: z.number().int().min(1).max(100),
-  offset: z.number().int().nonnegative(),
+  limit: z.int().min(1).max(100),
+  offset: z.int().nonnegative(),
 });
 
 export const getDisplaysWithContactAction = authenticatedActionClient
-  .schema(ZGetDisplaysWithContactAction)
+  .inputSchema(ZGetDisplaysWithContactAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

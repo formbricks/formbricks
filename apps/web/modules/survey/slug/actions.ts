@@ -10,12 +10,12 @@ import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/u
 import { updateSurveySlug } from "@/modules/survey/lib/slug";
 
 const ZUpdateSurveySlugAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   slug: ZSurveySlug,
 });
 
 export const updateSurveySlugAction = authenticatedActionClient
-  .schema(ZUpdateSurveySlugAction)
+  .inputSchema(ZUpdateSurveySlugAction)
   .action(async ({ ctx, parsedInput }) => {
     if (IS_FORMBRICKS_CLOUD) {
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");
@@ -39,11 +39,11 @@ export const updateSurveySlugAction = authenticatedActionClient
   });
 
 const ZRemoveSurveySlugAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export const removeSurveySlugAction = authenticatedActionClient
-  .schema(ZRemoveSurveySlugAction)
+  .inputSchema(ZRemoveSurveySlugAction)
   .action(async ({ ctx, parsedInput }) => {
     if (IS_FORMBRICKS_CLOUD) {
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");

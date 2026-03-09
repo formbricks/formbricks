@@ -1,10 +1,10 @@
-import cuid2 from "@paralleldrive/cuid2";
+import { createId, isCuid } from "@paralleldrive/cuid2";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 
 // generate encrypted single use id for the survey
 export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
-  const cuid = cuid2.createId();
+  const cuid = createId();
   if (!isEncrypted) {
     return cuid;
   }
@@ -30,7 +30,7 @@ export const validateSurveySingleUseId = (surveySingleUseId: string): string | u
     return undefined;
   }
 
-  if (cuid2.isCuid(decryptedCuid)) {
+  if (isCuid(decryptedCuid)) {
     return decryptedCuid;
   } else {
     return undefined;

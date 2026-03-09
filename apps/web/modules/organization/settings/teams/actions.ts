@@ -31,7 +31,7 @@ const ZDeleteInviteAction = z.object({
   organizationId: ZId,
 });
 
-export const deleteInviteAction = authenticatedActionClient.schema(ZDeleteInviteAction).action(
+export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteInviteAction).action(
   withAuditLogging(
     "deleted",
     "invite",
@@ -58,7 +58,7 @@ const ZCreateInviteTokenAction = z.object({
   inviteId: ZUuid,
 });
 
-export const createInviteTokenAction = authenticatedActionClient.schema(ZCreateInviteTokenAction).action(
+export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCreateInviteTokenAction).action(
   withAuditLogging(
     "updated",
     "invite",
@@ -115,7 +115,7 @@ const ZDeleteMembershipAction = z.object({
   organizationId: ZId,
 });
 
-export const deleteMembershipAction = authenticatedActionClient.schema(ZDeleteMembershipAction).action(
+export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDeleteMembershipAction).action(
   withAuditLogging(
     "deleted",
     "membership",
@@ -180,7 +180,7 @@ const ZResendInviteAction = z.object({
   organizationId: ZId,
 });
 
-export const resendInviteAction = authenticatedActionClient.schema(ZResendInviteAction).action(
+export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendInviteAction).action(
   withAuditLogging(
     "updated",
     "invite",
@@ -263,7 +263,7 @@ const ZInviteUserAction = z.object({
   teamIds: z.array(ZId),
 });
 
-export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserAction).action(
+export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUserAction).action(
   withAuditLogging(
     "created",
     "invite",
@@ -367,7 +367,7 @@ const ZLeaveOrganizationAction = z.object({
   organizationId: ZId,
 });
 
-export const leaveOrganizationAction = authenticatedActionClient.schema(ZLeaveOrganizationAction).action(
+export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLeaveOrganizationAction).action(
   withAuditLogging(
     "deleted",
     "membership",

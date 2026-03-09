@@ -16,7 +16,7 @@ const ZDeleteActionClassAction = z.object({
   actionClassId: ZId,
 });
 
-export const deleteActionClassAction = authenticatedActionClient.schema(ZDeleteActionClassAction).action(
+export const deleteActionClassAction = authenticatedActionClient.inputSchema(ZDeleteActionClassAction).action(
   withAuditLogging(
     "deleted",
     "actionClass",
@@ -50,7 +50,7 @@ const ZUpdateActionClassAction = z.object({
   updatedAction: ZActionClassInput,
 });
 
-export const updateActionClassAction = authenticatedActionClient.schema(ZUpdateActionClassAction).action(
+export const updateActionClassAction = authenticatedActionClient.inputSchema(ZUpdateActionClassAction).action(
   withAuditLogging(
     "updated",
     "actionClass",
@@ -96,7 +96,7 @@ const ZGetActiveInactiveSurveysAction = z.object({
 });
 
 export const getActiveInactiveSurveysAction = authenticatedActionClient
-  .schema(ZGetActiveInactiveSurveysAction)
+  .inputSchema(ZGetActiveInactiveSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
