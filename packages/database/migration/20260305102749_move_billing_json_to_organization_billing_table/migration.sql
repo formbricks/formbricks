@@ -11,7 +11,7 @@ ALTER TABLE "Organization" DROP COLUMN "billing";
 CREATE TABLE "OrganizationBilling" (
     "organization_id" TEXT NOT NULL,
     "stripe_customer_id" TEXT,
-    "limits" JSONB NOT NULL DEFAULT '{"projects":3,"monthly":{"responses":1500,"miu":2000}}',
+    "limits" JSONB NOT NULL,
     "period_start" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "stripe" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

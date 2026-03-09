@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "フォームの外側をクリックしてユーザーが終了できるようにする",
     "an_unknown_error_occurred_while_deleting_table_items": "{type}の削除中に不明なエラーが発生しました",
     "and": "および",
-    "and_response_limit_of": "と回答数の上限",
     "anonymous": "匿名",
     "api_keys": "APIキー",
     "app": "アプリ",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "コミュニティ版にダウングレードされました。",
     "you_are_not_authorized_to_perform_this_action": "このアクションを実行する権限がありません。",
     "you_have_reached_your_limit_of_workspace_limit": "ワークスペースの上限である{projectLimit}件に達しました。",
-    "you_have_reached_your_monthly_miu_limit_of": "月間MIU（月間アクティブユーザー）の上限に達しました",
     "you_have_reached_your_monthly_response_limit_of": "月間回答数の上限に達しました",
     "you_will_be_downgraded_to_the_community_edition_on_date": "コミュニティ版へのダウングレードは {date} に行われます。",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

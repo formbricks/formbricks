@@ -29,7 +29,6 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
     isAccessControlAllowed,
     projectPermission,
     license,
-    peopleCount,
     responseCount,
   } = layoutData;
 
@@ -52,7 +51,6 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
         <LimitsReachedBanner
           organization={organization}
           environmentId={environment.id}
-          peopleCount={peopleCount}
           responseCount={responseCount}
         />
       )}

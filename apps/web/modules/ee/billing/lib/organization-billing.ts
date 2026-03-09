@@ -38,7 +38,6 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-      miu: 2000,
     },
   },
   stripeCustomerId: null,
@@ -460,8 +459,6 @@ export const syncOrganizationBillingFromStripe = async (
       projects: projectsLimit,
       monthly: {
         responses: responsesIncludedLimit,
-        // MIU/contact metering is out of scope for the current cloud billing rollout.
-        miu: null,
       },
     },
     periodStart,

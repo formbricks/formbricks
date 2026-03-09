@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "Permitir a los usuarios salir haciendo clic fuera de la encuesta",
     "an_unknown_error_occurred_while_deleting_table_items": "Se ha producido un error desconocido al eliminar {type}s",
     "and": "Y",
-    "and_response_limit_of": "y límite de respuesta de",
     "anonymous": "Anónimo",
     "api_keys": "Claves API",
     "app": "Aplicación",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "Has sido degradado a la edición Community.",
     "you_are_not_authorized_to_perform_this_action": "No tienes autorización para realizar esta acción.",
     "you_have_reached_your_limit_of_workspace_limit": "Has alcanzado tu límite de {projectLimit} espacios de trabajo.",
-    "you_have_reached_your_monthly_miu_limit_of": "Has alcanzado tu límite mensual de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Has alcanzado tu límite mensual de respuestas de",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Serás degradado a la edición Community el {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

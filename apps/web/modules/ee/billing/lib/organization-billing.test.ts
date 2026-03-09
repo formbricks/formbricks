@@ -141,7 +141,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -169,7 +168,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -194,7 +192,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -235,7 +232,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -266,7 +262,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -296,7 +291,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -321,7 +315,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -367,7 +360,6 @@ describe("organization-billing", () => {
           projects: 5,
           monthly: {
             responses: 2000,
-            miu: null,
           },
         },
         stripe: expect.objectContaining({
@@ -404,7 +396,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -460,7 +451,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date().toISOString(),
@@ -498,7 +488,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -523,7 +512,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),
@@ -539,7 +527,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: expect.any(Date),
@@ -587,7 +574,6 @@ describe("organization-billing", () => {
           projects: 3,
           monthly: {
             responses: 1500,
-            miu: 2000,
           },
         },
         periodStart: new Date(),
@@ -599,7 +585,6 @@ describe("organization-billing", () => {
           projects: 3,
           monthly: {
             responses: 1500,
-            miu: 2000,
           },
         },
         periodStart: new Date(),
@@ -611,7 +596,6 @@ describe("organization-billing", () => {
           projects: 3,
           monthly: {
             responses: 1500,
-            miu: 2000,
           },
         },
         periodStart: new Date(),
@@ -674,7 +658,6 @@ describe("organization-billing", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
       periodStart: new Date(),

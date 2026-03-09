@@ -32,7 +32,6 @@ describe("getFirstOrganization", () => {
         stripeCustomerId: "cus_123",
         limits: {
           monthly: {
-            miu: 100,
             responses: 1000,
           },
           projects: 3,

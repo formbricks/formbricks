@@ -73,7 +73,6 @@ const mockOrganization: TOrganization = {
       projects: 1,
       monthly: {
         responses: 100,
-        miu: 1000,
       },
     },
     periodStart: new Date(),

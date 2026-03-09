@@ -48,7 +48,6 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-      miu: 2000,
     },
   },
   stripeCustomerId: null,
@@ -323,15 +322,6 @@ export const deleteOrganization = async (organizationId: string) => {
     throw error;
   }
 };
-
-export const getMonthlyActiveOrganizationPeopleCount = reactCache(
-  async (organizationId: string): Promise<number> => {
-    validateInputs([organizationId, ZId]);
-
-    // temporary solution until we have a better way to track active users
-    return 0;
-  }
-);
 
 export const getMonthlyOrganizationResponseCount = reactCache(
   async (organizationId: string): Promise<number> => {

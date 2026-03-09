@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "Permite utilizatorilor să iasă făcând clic în afara sondajului",
     "an_unknown_error_occurred_while_deleting_table_items": "A apărut o eroare necunoscută la ștergerea elementelor de tipul {type}",
     "and": "Și",
-    "and_response_limit_of": "și limită răspuns",
     "anonymous": "Anonim",
     "api_keys": "Chei API",
     "app": "Aplicație",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "Ai fost retrogradat la ediția Community.",
     "you_are_not_authorized_to_perform_this_action": "Nu sunteți autorizat să efectuați această acțiune.",
     "you_have_reached_your_limit_of_workspace_limit": "Ați atins limita de {projectLimit} spații de lucru.",
-    "you_have_reached_your_monthly_miu_limit_of": "Ați atins limita lunară MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Ați atins limita lunară de răspunsuri de",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Vei fi retrogradat la ediția Community pe {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

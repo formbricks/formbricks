@@ -33,7 +33,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     const periodStart = new Date("2025-01-01");
     mockGetBilling.mockResolvedValue({
       stripeCustomerId: "cus_1",
-      limits: { projects: 5, monthly: { responses: 1000, miu: 3000 } },
+      limits: { projects: 5, monthly: { responses: 1000 } },
       periodStart,
       stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
     } as any);
@@ -45,7 +45,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: ["rbac", "spam-protection"],
-      limits: { projects: 5, monthlyResponses: 1000, monthlyMiu: 3000 },
+      limits: { projects: 5, monthlyResponses: 1000 },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
@@ -65,7 +65,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual([]);
-    expect(result.limits).toEqual({ projects: null, monthlyResponses: null, monthlyMiu: null });
+    expect(result.limits).toEqual({ projects: null, monthlyResponses: null });
     expect(result.stripeCustomerId).toBeNull();
     expect(result.periodStart).toBeNull();
   });

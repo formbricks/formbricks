@@ -52,7 +52,7 @@ export const mockOrganization: TOrganization = {
   },
   billing: {
     stripeCustomerId: null,
-    limits: { monthly: { responses: null, miu: null }, projects: null },
+    limits: { monthly: { responses: null }, projects: null },
     periodStart: new Date(),
   },
   createdAt: new Date(),

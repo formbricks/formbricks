@@ -29,7 +29,6 @@ export const getCloudOrganizationEntitlementsContext = async (
     limits: {
       projects: billing.limits?.projects ?? null,
       monthlyResponses: billing.limits?.monthly?.responses ?? null,
-      monthlyMiu: billing.limits?.monthly?.miu ?? null,
     },
     licenseStatus: license.status,
     licenseFeatures: license.features,

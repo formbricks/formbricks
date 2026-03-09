@@ -21,7 +21,7 @@ describe("getOrganizationBillingByEnvironmentId", () => {
   const environmentId = "env-123";
   const mockBillingData: TOrganizationBilling = {
     limits: {
-      monthly: { miu: 0, responses: 0 },
+      monthly: { responses: 0 },
       projects: 3,
     },
     periodStart: new Date(),

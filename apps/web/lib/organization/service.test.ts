@@ -61,7 +61,6 @@ describe("Organization Service", () => {
             projects: 3,
             monthly: {
               responses: 1500,
-              miu: 2000,
             },
           },
           stripeCustomerId: null,
@@ -114,7 +113,6 @@ describe("Organization Service", () => {
               projects: 3,
               monthly: {
                 responses: 1500,
-                miu: 2000,
               },
             },
             stripeCustomerId: null,
@@ -160,7 +158,6 @@ describe("Organization Service", () => {
           projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
           monthly: {
             responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-            miu: 2000,
           },
         },
         stripeCustomerId: null,
@@ -191,7 +188,6 @@ describe("Organization Service", () => {
                 projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
                 monthly: {
                   responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-                  miu: 2000,
                 },
               },
               stripeCustomerId: null,
@@ -214,7 +210,6 @@ describe("Organization Service", () => {
           projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
           monthly: {
             responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-            miu: 2000,
           },
         },
         stripeCustomerId: null,
@@ -269,7 +264,6 @@ describe("Organization Service", () => {
             projects: 3,
             monthly: {
               responses: 1500,
-              miu: 2000,
             },
           },
           stripeCustomerId: null,
@@ -311,7 +305,6 @@ describe("Organization Service", () => {
             projects: 3,
             monthly: {
               responses: 1500,
-              miu: 2000,
             },
           },
           stripeCustomerId: null,

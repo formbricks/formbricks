@@ -33,7 +33,6 @@ describe("auth", () => {
               projects: 3,
               monthly: {
                 responses: 1500,
-                miu: 2000,
               },
             },
             periodStart: new Date(),

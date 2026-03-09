@@ -361,7 +361,7 @@ async function main(): Promise<void> {
       name: "Seed Organization",
       billing: {
         create: {
-          limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
+          limits: { projects: 3, monthly: { responses: 1500 } },
           stripeCustomerId: null,
           periodStart: new Date(),
         },
@@ -374,7 +374,7 @@ async function main(): Promise<void> {
     update: {},
     create: {
       organizationId: organization.id,
-      limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
+      limits: { projects: 3, monthly: { responses: 1500 } },
       stripeCustomerId: null,
       periodStart: new Date(),
     },

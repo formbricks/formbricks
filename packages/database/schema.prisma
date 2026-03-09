@@ -690,7 +690,7 @@ model OrganizationBilling {
   organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   stripeCustomerId String?      @unique @map(name: "stripe_customer_id")
   /// [OrganizationBillingPlanLimits]
-  limits           Json         @default("{\"projects\":3,\"monthly\":{\"responses\":1500,\"miu\":2000}}")
+  limits           Json
   periodStart      DateTime     @default(now()) @map(name: "period_start")
   /// [OrganizationStripeBilling]
   stripe           Json?

@@ -78,7 +78,6 @@ const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
   limits: {
     projects: 3,
     monthlyResponses: null,
-    monthlyMiu: null,
   },
   licenseStatus: "active",
   licenseFeatures: defaultFeatures,

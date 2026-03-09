@@ -420,7 +420,6 @@ describe("data", () => {
       limits: {
         monthly: {
           responses: 1000,
-          miu: 5000,
         },
       },
       periodStart: new Date(),

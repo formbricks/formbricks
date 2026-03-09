@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "Allow users to exit by clicking outside the survey",
     "an_unknown_error_occurred_while_deleting_table_items": "An unknown error occurred while deleting {type}s",
     "and": "And",
-    "and_response_limit_of": "and response limit of",
     "anonymous": "Anonymous",
     "api_keys": "API Keys",
     "app": "App",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "You are downgraded to the Community Edition.",
     "you_are_not_authorized_to_perform_this_action": "You are not authorized to perform this action.",
     "you_have_reached_your_limit_of_workspace_limit": "You have reached your limit of {projectLimit} workspaces.",
-    "you_have_reached_your_monthly_miu_limit_of": "You have reached your monthly MIU limit of",
     "you_have_reached_your_monthly_response_limit_of": "You have reached your monthly response limit of",
     "you_will_be_downgraded_to_the_community_edition_on_date": "You will be downgraded to the Community Edition on {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

@@ -107,7 +107,6 @@ checksums:
     common/allow_users_to_exit_by_clicking_outside_the_survey: 1c09db6e85214f1b1c3d4774c4c5cd56
     common/an_unknown_error_occurred_while_deleting_table_items: 06be3fd128aeb51eed4fba9a079ecee2
     common/and: dc75b95c804b16dc617a5f16f7393bca
-    common/and_response_limit_of: 05be41a1d7e8dafa4aa012dcba77f5d4
     common/anonymous: 77b5222e710cc1dae073dae32309f8ed
     common/api_keys: f961b547cd312cc8b9b79f0c9e0b2cc3
     common/app: 77e32ac4e5a1e01bc9a6a15fdfef9bf8
@@ -450,7 +449,6 @@ checksums:
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
     common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
     common/you_have_reached_your_limit_of_workspace_limit: 54d754c3267036742f23fb05fd3fcc45
-    common/you_have_reached_your_monthly_miu_limit_of: ded62fc6842c707f62622386ca34f71a
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
     common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254

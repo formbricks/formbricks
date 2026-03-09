@@ -7,7 +7,7 @@ import type {
 export type TEntitlementSource = "cloud_stripe" | "self_hosted_license";
 export type TKnownEntitlementFeature =
   (typeof CLOUD_STRIPE_FEATURE_LOOKUP_KEYS)[keyof typeof CLOUD_STRIPE_FEATURE_LOOKUP_KEYS];
-export type TUsageLimitEntitlementFeature = `responses-${number}` | `miu-${number}`;
+export type TUsageLimitEntitlementFeature = `responses-${number}`;
 export type TEntitlementFeature = TKnownEntitlementFeature | TUsageLimitEntitlementFeature;
 
 const KNOWN_ENTITLEMENT_FEATURES: readonly TKnownEntitlementFeature[] = Object.values(
@@ -19,13 +19,12 @@ export const isEntitlementFeature = (feature: string): feature is TEntitlementFe
     return true;
   }
 
-  return /^responses-\d+$/.test(feature) || /^miu-\d+$/.test(feature);
+  return /^responses-\d+$/.test(feature);
 };
 
 export type TEntitlementLimits = {
   projects: number | null;
   monthlyResponses: number | null;
-  monthlyMiu: number | null;
 };
 
 export type TOrganizationEntitlementsContext = {

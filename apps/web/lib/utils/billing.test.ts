@@ -23,7 +23,6 @@ describe("getBillingPeriodStartDate", () => {
         projects: 1,
         monthly: {
           responses: 250,
-          miu: 2000,
         },
       },
     });
@@ -41,7 +40,6 @@ describe("getBillingPeriodStartDate", () => {
         projects: 3,
         monthly: {
           responses: 1500,
-          miu: 2000,
         },
       },
     });

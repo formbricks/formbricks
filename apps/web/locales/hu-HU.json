@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "Lehetővé tétel a felhasználók számára, hogy a kérdőíven kívülre kattintva kilépjenek",
     "an_unknown_error_occurred_while_deleting_table_items": "{type} típusok törlésekor ismeretlen hiba történt",
     "and": "És",
-    "and_response_limit_of": "és kérdéskorlátja ennek:",
     "anonymous": "Névtelen",
     "api_keys": "API-kulcsok",
     "app": "Alkalmazás",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "Visszaváltott a közösségi kiadásra.",
     "you_are_not_authorized_to_perform_this_action": "Nincs felhatalmazva ennek a műveletnek a végrehajtásához.",
     "you_have_reached_your_limit_of_workspace_limit": "Elérte a(z) {projectLimit} munkaterületből álló korlátot.",
-    "you_have_reached_your_monthly_miu_limit_of": "Elérte a havi MIU-korlátját ennek:",
     "you_have_reached_your_monthly_response_limit_of": "Elérte a havi válaszkorlátját ennek:",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Vissza lesz állítva a közösségi kiadásra ekkor: {date}.",
     "your_license_has_expired_please_renew": "A vállalati licence lejárt. Újítsa meg, hogy továbbra is használhassa a vállalati funkciókat."

@@ -42,7 +42,6 @@ describe("getEnvironmentContextForLinkSurvey", () => {
             limits: {
               monthly: {
                 responses: 100,
-                miu: 1000,
               },
               projects: 3,
             },
@@ -194,7 +193,6 @@ describe("getEnvironmentContextForLinkSurvey", () => {
             limits: {
               monthly: {
                 responses: 100,
-                miu: 1000,
               },
               projects: 3,
             },

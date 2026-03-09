@@ -14,7 +14,6 @@ import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
@@ -71,7 +70,6 @@ vi.mock("@/lib/membership/utils", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn(),
-  getMonthlyActiveOrganizationPeopleCount: vi.fn(),
   getMonthlyOrganizationResponseCount: vi.fn(),
 }));
 
@@ -143,7 +141,6 @@ describe("utils.ts", () => {
       fallbackLevel: "none",
     } as any);
     vi.mocked(getAccessControlPermission).mockResolvedValue(true);
-    vi.mocked(getMonthlyActiveOrganizationPeopleCount).mockResolvedValue(0);
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(0);
   });
 
@@ -437,7 +434,6 @@ describe("utils.ts", () => {
       expect(result.isAccessControlAllowed).toBeDefined();
       expect(result.projectPermission).toBeDefined();
       expect(result.license).toBeDefined();
-      expect(result.peopleCount).toBe(0);
       expect(result.responseCount).toBe(0);
     });
 
@@ -550,7 +546,6 @@ describe("utils.ts", () => {
 
       await getEnvironmentLayoutData("env123", "user123");
 
-      expect(getMonthlyActiveOrganizationPeopleCount).toHaveBeenCalledWith("org123");
       expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith("org123");
     });
 

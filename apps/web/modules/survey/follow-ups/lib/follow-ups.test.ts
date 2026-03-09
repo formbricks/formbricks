@@ -75,7 +75,7 @@ describe("Follow-ups", () => {
     id: "org1",
     billing: {
       limits: {
-        monthly: { miu: 1000, responses: 1000 },
+        monthly: { responses: 1000 },
         projects: 3,
       },
       periodStart: new Date(),

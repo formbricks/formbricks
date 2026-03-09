@@ -49,9 +49,8 @@ export const getSelfHostedOrganizationEntitlementsContext = async (
     features: mapLicenseFeaturesToEntitlements(license.features),
     limits: {
       projects: license.active ? (license.features?.projects ?? 3) : 3,
-      // Self-hosted limits for responses/MIU are not license-server-managed today.
+      // Self-hosted response limits are not license-server-managed today.
       monthlyResponses: null,
-      monthlyMiu: null,
     },
     licenseStatus: license.status,
     licenseFeatures: license.features,

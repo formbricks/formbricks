@@ -26,12 +26,11 @@ export const ZOrganizationStripeBilling = z.object({
 });
 export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 
-// responses and miu can be null to support the unlimited plan
+// responses can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
   projects: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
-    miu: z.number().nullable(),
   }),
 });
 
@@ -43,7 +42,6 @@ export const ZOrganizationBilling = z.object({
     projects: 3,
     monthly: {
       responses: 1500,
-      miu: 2000,
     },
   }),
   periodStart: z.date(),

@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "Laat gebruikers afsluiten door buiten de enquête te klikken",
     "an_unknown_error_occurred_while_deleting_table_items": "Er is een onbekende fout opgetreden bij het verwijderen van {type}s",
     "and": "En",
-    "and_response_limit_of": "en responslimiet van",
     "anonymous": "Anoniem",
     "api_keys": "API-sleutels",
     "app": "App",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "Je bent gedowngraded naar de Community-editie.",
     "you_are_not_authorized_to_perform_this_action": "U bent niet geautoriseerd om deze actie uit te voeren.",
     "you_have_reached_your_limit_of_workspace_limit": "Je hebt je limiet van {projectLimit} werkruimtes bereikt.",
-    "you_have_reached_your_monthly_miu_limit_of": "U heeft uw maandelijkse MIU-limiet van bereikt",
     "you_have_reached_your_monthly_response_limit_of": "U heeft uw maandelijkse responslimiet bereikt van",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Je wordt gedowngraded naar de Community-editie op {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

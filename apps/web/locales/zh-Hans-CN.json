@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "允许 用户 通过 点击 调查 外部 退出",
     "an_unknown_error_occurred_while_deleting_table_items": "删除 {type} 时发生未知错误",
     "and": "和",
-    "and_response_limit_of": "和 响应限制",
     "anonymous": "匿名",
     "api_keys": "API 密钥",
     "app": "应用",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "您已降级到社区版。",
     "you_are_not_authorized_to_perform_this_action": "您无权执行此操作。",
     "you_have_reached_your_limit_of_workspace_limit": "您已达到 {projectLimit} 个工作区的上限。",
-    "you_have_reached_your_monthly_miu_limit_of": "您 已经 达到 每月 的 MIU 限制",
     "you_have_reached_your_monthly_response_limit_of": "您 已经 达到 每月 的 响应 限制",
     "you_will_be_downgraded_to_the_community_edition_on_date": "您将在 {date} 降级到社区版。",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

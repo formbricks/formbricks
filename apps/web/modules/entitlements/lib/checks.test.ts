@@ -27,7 +27,7 @@ const baseContext: TOrganizationEntitlementsContext = {
   organizationId: "org1",
   source: "cloud_stripe",
   features: ["rbac", "spam-protection"],
-  limits: { projects: 3, monthlyResponses: 500, monthlyMiu: 2000 },
+  limits: { projects: 3, monthlyResponses: 500 },
   licenseStatus: "no-license",
   licenseFeatures: null,
   stripeCustomerId: "cus_1",
@@ -114,7 +114,6 @@ describe("getOrganizationEntitlementLimits", () => {
     expect(await getOrganizationEntitlementLimits("org1")).toEqual({
       projects: 3,
       monthlyResponses: 500,
-      monthlyMiu: 2000,
     });
   });
 });

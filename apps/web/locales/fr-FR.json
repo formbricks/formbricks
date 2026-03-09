@@ -134,7 +134,6 @@
     "allow_users_to_exit_by_clicking_outside_the_survey": "Permettre aux utilisateurs de quitter en cliquant hors de l'enquête",
     "an_unknown_error_occurred_while_deleting_table_items": "Une erreur inconnue est survenue lors de la suppression des {type}s",
     "and": "Et",
-    "and_response_limit_of": "et limite de réponse de",
     "anonymous": "Anonyme",
     "api_keys": "Clés API",
     "app": "Application",
@@ -477,7 +476,6 @@
     "you_are_downgraded_to_the_community_edition": "Vous êtes rétrogradé à l'édition communautaire.",
     "you_are_not_authorized_to_perform_this_action": "Vous n'êtes pas autorisé à effectuer cette action.",
     "you_have_reached_your_limit_of_workspace_limit": "Vous avez atteint votre limite de {projectLimit} espaces de travail.",
-    "you_have_reached_your_monthly_miu_limit_of": "Vous avez atteint votre limite mensuelle de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Vous avez atteint votre limite de réponses mensuelle de",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Vous serez rétrogradé à l'édition communautaire le {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features."

@@ -89,7 +89,7 @@ describe("getOrganizationAIKeys", () => {
       stripeCustomerId: null,
       periodStart: new Date(),
       limits: {
-        monthly: { responses: null, miu: null },
+        monthly: { responses: null },
         projects: null,
       },
     }, // Prisma.JsonValue compatible

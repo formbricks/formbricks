@@ -11,7 +11,6 @@ import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
@@ -315,13 +314,9 @@ export const getEnvironmentLayoutData = reactCache(
     ]);
 
     // Conditional queries for Formbricks Cloud
-    let peopleCount = 0;
     let responseCount = 0;
     if (IS_FORMBRICKS_CLOUD) {
-      [peopleCount, responseCount] = await Promise.all([
-        getMonthlyActiveOrganizationPeopleCount(organization.id),
-        getMonthlyOrganizationResponseCount(organization.id),
-      ]);
+      responseCount = await getMonthlyOrganizationResponseCount(organization.id);
     }
 
     return {
@@ -335,7 +330,6 @@ export const getEnvironmentLayoutData = reactCache(
       isAccessControlAllowed,
       projectPermission,
       license,
-      peopleCount,
       responseCount,
     };
   }
