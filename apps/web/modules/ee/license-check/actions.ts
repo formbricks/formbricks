@@ -32,7 +32,7 @@ const ZRecheckLicenseAction = z.object({
 export type TRecheckLicenseAction = z.infer<typeof ZRecheckLicenseAction>;
 
 export const recheckLicenseAction = authenticatedActionClient
-  .schema(ZRecheckLicenseAction)
+  .inputSchema(ZRecheckLicenseAction)
   .action(
     async ({
       ctx,

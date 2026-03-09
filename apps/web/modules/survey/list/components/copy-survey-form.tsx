@@ -128,10 +128,6 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
               : project?.environments[1];
 
           return {
-            operation: copySurveyToOtherEnvironmentAction({
-              surveyId: survey.id,
-              targetEnvironmentId: environmentId,
-            }),
             projectName: project?.name ?? "Unknown Project",
             environmentType: environment?.type ?? "unknown",
             environmentId,
@@ -139,7 +135,14 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
         });
       });
 
-      const results = await Promise.all(copyOperationsWithMetadata.map((item) => item.operation));
+      const results: Awaited<ReturnType<typeof copySurveyToOtherEnvironmentAction>>[] = [];
+      for (const item of copyOperationsWithMetadata) {
+        const result = await copySurveyToOtherEnvironmentAction({
+          surveyId: survey.id,
+          targetEnvironmentId: item.environmentId,
+        });
+        results.push(result);
+      }
 
       let successCount = 0;
       let errorCount = 0;

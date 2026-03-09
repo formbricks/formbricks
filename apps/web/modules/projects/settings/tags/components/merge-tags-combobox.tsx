@@ -34,7 +34,7 @@ export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) =>
         <Button
           variant="secondary"
           size="sm"
-          className="font-medium text-slate-900 focus:border-transparent focus:ring-0 focus:shadow-transparent focus:ring-transparent focus:outline-transparent">
+          className="font-medium text-slate-900 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent">
           {t("environments.workspace.tags.merge")}
         </Button>
       </PopoverTrigger>
@@ -43,7 +43,7 @@ export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) =>
           <div className="p-1">
             <CommandInput
               placeholder={t("environments.workspace.tags.search_tags")}
-              className="border-b border-none border-transparent shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
+              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
           <CommandList className="border-0">

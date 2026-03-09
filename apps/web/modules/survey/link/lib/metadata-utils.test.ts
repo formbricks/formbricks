@@ -157,9 +157,8 @@ describe("Metadata Utils", () => {
       }));
 
       // Re-import the function to use the updated mock
-      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } = await import(
-        "./metadata-utils"
-      );
+      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } =
+        await import("./metadata-utils");
 
       const mockSurvey = {
         id: mockSurveyId,

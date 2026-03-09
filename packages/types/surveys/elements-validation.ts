@@ -51,7 +51,7 @@ export const validateElementLabels = (
   blockIndex: number,
   elementIndex: number,
   skipArticle = false
-): z.IssueData | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   for (const language of languages) {
     if (
@@ -60,7 +60,8 @@ export const validateElementLabels = (
       fieldLabel[language.language.code] === undefined
     ) {
       return {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
+        input: fieldLabel,
         message: `The ${field} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)} is not present for the following languages: ${language.language.code}`,
         path: ["blocks", blockIndex, "elements", elementIndex, field],
       };
@@ -80,7 +81,8 @@ export const validateElementLabels = (
 
   if (invalidLanguageCodes.length) {
     return {
-      code: z.ZodIssueCode.custom,
+      code: "custom",
+      input: fieldLabel,
       message,
       path: ["blocks", blockIndex, "elements", elementIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },

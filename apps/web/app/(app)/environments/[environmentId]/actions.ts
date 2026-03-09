@@ -25,7 +25,7 @@ const ZCreateProjectAction = z.object({
   data: ZProjectUpdateInput,
 });
 
-export const createProjectAction = authenticatedActionClient.schema(ZCreateProjectAction).action(
+export const createProjectAction = authenticatedActionClient.inputSchema(ZCreateProjectAction).action(
   withAuditLogging(
     "created",
     "project",
@@ -97,7 +97,7 @@ const ZGetOrganizationsForSwitcherAction = z.object({
  * Called on-demand when user opens the organization switcher.
  */
 export const getOrganizationsForSwitcherAction = authenticatedActionClient
-  .schema(ZGetOrganizationsForSwitcherAction)
+  .inputSchema(ZGetOrganizationsForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -122,7 +122,7 @@ const ZGetProjectsForSwitcherAction = z.object({
  * Called on-demand when user opens the project switcher.
  */
 export const getProjectsForSwitcherAction = authenticatedActionClient
-  .schema(ZGetProjectsForSwitcherAction)
+  .inputSchema(ZGetProjectsForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

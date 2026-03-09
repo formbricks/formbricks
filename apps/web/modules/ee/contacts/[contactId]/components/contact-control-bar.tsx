@@ -99,7 +99,7 @@ export const ContactControlBar = ({
       <DeleteDialog
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}
-        deleteWhat="person"
+        deleteWhat={t("common.person")}
         onDelete={handleDeletePerson}
         isDeleting={isDeletingPerson}
         text={

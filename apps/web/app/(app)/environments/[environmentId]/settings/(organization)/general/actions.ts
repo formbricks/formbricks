@@ -17,7 +17,7 @@ const ZUpdateOrganizationNameAction = z.object({
 });
 
 export const updateOrganizationNameAction = authenticatedActionClient
-  .schema(ZUpdateOrganizationNameAction)
+  .inputSchema(ZUpdateOrganizationNameAction)
   .action(
     withAuditLogging(
       "updated",
@@ -55,28 +55,36 @@ const ZDeleteOrganizationAction = z.object({
   organizationId: ZId,
 });
 
-export const deleteOrganizationAction = authenticatedActionClient.schema(ZDeleteOrganizationAction).action(
-  withAuditLogging(
-    "deleted",
-    "organization",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-      if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
+export const deleteOrganizationAction = authenticatedActionClient
+  .inputSchema(ZDeleteOrganizationAction)
+  .action(
+    withAuditLogging(
+      "deleted",
+      "organization",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+        if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner"],
-          },
-        ],
-      });
-      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      const oldObject = await getOrganization(parsedInput.organizationId);
-      ctx.auditLoggingCtx.oldObject = oldObject;
-      return await deleteOrganization(parsedInput.organizationId);
-    }
-  )
-);
+        await checkAuthorizationUpdated({
+          userId: ctx.user.id,
+          organizationId: parsedInput.organizationId,
+          access: [
+            {
+              type: "organization",
+              roles: ["owner"],
+            },
+          ],
+        });
+        ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+        const oldObject = await getOrganization(parsedInput.organizationId);
+        ctx.auditLoggingCtx.oldObject = oldObject;
+        return await deleteOrganization(parsedInput.organizationId);
+      }
+    )
+  );

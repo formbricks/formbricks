@@ -14,31 +14,39 @@ const ZCreateOrganizationAction = z.object({
   organizationName: z.string(),
 });
 
-export const createOrganizationAction = authenticatedActionClient.schema(ZCreateOrganizationAction).action(
-  withAuditLogging(
-    "created",
-    "organization",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const hasNoOrganizations = await gethasNoOrganizations();
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+export const createOrganizationAction = authenticatedActionClient
+  .inputSchema(ZCreateOrganizationAction)
+  .action(
+    withAuditLogging(
+      "created",
+      "organization",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: Record<string, any>;
+      }) => {
+        const hasNoOrganizations = await gethasNoOrganizations();
+        const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
-      if (!hasNoOrganizations && !isMultiOrgEnabled) {
-        throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
+        if (!hasNoOrganizations && !isMultiOrgEnabled) {
+          throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
+        }
+
+        const newOrganization = await createOrganization({
+          name: parsedInput.organizationName,
+        });
+
+        await createMembership(newOrganization.id, ctx.user.id, {
+          role: "owner",
+          accepted: true,
+        });
+
+        ctx.auditLoggingCtx.organizationId = newOrganization.id;
+        ctx.auditLoggingCtx.newObject = newOrganization;
+
+        return newOrganization;
       }
-
-      const newOrganization = await createOrganization({
-        name: parsedInput.organizationName,
-      });
-
-      await createMembership(newOrganization.id, ctx.user.id, {
-        role: "owner",
-        accepted: true,
-      });
-
-      ctx.auditLoggingCtx.organizationId = newOrganization.id;
-      ctx.auditLoggingCtx.newObject = newOrganization;
-
-      return newOrganization;
-    }
-  )
-);
+    )
+  );

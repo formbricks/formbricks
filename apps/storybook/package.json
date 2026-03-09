@@ -10,25 +10,20 @@
     "build-storybook": "storybook build",
     "clean": "rimraf .turbo node_modules dist storybook-static"
   },
-  "dependencies": {
-    "@formbricks/survey-ui": "workspace:*"
-  },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.0",
-    "@storybook/addon-a11y": "10.1.11",
-    "@storybook/addon-links": "10.1.11",
-    "@storybook/addon-onboarding": "10.1.11",
-    "@storybook/react-vite": "10.1.11",
-    "@typescript-eslint/eslint-plugin": "8.53.0",
-    "@tailwindcss/vite": "4.1.18",
-    "@typescript-eslint/parser": "8.53.0",
-    "@vitejs/plugin-react": "5.1.2",
-    "esbuild": "0.25.12",
+    "@chromatic-com/storybook": "^5.0.1",
+    "@storybook/addon-a11y": "10.2.15",
+    "@storybook/addon-links": "10.2.15",
+    "@storybook/addon-onboarding": "10.2.15",
+    "@storybook/react-vite": "10.2.15",
+    "@typescript-eslint/eslint-plugin": "8.56.1",
+    "@tailwindcss/vite": "4.2.1",
+    "@typescript-eslint/parser": "8.56.1",
+    "@vitejs/plugin-react": "5.1.4",
     "eslint-plugin-react-refresh": "0.4.26",
-    "eslint-plugin-storybook": "10.1.11",
-    "prop-types": "15.8.1",
-    "storybook": "10.1.11",
+    "eslint-plugin-storybook": "10.2.14",
+    "storybook": "10.2.15",
     "vite": "7.3.1",
-    "@storybook/addon-docs": "10.1.11"
+    "@storybook/addon-docs": "10.2.15"
   }
 }

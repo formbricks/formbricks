@@ -8,7 +8,7 @@ import { validateInputs } from "@/lib/utils/validate";
 
 export const getProjectByEnvironmentId = reactCache(
   async (environmentId: string): Promise<Project | null> => {
-    validateInputs([environmentId, z.string().cuid2()]);
+    validateInputs([environmentId, z.cuid2()]);
 
     let projectPrisma;
 

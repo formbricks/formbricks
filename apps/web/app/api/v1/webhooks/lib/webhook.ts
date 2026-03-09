@@ -6,9 +6,11 @@ import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhoo
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
 export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhook> => {
   validateInputs([webhookInput, ZWebhookInput]);
+  await validateWebhookUrl(webhookInput.url);
 
   try {
     const secret = generateWebhookSecret();

@@ -168,7 +168,7 @@ describe("action-utils", () => {
       validateActionNameUniqueness(data, ["existingAction"], ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["name"],
         message: 'Action with name "existingAction" already exists',
       });
@@ -201,7 +201,7 @@ describe("action-utils", () => {
       validateActionKeyUniqueness(data, ["existingKey"], ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["key"],
         message: 'Action with key "existingKey" already exists',
       });
@@ -251,7 +251,7 @@ describe("action-utils", () => {
       validateCssSelector(data, ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["noCodeConfig", "elementSelector", "cssSelector"],
         message: "Invalid CSS selector",
       });
@@ -309,7 +309,7 @@ describe("action-utils", () => {
       validateUrlFilterRegex(data, ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["noCodeConfig", "urlFilters", 0, "value"],
         message: "Invalid regex pattern",
       });
@@ -368,7 +368,7 @@ describe("action-utils", () => {
 
       expect(ctx.addIssue).toHaveBeenCalledTimes(1);
       expect(ctx.addIssue).toHaveBeenCalledWith({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["noCodeConfig", "urlFilters", 1, "value"],
         message: "Invalid regex pattern",
       });

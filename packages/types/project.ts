@@ -26,12 +26,12 @@ export const ZProjectConfig = z.object({
 export type TProjectConfig = z.infer<typeof ZProjectConfig>;
 
 export const ZLanguage = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   code: z.string(),
   alias: z.string().nullable(),
-  projectId: z.string().cuid2(),
+  projectId: z.cuid2(),
 });
 export type TLanguage = z.infer<typeof ZLanguage>;
 
@@ -49,17 +49,22 @@ export type TLanguageUpdate = z.infer<typeof ZLanguageUpdate>;
 export type TLogo = z.infer<typeof ZLogo>;
 
 export const ZProject = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  name: z.string().trim().min(1, { message: "Project name cannot be empty" }),
+  name: z.string().trim().min(1, {
+    error: "Project name cannot be empty",
+  }),
   organizationId: z.string(),
   styling: ZProjectStyling,
   recontactDays: z
-    .number({ message: "Recontact days is required" })
     .int()
-    .min(0, { message: "Must be a positive number" })
-    .max(365, { message: "Must be less than 365" }),
+    .min(0, {
+      error: "Must be a positive number",
+    })
+    .max(365, {
+      error: "Must be less than 365",
+    }),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
   config: ZProjectConfig,
@@ -75,10 +80,16 @@ export const ZProject = z.object({
 export type TProject = z.infer<typeof ZProject>;
 
 export const ZProjectUpdateInput = z.object({
-  name: z.string().trim().min(1, { message: "Workspace name cannot be empty" }).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, {
+      error: "Workspace name cannot be empty",
+    })
+    .optional(),
   organizationId: z.string().optional(),
   highlightBorderColor: ZColor.nullish(),
-  recontactDays: z.number().int().optional(),
+  recontactDays: z.int().optional(),
   inAppSurveyBranding: z.boolean().optional(),
   linkSurveyBranding: z.boolean().optional(),
   config: ZProjectConfig.optional(),

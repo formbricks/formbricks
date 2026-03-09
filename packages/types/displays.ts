@@ -1,20 +1,25 @@
 import { z } from "zod";
 
 export const ZDisplay = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  contactId: z.string().cuid().nullable(),
-  surveyId: z.string().cuid(),
+  contactId: z.cuid().nullable(),
+  surveyId: z.cuid(),
 });
 
 export type TDisplay = z.infer<typeof ZDisplay>;
 
 export const ZDisplayCreateInput = z.object({
-  environmentId: z.string().cuid2(),
-  surveyId: z.string().cuid2(),
-  userId: z.string().optional(),
-  responseId: z.string().cuid2().optional(),
+  environmentId: z.cuid2(),
+  surveyId: z.cuid2(),
+  userId: z
+    .string()
+    .max(255, {
+      error: "User ID cannot exceed 255 characters",
+    })
+    .optional(),
+  responseId: z.cuid2().optional(),
 });
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
@@ -26,19 +31,19 @@ export const ZDisplayFilters = z.object({
       max: z.date().optional(),
     })
     .optional(),
-  responseIds: z.array(z.string().cuid2()).optional(),
+  responseIds: z.array(z.cuid2()).optional(),
 });
 
 export type TDisplayFilters = z.infer<typeof ZDisplayFilters>;
 
 export const ZDisplayWithContact = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   surveyId: z.string(),
   contact: z
     .object({
       id: z.string(),
-      attributes: z.record(z.string()),
+      attributes: z.record(z.string(), z.string()),
     })
     .nullable(),
 });

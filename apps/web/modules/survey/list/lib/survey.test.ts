@@ -61,6 +61,14 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsQuotasEnabled: vi.fn(),
 }));
 
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: async () => (key: string, params?: Record<string, unknown>) => {
+    if (key === "common.duplicate_copy") return "(copy)";
+    if (key === "common.duplicate_copy_number") return `(copy ${params?.copyNumber})`;
+    return key;
+  },
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {

@@ -86,7 +86,7 @@ const config = ({ mode }) => {
       lib: {
         entry: {
           index: resolve(__dirname, "src/index.ts"),
-          validation: resolve(__dirname, "src/lib/validation/index.ts"),
+          validation: resolve(__dirname, "src/validation.ts"),
         },
         formats: ["es"],
       },
@@ -104,7 +104,7 @@ const config = ({ mode }) => {
     plugins: [
       ...sharedConfig.plugins,
       dts({
-        rollupTypes: true,
+        rollupTypes: false,
         // Generate separate .d.ts files for each entry point
         entryRoot: "src",
       }),

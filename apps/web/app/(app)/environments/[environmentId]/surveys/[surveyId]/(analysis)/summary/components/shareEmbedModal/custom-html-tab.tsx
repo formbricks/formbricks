@@ -105,7 +105,7 @@ export const CustomHtmlTab = ({ projectCustomScripts, isReadOnly }: CustomHtmlTa
             <div className={scriptsMode === "replace" ? "opacity-50" : ""}>
               <FormLabel>{t("environments.surveys.share.custom_html.workspace_scripts_label")}</FormLabel>
               <div className="mt-2 max-h-32 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3">
-                <pre className="font-mono text-xs whitespace-pre-wrap text-slate-600">
+                <pre className="whitespace-pre-wrap font-mono text-xs text-slate-600">
                   {projectCustomScripts}
                 </pre>
               </div>
@@ -135,7 +135,7 @@ export const CustomHtmlTab = ({ projectCustomScripts, isReadOnly }: CustomHtmlTa
                     rows={8}
                     placeholder={t("environments.surveys.share.custom_html.placeholder")}
                     className={cn(
-                      "focus:border-brand-dark flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                      "flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     )}
                     {...field}
                     disabled={isReadOnly}

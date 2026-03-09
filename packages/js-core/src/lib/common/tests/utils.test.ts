@@ -887,6 +887,7 @@ describe("utils.ts", () => {
       targetElement.className = "other";
 
       targetElement.matches = vi.fn(() => false);
+      targetElement.closest = vi.fn(() => null); // no ancestor matches either
 
       const action: TEnvironmentStateActionClass = {
         id: "clabc123abc",
@@ -993,13 +994,93 @@ describe("utils.ts", () => {
       expect(result).toBe(true);
     });
 
+    // --- Regression tests for nested child click target (issue #7314) ---
+    // In this test environment document.createElement() returns a plain mock object,
+    // so we set .matches and .closest as vi.fn() — the same pattern used by existing tests.
+    // This exercises the exact code path of the fix: matches() fails → closest() succeeds.
+
+    test("returns true when clicking a child element inside a button matched by cssSelector", () => {
+      const button = document.createElement("button");
+      const icon = document.createElement("span");
+
+      // Simulate: icon does NOT directly match ".my-btn", but its closest ancestor does
+      (icon as unknown as { matches: ReturnType<typeof vi.fn> }).matches = vi.fn(() => false);
+      (icon as unknown as { closest: ReturnType<typeof vi.fn> }).closest = vi.fn(() => button);
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc",
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector: ".my-btn" },
+        },
+      };
+
+      // Before fix: matches() → false → returns false (bug)
+      // After fix:  matches() → false → closest() → button → returns true (correct)
+      const result = evaluateNoCodeConfigClick(icon as unknown as HTMLElement, action);
+      expect(result).toBe(true);
+    });
+
+    test("returns false when clicking a child element with no matching ancestor", () => {
+      const other = document.createElement("div");
+
+      // Simulate: element doesn't match, and no ancestor matches either
+      (other as unknown as { matches: ReturnType<typeof vi.fn> }).matches = vi.fn(() => false);
+      (other as unknown as { closest: ReturnType<typeof vi.fn> }).closest = vi.fn(() => null);
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc",
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector: ".my-btn" },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(other as unknown as HTMLElement, action);
+      expect(result).toBe(false);
+    });
+
+    test("uses direct target (not closest) when target directly matches cssSelector", () => {
+      const button = document.createElement("button");
+
+      // Simulate: click on the button itself — matches() succeeds, closest() should NOT be called
+      (button as unknown as { matches: ReturnType<typeof vi.fn> }).matches = vi.fn(() => true);
+      const closestSpy = vi.fn();
+      (button as unknown as { closest: ReturnType<typeof vi.fn> }).closest = closestSpy;
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc",
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector: ".my-btn" },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(button as unknown as HTMLElement, action);
+      expect(result).toBe(true);
+      expect(closestSpy).not.toHaveBeenCalled(); // closest() is only a fallback
+    });
+
     test("handles multiple cssSelectors correctly", () => {
       const targetElement = document.createElement("div");
       targetElement.className = "test other";
 
       targetElement.matches = vi.fn((selector) => {
-        return selector === ".test" || selector === ".other";
+        return selector === ".test" || selector === ".other" || selector === ".test .other";
       });
+      targetElement.closest = vi.fn(() => null); // not needed but consistent with mock environment
 
       const action: TEnvironmentStateActionClass = {
         id: "clabc123abc",

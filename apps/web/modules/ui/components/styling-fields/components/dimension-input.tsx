@@ -32,14 +32,15 @@ export const DimensionInput = ({ form, name, label, description, placeholder }: 
         else if (value.endsWith("rem")) unit = "rem";
         else if (value.endsWith("em")) unit = "em";
       }
-      const numericValue = typeof value === "string" ? Number.parseFloat(value) : value;
+      const parsed = typeof value === "string" ? Number.parseFloat(value) : value;
+      const numericValue = typeof parsed === "number" && Number.isNaN(parsed) ? null : parsed;
 
       return (
         <FormItem className="space-y-1">
           <FormLabel>{label}</FormLabel>
           {description && <FormDescription>{description}</FormDescription>}
           <FormControl>
-            <div className="focus-within:border-brand-dark flex h-10 rounded-md border border-slate-300 focus-within:ring-2 focus-within:ring-slate-400 focus-within:ring-offset-2">
+            <div className="flex h-10 rounded-md border border-slate-300 focus-within:border-brand-dark focus-within:ring-2 focus-within:ring-slate-400 focus-within:ring-offset-2">
               <Input
                 type="number"
                 {...field}

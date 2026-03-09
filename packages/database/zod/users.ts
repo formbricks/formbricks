@@ -1,9 +1,6 @@
 import { OrganizationRole, User } from "@prisma/client";
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
 import { ZUserEmail, ZUserName } from "../../types/user";
-
-extendZodWithOpenApi(z);
 
 const ZNoBillingOrganizationRoles = z.enum(
   Object.values(OrganizationRole).filter((role) => role !== OrganizationRole.billing) as [
@@ -15,44 +12,47 @@ const ZNoBillingOrganizationRoles = z.enum(
 export type TNoBillingOrganizationRoles = z.infer<typeof ZNoBillingOrganizationRoles>;
 
 export const ZUser = z.object({
-  id: z.string().cuid2().openapi({
-    description: "The ID of the user",
-  }),
-  createdAt: z.coerce.date().openapi({
-    description: "The date and time the user was created",
-    example: "2021-01-01T00:00:00.000Z",
-  }),
-  updatedAt: z.coerce.date().openapi({
-    description: "The date and time the user was last updated",
-    example: "2021-01-01T00:00:00.000Z",
-  }),
-  lastLoginAt: z.coerce.date().openapi({
-    description: "The date and time the user last logged in",
-    example: "2021-01-01T00:00:00.000Z",
-  }),
-  isActive: z.boolean().openapi({
-    description: "Whether the user is active",
-    example: true,
-  }),
-  name: ZUserName.openapi({
-    description: "The name of the user",
+  id: z.cuid2().describe("The ID of the user"),
+  createdAt: z.coerce
+    .date()
+    .meta({
+      example: "2021-01-01T00:00:00.000Z",
+    })
+    .describe("The date and time the user was created"),
+  updatedAt: z.coerce
+    .date()
+    .meta({
+      example: "2021-01-01T00:00:00.000Z",
+    })
+    .describe("The date and time the user was last updated"),
+  lastLoginAt: z.coerce
+    .date()
+    .meta({
+      example: "2021-01-01T00:00:00.000Z",
+    })
+    .describe("The date and time the user last logged in"),
+  isActive: z
+    .boolean()
+    .meta({
+      example: true,
+    })
+    .describe("Whether the user is active"),
+  name: ZUserName.meta({
     example: "John Doe",
-  }),
-  email: ZUserEmail.openapi({
-    description: "The email of the user",
+  }).describe("The name of the user"),
+  email: ZUserEmail.meta({
     example: "example@example.com",
-  }),
-  role: ZNoBillingOrganizationRoles.openapi({
-    description: "The role of the user in the organization",
+  }).describe("The email of the user"),
+  role: ZNoBillingOrganizationRoles.meta({
     example: OrganizationRole.member,
-  }),
+  }).describe("The role of the user in the organization"),
   teams: z
     .array(z.string())
     .optional()
-    .openapi({
-      description: "The list of teams the user is a member of",
+    .meta({
       example: ["team1", "team2"],
-    }),
+    })
+    .describe("The list of teams the user is a member of"),
 }) satisfies z.ZodType<
   Omit<
     User,
@@ -78,9 +78,8 @@ export const ZUser = z.object({
   >
 >;
 
-ZUser.openapi({
-  ref: "user",
-  description: "A user",
-});
+ZUser.meta({
+  id: "user",
+}).describe("A user");
 
 export type TUser = z.infer<typeof ZUser>;

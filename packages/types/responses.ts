@@ -5,7 +5,7 @@ import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
 export const ZResponseDataValue = z
-  .union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
+  .union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())])
   .optional();
 
 export const ZResponseFilterCondition = z.enum([
@@ -39,100 +39,100 @@ export const ZResponseFilterCondition = z.enum([
 
 export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
 
-export const ZResponseData = z.record(ZResponseDataValue);
+export const ZResponseData = z.record(z.string(), ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
-export const ZResponseVariables = z.record(z.union([z.string(), z.number()]));
+export const ZResponseVariables = z.record(z.string(), z.union([z.string(), z.number()]));
 
 export type TResponseVariables = z.infer<typeof ZResponseVariables>;
 
-export const ZResponseTtc = z.record(z.number());
+export const ZResponseTtc = z.record(z.string(), z.number());
 
 export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 
-export const ZResponseContactAttributes = z.record(z.string()).nullable();
+export const ZResponseContactAttributes = z.record(z.string(), z.string()).nullable();
 
 export type TResponseContactAttributes = z.infer<typeof ZResponseContactAttributes>;
 
-export const ZSurveyContactAttributes = z.record(z.array(z.string()));
+export const ZSurveyContactAttributes = z.record(z.string(), z.array(z.string()));
 
 export type TSurveyContactAttributes = z.infer<typeof ZSurveyContactAttributes>;
 
-export const ZSurveyMetaFieldFilter = z.record(z.array(z.string()));
+export const ZSurveyMetaFieldFilter = z.record(z.string(), z.array(z.string()));
 
 export type TSurveyMetaFieldFilter = z.infer<typeof ZSurveyMetaFieldFilter>;
 
-export const ZResponseHiddenFieldsFilter = z.record(z.array(z.string()));
+export const ZResponseHiddenFieldsFilter = z.record(z.string(), z.array(z.string()));
 
 export type TResponseHiddenFieldsFilter = z.infer<typeof ZResponseHiddenFieldsFilter>;
 
 const ZResponseFilterCriteriaDataLessThan = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.lessThan),
+  op: z.literal(ZResponseFilterCondition.enum.lessThan),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataLessEqual = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.lessEqual),
+  op: z.literal(ZResponseFilterCondition.enum.lessEqual),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataGreaterEqual = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.greaterEqual),
+  op: z.literal(ZResponseFilterCondition.enum.greaterEqual),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataGreaterThan = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.greaterThan),
+  op: z.literal(ZResponseFilterCondition.enum.greaterThan),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.includesOne),
+  op: z.literal(ZResponseFilterCondition.enum.includesOne),
   value: z.union([z.array(z.string()), z.array(z.number())]),
 });
 
 const ZResponseFilterCriteriaDataIncludesAll = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.includesAll),
+  op: z.literal(ZResponseFilterCondition.enum.includesAll),
   value: z.array(z.string()),
 });
 
 const ZResponseFilterCriteriaDataEquals = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.equals),
+  op: z.literal(ZResponseFilterCondition.enum.equals),
   value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataNotEquals = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.notEquals),
+  op: z.literal(ZResponseFilterCondition.enum.notEquals),
   value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataAccepted = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.accepted),
+  op: z.literal(ZResponseFilterCondition.enum.accepted),
 });
 
 const ZResponseFilterCriteriaDataClicked = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.clicked),
+  op: z.literal(ZResponseFilterCondition.enum.clicked),
 });
 
 const ZResponseFilterCriteriaDataSubmitted = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.submitted),
+  op: z.literal(ZResponseFilterCondition.enum.submitted),
 });
 
 const ZResponseFilterCriteriaDataSkipped = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.skipped),
+  op: z.literal(ZResponseFilterCondition.enum.skipped),
 });
 
 const ZResponseFilterCriteriaDataUploaded = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.uploaded),
+  op: z.literal(ZResponseFilterCondition.enum.uploaded),
 });
 
 const ZResponseFilterCriteriaDataNotUploaded = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.notUploaded),
+  op: z.literal(ZResponseFilterCondition.enum.notUploaded),
 });
 
 const ZResponseFilterCriteriaDataBooked = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.booked),
+  op: z.literal(ZResponseFilterCondition.enum.booked),
 });
 
 const ZResponseFilterCriteriaMatrix = z.object({
@@ -141,45 +141,45 @@ const ZResponseFilterCriteriaMatrix = z.object({
 });
 
 const ZResponseFilterCriteriaIsEmpty = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.isEmpty),
+  op: z.literal(ZResponseFilterCondition.enum.isEmpty),
 });
 
 const ZResponseFilterCriteriaIsNotEmpty = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.isNotEmpty),
+  op: z.literal(ZResponseFilterCondition.enum.isNotEmpty),
 });
 
 const ZResponseFilterCriteriaIsAnyOf = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.isAnyOf),
+  op: z.literal(ZResponseFilterCondition.enum.isAnyOf),
   value: z.record(z.string(), z.array(z.string())),
 });
 
 const ZResponseFilterCriteriaContains = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.contains),
+  op: z.literal(ZResponseFilterCondition.enum.contains),
   value: z.string(),
 });
 
 const ZResponseFilterCriteriaDoesNotContain = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.doesNotContain),
+  op: z.literal(ZResponseFilterCondition.enum.doesNotContain),
   value: z.string(),
 });
 
 const ZResponseFilterCriteriaStartsWith = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.startsWith),
+  op: z.literal(ZResponseFilterCondition.enum.startsWith),
   value: z.string(),
 });
 
 const ZResponseFilterCriteriaDoesNotStartWith = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.doesNotStartWith),
+  op: z.literal(ZResponseFilterCondition.enum.doesNotStartWith),
   value: z.string(),
 });
 
 const ZResponseFilterCriteriaEndsWith = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.endsWith),
+  op: z.literal(ZResponseFilterCondition.enum.endsWith),
   value: z.string(),
 });
 
 const ZResponseFilterCriteriaDoesNotEndWith = z.object({
-  op: z.literal(ZResponseFilterCondition.Values.doesNotEndWith),
+  op: z.literal(ZResponseFilterCondition.enum.doesNotEndWith),
   value: z.string(),
 });
 
@@ -211,6 +211,7 @@ export const ZResponseFilterCriteria = z.object({
 
   contactAttributes: z
     .record(
+      z.string(),
       z.object({
         op: z.enum(["equals", "notEquals"]),
         value: z.union([z.string(), z.number()]),
@@ -220,6 +221,7 @@ export const ZResponseFilterCriteria = z.object({
 
   data: z
     .record(
+      z.string(),
       z.union([
         ZResponseFilterCriteriaDataLessThan,
         ZResponseFilterCriteriaDataLessEqual,
@@ -254,6 +256,7 @@ export const ZResponseFilterCriteria = z.object({
 
   others: z
     .record(
+      z.string(),
       z.object({
         op: z.enum(["equals", "notEquals"]),
         value: z.union([z.string(), z.number()]),
@@ -263,6 +266,7 @@ export const ZResponseFilterCriteria = z.object({
 
   meta: z
     .record(
+      z.string(),
       z.union([
         ZResponseFilterCriteriaDataEquals,
         ZResponseFilterCriteriaDataNotEquals,
@@ -315,10 +319,10 @@ export const ZResponseMeta = z.object({
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
 
 export const ZResponse = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   displayId: z.string().nullish(),
   contact: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
@@ -338,8 +342,8 @@ export type TResponse = z.infer<typeof ZResponse>;
 export const ZResponseInput = z.object({
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  environmentId: z.string().cuid2(),
-  surveyId: z.string().cuid2(),
+  environmentId: z.cuid2(),
+  surveyId: z.cuid2(),
   userId: z.string().nullish(),
   displayId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
@@ -386,7 +390,10 @@ export const ZResponseWithSurvey = ZResponse.extend({
 
 export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 
-export const ZResponseHiddenFieldValue = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+export const ZResponseHiddenFieldValue = z.record(
+  z.string(),
+  z.union([z.string(), z.number(), z.array(z.string())])
+);
 export type TResponseHiddenFieldValue = z.infer<typeof ZResponseHiddenFieldValue>;
 
 export const ZResponseUpdate = z.object({
@@ -418,7 +425,7 @@ export const ZResponseTableData = z.object({
   tags: z.array(ZTag),
   language: z.string().nullable(),
   responseData: ZResponseData,
-  variables: z.record(z.union([z.string(), z.number()])),
+  variables: z.record(z.string(), z.union([z.string(), z.number()])),
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,
