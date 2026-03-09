@@ -315,21 +315,6 @@ describe("organization-billing", () => {
                   recurring: { usage_type: "licensed", interval: "year" },
                 },
               },
-              {
-                price: {
-                  id: "price_pro_usage_responses_live",
-                  lookup_key: "price_pro_usage_responses",
-                  product: { id: "prod_pro" },
-                  currency: "usd",
-                  billing_scheme: "tiered",
-                  tiers_mode: "graduated",
-                  tiers: [
-                    { unit_amount: 0, up_to: 2000 },
-                    { unit_amount: 8, up_to: null },
-                  ],
-                  recurring: { usage_type: "metered", interval: "month" },
-                },
-              },
             ],
           },
         },
@@ -363,11 +348,6 @@ describe("organization-billing", () => {
           plan: "pro",
           subscriptionId: "sub_1",
           features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
-          responseMetering: expect.objectContaining({
-            includedResponses: 2000,
-            overageUnitAmountCents: 8,
-            currency: "usd",
-          }),
           lastSyncedEventId: "evt_new",
           lastStripeEventCreatedAt: expect.any(String),
           lastSyncedAt: expect.any(String),

@@ -16,14 +16,6 @@ export const ZOrganizationStripeSubscriptionStatus = z.enum([
 export type TOrganizationStripeSubscriptionStatus = z.infer<typeof ZOrganizationStripeSubscriptionStatus>;
 
 export const ZOrganizationStripeBilling = z.object({
-  responseMetering: z
-    .object({
-      usagePriceId: z.string().nullable().optional(),
-      includedResponses: z.number().nullable().optional(),
-      overageUnitAmountCents: z.number().nullable().optional(),
-      currency: z.string().nullable().optional(),
-    })
-    .optional(),
   plan: ZCloudBillingPlan.optional(),
   subscriptionStatus: ZOrganizationStripeSubscriptionStatus.nullable().optional(),
   subscriptionId: z.string().nullable().optional(),

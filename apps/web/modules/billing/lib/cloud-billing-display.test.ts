@@ -23,6 +23,7 @@ describe("cloud-billing-display", () => {
     expect(result).toEqual({
       organizationId: "org_1",
       currentCloudPlan: "pro",
+      currentSubscriptionStatus: null,
       billing,
     });
   });

@@ -21,13 +21,6 @@ import { stripeClient } from "./stripe-client";
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
-type TResponseMeteringProjection = {
-  usagePriceId: string | null;
-  includedResponses: number | null;
-  overageUnitAmountCents: number | null;
-  currency: string | null;
-};
-
 const ORGANIZATION_BILLING_SELECT = {
   stripeCustomerId: true,
   limits: true,
@@ -118,69 +111,6 @@ const parseMaxNumericEntitlementLimit = (features: string[], prefix: string): nu
   }
 
   return maxValue;
-};
-
-const getResponseUsagePriceLookupKeyForPlan = (plan: TCloudStripePlan): string | null => {
-  if (plan === "pro") return CLOUD_STRIPE_PRICE_LOOKUP_KEYS.PRO_USAGE_RESPONSES;
-  if (plan === "scale") return CLOUD_STRIPE_PRICE_LOOKUP_KEYS.SCALE_USAGE_RESPONSES;
-  return null;
-};
-
-const isResponseUsagePrice = (price: Stripe.Price, plan: TCloudStripePlan): boolean => {
-  const expectedLookupKey = getResponseUsagePriceLookupKeyForPlan(plan);
-  if (!expectedLookupKey) return false;
-  return price.lookup_key === expectedLookupKey;
-};
-
-const parseGraduatedResponseMeteringFromPrice = (price: Stripe.Price): TResponseMeteringProjection | null => {
-  if (price.recurring?.usage_type !== "metered") return null;
-  if (price.billing_scheme !== "tiered" || price.tiers_mode !== "graduated" || !price.tiers?.length) {
-    return null;
-  }
-
-  const sortedTiers = [...price.tiers].sort((a, b) => {
-    const aUpTo = a.up_to ?? Number.POSITIVE_INFINITY;
-    const bUpTo = b.up_to ?? Number.POSITIVE_INFINITY;
-    return aUpTo - bUpTo;
-  });
-
-  let includedResponses: number | null = null;
-  let overageUnitAmountCents: number | null = null;
-
-  for (const tier of sortedTiers) {
-    const unitAmount = tier.unit_amount;
-    const upTo = tier.up_to;
-
-    if (unitAmount === 0 && typeof upTo === "number") {
-      includedResponses = Math.max(includedResponses ?? 0, upTo);
-      continue;
-    }
-
-    if (typeof unitAmount === "number" && unitAmount > 0) {
-      overageUnitAmountCents = unitAmount;
-      break;
-    }
-  }
-
-  return {
-    usagePriceId: price.id,
-    includedResponses,
-    overageUnitAmountCents,
-    currency: price.currency ?? null,
-  };
-};
-
-const resolveResponseMeteringProjection = (
-  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>,
-  cloudPlan: TCloudStripePlan
-): TResponseMeteringProjection | null => {
-  if (!subscription) return null;
-
-  const meteredItem = subscription.items.data.find((item) => isResponseUsagePrice(item.price, cloudPlan));
-
-  if (!meteredItem) return null;
-
-  return parseGraduatedResponseMeteringFromPrice(meteredItem.price);
 };
 
 const getSubscriptionTopPlanLevel = (
@@ -436,7 +366,6 @@ export const syncOrganizationBillingFromStripe = async (
     featureLookupKeys,
     "responses-included-"
   );
-  const responseMeteringProjection = resolveResponseMeteringProjection(subscription, cloudPlan);
 
   const projectsLimit = workspaceLimitFromEntitlements ?? previousLimits?.projects ?? null;
 
@@ -448,19 +377,12 @@ export const syncOrganizationBillingFromStripe = async (
   }
 
   const responsesIncludedLimit =
-    responsesIncludedFromEntitlements ??
-    responseMeteringProjection?.includedResponses ??
-    previousLimits?.monthly?.responses ??
-    null;
+    responsesIncludedFromEntitlements ?? previousLimits?.monthly?.responses ?? null;
 
-  if (
-    responsesIncludedFromEntitlements === null &&
-    responseMeteringProjection?.includedResponses == null &&
-    previousLimits?.monthly?.responses == null
-  ) {
+  if (responsesIncludedFromEntitlements === null && previousLimits?.monthly?.responses == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
-      "No responses included entitlement or metered price tier found; preserving previous responses included limit"
+      "No responses included entitlement found in Stripe entitlements; preserving previous responses limit"
     );
   }
 
@@ -481,7 +403,6 @@ export const syncOrganizationBillingFromStripe = async (
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
       features: featureLookupKeys,
-      responseMetering: responseMeteringProjection ?? billing.stripe?.responseMetering,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,

@@ -29,14 +29,6 @@ export const ZOrganizationBilling = z.object({
   periodStart: z.coerce.date(),
   stripe: z
     .object({
-      responseMetering: z
-        .object({
-          usagePriceId: z.string().nullable().optional(),
-          includedResponses: z.number().nullable().optional(),
-          overageUnitAmountCents: z.number().nullable().optional(),
-          currency: z.string().nullable().optional(),
-        })
-        .optional(),
       plan: z.enum(["hobby", "pro", "scale", "unknown"]).optional(),
       subscriptionStatus: z
         .enum([

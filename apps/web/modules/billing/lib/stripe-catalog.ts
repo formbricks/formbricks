@@ -31,13 +31,6 @@ if (
 
 export const CLOUD_STRIPE_PRICE_LOOKUP_KEYS = {
   HOBBY_MONTHLY: "price_hobby_monthly",
-  TRIAL_FREE: "price_trial_free",
-  PRO_MONTHLY: "price_pro_monthly",
-  PRO_YEARLY: "price_pro_yearly",
-  SCALE_MONTHLY: "price_scale_monthly",
-  SCALE_YEARLY: "price_scale_yearly",
-  PRO_USAGE_RESPONSES: "price_pro_usage_responses",
-  SCALE_USAGE_RESPONSES: "price_scale_usage_responses",
 } as const;
 
 export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
