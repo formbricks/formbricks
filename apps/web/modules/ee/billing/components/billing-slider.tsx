@@ -1,66 +1,22 @@
 "use client";
 
-import * as SliderPrimitive from "@radix-ui/react-slider";
-import * as React from "react";
-import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 
-interface SliderProps {
+interface BillingSliderProps {
   className?: string;
   value: number;
   max: number;
-  freeTierLimit: number;
-  metric: string;
 }
 
-export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
-  ({ className, value, max, freeTierLimit, metric, ...props }, ref) => {
-    const { t } = useTranslation();
-    return (
-      <SliderPrimitive.Root
-        ref={ref}
-        className={cn("relative flex w-full touch-none select-none items-center", className)}
-        {...props}>
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-r-full bg-slate-300">
-          <div
-            style={{ width: `calc(${Math.min(value / max, 0.93) * 100}%)` }}
-            className="absolute h-full bg-slate-800"></div>
-          <div
-            style={{
-              width: `${((freeTierLimit - value) / max) * 100}%`,
-              left: `${(value / max) * 100}%`,
-            }}
-            className="absolute h-full bg-slate-400"></div>
-        </SliderPrimitive.Track>
+export const BillingSlider = ({ className, value, max }: BillingSliderProps) => {
+  const percentage = Math.min((value / max) * 100, 100);
 
-        <div
-          style={{ left: `calc(${Math.min(value / max, 0.93) * 100}%)` }}
-          className="absolute mt-4 h-6 w-px bg-slate-400"></div>
-
-        <div
-          style={{ left: `calc(${Math.min(value / max, 0.93) * 100}% + 0.5rem)` }}
-          className="absolute mt-16 text-sm text-slate-700 dark:text-slate-200">
-          <p className="text-xs">
-            {t("environments.settings.billing.current")}:
-            <br />
-            {value} {metric}
-          </p>
-        </div>
-
-        <div
-          style={{ left: `${(freeTierLimit / max) * 100}%` }}
-          className="absolute mt-4 h-6 w-px bg-slate-300"></div>
-        <div
-          style={{ left: `calc(${(freeTierLimit / max) * 100}% + 0.5rem)` }}
-          className="absolute mt-16 text-sm text-slate-700">
-          <p className="text-xs">
-            {t("environments.settings.billing.current_tier_limit")}:
-            <br />
-            {freeTierLimit} {metric}
-          </p>
-        </div>
-      </SliderPrimitive.Root>
-    );
-  }
-);
-BillingSlider.displayName = SliderPrimitive.Root.displayName;
+  return (
+    <div className={cn("relative h-2 w-full overflow-hidden rounded-full bg-slate-200", className)}>
+      <div
+        style={{ width: `${percentage}%` }}
+        className={cn("h-full rounded-full transition-all", percentage >= 90 ? "bg-red-500" : "bg-slate-800")}
+      />
+    </div>
+  );
+};
