@@ -3,15 +3,18 @@
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { createElement, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   createPricingTableCustomerSessionAction,
   isSubscriptionCancelledAction,
   manageSubscriptionAction,
+  retryStripeSetupAction,
 } from "../actions";
 import { UsageCard } from "./usage-card";
 
@@ -83,6 +86,7 @@ interface PricingTableProps {
   currentCloudPlan: "hobby" | "pro" | "scale" | "trial" | "unknown";
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
+  isStripeSetupIncomplete: boolean;
 }
 
 const getCurrentCloudPlanLabel = (
@@ -105,9 +109,11 @@ export const PricingTable = ({
   currentCloudPlan,
   stripePublishableKey,
   stripePricingTableId,
+  isStripeSetupIncomplete,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
   const [pricingTableCustomerSessionClientSecret, setPricingTableCustomerSessionClientSecret] = useState<
     string | null
@@ -195,6 +201,20 @@ export const PricingTable = ({
     }
   };
 
+  const retryStripeSetup = async () => {
+    setIsRetryingStripeSetup(true);
+    try {
+      const response = await retryStripeSetupAction({ organizationId: organization.id });
+      if (response?.data) {
+        router.refresh();
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+      }
+    } catch {
+      setIsRetryingStripeSetup(false);
+    }
+  };
+
   const responsesUnlimitedCheck =
     currentCloudPlan === "scale" && organization.billing.limits.monthly.responses === null;
   const projectsUnlimitedCheck =
@@ -202,7 +222,18 @@ export const PricingTable = ({
 
   return (
     <main>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
+        {isStripeSetupIncomplete && hasBillingRights && (
+          <Alert variant="warning">
+            <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
+            <AlertDescription>
+              {t("environments.settings.billing.stripe_setup_incomplete_description")}
+            </AlertDescription>
+            <AlertButton onClick={() => void retryStripeSetup()} loading={isRetryingStripeSetup}>
+              {t("environments.settings.billing.retry_setup")}
+            </AlertButton>
+          </Alert>
+        )}
         <SettingsCard
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
@@ -210,7 +241,7 @@ export const PricingTable = ({
             canManageSubscription
               ? {
                   text: t("environments.settings.billing.manage_subscription"),
-                  onClick: openCustomerPortal,
+                  onClick: () => void openCustomerPortal(),
                   variant: "default",
                 }
               : undefined
@@ -284,7 +315,7 @@ export const PricingTable = ({
         )}
 
         {showPricingTable && (
-          <div className="mb-12 w-full max-w-5xl">
+          <div className="mb-12 w-full max-w-4xl">
             <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
             {createElement("stripe-pricing-table", stripePricingTableProps)}
           </div>

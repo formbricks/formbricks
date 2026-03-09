@@ -256,4 +256,12 @@ describe("getEnvironmentStateData", () => {
 
     expect(result.environment.appSetupCompleted).toBe(false);
   });
+
+  test("should not include organization in result", async () => {
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironmentData as never);
+
+    const result = await getEnvironmentStateData(environmentId);
+
+    expect(result).not.toHaveProperty("organization");
+  });
 });

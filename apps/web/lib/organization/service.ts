@@ -185,9 +185,8 @@ export const createOrganization = async (
     });
 
     if (IS_FORMBRICKS_CLOUD) {
-      // Stripe setup is best-effort and must not block organization creation.
-      void ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
-        logger.warn(
+      ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
+        logger.error(
           { error, organizationId: organization.id },
           "Stripe setup failed after organization creation"
         );
