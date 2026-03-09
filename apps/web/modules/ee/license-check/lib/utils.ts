@@ -29,13 +29,17 @@ const getFeaturePermission = async (
 // On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
   organizationId: string,
-  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "multiLanguageSurveys" | "quotas">
+  featureKey: keyof Pick<
+    TEnterpriseLicenseFeatures,
+    "accessControl" | "multiLanguageSurveys" | "quotas" | "contacts"
+  >
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
     const featureLookupKeyMap: Record<string, string> = {
       accessControl: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.RBAC,
       quotas: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.QUOTA_MANAGEMENT,
       multiLanguageSurveys: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.MULTI_LANGUAGE_SURVEYS,
+      contacts: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS,
     };
     const lookupKey = featureLookupKeyMap[featureKey];
     if (lookupKey) {
@@ -93,8 +97,8 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("isMultiOrgEnabled");
 };
 
-export const getIsContactsEnabled = async (): Promise<boolean> => {
-  return getSpecificFeatureFlag("contacts");
+export const getIsContactsEnabled = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "contacts");
 };
 
 export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {

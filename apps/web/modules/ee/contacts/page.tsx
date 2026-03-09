@@ -19,7 +19,7 @@ export const ContactsPage = async ({
 
   const t = await getTranslate();
 
-  const isContactsEnabled = await getIsContactsEnabled();
+  const isContactsEnabled = await getIsContactsEnabled(organization.id);
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 

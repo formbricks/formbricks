@@ -40,10 +40,11 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   if (!user) {
     throw new Error(t("common.user_not_found"));
   }
-  const isContactsEnabled = await getIsContactsEnabled();
+  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
+
+  const isContactsEnabled = await getIsContactsEnabled(organizationId);
   const segments = isContactsEnabled ? await getSegments(environment.id) : [];
 
-  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
   if (!organizationId) {
     throw new Error(t("common.organization_not_found"));
   }

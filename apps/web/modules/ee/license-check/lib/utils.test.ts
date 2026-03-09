@@ -293,13 +293,13 @@ describe("License Utils", () => {
 
       const [multiOrg, contacts, twoFactor, sso] = await Promise.all([
         getIsMultiOrgEnabled(),
-        getIsContactsEnabled(),
+        getIsContactsEnabled("org_1"),
         getIsTwoFactorAuthEnabled(),
         getIsSsoEnabled(),
       ]);
 
       expect(multiOrg).toBe(true);
-      expect(contacts).toBe(true);
+      expect(contacts).toBe(false);
       expect(twoFactor).toBe(true);
       expect(sso).toBe(true);
     });
@@ -309,7 +309,7 @@ describe("License Utils", () => {
 
       const [multiOrg, contacts, twoFactor, sso] = await Promise.all([
         getIsMultiOrgEnabled(),
-        getIsContactsEnabled(),
+        getIsContactsEnabled("org_1"),
         getIsTwoFactorAuthEnabled(),
         getIsSsoEnabled(),
       ]);

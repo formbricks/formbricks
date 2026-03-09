@@ -51,6 +51,7 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   RBAC: "rbac",
   SPAM_PROTECTION: "spam-protection",
   MULTI_LANGUAGE_SURVEYS: "multi-language-surveys",
+  CONTACTS: "contacts",
 } as const;
 
 export const CLOUD_PLAN_LEVEL = {

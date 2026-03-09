@@ -27,7 +27,7 @@ const Page = async (props) => {
     getSurvey(params.surveyId),
     getUser(session.user.id),
     getTagsByEnvironmentId(params.environmentId),
-    getIsContactsEnabled(),
+    getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
     findMatchingLocale(),
   ]);

@@ -9,6 +9,7 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   rbac: "accessControl",
   "spam-protection": "spamProtection",
   "multi-language-surveys": "multiLanguageSurveys",
+  contacts: "contacts",
 };
 
 export const hasOrganizationEntitlement = async (
@@ -29,7 +30,6 @@ export const hasOrganizationEntitlementWithLicenseGuard = async (
   featureLookupKey: string
 ): Promise<boolean> => {
   const context = await getOrganizationEntitlementsContext(organizationId);
-
   if (!isEntitlementFeature(featureLookupKey)) {
     return false;
   }
