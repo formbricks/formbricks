@@ -9,10 +9,10 @@ const DEFAULT_CLOUD_STRIPE_PRODUCT_IDS = {
 } as const;
 
 export const CLOUD_STRIPE_PRODUCT_IDS = {
-  HOBBY: process.env.CLOUD_STRIPE_PRODUCT_ID_HOBBY?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.HOBBY,
-  PRO: process.env.CLOUD_STRIPE_PRODUCT_ID_PRO?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.PRO,
-  SCALE: process.env.CLOUD_STRIPE_PRODUCT_ID_SCALE?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.SCALE,
-  TRIAL: process.env.CLOUD_STRIPE_PRODUCT_ID_TRIAL?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.TRIAL,
+  HOBBY: process.env.STRIPE_PRODUCT_ID_HOBBY?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.HOBBY,
+  PRO: process.env.STRIPE_PRODUCT_ID_PRO?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.PRO,
+  SCALE: process.env.STRIPE_PRODUCT_ID_SCALE?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.SCALE,
+  TRIAL: process.env.STRIPE_PRODUCT_ID_TRIAL?.trim() || DEFAULT_CLOUD_STRIPE_PRODUCT_IDS.TRIAL,
 } as const;
 
 const cloudStripeProductIdsUsingDefaults = Object.entries(DEFAULT_CLOUD_STRIPE_PRODUCT_IDS).flatMap(
@@ -27,7 +27,7 @@ if (
   cloudStripeProductIdsUsingDefaults.length > 0 &&
   process.env.NODE_ENV !== "test"
 ) {
-  const message = `Cloud Stripe product IDs are using defaults for: ${cloudStripeProductIdsUsingDefaults.join(", ")}. Configure CLOUD_STRIPE_PRODUCT_ID_* environment variables.`;
+  const message = `Cloud Stripe product IDs are using defaults for: ${cloudStripeProductIdsUsingDefaults.join(", ")}. Configure STRIPE_PRODUCT_ID_* environment variables.`;
   logger.warn({ cloudStripeProductIdsUsingDefaults }, message);
 }
 
