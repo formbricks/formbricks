@@ -17,7 +17,6 @@ import {
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
@@ -80,10 +79,6 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
         await checkSurveyFollowUpsPermission(organizationId);
       }
 
-      if (survey.languages?.length) {
-        await checkMultiLanguagePermission(organizationId);
-      }
-
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.surveyId = survey.id;
       const oldObject = await getSurvey(survey.id);
@@ -131,10 +126,6 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
 
       if (parsedInput.followUps?.length) {
         await checkSurveyFollowUpsPermission(organizationId);
-      }
-
-      if (parsedInput.languages?.length) {
-        await checkMultiLanguagePermission(organizationId);
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;

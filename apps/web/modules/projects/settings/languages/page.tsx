@@ -1,11 +1,9 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
-import { EditLanguage } from "@/modules/ee/multi-language-surveys/components/edit-language";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
+import { EditLanguage } from "@/modules/survey/multi-language-surveys/components/edit-language";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -13,9 +11,7 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
   const params = await props.params;
   const t = await getTranslate();
 
-  const { organization, session, project, isReadOnly } = await getEnvironmentAuth(params.environmentId);
-
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const { session, project, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   const user = await getUser(session.user.id);
 
@@ -31,14 +27,7 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
       <SettingsCard
         title={t("environments.workspace.languages.multi_language_surveys")}
         description={t("environments.workspace.languages.multi_language_surveys_description")}>
-        <EditLanguage
-          project={project}
-          locale={user.locale}
-          isReadOnly={isReadOnly}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        />
+        <EditLanguage project={project} locale={user.locale} isReadOnly={isReadOnly} />
       </SettingsCard>
     </PageContentWrapper>
   );

@@ -1123,9 +1123,7 @@
         "security_list_tip_link": "Registrera dig här.",
         "share_invite_link": "Dela inbjudningslänk",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Dela denna länk för att låta din organisationsmedlem gå med i din organisation:",
-        "test_email_sent_successfully": "Test-e-post skickat",
-        "use_multi_language_surveys_with_a_higher_plan": "Använd flerspråkiga enkäter med en högre plan",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Enkätera dina användare på olika språk."
+        "test_email_sent_successfully": "Test-e-post skickat"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Prenumerera automatiskt på nya enkäter",
@@ -1695,8 +1693,6 @@
         "until_they_submit_a_response": "Fråga tills de skickar in ett svar",
         "untitled_block": "Namnlöst block",
         "update_options": "Uppdatera alternativ",
-        "upgrade_notice_description": "Skapa flerspråkiga enkäter och lås upp många fler funktioner",
-        "upgrade_notice_title": "Lås upp flerspråkiga enkäter med en högre plan",
         "upload": "Ladda upp",
         "upload_at_least_2_images": "Ladda upp minst 2 bilder",
         "upper_label": "Övre etikett",

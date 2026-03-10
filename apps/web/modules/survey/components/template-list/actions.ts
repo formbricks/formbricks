@@ -8,7 +8,6 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
@@ -67,10 +66,6 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
 
       if (parsedInput.surveyBody.followUps?.length) {
         await checkSurveyFollowUpsPermission(organizationId);
-      }
-
-      if (parsedInput.surveyBody.languages?.length) {
-        await checkMultiLanguagePermission(organizationId);
       }
 
       const result = await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);
