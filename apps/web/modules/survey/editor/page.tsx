@@ -14,7 +14,6 @@ import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
-  getMultiLanguagePermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -76,19 +75,13 @@ export const SurveyEditorPage = async (props: {
   ]);
 
   const isUserTargetingAllowed = await getIsContactsEnabled();
-  const [
-    isMultiLanguageAllowed,
-    isSurveyFollowUpsAllowed,
-    isSpamProtectionAllowed,
-    isQuotasAllowed,
-    isExternalUrlsAllowed,
-  ] = await Promise.all([
-    getMultiLanguagePermission(organizationBilling.plan),
-    getSurveyFollowUpsPermission(organizationBilling.plan),
-    getIsSpamProtectionEnabled(organizationBilling.plan),
-    getIsQuotasEnabled(organizationBilling.plan),
-    getExternalUrlsPermission(organizationBilling.plan),
-  ]);
+  const [isSurveyFollowUpsAllowed, isSpamProtectionAllowed, isQuotasAllowed, isExternalUrlsAllowed] =
+    await Promise.all([
+      getSurveyFollowUpsPermission(organizationBilling.plan),
+      getIsSpamProtectionEnabled(organizationBilling.plan),
+      getIsQuotasEnabled(organizationBilling.plan),
+      getExternalUrlsPermission(organizationBilling.plan),
+    ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
   const [projectLanguages, teamMemberDetails] = await Promise.all([
@@ -124,7 +117,6 @@ export const SurveyEditorPage = async (props: {
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
-      isMultiLanguageAllowed={isMultiLanguageAllowed}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       projectLanguages={projectLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

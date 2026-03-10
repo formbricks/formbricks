@@ -34,7 +34,6 @@ interface SurveyEditorProps {
   membershipRole?: OrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
-  isMultiLanguageAllowed?: boolean;
   isSpamProtectionAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
@@ -64,7 +63,6 @@ export const SurveyEditor = ({
   responseCount,
   membershipRole,
   colors,
-  isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
   isSpamProtectionAllowed = false,
   isFormbricksCloud,
@@ -207,7 +205,6 @@ export const SurveyEditor = ({
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}

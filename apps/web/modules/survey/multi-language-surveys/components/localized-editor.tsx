@@ -123,7 +123,7 @@ export function LocalizedEditor({
               if (isEndingCard) {
                 const ending = localSurvey.endings.find((ending) => ending.id === elementId);
                 // If the field doesn't exist on the ending card, don't create it
-                if (!ending || (ending as Record<string, unknown>)[id] === undefined) {
+                if ((ending as Record<string, unknown>)?.[id] === undefined) {
                   return;
                 }
               }

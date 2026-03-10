@@ -69,7 +69,7 @@ export default defineConfig({
         // Feature-specific modules
         "app/**/billing-confirmation/**", // Billing confirmation pages
         "modules/ee/billing/**", // Enterprise billing features
-        "modules/ee/multi-language-surveys/**", // Multi-language survey features
+        "modules/survey/multi-language-surveys/**", // Multi-language survey features
         "modules/email/**", // Email functionality
         "modules/integrations/**", // Integration modules
         "modules/setup/**/intro/**", // Setup intro pages

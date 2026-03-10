@@ -81,7 +81,6 @@ const LicenseFeaturesSchema = z.object({
   saml: z.boolean(),
   spamProtection: z.boolean(),
   auditLogs: z.boolean(),
-  multiLanguageSurveys: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),
 });
@@ -149,7 +148,6 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   saml: false,
   spamProtection: false,
   auditLogs: false,
-  multiLanguageSurveys: false,
   accessControl: false,
   quotas: false,
 };

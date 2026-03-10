@@ -2,7 +2,6 @@
 
 import { Language } from "@prisma/client";
 import { TFunction } from "i18next";
-import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -14,13 +13,13 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import {
   createLanguageAction,
   deleteLanguageAction,
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
+import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
@@ -28,9 +27,6 @@ interface EditLanguageProps {
   project: TProject;
   locale: TUserLocale;
   isReadOnly: boolean;
-  isMultiLanguageAllowed: boolean;
-  environmentId: string;
-  isFormbricksCloud: boolean;
 }
 
 const checkIfDuplicateExists = (arr: string[]) => {
@@ -81,14 +77,7 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
   return true;
 };
 
-export function EditLanguage({
-  project,
-  locale,
-  isReadOnly,
-  isMultiLanguageAllowed,
-  environmentId,
-  isFormbricksCloud,
-}: EditLanguageProps) {
+export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps) {
   const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
@@ -147,7 +136,7 @@ export function EditLanguage({
         const errorMessage = getFormattedErrorMessage(surveysUsingLanguageResponse);
         toast.error(errorMessage);
       }
-    } catch (err) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
@@ -164,7 +153,7 @@ export function EditLanguage({
       toast.success(t("environments.workspace.languages.language_deleted_successfully"));
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
-    } catch (err) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     }
@@ -174,21 +163,6 @@ export function EditLanguage({
     setLanguages(project.languages);
     setIsEditing(false);
   };
-
-  const buttons: [ModalButton, ModalButton] = [
-    {
-      text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
-      href: isFormbricksCloud
-        ? `/environments/${environmentId}/settings/billing`
-        : "https://formbricks.com/upgrade-self-hosting-license",
-    },
-    {
-      text: t("common.learn_more"),
-      href: isFormbricksCloud
-        ? `/environments/${environmentId}/settings/billing`
-        : "https://formbricks.com/learn-more-self-hosting-license",
-    },
-  ];
 
   const handleSaveChanges = async () => {
     if (!validateLanguages(languages, t)) return;
@@ -216,84 +190,69 @@ export function EditLanguage({
     setIsEditing(false);
   };
 
-  const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
-    isEditing && languages.length === project.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary">
-        <PlusIcon />
-        {t("environments.workspace.languages.add_language")}
-      </Button>
-    ) : null;
-
   return (
-    <>
-      {isMultiLanguageAllowed ? (
-        <div className="flex flex-col space-y-4">
-          <div className="space-y-4">
-            {languages.length > 0 ? (
-              <>
-                <LanguageLabels />
-                {languages.map((language, index) => (
-                  <LanguageRow
-                    index={index}
-                    isEditing={isEditing}
-                    key={language.id}
-                    language={language}
-                    locale={locale}
-                    onDelete={() => handleDeleteLanguage(language.id)}
-                    onLanguageChange={(newLanguage: Language) => {
-                      const updatedLanguages = [...languages];
-                      updatedLanguages[index] = newLanguage;
-                      setLanguages(updatedLanguages);
-                    }}
-                  />
-                ))}
-              </>
-            ) : (
-              <p className="text-sm italic text-slate-500">
-                {t("environments.workspace.languages.no_language_found")}
-              </p>
-            )}
-            <AddLanguageButton onClick={handleAddLanguage} />
-          </div>
-          <EditSaveButtons
-            isEditing={isEditing}
-            onCancel={handleCancelChanges}
-            disabled={isReadOnly}
-            onEdit={() => {
-              setIsEditing(true);
-            }}
-            onSave={handleSaveChanges}
-            t={t}
-          />
-          {isReadOnly && (
-            <Alert variant="warning" className="mt-4">
-              <AlertDescription>
-                {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-              </AlertDescription>
-            </Alert>
-          )}
-          <ConfirmationModal
-            buttonText={t("environments.workspace.languages.remove_language")}
-            isButtonDisabled={confirmationModal.isButtonDisabled}
-            onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
-            open={confirmationModal.isOpen}
-            setOpen={() => {
-              setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
-            }}
-            body={confirmationModal.text}
-            title={t("environments.workspace.languages.remove_language")}
-          />
-        </div>
-      ) : (
-        <UpgradePrompt
-          title={t("environments.settings.general.use_multi_language_surveys_with_a_higher_plan")}
-          description={t(
-            "environments.settings.general.use_multi_language_surveys_with_a_higher_plan_description"
-          )}
-          buttons={buttons}
+    <div className="flex flex-col space-y-4">
+      <div className="space-y-4">
+        {languages.length > 0 ? (
+          <>
+            <LanguageLabels />
+            {languages.map((language, index) => (
+              <LanguageRow
+                isEditing={isEditing}
+                key={language.id}
+                language={language}
+                locale={locale}
+                onDelete={() => handleDeleteLanguage(language.id)}
+                onLanguageChange={(newLanguage: Language) => {
+                  const updatedLanguages = [...languages];
+                  updatedLanguages[index] = newLanguage;
+                  setLanguages(updatedLanguages);
+                }}
+              />
+            ))}
+          </>
+        ) : (
+          <p className="text-sm italic text-slate-500">
+            {t("environments.workspace.languages.no_language_found")}
+          </p>
+        )}
+
+        <AddLanguageButton
+          onClick={handleAddLanguage}
+          isEditing={isEditing}
+          languages={languages}
+          project={project}
         />
+      </div>
+      <EditSaveButtons
+        isEditing={isEditing}
+        onCancel={handleCancelChanges}
+        disabled={isReadOnly}
+        onEdit={() => {
+          setIsEditing(true);
+        }}
+        onSave={handleSaveChanges}
+        t={t}
+      />
+      {isReadOnly && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
       )}
-    </>
+      <ConfirmationModal
+        buttonText={t("environments.workspace.languages.remove_language")}
+        isButtonDisabled={confirmationModal.isButtonDisabled}
+        onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
+        open={confirmationModal.isOpen}
+        setOpen={() => {
+          setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
+        }}
+        body={confirmationModal.text}
+        title={t("environments.workspace.languages.remove_language")}
+      />
+    </div>
   );
 }
 

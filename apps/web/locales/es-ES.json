@@ -1123,9 +1123,7 @@
         "security_list_tip_link": "Regístrate aquí.",
         "share_invite_link": "Compartir enlace de invitación",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Comparte este enlace para permitir que los miembros de tu organización se unan a tu organización:",
-        "test_email_sent_successfully": "Correo electrónico de prueba enviado correctamente",
-        "use_multi_language_surveys_with_a_higher_plan": "Utiliza encuestas en varios idiomas con un plan superior",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Encuesta a tus usuarios en diferentes idiomas."
+        "test_email_sent_successfully": "Correo electrónico de prueba enviado correctamente"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Suscripción automática a nuevas encuestas",
@@ -1695,8 +1693,6 @@
         "until_they_submit_a_response": "Preguntar hasta que envíen una respuesta",
         "untitled_block": "Bloque sin título",
         "update_options": "Actualizar opciones",
-        "upgrade_notice_description": "Crea encuestas multilingües y desbloquea muchas más funciones",
-        "upgrade_notice_title": "Desbloquea encuestas multilingües con un plan superior",
         "upload": "Subir",
         "upload_at_least_2_images": "Sube al menos 2 imágenes",
         "upper_label": "Etiqueta superior",
