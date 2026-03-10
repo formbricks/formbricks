@@ -14,11 +14,7 @@ import {
   TResponseVariables,
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
-import {
-  TSurveyElement,
-  TSurveyElementChoice,
-  TSurveyElementTypeEnum,
-} from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyElementSummaryAddress,
@@ -293,7 +289,10 @@ const checkForI18n = (
 ) => {
   const element = elements.find((element) => element.id === id);
 
-  if (element?.type === "multipleChoiceMulti" || element?.type === "ranking") {
+  if (
+    element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+    element?.type === TSurveyElementTypeEnum.Ranking
+  ) {
     // Initialize an array to hold the choice values
     let choiceValues = [] as string[];
 
@@ -318,13 +317,9 @@ const checkForI18n = (
   }
 
   // Return the localized value of the choice fo multiSelect single element
-  if (element && "choices" in element) {
-    const choice = (element.choices as TSurveyElementChoice[])?.find(
-      (choice) => choice.label?.[languageCode] === responseData[id]
-    );
-    return choice && "label" in choice
-      ? getLocalizedValue(choice.label, "default") || responseData[id]
-      : responseData[id];
+  if (element?.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
+    const choice = element.choices?.find((choice) => choice.label[languageCode] === responseData[id]);
+    return choice ? getLocalizedValue(choice.label, "default") || responseData[id] : responseData[id];
   }
 
   return responseData[id];

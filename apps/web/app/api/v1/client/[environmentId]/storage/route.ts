@@ -1,9 +1,8 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -11,12 +10,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
-
-interface Context {
-  params: Promise<{
-    environmentId: string;
-  }>;
-}
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -34,7 +27,7 @@ export const OPTIONS = async (): Promise<Response> => {
 // use this to let users upload files to a file upload question response for example
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
     const { environmentId } = params;
     let jsonInput: TUploadPrivateFileRequest;

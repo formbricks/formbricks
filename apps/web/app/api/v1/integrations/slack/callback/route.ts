@@ -1,17 +1,16 @@
-import { NextRequest } from "next/server";
 import {
   TIntegrationSlackConfig,
   TIntegrationSlackConfigData,
   TIntegrationSlackCredential,
 } from "@formbricks/types/integration/slack";
 import { responses } from "@/app/lib/api/response";
-import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication?: TApiV1Authentication }) => {
+  handler: async ({ req, authentication }) => {
     if (!authentication || !("user" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }

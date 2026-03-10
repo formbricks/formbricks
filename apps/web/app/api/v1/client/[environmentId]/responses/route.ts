@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import { NextRequest } from "next/server";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZEnvironmentId } from "@formbricks/types/environment";
@@ -9,7 +8,7 @@ import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -18,12 +17,6 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
-
-interface Context {
-  params: Promise<{
-    environmentId: string;
-  }>;
-}
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -56,7 +49,7 @@ const validateResponse = (responseInputData: TResponseInput, survey: TSurvey) =>
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
     const requestHeaders = await headers();
     let responseInput;

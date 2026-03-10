@@ -1,8 +1,7 @@
-import { NextRequest } from "next/server";
 import * as z from "zod";
 import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
-import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
@@ -21,7 +20,7 @@ const getEmail = async (token: string) => {
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication?: TApiV1Authentication }) => {
+  handler: async ({ req, authentication }) => {
     if (!authentication || !("user" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }

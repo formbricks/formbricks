@@ -1,7 +1,6 @@
-import { NextRequest } from "next/server";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
@@ -12,11 +11,7 @@ export const GET = withV1ApiWrapper({
     req,
     props,
     authentication,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ surveyId: string }> };
-    authentication?: TApiV1Authentication;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ surveyId: string }> }>) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }

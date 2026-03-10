@@ -1,14 +1,13 @@
-import { NextRequest } from "next/server";
 import * as z from "zod";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { responses } from "@/app/lib/api/response";
-import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getTables } from "@/lib/airtable/service";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getIntegrationByType } from "@/lib/integration/service";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication?: TApiV1Authentication }) => {
+  handler: async ({ req, authentication }) => {
     if (!authentication || !("user" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }

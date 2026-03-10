@@ -10,7 +10,7 @@ import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication?: TApiV1Authentication }) => {
+  handler: async ({ authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
