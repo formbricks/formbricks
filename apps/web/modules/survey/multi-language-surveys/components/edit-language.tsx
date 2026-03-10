@@ -20,6 +20,7 @@ import {
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
+import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
@@ -190,14 +191,6 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
     setIsEditing(false);
   };
 
-  const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
-    isEditing && languages.length === project.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary">
-        <PlusIcon />
-        {t("environments.workspace.languages.add_language")}
-      </Button>
-    ) : null;
-
   return (
     <div className="flex flex-col space-y-4">
       <div className="space-y-4">
@@ -225,7 +218,13 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
             {t("environments.workspace.languages.no_language_found")}
           </p>
         )}
-        <AddLanguageButton onClick={handleAddLanguage} />
+
+        <AddLanguageButton
+          onClick={handleAddLanguage}
+          isEditing={isEditing}
+          languages={languages}
+          project={project}
+        />
       </div>
       <EditSaveButtons
         isEditing={isEditing}
