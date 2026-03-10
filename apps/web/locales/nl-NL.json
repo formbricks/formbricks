@@ -1119,9 +1119,7 @@
         "security_list_tip_link": "Meld je hier aan.",
         "share_invite_link": "Deel de uitnodigingslink",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Deel deze link om uw organisatielid lid te laten worden van uw organisatie:",
-        "test_email_sent_successfully": "Test-e-mail succesvol verzonden",
-        "use_multi_language_surveys_with_a_higher_plan": "Gebruik meertalige enquêtes met een hoger plan",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Onderzoek uw gebruikers in verschillende talen."
+        "test_email_sent_successfully": "Test-e-mail succesvol verzonden"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Automatisch abonneren op nieuwe enquêtes",
@@ -1688,8 +1686,6 @@
         "until_they_submit_a_response": "Vraag totdat ze een reactie indienen",
         "untitled_block": "Naamloos blok",
         "update_options": "Opties bijwerken",
-        "upgrade_notice_description": "Creëer meertalige enquêtes en ontgrendel nog veel meer functies",
-        "upgrade_notice_title": "Ontgrendel meertalige enquêtes met een hoger plan",
         "upload": "Uploaden",
         "upload_at_least_2_images": "Upload minimaal 2 afbeeldingen",
         "upper_label": "Bovenste etiket",
