@@ -1,5 +1,5 @@
 import { IntegrationType } from "@prisma/client";
-import { type CacheKey, getCacheService } from "@formbricks/cache";
+import { createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { env } from "@/lib/env";
@@ -7,8 +7,8 @@ import { getInstanceInfo } from "@/lib/instance";
 import packageJson from "@/package.json";
 
 const TELEMETRY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const TELEMETRY_LOCK_KEY = "telemetry_lock" as CacheKey;
-const TELEMETRY_LAST_SENT_KEY = "telemetry_last_sent_ts" as CacheKey;
+const TELEMETRY_LOCK_KEY = createCacheKey.custom("analytics", "telemetry_lock");
+const TELEMETRY_LAST_SENT_KEY = createCacheKey.custom("analytics", "telemetry_last_sent_ts");
 
 /**
  * In-memory timestamp for the next telemetry check.

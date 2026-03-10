@@ -1,54 +1,84 @@
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 
-// Function to calculate billing period start date based on organization plan and billing period
-export const getBillingPeriodStartDate = (billing: TOrganizationBilling): Date => {
-  const now = new Date();
-  if (billing.plan === "free") {
-    // For free plans, use the first day of the current calendar month
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  } else if (billing.period === "yearly" && billing.periodStart) {
-    // For yearly plans, use the same day of the month as the original subscription date
-    const periodStart = new Date(billing.periodStart);
-    // Use UTC to avoid timezone-offset shifting when parsing ISO date-only strings
-    const subscriptionDay = periodStart.getUTCDate();
+type TBillingInput = Pick<TOrganizationBilling, "usageCycleAnchor">;
 
-    // Helper function to get the last day of a specific month
-    const getLastDayOfMonth = (year: number, month: number): number => {
-      // Create a date for the first day of the next month, then subtract one day
-      return new Date(year, month + 1, 0).getDate();
-    };
+export type TUsageCycleWindow = {
+  start: Date;
+  end: Date;
+};
 
-    // Calculate the adjusted day for the current month
-    const lastDayOfCurrentMonth = getLastDayOfMonth(now.getFullYear(), now.getMonth());
-    const adjustedCurrentMonthDay = Math.min(subscriptionDay, lastDayOfCurrentMonth);
+const getUtcMonthDate = (
+  year: number,
+  monthIndex: number,
+  anchorDay: number,
+  hours: number,
+  minutes: number,
+  seconds: number,
+  milliseconds: number
+): Date => {
+  const lastDayOfMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  const clampedDay = Math.min(anchorDay, lastDayOfMonth);
 
-    // Calculate the current month's adjusted subscription date
-    const currentMonthSubscriptionDate = new Date(now.getFullYear(), now.getMonth(), adjustedCurrentMonthDay);
+  return new Date(Date.UTC(year, monthIndex, clampedDay, hours, minutes, seconds, milliseconds));
+};
 
-    // If today is before the subscription day in the current month (or its adjusted equivalent),
-    // we should use the previous month's subscription day as our start date
-    if (now.getDate() < adjustedCurrentMonthDay) {
-      // Calculate previous month and year
-      const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-      const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+const addUtcMonthsFromAnchor = (anchor: Date, monthOffset: number): Date => {
+  const anchorYear = anchor.getUTCFullYear();
+  const anchorMonth = anchor.getUTCMonth();
+  const anchorDay = anchor.getUTCDate();
+  const targetMonthIndex = anchorMonth + monthOffset;
+  const targetYear = anchorYear + Math.floor(targetMonthIndex / 12);
+  const normalizedMonthIndex = ((targetMonthIndex % 12) + 12) % 12;
 
-      // Calculate the adjusted day for the previous month
-      const lastDayOfPreviousMonth = getLastDayOfMonth(prevYear, prevMonth);
-      const adjustedPreviousMonthDay = Math.min(subscriptionDay, lastDayOfPreviousMonth);
+  return getUtcMonthDate(
+    targetYear,
+    normalizedMonthIndex,
+    anchorDay,
+    anchor.getUTCHours(),
+    anchor.getUTCMinutes(),
+    anchor.getUTCSeconds(),
+    anchor.getUTCMilliseconds()
+  );
+};
 
-      // Return the adjusted previous month date
-      return new Date(prevYear, prevMonth, adjustedPreviousMonthDay);
-    } else {
-      return currentMonthSubscriptionDate;
-    }
-  } else if (billing.period === "monthly" && billing.periodStart) {
-    // For monthly plans with a periodStart, use that date
-    return new Date(billing.periodStart);
-  } else {
-    // For other plans, use the periodStart from billing
-    if (!billing.periodStart) {
-      throw new Error("billing period start is not set");
-    }
-    return new Date(billing.periodStart);
+const getCalendarMonthWindow = (now: Date): TUsageCycleWindow => {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+  return { start, end };
+};
+
+export const getMonthlyUsageCycleWindow = (
+  usageCycleAnchor: Date | null,
+  now = new Date()
+): TUsageCycleWindow => {
+  if (!usageCycleAnchor) {
+    return getCalendarMonthWindow(now);
   }
+
+  const anchor = new Date(usageCycleAnchor);
+
+  let monthOffset =
+    (now.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + (now.getUTCMonth() - anchor.getUTCMonth());
+
+  let start = addUtcMonthsFromAnchor(anchor, monthOffset);
+
+  while (start > now) {
+    monthOffset -= 1;
+    start = addUtcMonthsFromAnchor(anchor, monthOffset);
+  }
+
+  let end = addUtcMonthsFromAnchor(anchor, monthOffset + 1);
+
+  while (end <= now) {
+    monthOffset += 1;
+    start = addUtcMonthsFromAnchor(anchor, monthOffset);
+    end = addUtcMonthsFromAnchor(anchor, monthOffset + 1);
+  }
+
+  return { start, end };
+};
+
+export const getBillingUsageCycleWindow = (billing: TBillingInput, now = new Date()): TUsageCycleWindow => {
+  return getMonthlyUsageCycleWindow(billing.usageCycleAnchor, now);
 };

@@ -27,7 +27,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
     throw new Error("Workspace not found");
   }
 
-  const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);
+  const canRemoveBranding = await getRemoveBrandingPermission(organization.id);
   const publicDomain = getPublicDomain();
 
   return (

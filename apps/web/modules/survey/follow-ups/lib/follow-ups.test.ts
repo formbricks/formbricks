@@ -74,13 +74,11 @@ describe("Follow-ups", () => {
   const mockOrganization = {
     id: "org1",
     billing: {
-      plan: "scale",
       limits: {
-        monthly: { miu: 1000, responses: 1000 },
+        monthly: { responses: 1000 },
         projects: 3,
       },
-      period: "monthly",
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       stripeCustomerId: "cus123",
     },
     whitelabel: {

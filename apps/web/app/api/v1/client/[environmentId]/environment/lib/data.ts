@@ -25,10 +25,6 @@ export interface EnvironmentStateData {
     appSetupCompleted: boolean;
     project: TJsEnvironmentStateProject;
   };
-  organization: {
-    id: string;
-    billing: any;
-  };
   surveys: TJsEnvironmentStateSurvey[];
   actionClasses: TJsEnvironmentStateActionClass[];
 }
@@ -59,13 +55,6 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             placement: true,
             inAppSurveyBranding: true,
             styling: true,
-            // Organization data (nested select for efficiency)
-            organization: {
-              select: {
-                id: true,
-                billing: true,
-              },
-            },
           },
         },
         // Action classes (optimized for environment state)
@@ -157,10 +146,6 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
       throw new ResourceNotFoundError("project", null);
     }
 
-    if (!environmentData.project.organization) {
-      throw new ResourceNotFoundError("organization", null);
-    }
-
     // Transform surveys using existing utility
     const transformedSurveys = environmentData.surveys.map((survey) =>
       transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey)
@@ -180,10 +165,6 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
           inAppSurveyBranding: environmentData.project.inAppSurveyBranding,
           styling: resolveStorageUrlsInObject(environmentData.project.styling),
         },
-      },
-      organization: {
-        id: environmentData.project.organization.id,
-        billing: environmentData.project.organization.billing,
       },
       surveys: resolveStorageUrlsInObject(transformedSurveys),
       actionClasses: environmentData.actionClasses as TJsEnvironmentStateActionClass[],

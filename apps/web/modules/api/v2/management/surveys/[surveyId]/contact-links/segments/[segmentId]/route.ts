@@ -1,4 +1,5 @@
 import { logger } from "@formbricks/logger";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -35,7 +36,8 @@ export const GET = async (
         });
       }
 
-      const isContactsEnabled = await getIsContactsEnabled();
+      const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
         return handleApiError(request, {
           type: "forbidden",

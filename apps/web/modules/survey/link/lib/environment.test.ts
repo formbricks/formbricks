@@ -33,25 +33,19 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         styling: { primaryColor: "#000000" },
         logo: { url: "https://example.com/logo.png" },
         linkSurveyBranding: true,
+        customHeadScripts: null,
         organizationId: "clh1a2b3c4d5e6f7g8h9k",
         organization: {
           id: "clh1a2b3c4d5e6f7g8h9k",
           billing: {
-            plan: "free",
+            stripeCustomerId: null,
             limits: {
               monthly: {
                 responses: 100,
-                miu: 1000,
               },
+              projects: 3,
             },
-            features: {
-              inAppSurvey: {
-                status: "active",
-              },
-              linkSurvey: {
-                status: "active",
-              },
-            },
+            usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
           },
           whitelabel: null,
         },
@@ -69,6 +63,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         styling: { primaryColor: "#000000" },
         logo: { url: "https://example.com/logo.png" },
         linkSurveyBranding: true,
+        customHeadScripts: null,
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9k",
       organizationBilling: mockData.project.organization.billing,
@@ -90,7 +85,14 @@ describe("getEnvironmentContextForLinkSurvey", () => {
             organization: {
               select: {
                 id: true,
-                billing: true,
+                billing: {
+                  select: {
+                    stripeCustomerId: true,
+                    limits: true,
+                    usageCycleAnchor: true,
+                    stripe: true,
+                  },
+                },
                 whitelabel: true,
               },
             },
@@ -182,25 +184,19 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         styling: null,
         logo: null,
         linkSurveyBranding: false,
+        customHeadScripts: null,
         organizationId: "clh1a2b3c4d5e6f7g8h9u",
         organization: {
           id: "clh1a2b3c4d5e6f7g8h9u",
           billing: {
-            plan: "free",
+            stripeCustomerId: null,
             limits: {
               monthly: {
                 responses: 100,
-                miu: 1000,
               },
+              projects: 3,
             },
-            features: {
-              inAppSurvey: {
-                status: "inactive",
-              },
-              linkSurvey: {
-                status: "inactive",
-              },
-            },
+            usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
           },
           whitelabel: null,
         },
@@ -218,6 +214,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         styling: null,
         logo: null,
         linkSurveyBranding: false,
+        customHeadScripts: null,
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9u",
       organizationBilling: mockData.project.organization.billing,

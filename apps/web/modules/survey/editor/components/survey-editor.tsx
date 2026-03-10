@@ -187,7 +187,6 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!project.styling.allowStyleOverwrite}
-            isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
           {activeView === "elements" && (
@@ -256,6 +255,7 @@ export const SurveyEditor = ({
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+              isFormbricksCloud={isFormbricksCloud}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}

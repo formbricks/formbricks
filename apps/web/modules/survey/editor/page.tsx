@@ -71,14 +71,19 @@ export const SurveyEditorPage = async (props) => {
     getUserEmail(session.user.id),
   ]);
 
-  const isUserTargetingAllowed = await getIsContactsEnabled();
-  const [isSurveyFollowUpsAllowed, isSpamProtectionAllowed, isQuotasAllowed, isExternalUrlsAllowed] =
-    await Promise.all([
-      getSurveyFollowUpsPermission(organizationBilling.plan),
-      getIsSpamProtectionEnabled(organizationBilling.plan),
-      getIsQuotasEnabled(organizationBilling.plan),
-      getExternalUrlsPermission(organizationBilling.plan),
-    ]);
+  const [
+    isSurveyFollowUpsAllowed,
+    isSpamProtectionAllowed,
+    isQuotasAllowed,
+    isExternalUrlsAllowed,
+    isUserTargetingAllowed,
+  ] = await Promise.all([
+    getSurveyFollowUpsPermission(projectWithTeamIds.organizationId),
+    getIsSpamProtectionEnabled(projectWithTeamIds.organizationId),
+    getIsQuotasEnabled(projectWithTeamIds.organizationId),
+    getExternalUrlsPermission(projectWithTeamIds.organizationId),
+    getIsContactsEnabled(projectWithTeamIds.organizationId),
+  ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
   const [projectLanguages, teamMemberDetails] = await Promise.all([

@@ -16,7 +16,7 @@ export const POST = async (request: NextRequest) =>
 
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return handleApiError(
           request,

@@ -18,6 +18,7 @@ import { convertDatesInObject } from "@/lib/time";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
@@ -290,6 +291,14 @@ export const POST = async (request: Request) => {
     });
   }
   if (event === "responseCreated") {
+    recordResponseCreatedMeterEvent({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      responseId: response.id,
+      createdAt: response.createdAt,
+    }).catch((error) => {
+      logger.error({ error, responseId: response.id }, "Failed to record response meter event");
+    });
+
     // Send telemetry events
     await sendTelemetryEvents();
   }

@@ -34,7 +34,7 @@ export const SingleContactPage = async (props: {
     throw new Error(t("environments.contacts.contact_not_found"));
   }
 
-  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
   // Derive contact identifier from metadata array
   const getAttributeValue = (key: string): string | undefined => {

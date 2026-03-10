@@ -1,17 +1,15 @@
-import { Organization } from "@prisma/client";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 
 export const organizationId = "zo6u7apbattt8dquvzbgjjwb";
 export const environmentId = "oh5cq6yu418itha55vsuj47e";
 
-export const organizationBilling: Organization["billing"] = {
+export const organizationBilling: TOrganizationBilling = {
   stripeCustomerId: "cus_P78901234567890123456789",
-  plan: "scale",
-  period: "monthly",
   limits: {
-    monthly: { responses: 100, miu: 1000 },
+    monthly: { responses: 100 },
     projects: 1,
   },
-  periodStart: new Date(),
+  usageCycleAnchor: new Date(),
 };
 
 export const organizationEnvironments = {

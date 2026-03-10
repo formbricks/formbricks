@@ -12,7 +12,7 @@ import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contac
 export const GET = withV1ApiWrapper({
   handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
     try {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(
@@ -52,7 +52,7 @@ export const POST = withV1ApiWrapper({
     authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
     try {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(
