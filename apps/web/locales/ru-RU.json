@@ -194,7 +194,6 @@
     "days": "дни",
     "default": "По умолчанию",
     "delete": "Удалить",
-    "delete_file": "Удалить {filename}",
     "delete_what": "Удалить {deleteWhat}",
     "description": "Описание",
     "dev_env": "Dev Environment",

@@ -194,7 +194,6 @@
     "days": "zile",
     "default": "Implicit",
     "delete": "Șterge",
-    "delete_file": "Ștergeți {filename}",
     "delete_what": "Șterge {deleteWhat}",
     "description": "Descriere",
     "dev_env": "Mediu de dezvoltare",

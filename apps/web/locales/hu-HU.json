@@ -194,7 +194,6 @@
     "days": "nap",
     "default": "Alapértelmezett",
     "delete": "Törlés",
-    "delete_file": "{filename} törlése",
     "delete_what": "{deleteWhat} törlése",
     "description": "Leírás",
     "dev_env": "Fejlesztői környezet",

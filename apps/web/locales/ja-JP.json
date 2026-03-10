@@ -194,7 +194,6 @@
     "days": "日",
     "default": "デフォルト",
     "delete": "削除",
-    "delete_file": "{filename}を削除",
     "delete_what": "{deleteWhat}を削除",
     "description": "説明",
     "dev_env": "開発環境",

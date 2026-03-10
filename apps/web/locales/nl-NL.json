@@ -194,7 +194,6 @@
     "days": "dagen",
     "default": "Standaard",
     "delete": "Verwijderen",
-    "delete_file": "Verwijder {filename}",
     "delete_what": "Verwijder {deleteWhat}",
     "description": "Beschrijving",
     "dev_env": "Ontwikkelomgeving",

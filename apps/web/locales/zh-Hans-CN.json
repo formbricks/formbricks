@@ -194,7 +194,6 @@
     "days": "天",
     "default": "默认",
     "delete": "删除",
-    "delete_file": "删除 {filename}",
     "delete_what": "删除{deleteWhat}",
     "description": "描述",
     "dev_env": "开发 环境",

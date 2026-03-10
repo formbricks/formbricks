@@ -167,7 +167,6 @@ checksums:
     common/days: c95fe8aedde21a0b5653dbd0b3c58b48
     common/default: d9c6dc5c412fe94143dfd1d332ec81d4
     common/delete: 8bcf303dd10a645b5baacb02b47d72c9
-    common/delete_file: e7fcc64bf4cc033f1051ec8536912c32
     common/delete_what: 718ddfcc1dec7f3e8b67856fba838267
     common/description: e17686a22ffad04cc7bb70524ed4478b
     common/dev_env: e650911d5e19ba256358e0cda154c005

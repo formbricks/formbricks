@@ -194,7 +194,6 @@
     "days": "dias",
     "default": "Padrão",
     "delete": "Eliminar",
-    "delete_file": "Eliminar {filename}",
     "delete_what": "Eliminar {deleteWhat}",
     "description": "Descrição",
     "dev_env": "Ambiente de Desenvolvimento",

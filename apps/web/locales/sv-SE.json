@@ -194,7 +194,6 @@
     "days": "dagar",
     "default": "Standard",
     "delete": "Ta bort",
-    "delete_file": "Ta bort {filename}",
     "delete_what": "Ta bort {deleteWhat}",
     "description": "Beskrivning",
     "dev_env": "Utvecklingsmiljö",
