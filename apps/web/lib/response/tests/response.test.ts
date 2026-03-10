@@ -378,7 +378,7 @@ describe("Tests for deleteResponse service", () => {
         delete: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    (prisma.$transaction as unknown as ReturnType<typeof vi.fn>) = vi.fn(async (cb: any) => cb(mockTx));
   });
 
   describe("Happy Path", () => {

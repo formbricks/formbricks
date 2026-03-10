@@ -51,7 +51,7 @@ export const cache = new Proxy({} as AsyncCacheService, {
       if (!cacheServiceResult.ok) {
         return { ok: false, error: cacheServiceResult.error };
       }
-      const method = cacheServiceResult.data[prop];
+      const method = cacheServiceResult.data[prop] as (...args: unknown[]) => unknown;
 
       return await method.apply(cacheServiceResult.data, args);
     };

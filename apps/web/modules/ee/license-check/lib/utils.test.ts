@@ -58,6 +58,7 @@ const defaultLicense = {
   lastChecked: new Date(),
   isPendingDowngrade: false,
   fallbackLevel: "live" as const,
+  status: "active" as const,
 };
 
 describe("License Utils", () => {

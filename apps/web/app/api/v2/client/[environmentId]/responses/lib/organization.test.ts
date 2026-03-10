@@ -31,7 +31,9 @@ describe("getOrganizationBillingByEnvironmentId", () => {
   };
 
   test("returns billing when organization is found", async () => {
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: mockBillingData });
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: mockBillingData } as Awaited<
+      ReturnType<typeof prisma.organization.findFirst>
+    >);
     const result = await getOrganizationBillingByEnvironmentId(environmentId);
     expect(result).toEqual(mockBillingData);
     expect(prisma.organization.findFirst).toHaveBeenCalledWith({

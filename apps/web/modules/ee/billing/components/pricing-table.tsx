@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
+import { STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
@@ -20,8 +21,8 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   stripePriceLookupKeys: {
-    STARTUP_MAY25_MONTHLY: string;
-    STARTUP_MAY25_YEARLY: string;
+    STARTUP_MAY25_MONTHLY: STRIPE_PRICE_LOOKUP_KEYS;
+    STARTUP_MAY25_YEARLY: STRIPE_PRICE_LOOKUP_KEYS;
   };
   projectFeatureKeys: {
     FREE: string;
@@ -74,7 +75,7 @@ export const PricingTable = ({
     }
   };
 
-  const upgradePlan = async (priceLookupKey) => {
+  const upgradePlan = async (priceLookupKey: STRIPE_PRICE_LOOKUP_KEYS) => {
     try {
       const upgradePlanResponse = await upgradePlanAction({
         environmentId,

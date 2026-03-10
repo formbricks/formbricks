@@ -26,7 +26,10 @@ export const createTeam = async (
 
     return ok(team);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "team", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "team", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
+    });
   }
 };
 
@@ -55,6 +58,9 @@ export const getTeams = async (
       },
     });
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "teams", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "teams", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
+    });
   }
 };

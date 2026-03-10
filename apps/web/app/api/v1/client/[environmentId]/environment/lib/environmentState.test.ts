@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState, TJsEnvironmentStateProject } from "@formbricks/types/js";

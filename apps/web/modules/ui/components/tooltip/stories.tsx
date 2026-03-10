@@ -197,7 +197,7 @@ export const LongContent: Story = {
   },
 };
 
-export const CustomStyling: StoryObj = {
+export const CustomStyling: Story = {
   render: renderTooltip,
   args: {
     tooltipText: "This tooltip has custom styling",

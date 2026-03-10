@@ -73,7 +73,7 @@ The **TabNav** component provides a navigation interface with tabs. It displays 
 
 export default meta;
 
-type Story = StoryObj<typeof TabNav> & { args: StoryOptions };
+type Story = StoryObj<StoryProps>;
 
 // Create a render function to handle dynamic tab generation
 const renderTabNav = (args: StoryProps) => {

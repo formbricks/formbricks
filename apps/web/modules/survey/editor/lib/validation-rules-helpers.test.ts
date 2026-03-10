@@ -107,7 +107,7 @@ describe("getDefaultRuleValue", () => {
         { id: "opt2", label: { default: "Option 2" } },
         { id: "other", label: { default: "Other" } },
       ],
-    } as TSurveyMultipleChoiceElement;
+    } as unknown as TSurveyMultipleChoiceElement;
 
     const config = RULE_TYPE_CONFIG.equals;
     const value = getDefaultRuleValue(config, element);
@@ -124,7 +124,7 @@ describe("getDefaultRuleValue", () => {
         { id: "none", label: { default: "None" } },
         { id: "opt1", label: { default: "Option 1" } },
       ],
-    } as TSurveyMultipleChoiceElement;
+    } as unknown as TSurveyMultipleChoiceElement;
 
     const config = RULE_TYPE_CONFIG.equals;
     const value = getDefaultRuleValue(config, element);
@@ -140,7 +140,7 @@ describe("getDefaultRuleValue", () => {
         { id: "other", label: { default: "Other" } },
         { id: "none", label: { default: "None" } },
       ],
-    } as TSurveyMultipleChoiceElement;
+    } as unknown as TSurveyMultipleChoiceElement;
 
     const config = RULE_TYPE_CONFIG.equals;
     const value = getDefaultRuleValue(config, element);
@@ -161,7 +161,7 @@ describe("getDefaultRuleValue", () => {
         { id: "opt1", label: { default: "Option 1" } },
         { id: "opt2", label: { default: "Option 2" } },
       ],
-    } as TSurveyRankingElement;
+    } as unknown as TSurveyRankingElement;
 
     const config = RULE_TYPE_CONFIG.minRanked;
     const value = getDefaultRuleValue(config, element);

@@ -85,7 +85,7 @@ export const isValidFileTypeForExtension = (fileName: string, mimeType: string):
   const mimeTypeLower = mimeType.toLowerCase();
 
   // Check if the MIME type matches the expected type for this extension
-  return mimeTypes[extension] === mimeTypeLower;
+  return (mimeTypes as Record<string, string>)[extension] === mimeTypeLower;
 };
 
 export const validateSingleFile = (

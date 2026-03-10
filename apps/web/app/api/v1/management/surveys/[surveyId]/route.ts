@@ -12,7 +12,7 @@ import {
   validateSurveyInput,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -40,8 +40,12 @@ export const GET = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ surveyId: string }> };
-    authentication: NonNullable<TApiKeyAuthentication>;
+    authentication?: TApiV1Authentication;
   }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
 
     try {
@@ -87,11 +91,15 @@ export const DELETE = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ surveyId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
+    auditLog?: TApiAuditLog;
+    authentication?: TApiV1Authentication;
   }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.surveyId;
+    auditLog!.targetId = params.surveyId;
     try {
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
       if (result.error) {
@@ -99,7 +107,7 @@ export const DELETE = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.survey;
+      auditLog!.oldObject = result.survey;
 
       const deletedSurvey = await deleteSurvey(params.surveyId);
       return {
@@ -124,11 +132,15 @@ export const PUT = withV1ApiWrapper({
   }: {
     req: NextRequest;
     props: { params: Promise<{ surveyId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
+    auditLog?: TApiAuditLog;
+    authentication?: TApiV1Authentication;
   }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.surveyId;
+    auditLog!.targetId = params.surveyId;
     try {
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "PUT");
       if (result.error) {
@@ -136,7 +148,7 @@ export const PUT = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.survey;
+      auditLog!.oldObject = result.survey;
 
       const organization = await getOrganizationByEnvironmentId(result.survey.environmentId);
       if (!organization) {
@@ -195,7 +207,7 @@ export const PUT = withV1ApiWrapper({
 
       try {
         const updatedSurvey = await updateSurvey({ ...inputValidation.data, id: params.surveyId });
-        auditLog.newObject = updatedSurvey;
+        auditLog!.newObject = updatedSurvey;
 
         if (hasQuestions) {
           const surveyWithQuestions = {

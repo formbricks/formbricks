@@ -15,7 +15,7 @@ import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 // use this to get a signed url for uploading a public file for a specific resource, e.g. a survey's background image
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiV1Authentication }) => {
+  handler: async ({ req, authentication }: { req: NextRequest; authentication?: TApiV1Authentication }) => {
     let storageInput: TUploadPublicFileRequest;
 
     try {

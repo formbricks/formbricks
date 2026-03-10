@@ -56,6 +56,7 @@ describe("getMetadataForLinkSurvey", () => {
         styling: null,
         logo: null,
         linkSurveyBranding: true,
+        customHeadScripts: null,
       },
       organizationId: "org-123",
       organizationBilling: {

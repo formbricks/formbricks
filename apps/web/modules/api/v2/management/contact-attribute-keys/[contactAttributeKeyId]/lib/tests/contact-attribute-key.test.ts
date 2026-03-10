@@ -33,12 +33,12 @@ const mockContactAttributeKey: ContactAttributeKey = {
   environmentId: "env123",
   isUnique: true,
   type: "default",
+  dataType: "string",
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
 const mockUpdateInput: TContactAttributeKeyUpdateSchema = {
-  key: "email",
   name: "Email Address",
   description: "User's verified email address",
 };
@@ -97,8 +97,26 @@ describe("updateContactAttributeKey", () => {
     vi.mocked(prisma.contactAttributeKey.update).mockResolvedValueOnce(updatedKey);
 
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
-      { id: "contact1", contactId: "contact1" },
-      { id: "contact2", contactId: "contact2" },
+      {
+        id: "contact1",
+        contactId: "contact1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        value: "test",
+        attributeKeyId: "cak123",
+        valueNumber: null,
+        valueDate: null,
+      },
+      {
+        id: "contact2",
+        contactId: "contact2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        value: "test",
+        attributeKeyId: "cak123",
+        valueNumber: null,
+        valueDate: null,
+      },
     ]);
 
     const result = await updateContactAttributeKey("cak123", mockUpdateInput);
@@ -156,8 +174,26 @@ describe("deleteContactAttributeKey", () => {
   test("returns ok on successful delete", async () => {
     vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValueOnce(mockContactAttributeKey);
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
-      { id: "contact1", contactId: "contact1" },
-      { id: "contact2", contactId: "contact2" },
+      {
+        id: "contact1",
+        contactId: "contact1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        value: "test",
+        attributeKeyId: "cak123",
+        valueNumber: null,
+        valueDate: null,
+      },
+      {
+        id: "contact2",
+        contactId: "contact2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        value: "test",
+        attributeKeyId: "cak123",
+        valueNumber: null,
+        valueDate: null,
+      },
     ]);
     const result = await deleteContactAttributeKey("cak123");
     expect(result.ok).toBe(true);

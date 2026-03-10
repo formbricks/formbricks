@@ -4,13 +4,17 @@ import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classe
 import { DatabaseError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getActionClasses } from "./lib/action-classes";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
+  handler: async ({ authentication }: { authentication?: TApiV1Authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
@@ -39,9 +43,13 @@ export const POST = withV1ApiWrapper({
     authentication,
   }: {
     req: NextRequest;
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
+    auditLog?: TApiAuditLog;
+    authentication?: TApiV1Authentication;
   }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       let actionClassInput;
       try {
@@ -73,8 +81,8 @@ export const POST = withV1ApiWrapper({
       }
 
       const actionClass: TActionClass = await createActionClass(environmentId, inputValidation.data);
-      auditLog.targetId = actionClass.id;
-      auditLog.newObject = actionClass;
+      auditLog!.targetId = actionClass.id;
+      auditLog!.newObject = actionClass;
       return {
         response: responses.successResponse(actionClass),
       };

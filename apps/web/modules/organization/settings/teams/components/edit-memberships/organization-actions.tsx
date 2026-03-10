@@ -83,7 +83,7 @@ export const OrganizationActions = ({
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
       setLoading(false);
     }
   };

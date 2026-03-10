@@ -48,7 +48,7 @@ export const checkSurveyValidity = async (
       return responses.badRequestResponse("Invalid URL in response metadata", {
         surveyId: survey.id,
         environmentId,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       });
     }
     const suId = url.searchParams.get("suId");

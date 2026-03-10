@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { doesContactExist } from "./contact";
 
@@ -16,7 +16,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn) => fn), // Mock react's cache to just return the function
+    cache: vi.fn((fn: Function) => fn), // Mock react's cache to just return the function
   };
 });
 
@@ -28,7 +28,12 @@ describe("doesContactExist", () => {
   });
 
   test("should return true if contact exists", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue({ id: contactId });
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue({
+      id: contactId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      environmentId: "test-env",
+    });
 
     const result = await doesContactExist(contactId);
 

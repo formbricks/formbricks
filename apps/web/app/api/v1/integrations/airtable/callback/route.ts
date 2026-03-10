@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import * as z from "zod";
 import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
-import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
@@ -21,13 +21,11 @@ const getEmail = async (token: string) => {
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TSessionAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }: { req: NextRequest; authentication?: TApiV1Authentication }) => {
+    if (!authentication || !("user" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
     const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -97,7 +95,9 @@ export const GET = withV1ApiWrapper({
     } catch (error) {
       logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
       return {
-        response: responses.internalServerErrorResponse(error),
+        response: responses.internalServerErrorResponse(
+          error instanceof Error ? error.message : String(error)
+        ),
       };
     }
   },

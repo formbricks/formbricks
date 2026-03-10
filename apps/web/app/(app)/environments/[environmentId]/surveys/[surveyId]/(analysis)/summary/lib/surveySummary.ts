@@ -319,8 +319,8 @@ const checkForI18n = (
 
   // Return the localized value of the choice fo multiSelect single element
   if (element && "choices" in element) {
-    const choice = element.choices?.find(
-      (choice: TSurveyElementChoice) => choice.label?.[languageCode] === responseData[id]
+    const choice = (element.choices as TSurveyElementChoice[])?.find(
+      (choice) => choice.label?.[languageCode] === responseData[id]
     );
     return choice && "label" in choice
       ? getLocalizedValue(choice.label, "default") || responseData[id]
@@ -832,13 +832,19 @@ export const getElementSummary = async (
         let totalResponseCount = 0;
 
         // Initialize count object
-        const countMap: Record<string, string> = rows.reduce((acc, row) => {
-          acc[row] = columns.reduce((colAcc, col) => {
-            colAcc[col] = 0;
-            return colAcc;
-          }, {});
-          return acc;
-        }, {});
+        const countMap: Record<string, Record<string, number>> = rows.reduce(
+          (acc: Record<string, Record<string, number>>, row) => {
+            acc[row] = columns.reduce(
+              (colAcc: Record<string, number>, col) => {
+                colAcc[col] = 0;
+                return colAcc;
+              },
+              {} as Record<string, number>
+            );
+            return acc;
+          },
+          {} as Record<string, Record<string, number>>
+        );
 
         responses.forEach((response) => {
           const selectedResponses = response.data[element.id] as Record<string, string>;

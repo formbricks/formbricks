@@ -82,7 +82,7 @@ export const METADATA_FIELDS = ["action", "country", ...userAgentFields, "source
 
 export const getMetadataValue = (meta: TResponseMeta, label: string) => {
   if (userAgentFields.includes(label)) {
-    return meta.userAgent?.[label];
+    return (meta.userAgent as Record<string, string> | undefined)?.[label];
   }
-  return meta[label];
+  return (meta as Record<string, string | undefined>)[label];
 };

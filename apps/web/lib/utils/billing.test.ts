@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { getBillingPeriodStartDate } from "./billing";
 
 describe("getBillingPeriodStartDate", () => {
@@ -27,7 +28,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // For free plans, should return first day of current month
     expect(result).toEqual(new Date(2023, 2, 1));
@@ -45,7 +46,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // For monthly plans, should return periodStart directly
     expect(result).toEqual(new Date("2023-02-10"));
@@ -63,7 +64,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // Should return March 15, 2023 (same day in current month)
     expect(result).toEqual(new Date(2023, 2, 15));
@@ -81,7 +82,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // Should return February 15, 2023 (same day in previous month)
     expect(result).toEqual(new Date(2023, 1, 15));
@@ -99,7 +100,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // Should return January 31, 2023 (previous month's subscription day)
     // since today (Feb 15) is less than the subscription day (31st)
@@ -118,7 +119,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // Should return February 28, 2023 (last day of February)
     // since February 2023 doesn't have a 30th day
@@ -137,7 +138,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // Should return February 29, 2024 (last day of February in leap year)
     expect(result).toEqual(new Date(2024, 1, 29));
@@ -154,7 +155,7 @@ describe("getBillingPeriodStartDate", () => {
       },
     };
 
-    const result = getBillingPeriodStartDate(organization.billing);
+    const result = getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
 
     // Should return March 31, 2023 (since today is before April's adjusted subscription day)
     expect(result).toEqual(new Date(2023, 2, 31));
@@ -170,7 +171,7 @@ describe("getBillingPeriodStartDate", () => {
     };
 
     expect(() => {
-      getBillingPeriodStartDate(organization.billing);
+      getBillingPeriodStartDate(organization.billing as unknown as TOrganizationBilling);
     }).toThrow("billing period start is not set");
   });
 });

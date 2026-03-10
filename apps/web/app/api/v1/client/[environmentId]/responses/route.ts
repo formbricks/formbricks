@@ -66,7 +66,7 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.badRequestResponse(
           "Invalid JSON in request body",
-          { error: error.message },
+          { error: error instanceof Error ? error.message : "Unknown error occurred" },
           true
         ),
       };
@@ -183,7 +183,9 @@ export const POST = withV1ApiWrapper({
       } else {
         logger.error({ error, url: req.url }, "Error creating response");
         return {
-          response: responses.internalServerErrorResponse(error.message),
+          response: responses.internalServerErrorResponse(
+            error instanceof Error ? error.message : "Unknown error occurred"
+          ),
         };
       }
     }

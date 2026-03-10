@@ -9,7 +9,10 @@ import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
-const ConfigLayout = async (props) => {
+const ConfigLayout = async (props: {
+  params: Promise<{ environmentId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;

@@ -4,7 +4,7 @@ import { ZResponseUpdateInput } from "@formbricks/types/responses";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -15,10 +15,10 @@ import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 async function fetchAndAuthorizeResponse(
   responseId: string,
-  authentication: TApiKeyAuthentication,
+  authentication: TApiV1Authentication | undefined,
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
-  if (!authentication) {
+  if (!authentication || !("apiKeyId" in authentication)) {
     return { error: responses.notAuthenticatedResponse() };
   }
 
@@ -45,7 +45,7 @@ export const GET = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ responseId: string }> };
-    authentication: TApiKeyAuthentication;
+    authentication?: TApiV1Authentication;
   }) => {
     const params = await props.params;
     try {
@@ -77,11 +77,11 @@ export const DELETE = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ responseId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    auditLog?: TApiAuditLog;
+    authentication?: TApiV1Authentication;
   }) => {
     const params = await props.params;
-    auditLog.targetId = params.responseId;
+    auditLog!.targetId = params.responseId;
     try {
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "DELETE");
       if (result.error) {
@@ -89,7 +89,7 @@ export const DELETE = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.response;
+      auditLog!.oldObject = result.response;
 
       const deletedResponse = await deleteResponse(params.responseId);
       return {
@@ -114,11 +114,11 @@ export const PUT = withV1ApiWrapper({
   }: {
     req: NextRequest;
     props: { params: Promise<{ responseId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    auditLog?: TApiAuditLog;
+    authentication?: TApiV1Authentication;
   }) => {
     const params = await props.params;
-    auditLog.targetId = params.responseId;
+    auditLog!.targetId = params.responseId;
     try {
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "PUT");
       if (result.error) {
@@ -126,7 +126,7 @@ export const PUT = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.response;
+      auditLog!.oldObject = result.response;
 
       let responseUpdate;
       try {
@@ -173,7 +173,7 @@ export const PUT = withV1ApiWrapper({
       }
 
       const updated = await updateResponseWithQuotaEvaluation(params.responseId, inputValidation.data);
-      auditLog.newObject = updated;
+      auditLog!.newObject = updated;
 
       sendToPipeline({
         event: "responseUpdated",

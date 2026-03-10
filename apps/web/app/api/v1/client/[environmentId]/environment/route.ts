@@ -102,7 +102,10 @@ export const GET = withV1ApiWrapper({
         "Error in GET /api/v1/client/[environmentId]/environment"
       );
       return {
-        response: responses.internalServerErrorResponse(err.message, true),
+        response: responses.internalServerErrorResponse(
+          err instanceof Error ? err.message : "Unknown error occurred",
+          true
+        ),
       };
     }
   },

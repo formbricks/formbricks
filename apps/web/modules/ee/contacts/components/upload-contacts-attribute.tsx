@@ -36,7 +36,7 @@ export const UploadContactsAttributes = ({
 
   // Create a mapping of attribute IDs to their names/keys
   const attributeKeyMap: Record<string, string> = useMemo(() => {
-    return keys.reduce((acc, tag) => {
+    return keys.reduce<Record<string, string>>((acc, tag) => {
       acc[tag.value] = tag.label;
       return acc;
     }, {});

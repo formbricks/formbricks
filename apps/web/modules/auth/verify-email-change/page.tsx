@@ -2,7 +2,11 @@ import { BackToLoginButton } from "@/modules/auth/components/back-to-login-butto
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { EmailChangeSignIn } from "@/modules/auth/verify-email-change/components/email-change-sign-in";
 
-export const VerifyEmailChangePage = async ({ searchParams }) => {
+export const VerifyEmailChangePage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ token: string }>;
+}) => {
   const { token } = await searchParams;
 
   return (

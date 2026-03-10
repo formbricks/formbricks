@@ -211,19 +211,27 @@ export const getImagesFromUnsplashAction = actionClient
     }
 
     const { results } = await response.json();
-    return results.map((result) => {
-      const authorName = encodeURIComponent(result.user.first_name + " " + result.user.last_name);
-      const authorLink = encodeURIComponent(result.user.links.html);
+    return results.map(
+      (result: {
+        id: string;
+        alt_description: string;
+        user: { first_name: string; last_name: string; links: { html: string } };
+        urls: { regular: string };
+        links: { download_location: string };
+      }) => {
+        const authorName = encodeURIComponent(result.user.first_name + " " + result.user.last_name);
+        const authorLink = encodeURIComponent(result.user.links.html);
 
-      return {
-        id: result.id,
-        alt_description: result.alt_description,
-        urls: {
-          regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
-          download: result.links.download_location,
-        },
-      };
-    });
+        return {
+          id: result.id,
+          alt_description: result.alt_description,
+          urls: {
+            regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
+            download: result.links.download_location,
+          },
+        };
+      }
+    );
   });
 
 const isValidUnsplashUrl = (url: string): boolean => {

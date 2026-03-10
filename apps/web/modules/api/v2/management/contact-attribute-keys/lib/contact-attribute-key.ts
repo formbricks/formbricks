@@ -29,7 +29,12 @@ export const getContactAttributeKeys = reactCache(
     } catch (error) {
       return err({
         type: "internal_server_error",
-        details: [{ field: "contactAttributeKeys", issue: error.message }],
+        details: [
+          {
+            field: "contactAttributeKeys",
+            issue: error instanceof Error ? error.message : "Unknown error occurred",
+          },
+        ],
       });
     }
   }
@@ -83,7 +88,12 @@ export const createContactAttributeKey = async (
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "contactAttributeKey", issue: error.message }],
+      details: [
+        {
+          field: "contactAttributeKey",
+          issue: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+      ],
     });
   }
 };

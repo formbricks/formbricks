@@ -37,7 +37,7 @@ vi.mock("./utils", async () => {
   return {
     ...(actualUtils as object),
     redactPII: vi.fn((obj) => obj), // Keep others as simple mocks or actuals if needed
-    deepDiff: vi.fn((a, b) => ({ diff: true })),
+    deepDiff: vi.fn((_a: unknown, _b: unknown) => ({ diff: true })),
   };
 });
 

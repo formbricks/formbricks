@@ -12,17 +12,17 @@ export const convertPrismaContactAttributes = (
     select: { value: true; attributeKey: { select: { key: true; name: true } } };
   }>[]
 ): TContactAttributes => {
-  return prismaAttributes.reduce((acc, attr) => {
+  return prismaAttributes.reduce<Record<string, { name: string | null; value: string }>>((acc, attr) => {
     acc[attr.attributeKey.key] = {
       name: attr.attributeKey.name,
       value: attr.value,
     };
     return acc;
-  }, {});
+  }, {}) as unknown as TContactAttributes;
 };
 
 export const transformPrismaContact = (person: TTransformPersonInput): TContactWithAttributes => {
-  const attributes = person.attributes.reduce((acc, attr) => {
+  const attributes = person.attributes.reduce<Record<string, string>>((acc, attr) => {
     acc[attr.attributeKey.key] = readAttributeValue(attr, attr.attributeKey.dataType);
     return acc;
   }, {});

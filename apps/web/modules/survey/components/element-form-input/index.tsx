@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import {
@@ -11,7 +11,12 @@ import {
   TSurveyElementChoice,
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
@@ -43,7 +48,9 @@ interface ElementFormInputProps {
   localSurvey: TSurvey;
   elementIdx: number;
   updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
-  updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
+  updateSurvey?: (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   isInvalid: boolean;
@@ -59,7 +66,7 @@ interface ElementFormInputProps {
   isStorageConfigured: boolean;
   autoFocus?: boolean;
   firstRender?: boolean;
-  setFirstRender?: (value: boolean) => void;
+  setFirstRender?: Dispatch<SetStateAction<boolean>>;
   isExternalUrlsAllowed?: boolean;
 }
 
@@ -235,7 +242,7 @@ export const ElementFormInput = ({
           const [parent, child] = id.split(".");
           updateElement(elementIdx, {
             [parent]: {
-              ...currentElement[parent],
+              ...((currentElement as Record<string, unknown>)[parent] as Record<string, unknown>),
               [child]: translatedText,
             },
           });

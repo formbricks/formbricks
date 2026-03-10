@@ -114,7 +114,7 @@ export const ElementsView = ({
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const internalElementIdMap = useMemo(() => {
-    return elements.reduce((acc, element) => {
+    return elements.reduce<Record<string, string>>((acc, element) => {
       acc[element.id] = createId();
       return acc;
     }, {});

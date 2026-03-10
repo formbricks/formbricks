@@ -1,20 +1,18 @@
 import crypto from "crypto";
 import { NextRequest } from "next/server";
 import { responses } from "@/app/lib/api/response";
-import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TSessionAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }: { req: NextRequest; authentication?: TApiV1Authentication }) => {
+    if (!authentication || !("user" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const environmentId = req.headers.get("environmentId");
 
     if (!environmentId) {

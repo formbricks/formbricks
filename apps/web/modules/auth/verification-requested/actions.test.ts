@@ -30,7 +30,7 @@ vi.mock("@/modules/email", () => ({
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((type, object, fn) => fn),
+  withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({

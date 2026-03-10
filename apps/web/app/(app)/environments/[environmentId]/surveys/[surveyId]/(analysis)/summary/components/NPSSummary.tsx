@@ -60,7 +60,9 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
       },
     };
 
-    const filter = filters[group];
+    const filter = (filters as Record<string, { comparison: string; values: string | string[] | undefined }>)[
+      group
+    ];
 
     if (filter) {
       setFilter(
@@ -104,7 +106,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
         <TabsContent value="aggregated" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
             <div className="space-y-5 text-sm md:text-base">
-              {["promoters", "passives", "detractors", "dismissed"].map((group) => (
+              {(["promoters", "passives", "detractors", "dismissed"] as const).map((group) => (
                 <button
                   className="w-full cursor-pointer hover:opacity-80"
                   key={group}

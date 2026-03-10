@@ -743,8 +743,12 @@ export const getResponsesJson = (
         elementHeadline.forEach((headline, index) => {
           if (answer) {
             const row = element.rows[index];
-            if (row && row.label.default && answer[row.label.default] !== undefined) {
-              jsonData[idx][headline] = answer[row.label.default];
+            if (
+              row &&
+              row.label.default &&
+              (answer as Record<string, string>)[row.label.default] !== undefined
+            ) {
+              jsonData[idx][headline] = (answer as Record<string, string>)[row.label.default];
             } else {
               jsonData[idx][headline] = "";
             }
