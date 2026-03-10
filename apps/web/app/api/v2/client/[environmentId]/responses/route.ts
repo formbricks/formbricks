@@ -11,6 +11,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -76,7 +77,8 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInputData = responseInputValidation.data;
 
   if (responseInputData.contactId) {
-    const isContactsEnabled = await getIsContactsEnabled();
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }

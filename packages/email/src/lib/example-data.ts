@@ -129,7 +129,6 @@ export const exampleData = {
         limits: {
           monthly: {
             responses: 1000,
-            miu: 10000,
           },
         },
       },

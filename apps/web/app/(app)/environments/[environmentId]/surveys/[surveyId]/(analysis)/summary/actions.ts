@@ -154,7 +154,8 @@ const ZGeneratePersonalLinksAction = z.object({
 export const generatePersonalLinksAction = authenticatedActionClient
   .inputSchema(ZGeneratePersonalLinksAction)
   .action(async ({ ctx, parsedInput }) => {
-    const isContactsEnabled = await getIsContactsEnabled();
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       throw new OperationNotAllowedError("Contacts are not enabled for this environment");
     }

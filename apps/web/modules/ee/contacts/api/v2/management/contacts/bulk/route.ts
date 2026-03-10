@@ -13,7 +13,7 @@ export const PUT = async (request: Request) =>
       body: ZContactBulkUploadRequest,
     },
     handler: async ({ authentication, parsedInput, auditLog }) => {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return handleApiError(
           request,

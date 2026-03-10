@@ -36,7 +36,7 @@ export const GET = withV1ApiWrapper({
     try {
       const params = await props.params;
 
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(
@@ -81,7 +81,7 @@ export const DELETE = withV1ApiWrapper({
     auditLog.targetId = params.contactId;
 
     try {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(

@@ -39,7 +39,7 @@ const checkAdvancedTargetingPermission = async (organizationId: string) => {
     throw new Error("Organization not found");
   }
 
-  const isContactsEnabled = await getIsContactsEnabled();
+  const isContactsEnabled = await getIsContactsEnabled(organizationId);
 
   if (!isContactsEnabled) {
     throw new OperationNotAllowedError("Advanced targeting is not allowed for this organization");

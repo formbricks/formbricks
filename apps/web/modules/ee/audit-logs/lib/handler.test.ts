@@ -14,14 +14,18 @@ var mutableConstants: { AUDIT_LOG_ENABLED: boolean }; // NOSONAR / test code
 // For safety with hoisted mocks, initialize immediately.
 mutableConstants = { AUDIT_LOG_ENABLED: true };
 
-vi.mock("@/lib/constants", () => ({
-  // AUDIT_LOG_ENABLED will be controlled by mutableConstants
-  get AUDIT_LOG_ENABLED() {
-    // Guard against mutableConstants being undefined during early hoisting phases if not initialized above
-    return mutableConstants ? mutableConstants.AUDIT_LOG_ENABLED : true; // Default to true if somehow undefined
-  },
-  AUDIT_LOG_GET_USER_IP: true,
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    // AUDIT_LOG_ENABLED will be controlled by mutableConstants
+    get AUDIT_LOG_ENABLED() {
+      // Guard against mutableConstants being undefined during early hoisting phases if not initialized above
+      return mutableConstants ? mutableConstants.AUDIT_LOG_ENABLED : true; // Default to true if somehow undefined
+    },
+    AUDIT_LOG_GET_USER_IP: true,
+  };
+});
 vi.mock("@/lib/utils/client-ip", () => ({
   getClientIpFromHeaders: vi.fn().mockResolvedValue("127.0.0.1"),
 }));
