@@ -359,13 +359,6 @@ async function main(): Promise<void> {
     create: {
       id: SEED_IDS.ORGANIZATION,
       name: "Seed Organization",
-      billing: {
-        create: {
-          limits: { projects: 3, monthly: { responses: 1500 } },
-          stripeCustomerId: null,
-          usageCycleAnchor: new Date(),
-        },
-      },
     },
   });
 

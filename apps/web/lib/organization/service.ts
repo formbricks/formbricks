@@ -210,6 +210,19 @@ export const updateOrganization = async (
     const { billing, ...organizationData } = data;
 
     const updatedOrganization = await prisma.$transaction(async (tx) => {
+      const existingOrganization = await tx.organization.findUnique({
+        where: {
+          id: organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!existingOrganization) {
+        throw new ResourceNotFoundError("Organization", organizationId);
+      }
+
       if (Object.keys(organizationData).length > 0) {
         await tx.organization.update({
           where: {

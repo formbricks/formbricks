@@ -47,6 +47,7 @@ export const ZOrganizationBilling = z.object({
       lastSyncedAt: z.string().nullable().optional(),
       lastSyncedEventId: z.string().nullable().optional(),
     })
+    .nullable()
     .optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
