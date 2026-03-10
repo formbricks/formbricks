@@ -313,8 +313,10 @@ const ensureOrganizationBillingRecord = async (
   }
 
   const defaultBilling = getDefaultOrganizationBilling();
-  const createdBilling = await prisma.organizationBilling.create({
-    data: {
+  const billing = await prisma.organizationBilling.upsert({
+    where: { organizationId },
+    update: {},
+    create: {
       organizationId,
       stripeCustomerId: defaultBilling.stripeCustomerId,
       limits: defaultBilling.limits,
@@ -323,7 +325,7 @@ const ensureOrganizationBillingRecord = async (
     select: ORGANIZATION_BILLING_SELECT,
   });
 
-  return mapBillingRecord(createdBilling);
+  return mapBillingRecord(billing);
 };
 
 export const ensureStripeCustomerForOrganization = async (

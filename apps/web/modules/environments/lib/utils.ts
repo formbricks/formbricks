@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, DatabaseError } from "@formbricks/types/errors";
+import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
@@ -204,7 +204,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
     if (!data) return null;
 
     if (!data.project.organization.billing) {
-      throw new Error("Organization billing not found");
+      throw new ResourceNotFoundError("OrganizationBilling", data.project.organization.id);
     }
 
     // Extract and return properly typed data

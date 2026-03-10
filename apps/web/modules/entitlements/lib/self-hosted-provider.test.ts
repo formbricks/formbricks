@@ -77,11 +77,12 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     mockGetLicense.mockResolvedValue({
       status: "expired",
       active: false,
-      features: { projects: 10 },
+      features: { projects: 10, contacts: true, spamProtection: true },
     } as any);
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
+    expect(result.features).toEqual([]);
     expect(result.limits.projects).toBe(3);
   });
 

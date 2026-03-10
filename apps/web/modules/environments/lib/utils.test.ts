@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -104,6 +104,12 @@ vi.mock("@/lib/constants", () => ({
 vi.mock("@formbricks/types/errors", () => ({
   AuthorizationError: class AuthorizationError extends Error {},
   DatabaseError: class DatabaseError extends Error {},
+  ResourceNotFoundError: class ResourceNotFoundError extends Error {
+    constructor(resource: string, id: string | null) {
+      super(`${resource} not found${id ? `: ${id}` : ""}`);
+      this.name = "ResourceNotFoundError";
+    }
+  },
 }));
 
 describe("utils.ts", () => {
@@ -475,6 +481,65 @@ describe("utils.ts", () => {
       vi.mocked(hasUserEnvironmentAccess).mockResolvedValueOnce(false);
 
       await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthorizationError);
+    });
+
+    test("throws ResourceNotFoundError if organization billing is missing", async () => {
+      vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce({
+        id: "env123",
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-02"),
+        type: "production",
+        projectId: "proj123",
+        appSetupCompleted: true,
+        project: {
+          id: "proj123",
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date("2024-01-02"),
+          name: "Test Project",
+          organizationId: "org123",
+          languages: ["en"],
+          recontactDays: 7,
+          linkSurveyBranding: true,
+          inAppSurveyBranding: true,
+          config: {},
+          placement: "bottomRight",
+          clickOutsideClose: true,
+          overlay: "none",
+          styling: {},
+          logo: null,
+          environments: [
+            {
+              id: "env123",
+              type: "production",
+              createdAt: new Date("2024-01-01"),
+              updatedAt: new Date("2024-01-02"),
+              projectId: "proj123",
+              appSetupCompleted: true,
+            },
+          ],
+          organization: {
+            id: "org123",
+            createdAt: new Date("2024-01-01"),
+            updatedAt: new Date("2024-01-02"),
+            name: "Test Organization",
+            billing: null,
+            isAIEnabled: false,
+            whitelabel: false,
+            memberships: [
+              {
+                userId: "user123",
+                organizationId: "org123",
+                accepted: true,
+                role: "owner",
+              },
+            ],
+          },
+        },
+      } as any);
+
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
+        new ResourceNotFoundError("OrganizationBilling", "org123")
+      );
     });
 
     test("throws AuthorizationError if membership not found", async () => {
