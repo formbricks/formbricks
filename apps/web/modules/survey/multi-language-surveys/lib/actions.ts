@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZLanguageInput } from "@formbricks/types/project";
 import {
   createLanguage,
@@ -11,7 +10,6 @@ import {
   getSurveysUsingGivenLanguage,
   updateLanguage,
 } from "@/lib/language/service";
-import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -21,26 +19,11 @@ import {
   getProjectIdFromLanguageId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 
 const ZCreateLanguageAction = z.object({
   projectId: ZId,
   languageInput: ZLanguageInput,
 });
-
-export const checkMultiLanguagePermission = async (organizationId: string) => {
-  const organization = await getOrganization(organizationId);
-
-  if (!organization) {
-    throw new ResourceNotFoundError("Organization", organizationId);
-  }
-
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
-
-  if (!isMultiLanguageAllowed) {
-    throw new OperationNotAllowedError("Multi language is not allowed for this organization");
-  }
-};
 
 export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreateLanguageAction).action(
   withAuditLogging(
@@ -66,7 +49,6 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
           },
         ],
       });
-      await checkMultiLanguagePermission(organizationId);
 
       const result = await createLanguage(parsedInput.projectId, parsedInput.languageInput);
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -110,7 +92,6 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
           },
         ],
       });
-      await checkMultiLanguagePermission(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.languageId = parsedInput.languageId;
@@ -145,7 +126,6 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
         },
       ],
     });
-    await checkMultiLanguagePermission(organizationId);
 
     return await getSurveysUsingGivenLanguage(parsedInput.languageId);
   });
@@ -186,7 +166,6 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
           },
         ],
       });
-      await checkMultiLanguagePermission(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.languageId = parsedInput.languageId;

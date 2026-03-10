@@ -126,7 +126,7 @@ export const MainNavigation = ({
         name: t("common.configuration"),
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
-        isActive: pathname?.includes("/project"),
+        isActive: pathname?.includes("/workspace"),
       },
     ],
     [t, environment.id, pathname, isFormbricksCloud]

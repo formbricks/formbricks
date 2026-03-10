@@ -13,7 +13,6 @@ import {
   getIsSpamProtectionEnabled,
   getIsSsoEnabled,
   getIsTwoFactorAuthEnabled,
-  getMultiLanguagePermission,
   getOrganizationProjectsLimit,
   getRemoveBrandingPermission,
   getWhiteLabelPermission,
@@ -47,7 +46,6 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   spamProtection: false,
   ai: false,
   auditLogs: false,
-  multiLanguageSurveys: false,
   accessControl: false,
   quotas: false,
 };
@@ -230,63 +228,6 @@ describe("License Utils", () => {
         active: false,
       });
       const result = await getBiggerUploadFileSizePermission(mockOrganization.billing.plan);
-      expect(result).toBe(false);
-    });
-  });
-
-  describe("getMultiLanguagePermission", () => {
-    test("should return true if license active and multiLanguageSurveys feature enabled (self-hosted)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, multiLanguageSurveys: true },
-      });
-      const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
-      expect(result).toBe(true);
-    });
-
-    test("should return true if license active, multiLanguageSurveys enabled and plan is CUSTOM (cloud)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, multiLanguageSurveys: true },
-      });
-      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
-      expect(result).toBe(true);
-    });
-
-    test("should return false if license active, multiLanguageSurveys enabled but plan is not CUSTOM (cloud)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, multiLanguageSurveys: true },
-      });
-      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.STARTUP);
-      expect(result).toBe(false);
-    });
-
-    test("should return true if license active, multiLanguageSurveys enabled and plan is CUSTOM (cloud)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, multiLanguageSurveys: true },
-      });
-      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
-      expect(result).toBe(true);
-    });
-
-    test("should return false if license active but multiLanguageSurveys feature disabled (self-hosted)", async () => {
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
-      const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
-      expect(result).toBe(false);
-    });
-
-    test("should return false if license is inactive", async () => {
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        active: false,
-      });
-      const result = await getMultiLanguagePermission(mockOrganization.billing.plan);
       expect(result).toBe(false);
     });
   });

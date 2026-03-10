@@ -110,7 +110,7 @@ export const WorkflowsPage = ({ userEmail, organizationName, billingPlan }: Work
       <div className="flex h-full flex-col items-center px-4 pt-[15vh]">
         <div className="w-full max-w-2xl space-y-8">
           <div className="space-y-3 text-center">
-            <div className="from-brand-light to-brand-dark mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br shadow-md">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-light to-brand-dark shadow-md">
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-800">{t("workflows.heading")}</h1>
@@ -123,7 +123,7 @@ export const WorkflowsPage = ({ userEmail, organizationName, billingPlan }: Work
               onChange={(e) => setPromptValue(e.target.value)}
               placeholder={t("workflows.placeholder")}
               rows={5}
-              className="focus:border-brand-dark focus:ring-brand-light/20 w-full resize-none rounded-xl border border-slate-200 bg-white px-5 py-4 text-base text-slate-800 shadow-sm transition-all placeholder:text-slate-400 focus:outline-none focus:ring-2"
+              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-5 py-4 text-base text-slate-800 shadow-sm transition-all placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-light/20"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   handleGenerateWorkflow();
@@ -156,7 +156,7 @@ export const WorkflowsPage = ({ userEmail, organizationName, billingPlan }: Work
         <div className="w-full max-w-2xl space-y-8">
           <div className="space-y-3 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
-              <Sparkles className="text-brand-dark h-6 w-6" />
+              <Sparkles className="h-6 w-6 text-brand-dark" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-800">
               {t("workflows.coming_soon_title")}
@@ -175,7 +175,7 @@ export const WorkflowsPage = ({ userEmail, organizationName, billingPlan }: Work
               onChange={(e) => setDetailsValue(e.target.value)}
               placeholder={t("workflows.follow_up_placeholder")}
               rows={4}
-              className="focus:border-brand-dark focus:ring-brand-light/20 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2"
+              className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-brand-dark focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-light/20"
             />
             <div className="mt-4 flex items-center justify-end gap-3">
               <Button variant="ghost" onClick={handleSkipFeedback} className="text-slate-500">
