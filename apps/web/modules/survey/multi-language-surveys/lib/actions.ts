@@ -25,7 +25,7 @@ const ZCreateLanguageAction = z.object({
   languageInput: ZLanguageInput,
 });
 
-export const createLanguageAction = authenticatedActionClient.schema(ZCreateLanguageAction).action(
+export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreateLanguageAction).action(
   withAuditLogging(
     "created",
     "language",
