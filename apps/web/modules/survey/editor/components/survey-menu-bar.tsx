@@ -191,50 +191,61 @@ export const SurveyMenuBar = ({
   const validateSurveyWithZod = (): boolean => {
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
-      const currentError = localSurveyValidation.error.issues[0];
+      const issues = localSurveyValidation.error.issues;
+      const newInvalidIds: string[] = [];
 
-      if (currentError.path[0] === "blocks") {
-        const blockIdx = currentError.path[1];
+      for (const issue of issues) {
+        if (issue.path[0] === "blocks") {
+          const blockIdx = issue.path[1];
 
-        // Check if this is an element-level error (path includes "elements")
-        // Element errors: ["blocks", blockIdx, "elements", elementIdx, ...]
-        // Block errors: ["blocks", blockIdx, "buttonLabel"] or ["blocks", blockIdx, "logic"]
-        if (currentError.path[2] === "elements" && typeof currentError.path[3] === "number") {
-          const elementIdx = currentError.path[3];
-          const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
-          const element = block?.elements[elementIdx];
+          if (issue.path[2] === "elements" && typeof issue.path[3] === "number") {
+            const elementIdx = issue.path[3];
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+            const element = block?.elements[elementIdx];
 
-          if (element) {
-            setInvalidElements((prevInvalidElements) =>
-              prevInvalidElements ? [...prevInvalidElements, element.id] : [element.id]
-            );
+            if (element && !newInvalidIds.includes(element.id)) {
+              newInvalidIds.push(element.id);
+            }
+          }
+        } else if (issue.path[0] === "welcomeCard") {
+          if (!newInvalidIds.includes("start")) {
+            newInvalidIds.push("start");
+          }
+        } else if (issue.path[0] === "endings") {
+          const endingIdx = typeof issue.path[1] === "number" ? issue.path[1] : -1;
+          const endingId = localSurvey.endings[endingIdx]?.id;
+          if (endingId && !newInvalidIds.includes(endingId)) {
+            newInvalidIds.push(endingId);
           }
         }
-      } else if (currentError.path[0] === "welcomeCard") {
-        setInvalidElements((prevInvalidElements) =>
-          prevInvalidElements ? [...prevInvalidElements, "start"] : ["start"]
-        );
-      } else if (currentError.path[0] === "endings") {
-        const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] : -1;
-        setInvalidElements((prevInvalidElements) =>
-          prevInvalidElements
-            ? [...prevInvalidElements, localSurvey.endings[endingIdx].id]
-            : [localSurvey.endings[endingIdx].id]
-        );
       }
 
-      if (currentError.code === "custom") {
-        const params = currentError.params ?? ({} as { invalidLanguageCodes: string[] });
+      if (newInvalidIds.length > 0) {
+        setInvalidElements((prev) => {
+          const existing = prev ?? [];
+          const merged = [...existing];
+          for (const id of newInvalidIds) {
+            if (!merged.includes(id)) {
+              merged.push(id);
+            }
+          }
+          return merged;
+        });
+      }
+
+      const firstError = issues[0];
+      if (firstError.code === "custom") {
+        const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
           const invalidLanguageLabels = params.invalidLanguageCodes.map(
             (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
           );
 
-          const messageSplit = currentError.message.split("-fLang-")[0];
+          const messageSplit = firstError.message.split("-fLang-")[0];
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
-          toast.error(currentError.message, {
+          toast.error(firstError.message, {
             className: "w-fit !max-w-md",
           });
         }
@@ -242,7 +253,7 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      toast.error(currentError.message);
+      toast.error(firstError.message);
       return false;
     }
 
