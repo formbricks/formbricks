@@ -187,8 +187,8 @@ export const PricingTable = ({
       return;
     }
 
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
+    if (typeof globalThis.window !== "undefined") {
+      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
     }
 
     const loadPricingTableCustomerSession = async () => {

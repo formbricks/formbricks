@@ -90,7 +90,7 @@ const ZCreatePricingTableCustomerSessionAction = z.object({
 });
 
 export const createPricingTableCustomerSessionAction = authenticatedActionClient
-  .schema(ZCreatePricingTableCustomerSessionAction)
+  .inputSchema(ZCreatePricingTableCustomerSessionAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
