@@ -29,10 +29,7 @@ const getFeaturePermission = async (
 // On Self-hosted: requires active license AND feature enabled in license
 const getCustomPlanFeaturePermission = async (
   organizationId: string,
-  featureKey: keyof Pick<
-    TEnterpriseLicenseFeatures,
-    "accessControl" | "multiLanguageSurveys" | "quotas" | "contacts"
-  >
+  featureKey: keyof Pick<TEnterpriseLicenseFeatures, "accessControl" | "quotas" | "contacts">
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
     const featureLookupKeyMap: Record<string, string> = {
@@ -139,10 +136,6 @@ export const getIsSpamProtectionEnabled = async (organizationId: string): Promis
 
   const license = await getEnterpriseLicense();
   return license.active && !!license.features?.spamProtection;
-};
-
-export const getMultiLanguagePermission = async (organizationId: string): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(organizationId, "multiLanguageSurveys");
 };
 
 export const getAccessControlPermission = async (organizationId: string): Promise<boolean> => {

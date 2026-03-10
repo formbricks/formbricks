@@ -1094,9 +1094,7 @@
         "security_list_tip_link": "Înscrie-te aici.",
         "share_invite_link": "Distribuie link-ul de invitație",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Distribuie acest link pentru a permite membrului organizației să se alăture organizației tale:",
-        "test_email_sent_successfully": "Email de test trimis cu succes",
-        "use_multi_language_surveys_with_a_higher_plan": "Utilizați chestionare multilingve cu un plan superior",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Sondajul utilizatorilor dvs. în diferite limbi."
+        "test_email_sent_successfully": "Email de test trimis cu succes"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Auto-abonare la sondaje noi",
@@ -1665,8 +1663,6 @@
         "until_they_submit_a_response": "Întreabă până când trimit un răspuns",
         "untitled_block": "Bloc fără titlu",
         "update_options": "Actualizați opțiunile",
-        "upgrade_notice_description": "Creați sondaje multilingve și deblocați multe alte caracteristici",
-        "upgrade_notice_title": "Deblocați sondajele multilingve cu un plan superior",
         "upload": "Încărcați",
         "upload_at_least_2_images": "Încărcați cel puțin 2 imagini",
         "upper_label": "Etichetă superioară",

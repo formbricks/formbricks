@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
@@ -142,9 +141,6 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     getExistingContactResponse(survey.id, contactId)(),
   ]);
 
-  // Get multi-language permission
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(environmentContext.organizationId);
-
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
     ? await getResponseCountBySurveyId(survey.id)
@@ -159,7 +155,6 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseResponse,
     environmentContext,
     locale,
-    isMultiLanguageAllowed,
     responseCount,
   });
 };

@@ -14,7 +14,6 @@ import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
-  getMultiLanguagePermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -73,14 +72,12 @@ export const SurveyEditorPage = async (props) => {
   ]);
 
   const [
-    isMultiLanguageAllowed,
     isSurveyFollowUpsAllowed,
     isSpamProtectionAllowed,
     isQuotasAllowed,
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
   ] = await Promise.all([
-    getMultiLanguagePermission(projectWithTeamIds.organizationId),
     getSurveyFollowUpsPermission(projectWithTeamIds.organizationId),
     getIsSpamProtectionEnabled(projectWithTeamIds.organizationId),
     getIsQuotasEnabled(projectWithTeamIds.organizationId),
@@ -122,7 +119,6 @@ export const SurveyEditorPage = async (props) => {
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
-      isMultiLanguageAllowed={isMultiLanguageAllowed}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       projectLanguages={projectLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

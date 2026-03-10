@@ -17,7 +17,6 @@ import {
   getIsSpamProtectionEnabled,
   getIsSsoEnabled,
   getIsTwoFactorAuthEnabled,
-  getMultiLanguagePermission,
   getOrganizationProjectsLimit,
   getRemoveBrandingPermission,
   getWhiteLabelPermission,
@@ -58,7 +57,6 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   spamProtection: false,
   ai: false,
   auditLogs: false,
-  multiLanguageSurveys: false,
   accessControl: false,
   quotas: false,
 };
@@ -69,6 +67,7 @@ const defaultLicense = {
   lastChecked: new Date(),
   isPendingDowngrade: false,
   fallbackLevel: "live" as const,
+  status: "active" as const,
 };
 
 const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
@@ -163,19 +162,6 @@ describe("License Utils", () => {
       );
     });
 
-    test("uses cloud multi-language entitlement", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
-
-      const result = await getMultiLanguagePermission("org_1");
-
-      expect(result).toBe(true);
-      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
-        "org_1",
-        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.MULTI_LANGUAGE_SURVEYS
-      );
-    });
-
     test("uses cloud quota entitlement", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
@@ -196,19 +182,16 @@ describe("License Utils", () => {
         features: {
           ...defaultFeatures,
           accessControl: true,
-          multiLanguageSurveys: true,
           quotas: true,
         },
       });
 
-      const [access, multiLanguage, quotas] = await Promise.all([
+      const [access, quotas] = await Promise.all([
         getAccessControlPermission("org_1"),
-        getMultiLanguagePermission("org_1"),
         getIsQuotasEnabled("org_1"),
       ]);
 
       expect(access).toBe(true);
-      expect(multiLanguage).toBe(true);
       expect(quotas).toBe(true);
     });
   });

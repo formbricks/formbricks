@@ -1094,9 +1094,7 @@
         "security_list_tip_link": "こちらからサインアップしてください。",
         "share_invite_link": "招待リンクを共有",
         "share_this_link_to_let_your_organization_member_join_your_organization": "このリンクを共有して、組織メンバーを招待できます:",
-        "test_email_sent_successfully": "テストメールを正常に送信しました",
-        "use_multi_language_surveys_with_a_higher_plan": "上位プランで多言語フォームを使用",
-        "use_multi_language_surveys_with_a_higher_plan_description": "異なる言語でユーザーにフォームを送信できます。"
+        "test_email_sent_successfully": "テストメールを正常に送信しました"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "新しいフォームに自動購読",
@@ -1665,8 +1663,6 @@
         "until_they_submit_a_response": "回答が提出されるまで質問する",
         "untitled_block": "無題のブロック",
         "update_options": "オプションを更新",
-        "upgrade_notice_description": "多言語フォームを作成し、さらに多くの機能をアンロック",
-        "upgrade_notice_title": "上位プランで多言語フォームをアンロック",
         "upload": "アップロード",
         "upload_at_least_2_images": "少なくとも2枚の画像をアップロードしてください",
         "upper_label": "上限ラベル",

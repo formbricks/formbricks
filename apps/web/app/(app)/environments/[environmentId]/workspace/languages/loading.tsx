@@ -1,3 +1,3 @@
-import { LanguagesLoading } from "@/modules/ee/languages/loading";
+import { LanguagesLoading } from "@/modules/projects/settings/languages/loading";
 
 export default LanguagesLoading;
