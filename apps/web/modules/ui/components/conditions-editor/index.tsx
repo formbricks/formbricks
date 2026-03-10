@@ -161,7 +161,8 @@ export function ConditionsEditor({
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
-      if (parentConditionGroup.conditions.length === 1) return <div>{t("environments.surveys.edit.when")}</div>;
+      if (parentConditionGroup.conditions.length === 1)
+        return <div>{t("environments.surveys.edit.when")}</div>;
       return <div />;
     };
 
@@ -270,7 +271,9 @@ export function ConditionsEditor({
       {/* Dropdown for changing the connector */}
       {conditions.conditions.length > 1 && (
         <div className="flex items-center gap-x-2 text-sm">
-          <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">{t("environments.surveys.edit.when")}</p>
+          <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
+            {t("environments.surveys.edit.when")}
+          </p>
           <Select
             value={conditions.connector}
             onValueChange={() => {

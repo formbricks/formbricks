@@ -339,7 +339,9 @@ export const BlockCard = ({
                               <div className="flex grow flex-col justify-center">
                                 {hasMultipleElements && (
                                   <p className="mb-1 text-xs font-medium text-slate-500">
-                                    {t("environments.surveys.edit.question_number", { number: elementIndex + 1 })}
+                                    {t("environments.surveys.edit.question_number", {
+                                      number: elementIndex + 1,
+                                    })}
                                   </p>
                                 )}
                                 <h3 className="text-sm font-semibold">
