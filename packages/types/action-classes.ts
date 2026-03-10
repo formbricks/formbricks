@@ -27,7 +27,7 @@ export const ZActionClassPageUrlRule = z.enum(ACTION_CLASS_PAGE_URL_RULES);
 export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
 
 const ZActionClassNoCodeConfigBase = z.object({
-  type: z.enum(["click", "pageView", "exitIntent", "fiftyPercentScroll"]),
+  type: z.enum(["click", "pageView", "exitIntent", "fiftyPercentScroll", "pageDwell"]),
   urlFilters: z.array(
     z.object({
       value: z.string().trim().min(1, {
@@ -68,11 +68,17 @@ const ZActionClassNoCodeConfigfiftyPercentScroll = ZActionClassNoCodeConfigBase.
   type: z.literal("fiftyPercentScroll"),
 });
 
+const ZActionClassNoCodeConfigPageDwell = ZActionClassNoCodeConfigBase.extend({
+  type: z.literal("pageDwell"),
+  timeInSeconds: z.number().int().min(1).max(3600),
+});
+
 export const ZActionClassNoCodeConfig = z.union([
   ZActionClassNoCodeConfigClick,
   ZActionClassNoCodeConfigPageView,
   ZActionClassNoCodeConfigExitIntent,
   ZActionClassNoCodeConfigfiftyPercentScroll,
+  ZActionClassNoCodeConfigPageDwell,
 ]);
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;

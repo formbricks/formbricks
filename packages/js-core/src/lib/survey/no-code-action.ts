@@ -6,6 +6,7 @@ import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
+import { type TEnvironmentStateActionClass } from "@/types/config";
 import { type Result } from "@/types/error";
 
 // Factory for creating context-specific tracking handlers
@@ -28,6 +29,10 @@ const trackNoCodePageViewActionHandler = createTrackNoCodeActionWithContext("pag
 const trackNoCodeClickActionHandler = createTrackNoCodeActionWithContext("click");
 const trackNoCodeExitIntentActionHandler = createTrackNoCodeActionWithContext("exit intent");
 const trackNoCodeScrollActionHandler = createTrackNoCodeActionWithContext("scroll");
+const trackNoCodePageDwellActionHandler = createTrackNoCodeActionWithContext("page dwell");
+
+// Page Dwell timer state: key = action name, value = timeout ID (running) or null (already fired)
+const pageDwellTimers = new Map<string, number | null>();
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -37,6 +42,62 @@ let arePageUrlEventListenersAdded = false;
 let isHistoryPatched = false;
 export const setIsHistoryPatched = (value: boolean): void => {
   isHistoryPatched = value;
+};
+
+const checkPageDwell = (actionClasses: TEnvironmentStateActionClass[]): void => {
+  const queue = CommandQueue.getInstance();
+  const logger = Logger.getInstance();
+  const timeoutStack = TimeoutStack.getInstance();
+
+  const noCodePageDwellActionClasses = actionClasses.filter(
+    (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageDwell"
+  );
+
+  const matchingDwellActionNames = new Set<string>();
+
+  for (const event of noCodePageDwellActionClasses) {
+    if (event.noCodeConfig?.type !== "pageDwell") continue;
+
+    const urlFilters = event.noCodeConfig.urlFilters;
+    const connector = event.noCodeConfig.urlFiltersConnector ?? "or";
+    const isValidUrl = handleUrlFilters(urlFilters, connector);
+
+    if (!isValidUrl) continue;
+
+    matchingDwellActionNames.add(event.name);
+    if (pageDwellTimers.has(event.name)) continue;
+
+    const { timeInSeconds } = event.noCodeConfig;
+    const actionName = event.name;
+
+    logger.debug(`Starting page dwell timer for "${actionName}" (${timeInSeconds.toString()}s)`);
+    const timerId = globalThis.setTimeout(() => {
+      logger.debug(
+        `Page dwell timer for "${actionName}" completed after ${timeInSeconds.toString()}s — firing action`
+      );
+      pageDwellTimers.set(actionName, null);
+      void queue.add(trackNoCodePageDwellActionHandler, CommandType.GeneralAction, true, actionName);
+    }, timeInSeconds * 1000);
+    pageDwellTimers.set(actionName, timerId as unknown as number);
+  }
+
+  for (const [actionName, timerId] of pageDwellTimers) {
+    if (matchingDwellActionNames.has(actionName)) continue;
+
+    if (timerId !== null) {
+      logger.debug(
+        `Page dwell timer for "${actionName}" interrupted — user navigated away before completion`
+      );
+      clearTimeout(timerId);
+    }
+    pageDwellTimers.delete(actionName);
+
+    const scheduledTimeout = timeoutStack.getTimeouts().find((t) => t.event === actionName);
+    if (!scheduledTimeout) continue;
+
+    timeoutStack.remove(scheduledTimeout.timeoutId);
+    setIsSurveyRunning(false);
+  }
 };
 
 export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
@@ -70,6 +131,8 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
       }
     }
   }
+
+  checkPageDwell(actionClasses);
 
   return { ok: true, data: undefined };
 };
@@ -257,4 +320,14 @@ export const removeScrollDepthListener = (): void => {
     window.removeEventListener("scroll", checkScrollDepthWrapper as EventListener);
     scrollDepthListenerAdded = false;
   }
+};
+
+// Page Dwell Cleanup
+export const clearPageDwellTimers = (): void => {
+  for (const [, timerId] of pageDwellTimers) {
+    if (timerId !== null) {
+      clearTimeout(timerId);
+    }
+  }
+  pageDwellTimers.clear();
 };

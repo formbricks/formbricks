@@ -47,6 +47,7 @@ const createNoCodeConfigType = (t: ReturnType<typeof useTranslation>["t"]) => ({
   pageView: t("environments.actions.page_view"),
   exitIntent: t("environments.actions.exit_intent"),
   fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
+  pageDwell: t("environments.actions.page_dwell"),
 });
 
 const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTranslation>["t"]) => {

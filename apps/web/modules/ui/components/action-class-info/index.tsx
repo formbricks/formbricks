@@ -33,9 +33,14 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
   };
 
   const isNoCodeClick = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "click";
+  const isNoCodePageDwell = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "pageDwell";
 
   const clickConfig = isNoCodeClick
     ? (actionClass.noCodeConfig as Extract<typeof actionClass.noCodeConfig, { type: "click" }>)
+    : null;
+
+  const pageDwellConfig = isNoCodePageDwell
+    ? (actionClass.noCodeConfig as Extract<typeof actionClass.noCodeConfig, { type: "pageDwell" }>)
     : null;
 
   return (
@@ -57,6 +62,12 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
       {clickConfig?.elementSelector.innerHtml && (
         <InfoItem>
           {t("environments.surveys.edit.inner_text")}: <b>{clickConfig.elementSelector.innerHtml}</b>
+        </InfoItem>
+      )}
+
+      {pageDwellConfig && (
+        <InfoItem>
+          {t("environments.actions.time_in_seconds")}: <b>{pageDwellConfig.timeInSeconds}s</b>
         </InfoItem>
       )}
 

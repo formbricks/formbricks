@@ -11,6 +11,7 @@ import {
   addPageUrlEventListeners,
   addScrollDepthListener,
   checkPageUrl,
+  clearPageDwellTimers,
   createTrackNoCodeActionWithContext,
   removeClickEventListener,
   removeExitIntentListener,
@@ -652,5 +653,251 @@ describe("removePageUrlEventListeners additional cases", () => {
     // Assuming listeners are not added yet (arePageUrlEventListenersAdded is false)
     removePageUrlEventListeners();
     (window.removeEventListener as Mock).mockRestore();
+  });
+});
+
+describe("pageDwell action handling", () => {
+  let getInstanceConfigMock: MockInstance<() => Config>;
+  let getInstanceTimeoutStackMock: MockInstance<() => TimeoutStack>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    clearPageDwellTimers();
+    getInstanceConfigMock = vi.spyOn(Config, "getInstance");
+    getInstanceTimeoutStackMock = vi.spyOn(TimeoutStack, "getInstance");
+    (checkSetup as Mock).mockReturnValue({ ok: true });
+
+    const mockTimeoutStack = {
+      getTimeouts: vi.fn().mockReturnValue([]),
+      remove: vi.fn(),
+      add: vi.fn(),
+    };
+    getInstanceTimeoutStackMock.mockReturnValue(mockTimeoutStack as unknown as TimeoutStack);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.resetAllMocks();
+    clearPageDwellTimers();
+  });
+
+  const createConfigWithDwellAction = (actionName: string, timeInSeconds: number) => ({
+    get: vi.fn().mockReturnValue({
+      environment: {
+        data: {
+          actionClasses: [
+            {
+              name: actionName,
+              type: "noCode",
+              noCodeConfig: {
+                type: "pageDwell",
+                urlFilters: [{ value: "/dashboard", rule: "contains" }],
+                timeInSeconds,
+              },
+            },
+          ],
+        },
+      },
+    }),
+    update: vi.fn(),
+  });
+
+  test("starts a dwell timer when URL matches a pageDwell action", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+  });
+
+  test("fires trackNoCodeAction after the dwell time elapses", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(trackNoCodeAction).toHaveBeenCalledWith("dwellAction");
+  });
+
+  test("does not start a timer if URL does not match", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(false);
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/settings" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+  });
+
+  test("clears dwell timer when URL stops matching on subsequent navigation", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 10);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+
+    (handleUrlFilters as Mock).mockReturnValue(false);
+    await checkPageUrl();
+
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+  });
+
+  test("does not restart timer when URL still matches on subsequent checkPageUrl calls", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await checkPageUrl();
+
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(trackNoCodeAction).toHaveBeenCalledTimes(1);
+    expect(trackNoCodeAction).toHaveBeenCalledWith("dwellAction");
+  });
+
+  test("restarts timer after navigating away and back", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    (handleUrlFilters as Mock).mockReturnValue(false);
+    await checkPageUrl();
+
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    await checkPageUrl();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(trackNoCodeAction).toHaveBeenCalledTimes(1);
+    expect(trackNoCodeAction).toHaveBeenCalledWith("dwellAction");
+  });
+
+  test("does not re-fire after timer already fired on same page", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 3);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(trackNoCodeAction).toHaveBeenCalledTimes(1);
+
+    await checkPageUrl();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(trackNoCodeAction).toHaveBeenCalledTimes(1);
+  });
+
+  test("clearPageDwellTimers clears all active timers", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    clearPageDwellTimers();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(trackNoCodeAction).not.toHaveBeenCalled();
+  });
+
+  test("clears scheduled survey display timeout when URL stops matching a dwell action", async () => {
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithDwellAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    const mockTimeoutStack = {
+      getTimeouts: vi.fn().mockReturnValue([{ event: "dwellAction", timeoutId: 999 }]),
+      remove: vi.fn(),
+      add: vi.fn(),
+    };
+    getInstanceTimeoutStackMock.mockReturnValue(mockTimeoutStack as unknown as TimeoutStack);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    (handleUrlFilters as Mock).mockReturnValue(false);
+    await checkPageUrl();
+
+    expect(mockTimeoutStack.remove).toHaveBeenCalledWith(999);
+    expect(setIsSurveyRunning).toHaveBeenCalledWith(false);
   });
 });
