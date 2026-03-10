@@ -652,3 +652,109 @@ describe("getBaseProjectStyling_Helper", () => {
     expect(styled.isLogoHidden).toBeNull();
   });
 });
+
+describe("inputShadow validation and sanitization", () => {
+  beforeEach(() => {
+    document.head.innerHTML = "";
+    document.body.innerHTML = "";
+    setStyleNonce(undefined);
+  });
+
+  afterEach(() => {
+    const styleElement = document.getElementById("formbricks__css__custom");
+    if (styleElement) {
+      styleElement.remove();
+    }
+    setStyleNonce(undefined);
+  });
+
+  test("should apply valid inputShadow values", () => {
+    const validShadows = [
+      "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+      "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      "none",
+      "0 0 10px rgba(0,0,0,0.5)",
+      "2px 2px 4px #000000",
+      "inset 0 0 5px rgba(0,0,0,0.1)",
+    ];
+
+    validShadows.forEach((shadow) => {
+      document.head.innerHTML = "";
+      const styling = getBaseProjectStyling({ brandColor: { light: "#123" }, inputShadow: shadow });
+      addCustomThemeToDom({ styling });
+      const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+      expect(styleElement.innerHTML).toContain("--fb-input-shadow:");
+    });
+  });
+
+  test("should reject inputShadow with dangerous characters", () => {
+    const dangerousShadows = [
+      "0 1px 2px { background: red }",
+      "0 1px 2px; color: red",
+      '0 1px 2px "malicious"',
+      "0 1px 2px 'malicious'",
+      "data::image/svg+xml",
+      "url(javascript:alert(1))",
+    ];
+
+    dangerousShadows.forEach((shadow) => {
+      document.head.innerHTML = "";
+      const styling = getBaseProjectStyling({ brandColor: { light: "#123" }, inputShadow: shadow });
+      addCustomThemeToDom({ styling });
+      const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+      expect(styleElement.innerHTML).not.toContain("--fb-input-shadow:");
+    });
+  });
+
+  test("should handle null and undefined inputShadow gracefully", () => {
+    const styling1 = getBaseProjectStyling({ brandColor: { light: "#123" }, inputShadow: null });
+    addCustomThemeToDom({ styling: styling1 });
+    let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    expect(styleElement.innerHTML).not.toContain("--fb-input-shadow:");
+
+    document.head.innerHTML = "";
+    const styling2 = getBaseProjectStyling({ brandColor: { light: "#123" }, inputShadow: undefined });
+    addCustomThemeToDom({ styling: styling2 });
+    styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    expect(styleElement.innerHTML).not.toContain("--fb-input-shadow:");
+  });
+
+  test("should reject empty or whitespace-only inputShadow", () => {
+    const emptyShadows = ["", "   ", "\t", "\n"];
+
+    emptyShadows.forEach((shadow) => {
+      document.head.innerHTML = "";
+      const styling = getBaseProjectStyling({ brandColor: { light: "#123" }, inputShadow: shadow });
+      addCustomThemeToDom({ styling });
+      const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+      expect(styleElement.innerHTML).not.toContain("--fb-input-shadow:");
+    });
+  });
+
+  test("should not throw error when setting innerHTML with valid shadow", () => {
+    const styling = getBaseProjectStyling({
+      brandColor: { light: "#123" },
+      inputShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    });
+
+    expect(() => {
+      addCustomThemeToDom({ styling });
+    }).not.toThrow();
+
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    expect(styleElement).not.toBeNull();
+    expect(styleElement.innerHTML).toBeTruthy();
+  });
+
+  test("should prevent CSS injection through malformed colon patterns", () => {
+    const malformedShadows = ["test::malformed", ":::invalid", "0px::1px::2px", "data::base64::encoded"];
+
+    malformedShadows.forEach((shadow) => {
+      document.head.innerHTML = "";
+      const styling = getBaseProjectStyling({ brandColor: { light: "#123" }, inputShadow: shadow });
+      addCustomThemeToDom({ styling });
+      const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+      expect(styleElement.innerHTML).not.toContain("--fb-input-shadow:");
+    });
+  });
+});

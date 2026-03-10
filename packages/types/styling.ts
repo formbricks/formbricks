@@ -68,7 +68,24 @@ export const ZBaseStyling = z.object({
   inputPlaceholderOpacity: z.number().max(1).min(0).nullish(),
   inputPaddingX: z.union([z.number(), z.string()]).nullish(),
   inputPaddingY: z.union([z.number(), z.string()]).nullish(),
-  inputShadow: z.string().nullish(),
+  inputShadow: z
+    .string()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        // Reject values with dangerous characters that could break CSS parsing
+        if (/[{};"']/.test(val)) return false;
+        // Reject values with multiple consecutive colons
+        if (/:{2,}/.test(val)) return false;
+        // Validate basic CSS pattern
+        if (!/^[\w\s\-.,()/#%]+$/.test(val)) return false;
+        return true;
+      },
+      {
+        message: "Invalid CSS shadow value",
+      }
+    )
+    .nullish(),
 
   // Options
   optionBgColor: ZStylingColor.nullish(),

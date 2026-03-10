@@ -55,6 +55,38 @@ export const addStylesToDom = () => {
   }
 };
 
+/**
+ * Validates and sanitizes a CSS value to prevent CSS injection and parsing errors.
+ * Returns null if the value is invalid or potentially dangerous.
+ */
+const sanitizeCssValue = (value: string): string | null => {
+  if (!value || typeof value !== "string") return null;
+
+  const trimmedValue = value.trim();
+  if (trimmedValue === "") return null;
+
+  // Check for dangerous patterns that could break CSS parsing
+  // Reject values containing unescaped braces, quotes, or semicolons that could break out of the CSS context
+  if (/[{};"']/.test(trimmedValue)) {
+    return null;
+  }
+
+  // Check for multiple consecutive colons (::) which might indicate malformed data URIs or other issues
+  if (/:{2,}/.test(trimmedValue)) {
+    return null;
+  }
+
+  // For box-shadow values, validate basic structure
+  // Valid patterns include: "none", or combinations of: offset-x offset-y [blur-radius] [spread-radius] [color] [inset]
+  // Allow common CSS units and color formats
+  const validCssPattern = /^[\w\s\-.,()/#%]+$/;
+  if (!validCssPattern.test(trimmedValue)) {
+    return null;
+  }
+
+  return trimmedValue;
+};
+
 export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
@@ -233,7 +265,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("input-padding-y", formatDimension(styling.inputPaddingY));
   if (styling.inputPlaceholderOpacity !== undefined)
     appendCssVariable("input-placeholder-opacity", `${styling.inputPlaceholderOpacity}`);
-  appendCssVariable("input-shadow", styling.inputShadow);
+  if (styling.inputShadow !== undefined && styling.inputShadow !== null) {
+    const sanitizedShadow = sanitizeCssValue(styling.inputShadow);
+    appendCssVariable("input-shadow", sanitizedShadow);
+  }
 
   // Options (Advanced)
   appendCssVariable("option-bg-color", styling.optionBgColor?.light ?? styling.inputColor?.light);
