@@ -24,7 +24,7 @@ import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
   name: ZUserName,
-  email: z.string().email(),
+  email: z.email(),
   password: ZUserPassword,
 });
 

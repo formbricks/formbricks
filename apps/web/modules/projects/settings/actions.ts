@@ -20,7 +20,7 @@ const ZUpdateProjectAction = z.object({
   data: ZProjectUpdateInput,
 });
 
-export const updateProjectAction = authenticatedActionClient.schema(ZUpdateProjectAction).action(
+export const updateProjectAction = authenticatedActionClient.inputSchema(ZUpdateProjectAction).action(
   withAuditLogging(
     "updated",
     "project",
@@ -86,7 +86,7 @@ const ZGetTeamsByOrganizationIdAction = z.object({
 });
 
 export const getTeamsByOrganizationIdAction = authenticatedActionClient
-  .schema(ZGetTeamsByOrganizationIdAction)
+  .inputSchema(ZGetTeamsByOrganizationIdAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

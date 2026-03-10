@@ -12,7 +12,7 @@ const ZUpdateNotificationSettingsAction = z.object({
 });
 
 export const updateNotificationSettingsAction = authenticatedActionClient
-  .schema(ZUpdateNotificationSettingsAction)
+  .inputSchema(ZUpdateNotificationSettingsAction)
   .action(
     withAuditLogging(
       "updated",

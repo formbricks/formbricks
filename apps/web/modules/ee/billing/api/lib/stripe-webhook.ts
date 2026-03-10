@@ -1,19 +1,23 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
-import { STRIPE_API_VERSION } from "@/lib/constants";
-import { env } from "@/lib/env";
 import { handleCheckoutSessionCompleted } from "@/modules/ee/billing/api/lib/checkout-session-completed";
 import { handleInvoiceFinalized } from "@/modules/ee/billing/api/lib/invoice-finalized";
 import { handleSubscriptionDeleted } from "@/modules/ee/billing/api/lib/subscription-deleted";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
-  apiVersion: STRIPE_API_VERSION,
-});
-
-const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
+import { getStripeClient, getStripeWebhookSecret } from "./stripe-client";
 
 export const webhookHandler = async (requestBody: string, stripeSignature: string) => {
+  let stripe: Stripe;
+  let webhookSecret: string;
   let event: Stripe.Event;
+
+  try {
+    stripe = getStripeClient();
+    webhookSecret = getStripeWebhookSecret();
+  } catch (err: unknown) {
+    logger.error(err, "Error getting Stripe client or webhook secret");
+    logger.warn("Stripe webhook skipped: Stripe is not configured");
+    return { status: 503, message: "Stripe webhook is not configured" };
+  }
 
   try {
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);

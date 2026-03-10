@@ -13,7 +13,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 
 const ZForgotPasswordForm = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 
 type TForgotPasswordForm = z.infer<typeof ZForgotPasswordForm>;

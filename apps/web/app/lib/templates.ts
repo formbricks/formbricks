@@ -34,7 +34,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[0],
@@ -47,7 +47,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               headline: t("templates.card_abandonment_survey_question_2_headline"),
@@ -67,7 +67,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.card_abandonment_survey_question_3_headline"),
@@ -78,7 +78,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               headline: t("templates.card_abandonment_survey_question_4_headline"),
@@ -92,7 +92,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -113,7 +113,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildConsentElement({
               id: reusableElementIds[1],
@@ -127,7 +127,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.card_abandonment_survey_question_7_headline"),
@@ -141,7 +141,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block8Id,
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -175,7 +175,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[0],
@@ -188,7 +188,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -210,7 +210,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.site_abandonment_survey_question_4_headline"),
@@ -221,7 +221,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               headline: t("templates.site_abandonment_survey_question_5_headline"),
@@ -235,7 +235,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -254,7 +254,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildConsentElement({
               id: reusableElementIds[1],
@@ -268,7 +268,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.site_abandonment_survey_question_8_headline"),
@@ -282,7 +282,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block8Id,
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -313,7 +313,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[0],
@@ -326,7 +326,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -344,7 +344,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -364,7 +364,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.product_market_fit_superhuman_question_4_headline"),
@@ -375,7 +375,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.product_market_fit_superhuman_question_5_headline"),
@@ -386,7 +386,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.product_market_fit_superhuman_question_6_headline"),
@@ -416,7 +416,7 @@ const onboardingSegmentation = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -436,7 +436,7 @@ const onboardingSegmentation = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -456,7 +456,7 @@ const onboardingSegmentation = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -501,7 +501,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -541,7 +541,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -556,7 +556,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[2],
@@ -573,7 +573,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[3],
@@ -587,7 +587,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block5Id,
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[4],
@@ -625,7 +625,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -644,7 +644,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -659,7 +659,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -673,7 +673,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[3],
@@ -698,7 +698,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.earned_advocacy_score_question_5_headline"),
@@ -729,7 +729,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -744,7 +744,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -759,7 +759,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -774,7 +774,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -789,7 +789,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -804,7 +804,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -819,7 +819,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -834,7 +834,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -849,7 +849,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 9",
+          name: t("templates.block_9"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -864,7 +864,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 10",
+          name: t("templates.block_10"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -912,7 +912,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -952,7 +952,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -967,7 +967,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -982,7 +982,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[3],
@@ -999,7 +999,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block5Id,
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[4],
@@ -1015,7 +1015,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block6Id,
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[5],
@@ -1054,7 +1054,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -1100,7 +1100,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[1],
@@ -1119,7 +1119,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -1152,7 +1152,7 @@ const interviewPrompt = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildCTAElement({
               headline: t("templates.interview_prompt_question_1_headline"),
@@ -1191,7 +1191,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -1224,7 +1224,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -1239,7 +1239,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -1254,7 +1254,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[3],
@@ -1269,7 +1269,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block5Id,
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[4],
@@ -1284,7 +1284,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block6Id,
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[5],
@@ -1317,7 +1317,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -1332,7 +1332,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1351,7 +1351,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.employee_satisfaction_question_3_headline"),
@@ -1363,7 +1363,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -1378,7 +1378,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.employee_satisfaction_question_6_headline"),
@@ -1390,7 +1390,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1428,7 +1428,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1448,7 +1448,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1468,7 +1468,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.uncover_strengths_and_weaknesses_question_3_headline"),
@@ -1499,7 +1499,7 @@ const productMarketFitShort = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1517,7 +1517,7 @@ const productMarketFitShort = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.product_market_fit_short_question_2_headline"),
@@ -1548,7 +1548,7 @@ const marketAttribution = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1587,7 +1587,7 @@ const changingSubscriptionExperience = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1607,7 +1607,7 @@ const changingSubscriptionExperience = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1643,7 +1643,7 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1680,7 +1680,7 @@ const featureChaser = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -1695,7 +1695,7 @@ const featureChaser = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -1732,7 +1732,7 @@ const fakeDoorFollowUp = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.fake_door_follow_up_question_1_headline"),
@@ -1748,7 +1748,7 @@ const fakeDoorFollowUp = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -1790,7 +1790,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -1815,7 +1815,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -1830,7 +1830,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[2],
@@ -1844,7 +1844,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[3],
@@ -1880,7 +1880,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -1926,7 +1926,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -1940,7 +1940,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -1972,7 +1972,7 @@ const newIntegrationSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2011,7 +2011,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2027,7 +2027,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.docs_feedback_question_2_headline"),
@@ -2038,7 +2038,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.docs_feedback_question_3_headline"),
@@ -2068,7 +2068,7 @@ const nps = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildNPSElement({
               headline: t("templates.nps_question_1_headline"),
@@ -2080,7 +2080,7 @@ const nps = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.nps_question_2_headline"),
@@ -2110,7 +2110,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 10,
@@ -2125,7 +2125,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2144,7 +2144,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -2168,7 +2168,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2187,7 +2187,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2206,7 +2206,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2225,7 +2225,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2244,7 +2244,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2263,7 +2263,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 9",
+          name: t("templates.block_9"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2282,7 +2282,7 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 10",
+          name: t("templates.block_10"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.csat_question_10_headline"),
@@ -2324,7 +2324,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -2371,7 +2371,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -2412,7 +2412,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -2427,7 +2427,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[3],
@@ -2443,7 +2443,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[4],
@@ -2457,7 +2457,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[5],
@@ -2478,7 +2478,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[6],
@@ -2511,7 +2511,7 @@ const identifyUpsellOpportunities = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2548,7 +2548,7 @@ const prioritizeFeatures = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2567,7 +2567,7 @@ const prioritizeFeatures = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2584,7 +2584,7 @@ const prioritizeFeatures = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.prioritize_features_question_3_headline"),
@@ -2615,7 +2615,7 @@ const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.gauge_feature_satisfaction_question_1_headline"),
@@ -2630,7 +2630,7 @@ const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.gauge_feature_satisfaction_question_2_headline"),
@@ -2660,7 +2660,7 @@ const marketSiteClarity = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2677,7 +2677,7 @@ const marketSiteClarity = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.market_site_clarity_question_2_headline"),
@@ -2688,7 +2688,7 @@ const marketSiteClarity = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildCTAElement({
               headline: t("templates.market_site_clarity_question_3_headline"),
@@ -2721,7 +2721,7 @@ const customerEffortScore = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -2735,7 +2735,7 @@ const customerEffortScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.customer_effort_score_question_2_headline"),
@@ -2766,7 +2766,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -2780,7 +2780,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -2794,7 +2794,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -2808,7 +2808,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -2822,7 +2822,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2844,7 +2844,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2884,7 +2884,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2900,7 +2900,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -2922,7 +2922,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -2938,7 +2938,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -2953,7 +2953,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -2995,7 +2995,7 @@ const rateCheckoutExperience = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -3041,7 +3041,7 @@ const rateCheckoutExperience = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -3056,7 +3056,7 @@ const rateCheckoutExperience = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -3090,7 +3090,7 @@ const measureSearchExperience = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -3136,7 +3136,7 @@ const measureSearchExperience = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -3151,7 +3151,7 @@ const measureSearchExperience = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -3185,7 +3185,7 @@ const evaluateContentQuality = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -3231,7 +3231,7 @@ const evaluateContentQuality = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -3246,7 +3246,7 @@ const evaluateContentQuality = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -3283,7 +3283,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -3308,7 +3308,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[1],
@@ -3354,7 +3354,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -3402,7 +3402,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[3],
@@ -3450,7 +3450,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block5Id,
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[4],
@@ -3500,7 +3500,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[0],
@@ -3513,7 +3513,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[1],
@@ -3559,7 +3559,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[2],
@@ -3594,7 +3594,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[3],
@@ -3609,7 +3609,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block5Id,
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[4],
@@ -3624,7 +3624,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block6Id,
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[5],
@@ -3639,7 +3639,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block7Id,
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[6],
@@ -3654,7 +3654,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block8Id,
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[7],
@@ -3668,7 +3668,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block9Id,
-          name: "Block 9",
+          name: t("templates.block_9"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[8],
@@ -3701,7 +3701,7 @@ const buildProductRoadmap = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -3716,7 +3716,7 @@ const buildProductRoadmap = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.build_product_roadmap_question_2_headline"),
@@ -3750,7 +3750,7 @@ const understandPurchaseIntention = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -3773,7 +3773,7 @@ const understandPurchaseIntention = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -3791,7 +3791,7 @@ const understandPurchaseIntention = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -3826,7 +3826,7 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[0],
@@ -3874,7 +3874,7 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -3892,7 +3892,7 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[2],
@@ -3940,7 +3940,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[0],
@@ -3953,7 +3953,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[1],
@@ -3974,7 +3974,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -3988,7 +3988,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildCTAElement({
               id: reusableElementIds[3],
@@ -4001,7 +4001,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildRatingElement({
               id: reusableElementIds[4],
@@ -4022,7 +4022,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block6Id,
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[5],
@@ -4037,7 +4037,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block7Id,
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[6],
@@ -4051,7 +4051,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block8Id,
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[7],
@@ -4090,7 +4090,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildMultipleChoiceElement({
               id: reusableElementIds[0],
@@ -4125,7 +4125,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block2Id,
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[1],
@@ -4140,7 +4140,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block3Id,
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
@@ -4155,7 +4155,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block4Id,
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[3],
@@ -4170,7 +4170,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block5Id,
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[4],
@@ -4185,7 +4185,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
         }),
         buildBlock({
           id: block6Id,
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[5],
@@ -4217,7 +4217,7 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.employee_well_being_question_1_headline"),
@@ -4231,7 +4231,7 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               headline: t("templates.employee_well_being_question_2_headline"),
@@ -4245,7 +4245,7 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               headline: t("templates.employee_well_being_question_3_headline"),
@@ -4259,7 +4259,7 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.employee_well_being_question_4_headline"),
@@ -4290,7 +4290,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -4305,7 +4305,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.long_term_retention_check_in_question_2_headline"),
@@ -4317,7 +4317,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -4336,7 +4336,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -4351,7 +4351,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 5",
+          name: t("templates.block_5"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.long_term_retention_check_in_question_5_headline"),
@@ -4363,7 +4363,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 6",
+          name: t("templates.block_6"),
           elements: [
             buildNPSElement({
               headline: t("templates.long_term_retention_check_in_question_6_headline"),
@@ -4376,7 +4376,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 7",
+          name: t("templates.block_7"),
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -4395,7 +4395,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 8",
+          name: t("templates.block_8"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.long_term_retention_check_in_question_8_headline"),
@@ -4407,7 +4407,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 9",
+          name: t("templates.block_9"),
           elements: [
             buildRatingElement({
               range: 5,
@@ -4422,7 +4422,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 10",
+          name: t("templates.block_10"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.long_term_retention_check_in_question_10_headline"),
@@ -4453,7 +4453,7 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.professional_development_growth_survey_question_1_headline"),
@@ -4467,7 +4467,7 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               headline: t("templates.professional_development_growth_survey_question_2_headline"),
@@ -4481,7 +4481,7 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               headline: t("templates.professional_development_growth_survey_question_3_headline"),
@@ -4495,7 +4495,7 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.professional_development_growth_survey_question_4_headline"),
@@ -4526,7 +4526,7 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.recognition_and_reward_survey_question_1_headline"),
@@ -4540,7 +4540,7 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               headline: t("templates.recognition_and_reward_survey_question_2_headline"),
@@ -4554,7 +4554,7 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               headline: t("templates.recognition_and_reward_survey_question_3_headline"),
@@ -4568,7 +4568,7 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.recognition_and_reward_survey_question_4_headline"),
@@ -4599,7 +4599,7 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.alignment_and_engagement_survey_question_1_headline"),
@@ -4613,7 +4613,7 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               headline: t("templates.alignment_and_engagement_survey_question_2_headline"),
@@ -4626,7 +4626,7 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               headline: t("templates.alignment_and_engagement_survey_question_3_headline"),
@@ -4640,7 +4640,7 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.alignment_and_engagement_survey_question_4_headline"),
@@ -4671,7 +4671,7 @@ const supportiveWorkCulture = (t: TFunction): TTemplate => {
       hiddenFields: hiddenFieldsDefault,
       blocks: [
         buildBlock({
-          name: "Block 1",
+          name: t("templates.block_1"),
           elements: [
             buildRatingElement({
               headline: t("templates.supportive_work_culture_survey_question_1_headline"),
@@ -4685,7 +4685,7 @@ const supportiveWorkCulture = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 2",
+          name: t("templates.block_2"),
           elements: [
             buildRatingElement({
               headline: t("templates.supportive_work_culture_survey_question_2_headline"),
@@ -4699,7 +4699,7 @@ const supportiveWorkCulture = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 3",
+          name: t("templates.block_3"),
           elements: [
             buildRatingElement({
               headline: t("templates.supportive_work_culture_survey_question_3_headline"),
@@ -4713,7 +4713,7 @@ const supportiveWorkCulture = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
-          name: "Block 4",
+          name: t("templates.block_4"),
           elements: [
             buildOpenTextElement({
               headline: t("templates.supportive_work_culture_survey_question_4_headline"),
@@ -4793,7 +4793,7 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
       blocks: [
         {
           id: createId(),
-          name: t("templates.custom_survey_block_1_name"),
+          name: t("templates.block_1"),
           elements: [
             {
               id: createId(),
@@ -4836,7 +4836,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
     blocks: [
       {
         id: "cltxxaa6x0000g8hacxdxeje1",
-        name: "Block 1",
+        name: t("templates.block_1"),
         elements: [
           {
             ...buildMultipleChoiceElement({
@@ -4871,7 +4871,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
       },
       {
         id: "cltxxaa6x0000g8hacxdxeje2",
-        name: "Block 2",
+        name: t("templates.block_2"),
         elements: [
           {
             ...buildRatingElement({

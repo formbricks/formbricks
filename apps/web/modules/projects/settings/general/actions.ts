@@ -14,7 +14,7 @@ const ZProjectDeleteAction = z.object({
   projectId: ZId,
 });
 
-export const deleteProjectAction = authenticatedActionClient.schema(ZProjectDeleteAction).action(
+export const deleteProjectAction = authenticatedActionClient.inputSchema(ZProjectDeleteAction).action(
   withAuditLogging(
     "deleted",
     "project",

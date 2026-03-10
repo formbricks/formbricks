@@ -15,6 +15,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendResponseFinishedEmail } from "@/modules/email";
@@ -135,13 +136,17 @@ export const POST = async (request: Request) => {
       );
     }
 
-    return fetchWithTimeout(webhook.url, {
-      method: "POST",
-      headers: requestHeaders,
-      body,
-    }).catch((error) => {
-      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
-    });
+    return validateWebhookUrl(webhook.url)
+      .then(() =>
+        fetchWithTimeout(webhook.url, {
+          method: "POST",
+          headers: requestHeaders,
+          body,
+        })
+      )
+      .catch((error) => {
+        logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
+      });
   });
 
   if (event === "responseFinished") {

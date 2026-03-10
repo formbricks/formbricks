@@ -35,7 +35,7 @@ const ZUpdateOrganizationEmailLogoUrlAction = z.object({
 });
 
 export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient
-  .schema(ZUpdateOrganizationEmailLogoUrlAction)
+  .inputSchema(ZUpdateOrganizationEmailLogoUrlAction)
   .action(
     withAuditLogging(
       "updated",
@@ -71,7 +71,7 @@ const ZRemoveOrganizationEmailLogoUrlAction = z.object({
 });
 
 export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
-  .schema(ZRemoveOrganizationEmailLogoUrlAction)
+  .inputSchema(ZRemoveOrganizationEmailLogoUrlAction)
   .action(
     withAuditLogging(
       "updated",
@@ -102,7 +102,7 @@ const ZSendTestEmailAction = z.object({
 });
 
 export const sendTestEmailAction = authenticatedActionClient
-  .schema(ZSendTestEmailAction)
+  .inputSchema(ZSendTestEmailAction)
   .action(async ({ ctx, parsedInput }) => {
     const organization = await getOrganization(parsedInput.organizationId);
 

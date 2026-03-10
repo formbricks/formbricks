@@ -27,7 +27,7 @@ const ZGetResponsesDownloadUrlAction = z.object({
 });
 
 export const getResponsesDownloadUrlAction = authenticatedActionClient
-  .schema(ZGetResponsesDownloadUrlAction)
+  .inputSchema(ZGetResponsesDownloadUrlAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -57,7 +57,7 @@ const ZGetSurveyFilterDataAction = z.object({
 });
 
 export const getSurveyFilterDataAction = authenticatedActionClient
-  .schema(ZGetSurveyFilterDataAction)
+  .inputSchema(ZGetSurveyFilterDataAction)
   .action(async ({ ctx, parsedInput }) => {
     const survey = await getSurvey(parsedInput.surveyId);
 
@@ -120,7 +120,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).action(
+export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey).action(
   withAuditLogging(
     "updated",
     "survey",

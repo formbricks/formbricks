@@ -46,7 +46,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const updateSurveyDraftAction = authenticatedActionClient.schema(ZSurveyDraft).action(
+export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSurveyDraft).action(
   withAuditLogging(
     "updated",
     "survey",
@@ -98,7 +98,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.schema(ZSurveyD
   )
 );
 
-export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).action(
+export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey).action(
   withAuditLogging(
     "updated",
     "survey",
@@ -146,11 +146,11 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
 );
 
 const ZRefetchProjectAction = z.object({
-  projectId: z.string().cuid2(),
+  projectId: z.cuid2(),
 });
 
 export const refetchProjectAction = authenticatedActionClient
-  .schema(ZRefetchProjectAction)
+  .inputSchema(ZRefetchProjectAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -177,7 +177,7 @@ const ZGetImagesFromUnsplashAction = z.object({
 });
 
 export const getImagesFromUnsplashAction = actionClient
-  .schema(ZGetImagesFromUnsplashAction)
+  .inputSchema(ZGetImagesFromUnsplashAction)
   .action(async ({ parsedInput }) => {
     if (!UNSPLASH_ACCESS_KEY) {
       throw new Error("Unsplash access key is not set");
@@ -227,11 +227,11 @@ const isValidUnsplashUrl = (url: string): boolean => {
 };
 
 const ZTriggerDownloadUnsplashImageAction = z.object({
-  downloadUrl: z.string().url(),
+  downloadUrl: z.url(),
 });
 
 export const triggerDownloadUnsplashImageAction = actionClient
-  .schema(ZTriggerDownloadUnsplashImageAction)
+  .inputSchema(ZTriggerDownloadUnsplashImageAction)
   .action(async ({ parsedInput }) => {
     if (!isValidUnsplashUrl(parsedInput.downloadUrl)) {
       throw new Error("Invalid Unsplash URL");
@@ -254,7 +254,7 @@ const ZCreateActionClassAction = z.object({
   action: ZActionClassInput,
 });
 
-export const createActionClassAction = authenticatedActionClient.schema(ZCreateActionClassAction).action(
+export const createActionClassAction = authenticatedActionClient.inputSchema(ZCreateActionClassAction).action(
   withAuditLogging(
     "created",
     "actionClass",

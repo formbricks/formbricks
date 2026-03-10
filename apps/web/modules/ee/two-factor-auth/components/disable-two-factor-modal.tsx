@@ -32,8 +32,8 @@ const ZDisableTwoFactorFormState = z
     backupCode: z.string().optional(),
   })
   .refine((data) => (!!data.code && !data.backupCode) || (!data.code && !!data.backupCode), {
-    message: "Please provide either the code OR the backup code",
     path: ["code"],
+    error: "Please provide either the code OR the backup code",
   });
 
 type TDisableTwoFactorFormState = z.infer<typeof ZDisableTwoFactorFormState>;

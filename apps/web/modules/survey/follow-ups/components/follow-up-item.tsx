@@ -110,7 +110,7 @@ export const FollowUpItem = ({
     const newFollowUp = {
       ...followUp,
       id: createId(),
-      name: `${followUp.name} (copy)`,
+      name: `${followUp.name} ${t("common.duplicate_copy")}`,
     };
 
     setLocalSurvey((prev) => ({

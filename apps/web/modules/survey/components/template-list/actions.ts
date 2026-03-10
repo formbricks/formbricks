@@ -14,7 +14,7 @@ import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZCreateSurveyAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   surveyBody: ZSurveyCreateInput,
 });
 
@@ -38,7 +38,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   }
 };
 
-export const createSurveyAction = authenticatedActionClient.schema(ZCreateSurveyAction).action(
+export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateSurveyAction).action(
   withAuditLogging(
     "created",
     "survey",

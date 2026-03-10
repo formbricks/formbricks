@@ -1,8 +1,5 @@
 import type { Organization } from "@prisma/client";
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
-
-extendZodWithOpenApi(z);
 
 export const ZOrganizationWhiteLabel = z.object({
   logoUrl: z.string().nullable(),
@@ -10,8 +7,8 @@ export const ZOrganizationWhiteLabel = z.object({
 
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
-  plan: z.enum(["free", "startup", "scale", "enterprise"]).default("free"),
-  period: z.enum(["monthly", "yearly"]).default("monthly"),
+  plan: z.enum(["free", "startup", "scale", "enterprise"]).prefault("free"),
+  period: z.enum(["monthly", "yearly"]).prefault("monthly"),
   limits: z
     .object({
       projects: z.number().nullable(),
@@ -20,7 +17,7 @@ export const ZOrganizationBilling = z.object({
         miu: z.number().nullable(),
       }),
     })
-    .default({
+    .prefault({
       projects: 3,
       monthly: {
         responses: 1500,
@@ -31,11 +28,11 @@ export const ZOrganizationBilling = z.object({
 });
 
 export const ZOrganization = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   name: z.string(),
   whitelabel: ZOrganizationWhiteLabel,
   billing: ZOrganizationBilling as z.ZodType<Organization["billing"]>,
-  isAIEnabled: z.boolean().default(false) as z.ZodType<Organization["isAIEnabled"]>,
+  isAIEnabled: z.boolean().prefault(false) as z.ZodType<Organization["isAIEnabled"]>,
 }) satisfies z.ZodType<Organization>;
