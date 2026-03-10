@@ -233,6 +233,7 @@
               "self-hosting/configuration/smtp",
               "self-hosting/configuration/file-uploads",
               "self-hosting/configuration/domain-configuration",
+              "self-hosting/configuration/cdn",
               "self-hosting/configuration/custom-subpath",
               {
                 "group": "Auth & SSO",
@@ -240,6 +241,7 @@
                 "pages": [
                   "self-hosting/auth-behavior",
                   "self-hosting/configuration/auth-sso/open-id-connect",
+                  "self-hosting/configuration/auth-sso/keycloak-oidc",
                   "self-hosting/configuration/auth-sso/azure-ad-oauth",
                   "self-hosting/configuration/auth-sso/google-oauth",
                   "self-hosting/configuration/auth-sso/saml-sso"
