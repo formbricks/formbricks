@@ -105,8 +105,8 @@ Every time you update Formbricks, include CDN cache handling in your rollout:
     deployment process.
   </Step>
   <Step title="Purge or revalidate public assets">
-    Purge the CDN cache for at least <code>/js/*</code>, <code>/_next/*</code>, and <code>/css/*</code>. If your CDN
-    supports targeted purges, make sure <code>/js/surveys.umd.cjs</code> is included every time.
+    Purge the CDN cache for at least `/js/*`, `/_next/*`, and `/css/*`. If your CDN
+    supports targeted purges, make sure `/js/surveys.umd.cjs` is included every time.
   </Step>
   <Step title="Check the public domain after the purge">
     Open a survey or embedded survey through the public domain and verify in the browser network tab that the
