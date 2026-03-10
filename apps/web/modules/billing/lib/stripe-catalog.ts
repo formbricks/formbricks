@@ -8,6 +8,5 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   QUOTA_MANAGEMENT: "quota-management",
   RBAC: "rbac",
   SPAM_PROTECTION: "spam-protection",
-  MULTI_LANGUAGE_SURVEYS: "multi-language-surveys",
   CONTACTS: "contacts",
 } as const;

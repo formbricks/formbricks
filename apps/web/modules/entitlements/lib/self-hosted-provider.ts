@@ -24,9 +24,6 @@ const mapLicenseFeaturesToEntitlements = (
   if (features.spamProtection) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.SPAM_PROTECTION);
   }
-  if (features.multiLanguageSurveys) {
-    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.MULTI_LANGUAGE_SURVEYS);
-  }
   if (features.contacts) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS);
   }

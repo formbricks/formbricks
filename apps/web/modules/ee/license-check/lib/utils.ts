@@ -35,7 +35,6 @@ const getCustomPlanFeaturePermission = async (
     const featureLookupKeyMap: Record<string, string> = {
       accessControl: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.RBAC,
       quotas: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.QUOTA_MANAGEMENT,
-      multiLanguageSurveys: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.MULTI_LANGUAGE_SURVEYS,
       contacts: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS,
     };
     const lookupKey = featureLookupKeyMap[featureKey];

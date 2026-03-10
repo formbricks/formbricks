@@ -8,7 +8,6 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   "quota-management": "quotas",
   rbac: "accessControl",
   "spam-protection": "spamProtection",
-  "multi-language-surveys": "multiLanguageSurveys",
   contacts: "contacts",
 };
 
