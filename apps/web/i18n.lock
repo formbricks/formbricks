@@ -148,11 +148,12 @@ checksums:
     common/copy: 627c00d2c850b9b45f7341a6ac01b6bb
     common/copy_code: 704c13d9bc01caad29a1cf3179baa111
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
-    common/count_attributes: 042fba9baffef5afe2c24f13d4f50697
-    common/count_contacts: b1c413a4b06961b71b6aeee95d6775d7
-    common/count_members: 8cabb9805075f20e3977b919b3b2fdc5
-    common/count_responses: 690118a456c01c5b4d437ae82b50b131
-    common/count_selections: c0f581d21468af2f46dad171921f71ba
+    common/count_attributes: 48805e836a9b50f9635ad00fed953058
+    common/count_contacts: 9f71d503455264f1eec1ae58894cf143
+    common/count_members: 31ce64ca63fdf95e02ab5543b6e2f717
+    common/count_questions: a7a34376a01eda781381fe7544541293
+    common/count_responses: 437e022825c7a08481d8f7e56926742d
+    common/count_selections: a1ec41682b9a7d8601c3905dfba34e16
     common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
@@ -251,7 +252,6 @@ checksums:
     common/look_and_feel: 9125503712626d495cedec7a79f1418c
     common/manage: a3d40c0267b81ae53c9598eaeb05087d
     common/marketing: fcf0f06f8b64b458c7ca6d95541a3cc8
-    common/member: 1606dc30b369856b9dba1fe9aec425d2
     common/members: 0932e80cba1e3e0a7f52bb67ff31da32
     common/members_and_teams: bf5c3fadcb9fc23533ec1532b805ac08
     common/membership_not_found: 7ac63584af23396aace9992ad919ffd4
@@ -359,8 +359,6 @@ checksums:
     common/select_teams: ae5d451929846ae6367562bc671a1af9
     common/selected: 9f09e059ba20c88ed34e2b4e8e032d56
     common/selected_questions: beffe92d5272d99a0022f004e6a6ad73
-    common/selection: 25b570dc6339916a7aada2142aca0cd1
-    common/selections: 82f0681bf0208e25d7efedc23c556b8f
     common/send_test_email: 2fd3ea40199b9589132ac826a5b0f3f5
     common/session_not_found: e9622df3170dbfd9636403bb0c22295b
     common/settings: 8df6777277469c1fd88cc18dde2f1cc3
@@ -1200,11 +1198,13 @@ checksums:
     environments/surveys/edit/adjust_survey_closed_message: ae6f38c9daf08656362bd84459a312fa
     environments/surveys/edit/adjust_survey_closed_message_description: e906aebd9af6451a2a39c73287927299
     environments/surveys/edit/adjust_the_theme_in_the: bccdafda8af5871513266f668b55d690
+    environments/surveys/edit/all_are_true: 05d02c5afac857da530b73dcf18dd8e4
     environments/surveys/edit/all_other_answers_will_continue_to: 9a5d09eea42ff5fd1c18cc58a14dcabd
     environments/surveys/edit/allow_multi_select: 7b4b83f7a0205e2a0a8971671a69a174
     environments/surveys/edit/allow_multiple_files: dbd99f9d1026e4f7c5a5d03f71ba379d
     environments/surveys/edit/allow_users_to_select_more_than_one_image: d683e0b538d1366400292a771f3fbd08
     environments/surveys/edit/and_launch_surveys_in_your_website_or_app: a3edcdb4aea792a27d90aad1930f001a
+    environments/surveys/edit/any_is_true: 32c9f3998984fd32a2b5bc53f2d97429
     environments/surveys/edit/animation: 66a18eacfb92fc9fc9db188d2dde4f81
     environments/surveys/edit/app_survey_description: bdfacfce478e97f70b700a1382dfa687
     environments/surveys/edit/assign: e80715ab64bf7cf463abb3a9fd1ad516
@@ -1496,6 +1496,7 @@ checksums:
     environments/surveys/edit/question_deleted: ecdeb22b81ae2d732656a7742c1eec7b
     environments/surveys/edit/question_duplicated: 3f02439fd0a8b818bc84c1b1b473898c
     environments/surveys/edit/question_id_updated: e8d94dbefcbad00c7464b3d1fb0ee81a
+    environments/surveys/edit/question_number: 742636e9d2d5dcc7ee6ca1b3016bcee7
     environments/surveys/edit/question_used_in_logic_warning_text: ec78767a7cf335222d41b98cb5baa6be
     environments/surveys/edit/question_used_in_logic_warning_title: 4bb8528cdc3b8649c194487067737f6d
     environments/surveys/edit/question_used_in_quota: ceb5e88f6916e4863e589c6be030bb3b
@@ -1685,6 +1686,7 @@ checksums:
     environments/surveys/edit/waiting_time_across_surveys: 6873c18d51830e2cadef67cce6a2c95c
     environments/surveys/edit/waiting_time_across_surveys_description: 6edafaeb3ccd8cadde81175776636c8e
     environments/surveys/edit/welcome_message: 986a434e3895c8ee0b267df95cc40051
+    environments/surveys/edit/when: a40ad3eed1b75e76226290eeb9bb20cd
     environments/surveys/edit/without_a_filter_all_of_your_users_can_be_surveyed: 451990569c61f25d01044cc45b1ce122
     environments/surveys/edit/you_have_not_created_a_segment_yet: c6658bd1cee9c5c957c675db044708dd
     environments/surveys/edit/your_description_here_recall_information_with: 60f73a3cc9bdb9afea2166a7db8fd618
@@ -2248,6 +2250,16 @@ checksums:
     templates/alignment_and_engagement_survey_question_4_headline: e36be56ce8aad1d0ca04939bea4e39b7
     templates/alignment_and_engagement_survey_question_4_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/back: f541015a827e37cb3b1234e56bc2aa3c
+    templates/block_1: 5e1b4dce0cb70662441b663507a69454
+    templates/block_2: f50d8aab8b44f168a2ab00526d4f9a2c
+    templates/block_3: 78d84f8e4763a95710543c5368ce8a41
+    templates/block_4: 2c346374f245a6821940c061b855ac69
+    templates/block_5: 975abfc66e8e377478ff691a040dda0b
+    templates/block_6: 2bd10f1edb210243c5ab459c59e02d30
+    templates/block_7: 13f0f680c09c96081e125123ad2f6786
+    templates/block_8: 1be1b18e159e8c8d11d2fb1082ea5d98
+    templates/block_9: 2da3894d05e4415fa043ba18d11d60e2
+    templates/block_10: 09a42e99b34b45700e734730acfe37ed
     templates/book_interview: 1cc9c72d1c088b28e5dfa5ec7d7b78c4
     templates/build_product_roadmap_description: 6ca163ed3b0095cedcbc11822a0d502a
     templates/build_product_roadmap_name: 8c216b183c3539c0340ce87465a391cc
@@ -2455,7 +2467,6 @@ checksums:
     templates/csat_survey_question_3_headline: 25974b7f1692cad41908fe305830b6c0
     templates/csat_survey_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/cta_description: bc94a2ddc965b286a8677b0642696c7e
-    templates/custom_survey_block_1_name: 5e1b4dce0cb70662441b663507a69454
     templates/custom_survey_description: 0492afdea2ef1bd683eaf48a2bad2caa
     templates/custom_survey_name: 6fc756927ca9ea22c26368cccd64a67e
     templates/custom_survey_question_1_headline: 0abf9d41e0b5c5567c3833fd63048398
