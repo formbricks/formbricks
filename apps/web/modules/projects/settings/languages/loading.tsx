@@ -9,6 +9,12 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 
 export const LanguagesLoading = () => {
   const { t } = useTranslation();
+  const loaderIds: string[] = [
+    "6ac6e8d8-1448-49cd-9f7b-0843a1fb2f23",
+    "6ac6e8d8-1448-49cd-9f7b-0843a1fb2f24",
+    "6ac6e8d8-1448-49cd-9f7b-0843a1fb2f25",
+  ];
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.workspace_configuration")}>
@@ -19,8 +25,8 @@ export const LanguagesLoading = () => {
         description={t("environments.workspace.languages.multi_language_surveys_description")}>
         <div className="flex flex-col space-y-4">
           <LanguageLabels />
-          {[...Array(3)].map((_, idx) => (
-            <div key={idx} className="my-3 grid h-10 grid-cols-4 gap-4">
+          {loaderIds.map((id) => (
+            <div key={id} className="my-3 grid h-10 grid-cols-4 gap-4">
               <div className="h-full animate-pulse rounded-md bg-slate-200" />
               <div className="h-full animate-pulse rounded-md bg-slate-200" />
               <div className="h-full animate-pulse rounded-md bg-slate-200" />

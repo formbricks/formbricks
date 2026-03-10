@@ -136,7 +136,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         const errorMessage = getFormattedErrorMessage(surveysUsingLanguageResponse);
         toast.error(errorMessage);
       }
-    } catch (err) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
@@ -153,7 +153,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       toast.success(t("environments.workspace.languages.language_deleted_successfully"));
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
-    } catch (err) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     }

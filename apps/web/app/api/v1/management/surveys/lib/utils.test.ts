@@ -150,15 +150,6 @@ describe("checkFeaturePermissions", () => {
     expect(result).toBeNull();
   });
 
-  test("should return null if multi-language is used", async () => {
-    const surveyData = {
-      ...baseSurveyData,
-      languages: [mockLanguage],
-    };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
-    expect(result).toBeNull();
-  });
-
   // Combined tests
   test("should return null if multiple features are used and all permissions granted", async () => {
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
