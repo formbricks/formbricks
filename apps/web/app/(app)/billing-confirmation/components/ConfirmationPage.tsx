@@ -20,17 +20,19 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
   useEffect(() => {
     setShowConfetti(true);
 
-    if (typeof window === "undefined") {
+    if (typeof globalThis.window === "undefined") {
       return;
     }
 
     if (environmentId) {
-      window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
+      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
       setResolvedEnvironmentId(environmentId);
       return;
     }
 
-    const storedEnvironmentId = window.sessionStorage.getItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY);
+    const storedEnvironmentId = globalThis.window.sessionStorage.getItem(
+      BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY
+    );
     if (storedEnvironmentId) {
       setResolvedEnvironmentId(storedEnvironmentId);
     }

@@ -56,8 +56,7 @@ export const getMonthlyUsageCycleWindow = (
     return getCalendarMonthWindow(now);
   }
 
-  const anchor =
-    usageCycleAnchor instanceof Date ? new Date(usageCycleAnchor.getTime()) : new Date(usageCycleAnchor);
+  const anchor = new Date(usageCycleAnchor);
 
   let monthOffset =
     (now.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + (now.getUTCMonth() - anchor.getUTCMonth());

@@ -57,7 +57,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
         accessControl: true,
         quotas: false,
         spamProtection: true,
-        multiLanguageSurveys: true,
+        contacts: true,
         projects: 10,
       },
     } as any);
@@ -67,7 +67,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     expect(result.features).toContain("hide-branding");
     expect(result.features).toContain("rbac");
     expect(result.features).toContain("spam-protection");
-    expect(result.features).toContain("multi-language-surveys");
+    expect(result.features).toContain("contacts");
     expect(result.features).not.toContain("quota-management");
     expect(result.limits.projects).toBe(10);
   });
