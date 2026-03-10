@@ -20,7 +20,7 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
   useEffect(() => {
     setShowConfetti(true);
 
-    if (typeof globalThis.window === "undefined") {
+    if (globalThis.window === undefined) {
       return;
     }
 

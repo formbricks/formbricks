@@ -187,7 +187,7 @@ export const PricingTable = ({
       return;
     }
 
-    if (typeof globalThis.window !== "undefined") {
+    if (globalThis.window !== undefined) {
       globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
     }
 
