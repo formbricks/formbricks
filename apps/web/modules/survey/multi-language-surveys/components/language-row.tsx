@@ -10,7 +10,6 @@ import { LanguageSelect } from "./language-select";
 interface LanguageRowProps {
   language: Language;
   isEditing: boolean;
-  index: number;
   onLanguageChange: (newLanguage: Language) => void;
   onDelete: () => void;
   locale: TUserLocale;

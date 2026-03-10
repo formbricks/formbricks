@@ -2,7 +2,6 @@
 
 import { Language } from "@prisma/client";
 import { TFunction } from "i18next";
-import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -199,7 +198,6 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
             <LanguageLabels />
             {languages.map((language, index) => (
               <LanguageRow
-                index={index}
                 isEditing={isEditing}
                 key={language.id}
                 language={language}
