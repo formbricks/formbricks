@@ -46,7 +46,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZDeleteQuotaAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkQuotasEnabled(organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -58,7 +58,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
             minPermission: "readWrite",
           },
         ],
@@ -91,7 +91,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZUpdateQuotaAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkQuotasEnabled(organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -103,7 +103,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
+            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
             minPermission: "readWrite",
           },
         ],

@@ -108,7 +108,7 @@ export const updateSegmentAction = authenticatedActionClient.schema(ZUpdateSegme
     "updated",
     "segment",
     async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
