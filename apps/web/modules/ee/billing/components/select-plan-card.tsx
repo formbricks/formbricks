@@ -4,26 +4,21 @@ import { CheckIcon, GiftIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import calLogo from "@/images/customer-logos/cal-logo-light.svg";
 import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
+import { startScaleTrialAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
   /** URL to redirect after starting trial or continuing with free */
   nextUrl: string;
+  organizationId: string;
 }
-
-const TRIAL_FEATURES = [
-  "Fully white-labeled surveys",
-  "All team & collaboration features",
-  "Setup custom webhooks",
-  "Get full API access",
-  "Setup email follow-ups",
-  "Manage quotas",
-];
 
 const CUSTOMER_LOGOS = [
   { src: siemensLogo, alt: "Siemens" },
@@ -33,14 +28,37 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl }: SelectPlanCardProps) => {
+export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const { t } = useTranslation();
+
+  const TRIAL_FEATURE_KEYS = [
+    t("environments.settings.billing.trial_feature_whitelabel"),
+    t("environments.settings.billing.trial_feature_collaboration"),
+    t("environments.settings.billing.trial_feature_webhooks"),
+    t("environments.settings.billing.trial_feature_api_access"),
+    t("environments.settings.billing.trial_feature_email_followups"),
+    t("environments.settings.billing.trial_feature_quotas"),
+  ] as const;
 
   const handleStartTrial = async () => {
     setIsStartingTrial(true);
-    // TODO: Implement trial activation via Stripe
-    router.push(nextUrl);
+    try {
+      const result = await startScaleTrialAction({ organizationId });
+      if (result?.data) {
+        router.push(nextUrl);
+      } else if (result?.serverError === "trial_already_used") {
+        toast.error(t("environments.settings.billing.trial_already_used"));
+        setIsStartingTrial(false);
+      } else {
+        toast.error(t("environments.settings.billing.failed_to_start_trial"));
+        setIsStartingTrial(false);
+      }
+    } catch {
+      toast.error(t("environments.settings.billing.failed_to_start_trial"));
+      setIsStartingTrial(false);
+    }
   };
 
   const handleContinueFree = () => {
@@ -57,15 +75,17 @@ export const SelectPlanCard = ({ nextUrl }: SelectPlanCardProps) => {
           </div>
 
           <div className="text-center">
-            <h3 className="text-2xl font-semibold text-slate-800">Try Pro features for free!</h3>
-            <p className="mt-2 text-slate-600">14 days trial, no credit card required</p>
+            <h3 className="text-2xl font-semibold text-slate-800">
+              {t("environments.settings.billing.trial_title")}
+            </h3>
+            <p className="mt-2 text-slate-600">{t("environments.settings.billing.trial_no_credit_card")}</p>
           </div>
 
           <ul className="w-full space-y-3 text-left">
-            {TRIAL_FEATURES.map((feature) => (
-              <li key={feature} className="flex items-center gap-3 text-slate-700">
+            {TRIAL_FEATURE_KEYS.map((key) => (
+              <li key={key} className="flex items-center gap-3 text-slate-700">
                 <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
-                <span>{feature}</span>
+                <span>{t(key)}</span>
               </li>
             ))}
           </ul>
@@ -76,7 +96,7 @@ export const SelectPlanCard = ({ nextUrl }: SelectPlanCardProps) => {
             className="mt-4 w-full"
             loading={isStartingTrial}
             disabled={isStartingTrial}>
-            Start Free Trial
+            {t("common.start_free_trial")}
           </Button>
         </div>
 
@@ -103,7 +123,7 @@ export const SelectPlanCard = ({ nextUrl }: SelectPlanCardProps) => {
       <button
         onClick={handleContinueFree}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        I want to stay on the Hobby plan
+        {t("environments.settings.billing.stay_on_hobby_plan")}
       </button>
     </div>
   );

@@ -14,7 +14,7 @@ export const SelectPlanOnboarding = ({ organizationId }: SelectPlanOnboardingPro
         title="Ship professional, unbranded surveys today!"
         subtitle="No credit card required, no strings attached."
       />
-      <SelectPlanCard nextUrl={nextUrl} />
+      <SelectPlanCard nextUrl={nextUrl} organizationId={organizationId} />
     </div>
   );
 };

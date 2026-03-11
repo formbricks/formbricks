@@ -909,6 +909,7 @@ checksums:
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/cancelling: 6e46e789720395bfa1e3a4b3b1519634
+    environments/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
     environments/settings/billing/manage_subscription: 31cafd367fc70d656d8dd979d537dc96
     environments/settings/billing/plan_hobby: 3e96a8e688032f9bd21b436bc70c19d5
     environments/settings/billing/plan_pro: 682b3c9feab30112b4454cb5bb7974b1
@@ -923,10 +924,20 @@ checksums:
     environments/settings/billing/scale_feature_spam: 8a8229b6ac3f3e0427fd347cb667ce11
     environments/settings/billing/scale_feature_teams: f6e8428f6cdb227176a5fa8c5c95c976
     environments/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
+    environments/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     environments/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     environments/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
+    environments/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
+    environments/settings/billing/trial_feature_api_access: d7aabb2de18beb5bd30c274cd768a2a9
+    environments/settings/billing/trial_feature_collaboration: a43509fffe319e14d69a981ef2791517
+    environments/settings/billing/trial_feature_email_followups: add368efdd84c5aef8886f369d54cbed
+    environments/settings/billing/trial_feature_quotas: 3a67818b3901bdaa72abc62db72ab170
+    environments/settings/billing/trial_feature_webhooks: 8d7f034e006b2fe0eb8fa9b8f1abef51
+    environments/settings/billing/trial_feature_whitelabel: 624a7aeca6a0fa65935c63fd7a8e9638
+    environments/settings/billing/trial_no_credit_card: 01c70aa6e1001815a9a11951394923ca
+    environments/settings/billing/trial_title: 23d0d2cbe306ae0f784b8289bf66a2c7
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2

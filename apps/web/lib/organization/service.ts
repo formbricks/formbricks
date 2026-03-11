@@ -19,7 +19,7 @@ import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import {
-  deleteStripeCustomer,
+  cleanupStripeCustomer,
   ensureCloudStripeSetupForOrganization,
 } from "@/modules/ee/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
@@ -320,10 +320,10 @@ export const deleteOrganization = async (organizationId: string) => {
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {
-      deleteStripeCustomer(stripeCustomerId).catch((error) => {
+      cleanupStripeCustomer(stripeCustomerId).catch((error) => {
         logger.error(
           { error, organizationId, stripeCustomerId },
-          "Failed to delete Stripe customer after organization deletion"
+          "Failed to clean up Stripe customer after organization deletion"
         );
       });
     }
