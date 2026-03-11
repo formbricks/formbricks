@@ -33,13 +33,13 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
   };
 
   const isNoCodeClick = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "click";
-  const isNoCodePageDwell = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "pageDwell";
+  const isNoCodeTimeOnPage = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "pageDwell";
 
   const clickConfig = isNoCodeClick
     ? (actionClass.noCodeConfig as Extract<typeof actionClass.noCodeConfig, { type: "click" }>)
     : null;
 
-  const pageDwellConfig = isNoCodePageDwell
+  const timeOnPageConfig = isNoCodeTimeOnPage
     ? (actionClass.noCodeConfig as Extract<typeof actionClass.noCodeConfig, { type: "pageDwell" }>)
     : null;
 
@@ -65,9 +65,14 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
         </InfoItem>
       )}
 
-      {pageDwellConfig && (
+      {timeOnPageConfig && (
         <InfoItem>
-          {t("environments.actions.time_in_seconds")}: <b>{pageDwellConfig.timeInSeconds}s</b>
+          {t("environments.actions.time_in_seconds")}:{" "}
+          <b>
+            {t("environments.actions.time_in_seconds_with_unit", {
+              seconds: timeOnPageConfig.timeInSeconds,
+            })}
+          </b>
         </InfoItem>
       )}
 

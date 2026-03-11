@@ -68,7 +68,7 @@ const ZActionClassNoCodeConfigfiftyPercentScroll = ZActionClassNoCodeConfigBase.
   type: z.literal("fiftyPercentScroll"),
 });
 
-const ZActionClassNoCodeConfigPageDwell = ZActionClassNoCodeConfigBase.extend({
+const ZActionClassNoCodeConfigTimeOnPage = ZActionClassNoCodeConfigBase.extend({
   type: z.literal("pageDwell"),
   timeInSeconds: z.number().int().min(1).max(3600),
 });
@@ -78,7 +78,7 @@ export const ZActionClassNoCodeConfig = z.union([
   ZActionClassNoCodeConfigPageView,
   ZActionClassNoCodeConfigExitIntent,
   ZActionClassNoCodeConfigfiftyPercentScroll,
-  ZActionClassNoCodeConfigPageDwell,
+  ZActionClassNoCodeConfigTimeOnPage,
 ]);
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;

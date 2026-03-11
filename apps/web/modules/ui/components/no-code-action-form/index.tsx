@@ -41,7 +41,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
                     { value: "pageView", label: t("environments.actions.page_view") },
                     { value: "exitIntent", label: t("environments.actions.exit_intent") },
                     { value: "fiftyPercentScroll", label: t("environments.actions.fifty_percent_scroll") },
-                    { value: "pageDwell", label: t("environments.actions.page_dwell") },
+                    { value: "pageDwell", label: t("environments.actions.time_on_page") },
                   ]}
                 />
               </div>
@@ -101,7 +101,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
           <div className="flex flex-col gap-2">
             <Alert>
               <InfoIcon className="h-4 w-4" />
-              <AlertTitle>{t("environments.actions.page_dwell")}</AlertTitle>
+              <AlertTitle>{t("environments.actions.time_on_page")}</AlertTitle>
               <AlertDescription>
                 {t("environments.actions.this_action_will_be_triggered_after_user_stays_on_page")}
               </AlertDescription>

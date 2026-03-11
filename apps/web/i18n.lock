@@ -562,7 +562,6 @@ checksums:
     environments/actions/matches_regex: 208b4d02b38714b4523923239e4a66b0
     environments/actions/on_all_pages: ccb8ee531a55e21eb8157c36fa75ad9a
     environments/actions/or: 0208d355f231c386b19390f0bea41b95
-    environments/actions/page_dwell: d1befa2a2894870b1bee1bac78f5b0b3
     environments/actions/page_filter: fe98a0bcbedb938e58cc3730589caa95
     environments/actions/page_view: 019c12b6739f6f7b1500f96ee275d47c
     environments/actions/select_match_type: b555dce1cb5c61538d3fbd792b2c71a2
@@ -577,6 +576,8 @@ checksums:
     environments/actions/this_is_a_code_action_please_make_changes_in_your_code_base: 27e64863fdebca791ca129ac0c3da3d5
     environments/actions/time_in_seconds: 822be76950e5f614ed23f52ba1d4825f
     environments/actions/time_in_seconds_placeholder: e54a4c40e0c6b43fb2e97bd32cab8da8
+    environments/actions/time_in_seconds_with_unit: a743b7844c71ddad364a93872682ae9e
+    environments/actions/time_on_page: b712a3e809669be7384a52a801777408
     environments/actions/track_new_user_action: 7133de99e7561128cfc6631ab2e592de
     environments/actions/track_user_action_to_display_surveys_or_create_user_segment: 2794a2dc51e48f1178d5d759db68029c
     environments/actions/url: ca97457614226960d41dd18c3c29c86b

@@ -29,10 +29,10 @@ const trackNoCodePageViewActionHandler = createTrackNoCodeActionWithContext("pag
 const trackNoCodeClickActionHandler = createTrackNoCodeActionWithContext("click");
 const trackNoCodeExitIntentActionHandler = createTrackNoCodeActionWithContext("exit intent");
 const trackNoCodeScrollActionHandler = createTrackNoCodeActionWithContext("scroll");
-const trackNoCodePageDwellActionHandler = createTrackNoCodeActionWithContext("page dwell");
+const trackNoCodeTimeOnPageActionHandler = createTrackNoCodeActionWithContext("time on page");
 
-// Page Dwell timer state: key = action name, value = timeout ID (running) or null (already fired)
-const pageDwellTimers = new Map<string, number | null>();
+// Time on Page timer state: key = action name, value = page context + timeout ID (running) or null (already fired)
+const timeOnPageTimers = new Map<string, { pageKey: string; timerId: number | null }>();
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -44,53 +44,61 @@ export const setIsHistoryPatched = (value: boolean): void => {
   isHistoryPatched = value;
 };
 
-const checkPageDwell = (actionClasses: TEnvironmentStateActionClass[]): void => {
+const checkTimeOnPage = (actionClasses: TEnvironmentStateActionClass[]): void => {
   const queue = CommandQueue.getInstance();
   const logger = Logger.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
 
-  const noCodePageDwellActionClasses = actionClasses.filter(
+  const noCodeTimeOnPageActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageDwell"
   );
 
-  const matchingDwellActionNames = new Set<string>();
+  const currentPageKey = window.location.href;
+  const matchingTimeOnPageActionNames = new Set<string>();
 
-  for (const event of noCodePageDwellActionClasses) {
-    if (event.noCodeConfig?.type !== "pageDwell") continue;
+  for (const event of noCodeTimeOnPageActionClasses) {
+    const config = event.noCodeConfig as Extract<typeof event.noCodeConfig, { type: "pageDwell" }>;
 
-    const urlFilters = event.noCodeConfig.urlFilters;
-    const connector = event.noCodeConfig.urlFiltersConnector ?? "or";
+    const urlFilters = config.urlFilters;
+    const connector = config.urlFiltersConnector ?? "or";
     const isValidUrl = handleUrlFilters(urlFilters, connector);
 
     if (!isValidUrl) continue;
 
-    matchingDwellActionNames.add(event.name);
-    if (pageDwellTimers.has(event.name)) continue;
+    matchingTimeOnPageActionNames.add(event.name);
 
-    const { timeInSeconds } = event.noCodeConfig;
+    const existing = timeOnPageTimers.get(event.name);
+    if (existing?.pageKey === currentPageKey) continue;
+
+    if (existing?.timerId != null) {
+      logger.debug(`Time on page timer for "${event.name}" restarting — page changed to ${currentPageKey}`);
+      clearTimeout(existing.timerId);
+    }
+
+    const { timeInSeconds } = config;
     const actionName = event.name;
 
-    logger.debug(`Starting page dwell timer for "${actionName}" (${timeInSeconds.toString()}s)`);
+    logger.debug(`Starting time on page timer for "${actionName}" (${timeInSeconds.toString()}s)`);
     const timerId = globalThis.setTimeout(() => {
       logger.debug(
-        `Page dwell timer for "${actionName}" completed after ${timeInSeconds.toString()}s — firing action`
+        `Time on page timer for "${actionName}" completed after ${timeInSeconds.toString()}s — firing action`
       );
-      pageDwellTimers.set(actionName, null);
-      void queue.add(trackNoCodePageDwellActionHandler, CommandType.GeneralAction, true, actionName);
+      timeOnPageTimers.set(actionName, { pageKey: currentPageKey, timerId: null });
+      void queue.add(trackNoCodeTimeOnPageActionHandler, CommandType.GeneralAction, true, actionName);
     }, timeInSeconds * 1000);
-    pageDwellTimers.set(actionName, timerId as unknown as number);
+    timeOnPageTimers.set(actionName, { pageKey: currentPageKey, timerId: timerId as unknown as number });
   }
 
-  for (const [actionName, timerId] of pageDwellTimers) {
-    if (matchingDwellActionNames.has(actionName)) continue;
+  for (const [actionName, entry] of timeOnPageTimers) {
+    if (matchingTimeOnPageActionNames.has(actionName)) continue;
 
-    if (timerId !== null) {
+    if (entry.timerId !== null) {
       logger.debug(
-        `Page dwell timer for "${actionName}" interrupted — user navigated away before completion`
+        `Time on page timer for "${actionName}" interrupted — user navigated away before completion`
       );
-      clearTimeout(timerId);
+      clearTimeout(entry.timerId);
     }
-    pageDwellTimers.delete(actionName);
+    timeOnPageTimers.delete(actionName);
 
     const scheduledTimeout = timeoutStack.getTimeouts().find((t) => t.event === actionName);
     if (!scheduledTimeout) continue;
@@ -132,7 +140,7 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
     }
   }
 
-  checkPageDwell(actionClasses);
+  checkTimeOnPage(actionClasses);
 
   return { ok: true, data: undefined };
 };
@@ -322,12 +330,12 @@ export const removeScrollDepthListener = (): void => {
   }
 };
 
-// Page Dwell Cleanup
-export const clearPageDwellTimers = (): void => {
-  for (const [, timerId] of pageDwellTimers) {
-    if (timerId !== null) {
-      clearTimeout(timerId);
+// Time on Page Cleanup
+export const clearTimeOnPageTimers = (): void => {
+  for (const [, entry] of timeOnPageTimers) {
+    if (entry.timerId !== null) {
+      clearTimeout(entry.timerId);
     }
   }
-  pageDwellTimers.clear();
+  timeOnPageTimers.clear();
 };

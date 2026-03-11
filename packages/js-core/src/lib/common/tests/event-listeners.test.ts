@@ -31,7 +31,7 @@ vi.mock("@/lib/survey/no-code-action", () => ({
   removeExitIntentListener: vi.fn(),
   addScrollDepthListener: vi.fn(),
   removeScrollDepthListener: vi.fn(),
-  clearPageDwellTimers: vi.fn(),
+  clearTimeOnPageTimers: vi.fn(),
 }));
 
 // We'll need to track if "areRemoveEventListenersAdded" was set
@@ -122,7 +122,7 @@ describe("event-listeners file", () => {
     const mockClickRemove = vi.spyOn(pageUrlEventListeners, "removeClickEventListener");
     const mockExitRemove = vi.spyOn(pageUrlEventListeners, "removeExitIntentListener");
     const mockScrollRemove = vi.spyOn(pageUrlEventListeners, "removeScrollDepthListener");
-    const mockDwellClear = vi.spyOn(pageUrlEventListeners, "clearPageDwellTimers");
+    const mockTimeOnPageClear = vi.spyOn(pageUrlEventListeners, "clearTimeOnPageTimers");
 
     // Call the function after setting up the spies
     removeAllEventListeners();
@@ -134,7 +134,7 @@ describe("event-listeners file", () => {
     expect(mockClickRemove).toHaveBeenCalled();
     expect(mockExitRemove).toHaveBeenCalled();
     expect(mockScrollRemove).toHaveBeenCalled();
-    expect(mockDwellClear).toHaveBeenCalled();
+    expect(mockTimeOnPageClear).toHaveBeenCalled();
   });
 
   test("removeAllEventListeners also calls removeCleanupEventListeners", () => {

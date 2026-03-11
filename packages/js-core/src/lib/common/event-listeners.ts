@@ -7,7 +7,7 @@ import {
   addExitIntentListener,
   addPageUrlEventListeners,
   addScrollDepthListener,
-  clearPageDwellTimers,
+  clearTimeOnPageTimers,
   removeClickEventListener,
   removeExitIntentListener,
   removePageUrlEventListeners,
@@ -35,7 +35,7 @@ export const addCleanupEventListeners = (): void => {
     removeClickEventListener();
     removeExitIntentListener();
     removeScrollDepthListener();
-    clearPageDwellTimers();
+    clearTimeOnPageTimers();
   });
   areRemoveEventListenersAdded = true;
 };
@@ -49,7 +49,7 @@ export const removeCleanupEventListeners = (): void => {
     removeClickEventListener();
     removeExitIntentListener();
     removeScrollDepthListener();
-    clearPageDwellTimers();
+    clearTimeOnPageTimers();
   });
   areRemoveEventListenersAdded = false;
 };
@@ -61,6 +61,6 @@ export const removeAllEventListeners = (): void => {
   removeClickEventListener();
   removeExitIntentListener();
   removeScrollDepthListener();
-  clearPageDwellTimers();
+  clearTimeOnPageTimers();
   removeCleanupEventListeners();
 };
