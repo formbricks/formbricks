@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 import {
-  cleanupStripeCustomer,
-  createScaleTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
@@ -31,11 +28,6 @@ const mocks = vi.hoisted(() => ({
   subscriptionsCancel: vi.fn(),
   pricesList: vi.fn(),
   entitlementsList: vi.fn(),
-  customersList: vi.fn(),
-  customersRetrieve: vi.fn(),
-  customersUpdate: vi.fn(),
-  prismaMembershipFindFirst: vi.fn(),
-  loggerInfo: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -67,9 +59,6 @@ vi.mock("@formbricks/database", () => ({
       upsert: mocks.prismaOrganizationBillingUpsert,
       update: mocks.prismaOrganizationBillingUpdate,
     },
-    membership: {
-      findFirst: mocks.prismaMembershipFindFirst,
-    },
   },
 }));
 
@@ -83,7 +72,6 @@ vi.mock("@/lib/cache", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     warn: mocks.loggerWarn,
-    info: mocks.loggerInfo,
   },
 }));
 
@@ -97,12 +85,7 @@ vi.mock("./stripe-plan", async (importOriginal) => {
 
 vi.mock("./stripe-client", () => ({
   stripeClient: {
-    customers: {
-      create: mocks.customersCreate,
-      list: mocks.customersList,
-      retrieve: mocks.customersRetrieve,
-      update: mocks.customersUpdate,
-    },
+    customers: { create: mocks.customersCreate },
     products: {
       list: mocks.productsList,
       retrieve: mocks.productsRetrieve,
@@ -174,34 +157,28 @@ describe("organization-billing", () => {
     expect(mocks.customersCreate).not.toHaveBeenCalled();
   });
 
-  test("ensureStripeCustomerForOrganization reuses Stripe customer found by owner email", async () => {
+  test("ensureStripeCustomerForOrganization returns existing customer id", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
     });
-    mocks.prismaMembershipFindFirst.mockResolvedValue({
-      user: { email: "owner@example.com" },
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_existing",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: null,
     });
-    mocks.customersList.mockResolvedValue({
-      data: [{ id: "cus_existing", deleted: false }],
-    });
-    mocks.customersUpdate.mockResolvedValue({ id: "cus_existing" });
 
     const result = await ensureStripeCustomerForOrganization("org_1");
 
     expect(result).toEqual({ customerId: "cus_existing" });
     expect(mocks.customersCreate).not.toHaveBeenCalled();
-    expect(mocks.customersUpdate).toHaveBeenCalledWith("cus_existing", {
-      name: "Org 1",
-      metadata: { organizationId: "org_1" },
-    });
-    expect(mocks.prismaOrganizationBillingUpsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { organizationId: "org_1" },
-        create: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
-        update: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
-      })
-    );
+    expect(mocks.prismaOrganizationBillingUpsert).not.toHaveBeenCalled();
   });
 
   test("ensureStripeCustomerForOrganization creates and stores a Stripe customer", async () => {
@@ -220,7 +197,6 @@ describe("organization-billing", () => {
       usageCycleAnchor: new Date(),
       stripe: null,
     });
-    mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
 
     const result = await ensureStripeCustomerForOrganization("org_1");
@@ -229,7 +205,6 @@ describe("organization-billing", () => {
     expect(mocks.customersCreate).toHaveBeenCalledWith(
       {
         name: "Org 1",
-        email: undefined,
         metadata: { organizationId: "org_1" },
       },
       { idempotencyKey: "ensure-customer-org_1" }
@@ -592,8 +567,18 @@ describe("organization-billing", () => {
       id: "org_1",
       name: "Org 1",
     });
-    mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.prismaOrganizationBillingFindUnique
+      .mockResolvedValueOnce({
+        stripeCustomerId: null,
+        limits: {
+          projects: 3,
+          monthly: {
+            responses: 1500,
+          },
+        },
+        usageCycleAnchor: new Date(),
+        stripe: {},
+      })
       .mockResolvedValueOnce({
         stripeCustomerId: "cus_new",
         limits: {
@@ -715,63 +700,5 @@ describe("organization-billing", () => {
 
     expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_hobby", { prorate: false });
     expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
-  });
-
-  test("createScaleTrialSubscription creates a 14-day trial subscription", async () => {
-    mocks.productsList.mockResolvedValue({
-      data: [{ id: "prod_scale", metadata: { formbricks_plan: "scale" }, default_price: null }],
-    });
-    mocks.customersRetrieve.mockResolvedValue({ id: "cus_1", deleted: false, email: "test@example.com" });
-    mocks.customersList.mockResolvedValue({ data: [] });
-    mocks.pricesList.mockResolvedValue({ data: [{ id: "price_scale_1" }] });
-
-    await createScaleTrialSubscription("org_1", "cus_1");
-
-    expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        customer: "cus_1",
-        items: [{ price: "price_scale_1", quantity: 1 }],
-        trial_period_days: 14,
-        trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
-      }),
-      { idempotencyKey: "create-scale-trial-org_1" }
-    );
-  });
-
-  test("createScaleTrialSubscription throws OperationNotAllowedError when trial already used", async () => {
-    mocks.productsList.mockResolvedValue({
-      data: [{ id: "prod_scale", metadata: { formbricks_plan: "scale" }, default_price: null }],
-    });
-    mocks.customersRetrieve.mockResolvedValue({ id: "cus_1", deleted: false, email: "test@example.com" });
-    mocks.customersList.mockResolvedValue({
-      data: [{ id: "cus_1" }],
-    });
-    mocks.subscriptionsList.mockResolvedValue({
-      data: [
-        {
-          trial_start: 1700000000,
-          items: { data: [{ price: { product: "prod_scale" } }] },
-        },
-      ],
-    });
-
-    await expect(createScaleTrialSubscription("org_1", "cus_1")).rejects.toThrow(OperationNotAllowedError);
-  });
-
-  test("cleanupStripeCustomer cancels active subscriptions but keeps the customer", async () => {
-    mocks.subscriptionsList.mockResolvedValue({
-      data: [
-        { id: "sub_active", status: "active" },
-        { id: "sub_trialing", status: "trialing" },
-        { id: "sub_canceled", status: "canceled" },
-      ],
-    });
-
-    await cleanupStripeCustomer("cus_1");
-
-    expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_active", { prorate: false });
-    expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_trialing", { prorate: false });
-    expect(mocks.subscriptionsCancel).not.toHaveBeenCalledWith("sub_canceled", expect.anything());
-    expect(mocks.subscriptionsCancel).toHaveBeenCalledTimes(2);
   });
 });
