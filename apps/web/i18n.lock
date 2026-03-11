@@ -923,6 +923,8 @@ checksums:
     environments/settings/billing/scale_feature_quota: 31fb6b5e846dd44de140a69fd3e4c067
     environments/settings/billing/scale_feature_spam: 8a8229b6ac3f3e0427fd347cb667ce11
     environments/settings/billing/scale_feature_teams: f6e8428f6cdb227176a5fa8c5c95c976
+    environments/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
+    environments/settings/billing/select_plan_header_title: d851e9fa093ddb248924cf99e1d79b4e
     environments/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
     environments/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     environments/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b

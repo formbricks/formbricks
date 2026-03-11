@@ -978,6 +978,8 @@
         "scale_feature_quota": "Gestion des quotas",
         "scale_feature_spam": "Protection contre le spam",
         "scale_feature_teams": "Équipes & rôles d’accès",
+        "select_plan_header_subtitle": "Aucune carte bancaire requise, aucun engagement.",
+        "select_plan_header_title": "Envoyez des sondages professionnels et personnalisés dès aujourd'hui !",
         "status_trialing": "Essai",
         "stay_on_hobby_plan": "Je veux rester sur le plan Hobby",
         "stripe_setup_incomplete": "Configuration de la facturation incomplète",

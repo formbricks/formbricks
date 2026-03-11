@@ -978,6 +978,8 @@
         "scale_feature_quota": "Keretkezelés",
         "scale_feature_spam": "Spamvédelem",
         "scale_feature_teams": "Csapatok és hozzáférési szerepkörök",
+        "select_plan_header_subtitle": "Nincs szükség bankkártyára, nincsenek rejtett feltételek.",
+        "select_plan_header_title": "Küldjön professzionális, márkajelzés nélküli felméréseket még ma!",
         "status_trialing": "Próbaverzió",
         "stay_on_hobby_plan": "A Hobby csomagnál szeretnék maradni",
         "stripe_setup_incomplete": "Számlázás beállítása nem teljes",

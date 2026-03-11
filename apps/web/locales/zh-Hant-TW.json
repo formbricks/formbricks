@@ -978,6 +978,8 @@
         "scale_feature_quota": "額度管理",
         "scale_feature_spam": "垃圾訊息防護",
         "scale_feature_teams": "團隊與存取權限",
+        "select_plan_header_subtitle": "無需信用卡，完全沒有附加條件。",
+        "select_plan_header_title": "立即發送專業、無品牌標記的問卷調查！",
         "status_trialing": "試用版",
         "stay_on_hobby_plan": "我想繼續使用 Hobby 方案",
         "stripe_setup_incomplete": "帳單設定尚未完成",

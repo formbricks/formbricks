@@ -85,7 +85,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
             {TRIAL_FEATURE_KEYS.map((key) => (
               <li key={key} className="flex items-center gap-3 text-slate-700">
                 <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
-                <span>{t(key)}</span>
+                <span>{key}</span>
               </li>
             ))}
           </ul>

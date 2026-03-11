@@ -4,9 +4,13 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
-import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
+import {
+  cleanupStripeCustomer,
+  ensureCloudStripeSetupForOrganization,
+} from "@/modules/ee/billing/lib/organization-billing";
 import {
   createOrganization,
+  deleteOrganization,
   getOrganization,
   getOrganizationsByUserId,
   select as organizationSelect,
@@ -22,6 +26,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     organizationBilling: {
       upsert: vi.fn(),
@@ -38,6 +43,7 @@ vi.mock("@/lib/user/service", () => ({
 
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn().mockResolvedValue(undefined),
+  cleanupStripeCustomer: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("Organization Service", () => {
@@ -373,6 +379,24 @@ describe("Organization Service", () => {
 
       // Should not call updateUser because user is unsubscribed from this organization
       expect(updateUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deleteOrganization", () => {
+    test("should call cleanupStripeCustomer when cloud and stripeCustomerId exists", async () => {
+      vi.mocked(prisma.organization.delete).mockResolvedValue({
+        id: "org1",
+        name: "Test Org",
+        billing: { stripeCustomerId: "cus_123" },
+        memberships: [],
+        projects: [],
+      } as any);
+
+      await deleteOrganization("org1");
+
+      if (IS_FORMBRICKS_CLOUD) {
+        expect(cleanupStripeCustomer).toHaveBeenCalledWith("cus_123");
+      }
     });
   });
 });

@@ -978,6 +978,8 @@
         "scale_feature_quota": "Управление квотами",
         "scale_feature_spam": "Защита от спама",
         "scale_feature_teams": "Команды и роли доступа",
+        "select_plan_header_subtitle": "Кредитная карта не требуется, никаких обязательств.",
+        "select_plan_header_title": "Создавайте профессиональные опросы без брендинга уже сегодня!",
         "status_trialing": "Пробный",
         "stay_on_hobby_plan": "Я хочу остаться на тарифе Hobby",
         "stripe_setup_incomplete": "Настройка оплаты не завершена",
