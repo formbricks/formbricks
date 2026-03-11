@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
@@ -10,7 +9,7 @@ import {
   validateSurveyInput,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -18,13 +17,11 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const searchParams = new URL(req.url).searchParams;
       const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
@@ -70,15 +67,11 @@ export const GET = withV1ApiWrapper({
 });
 
 export const POST = withV1ApiWrapper({
-  handler: async ({
-    req,
-    auditLog,
-    authentication,
-  }: {
-    req: NextRequest;
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ req, auditLog, authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       let surveyInput;
       try {
@@ -141,8 +134,10 @@ export const POST = withV1ApiWrapper({
       }
 
       const survey = await createSurvey(environmentId, { ...surveyData, environmentId: undefined });
-      auditLog.targetId = survey.id;
-      auditLog.newObject = survey;
+      if (auditLog) {
+        auditLog.targetId = survey.id;
+        auditLog.newObject = survey;
+      }
 
       if (hasQuestions) {
         const surveyWithQuestions = {

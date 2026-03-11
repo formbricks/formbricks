@@ -57,7 +57,6 @@ describe("Organization Access", () => {
       organizationId: mockOrgId,
       role: "member",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const hasAccess = await hasOrganizationAccess(mockUserId, mockOrgId);
@@ -77,7 +76,6 @@ describe("Organization Access", () => {
       organizationId: mockOrgId,
       role: "manager",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const isManager = await isManagerOrOwner(mockUserId, mockOrgId);
@@ -90,7 +88,6 @@ describe("Organization Access", () => {
       organizationId: mockOrgId,
       role: "owner",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const isOwner = await isManagerOrOwner(mockUserId, mockOrgId);
@@ -103,7 +100,6 @@ describe("Organization Access", () => {
       organizationId: mockOrgId,
       role: "member",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const isManagerOrOwnerRole = await isManagerOrOwner(mockUserId, mockOrgId);
@@ -116,7 +112,6 @@ describe("Organization Access", () => {
       organizationId: mockOrgId,
       role: "owner",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const isOwnerRole = await isOwner(mockUserId, mockOrgId);
@@ -129,7 +124,6 @@ describe("Organization Access", () => {
       organizationId: mockOrgId,
       role: "manager",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const isOwnerRole = await isOwner(mockUserId, mockOrgId);
@@ -151,7 +145,6 @@ describe("Organization Authority", () => {
       organizationId: mockOrgId,
       role: "manager",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const hasAuthority = await hasOrganizationAuthority(mockUserId, mockOrgId);
@@ -170,7 +163,6 @@ describe("Organization Authority", () => {
       organizationId: mockOrgId,
       role: "member",
       accepted: true,
-      deprecatedRole: null,
     });
 
     await expect(hasOrganizationAuthority(mockUserId, mockOrgId)).rejects.toThrow(AuthenticationError);
@@ -182,7 +174,6 @@ describe("Organization Authority", () => {
       organizationId: mockOrgId,
       role: "owner",
       accepted: true,
-      deprecatedRole: null,
     });
 
     const hasOwnership = await hasOrganizationOwnership(mockUserId, mockOrgId);
@@ -201,7 +192,6 @@ describe("Organization Authority", () => {
       organizationId: mockOrgId,
       role: "manager",
       accepted: true,
-      deprecatedRole: null,
     });
 
     await expect(hasOrganizationOwnership(mockUserId, mockOrgId)).rejects.toThrow(AuthenticationError);

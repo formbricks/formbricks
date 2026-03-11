@@ -4,8 +4,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import {
+  TSurveyElement,
   TSurveyElementChoice,
   TSurveyMultipleChoiceElement,
   TSurveyRankingElement,
@@ -23,7 +23,7 @@ interface ChoiceProps {
   choice: TSurveyElementChoice;
   choiceIdx: number;
   elementIdx: number;
-  updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
+  updateChoice: (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => void;
   deleteChoice: (choiceIdx: number) => void;
   addChoice: (choiceIdx: number) => void;
   isInvalid: boolean;
@@ -32,10 +32,7 @@ interface ChoiceProps {
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
   element: TSurveyMultipleChoiceElement | TSurveyRankingElement;
-  updateElement: (
-    elementIdx: number,
-    updatedAttributes: Partial<TSurveyMultipleChoiceElement> | Partial<TSurveyRankingElement>
-  ) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   surveyLanguageCodes: string[];
   locale: TUserLocale;
   isStorageConfigured: boolean;

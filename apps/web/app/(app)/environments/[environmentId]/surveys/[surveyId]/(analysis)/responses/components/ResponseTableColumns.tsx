@@ -5,7 +5,7 @@ import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { TResponseTableData } from "@formbricks/types/responses";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -41,7 +41,7 @@ const getElementColumnsData = (
   const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
-  const createElementHeader = (elementType: string, headline: string, suffix?: string) => {
+  const createElementHeader = (elementType: TSurveyElementTypeEnum, headline: string, suffix?: string) => {
     const title = suffix ? `${headline} - ${suffix}` : headline;
     const ElementHeader = () => (
       <div className="flex items-center justify-between">
@@ -232,7 +232,7 @@ const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] =
   const metadataColumns: ColumnDef<TResponseTableData>[] = [];
 
   METADATA_FIELDS.forEach((label) => {
-    const IconComponent = COLUMNS_ICON_MAP[label];
+    const IconComponent = COLUMNS_ICON_MAP[label as keyof typeof COLUMNS_ICON_MAP];
 
     metadataColumns.push({
       accessorKey: "METADATA_" + label,

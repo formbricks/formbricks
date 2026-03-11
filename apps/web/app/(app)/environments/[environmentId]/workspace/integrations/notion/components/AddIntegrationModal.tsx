@@ -234,7 +234,7 @@ export const AddIntegrationModal = ({
       resetForm();
       setOpen(false);
     } catch (e) {
-      toast.error(e.message);
+      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     } finally {
       setIsLinkingDatabase(false);
     }
@@ -255,7 +255,7 @@ export const AddIntegrationModal = ({
       toast.success(t("environments.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
       setIsDeleting(false);
     }

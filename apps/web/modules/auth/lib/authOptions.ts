@@ -1,9 +1,9 @@
-import type { Account, NextAuthOptions } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { TUser } from "@formbricks/types/user";
+import type { TUser } from "@formbricks/types/user";
 import {
   CONTROL_HASH,
   EMAIL_VERIFICATION_DISABLED,
@@ -336,7 +336,7 @@ export const authOptions: NextAuthOptions = {
 
       return session;
     },
-    async signIn({ user, account }: { user: TUser; account: Account }) {
+    async signIn({ user, account }) {
       const cookieStore = await cookies();
 
       // get callback url from the cookie store,
@@ -345,24 +345,30 @@ export const authOptions: NextAuthOptions = {
         cookieStore.get("next-auth.callback-url")?.value ||
         "";
 
+      const userEmail = user.email ?? "";
+
       if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
-        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+        if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
-        await updateUserLastLoginAt(user.email);
+        await updateUserLastLoginAt(userEmail);
         return true;
       }
-      if (ENTERPRISE_LICENSE_KEY) {
-        const result = await handleSsoCallback({ user, account, callbackUrl });
+      if (ENTERPRISE_LICENSE_KEY && account) {
+        const result = await handleSsoCallback({
+          user: user as TUser,
+          account,
+          callbackUrl,
+        });
 
         if (result) {
-          await updateUserLastLoginAt(user.email);
+          await updateUserLastLoginAt(userEmail);
         }
         return result;
       }
-      await updateUserLastLoginAt(user.email);
+      await updateUserLastLoginAt(userEmail);
       return true;
     },
   },

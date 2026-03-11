@@ -98,7 +98,10 @@ export const verifyContactSurveyToken = (
       surveyId,
     });
   } catch (error) {
-    logger.error("Error verifying contact survey token:", error);
+    logger.error(
+      error instanceof Error ? error : new Error(String(error)),
+      "Error verifying contact survey token"
+    );
 
     // Check if the error is specifically a JWT expiration error
     if (error instanceof jwt.TokenExpiredError) {

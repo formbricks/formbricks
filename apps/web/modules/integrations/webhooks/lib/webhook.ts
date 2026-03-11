@@ -177,13 +177,15 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
       throw new UnknownError(`Request failed with status code ${statusCode}: ${errorMessage}`);
     }
   } catch (error) {
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       throw new UnknownError("Request timed out after 5 seconds");
     }
     if (error instanceof UnknownError) {
       throw error;
     }
 
-    throw new UnknownError(`Error while fetching the URL: ${error.message}`);
+    throw new UnknownError(
+      `Error while fetching the URL: ${error instanceof Error ? error.message : "Unknown error occurred"}`
+    );
   }
 };

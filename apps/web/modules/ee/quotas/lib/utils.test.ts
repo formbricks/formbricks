@@ -53,6 +53,7 @@ type MockTx = {
   };
 };
 let mockTx: MockTx;
+const asTx = (tx: MockTx) => tx as unknown as Prisma.TransactionClient;
 
 describe("Quota Utils", () => {
   const mockSurveyId = "survey123";
@@ -66,7 +67,6 @@ describe("Quota Utils", () => {
     type: "link",
     status: "inProgress",
     welcomeCard: {
-      html: { default: "Welcome" },
       enabled: false,
       headline: { default: "Welcome!" },
       buttonLabel: { default: "Next" },
@@ -112,6 +112,7 @@ describe("Quota Utils", () => {
     triggers: [],
     segment: null,
     recaptcha: null,
+    blocks: [],
   };
 
   const mockQuota: TSurveyQuota = {
@@ -280,7 +281,7 @@ describe("Quota Utils", () => {
       const otherQuotas = [mockQuota2];
       const failedQuotas = [{ ...mockQuota, id: "failed123" }];
 
-      await upsertResponseQuotaLinks(mockResponseId, fullQuotas, otherQuotas, failedQuotas, mockTx);
+      await upsertResponseQuotaLinks(mockResponseId, fullQuotas, otherQuotas, failedQuotas, asTx(mockTx));
 
       // Verify transaction was called
       expect(mockTx.responseQuotaLink.deleteMany).toHaveBeenCalledTimes(1);
@@ -289,7 +290,7 @@ describe("Quota Utils", () => {
     });
 
     test("should handle empty quota arrays within transaction", async () => {
-      await upsertResponseQuotaLinks(mockResponseId, [], [], [], mockTx);
+      await upsertResponseQuotaLinks(mockResponseId, [], [], [], asTx(mockTx));
 
       // Verify transaction was called even with empty arrays
       // expect(mockTx).toHaveBeenCalledTimes(1);
@@ -301,7 +302,7 @@ describe("Quota Utils", () => {
       const otherQuotas = [mockQuota2];
       const failedQuotas = [{ ...mockQuota, id: "failed123" }];
 
-      await upsertResponseQuotaLinks(mockResponseId, fullQuotas, otherQuotas, failedQuotas, mockTx);
+      await upsertResponseQuotaLinks(mockResponseId, fullQuotas, otherQuotas, failedQuotas, asTx(mockTx));
 
       // Verify correct operations were called within transaction
       expect(mockTx.responseQuotaLink.deleteMany).toHaveBeenCalledWith({
@@ -359,7 +360,7 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 25 } } as any,
       ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toBeNull();
       expect(validateInputs).toHaveBeenCalledWith(
@@ -375,7 +376,7 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
       ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toEqual(mockQuota);
       expect(mockTx.responseQuotaLink.groupBy).toHaveBeenCalledTimes(1);
@@ -388,7 +389,7 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
       ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toEqual(mockQuota);
       expect(updateResponse).toHaveBeenCalledWith(
@@ -411,7 +412,13 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 30 } } as any, // mockQuota2 at limit
       ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, resultWithContinueAction, true, mockTx);
+      const result = await handleQuotas(
+        mockSurveyId,
+        mockResponseId,
+        resultWithContinueAction,
+        true,
+        asTx(mockTx)
+      );
 
       expect(result).toEqual(mockQuota2);
       expect(updateResponse).not.toHaveBeenCalled();
@@ -426,7 +433,7 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
       ]);
 
-      await handleQuotas(mockSurveyId, mockResponseId, resultWithPartialCount, true, mockTx);
+      await handleQuotas(mockSurveyId, mockResponseId, resultWithPartialCount, true, asTx(mockTx));
 
       expect(mockTx.responseQuotaLink.groupBy).toHaveBeenCalledWith({
         by: ["quotaId"],
@@ -455,7 +462,7 @@ describe("Quota Utils", () => {
         { quotaId: mockQuotaId, _count: { responseId: 45 } } as any, // mockQuota below limit
       ]);
 
-      await handleQuotas(mockSurveyId, mockResponseId, resultWithFinishedOnly, true, mockTx);
+      await handleQuotas(mockSurveyId, mockResponseId, resultWithFinishedOnly, true, asTx(mockTx));
 
       expect(mockTx.responseQuotaLink.groupBy).toHaveBeenCalledWith({
         by: ["quotaId"],
@@ -488,7 +495,7 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
       ]);
 
-      await handleQuotas(mockSurveyId, mockResponseId, testResult, true, mockTx);
+      await handleQuotas(mockSurveyId, mockResponseId, testResult, true, asTx(mockTx));
 
       // Verify transaction was called (upsertResponseQuotaLinks uses transaction)
       expect(mockTx.responseQuotaLink.deleteMany).toHaveBeenCalledTimes(1);
@@ -507,7 +514,7 @@ describe("Quota Utils", () => {
         { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
       ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, bothQuotasFull, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, bothQuotasFull, true, asTx(mockTx));
 
       expect(result).toEqual(mockQuota);
     });
@@ -517,7 +524,7 @@ describe("Quota Utils", () => {
         throw new Error("Validation failed");
       });
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toBeNull();
       expect(logger.error).toHaveBeenCalledWith(
@@ -537,7 +544,7 @@ describe("Quota Utils", () => {
       });
       vi.mocked(mockTx.responseQuotaLink.groupBy).mockRejectedValue(prismaError);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toBeNull();
       expect(logger.error).toHaveBeenCalledWith(
@@ -557,7 +564,7 @@ describe("Quota Utils", () => {
       ]);
       vi.mocked(updateResponse).mockRejectedValue(new Error("Update failed"));
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toBeNull();
       expect(logger.error).toHaveBeenCalledWith(
@@ -576,7 +583,7 @@ describe("Quota Utils", () => {
         failedQuotas: [mockQuota],
       };
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, emptyResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, emptyResult, true, asTx(mockTx));
 
       expect(result).toBeNull();
       expect(mockTx.responseQuotaLink.groupBy).not.toHaveBeenCalled();
@@ -588,7 +595,7 @@ describe("Quota Utils", () => {
         { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
       ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
 
       expect(result).toEqual(mockQuota);
     });

@@ -27,7 +27,9 @@ export const getWebhook = async (webhookId: string) => {
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -76,7 +78,9 @@ export const updateWebhook = async (
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -104,7 +108,9 @@ export const deleteWebhook = async (webhookId: string): Promise<Result<Webhook, 
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

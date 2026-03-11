@@ -47,7 +47,7 @@ const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
               "Response Finished": 3,
             };
 
-            return triggerOrder[a] - triggerOrder[b];
+            return (triggerOrder as Record<string, number>)[a] - (triggerOrder as Record<string, number>)[b];
           })
           .join(", ")}
       </p>

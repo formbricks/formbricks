@@ -1,4 +1,4 @@
-import { Response } from "@prisma/client";
+import { Prisma, Response } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -47,6 +47,7 @@ type MockTx = {
   };
 };
 let mockTx: MockTx;
+const asTx = (tx: MockTx) => tx as unknown as Prisma.TransactionClient;
 
 describe("Quota Evaluation Service", () => {
   const mockSurveyId = "survey123";
@@ -60,7 +61,6 @@ describe("Quota Evaluation Service", () => {
     type: "link",
     status: "inProgress",
     welcomeCard: {
-      html: { default: "Welcome" },
       enabled: false,
       headline: { default: "Welcome!" },
       buttonLabel: { default: "Next" },
@@ -108,7 +108,6 @@ describe("Quota Evaluation Service", () => {
     recaptcha: null,
     createdAt: new Date("2024-01-01"),
     autoComplete: null,
-    closeOnDate: null,
     createdBy: null,
     followUps: [],
     isVerifyEmailEnabled: false,
@@ -118,8 +117,10 @@ describe("Quota Evaluation Service", () => {
     pin: null,
     environmentId: "env123",
     metadata: {},
-    runOnDate: null,
     updatedAt: new Date("2024-01-01"),
+    blocks: [],
+    isCaptureIpEnabled: false,
+    slug: null,
   };
 
   const mockQuota: TSurveyQuota = {
@@ -233,7 +234,7 @@ describe("Quota Evaluation Service", () => {
         variables: mockVariablesData,
         language: "en",
         responseFinished: true,
-        tx: mockTx,
+        tx: asTx(mockTx),
       };
 
       const continueSurveyQuota: TSurveyQuota = {
@@ -278,7 +279,7 @@ describe("Quota Evaluation Service", () => {
         variables: mockVariablesData,
         language: "en",
         responseFinished: true,
-        tx: mockTx,
+        tx: asTx(mockTx),
       };
 
       const evaluateResult = {
@@ -322,7 +323,7 @@ describe("Quota Evaluation Service", () => {
         data: mockResponseData,
         variables: mockVariablesData,
         responseFinished: false,
-        tx: mockTx,
+        tx: asTx(mockTx),
       };
 
       const mockPartialSubmissionQuota = {
@@ -455,7 +456,7 @@ describe("Quota Evaluation Service", () => {
         variables: mockVariablesData,
         language: "en",
         responseFinished: true,
-        tx: mockTx,
+        tx: asTx(mockTx),
       };
 
       const evaluateResult = {

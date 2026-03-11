@@ -6,7 +6,8 @@ import { RESPONSES_API_URL, SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests for Responses", () => {
   test("Create, Retrieve, Update, and Delete Responses via API", async ({ page, users, request }) => {
-    let environmentId, apiKey;
+    let environmentId: string;
+    let apiKey: string;
 
     try {
       ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
@@ -15,7 +16,9 @@ test.describe("API Tests for Responses", () => {
       throw error;
     }
 
-    let createdResponseId1, createdResponseId2, surveyId: string;
+    let createdResponseId1: string;
+    let createdResponseId2: string;
+    let surveyId: string;
 
     await test.step("Create Survey via API", async () => {
       const surveyBody = {
@@ -53,7 +56,7 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { name: string; id: string } };
       expect(responseBody.data.name).toEqual("My new Survey from API");
       surveyId = responseBody.data.id;
     });
@@ -98,7 +101,7 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseJson = await response.json();
+      const responseJson = (await response.json()) as { data: { id: string } };
       expect(responseJson.data).toHaveProperty("id");
       createdResponseId1 = responseJson.data.id;
     });
@@ -143,7 +146,7 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseJson = await response.json();
+      const responseJson = (await response.json()) as { data: { id: string } };
       expect(responseJson.data).toHaveProperty("id");
       createdResponseId2 = responseJson.data.id;
     });
@@ -164,7 +167,7 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string; [key: string]: unknown }[] };
       expect(Array.isArray(responseBody.data)).toBe(true);
       expect(responseBody.data.length).toBeGreaterThan(0);
 
@@ -253,13 +256,9 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string }[] };
       expect(Array.isArray(responseBody.data)).toBe(true);
       expect(responseBody.data.length).toBeGreaterThan(0);
-
-      const createdResponse1 = responseBody.data.find((resp) => resp.id === createdResponseId1);
-
-      const createdResponse2 = responseBody.data.find((resp) => resp.id === createdResponseId2);
 
       // Check if the responses are sorted correctly
       expect(responseBody.data[0].id).toBe(createdResponseId1);
@@ -282,11 +281,9 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string }[] };
       expect(Array.isArray(responseBody.data)).toBe(true);
       expect(responseBody.data.length).toBe(1);
-
-      const createdResponse1 = responseBody.data.find((resp) => resp.id === createdResponseId1);
 
       expect(responseBody.data[0].id).toBe(createdResponseId1);
     });
@@ -307,13 +304,11 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string }[] };
       expect(Array.isArray(responseBody.data)).toBe(true);
       expect(responseBody.data.length).toBe(1);
 
-      const createdResponse2 = responseBody.data.find((resp) => resp.id === createdResponseId2);
-
-      expect(responseBody.data[0].id).toBe(createdResponse2.id);
+      expect(responseBody.data[0].id).toBe(createdResponseId2);
     });
 
     await test.step("Update Response by ID via API", async () => {
@@ -371,7 +366,7 @@ test.describe("API Tests for Responses", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string; [key: string]: unknown } };
       expect(responseBody.data.id).toEqual(createdResponseId1);
       expect(responseBody.data).toMatchObject({
         createdAt: "2021-01-01T00:00:00.000Z",

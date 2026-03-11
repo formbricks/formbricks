@@ -1,11 +1,15 @@
 import { DatabaseError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
-import { TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getContactAttributes } from "./lib/contact-attributes";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
+  handler: async ({ authentication }: THandlerParams) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {

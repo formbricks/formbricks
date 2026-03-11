@@ -24,7 +24,12 @@ export const fetchEnvironmentId = reactCache(async (id: string, isResponseId: bo
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: isResponseId ? "response" : "survey", issue: error.message }],
+      details: [
+        {
+          field: isResponseId ? "response" : "survey",
+          issue: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+      ],
     });
   }
 });
@@ -49,7 +54,9 @@ export const fetchEnvironmentIdFromSurveyIds = reactCache(async (surveyIds: stri
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "survey", issue: error.message }],
+      details: [
+        { field: "survey", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });

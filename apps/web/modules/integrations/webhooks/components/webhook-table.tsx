@@ -38,7 +38,7 @@ export const WebhookTable = ({
     secret: null,
   });
 
-  const handleOpenWebhookDetailModalClick = (e, webhook: Webhook) => {
+  const handleOpenWebhookDetailModalClick = (e: React.MouseEvent, webhook: Webhook) => {
     e.preventDefault();
     setActiveWebhook(webhook);
     setWebhookDetailModalOpen(true);

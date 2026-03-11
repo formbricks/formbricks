@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TContactWithAttributes, TTransformPersonInput } from "@/modules/ee/contacts/types/contact";
 import { readAttributeValue } from "./attribute-storage";
@@ -7,22 +6,8 @@ export const getContactIdentifier = (contactAttributes: TContactAttributes | nul
   return contactAttributes?.email || contactAttributes?.userId || "";
 };
 
-export const convertPrismaContactAttributes = (
-  prismaAttributes: Prisma.ContactAttributeGetPayload<{
-    select: { value: true; attributeKey: { select: { key: true; name: true } } };
-  }>[]
-): TContactAttributes => {
-  return prismaAttributes.reduce((acc, attr) => {
-    acc[attr.attributeKey.key] = {
-      name: attr.attributeKey.name,
-      value: attr.value,
-    };
-    return acc;
-  }, {});
-};
-
 export const transformPrismaContact = (person: TTransformPersonInput): TContactWithAttributes => {
-  const attributes = person.attributes.reduce((acc, attr) => {
+  const attributes = person.attributes.reduce<Record<string, string>>((acc, attr) => {
     acc[attr.attributeKey.key] = readAttributeValue(attr, attr.attributeKey.dataType);
     return acc;
   }, {});

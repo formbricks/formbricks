@@ -205,11 +205,11 @@ export const ResponseTable = ({
   };
 
   // Handle downloading selected responses
-  const downloadSelectedRows = async (responseIds: string[], format: "csv" | "xlsx") => {
+  const downloadSelectedRows = async (responseIds: string[], format: "xlsx" | "csv") => {
     try {
       const downloadResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
-        format: format,
+        format,
         filterCriteria: { responseIds },
       });
 

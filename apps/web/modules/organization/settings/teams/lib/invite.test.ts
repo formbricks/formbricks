@@ -49,7 +49,6 @@ const mockInvite: Invite = {
   role: "member",
   expiresAt: new Date(),
   createdAt: new Date(),
-  deprecatedRole: null,
   teamIds: [],
 };
 
@@ -225,7 +224,9 @@ describe("inviteUser", () => {
   });
   test("throws InvalidInputError if user is already a member", async () => {
     vi.mocked(prisma.invite.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-2" });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-2" } as Awaited<
+      ReturnType<typeof prisma.user.findUnique>
+    >);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
       accepted: true,
       organizationId: "org1",
@@ -308,7 +309,7 @@ describe("getInvite", () => {
     vi.mocked(prisma.invite.findUnique).mockResolvedValue({
       email: "test@example.com",
       creator: { name: "Test" },
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.invite.findUnique>>);
     const result = await getInvite("invite-1");
     expect(result).toEqual({ email: "test@example.com", creator: { name: "Test" } });
   });

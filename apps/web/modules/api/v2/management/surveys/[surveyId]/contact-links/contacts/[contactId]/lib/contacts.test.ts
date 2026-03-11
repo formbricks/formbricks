@@ -22,7 +22,9 @@ describe("getContact", () => {
   });
 
   test("returns contact when found", async () => {
-    vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
+    vi.mocked(prisma.contact.findUnique).mockResolvedValue(
+      mockContact as Awaited<ReturnType<typeof prisma.contact.findUnique>>
+    );
 
     const result = await getContact(mockContactId, mockEnvironmentId);
 
