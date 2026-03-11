@@ -1,7 +1,7 @@
 "use client";
 
 import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -34,7 +34,6 @@ interface SurveyEditorProps {
   membershipRole?: OrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
-  isMultiLanguageAllowed?: boolean;
   isSpamProtectionAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
@@ -64,7 +63,6 @@ export const SurveyEditor = ({
   responseCount,
   membershipRole,
   colors,
-  isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
   isSpamProtectionAllowed = false,
   isFormbricksCloud,
@@ -85,13 +83,13 @@ export const SurveyEditor = ({
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
-  const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
+  const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
 
-  const [styling, setStyling] = useState(localSurvey?.styling);
+  const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestProject = useCallback(async () => {
@@ -161,10 +159,13 @@ export const SurveyEditor = ({
     return <LoadingSkeleton />;
   }
 
+  // After the null guard, we can safely narrow the setter type for child components
+  const setLocalSurveyNonNull = setLocalSurvey as Dispatch<SetStateAction<TSurvey>>;
+
   return (
     <div className="flex h-full w-full flex-col">
       <SurveyMenuBar
-        setLocalSurvey={setLocalSurvey}
+        setLocalSurvey={setLocalSurveyNonNull}
         localSurvey={localSurvey}
         survey={survey}
         environmentId={environment.id}
@@ -189,13 +190,12 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!project.styling.allowStyleOverwrite}
-            isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
           {activeView === "elements" && (
             <ElementsView
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               project={localProject}
@@ -204,7 +204,6 @@ export const SurveyEditor = ({
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
@@ -221,7 +220,7 @@ export const SurveyEditor = ({
               colors={colors}
               environmentId={environment.id}
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
               project={localProject}
               styling={styling ?? null}
               setStyling={setStyling}
@@ -237,7 +236,7 @@ export const SurveyEditor = ({
             <SettingsView
               environment={environment}
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
               actionClasses={actionClasses}
               contactAttributeKeys={contactAttributeKeys}
               segments={segments}
@@ -255,10 +254,11 @@ export const SurveyEditor = ({
           {activeView === "followUps" && (
             <FollowUpsView
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+              isFormbricksCloud={isFormbricksCloud}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}

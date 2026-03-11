@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
-import NextAuth from "next-auth";
+import NextAuth, { Account, Profile, User } from "next-auth";
+import { AdapterUser } from "next-auth/adapters";
+import { CredentialInput } from "next-auth/providers/credentials";
 import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions as baseAuthOptions } from "@/modules/auth/lib/authOptions";
@@ -73,7 +75,19 @@ const handler = async (req: Request, ctx: any) => {
         if (error) throw error;
         return result;
       },
-      async signIn({ user, account, profile, email, credentials }) {
+      async signIn({
+        user,
+        account,
+        profile,
+        email,
+        credentials,
+      }: {
+        user: User | AdapterUser;
+        account: Account | null;
+        profile?: Profile;
+        email?: { verificationRequest?: boolean };
+        credentials?: Record<string, CredentialInput>;
+      }) {
         let result: boolean | string = true;
         let error: any = undefined;
         let authMethod = "unknown";

@@ -16,7 +16,7 @@ import { Slider } from "@/modules/ui/components/slider";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
   responseCount: number;
   isSpamProtectionAllowed: boolean;
 }
@@ -143,7 +143,7 @@ export const ResponseOptionsCard = ({
     }
   };
 
-  const handleInputResponse = (e) => {
+  const handleInputResponse = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseInt(e.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
@@ -153,7 +153,7 @@ export const ResponseOptionsCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleInputResponseBlur = (e) => {
+  const handleInputResponseBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (parseInt(e.target.value) === 0) {
       toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
@@ -189,10 +189,15 @@ export const ResponseOptionsCard = ({
 
   const handleThresholdChange = (value: number) => {
     setRecaptchaThreshold(value);
-    setLocalSurvey((prevSurvey) => ({
-      ...prevSurvey,
-      recaptcha: { ...prevSurvey.recaptcha, threshold: value },
-    }));
+    setLocalSurvey(
+      (prevSurvey: TSurvey): TSurvey => ({
+        ...prevSurvey,
+        recaptcha: {
+          enabled: prevSurvey.recaptcha?.enabled ?? false,
+          threshold: value,
+        },
+      })
+    );
   };
 
   return (
@@ -205,7 +210,7 @@ export const ResponseOptionsCard = ({
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pr-5 pl-2">
+          <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -243,7 +248,7 @@ export const ResponseOptionsCard = ({
                   value={localSurvey.autoComplete?.toString()}
                   onChange={handleInputResponse}
                   onBlur={handleInputResponseBlur}
-                  className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
+                  className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                 />
                 {t("environments.surveys.edit.completed_responses")}
               </p>
@@ -310,7 +315,7 @@ export const ResponseOptionsCard = ({
                     <Input
                       autoFocus
                       id="heading"
-                      className="mt-2 mb-4 bg-white"
+                      className="mb-4 mt-2 bg-white"
                       name="heading"
                       defaultValue={surveyClosedMessage.heading}
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}

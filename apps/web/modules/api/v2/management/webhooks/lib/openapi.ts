@@ -13,7 +13,7 @@ export const getWebhooksEndpoint: ZodOpenApiOperationObject = {
   summary: "Get webhooks",
   description: "Gets webhooks from the database.",
   requestParams: {
-    query: ZGetWebhooksFilter.sourceType(),
+    query: ZGetWebhooksFilter,
   },
   tags: ["Management API - Webhooks"],
   responses: {

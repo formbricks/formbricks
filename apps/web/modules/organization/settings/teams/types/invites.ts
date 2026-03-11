@@ -3,8 +3,10 @@ import { z } from "zod";
 import { ZInvite } from "@formbricks/database/zod/invites";
 import { ZUserName } from "@formbricks/types/user";
 
-export interface TInvite
-  extends Omit<Invite, "deprecatedRole" | "organizationId" | "creatorId" | "acceptorId" | "teamIds"> {}
+export interface TInvite extends Omit<
+  Invite,
+  "deprecatedRole" | "organizationId" | "creatorId" | "acceptorId" | "teamIds"
+> {}
 
 export interface InviteWithCreator extends Pick<Invite, "email"> {
   creator: {

@@ -11,6 +11,7 @@ import {
   RocketIcon,
   UserCircleIcon,
   UserIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -115,13 +116,20 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
+        name: t("common.workflows"),
+        href: `/environments/${environment.id}/workflows`,
+        icon: WorkflowIcon,
+        isActive: pathname?.includes("/workflows"),
+        isHidden: !isFormbricksCloud,
+      },
+      {
         name: t("common.configuration"),
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
-        isActive: pathname?.includes("/project"),
+        isActive: pathname?.includes("/workspace"),
       },
     ],
-    [t, environment.id, pathname]
+    [t, environment.id, pathname, isFormbricksCloud]
   );
 
   const dropdownNavigation = [
@@ -188,7 +196,7 @@ export const MainNavigation = ({
                 size="icon"
                 onClick={toggleSidebar}
                 className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-none"
+                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
                 )}>
                 {isCollapsed ? (
                   <PanelLeftOpenIcon strokeWidth={1.5} />

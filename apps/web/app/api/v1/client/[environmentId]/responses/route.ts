@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import { NextRequest } from "next/server";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZEnvironmentId } from "@formbricks/types/environment";
@@ -9,21 +8,16 @@ import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
-
-interface Context {
-  params: Promise<{
-    environmentId: string;
-  }>;
-}
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -56,7 +50,7 @@ const validateResponse = (responseInputData: TResponseInput, survey: TSurvey) =>
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
     const requestHeaders = await headers();
     let responseInput;
@@ -66,7 +60,7 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.badRequestResponse(
           "Invalid JSON in request body",
-          { error: error.message },
+          { error: error instanceof Error ? error.message : "Unknown error occurred" },
           true
         ),
       };
@@ -108,7 +102,8 @@ export const POST = withV1ApiWrapper({
     const responseInputData = responseInputValidation.data;
 
     if (responseInputData.userId) {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(
@@ -183,7 +178,9 @@ export const POST = withV1ApiWrapper({
       } else {
         logger.error({ error, url: req.url }, "Error creating response");
         return {
-          response: responses.internalServerErrorResponse(error.message),
+          response: responses.internalServerErrorResponse(
+            error instanceof Error ? error.message : "Unknown error occurred"
+          ),
         };
       }
     }

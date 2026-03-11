@@ -8,7 +8,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { EditTagsWrapper } from "./components/edit-tags-wrapper";
 
-export const TagsPage = async (props) => {
+export const TagsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

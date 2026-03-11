@@ -1,18 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState, TJsEnvironmentStateProject } from "@formbricks/types/js";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
-import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { EnvironmentStateData, getEnvironmentStateData } from "./data";
 import { getEnvironmentState } from "./environmentState";
 
 // Mock dependencies
-vi.mock("@/lib/organization/service");
 vi.mock("@/lib/cache", () => ({
   cache: {
     withCache: vi.fn(),
@@ -70,17 +67,14 @@ const mockOrganization: TOrganization = {
   createdAt: new Date(),
   updatedAt: new Date(),
   billing: {
-    plan: "free",
     stripeCustomerId: null,
-    period: "monthly",
     limits: {
       projects: 1,
       monthly: {
         responses: 100,
-        miu: 1000,
       },
     },
-    periodStart: new Date(),
+    usageCycleAnchor: new Date(),
   },
   isAIEnabled: false,
 };
@@ -162,7 +156,6 @@ describe("getEnvironmentState", () => {
 
     // Default mocks for successful retrieval
     vi.mocked(getEnvironmentStateData).mockResolvedValue(mockEnvironmentStateData);
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50); // Default below limit
   });
 
   afterEach(() => {
@@ -182,7 +175,6 @@ describe("getEnvironmentState", () => {
     expect(result.data).toEqual(expectedData);
     expect(getEnvironmentStateData).toHaveBeenCalledWith(environmentId);
     expect(prisma.environment.update).not.toHaveBeenCalled();
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(mockOrganization.id);
   });
 
   test("should throw ResourceNotFoundError if environment not found", async () => {
@@ -221,24 +213,6 @@ describe("getEnvironmentState", () => {
     expect(result.data).toBeDefined();
   });
 
-  test("should return empty surveys if monthly response limit reached (Cloud)", async () => {
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(100); // Exactly at limit
-
-    const result = await getEnvironmentState(environmentId);
-
-    expect(result.data.surveys).toEqual([]);
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(mockOrganization.id);
-  });
-
-  test("should return surveys if monthly response limit not reached (Cloud)", async () => {
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(99); // Below limit
-
-    const result = await getEnvironmentState(environmentId);
-
-    expect(result.data.surveys).toEqual(mockSurveys);
-    expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(mockOrganization.id);
-  });
-
   test("should include recaptchaSiteKey if recaptcha variables are set", async () => {
     const result = await getEnvironmentState(environmentId);
 
@@ -253,32 +227,6 @@ describe("getEnvironmentState", () => {
       "fb:env:test-environment-id:state",
       60 * 1000 // 1 minutes in milliseconds
     );
-  });
-
-  test("should handle null response limit correctly (unlimited)", async () => {
-    const unlimitedOrgData = {
-      ...mockEnvironmentStateData,
-      organization: {
-        ...mockEnvironmentStateData.organization,
-        billing: {
-          ...mockOrganization.billing,
-          limits: {
-            ...mockOrganization.billing.limits,
-            monthly: {
-              ...mockOrganization.billing.limits.monthly,
-              responses: null, // Unlimited
-            },
-          },
-        },
-      },
-    };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(unlimitedOrgData);
-    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(999999); // High count
-
-    const result = await getEnvironmentState(environmentId);
-
-    // Should return surveys even with high count since limit is null (unlimited)
-    expect(result.data.surveys).toEqual(mockSurveys);
   });
 
   test("should propagate database update errors", async () => {

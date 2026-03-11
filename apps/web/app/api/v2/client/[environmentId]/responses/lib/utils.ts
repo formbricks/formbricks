@@ -6,6 +6,7 @@ import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
@@ -48,7 +49,7 @@ export const checkSurveyValidity = async (
       return responses.badRequestResponse("Invalid URL in response metadata", {
         surveyId: survey.id,
         environmentId,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       });
     }
     const suId = url.searchParams.get("suId");
@@ -92,7 +93,8 @@ export const checkSurveyValidity = async (
       return responses.notFoundResponse("Organization", null);
     }
 
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(billing.plan);
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationId);
 
     if (!isSpamProtectionEnabled) {
       logger.error("Spam protection is not enabled for this organization");

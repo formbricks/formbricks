@@ -284,7 +284,7 @@ export const AddIntegrationModal = ({
       }
       handleClose();
     } catch (e) {
-      toast.error(e.message);
+      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     }
   };
 
@@ -322,7 +322,7 @@ export const AddIntegrationModal = ({
 
       toast.success(t("environments.integrations.integration_removed_successfully"));
     } catch (e) {
-      toast.error(e.message);
+      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     }
   };
 

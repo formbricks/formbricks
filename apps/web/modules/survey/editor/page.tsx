@@ -14,7 +14,6 @@ import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
-  getMultiLanguagePermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -31,7 +30,7 @@ import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
-export const generateMetadata = async (props) => {
+export const generateMetadata = async (props: { params: Promise<{ surveyId: string }> }) => {
   const params = await props.params;
   const survey = await getSurvey(params.surveyId);
   return {
@@ -39,7 +38,10 @@ export const generateMetadata = async (props) => {
   };
 };
 
-export const SurveyEditorPage = async (props) => {
+export const SurveyEditorPage = async (props: {
+  params: Promise<{ environmentId: string; surveyId: string }>;
+  searchParams: Promise<{ mode?: string }>;
+}) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
@@ -72,19 +74,18 @@ export const SurveyEditorPage = async (props) => {
     getUserEmail(session.user.id),
   ]);
 
-  const isUserTargetingAllowed = await getIsContactsEnabled();
   const [
-    isMultiLanguageAllowed,
     isSurveyFollowUpsAllowed,
     isSpamProtectionAllowed,
     isQuotasAllowed,
     isExternalUrlsAllowed,
+    isUserTargetingAllowed,
   ] = await Promise.all([
-    getMultiLanguagePermission(organizationBilling.plan),
-    getSurveyFollowUpsPermission(organizationBilling.plan),
-    getIsSpamProtectionEnabled(organizationBilling.plan),
-    getIsQuotasEnabled(organizationBilling.plan),
-    getExternalUrlsPermission(organizationBilling.plan),
+    getSurveyFollowUpsPermission(projectWithTeamIds.organizationId),
+    getIsSpamProtectionEnabled(projectWithTeamIds.organizationId),
+    getIsQuotasEnabled(projectWithTeamIds.organizationId),
+    getExternalUrlsPermission(projectWithTeamIds.organizationId),
+    getIsContactsEnabled(projectWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
@@ -121,7 +122,6 @@ export const SurveyEditorPage = async (props) => {
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
-      isMultiLanguageAllowed={isMultiLanguageAllowed}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       projectLanguages={projectLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

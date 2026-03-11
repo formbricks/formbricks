@@ -267,7 +267,7 @@ export const getResponses = reactCache(
       [limit, ZOptionalNumber],
       [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.string().cuid2().optional()]
+      [cursor, z.cuid2().optional()]
     );
 
     limit = limit ?? RESPONSES_PER_PAGE;
@@ -384,9 +384,9 @@ export const getResponseDownloadFile = async (
     const organizationBilling = await getOrganizationBilling(organizationId);
 
     if (!organizationBilling) {
-      throw new Error("Organization billing not found");
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
-    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
     const headers = [
       "No.",

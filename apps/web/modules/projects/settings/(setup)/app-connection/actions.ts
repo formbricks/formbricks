@@ -8,7 +8,6 @@ import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/acti
 import { getSurveysByActionClassId } from "@/lib/survey/service";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
@@ -16,33 +15,29 @@ const ZDeleteActionClassAction = z.object({
   actionClassId: ZId,
 });
 
-export const deleteActionClassAction = authenticatedActionClient.schema(ZDeleteActionClassAction).action(
-  withAuditLogging(
-    "deleted",
-    "actionClass",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromActionClassId(parsedInput.actionClassId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
-          },
-        ],
-      });
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
-      ctx.auditLoggingCtx.oldObject = await getActionClass(parsedInput.actionClassId);
-      return await deleteActionClass(parsedInput.actionClassId);
-    }
-  )
+export const deleteActionClassAction = authenticatedActionClient.inputSchema(ZDeleteActionClassAction).action(
+  withAuditLogging("deleted", "actionClass", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromActionClassId(parsedInput.actionClassId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
+        },
+      ],
+    });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
+    ctx.auditLoggingCtx.oldObject = await getActionClass(parsedInput.actionClassId);
+    return await deleteActionClass(parsedInput.actionClassId);
+  })
 );
 
 const ZUpdateActionClassAction = z.object({
@@ -50,45 +45,41 @@ const ZUpdateActionClassAction = z.object({
   updatedAction: ZActionClassInput,
 });
 
-export const updateActionClassAction = authenticatedActionClient.schema(ZUpdateActionClassAction).action(
-  withAuditLogging(
-    "updated",
-    "actionClass",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const actionClass = await getActionClass(parsedInput.actionClassId);
-      if (actionClass === null) {
-        throw new ResourceNotFoundError("ActionClass", parsedInput.actionClassId);
-      }
-
-      const organizationId = await getOrganizationIdFromActionClassId(parsedInput.actionClassId);
-
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
-          },
-        ],
-      });
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
-      ctx.auditLoggingCtx.oldObject = actionClass;
-      const result = await updateActionClass(
-        actionClass.environmentId,
-        parsedInput.actionClassId,
-        parsedInput.updatedAction
-      );
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
+export const updateActionClassAction = authenticatedActionClient.inputSchema(ZUpdateActionClassAction).action(
+  withAuditLogging("updated", "actionClass", async ({ ctx, parsedInput }) => {
+    const actionClass = await getActionClass(parsedInput.actionClassId);
+    if (actionClass === null) {
+      throw new ResourceNotFoundError("ActionClass", parsedInput.actionClassId);
     }
-  )
+
+    const organizationId = await getOrganizationIdFromActionClassId(parsedInput.actionClassId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
+        },
+      ],
+    });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
+    ctx.auditLoggingCtx.oldObject = actionClass;
+    const result = await updateActionClass(
+      actionClass.environmentId,
+      parsedInput.actionClassId,
+      parsedInput.updatedAction
+    );
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
 );
 
 const ZGetActiveInactiveSurveysAction = z.object({
@@ -96,7 +87,7 @@ const ZGetActiveInactiveSurveysAction = z.object({
 });
 
 export const getActiveInactiveSurveysAction = authenticatedActionClient
-  .schema(ZGetActiveInactiveSurveysAction)
+  .inputSchema(ZGetActiveInactiveSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

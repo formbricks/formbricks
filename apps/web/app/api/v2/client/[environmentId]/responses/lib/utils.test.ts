@@ -1,6 +1,6 @@
-import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
@@ -8,6 +8,7 @@ import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/respons
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
 import { symmetricDecrypt } from "@/lib/crypto";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
 vi.mock("@/lib/i18n/utils", () => ({
@@ -33,6 +34,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 
 vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/organization", () => ({
   getOrganizationBillingByEnvironmentId: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/helper", () => ({
+  getOrganizationIdFromEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -83,6 +88,10 @@ const mockSurvey: TSurvey = {
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
   showLanguageSwitch: false,
+  blocks: [],
+  isCaptureIpEnabled: false,
+  metadata: {},
+  slug: null,
 };
 
 const mockResponseInput: TResponseInputV2 = {
@@ -94,20 +103,19 @@ const mockResponseInput: TResponseInputV2 = {
   meta: {},
 };
 
-const mockBillingData: Organization["billing"] = {
+const mockBillingData: TOrganizationBilling = {
   limits: {
-    monthly: { miu: 0, responses: 0 },
+    monthly: { responses: 0 },
     projects: 3,
   },
-  period: "monthly",
-  periodStart: new Date(),
-  plan: "scale",
+  usageCycleAnchor: new Date(),
   stripeCustomerId: "mock-stripe-customer-id",
 };
 
 describe("checkSurveyValidity", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("cm8f4x9mm0001gx9h5b7d7h3q");
   });
 
   test("should return badRequestResponse if survey environmentId does not match", async () => {

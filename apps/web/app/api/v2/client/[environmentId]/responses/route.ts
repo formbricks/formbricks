@@ -11,6 +11,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -41,7 +42,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
   try {
     responseInput = await request.json();
   } catch (error) {
-    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+    return responses.badRequestResponse(
+      "Invalid JSON in request body",
+      { error: error instanceof Error ? error.message : "Unknown error occurred" },
+      true
+    );
   }
 
   const { environmentId } = params;
@@ -76,7 +81,8 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInputData = responseInputValidation.data;
 
   if (responseInputData.contactId) {
-    const isContactsEnabled = await getIsContactsEnabled();
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
@@ -153,7 +159,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
       return responses.badRequestResponse(error.message);
     }
     logger.error({ error, url: request.url }, "Error creating response");
-    return responses.internalServerErrorResponse(error.message);
+    return responses.internalServerErrorResponse(
+      error instanceof Error ? error.message : "Unknown error occurred"
+    );
   }
   const { quotaFull, ...responseData } = response;
 

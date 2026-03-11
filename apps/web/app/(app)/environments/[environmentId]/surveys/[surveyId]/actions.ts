@@ -4,18 +4,16 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
+import { ZSurvey } from "@formbricks/types/surveys/types";
 import { getOrganization } from "@/lib/organization/service";
 import { getResponseDownloadFile, getResponseFilteringValues } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
@@ -28,7 +26,7 @@ const ZGetResponsesDownloadUrlAction = z.object({
 });
 
 export const getResponsesDownloadUrlAction = authenticatedActionClient
-  .schema(ZGetResponsesDownloadUrlAction)
+  .inputSchema(ZGetResponsesDownloadUrlAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -58,7 +56,7 @@ const ZGetSurveyFilterDataAction = z.object({
 });
 
 export const getSurveyFilterDataAction = authenticatedActionClient
-  .schema(ZGetSurveyFilterDataAction)
+  .inputSchema(ZGetSurveyFilterDataAction)
   .action(async ({ ctx, parsedInput }) => {
     const survey = await getSurvey(parsedInput.surveyId);
 
@@ -89,7 +87,7 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
     const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
       getTagsByEnvironmentId(survey.environmentId),
@@ -115,60 +113,52 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
     throw new ResourceNotFoundError("Organization not found", organizationId);
   }
 
-  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
+  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organizationId);
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
   }
 };
 
-export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).action(
-  withAuditLogging(
-    "updated",
-    "survey",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: TSurvey }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
-      await checkAuthorizationUpdated({
-        userId: ctx.user?.id ?? "",
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.id),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
+    await checkAuthorizationUpdated({
+      userId: ctx.user?.id ?? "",
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.id),
+          minPermission: "readWrite",
+        },
+      ],
+    });
 
-      const { followUps } = parsedInput;
+    const { followUps } = parsedInput;
 
-      const oldSurvey = await getSurvey(parsedInput.id);
+    const oldSurvey = await getSurvey(parsedInput.id);
 
-      if (parsedInput.recaptcha?.enabled) {
-        await checkSpamProtectionPermission(organizationId);
-      }
-
-      if (followUps?.length) {
-        await checkSurveyFollowUpsPermission(organizationId);
-      }
-
-      if (parsedInput.languages?.length) {
-        await checkMultiLanguagePermission(organizationId);
-      }
-
-      // Context for audit log
-      ctx.auditLoggingCtx.surveyId = parsedInput.id;
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.oldObject = oldSurvey;
-
-      const newSurvey = await updateSurvey(parsedInput);
-
-      ctx.auditLoggingCtx.newObject = newSurvey;
-
-      return newSurvey;
+    if (parsedInput.recaptcha?.enabled) {
+      await checkSpamProtectionPermission(organizationId);
     }
-  )
+
+    if (followUps?.length) {
+      await checkSurveyFollowUpsPermission(organizationId);
+    }
+
+    // Context for audit log
+    ctx.auditLoggingCtx.surveyId = parsedInput.id;
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.oldObject = oldSurvey;
+
+    const newSurvey = await updateSurvey(parsedInput);
+
+    ctx.auditLoggingCtx.newObject = newSurvey;
+
+    return newSurvey;
+  })
 );

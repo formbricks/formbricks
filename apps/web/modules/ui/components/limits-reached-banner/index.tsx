@@ -9,26 +9,21 @@ import { TOrganization } from "@formbricks/types/organizations";
 interface LimitsReachedBannerProps {
   organization: TOrganization;
   environmentId: string;
-  peopleCount: number;
   responseCount: number;
 }
 
 export const LimitsReachedBanner = ({
   organization,
-  peopleCount,
   responseCount,
   environmentId,
 }: LimitsReachedBannerProps) => {
   const { t } = useTranslation();
-  const orgBillingPeopleLimit = organization.billing?.limits?.monthly?.miu;
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
-
-  const isPeopleLimitReached = orgBillingPeopleLimit !== null && peopleCount >= orgBillingPeopleLimit;
   const isResponseLimitReached = orgBillingResponseLimit !== null && responseCount >= orgBillingResponseLimit;
 
   const [show, setShow] = useState(true);
 
-  if (show && (isPeopleLimitReached || isResponseLimitReached)) {
+  if (show && isResponseLimitReached) {
     return (
       <div
         aria-live="assertive"
@@ -39,25 +34,12 @@ export const LimitsReachedBanner = ({
               <div className="relative flex flex-col">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
+                    <TriangleAlertIcon className="h-6 w-6 text-error" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-slate-900">{t("common.limits_reached")}</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {isPeopleLimitReached && isResponseLimitReached ? (
-                        <>
-                          {t("common.you_have_reached_your_monthly_miu_limit_of")}{" "}
-                          <span>{orgBillingPeopleLimit}</span> {t("common.and_response_limit_of")}{" "}
-                          {orgBillingResponseLimit}.{" "}
-                        </>
-                      ) : null}
-                      {isPeopleLimitReached && !isResponseLimitReached ? (
-                        <>
-                          {t("common.you_have_reached_your_monthly_miu_limit_of")} {orgBillingPeopleLimit}
-                          .{" "}
-                        </>
-                      ) : null}
-                      {!isPeopleLimitReached && isResponseLimitReached ? (
+                      {isResponseLimitReached ? (
                         <>
                           {t("common.you_have_reached_your_monthly_response_limit_of")}{" "}
                           {orgBillingResponseLimit}.{" "}

@@ -5,6 +5,7 @@ import { PlusIcon } from "lucide-react";
 import { JSX } from "react";
 import { useTranslation } from "react-i18next";
 import type {
+  TSurveyElement,
   TSurveyOpenTextElement,
   TSurveyOpenTextElementInputType,
 } from "@formbricks/types/surveys/elements";
@@ -20,7 +21,7 @@ interface OpenElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyOpenTextElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyOpenTextElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;

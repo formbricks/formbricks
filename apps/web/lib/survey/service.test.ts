@@ -412,7 +412,7 @@ describe("Tests for handleTriggerUpdates", () => {
         },
       },
     ] as TSurvey["triggers"];
-    const currentTriggers = [];
+    const currentTriggers: TSurvey["triggers"] = [];
 
     const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
@@ -421,7 +421,7 @@ describe("Tests for handleTriggerUpdates", () => {
   });
 
   test("removes deleted triggers correctly", () => {
-    const updatedTriggers = [];
+    const updatedTriggers: TSurvey["triggers"] = [];
     const currentTriggers = [
       {
         actionClass: {
@@ -492,7 +492,7 @@ describe("Tests for handleTriggerUpdates", () => {
       },
     ] as TSurvey["triggers"];
 
-    const currentTriggers = [];
+    const currentTriggers: TSurvey["triggers"] = [];
 
     expect(() => handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses)).toThrow(
       InvalidInputError
@@ -520,7 +520,7 @@ describe("Tests for handleTriggerUpdates", () => {
         },
       },
     ] as TSurvey["triggers"];
-    const currentTriggers = [];
+    const currentTriggers: TSurvey["triggers"] = [];
 
     expect(() => handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses)).toThrow(
       InvalidInputError

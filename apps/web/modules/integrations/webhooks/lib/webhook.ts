@@ -11,6 +11,7 @@ import {
 } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
 
@@ -18,6 +19,10 @@ export const updateWebhook = async (
   webhookId: string,
   webhookInput: Partial<TWebhookInput>
 ): Promise<boolean> => {
+  if (webhookInput.url) {
+    await validateWebhookUrl(webhookInput.url);
+  }
+
   try {
     await prisma.webhook.update({
       where: {
@@ -66,6 +71,8 @@ export const createWebhook = async (
   webhookInput: TWebhookInput,
   secret?: string
 ): Promise<Webhook> => {
+  await validateWebhookUrl(webhookInput.url);
+
   try {
     if (isDiscordWebhook(webhookInput.url)) {
       throw new UnknownError("Discord webhooks are currently not supported.");
@@ -123,6 +130,8 @@ export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => 
 };
 
 export const testEndpoint = async (url: string, secret?: string): Promise<boolean> => {
+  await validateWebhookUrl(url);
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
@@ -168,13 +177,15 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
       throw new UnknownError(`Request failed with status code ${statusCode}: ${errorMessage}`);
     }
   } catch (error) {
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       throw new UnknownError("Request timed out after 5 seconds");
     }
     if (error instanceof UnknownError) {
       throw error;
     }
 
-    throw new UnknownError(`Error while fetching the URL: ${error.message}`);
+    throw new UnknownError(
+      `Error while fetching the URL: ${error instanceof Error ? error.message : "Unknown error occurred"}`
+    );
   }
 };

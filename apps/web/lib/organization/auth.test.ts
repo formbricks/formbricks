@@ -29,16 +29,13 @@ describe("auth", () => {
           name: "Org 1",
           billing: {
             stripeCustomerId: null,
-            plan: "free",
-            period: "monthly",
             limits: {
               projects: 3,
               monthly: {
                 responses: 1500,
-                miu: 2000,
               },
             },
-            periodStart: new Date(),
+            usageCycleAnchor: new Date(),
           },
           isAIEnabled: false,
         },

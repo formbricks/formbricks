@@ -30,12 +30,12 @@ vi.mock("@/modules/email", () => ({
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((type, object, fn) => fn),
+  withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
   actionClient: {
-    schema: vi.fn().mockReturnThis(),
+    inputSchema: vi.fn().mockReturnThis(),
     action: vi.fn((fn) => fn),
   },
 }));
@@ -66,7 +66,7 @@ describe("resendVerificationEmailAction", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {

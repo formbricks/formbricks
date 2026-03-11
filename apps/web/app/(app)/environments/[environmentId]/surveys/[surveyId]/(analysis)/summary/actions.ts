@@ -7,7 +7,6 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -22,7 +21,7 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 });
 
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
-  .schema(ZSendEmbedSurveyPreviewEmailAction)
+  .inputSchema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
@@ -69,56 +68,46 @@ const ZResetSurveyAction = z.object({
   projectId: ZId,
 });
 
-export const resetSurveyAction = authenticatedActionClient.schema(ZResetSurveyAction).action(
-  withAuditLogging(
-    "updated",
-    "survey",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZResetSurveyAction>;
-    }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-      const projectId = await getProjectIdFromSurveyId(parsedInput.surveyId);
+export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSurveyAction).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const projectId = await getProjectIdFromSurveyId(parsedInput.surveyId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId,
-          },
-        ],
-      });
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId,
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      ctx.auditLoggingCtx.oldObject = null;
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+    ctx.auditLoggingCtx.oldObject = null;
 
-      const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
-        parsedInput.surveyId
-      );
+    const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
+      parsedInput.surveyId
+    );
 
-      ctx.auditLoggingCtx.newObject = {
-        deletedResponsesCount: deletedResponsesCount,
-        deletedDisplaysCount: deletedDisplaysCount,
-      };
+    ctx.auditLoggingCtx.newObject = {
+      deletedResponsesCount: deletedResponsesCount,
+      deletedDisplaysCount: deletedDisplaysCount,
+    };
 
-      return {
-        success: true,
-        deletedResponsesCount: deletedResponsesCount,
-        deletedDisplaysCount: deletedDisplaysCount,
-      };
-    }
-  )
+    return {
+      success: true,
+      deletedResponsesCount: deletedResponsesCount,
+      deletedDisplaysCount: deletedDisplaysCount,
+    };
+  })
 );
 
 const ZGetEmailHtmlAction = z.object({
@@ -126,7 +115,7 @@ const ZGetEmailHtmlAction = z.object({
 });
 
 export const getEmailHtmlAction = authenticatedActionClient
-  .schema(ZGetEmailHtmlAction)
+  .inputSchema(ZGetEmailHtmlAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -155,9 +144,10 @@ const ZGeneratePersonalLinksAction = z.object({
 });
 
 export const generatePersonalLinksAction = authenticatedActionClient
-  .schema(ZGeneratePersonalLinksAction)
+  .inputSchema(ZGeneratePersonalLinksAction)
   .action(async ({ ctx, parsedInput }) => {
-    const isContactsEnabled = await getIsContactsEnabled();
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       throw new OperationNotAllowedError("Contacts are not enabled for this environment");
     }
@@ -234,7 +224,7 @@ const ZUpdateSingleUseLinksAction = z.object({
 });
 
 export const updateSingleUseLinksAction = authenticatedActionClient
-  .schema(ZUpdateSingleUseLinksAction)
+  .inputSchema(ZUpdateSingleUseLinksAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

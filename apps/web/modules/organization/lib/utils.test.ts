@@ -29,7 +29,7 @@ vi.mock("@/lingodotdev/server", () => ({
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }));
-vi.mock("react", () => ({ cache: (fn) => fn }));
+vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 
 describe("getOrganizationAuth", () => {
   const mockSession = { user: { id: "user-1" } };

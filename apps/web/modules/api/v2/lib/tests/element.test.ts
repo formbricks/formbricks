@@ -1,9 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import {
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyQuestionChoice, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { validateOtherOptionLength, validateOtherOptionLengthForMultipleChoice } from "../element";
 
@@ -54,7 +51,7 @@ const surveyQuestions = [
     type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
     choices: mockChoices,
   },
-] as unknown as TSurveyQuestion[];
+] as unknown as TSurveyElement[];
 
 describe("validateOtherOptionLength", () => {
   const mockChoices: TSurveyQuestionChoice[] = [

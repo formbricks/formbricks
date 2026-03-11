@@ -1,6 +1,5 @@
 import * as yaml from "yaml";
-import { z } from "zod";
-import { createDocument, extendZodWithOpenApi } from "zod-openapi";
+import { createDocument } from "zod-openapi";
 import { ZApiKeyData } from "@formbricks/database/zod/api-keys";
 import { ZContact } from "@formbricks/database/zod/contact";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
@@ -26,8 +25,6 @@ import { userPaths } from "@/modules/api/v2/organizations/[organizationId]/users
 import { rolePaths } from "@/modules/api/v2/roles/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import { contactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/lib/openapi";
-
-extendZodWithOpenApi(z);
 
 const document = createDocument({
   openapi: "3.1.0",

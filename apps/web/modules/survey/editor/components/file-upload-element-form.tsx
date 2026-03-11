@@ -7,7 +7,7 @@ import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -23,7 +23,7 @@ interface FileUploadFormProps {
   project: Project;
   element: TSurveyFileUploadElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyFileUploadElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
@@ -61,7 +61,11 @@ export const FileUploadElementForm = ({
       return 10;
     }
 
-    if (billingInfo.plan !== "free") {
+    const hasPaidCloudCapacity =
+      billingInfo.limits.projects === null ||
+      (typeof billingInfo.limits.projects === "number" && billingInfo.limits.projects > 1);
+
+    if (hasPaidCloudCapacity) {
       // 1GB in MB
       return 1024;
     }
@@ -172,7 +176,7 @@ export const FileUploadElementForm = ({
 
                   updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
                 }}
-                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
+                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
               />
               MB
             </p>

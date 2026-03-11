@@ -84,7 +84,7 @@ export const UploadContactsCSVButton = ({
         const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
-          setError(parsedRecords.error.errors[0].message);
+          setError(parsedRecords.error.issues[0].message);
           return;
         }
 
@@ -155,10 +155,10 @@ export const UploadContactsCSVButton = ({
     const values = Object.values(attributeMap);
 
     if (new Set(values).size !== values.length) {
-      const valueCount = values.reduce((acc, value) => {
+      const valueCount = values.reduce<Record<string, number>>((acc, value) => {
         acc[value] = (acc[value] || 0) + 1;
         return acc;
-      }, {}) as Record<string, number>;
+      }, {});
 
       const duplicateValues = Object.entries(valueCount)
         .filter(([_, count]) => count > 1)
@@ -350,7 +350,10 @@ export const UploadContactsCSVButton = ({
     ];
 
     const headers = Object.keys(exampleData[0]);
-    const csvRows = [headers.join(","), ...exampleData.map((row) => headers.map((h) => row[h]).join(","))];
+    const csvRows = [
+      headers.join(","),
+      ...exampleData.map((row) => headers.map((h) => (row as Record<string, string>)[h]).join(",")),
+    ];
     const csvString = csvRows.join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvString);
 

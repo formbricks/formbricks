@@ -177,46 +177,37 @@ async function handlePostUserCreation(
   }
 }
 
-export const createUserAction = actionClient.schema(ZCreateUserAction).action(
-  withAuditLogging(
-    "created",
-    "user",
-    async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
-      await applyIPRateLimit(rateLimitConfigs.auth.signup);
-      await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
+export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
+  withAuditLogging("created", "user", async ({ ctx, parsedInput }) => {
+    await applyIPRateLimit(rateLimitConfigs.auth.signup);
+    await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
-      const hashedPassword = await hashPassword(parsedInput.password);
-      const { user, userAlreadyExisted } = await createUserSafely(
-        parsedInput.email,
-        parsedInput.name,
-        hashedPassword,
-        parsedInput.userLocale
-      );
+    const hashedPassword = await hashPassword(parsedInput.password);
+    const { user, userAlreadyExisted } = await createUserSafely(
+      parsedInput.email,
+      parsedInput.name,
+      hashedPassword,
+      parsedInput.userLocale
+    );
 
-      if (!userAlreadyExisted && user) {
-        await handlePostUserCreation(
-          ctx,
-          user,
-          parsedInput.inviteToken,
-          parsedInput.emailVerificationDisabled
-        );
+    if (!userAlreadyExisted && user) {
+      await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
 
-        await subscribeUserToMailingList({
-          email: user.email,
-          isFormbricksCloud: parsedInput.isFormbricksCloud,
-          subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
-          subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
-        });
-      }
-
-      if (user) {
-        ctx.auditLoggingCtx.userId = user.id;
-        ctx.auditLoggingCtx.newObject = user;
-      }
-
-      return {
-        success: true,
-      };
+      await subscribeUserToMailingList({
+        email: user.email,
+        isFormbricksCloud: parsedInput.isFormbricksCloud,
+        subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
+        subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
+      });
     }
-  )
+
+    if (user) {
+      ctx.auditLoggingCtx.userId = user.id;
+      ctx.auditLoggingCtx.newObject = user;
+    }
+
+    return {
+      success: true,
+    };
+  })
 );

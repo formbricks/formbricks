@@ -32,8 +32,8 @@ const ZDisableTwoFactorFormState = z
     backupCode: z.string().optional(),
   })
   .refine((data) => (!!data.code && !data.backupCode) || (!data.code && !!data.backupCode), {
-    message: "Please provide either the code OR the backup code",
     path: ["code"],
+    error: "Please provide either the code OR the backup code",
   });
 
 type TDisableTwoFactorFormState = z.infer<typeof ZDisableTwoFactorFormState>;
@@ -109,7 +109,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                             required
                             onChange={(password) => field.onChange(password)}
                             value={field.value}
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                           />
                           {error?.message && <FormError className="text-left">{error.message}</FormError>}
                         </FormItem>

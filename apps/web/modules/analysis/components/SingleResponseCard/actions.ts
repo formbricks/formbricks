@@ -7,7 +7,6 @@ import { createTag } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getEnvironmentIdFromResponseId,
   getOrganizationIdFromEnvironmentId,
@@ -23,41 +22,37 @@ const ZCreateTagAction = z.object({
   tagName: z.string(),
 });
 
-export const createTagAction = authenticatedActionClient.schema(ZCreateTagAction).action(
-  withAuditLogging(
-    "created",
-    "tag",
-    async ({ parsedInput, ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagAction).action(
+  withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      const result = await createTag(parsedInput.environmentId, parsedInput.tagName);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    const result = await createTag(parsedInput.environmentId, parsedInput.tagName);
 
-      if (result.ok) {
-        ctx.auditLoggingCtx.tagId = result.data.id;
-        ctx.auditLoggingCtx.newObject = result.data;
-      } else {
-        ctx.auditLoggingCtx.newObject = null;
-      }
-
-      return result;
+    if (result.ok) {
+      ctx.auditLoggingCtx.tagId = result.data.id;
+      ctx.auditLoggingCtx.newObject = result.data;
+    } else {
+      ctx.auditLoggingCtx.newObject = null;
     }
-  )
+
+    return result;
+  })
 );
 
 const ZCreateTagToResponseAction = z.object({
@@ -65,11 +60,10 @@ const ZCreateTagToResponseAction = z.object({
   tagId: ZId,
 });
 
-export const createTagToResponseAction = authenticatedActionClient.schema(ZCreateTagToResponseAction).action(
-  withAuditLogging(
-    "addedToResponse",
-    "tag",
-    async ({ parsedInput, ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+export const createTagToResponseAction = authenticatedActionClient
+  .inputSchema(ZCreateTagToResponseAction)
+  .action(
+    withAuditLogging("addedToResponse", "tag", async ({ parsedInput, ctx }) => {
       const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
       const tagEnvironment = await getTag(parsedInput.tagId);
 
@@ -103,20 +97,18 @@ export const createTagToResponseAction = authenticatedActionClient.schema(ZCreat
       const result = await addTagToRespone(parsedInput.responseId, parsedInput.tagId);
       ctx.auditLoggingCtx.newObject = result;
       return result;
-    }
-  )
-);
+    })
+  );
 
 const ZDeleteTagOnResponseAction = z.object({
   responseId: ZId,
   tagId: ZId,
 });
 
-export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDeleteTagOnResponseAction).action(
-  withAuditLogging(
-    "removedFromResponse",
-    "tag",
-    async ({ parsedInput, ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+export const deleteTagOnResponseAction = authenticatedActionClient
+  .inputSchema(ZDeleteTagOnResponseAction)
+  .action(
+    withAuditLogging("removedFromResponse", "tag", async ({ parsedInput, ctx }) => {
       const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
       const tagEnvironment = await getTag(parsedInput.tagId);
       const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
@@ -148,43 +140,38 @@ export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDelet
       const result = await deleteTagOnResponse(parsedInput.responseId, parsedInput.tagId);
       ctx.auditLoggingCtx.oldObject = result;
       return result;
-    }
-  )
-);
+    })
+  );
 
 const ZDeleteResponseAction = z.object({
   responseId: ZId,
-  decrementQuotas: z.boolean().default(false),
+  decrementQuotas: z.boolean().prefault(false),
 });
 
-export const deleteResponseAction = authenticatedActionClient.schema(ZDeleteResponseAction).action(
-  withAuditLogging(
-    "deleted",
-    "response",
-    async ({ parsedInput, ctx }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromResponseId(parsedInput.responseId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.responseId = parsedInput.responseId;
-      const result = await deleteResponse(parsedInput.responseId, parsedInput.decrementQuotas);
-      ctx.auditLoggingCtx.oldObject = result;
-      return result;
-    }
-  )
+export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDeleteResponseAction).action(
+  withAuditLogging("deleted", "response", async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.responseId = parsedInput.responseId;
+    const result = await deleteResponse(parsedInput.responseId, parsedInput.decrementQuotas);
+    ctx.auditLoggingCtx.oldObject = result;
+    return result;
+  })
 );
 
 const ZGetResponseAction = z.object({
@@ -192,7 +179,7 @@ const ZGetResponseAction = z.object({
 });
 
 export const getResponseAction = authenticatedActionClient
-  .schema(ZGetResponseAction)
+  .inputSchema(ZGetResponseAction)
   .action(async ({ parsedInput, ctx }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

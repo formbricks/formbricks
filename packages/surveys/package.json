@@ -31,9 +31,9 @@
   },
   "scripts": {
     "dev": "concurrently -n \"ESM,UMD\" \"vite build --watch --mode dev\" \"BUILD_UMD=true vite build --watch --mode dev\"",
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && cross-env NODE_OPTIONS=--max-old-space-size=8192 BUILD_UMD=true vite build",
-    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc && cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true vite build",
-    "build:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build --mode dev",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && cross-env NODE_OPTIONS=--max-old-space-size=8192 BUILD_UMD=true vite build",
+    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true vite build",
+    "build:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build --mode dev",
     "go": "concurrently -n \"ESM,UMD\" \"vite build --watch --mode dev\" \"BUILD_UMD=true vite build --watch --mode dev\"",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
@@ -45,11 +45,11 @@
   "dependencies": {
     "@calcom/embed-snippet": "1.3.3",
     "@formbricks/survey-ui": "workspace:*",
-    "i18next": "25.8.13",
+    "i18next": "25.8.14",
     "i18next-icu": "2.4.3",
-    "isomorphic-dompurify": "2.36.0",
+    "isomorphic-dompurify": "3.0.0",
     "preact": "10.28.4",
-    "react-i18next": "15.7.4"
+    "react-i18next": "16.5.4"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
@@ -63,11 +63,11 @@
     "autoprefixer": "10.4.27",
     "concurrently": "9.2.1",
     "postcss": "8.5.8",
-    "rollup-plugin-visualizer": "6.0.8",
+    "rollup-plugin-visualizer": "7.0.1",
     "tailwindcss": "4.2.1",
     "terser": "5.46.0",
-    "vite": "6.4.1",
+    "vite": "7.3.1",
     "vite-plugin-dts": "4.5.4",
-    "vite-tsconfig-paths": "5.1.4"
+    "vite-tsconfig-paths": "6.1.1"
   }
 }

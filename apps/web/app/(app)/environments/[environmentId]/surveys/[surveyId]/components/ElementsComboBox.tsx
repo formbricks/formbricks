@@ -113,7 +113,9 @@ const elementIcons = {
 };
 
 const getIcon = (type: string) => {
-  const IconComponent = elementIcons[type];
+  const IconComponent = (elementIcons as Record<string, (typeof elementIcons)[keyof typeof elementIcons]>)[
+    type
+  ];
   return IconComponent ? <IconComponent className="h-5 w-5" strokeWidth={1.5} /> : null;
 };
 
@@ -192,7 +194,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={open ? `${t("common.search")}...` : t("common.select_filter")}
-            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none ring-offset-transparent outline-none focus:border-none focus:shadow-none focus:ring-offset-0 focus:outline-none"
+            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none outline-none ring-offset-transparent focus:border-none focus:shadow-none focus:outline-none focus:ring-offset-0"
           />
         )}
         <Button

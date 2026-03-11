@@ -27,7 +27,6 @@ import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
-import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
@@ -53,6 +52,7 @@ import {
   isUsedInRecall,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { MultiLanguageCard } from "@/modules/survey/multi-language-surveys/components/multi-language-card";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
@@ -67,7 +67,6 @@ interface ElementsViewProps {
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -89,7 +88,6 @@ export const ElementsView = ({
   setInvalidElements,
   setSelectedLanguageCode,
   selectedLanguageCode,
-  isMultiLanguageAllowed,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -114,7 +112,7 @@ export const ElementsView = ({
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const internalElementIdMap = useMemo(() => {
-    return elements.reduce((acc, element) => {
+    return elements.reduce<Record<string, string>>((acc, element) => {
       acc[element.id] = createId();
       return acc;
     }, {});
@@ -958,8 +956,6 @@ export const ElementsView = ({
               setLocalSurvey={setLocalSurvey}
               setActiveElementId={setActiveElementId}
               activeElementId={activeElementId}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
-              isFormbricksCloud={isFormbricksCloud}
               setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
             />

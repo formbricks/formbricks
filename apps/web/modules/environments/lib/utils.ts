@@ -4,14 +4,13 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, DatabaseError } from "@formbricks/types/errors";
+import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
@@ -172,7 +171,14 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                billing: true,
+                billing: {
+                  select: {
+                    stripeCustomerId: true,
+                    limits: true,
+                    usageCycleAnchor: true,
+                    stripe: true,
+                  },
+                },
                 isAIEnabled: true,
                 whitelabel: true,
                 // Current user's membership only (filtered at DB level)
@@ -196,6 +202,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
     });
 
     if (!data) return null;
+
+    if (!data.project.organization.billing) {
+      throw new ResourceNotFoundError("OrganizationBilling", data.project.organization.id);
+    }
 
     // Extract and return properly typed data
     return {
@@ -298,19 +308,15 @@ export const getEnvironmentLayoutData = reactCache(
 
     // Fetch remaining data in parallel
     const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
-      getAccessControlPermission(organization.billing.plan), // No DB query (logic only)
+      getAccessControlPermission(organization.id),
       getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);
 
     // Conditional queries for Formbricks Cloud
-    let peopleCount = 0;
     let responseCount = 0;
     if (IS_FORMBRICKS_CLOUD) {
-      [peopleCount, responseCount] = await Promise.all([
-        getMonthlyActiveOrganizationPeopleCount(organization.id),
-        getMonthlyOrganizationResponseCount(organization.id),
-      ]);
+      responseCount = await getMonthlyOrganizationResponseCount(organization.id);
     }
 
     return {
@@ -324,7 +330,6 @@ export const getEnvironmentLayoutData = reactCache(
       isAccessControlAllowed,
       projectPermission,
       license,
-      peopleCount,
       responseCount,
     };
   }

@@ -9,9 +9,10 @@ import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
-import { TI18nString } from "@formbricks/types/i18n";
 import {
   TMultipleChoiceOptionDisplayType,
+  TSurveyElement,
+  TSurveyElementChoice,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
 } from "@formbricks/types/surveys/elements";
@@ -32,7 +33,7 @@ interface MultipleChoiceElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyMultipleChoiceElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -85,7 +86,7 @@ export const MultipleChoiceElementForm = ({
     { value: "dropdown", label: t("environments.surveys.edit.dropdown") },
   ];
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
+  const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
     let newChoices: any[] = [];
     if (element.choices) {
       newChoices = element.choices.map((choice, idx) => {
@@ -286,7 +287,7 @@ export const MultipleChoiceElementForm = ({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options*</Label>
+        <Label htmlFor="choices">{t("environments.surveys.edit.options")}</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="multi-choice-choices"
@@ -399,8 +400,8 @@ export const MultipleChoiceElementForm = ({
           <OptionsSwitch
             options={multipleChoiceOptionDisplayTypeOptions}
             currentOption={element.displayType ?? "list"}
-            handleOptionChange={(value: TMultipleChoiceOptionDisplayType) =>
-              updateElement(elementIdx, { displayType: value })
+            handleOptionChange={(value: string) =>
+              updateElement(elementIdx, { displayType: value as TMultipleChoiceOptionDisplayType })
             }
           />
         </div>

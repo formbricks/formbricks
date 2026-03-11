@@ -17,7 +17,7 @@ export const ZIntegrationNotionCredential = z.object({
         object: z.string(),
         person: z
           .object({
-            email: z.string().email(),
+            email: z.email(),
           })
           .nullish(),
         avatar_url: z.string().nullish(),
@@ -51,11 +51,11 @@ export const ZIntegrationNotionConfigData = z
     databaseId: z.string(),
     databaseName: z.string(),
   })
-  .merge(
+  .extend(
     ZIntegrationBaseSurveyData.omit({
       elementIds: true,
       elements: true,
-    })
+    }).shape
   );
 
 export type TIntegrationNotionConfigData = z.infer<typeof ZIntegrationNotionConfigData>;

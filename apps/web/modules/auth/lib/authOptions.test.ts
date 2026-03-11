@@ -33,22 +33,26 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   },
 }));
 
-// Mock constants that this test needs
-vi.mock("@/lib/constants", () => ({
-  EMAIL_VERIFICATION_DISABLED: false,
-  SESSION_MAX_AGE: 86400,
-  NEXTAUTH_SECRET: "test-secret",
-  WEBAPP_URL: "http://localhost:3000",
-  ENCRYPTION_KEY: "12345678901234567890123456789012", // 32 bytes for AES-256
-  REDIS_URL: undefined,
-  AUDIT_LOG_ENABLED: false,
-  AUDIT_LOG_GET_USER_IP: false,
-  ENTERPRISE_LICENSE_KEY: undefined,
-  SENTRY_DSN: undefined,
-  BREVO_API_KEY: undefined,
-  RATE_LIMITING_DISABLED: false,
-  CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
-}));
+// Mock constants that this test needs while preserving untouched exports.
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    EMAIL_VERIFICATION_DISABLED: false,
+    SESSION_MAX_AGE: 86400,
+    NEXTAUTH_SECRET: "test-secret",
+    WEBAPP_URL: "http://localhost:3000",
+    ENCRYPTION_KEY: "12345678901234567890123456789012", // 32 bytes for AES-256
+    REDIS_URL: undefined,
+    AUDIT_LOG_ENABLED: false,
+    AUDIT_LOG_GET_USER_IP: false,
+    ENTERPRISE_LICENSE_KEY: undefined,
+    SENTRY_DSN: undefined,
+    BREVO_API_KEY: undefined,
+    RATE_LIMITING_DISABLED: false,
+    CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+  };
+});
 
 // Mock next/headers
 vi.mock("next/headers", () => ({

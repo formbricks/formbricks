@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
@@ -24,7 +25,11 @@ const mockOrganization = {
   name: "Test Org",
   createdAt: new Date(),
   updatedAt: new Date(),
-  billing: { plan: "free", limits: { monthly: { responses: null } } } as any, // Default no limit
+  billing: {
+    stripeCustomerId: null,
+    limits: { projects: 3, monthly: { responses: null } },
+    usageCycleAnchor: new Date(),
+  } as TOrganizationBilling, // Default no limit
 } as unknown as Organization;
 
 const mockResponseInput: TResponseInput = {
@@ -107,6 +112,7 @@ vi.mock("@/lib/constants", () => ({
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
+  STRIPE_API_VERSION: "2026-01-28.clover",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
 }));
@@ -154,7 +160,10 @@ describe("Response Lib Tests", () => {
         ...mockResponsePrisma,
       });
 
-      const response = await createResponse(mockResponseInputWithUserId, mockTx);
+      const response = await createResponse(
+        mockResponseInputWithUserId,
+        mockTx as unknown as Prisma.TransactionClient
+      );
 
       expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
       expect(getContactByUserId).toHaveBeenCalledWith(environmentId, mockUserId);
@@ -171,7 +180,9 @@ describe("Response Lib Tests", () => {
 
     test("should throw ResourceNotFoundError if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
-      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(ResourceNotFoundError);
+      await expect(
+        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+      ).rejects.toThrow(ResourceNotFoundError);
       expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
       expect(mockTx.response.create).not.toHaveBeenCalled();
     });
@@ -184,7 +195,9 @@ describe("Response Lib Tests", () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
-      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(DatabaseError);
+      await expect(
+        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+      ).rejects.toThrow(DatabaseError);
       expect(logger.error).not.toHaveBeenCalled(); // Should be caught and re-thrown as DatabaseError
     });
 
@@ -196,8 +209,12 @@ describe("Response Lib Tests", () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
-      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(DatabaseError);
-      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow("Display ID does not exist");
+      await expect(
+        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+      ).rejects.toThrow(DatabaseError);
+      await expect(
+        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+      ).rejects.toThrow("Display ID does not exist");
     });
 
     test("should handle generic errors", async () => {
@@ -205,7 +222,9 @@ describe("Response Lib Tests", () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
 
-      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(genericError);
+      await expect(
+        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+      ).rejects.toThrow(genericError);
     });
   });
 

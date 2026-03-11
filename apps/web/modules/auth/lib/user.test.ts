@@ -115,7 +115,9 @@ describe("User Management", () => {
         locale: "en",
         emailVerified: null,
       };
-      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(mockUser);
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(
+        mockUser as Awaited<ReturnType<typeof prisma.user.findFirst>>
+      );
 
       const result = await getUserByEmail(mockEmail);
 
@@ -136,7 +138,9 @@ describe("User Management", () => {
       const mockUser = {
         id: mockUserId,
       };
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+        mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+      );
 
       const result = await getUser(mockUserId);
 

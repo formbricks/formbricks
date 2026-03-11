@@ -10,7 +10,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 
 export const getOrganizationByTeamId = reactCache(async (teamId: string): Promise<Organization | null> => {
-  validateInputs([teamId, z.string().cuid2()]);
+  validateInputs([teamId, z.cuid2()]);
 
   try {
     const team = await prisma.team.findUnique({
@@ -88,6 +88,9 @@ export const createDefaultTeamMembership = async (userId: string) => {
       userId
     );
   } catch (error) {
-    logger.error("Error creating default team membership", error);
+    logger.error(
+      error instanceof Error ? error : new Error(String(error)),
+      "Error creating default team membership"
+    );
   }
 };

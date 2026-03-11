@@ -17,7 +17,7 @@ import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-const Page = async (props) => {
+const Page = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
@@ -27,7 +27,7 @@ const Page = async (props) => {
     getSurvey(params.surveyId),
     getUser(session.user.id),
     getTagsByEnvironmentId(params.environmentId),
-    getIsContactsEnabled(),
+    getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
     findMatchingLocale(),
   ]);
@@ -53,7 +53,7 @@ const Page = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
   const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
   // Fetch initial responses on the server to prevent duplicate client-side fetch

@@ -3,7 +3,7 @@
 import { PlusIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
@@ -21,7 +21,9 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  updateSurvey: (input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }>) => void;
+  updateSurvey: (
+    input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
+  ) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -185,7 +187,7 @@ export const EndScreenForm = ({
                       <div className="group relative">
                         {/* The highlight container is absolutely positioned behind the input */}
                         <div
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent`}
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}

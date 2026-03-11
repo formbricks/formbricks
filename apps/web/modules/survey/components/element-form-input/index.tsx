@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import {
@@ -11,15 +11,20 @@ import {
   TSurveyElementChoice,
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { MultiLangWrapper } from "@/modules/survey/components/element-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/element-form-input/components/recall-wrapper";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { LocalizedEditor } from "@/modules/survey/multi-language-surveys/components/localized-editor";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
@@ -43,7 +48,9 @@ interface ElementFormInputProps {
   localSurvey: TSurvey;
   elementIdx: number;
   updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
-  updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
+  updateSurvey?: (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   isInvalid: boolean;
@@ -59,7 +66,7 @@ interface ElementFormInputProps {
   isStorageConfigured: boolean;
   autoFocus?: boolean;
   firstRender?: boolean;
-  setFirstRender?: (value: boolean) => void;
+  setFirstRender?: Dispatch<SetStateAction<boolean>>;
   isExternalUrlsAllowed?: boolean;
 }
 
@@ -235,7 +242,7 @@ export const ElementFormInput = ({
           const [parent, child] = id.split(".");
           updateElement(elementIdx, {
             [parent]: {
-              ...currentElement[parent],
+              ...((currentElement as Record<string, unknown>)[parent] as Record<string, unknown>),
               [child]: translatedText,
             },
           });
@@ -391,7 +398,7 @@ export const ElementFormInput = ({
     return (
       <div className="w-full">
         {label && (
-          <div className="mt-3 mb-2 flex items-center justify-between">
+          <div className="mb-2 mt-3 flex items-center justify-between">
             <Label htmlFor={id}>{label}</Label>
             {id === "headline" && currentElement && updateElement && (
               <div className="flex items-center space-x-2">
@@ -521,7 +528,7 @@ export const ElementFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mt-3 mb-2 flex items-center justify-between">
+        <div className="mb-2 mt-3 flex items-center justify-between">
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
@@ -568,7 +575,7 @@ export const ElementFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent ${
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
                           }`}
                           dir="auto"

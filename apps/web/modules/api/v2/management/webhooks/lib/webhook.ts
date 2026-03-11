@@ -1,7 +1,9 @@
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { generateWebhookSecret } from "@/lib/crypto";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { getWebhooksQuery } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -41,13 +43,30 @@ export const getWebhooks = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhooks", issue: error.message }],
+      details: [
+        { field: "webhooks", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
 
 export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webhook, ApiErrorResponseV2>> => {
   const { environmentId, name, url, source, triggers, surveyIds } = webhook;
+
+  try {
+    await validateWebhookUrl(url);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return err({
+        type: "bad_request",
+        details: [{ field: "url", issue: error.message }],
+      });
+    }
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "url", issue: "Webhook URL validation failed unexpectedly" }],
+    });
+  }
 
   try {
     const secret = generateWebhookSecret();
@@ -74,7 +93,9 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

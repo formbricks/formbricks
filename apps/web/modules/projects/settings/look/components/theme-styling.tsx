@@ -203,7 +203,9 @@ export const ThemeStyling = ({
                         </FormDescription>
                         <FormControl>
                           <ColorPicker
-                            color={field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
+                            color={
+                              field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
+                            }
                             onChange={(color) => field.onChange(color)}
                             containerClass="w-full"
                           />

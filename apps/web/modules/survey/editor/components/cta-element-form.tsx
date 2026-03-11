@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
+import { TSurveyCTAElement, type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -18,7 +18,7 @@ interface CTAElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyCTAElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyCTAElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -111,7 +111,7 @@ export const CTAElementForm = ({
           description={t("environments.surveys.edit.button_external_description")}
           childBorder
           customContainerClass="p-0 mt-4">
-          <div className="flex flex-1 flex-col gap-2 px-4 pt-1 pb-4">
+          <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
             <ElementFormInput
               id="ctaButtonLabel"
               value={element.ctaButtonLabel}

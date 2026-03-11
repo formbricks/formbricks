@@ -5,7 +5,7 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
-import { getIsSpamProtectionEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkFeaturePermissions } from "./utils";
 
@@ -18,7 +18,6 @@ vi.mock("@/app/lib/api/response", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSpamProtectionEnabled: vi.fn(),
-  getMultiLanguagePermission: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/follow-ups/lib/utils", () => ({
@@ -31,17 +30,14 @@ const mockOrganization: TOrganization = {
   createdAt: new Date(),
   updatedAt: new Date(),
   billing: {
-    plan: "free",
     stripeCustomerId: null,
-    period: "monthly",
     limits: {
       projects: 3,
       monthly: {
         responses: 1500,
-        miu: 2000,
       },
     },
-    periodStart: new Date(),
+    usageCycleAnchor: new Date(),
   },
   isAIEnabled: false,
 };
@@ -97,6 +93,7 @@ const baseSurveyData: TSurveyCreateInputWithEnvironmentId = {
   languages: [],
   type: "link",
   welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+  blocks: [],
   followUps: [],
 };
 
@@ -151,36 +148,10 @@ describe("checkFeaturePermissions", () => {
     expect(result).toBeNull();
   });
 
-  // Multi-language tests
-  test("should return forbiddenResponse if multi-language is used but permission denied", async () => {
-    vi.mocked(getMultiLanguagePermission).mockResolvedValue(false);
-    const surveyData: TSurveyCreateInputWithEnvironmentId = {
-      ...baseSurveyData,
-      languages: [mockLanguage],
-    };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
-    expect(result).toBeInstanceOf(Response);
-    expect(result?.status).toBe(403);
-    expect(responses.forbiddenResponse).toHaveBeenCalledWith(
-      "Multi language is not enabled for this organization"
-    );
-  });
-
-  test("should return null if multi-language is used and permission granted", async () => {
-    vi.mocked(getMultiLanguagePermission).mockResolvedValue(true);
-    const surveyData = {
-      ...baseSurveyData,
-      languages: [mockLanguage],
-    };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
-    expect(result).toBeNull();
-  });
-
   // Combined tests
   test("should return null if multiple features are used and all permissions granted", async () => {
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     vi.mocked(getSurveyFollowUpsPermission).mockResolvedValue(true);
-    vi.mocked(getMultiLanguagePermission).mockResolvedValue(true);
     const surveyData = {
       ...baseSurveyData,
       recaptcha: { enabled: true, threshold: 0.5 },
@@ -194,7 +165,6 @@ describe("checkFeaturePermissions", () => {
   test("should return forbiddenResponse for the first denied feature (recaptcha)", async () => {
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false); // Denied
     vi.mocked(getSurveyFollowUpsPermission).mockResolvedValue(true);
-    vi.mocked(getMultiLanguagePermission).mockResolvedValue(true);
     const surveyData = {
       ...baseSurveyData,
       recaptcha: { enabled: true, threshold: 0.5 },
@@ -213,7 +183,6 @@ describe("checkFeaturePermissions", () => {
   test("should return forbiddenResponse for the first denied feature (follow-ups)", async () => {
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     vi.mocked(getSurveyFollowUpsPermission).mockResolvedValue(false); // Denied
-    vi.mocked(getMultiLanguagePermission).mockResolvedValue(true);
     const surveyData = {
       ...baseSurveyData,
       recaptcha: { enabled: true, threshold: 0.5 },

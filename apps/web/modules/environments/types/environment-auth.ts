@@ -58,6 +58,5 @@ export type TEnvironmentLayoutData = {
   isAccessControlAllowed: boolean;
   projectPermission: TTeamPermission | null;
   license: TEnterpriseLicense;
-  peopleCount: number;
   responseCount: number;
 };

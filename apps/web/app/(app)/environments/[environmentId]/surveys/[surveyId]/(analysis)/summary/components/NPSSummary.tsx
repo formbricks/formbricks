@@ -60,7 +60,9 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
       },
     };
 
-    const filter = filters[group];
+    const filter = (filters as Record<string, { comparison: string; values: string | string[] | undefined }>)[
+      group
+    ];
 
     if (filter) {
       setFilter(
@@ -104,7 +106,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
         <TabsContent value="aggregated" className="mt-4">
           <div className="px-4 pb-6 pt-4 md:px-6">
             <div className="space-y-5 text-sm md:text-base">
-              {["promoters", "passives", "detractors", "dismissed"].map((group) => (
+              {(["promoters", "passives", "detractors", "dismissed"] as const).map((group) => (
                 <button
                   className="w-full cursor-pointer hover:opacity-80"
                   key={group}
@@ -123,8 +125,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                       </div>
                     </div>
                     <p className="flex w-32 items-end justify-end text-slate-600">
-                      {elementSummary[group]?.count}{" "}
-                      {elementSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
+                      {t("common.count_responses", { count: elementSummary[group]?.count })}
                     </p>
                   </div>
                   <ProgressBar
@@ -158,7 +159,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                     }>
                     <div className="flex h-32 w-full flex-col items-center justify-end">
                       <div
-                        className="bg-brand-dark w-full rounded-t-lg border border-slate-200 transition-all group-hover:brightness-110"
+                        className="w-full rounded-t-lg border border-slate-200 bg-brand-dark transition-all group-hover:brightness-110"
                         style={{
                           height: `${Math.max(choice.percentage, 2)}%`,
                           opacity,

@@ -78,6 +78,15 @@ export type TActionClassNoCodeConfig =
         rule: TActionClassPageUrlRule;
       }[];
       urlFiltersConnector?: "or" | "and";
+    }
+  | {
+      type: "pageDwell";
+      urlFilters: {
+        value: string;
+        rule: TActionClassPageUrlRule;
+      }[];
+      urlFiltersConnector?: "or" | "and";
+      timeInSeconds: number;
     };
 
 export interface TTrackProperties {

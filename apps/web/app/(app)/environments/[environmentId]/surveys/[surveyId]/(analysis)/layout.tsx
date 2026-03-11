@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 type Props = {
@@ -14,10 +15,11 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
   const session = await getServerSession(authOptions);
   const survey = await getSurvey(params.surveyId);
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
+  const t = await getTranslate();
 
   if (session) {
     return {
-      title: `${responseCount} Responses | ${survey?.name} Results`,
+      title: `${t("common.count_responses", { count: responseCount })} | ${t("environments.surveys.summary.survey_results", { surveyName: survey?.name })}`,
     };
   }
   return {
@@ -25,7 +27,7 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
   };
 };
 
-const SurveyLayout = async ({ children }) => {
+const SurveyLayout = async ({ children }: { children: React.ReactNode }) => {
   return <ResponseFilterProvider>{children}</ResponseFilterProvider>;
 };
 

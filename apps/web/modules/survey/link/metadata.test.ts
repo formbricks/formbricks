@@ -56,14 +56,13 @@ describe("getMetadataForLinkSurvey", () => {
         styling: null,
         logo: null,
         linkSurveyBranding: true,
+        customHeadScripts: null,
       },
       organizationId: "org-123",
       organizationBilling: {
-        plan: "free",
-        period: "monthly",
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripeCustomerId: null,
-        limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
+        limits: { projects: 3, monthly: { responses: 1500 } },
       },
       organizationWhitelabel: null,
     });

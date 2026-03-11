@@ -1,4 +1,20 @@
-import { Prisma } from "@prisma/client";
+import {
+  ActionClass,
+  ApiKey,
+  Contact,
+  Environment,
+  Integration,
+  Invite,
+  Language,
+  Prisma,
+  Project,
+  Response,
+  Segment,
+  Survey,
+  Tag,
+  Team,
+  Webhook,
+} from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -100,7 +116,7 @@ describe("Service Functions", () => {
     const actionClassId = "action123";
 
     test("returns the action class when found", async () => {
-      const mockActionClass = { environmentId: "env123" };
+      const mockActionClass = { environmentId: "env123" } as unknown as ActionClass;
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(mockActionClass);
 
       const result = await getActionClass(actionClassId);
@@ -123,7 +139,7 @@ describe("Service Functions", () => {
     const apiKeyId = "apiKey123";
 
     test("returns the api key when found", async () => {
-      const mockApiKey = { organizationId: "org123" };
+      const mockApiKey = { organizationId: "org123" } as unknown as ApiKey;
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(mockApiKey);
 
       const result = await getApiKey(apiKeyId);
@@ -156,7 +172,7 @@ describe("Service Functions", () => {
     const environmentId = "env123";
 
     test("returns the environment when found", async () => {
-      const mockEnvironment = { projectId: "proj123" };
+      const mockEnvironment = { projectId: "proj123" } as unknown as Environment;
       vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironment);
 
       const result = await getEnvironment(environmentId);
@@ -184,7 +200,7 @@ describe("Service Functions", () => {
     const integrationId = "int123";
 
     test("returns the integration when found", async () => {
-      const mockIntegration = { environmentId: "env123" };
+      const mockIntegration = { environmentId: "env123" } as unknown as Integration;
       vi.mocked(prisma.integration.findUnique).mockResolvedValue(mockIntegration);
 
       const result = await getIntegration(integrationId);
@@ -211,7 +227,7 @@ describe("Service Functions", () => {
     const inviteId = "invite123";
 
     test("returns the invite when found", async () => {
-      const mockInvite = { organizationId: "org123" };
+      const mockInvite = { organizationId: "org123" } as unknown as Invite;
       vi.mocked(prisma.invite.findUnique).mockResolvedValue(mockInvite);
 
       const result = await getInvite(inviteId);
@@ -239,7 +255,7 @@ describe("Service Functions", () => {
     const languageId = "lang123";
 
     test("returns the language when found", async () => {
-      const mockLanguage = { projectId: "proj123" };
+      const mockLanguage = { projectId: "proj123" } as unknown as Language;
       vi.mocked(prisma.language.findFirst).mockResolvedValue(mockLanguage);
 
       const result = await getLanguage(languageId);
@@ -273,7 +289,7 @@ describe("Service Functions", () => {
     const projectId = "proj123";
 
     test("returns the project when found", async () => {
-      const mockProject = { organizationId: "org123" };
+      const mockProject = { organizationId: "org123" } as unknown as Project;
       vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject);
 
       const result = await getProject(projectId);
@@ -300,7 +316,7 @@ describe("Service Functions", () => {
     const responseId = "resp123";
 
     test("returns the response when found", async () => {
-      const mockResponse = { surveyId: "survey123" };
+      const mockResponse = { surveyId: "survey123" } as unknown as Response;
       vi.mocked(prisma.response.findUnique).mockResolvedValue(mockResponse);
 
       const result = await getResponse(responseId);
@@ -328,7 +344,7 @@ describe("Service Functions", () => {
     const surveyId = "survey123";
 
     test("returns the survey when found", async () => {
-      const mockSurvey = { environmentId: "env123" };
+      const mockSurvey = { environmentId: "env123" } as unknown as Survey;
       vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
 
       const result = await getSurvey(surveyId);
@@ -356,7 +372,7 @@ describe("Service Functions", () => {
     const tagId = "tag123";
 
     test("returns the tag when found", async () => {
-      const mockTag = { environmentId: "env123" };
+      const mockTag = { environmentId: "env123" } as unknown as Tag;
       vi.mocked(prisma.tag.findUnique).mockResolvedValue(mockTag);
 
       const result = await getTag(tagId);
@@ -373,7 +389,7 @@ describe("Service Functions", () => {
     const webhookId = "webhook123";
 
     test("returns the webhook when found", async () => {
-      const mockWebhook = { environmentId: "env123" };
+      const mockWebhook = { environmentId: "env123" } as unknown as Webhook;
       vi.mocked(prisma.webhook.findUnique).mockResolvedValue(mockWebhook);
 
       const result = await getWebhook(webhookId);
@@ -425,7 +441,7 @@ describe("Service Functions", () => {
     const teamId = "team123";
 
     test("returns the team when found", async () => {
-      const mockTeam = { organizationId: "org123" };
+      const mockTeam = { organizationId: "org123" } as unknown as Team;
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam);
 
       const result = await getTeam(teamId);
@@ -454,14 +470,16 @@ describe("Service Functions", () => {
     const organizationId = "org123";
 
     test("returns true when project belongs to organization", async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue({ organizationId });
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({ organizationId } as unknown as Project);
 
       const result = await isProjectPartOfOrganization(organizationId, projectId);
       expect(result).toBe(true);
     });
 
     test("returns false when project belongs to different organization", async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue({ organizationId: "otherOrg" });
+      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+        organizationId: "otherOrg",
+      } as unknown as Project);
 
       const result = await isProjectPartOfOrganization(organizationId, projectId);
       expect(result).toBe(false);
@@ -481,14 +499,14 @@ describe("Service Functions", () => {
     const organizationId = "org123";
 
     test("returns true when team belongs to organization", async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValue({ organizationId });
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ organizationId } as unknown as Team);
 
       const result = await isTeamPartOfOrganization(organizationId, teamId);
       expect(result).toBe(true);
     });
 
     test("returns false when team belongs to different organization", async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValue({ organizationId: "otherOrg" });
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ organizationId: "otherOrg" } as unknown as Team);
 
       const result = await isTeamPartOfOrganization(organizationId, teamId);
       expect(result).toBe(false);
@@ -505,7 +523,7 @@ describe("Service Functions", () => {
     const contactId = "contact123";
 
     test("returns the contact when found", async () => {
-      const mockContact = { environmentId: "env123" };
+      const mockContact = { environmentId: "env123" } as unknown as Contact;
       vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
 
       const result = await getContact(contactId);
@@ -533,7 +551,7 @@ describe("Service Functions", () => {
     const segmentId = "segment123";
 
     test("returns the segment when found", async () => {
-      const mockSegment = { environmentId: "env123" };
+      const mockSegment = { environmentId: "env123" } as unknown as Segment;
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegment);
 
       const result = await getSegment(segmentId);

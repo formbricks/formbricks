@@ -6,7 +6,6 @@ import { gethasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -14,11 +13,10 @@ const ZCreateOrganizationAction = z.object({
   organizationName: z.string(),
 });
 
-export const createOrganizationAction = authenticatedActionClient.schema(ZCreateOrganizationAction).action(
-  withAuditLogging(
-    "created",
-    "organization",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+export const createOrganizationAction = authenticatedActionClient
+  .inputSchema(ZCreateOrganizationAction)
+  .action(
+    withAuditLogging("created", "organization", async ({ ctx, parsedInput }) => {
       const hasNoOrganizations = await gethasNoOrganizations();
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
@@ -39,6 +37,5 @@ export const createOrganizationAction = authenticatedActionClient.schema(ZCreate
       ctx.auditLoggingCtx.newObject = newOrganization;
 
       return newOrganization;
-    }
-  )
-);
+    })
+  );

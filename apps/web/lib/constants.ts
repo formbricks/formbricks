@@ -159,7 +159,7 @@ export const BREVO_LIST_ID = env.BREVO_LIST_ID;
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
-export const STRIPE_API_VERSION = "2024-06-20";
+export const STRIPE_API_VERSION = "2026-02-25.clover";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150;
@@ -181,42 +181,6 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "zh-Hans-CN",
   "zh-Hant-TW",
 ];
-
-// Billing constants
-
-export enum PROJECT_FEATURE_KEYS {
-  FREE = "free",
-  STARTUP = "startup",
-  CUSTOM = "custom",
-}
-
-export enum STRIPE_PROJECT_NAMES {
-  STARTUP = "Formbricks Startup",
-  CUSTOM = "Formbricks Custom",
-}
-
-export enum STRIPE_PRICE_LOOKUP_KEYS {
-  STARTUP_MAY25_MONTHLY = "STARTUP_MAY25_MONTHLY",
-  STARTUP_MAY25_YEARLY = "STARTUP_MAY25_YEARLY",
-}
-
-export const BILLING_LIMITS = {
-  FREE: {
-    PROJECTS: 3,
-    RESPONSES: 1500,
-    MIU: 2000,
-  },
-  STARTUP: {
-    PROJECTS: 3,
-    RESPONSES: 5000,
-    MIU: 7500,
-  },
-  CUSTOM: {
-    PROJECTS: null,
-    RESPONSES: null,
-    MIU: null,
-  },
-} as const;
 
 export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
 export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";

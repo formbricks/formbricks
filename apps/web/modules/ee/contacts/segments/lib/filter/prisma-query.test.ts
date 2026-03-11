@@ -21,7 +21,7 @@ vi.mock("../segments", () => ({
 }));
 
 vi.mock("react", () => ({
-  cache: (fn) => fn,
+  cache: (fn: Function) => fn,
 }));
 
 describe("segmentFilterToPrismaQuery", () => {
@@ -747,7 +747,9 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const whereClause = (result.data.whereClause as Prisma.ContactWhereInput).AND?.[1] as any;
+      const whereClause = (
+        (result.data.whereClause as Prisma.ContactWhereInput).AND as Prisma.ContactWhereInput[]
+      )?.[1] as any;
       expect(whereClause).toBeDefined();
 
       // First group (AND conditions)

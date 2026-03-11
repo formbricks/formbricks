@@ -2,7 +2,7 @@
 
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -203,7 +203,7 @@ export function SegmentSettings({
                 group={segment.filters}
                 segment={segment}
                 segments={segments}
-                setSegment={setSegment}
+                setSegment={setSegment as Dispatch<SetStateAction<TSegment | null>>}
                 viewOnly={isReadOnly}
               />
 

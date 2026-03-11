@@ -23,14 +23,18 @@ vi.mock("@sentry/nextjs", () => ({
   }),
 }));
 
-// Mock SENTRY_DSN constant
-vi.mock("@/lib/constants", () => ({
-  SENTRY_DSN: "mocked-sentry-dsn",
-  IS_PRODUCTION: true,
-  AUDIT_LOG_ENABLED: true,
-  ENCRYPTION_KEY: "mocked-encryption-key",
-  REDIS_URL: undefined,
-}));
+// Mock SENTRY_DSN constant while preserving untouched exports.
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    SENTRY_DSN: "mocked-sentry-dsn",
+    IS_PRODUCTION: true,
+    AUDIT_LOG_ENABLED: true,
+    ENCRYPTION_KEY: "mocked-encryption-key",
+    REDIS_URL: undefined,
+  };
+});
 
 describe("utils", () => {
   describe("handleApiError", () => {

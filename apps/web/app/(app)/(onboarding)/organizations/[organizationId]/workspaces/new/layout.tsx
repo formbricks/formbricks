@@ -8,7 +8,10 @@ import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 
-const OnboardingLayout = async (props) => {
+const OnboardingLayout = async (props: {
+  params: Promise<{ organizationId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;
@@ -28,8 +31,10 @@ const OnboardingLayout = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
-  const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
+  const [organizationProjectsLimit, organizationProjectsCount] = await Promise.all([
+    getOrganizationProjectsLimit(organization.id),
+    getOrganizationProjectsCount(organization.id),
+  ]);
 
   if (organizationProjectsCount >= organizationProjectsLimit) {
     return redirect(`/`);

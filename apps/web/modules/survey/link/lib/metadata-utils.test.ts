@@ -110,7 +110,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ name: "Test Project" } as any);
@@ -135,7 +135,7 @@ describe("Metadata Utils", () => {
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
@@ -157,9 +157,8 @@ describe("Metadata Utils", () => {
       }));
 
       // Re-import the function to use the updated mock
-      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } = await import(
-        "./metadata-utils"
-      );
+      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } =
+        await import("./metadata-utils");
 
       const mockSurvey = {
         id: mockSurveyId,
@@ -169,7 +168,7 @@ describe("Metadata Utils", () => {
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
@@ -204,7 +203,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(getTextContent).mockReturnValue("Welcome Headline");
@@ -235,7 +234,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(recallToHeadline).mockReturnValue({
@@ -288,7 +287,7 @@ describe("Metadata Utils", () => {
       const surveyName = "Test Survey With Spaces";
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
-      expect(result.openGraph?.images?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
+      expect((result.openGraph?.images as string[])?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
     });
   });
 });

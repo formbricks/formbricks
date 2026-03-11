@@ -8,7 +8,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { getEnabledLanguages } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
-import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
+import { LanguageIndicator } from "@/modules/survey/multi-language-surveys/components/language-indicator";
 
 interface MultiLangWrapperRenderProps {
   value: TI18nString;
