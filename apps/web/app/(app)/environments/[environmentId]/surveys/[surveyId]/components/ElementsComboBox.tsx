@@ -113,7 +113,9 @@ const elementIcons = {
 };
 
 const getIcon = (type: string) => {
-  const IconComponent = elementIcons[type];
+  const IconComponent = (elementIcons as Record<string, (typeof elementIcons)[keyof typeof elementIcons]>)[
+    type
+  ];
   return IconComponent ? <IconComponent className="h-5 w-5" strokeWidth={1.5} /> : null;
 };
 

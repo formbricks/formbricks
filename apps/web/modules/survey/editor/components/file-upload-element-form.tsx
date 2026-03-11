@@ -7,7 +7,7 @@ import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -23,7 +23,7 @@ interface FileUploadFormProps {
   project: Project;
   element: TSurveyFileUploadElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyFileUploadElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;

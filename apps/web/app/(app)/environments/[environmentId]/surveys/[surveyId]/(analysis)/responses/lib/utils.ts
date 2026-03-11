@@ -80,9 +80,24 @@ export const COLUMNS_ICON_MAP = {
 const userAgentFields = ["browser", "os", "device"];
 export const METADATA_FIELDS = ["action", "country", ...userAgentFields, "source", "url"];
 
-export const getMetadataValue = (meta: TResponseMeta, label: string) => {
-  if (userAgentFields.includes(label)) {
-    return meta.userAgent?.[label];
+export const getMetadataValue = (
+  meta: TResponseMeta,
+  label: (typeof METADATA_FIELDS)[number]
+): string | undefined => {
+  switch (label) {
+    case "browser":
+      return meta.userAgent?.browser;
+    case "os":
+      return meta.userAgent?.os;
+    case "device":
+      return meta.userAgent?.device;
+    case "action":
+      return meta.action;
+    case "country":
+      return meta.country;
+    case "source":
+      return meta.source;
+    case "url":
+      return meta.url;
   }
-  return meta[label];
 };

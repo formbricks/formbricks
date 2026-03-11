@@ -35,7 +35,7 @@ interface SurveyMenuBarProps {
   environmentId: string;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidElements: React.Dispatch<React.SetStateAction<string[]>>;
+  setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
   project: Project;
   responseCount: number;
   selectedLanguageCode: string;
@@ -196,7 +196,7 @@ export const SurveyMenuBar = ({
 
       for (const issue of issues) {
         if (issue.path[0] === "blocks") {
-          const blockIdx = issue.path[1];
+          const blockIdx = issue.path[1] as number;
 
           if (issue.path[2] === "elements" && typeof issue.path[3] === "number") {
             const elementIdx = issue.path[3];

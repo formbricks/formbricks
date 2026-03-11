@@ -52,7 +52,9 @@ const mockProject = {
 
 describe("getProject", () => {
   test("should return project when found", async () => {
-    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(
+      mockProject as unknown as Awaited<ReturnType<typeof prisma.project.findUnique>>
+    );
     const project = await getProject("testProjectId");
     expect(project).toEqual(mockProject);
     expect(prisma.project.findUnique).toHaveBeenCalledWith({
@@ -86,7 +88,7 @@ describe("getProjectLanguages", () => {
   test("should return project languages when project found", async () => {
     vi.mocked(prisma.project.findUnique).mockResolvedValue({
       languages: mockProject.languages,
-    });
+    } as unknown as Awaited<ReturnType<typeof prisma.project.findUnique>>);
     const languages = await getProjectLanguages("testProjectId");
     expect(languages).toEqual(mockProject.languages);
     expect(prisma.project.findUnique).toHaveBeenCalledWith({

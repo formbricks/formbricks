@@ -22,7 +22,7 @@ interface SelectedRowSettingsProps<T> {
   updateRowList: (rowId: string[]) => void;
   type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
   isQuotasAllowed: boolean;
 }
 
@@ -98,7 +98,7 @@ export const SelectedRowSettings = <T,>({
   };
 
   // Handle download selected rows
-  const handleDownloadSelectedRows = async (format: string) => {
+  const handleDownloadSelectedRows = async (format: "xlsx" | "csv") => {
     setIsDownloading(true);
     const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
     if (downloadRowsAction && rowsToDownload.length > 0) {

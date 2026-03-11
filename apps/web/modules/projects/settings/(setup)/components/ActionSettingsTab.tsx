@@ -105,7 +105,7 @@ export const ActionSettingsTab = ({
       router.refresh();
       toast.success(t("environments.actions.action_updated_successfully"));
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
       setIsUpdatingAction(false);
     }

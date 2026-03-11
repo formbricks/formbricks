@@ -26,7 +26,9 @@ vi.mock("@/lib/utils/validate-webhook-url", () => ({
 
 describe("getWebhook", () => {
   test("returns ok if webhook is found", async () => {
-    vi.mocked(prisma.webhook.findUnique).mockResolvedValueOnce({ id: "123" });
+    vi.mocked(prisma.webhook.findUnique).mockResolvedValueOnce({ id: "123" } as Awaited<
+      ReturnType<typeof prisma.webhook.findUnique>
+    >);
     const result = await getWebhook("123");
     expect(result.ok).toBe(true);
 
@@ -41,7 +43,7 @@ describe("getWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toBe("not_found");
+      expect((result.error as { type: string })?.type).toBe("not_found");
     }
   });
 
@@ -51,7 +53,7 @@ describe("getWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error.type).toBe("internal_server_error");
+      expect((result.error as { type: string }).type).toBe("internal_server_error");
     }
   });
 });
@@ -86,8 +88,8 @@ describe("updateWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error.type).toBe("bad_request");
-      expect(result.error.details[0].field).toBe("url");
+      expect((result.error as { type: string }).type).toBe("bad_request");
+      expect((result.error as { type: string; details: { field: string }[] }).details[0].field).toBe("url");
     }
 
     expect(prisma.webhook.update).not.toHaveBeenCalled();
@@ -100,8 +102,8 @@ describe("updateWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error.type).toBe("internal_server_error");
-      expect(result.error.details[0].field).toBe("url");
+      expect((result.error as { type: string }).type).toBe("internal_server_error");
+      expect((result.error as { type: string; details: { field: string }[] }).details[0].field).toBe("url");
     }
 
     expect(prisma.webhook.update).not.toHaveBeenCalled();
@@ -113,7 +115,7 @@ describe("updateWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toBe("not_found");
+      expect((result.error as { type: string })?.type).toBe("not_found");
     }
   });
 
@@ -123,7 +125,7 @@ describe("updateWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toBe("internal_server_error");
+      expect((result.error as { type: string })?.type).toBe("internal_server_error");
     }
   });
 });
@@ -141,7 +143,7 @@ describe("deleteWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toBe("not_found");
+      expect((result.error as { type: string })?.type).toBe("not_found");
     }
   });
 
@@ -151,7 +153,7 @@ describe("deleteWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toBe("internal_server_error");
+      expect((result.error as { type: string })?.type).toBe("internal_server_error");
     }
   });
 });

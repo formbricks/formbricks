@@ -30,7 +30,7 @@ export const SlackWrapper = ({
   webAppUrl,
   locale,
 }: SlackWrapperProps) => {
-  const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
+  const [isConnected, setIsConnected] = useState(slackIntegration ? !!slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState<TIntegrationItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [showReconnectButton, setShowReconnectButton] = useState<boolean>(false);

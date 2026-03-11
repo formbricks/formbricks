@@ -41,7 +41,9 @@ describe("doesEnvironmentExist", () => {
   });
 
   test("should return environmentId if environment exists", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ id: mockEnvironmentId });
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ id: mockEnvironmentId } as Awaited<
+      ReturnType<typeof prisma.environment.findUnique>
+    >);
 
     const result = await doesEnvironmentExist(mockEnvironmentId);
 
@@ -69,7 +71,9 @@ describe("getProjectIdIfEnvironmentExists", () => {
   });
 
   test("should return projectId if environment exists", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ projectId: mockProjectId }); // Ensure correct mock value
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ projectId: mockProjectId } as Awaited<
+      ReturnType<typeof prisma.environment.findUnique>
+    >); // Ensure correct mock value
 
     const result = await getProjectIdIfEnvironmentExists(mockEnvironmentId);
 
@@ -98,7 +102,9 @@ describe("getEnvironment", () => {
 
   test("should return environment if it exists", async () => {
     const mockEnvData = { id: mockEnvironmentId, type: "production" as const };
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvData);
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue(
+      mockEnvData as Awaited<ReturnType<typeof prisma.environment.findUnique>>
+    );
 
     const result = await getEnvironment(mockEnvironmentId);
 

@@ -58,7 +58,7 @@ const mockProjectPrisma = {
   organizationId: "clq6167un000008l56jd8s3f9",
   config: { channel: "app", industry: "eCommerce" },
   logo: null,
-} as Project;
+} as unknown as Project;
 
 const mockProjectWithTeam: Project & { teamIds: string[] } = {
   ...mockProjectPrisma,

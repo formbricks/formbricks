@@ -31,7 +31,9 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -67,7 +69,9 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -104,7 +108,9 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -142,7 +148,9 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });

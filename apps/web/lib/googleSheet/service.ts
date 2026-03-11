@@ -112,24 +112,27 @@ export const getSpreadsheetNameById = async (
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
     return new Promise((resolve, reject) => {
-      sheets.spreadsheets.get({ spreadsheetId }, (err, response) => {
-        if (err) {
-          const msg = err.message?.toLowerCase() ?? "";
-          const isPermissionError =
-            msg.includes("permission") ||
-            msg.includes("caller does not have") ||
-            msg.includes("insufficient permission") ||
-            msg.includes("access denied");
-          if (isPermissionError) {
-            reject(new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION));
-          } else {
-            reject(new UnknownError(`Error while fetching spreadsheet data: ${err.message}`));
+      sheets.spreadsheets.get(
+        { spreadsheetId },
+        (err: Error | null, response: { data: { properties: { title: string } } }) => {
+          if (err) {
+            const msg = err.message?.toLowerCase() ?? "";
+            const isPermissionError =
+              msg.includes("permission") ||
+              msg.includes("caller does not have") ||
+              msg.includes("insufficient permission") ||
+              msg.includes("access denied");
+            if (isPermissionError) {
+              reject(new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION));
+            } else {
+              reject(new UnknownError(`Error while fetching spreadsheet data: ${err.message}`));
+            }
+            return;
           }
-          return;
+          const spreadsheetTitle = response.data.properties.title;
+          resolve(spreadsheetTitle);
         }
-        const spreadsheetTitle = response.data.properties.title;
-        resolve(spreadsheetTitle);
-      });
+      );
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

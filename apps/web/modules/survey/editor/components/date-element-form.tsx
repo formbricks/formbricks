@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -18,7 +18,7 @@ interface IDateElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyDateElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyDateElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -121,8 +121,8 @@ export const DateElementForm = ({
           <OptionsSwitch
             options={dateOptions}
             currentOption={element.format}
-            handleOptionChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>
-              updateElement(elementIdx, { format: value })
+            handleOptionChange={(value: string) =>
+              updateElement(elementIdx, { format: value as "M-d-y" | "d-M-y" | "y-M-d" })
             }
           />
         </div>

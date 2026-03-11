@@ -445,9 +445,9 @@ describe("Crypto Utils", () => {
 
       // Verify logger.warn was called with the correct format (object first, message second)
       expect(logger.warn).toHaveBeenCalledTimes(1);
-      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0];
+      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0] as [Record<string, unknown>, string];
       expect(firstArg).toHaveProperty("err");
-      expect(firstArg.err).toHaveProperty("message");
+      expect((firstArg as Record<string, Record<string, unknown>>).err).toHaveProperty("message");
       expect(secondArg).toBe("AES-GCM decryption failed; refusing to fall back to insecure CBC");
     });
 
@@ -473,9 +473,9 @@ describe("Crypto Utils", () => {
 
       // Verify logger.warn was called
       expect(logger.warn).toHaveBeenCalledTimes(1);
-      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0];
+      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0] as [Record<string, unknown>, string];
       expect(firstArg).toHaveProperty("err");
-      expect(firstArg.err).toHaveProperty("message");
+      expect((firstArg as Record<string, Record<string, unknown>>).err).toHaveProperty("message");
       expect(secondArg).toBe("AES-GCM decryption failed; refusing to fall back to insecure CBC");
     });
 
@@ -497,9 +497,9 @@ describe("Crypto Utils", () => {
 
       // Verify logger.warn was called
       expect(logger.warn).toHaveBeenCalledTimes(1);
-      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0];
+      const [firstArg, secondArg] = vi.mocked(logger.warn).mock.calls[0] as [Record<string, unknown>, string];
       expect(firstArg).toHaveProperty("err");
-      expect(firstArg.err).toHaveProperty("message");
+      expect((firstArg as Record<string, Record<string, unknown>>).err).toHaveProperty("message");
       expect(secondArg).toBe("AES-GCM decryption failed; refusing to fall back to insecure CBC");
     });
   });

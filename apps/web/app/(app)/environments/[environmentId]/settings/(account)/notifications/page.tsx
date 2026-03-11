@@ -16,8 +16,8 @@ const setCompleteNotificationSettings = (
   notificationSettings: TUserNotificationSettings,
   memberships: Membership[]
 ): TUserNotificationSettings => {
-  const newNotificationSettings = {
-    alert: {},
+  const newNotificationSettings: TUserNotificationSettings = {
+    alert: {} as Record<string, boolean>,
     unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
@@ -26,7 +26,8 @@ const setCompleteNotificationSettings = (
       for (const environment of project.environments) {
         for (const survey of environment.surveys) {
           newNotificationSettings.alert[survey.id] =
-            notificationSettings[survey.id]?.responseFinished ||
+            (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
+              ?.responseFinished ||
             (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
             false; // check for legacy notification settings w/o "alerts" key
         }
@@ -136,7 +137,10 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   return memberships;
 };
 
-const Page = async (props) => {
+const Page = async (props: {
+  params: Promise<{ environmentId: string }>;
+  searchParams: Promise<Record<string, string>>;
+}) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const t = await getTranslate();

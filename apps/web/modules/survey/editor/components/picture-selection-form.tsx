@@ -5,7 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement, TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -21,7 +21,7 @@ interface PictureSelectionFormProps {
   localSurvey: TSurvey;
   element: TSurveyPictureSelectionElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -55,7 +55,8 @@ export const PictureSelectionForm = ({
     });
   };
 
-  const handleFileInputChanges = (urls: string[]) => {
+  const handleFileInputChanges = (urls: string[] | undefined, _fileType: "image" | "video") => {
+    if (!urls) return;
     // Handle choice deletion
     if (urls.length < element.choices.length) {
       const deletedChoice = element.choices.find((choice) => !urls.includes(choice.imageUrl));

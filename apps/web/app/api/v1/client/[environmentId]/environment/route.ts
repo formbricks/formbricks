@@ -1,10 +1,9 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZEnvironmentId } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
 import { responses } from "@/app/lib/api/response";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -19,13 +18,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    props,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ environmentId: string }> };
-  }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
 
     try {
@@ -102,7 +95,10 @@ export const GET = withV1ApiWrapper({
         "Error in GET /api/v1/client/[environmentId]/environment"
       );
       return {
-        response: responses.internalServerErrorResponse(err.message, true),
+        response: responses.internalServerErrorResponse(
+          err instanceof Error ? err.message : "Unknown error occurred",
+          true
+        ),
       };
     }
   },

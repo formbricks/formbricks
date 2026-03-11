@@ -16,7 +16,7 @@ interface DataTableToolbarProps<T> {
   updateRowList: (rowIds: string[]) => void;
   type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
   isQuotasAllowed: boolean;
   leftContent?: React.ReactNode;
   onRefresh?: () => Promise<void>;

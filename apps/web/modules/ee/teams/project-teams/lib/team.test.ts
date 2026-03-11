@@ -33,8 +33,8 @@ describe("getTeamsByProjectId", () => {
   });
 
   test("returns mapped teams for valid project", async () => {
-    vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject);
-    vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockTeams);
+    vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject as any);
+    vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockTeams as any);
     const result = await getTeamsByProjectId("p1");
     expect(result).toEqual([
       { id: "t1", name: "Team 1", permission: "readWrite", memberCount: 2 },
@@ -50,7 +50,7 @@ describe("getTeamsByProjectId", () => {
   });
 
   test("throws DatabaseError on Prisma known error", async () => {
-    vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject);
+    vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject as any);
     vi.mocked(prisma.team.findMany).mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" })
     );
@@ -58,7 +58,7 @@ describe("getTeamsByProjectId", () => {
   });
 
   test("throws unknown error on unexpected error", async () => {
-    vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject);
+    vi.mocked(prisma.project.findUnique).mockResolvedValueOnce(mockProject as any);
     vi.mocked(prisma.team.findMany).mockRejectedValueOnce(new Error("unexpected"));
     await expect(getTeamsByProjectId("p1")).rejects.toThrow("unexpected");
   });

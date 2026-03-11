@@ -6,7 +6,7 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Users", () => {
   test("Create, Retrieve, Filter, and Update Users via API", async ({ page, users, request }) => {
-    let apiKey;
+    let apiKey: string;
     let organizationId: string;
     let createdUserId: string;
     let teamName = "New Team from API";
@@ -26,7 +26,7 @@ test.describe("API Tests for Users", () => {
         headers: { "x-api-key": apiKey },
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { organizationId: string } };
       expect(responseBody.data?.organizationId).toBeTruthy();
       organizationId = responseBody.data.organizationId;
     });
@@ -47,7 +47,7 @@ test.describe("API Tests for Users", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { name: string } };
       expect(responseBody.data.name).toEqual(teamName);
     });
 
@@ -69,7 +69,7 @@ test.describe("API Tests for Users", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { name: string; id: string } };
       expect(responseBody.data.name).toEqual("E2E Test User");
       createdUserId = responseBody.data.id;
     });
@@ -79,9 +79,9 @@ test.describe("API Tests for Users", () => {
         headers: { "x-api-key": apiKey },
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string }[] };
       expect(Array.isArray(responseBody.data)).toBe(true);
-      expect(responseBody.data.some((user: any) => user.id === createdUserId)).toBe(true);
+      expect(responseBody.data.some((user) => user.id === createdUserId)).toBe(true);
     });
 
     await test.step("Filter Users by Email via API", async () => {
@@ -91,7 +91,7 @@ test.describe("API Tests for Users", () => {
         params: queryParams,
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { email: string }[] };
 
       expect(responseBody.data.length).toBeGreaterThan(0);
       expect(responseBody.data[0].email).toBe(userEmail);
@@ -104,7 +104,7 @@ test.describe("API Tests for Users", () => {
         data: patchData,
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { name: string } };
       expect(responseBody.data.name).toBe("Updated E2E Name");
     });
 
@@ -121,7 +121,9 @@ test.describe("API Tests for Users", () => {
         data: patchData,
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as {
+        data: { name: string; role: string; isActive: boolean; teams: string[] };
+      };
       expect(responseBody.data.name).toBe("Fully Updated E2E");
       expect(responseBody.data.role).toBe("member");
       expect(responseBody.data.isActive).toBe(false);

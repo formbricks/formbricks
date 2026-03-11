@@ -690,7 +690,7 @@ export const evaluateSegment = async (
 
     return finalResult;
   } catch (error) {
-    logger.error("Error evaluating segment", error);
+    logger.error(error instanceof Error ? error : new Error(String(error)), "Error evaluating segment");
 
     throw error;
   }

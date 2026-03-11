@@ -147,7 +147,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
         }
         setImages((prevImages) => [...prevImages, ...imagesFromUnsplash]);
       } catch (error) {
-        toast.error(error.message);
+        toast.error(error instanceof Error ? error.message : "Unknown error occurred");
       } finally {
         setIsLoading(false);
       }
@@ -181,7 +181,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
         await triggerDownloadUnsplashImageAction({ downloadUrl: downloadImageUrl });
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     }
   };
 

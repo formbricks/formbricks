@@ -43,7 +43,9 @@ describe("getSegment", () => {
   });
 
   test("should return segment data when segment is found", async () => {
-    vi.mocked(prisma.segment.findUnique).mockResolvedValueOnce(mockSegment);
+    vi.mocked(prisma.segment.findUnique).mockResolvedValueOnce(
+      mockSegment as Awaited<ReturnType<typeof prisma.segment.findUnique>>
+    );
 
     const result = await getSegment(mockSegmentId);
 

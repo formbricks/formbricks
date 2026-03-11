@@ -27,7 +27,7 @@ const getStatusText = (count: number, t: TFunction, type: string) => {
   return `${count} ${type}s`;
 };
 
-const Page = async (props) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

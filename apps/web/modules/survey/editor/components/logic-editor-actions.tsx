@@ -136,8 +136,8 @@ export function LogicEditorActions({
                         : filteredObjectiveOptions
                     }
                     value={action.objective}
-                    onChangeValue={(val: TSurveyBlockLogicActionObjective) => {
-                      handleObjectiveChange(idx, val);
+                    onChangeValue={(val: string | number | string[]) => {
+                      handleObjectiveChange(idx, val as TSurveyBlockLogicActionObjective);
                     }}
                     comboboxClasses="grow"
                   />
@@ -151,9 +151,9 @@ export function LogicEditorActions({
                       showSearch={false}
                       options={getActionTargetOptions(action, localSurvey, blockIdx, t)}
                       value={action.target}
-                      onChangeValue={(val: string) => {
+                      onChangeValue={(val: string | number | string[]) => {
                         handleValuesChange(idx, {
-                          target: val,
+                          target: String(val),
                         });
                       }}
                       comboboxClasses="grow"
@@ -170,9 +170,9 @@ export function LogicEditorActions({
                         showSearch={false}
                         options={getActionVariableOptions(localSurvey)}
                         value={action.variableId}
-                        onChangeValue={(val: string) => {
+                        onChangeValue={(val: string | number | string[]) => {
                           handleValuesChange(idx, {
-                            variableId: val,
+                            variableId: String(val),
                             value: {
                               type: "static",
                               value: "",
@@ -194,11 +194,11 @@ export function LogicEditorActions({
                           localSurvey.variables.find((v) => v.id === action.variableId)?.type
                         )}
                         value={action.operator}
-                        onChangeValue={(
-                          val: TActionTextVariableCalculateOperator | TActionNumberVariableCalculateOperator
-                        ) => {
+                        onChangeValue={(val: string | number | string[]) => {
                           handleValuesChange(idx, {
-                            operator: val,
+                            operator: val as
+                              | TActionTextVariableCalculateOperator
+                              | TActionNumberVariableCalculateOperator,
                           });
                         }}
                         comboboxClasses="grow"

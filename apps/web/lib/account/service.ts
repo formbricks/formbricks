@@ -3,15 +3,13 @@ import { prisma } from "@formbricks/database";
 import { TAccount, TAccountInput, ZAccountInput } from "@formbricks/types/account";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
-import { filterAccountInputData } from "./utils";
 
 export const createAccount = async (accountData: TAccountInput): Promise<TAccount> => {
   validateInputs([accountData, ZAccountInput]);
 
   try {
-    const supportedAccountData = filterAccountInputData(accountData);
     const account = await prisma.account.create({
-      data: supportedAccountData,
+      data: accountData,
     });
     return account;
   } catch (error) {

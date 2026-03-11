@@ -42,7 +42,7 @@ export const DeleteContactButton = ({
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
       setIsDeletingPerson(false);
       setDeleteDialogOpen(false);

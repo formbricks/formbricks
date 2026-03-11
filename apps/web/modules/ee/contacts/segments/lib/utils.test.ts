@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
 import {
   TBaseFilter,
@@ -93,7 +94,7 @@ describe("Segment Utils", () => {
 
   test("convertOperatorToText", () => {
     // Mock t() that returns the i18n key for verification
-    const t = (key: string) => key;
+    const t = ((key: string) => key) as unknown as TFunction;
 
     expect(convertOperatorToText("equals", t)).toBe("=");
     expect(convertOperatorToText("notEquals", t)).toBe("!=");
@@ -116,7 +117,7 @@ describe("Segment Utils", () => {
   });
 
   test("convertOperatorToTitle", () => {
-    const t = (key: string) => key;
+    const t = ((key: string) => key) as unknown as TFunction;
 
     expect(convertOperatorToTitle("equals", t)).toBe("environments.segments.operator_title_equals");
     expect(convertOperatorToTitle("notEquals", t)).toBe("environments.segments.operator_title_not_equals");

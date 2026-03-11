@@ -107,7 +107,7 @@ export const WhenToSendCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleRandomizerInput = (e) => {
+  const handleRandomizerInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseFloat(e.target.value);
 
     if (Number.isNaN(value)) {
