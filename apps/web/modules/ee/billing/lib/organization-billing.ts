@@ -93,16 +93,23 @@ const listAllActiveEntitlements = async (customerId: string): Promise<string[]> 
   return [...new Set(featureLookupKeys)];
 };
 
-const parseMaxNumericEntitlementLimit = (features: string[], prefix: string): number | null => {
-  let maxValue: number | null = null;
+const parseEntitlementLimit = (features: string[], prefix: string): number | null | undefined => {
+  let maxValue: number | null | undefined;
 
   for (const feature of features) {
     if (!feature.startsWith(prefix)) continue;
     const rawValue = feature.slice(prefix.length);
+    if (rawValue === "unlimited") {
+      return null;
+    }
     if (!/^\d+$/.test(rawValue)) continue;
     const parsed = Number.parseInt(rawValue, 10);
     if (Number.isNaN(parsed)) continue;
-    maxValue = maxValue === null ? parsed : Math.max(maxValue, parsed);
+    if (maxValue == null) {
+      maxValue = parsed;
+      continue;
+    }
+    maxValue = Math.max(maxValue, parsed);
   }
 
   return maxValue;
@@ -572,18 +579,15 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const previousLimits = billing.limits;
-  const workspaceLimitFromEntitlements = parseMaxNumericEntitlementLimit(
-    featureLookupKeys,
-    "workspace-limit-"
-  );
-  const responsesIncludedFromEntitlements = parseMaxNumericEntitlementLimit(
-    featureLookupKeys,
-    "responses-included-"
-  );
+  const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
+  const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
 
-  const projectsLimit = workspaceLimitFromEntitlements ?? previousLimits?.projects ?? null;
+  const projectsLimit =
+    workspaceLimitFromEntitlements === undefined
+      ? (previousLimits?.projects ?? null)
+      : workspaceLimitFromEntitlements;
 
-  if (workspaceLimitFromEntitlements === null && previousLimits?.projects == null) {
+  if (workspaceLimitFromEntitlements === undefined && previousLimits?.projects == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
       "No workspace limit entitlement found in Stripe entitlements; preserving previous projects limit"
@@ -591,9 +595,11 @@ export const syncOrganizationBillingFromStripe = async (
   }
 
   const responsesIncludedLimit =
-    responsesIncludedFromEntitlements ?? previousLimits?.monthly?.responses ?? null;
+    responsesIncludedFromEntitlements === undefined
+      ? (previousLimits?.monthly?.responses ?? null)
+      : responsesIncludedFromEntitlements;
 
-  if (responsesIncludedFromEntitlements === null && previousLimits?.monthly?.responses == null) {
+  if (responsesIncludedFromEntitlements === undefined && previousLimits?.monthly?.responses == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
       "No responses included entitlement found in Stripe entitlements; preserving previous responses limit"
