@@ -103,14 +103,12 @@ const renderTabNav = (args: StoryProps) => {
     const [activeId, setActiveId] = useState(tabs[0]?.id || "tab-1");
 
     return (
-      // <div className="w-[60dvw]">
       <TabNav
         tabs={tabs}
         activeId={activeId}
         setActiveId={setActiveId}
         activeTabClassName={activeTabClassName}
       />
-      // </div>
     );
   };
 

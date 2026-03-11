@@ -41,12 +41,12 @@ const getElementColumnsData = (
   const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
-  const createElementHeader = (elementType: string, headline: string, suffix?: string) => {
+  const createElementHeader = (elementType: TSurveyElementTypeEnum, headline: string, suffix?: string) => {
     const title = suffix ? `${headline} - ${suffix}` : headline;
     const ElementHeader = () => (
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 overflow-hidden">
-          <span className="h-4 w-4">{ELEMENTS_ICON_MAP[elementType as TSurveyElementTypeEnum]}</span>
+          <span className="h-4 w-4">{ELEMENTS_ICON_MAP[elementType]}</span>
           <span className="truncate">{title}</span>
         </div>
       </div>

@@ -98,10 +98,9 @@ export const POST = withV1ApiWrapper({
       }
       if (auditLog) {
         auditLog.targetId = contactAttributeKey.id;
-      }
-      if (auditLog) {
         auditLog.newObject = contactAttributeKey;
       }
+
       return {
         response: responses.successResponse(contactAttributeKey),
       };

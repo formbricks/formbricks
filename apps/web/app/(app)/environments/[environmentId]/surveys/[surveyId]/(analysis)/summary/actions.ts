@@ -7,7 +7,6 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -70,52 +69,42 @@ const ZResetSurveyAction = z.object({
 });
 
 export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSurveyAction).action(
-  withAuditLogging(
-    "updated",
-    "survey",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZResetSurveyAction>;
-    }) => {
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: parsedInput.projectId,
-          },
-        ],
-      });
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: parsedInput.projectId,
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      ctx.auditLoggingCtx.oldObject = null;
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+    ctx.auditLoggingCtx.oldObject = null;
 
-      const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
-        parsedInput.surveyId
-      );
+    const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
+      parsedInput.surveyId
+    );
 
-      ctx.auditLoggingCtx.newObject = {
-        deletedResponsesCount: deletedResponsesCount,
-        deletedDisplaysCount: deletedDisplaysCount,
-      };
+    ctx.auditLoggingCtx.newObject = {
+      deletedResponsesCount: deletedResponsesCount,
+      deletedDisplaysCount: deletedDisplaysCount,
+    };
 
-      return {
-        success: true,
-        deletedResponsesCount: deletedResponsesCount,
-        deletedDisplaysCount: deletedDisplaysCount,
-      };
-    }
-  )
+    return {
+      success: true,
+      deletedResponsesCount: deletedResponsesCount,
+      deletedDisplaysCount: deletedDisplaysCount,
+    };
+  })
 );
 
 const ZGetEmailHtmlAction = z.object({

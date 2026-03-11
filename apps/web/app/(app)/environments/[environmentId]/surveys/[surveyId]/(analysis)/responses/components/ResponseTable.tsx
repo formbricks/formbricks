@@ -205,21 +205,16 @@ export const ResponseTable = ({
   };
 
   // Handle downloading selected responses
-  const downloadSelectedRows = async (responseIds: string[], format: string) => {
-    const validFormat = format === "xlsx" ? "xlsx" : "csv";
+  const downloadSelectedRows = async (responseIds: string[], format: "xlsx" | "csv") => {
     try {
       const downloadResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
-        format: validFormat,
+        format,
         filterCriteria: { responseIds },
       });
 
       if (downloadResponse?.data) {
-        downloadResponsesFile(
-          downloadResponse.data.fileName,
-          downloadResponse.data.fileContents,
-          validFormat
-        );
+        downloadResponsesFile(downloadResponse.data.fileName, downloadResponse.data.fileContents, format);
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }
