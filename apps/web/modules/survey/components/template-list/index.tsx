@@ -2,7 +2,6 @@
 
 import { Project } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -65,12 +64,6 @@ export const TemplateList = ({
     });
 
     if (createSurveyResponse?.data) {
-      const eventName = surveyType === "link" ? "link_survey_created" : "in_app_survey_created";
-      posthog.capture(eventName, {
-        survey_id: createSurveyResponse.data.id,
-        template_name: activeTemplate.name,
-        environment_id: environmentId,
-      });
       router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
