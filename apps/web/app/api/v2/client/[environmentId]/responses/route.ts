@@ -8,7 +8,6 @@ import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/respons
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { getPostHogClient } from "@/lib/posthog-server";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -180,21 +179,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
       surveyId: responseData.surveyId,
       response: responseData,
     });
-
-    try {
-      const posthogServer = getPostHogClient();
-      posthogServer?.capture({
-        distinctId: environmentId,
-        event: "survey_response_finished",
-        properties: {
-          survey_id: responseData.surveyId,
-          response_id: responseData.id,
-          environment_id: environmentId,
-        },
-      });
-    } catch {
-      // non-critical, don't block the response
-    }
   }
 
   const quotaObj = createQuotaFullObject(quotaFull);

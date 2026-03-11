@@ -4,7 +4,6 @@ import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
 import { Webhook as WebhookIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -155,12 +154,6 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           webhookSecret: testResult.secret,
         });
         if (createWebhookActionResult?.data) {
-          posthog.capture("webhook_created", {
-            environment_id: environmentId,
-            webhook_triggers: selectedTriggers,
-            survey_count: selectedSurveys.length,
-            all_surveys_selected: selectedAllSurveys,
-          });
           router.refresh();
           setCreatedWebhook(createWebhookActionResult.data);
           toast.success(t("environments.integrations.webhooks.webhook_added_successfully"));

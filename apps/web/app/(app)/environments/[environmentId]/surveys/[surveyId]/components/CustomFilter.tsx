@@ -18,7 +18,6 @@ import {
 } from "date-fns";
 import { TFunction } from "i18next";
 import { Loader2 } from "lucide-react";
-import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -253,12 +252,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       });
 
       if (responsesDownloadUrlResponse?.data) {
-        posthog.capture("responses_exported", {
-          survey_id: survey.id,
-          survey_name: survey.name,
-          file_type: fileType,
-          filter_type: filter,
-        });
         downloadResponsesFile(
           responsesDownloadUrlResponse.data.fileName,
           responsesDownloadUrlResponse.data.fileContents,

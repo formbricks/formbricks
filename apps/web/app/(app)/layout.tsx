@@ -6,6 +6,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
+import { PostHogIdentify } from "./components/PostHogIdentify";
 
 const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
@@ -19,6 +20,7 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <NoMobileOverlay />
+      {user && <PostHogIdentify userId={user.id} email={user.email} name={user.name} />}
       {IS_CHATWOOT_CONFIGURED && (
         <ChatwootWidget
           userEmail={user?.email}
