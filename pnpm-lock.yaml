@@ -363,9 +363,6 @@ importers:
       posthog-js:
         specifier: 1.360.0
         version: 1.360.0
-      posthog-node:
-        specifier: 5.28.0
-        version: 5.28.0(rxjs@7.8.2)
       prismjs:
         specifier: 1.30.0
         version: 1.30.0
@@ -9656,15 +9653,6 @@ packages:
 
   posthog-js@1.360.0:
     resolution: {integrity: sha512-jkyO+T97yi6RuiexOaXC7AnEGiC+yIfGU5DIUzI5rqBH6MltmtJw/ve2Oxc4jeua2WDr5sXMzo+SS+acbpueAA==}
-
-  posthog-node@5.28.0:
-    resolution: {integrity: sha512-EETYV0zA+7BLQmXzY+vGyDMoQK8uHf8f/1utbRjKncI41gPkw+4piGP7l4UT5Luld+4vQpJPOR1q1YrbXm7XjQ==}
-    engines: {node: ^20.20.0 || >=22.22.0}
-    peerDependencies:
-      rxjs: ^7.0.0
-    peerDependenciesMeta:
-      rxjs:
-        optional: true
 
   powershell-utils@0.1.0:
     resolution: {integrity: sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A==}
@@ -21958,12 +21946,6 @@ snapshots:
       preact: 10.28.2
       query-selector-shadow-dom: 1.0.1
       web-vitals: 5.1.0
-
-  posthog-node@5.28.0(rxjs@7.8.2):
-    dependencies:
-      '@posthog/core': 1.23.2
-    optionalDependencies:
-      rxjs: 7.8.2
 
   powershell-utils@0.1.0: {}
 

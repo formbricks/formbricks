@@ -103,7 +103,6 @@
     "otplib": "12.0.1",
     "papaparse": "5.5.3",
     "posthog-js": "1.360.0",
-    "posthog-node": "5.28.0",
     "prismjs": "1.30.0",
     "qr-code-styling": "1.9.2",
     "qrcode": "1.5.4",
