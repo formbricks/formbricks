@@ -406,6 +406,156 @@ describe("organization-billing", () => {
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 
+  test("syncOrganizationBillingFromStripe stores unlimited responses when entitlement is unlimited", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  product: { id: "prod_scale" },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [
+        { id: "ent_0", lookup_key: "workspace-limit-5" },
+        { id: "ent_1", lookup_key: "responses-included-unlimited" },
+      ],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1", {
+      id: "evt_unlimited",
+      created: 1739923300,
+    });
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        limits: {
+          projects: 5,
+          monthly: {
+            responses: null,
+          },
+        },
+        stripe: expect.objectContaining({
+          features: ["workspace-limit-5", "responses-included-unlimited"],
+          lastSyncedEventId: "evt_unlimited",
+        }),
+      }),
+    });
+    expect(result?.limits.monthly.responses).toBeNull();
+    expect(result?.stripe?.features).toEqual(["workspace-limit-5", "responses-included-unlimited"]);
+  });
+
+  test("syncOrganizationBillingFromStripe prefers unlimited responses over numeric response entitlements", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {},
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  product: { id: "prod_scale" },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [
+        { id: "ent_0", lookup_key: "responses-included-500" },
+        { id: "ent_1", lookup_key: "responses-included-unlimited" },
+      ],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1");
+
+    expect(result?.limits.monthly.responses).toBeNull();
+    expect(result?.stripe?.features).toEqual(["responses-included-500", "responses-included-unlimited"]);
+  });
+
+  test("syncOrganizationBillingFromStripe preserves previous response limit when no response entitlement exists", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {},
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  product: { id: "prod_pro" },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [{ id: "ent_0", lookup_key: "workspace-limit-5" }],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1");
+
+    expect(result?.limits.monthly.responses).toBe(500);
+    expect(result?.stripe?.features).toEqual(["workspace-limit-5"]);
+  });
+
   test("syncOrganizationBillingFromStripe prefers higher-tier active subscription over hobby", async () => {
     mocks.getCloudPlanFromProduct.mockImplementation(
       (product: { metadata?: { formbricks_plan?: string } }) => {

@@ -227,10 +227,8 @@ export const PricingTable = ({
     }
   };
 
-  const responsesUnlimitedCheck =
-    currentCloudPlan === "scale" && organization.billing.limits.monthly.responses === null;
-  const projectsUnlimitedCheck =
-    currentCloudPlan === "scale" && organization.billing.limits.projects === null;
+  const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
+  const projectsUnlimitedCheck = organization.billing.limits.projects === null;
   const usageCycleLabel = `${usageCycleStart.toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
     year: "numeric",
     month: "short",
