@@ -1,10 +1,11 @@
 "use server";
 
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
-import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
@@ -17,6 +18,7 @@ import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
@@ -147,6 +149,16 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     role: "owner",
     accepted: true,
   });
+
+  // Stripe setup must run AFTER membership is created so the owner email is available
+  if (IS_FORMBRICKS_CLOUD) {
+    ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
+      logger.error(
+        { error, organizationId: organization.id },
+        "Stripe setup failed after organization creation"
+      );
+    });
+  }
 
   await updateUser(user.id, {
     notificationSettings: {

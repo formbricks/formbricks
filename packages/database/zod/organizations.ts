@@ -27,7 +27,7 @@ export const ZOrganizationBilling = z.object({
   usageCycleAnchor: z.coerce.date().nullable(),
   stripe: z
     .object({
-      plan: z.enum(["hobby", "pro", "scale", "unknown"]).optional(),
+      plan: z.enum(["hobby", "pro", "scale", "custom", "unknown"]).optional(),
       subscriptionStatus: z
         .enum([
           "trialing",

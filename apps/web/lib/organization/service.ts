@@ -18,10 +18,7 @@ import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
-import {
-  deleteStripeCustomer,
-  ensureCloudStripeSetupForOrganization,
-} from "@/modules/ee/billing/lib/organization-billing";
+import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
 export const select = {
@@ -183,15 +180,6 @@ export const createOrganization = async (
       select,
     });
 
-    if (IS_FORMBRICKS_CLOUD) {
-      ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
-        logger.error(
-          { error, organizationId: organization.id },
-          "Stripe setup failed after organization creation"
-        );
-      });
-    }
-
     return mapOrganization(organization);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -320,10 +308,10 @@ export const deleteOrganization = async (organizationId: string) => {
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {
-      deleteStripeCustomer(stripeCustomerId).catch((error) => {
+      cleanupStripeCustomer(stripeCustomerId).catch((error) => {
         logger.error(
           { error, organizationId, stripeCustomerId },
-          "Failed to delete Stripe customer after organization deletion"
+          "Failed to clean up Stripe customer after organization deletion"
         );
       });
     }

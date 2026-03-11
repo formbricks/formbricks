@@ -4,7 +4,7 @@ import { type TOrganizationStripeSubscriptionStatus } from "@formbricks/types/or
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getOrganizationBillingWithReadThroughSync } from "./organization-billing";
 
-export type TCloudBillingDisplayPlan = "hobby" | "pro" | "scale" | "unknown";
+export type TCloudBillingDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 
 export type TCloudBillingDisplayContext = {
   organizationId: string;

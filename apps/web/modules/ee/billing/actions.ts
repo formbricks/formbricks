@@ -11,7 +11,12 @@ import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
-import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
+import {
+  createScaleTrialSubscription,
+  ensureCloudStripeSetupForOrganization,
+  reconcileCloudStripeSubscriptionsForOrganization,
+  syncOrganizationBillingFromStripe,
+} from "@/modules/ee/billing/lib/organization-billing";
 import { stripeClient } from "@/modules/ee/billing/lib/stripe-client";
 
 const ZManageSubscriptionAction = z.object({
@@ -137,4 +142,38 @@ export const retryStripeSetupAction = authenticatedActionClient
     });
 
     await ensureCloudStripeSetupForOrganization(parsedInput.organizationId);
+    return { success: true };
+  });
+
+const ZStartScaleTrialAction = z.object({
+  organizationId: ZId,
+});
+
+export const startScaleTrialAction = authenticatedActionClient
+  .inputSchema(ZStartScaleTrialAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(parsedInput.organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
+    }
+
+    if (!organization.billing?.stripeCustomerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
+    }
+
+    await createScaleTrialSubscription(parsedInput.organizationId, organization.billing.stripeCustomerId);
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "scale-trial");
+    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    return { success: true };
   });
