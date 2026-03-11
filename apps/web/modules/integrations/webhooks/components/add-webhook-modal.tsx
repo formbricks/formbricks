@@ -157,7 +157,8 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           posthog.capture("webhook_created", {
             environment_id: environmentId,
             webhook_triggers: selectedTriggers,
-            survey_count: selectedAllSurveys ? "all" : selectedSurveys.length,
+            survey_count: selectedSurveys.length,
+            all_surveys_selected: selectedAllSurveys,
           });
           router.refresh();
           setCreatedWebhook(createWebhookActionResult.data);

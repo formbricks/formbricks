@@ -83,7 +83,8 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
       setIsLoading(false);
       posthog.capture("api_key_created", {
         organization_id: organizationId,
-        api_key_label: data.label,
+        has_label: Boolean(data.label),
+        label_length: data.label?.length ?? 0,
       });
       toast.success(t("environments.workspace.api_keys.api_key_created"));
     } else {

@@ -129,10 +129,11 @@ export const SignupForm = ({
         : `/auth/verification-requested?token=${token}`;
 
       if (createUserResponse?.data) {
-        posthog.identify(data.email, { name: data.name, email: data.email });
+        const normalizedEmail = data.email.trim().toLowerCase();
+        posthog.identify(normalizedEmail, { name: data.name, email: normalizedEmail });
         posthog.capture("user_signed_up", {
           name: data.name,
-          email: data.email,
+          email: normalizedEmail,
           is_formbricks_cloud: isFormbricksCloud,
           has_invite_token: !!inviteToken,
           email_verification_disabled: emailVerificationDisabled,

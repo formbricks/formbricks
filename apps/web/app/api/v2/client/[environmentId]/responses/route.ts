@@ -177,7 +177,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
     try {
       const posthogServer = getPostHogClient();
-      posthogServer.capture({
+      posthogServer?.capture({
         distinctId: environmentId,
         event: "survey_response_finished",
         properties: {

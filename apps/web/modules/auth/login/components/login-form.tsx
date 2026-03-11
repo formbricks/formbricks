@@ -128,8 +128,9 @@ export const LoginForm = ({
         router.push(searchParams?.get("callbackUrl") ?? "/");
       }
     } catch (error) {
+      console.error(error);
       posthog.captureException(error);
-      toast.error(error.toString());
+      toast.error(t("auth.login.login_failed"));
     }
   };
 
