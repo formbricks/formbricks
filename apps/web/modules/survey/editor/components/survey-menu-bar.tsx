@@ -4,6 +4,7 @@ import { Project } from "@prisma/client";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -391,6 +392,12 @@ export const SurveyMenuBar = ({
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
         toast.success(t("environments.surveys.edit.changes_saved"));
+        posthog.capture("survey_saved", {
+          survey_id: localSurvey.id,
+          survey_name: localSurvey.name,
+          survey_type: localSurvey.type,
+          survey_status: localSurvey.status,
+        });
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
         router.refresh();
@@ -402,6 +409,7 @@ export const SurveyMenuBar = ({
 
       return true;
     } catch (e) {
+      posthog.captureException(e);
       console.error(e);
       setIsSurveySaving(false);
       toast.error(t("environments.surveys.edit.error_saving_changes"));
@@ -450,10 +458,16 @@ export const SurveyMenuBar = ({
       }
 
       setIsSurveyPublishing(false);
+      posthog.capture("survey_published", {
+        survey_id: localSurvey.id,
+        survey_name: localSurvey.name,
+        survey_type: localSurvey.type,
+      });
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
       router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
+      posthog.captureException(error);
       console.error(error);
       toast.error(t("environments.surveys.edit.error_publishing_survey"));
       setIsSurveyPublishing(false);

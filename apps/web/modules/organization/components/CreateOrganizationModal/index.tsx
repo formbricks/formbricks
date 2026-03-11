@@ -2,6 +2,7 @@
 
 import { PlusCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -45,6 +46,10 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     setLoading(true);
     const createOrganizationResponse = await createOrganizationAction({ organizationName: data.name });
     if (createOrganizationResponse?.data) {
+      posthog.capture("organization_created", {
+        organization_id: createOrganizationResponse.data.id,
+        organization_name: data.name,
+      });
       toast.success(t("environments.settings.general.organization_created_successfully"));
       router.push(`/organizations/${createOrganizationResponse.data.id}`);
       setOpen(false);

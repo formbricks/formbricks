@@ -2,6 +2,7 @@
 
 import { ApiKeyPermission } from "@prisma/client";
 import { FilesIcon, TrashIcon } from "lucide-react";
+import posthog from "posthog-js";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -80,6 +81,10 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
       const updatedApiKeys = [...apiKeysLocal, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
       setIsLoading(false);
+      posthog.capture("api_key_created", {
+        organization_id: organizationId,
+        api_key_label: data.label,
+      });
       toast.success(t("environments.workspace.api_keys.api_key_created"));
     } else {
       setIsLoading(false);

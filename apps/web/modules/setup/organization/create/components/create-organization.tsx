@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -36,6 +37,11 @@ export const CreateOrganization = () => {
       setIsSubmitting(true);
       const createOrganizationResponse = await createOrganizationAction({ organizationName });
       if (createOrganizationResponse?.data) {
+        posthog.capture("organization_created", {
+          organization_id: createOrganizationResponse.data.id,
+          organization_name: organizationName,
+          source: "setup",
+        });
         router.push(`/setup/organization/${createOrganizationResponse.data.id}/invite`);
       }
     } catch (error) {

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -74,6 +75,12 @@ export const SurveyDropDownMenu = ({
         toast.error(getFormattedErrorMessage(result));
         return;
       }
+      posthog.capture("survey_deleted", {
+        survey_id: surveyId,
+        survey_name: survey.name,
+        survey_type: survey.type,
+        survey_status: survey.status,
+      });
       deleteSurvey(surveyId);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
     } catch (error) {
@@ -90,6 +97,11 @@ export const SurveyDropDownMenu = ({
       // For single-use surveys, this button is disabled, so we just copy the base link
       const copiedLink = copySurveyLink(surveyLink);
       navigator.clipboard.writeText(copiedLink);
+      posthog.capture("survey_link_copied", {
+        survey_id: survey.id,
+        survey_name: survey.name,
+        survey_type: survey.type,
+      });
       toast.success(t("common.copied_to_clipboard"));
     } catch (error) {
       logger.error(error);
@@ -112,6 +124,13 @@ export const SurveyDropDownMenu = ({
         if (transformedDuplicatedSurvey?.data) {
           onSurveysCopied?.();
         }
+        posthog.capture("survey_duplicated", {
+          original_survey_id: surveyId,
+          new_survey_id: duplicatedSurveyResponse.data.id,
+          survey_name: survey.name,
+          survey_type: survey.type,
+          environment_id: environmentId,
+        });
         toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);

@@ -4,6 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
+import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
@@ -41,6 +42,12 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       type,
       endings: endingsTemp,
     }));
+
+    posthog.capture("survey_type_selected", {
+      survey_id: localSurvey.id,
+      survey_type: type,
+      previous_type: localSurvey.type,
+    });
 
     // if the type is "app" and the local survey does not already have a segment, we create a new temporary segment
     if (type === "app" && !localSurvey.segment) {
