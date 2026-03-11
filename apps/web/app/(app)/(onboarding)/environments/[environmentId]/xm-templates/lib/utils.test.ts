@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { TProject } from "@formbricks/types/project";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "./utils";
 
@@ -39,13 +40,13 @@ const mockTemplate: TXMTemplate = {
       elements: [
         {
           id: "q1",
-          type: "openText" as const,
+          type: "openText" as TSurveyElementTypeEnum.OpenText,
           inputType: "text" as const,
           headline: { default: "$[projectName] Question" },
           subheader: { default: "" },
           required: false,
           placeholder: { default: "" },
-          charLimit: 1000,
+          charLimit: { enabled: true, max: 1000 },
         },
       ],
     },

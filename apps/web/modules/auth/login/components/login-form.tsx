@@ -122,7 +122,7 @@ export const LoginForm = ({
         router.push(searchParams?.get("callbackUrl") ?? "/");
       }
     } catch (error) {
-      toast.error(error.toString());
+      toast.error(error instanceof Error ? error.message : String(error));
     }
   };
 

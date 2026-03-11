@@ -5,6 +5,7 @@ export const CLOUD_PLAN_LEVEL = {
   hobby: 0,
   pro: 1,
   scale: 2,
+  custom: 3,
   unknown: -1,
 } as const;
 
@@ -14,6 +15,7 @@ const CLOUD_PRODUCT_METADATA_TO_PLAN = {
   hobby: "hobby",
   pro: "pro",
   scale: "scale",
+  custom: "custom",
 } as const satisfies Record<string, Exclude<TCloudStripePlan, "unknown">>;
 
 const getProductPlanMetadata = (

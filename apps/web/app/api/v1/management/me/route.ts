@@ -102,7 +102,9 @@ const checkRateLimit = async (userId: string) => {
   try {
     await applyRateLimit(rateLimitConfigs.api.v1, userId);
   } catch (error) {
-    return responses.tooManyRequestsResponse(error.message);
+    return responses.tooManyRequestsResponse(
+      error instanceof Error ? error.message : "Unknown error occurred"
+    );
   }
   return null;
 };

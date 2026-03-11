@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   type TOrganizationBilling,
   type TOrganizationStripeSubscriptionStatus,
@@ -92,16 +93,23 @@ const listAllActiveEntitlements = async (customerId: string): Promise<string[]> 
   return [...new Set(featureLookupKeys)];
 };
 
-const parseMaxNumericEntitlementLimit = (features: string[], prefix: string): number | null => {
-  let maxValue: number | null = null;
+const parseEntitlementLimit = (features: string[], prefix: string): number | null | undefined => {
+  let maxValue: number | null | undefined;
 
   for (const feature of features) {
     if (!feature.startsWith(prefix)) continue;
     const rawValue = feature.slice(prefix.length);
+    if (rawValue === "unlimited") {
+      return null;
+    }
     if (!/^\d+$/.test(rawValue)) continue;
     const parsed = Number.parseInt(rawValue, 10);
     if (Number.isNaN(parsed)) continue;
-    maxValue = maxValue === null ? parsed : Math.max(maxValue, parsed);
+    if (maxValue == null) {
+      maxValue = parsed;
+      continue;
+    }
+    maxValue = Math.max(maxValue, parsed);
   }
 
   return maxValue;
@@ -291,6 +299,106 @@ const ensureHobbySubscription = async (
   );
 };
 
+/**
+ * Checks whether the given email has already used a Scale trial on any Stripe customer.
+ * Searches all customers with that email and inspects their subscription history.
+ */
+const hasEmailUsedScaleTrial = async (email: string, scaleProductId: string): Promise<boolean> => {
+  if (!stripeClient) return false;
+
+  const customers = await stripeClient.customers.list({
+    email,
+    limit: 100,
+  });
+
+  for (const customer of customers.data) {
+    const subscriptions = await stripeClient.subscriptions.list({
+      customer: customer.id,
+      status: "all",
+      limit: 100,
+    });
+
+    const hadScaleTrial = subscriptions.data.some(
+      (sub) =>
+        sub.trial_start != null &&
+        sub.items.data.some((item) => {
+          const productId =
+            typeof item.price.product === "string" ? item.price.product : item.price.product.id;
+          return productId === scaleProductId;
+        })
+    );
+
+    if (hadScaleTrial) return true;
+  }
+
+  return false;
+};
+
+export const createScaleTrialSubscription = async (
+  organizationId: string,
+  customerId: string
+): Promise<void> => {
+  if (!stripeClient) return;
+
+  const products = await stripeClient.products.list({
+    active: true,
+    limit: 100,
+  });
+
+  const scaleProduct = products.data.find((product) => product.metadata.formbricks_plan === "scale");
+  if (!scaleProduct) {
+    throw new Error("Stripe product metadata formbricks_plan=scale not found");
+  }
+
+  // Check if the email has already used a Scale trial across any Stripe customer
+  const customer = await stripeClient.customers.retrieve(customerId);
+  if (!customer.deleted && customer.email) {
+    const alreadyUsed = await hasEmailUsedScaleTrial(customer.email, scaleProduct.id);
+    if (alreadyUsed) {
+      throw new OperationNotAllowedError("trial_already_used");
+    }
+  }
+
+  const defaultPrice =
+    typeof scaleProduct.default_price === "string" ? null : (scaleProduct.default_price ?? null);
+
+  const fallbackPrices = await stripeClient.prices.list({
+    product: scaleProduct.id,
+    active: true,
+    limit: 100,
+  });
+
+  const scalePrice =
+    defaultPrice ??
+    fallbackPrices.data.find(
+      (price) => price.recurring?.interval === "month" && price.recurring.usage_type === "licensed"
+    ) ??
+    fallbackPrices.data[0] ??
+    null;
+
+  if (!scalePrice) {
+    throw new Error(`No active price found for Stripe scale product ${scaleProduct.id}`);
+  }
+
+  await stripeClient.subscriptions.create(
+    {
+      customer: customerId,
+      items: [{ price: scalePrice.id, quantity: 1 }],
+      trial_period_days: 14,
+      trial_settings: {
+        end_behavior: {
+          missing_payment_method: "cancel",
+        },
+      },
+      payment_settings: {
+        save_default_payment_method: "on_subscription",
+      },
+      metadata: { organizationId },
+    },
+    { idempotencyKey: `create-scale-trial-${organizationId}` }
+  );
+};
+
 const ensureOrganizationBillingRecord = async (
   organizationId: string
 ): Promise<TOrganizationBilling | null> => {
@@ -328,6 +436,37 @@ const ensureOrganizationBillingRecord = async (
   return mapBillingRecord(billing);
 };
 
+/**
+ * Finds the email of the organization owner by looking up the membership with role "owner"
+ * and joining to the user table.
+ */
+const getOrganizationOwnerEmail = async (organizationId: string): Promise<string | null> => {
+  const membership = await prisma.membership.findFirst({
+    where: { organizationId, role: "owner" },
+    select: { user: { select: { email: true } } },
+  });
+  return membership?.user.email ?? null;
+};
+
+/**
+ * Searches Stripe for an existing non-deleted customer with the given email.
+ * Returns the first match, or null if none found.
+ */
+const findStripeCustomerByEmail = async (email: string): Promise<Stripe.Customer | null> => {
+  if (!stripeClient) return null;
+
+  const customers = await stripeClient.customers.list({
+    email,
+    limit: 1,
+  });
+
+  const customer = customers.data[0];
+  if (customer && !customer.deleted) {
+    return customer;
+  }
+  return null;
+};
+
 export const ensureStripeCustomerForOrganization = async (
   organizationId: string
 ): Promise<{ customerId: string | null }> => {
@@ -344,40 +483,58 @@ export const ensureStripeCustomerForOrganization = async (
     return { customerId: null };
   }
 
-  const billing = await ensureOrganizationBillingRecord(organization.id);
-  if (!billing) {
-    return { customerId: null };
+  // Look up the org owner's email and check if a Stripe customer already exists for it.
+  // This reuses the old customer (and its trial history) when a user deletes their account
+  // and signs up again with the same email.
+  const ownerEmail = await getOrganizationOwnerEmail(organization.id);
+  let existingCustomer: Stripe.Customer | null = null;
+
+  if (ownerEmail) {
+    const foundCustomer = await findStripeCustomerByEmail(ownerEmail);
+    if (foundCustomer) {
+      // Only reuse if this customer is not already linked to another org's billing record
+      const existingBillingOwner = await findOrganizationIdByStripeCustomerId(foundCustomer.id);
+      if (!existingBillingOwner || existingBillingOwner === organizationId) {
+        existingCustomer = foundCustomer;
+        await stripeClient.customers.update(existingCustomer.id, {
+          name: organization.name,
+          metadata: { organizationId: organization.id },
+        });
+        logger.info(
+          { organizationId, customerId: existingCustomer.id, email: ownerEmail },
+          "Reusing existing Stripe customer for new organization"
+        );
+      }
+    }
   }
 
-  if (billing.stripeCustomerId) {
-    return { customerId: billing.stripeCustomerId };
-  }
+  const customer =
+    existingCustomer ??
+    (await stripeClient.customers.create(
+      {
+        name: organization.name,
+        email: ownerEmail ?? undefined,
+        metadata: { organizationId: organization.id },
+      },
+      { idempotencyKey: `ensure-customer-${organization.id}` }
+    ));
 
-  const customer = await stripeClient.customers.create(
-    {
-      name: organization.name,
-      metadata: { organizationId: organization.id },
-    },
-    { idempotencyKey: `ensure-customer-${organization.id}` }
-  );
+  const defaultBilling = getDefaultOrganizationBilling();
 
-  const updatedStripeSnapshot = {
-    ...billing.stripe,
-    lastSyncedAt: new Date().toISOString(),
-  };
-
+  // Always create/update the billing record with the resolved Stripe customer ID.
+  // Using upsert so the billing row is created if it doesn't exist yet.
   await prisma.organizationBilling.upsert({
     where: { organizationId: organization.id },
     create: {
       organizationId: organization.id,
       stripeCustomerId: customer.id,
-      limits: billing.limits,
-      usageCycleAnchor: billing.usageCycleAnchor,
-      stripe: updatedStripeSnapshot,
+      limits: defaultBilling.limits,
+      usageCycleAnchor: defaultBilling.usageCycleAnchor,
+      stripe: { lastSyncedAt: new Date().toISOString() },
     },
     update: {
       stripeCustomerId: customer.id,
-      stripe: updatedStripeSnapshot,
+      stripe: { lastSyncedAt: new Date().toISOString() },
     },
   });
 
@@ -422,18 +579,15 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const previousLimits = billing.limits;
-  const workspaceLimitFromEntitlements = parseMaxNumericEntitlementLimit(
-    featureLookupKeys,
-    "workspace-limit-"
-  );
-  const responsesIncludedFromEntitlements = parseMaxNumericEntitlementLimit(
-    featureLookupKeys,
-    "responses-included-"
-  );
+  const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
+  const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
 
-  const projectsLimit = workspaceLimitFromEntitlements ?? previousLimits?.projects ?? null;
+  const projectsLimit =
+    workspaceLimitFromEntitlements === undefined
+      ? (previousLimits?.projects ?? null)
+      : workspaceLimitFromEntitlements;
 
-  if (workspaceLimitFromEntitlements === null && previousLimits?.projects == null) {
+  if (workspaceLimitFromEntitlements === undefined && previousLimits?.projects == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
       "No workspace limit entitlement found in Stripe entitlements; preserving previous projects limit"
@@ -441,9 +595,11 @@ export const syncOrganizationBillingFromStripe = async (
   }
 
   const responsesIncludedLimit =
-    responsesIncludedFromEntitlements ?? previousLimits?.monthly?.responses ?? null;
+    responsesIncludedFromEntitlements === undefined
+      ? (previousLimits?.monthly?.responses ?? null)
+      : responsesIncludedFromEntitlements;
 
-  if (responsesIncludedFromEntitlements === null && previousLimits?.monthly?.responses == null) {
+  if (responsesIncludedFromEntitlements === undefined && previousLimits?.monthly?.responses == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
       "No responses included entitlement found in Stripe entitlements; preserving previous responses limit"
@@ -528,9 +684,25 @@ export const getOrganizationBillingWithReadThroughSync = async (
   }
 };
 
-export const deleteStripeCustomer = async (stripeCustomerId: string): Promise<void> => {
+/**
+ * Cleans up a Stripe customer after organization deletion by cancelling all active
+ * subscriptions. The customer object is intentionally kept so that trial usage history
+ * is preserved — this prevents the same email from claiming a free trial again.
+ */
+export const cleanupStripeCustomer = async (stripeCustomerId: string): Promise<void> => {
   if (!stripeClient) return;
-  await stripeClient.customers.del(stripeCustomerId);
+
+  const subscriptions = await stripeClient.subscriptions.list({
+    customer: stripeCustomerId,
+    status: "all",
+    limit: 100,
+  });
+
+  await Promise.all(
+    subscriptions.data
+      .filter((sub) => ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status))
+      .map((sub) => stripeClient!.subscriptions.cancel(sub.id, { prorate: false }))
+  );
 };
 
 export const findOrganizationIdByStripeCustomerId = async (customerId: string): Promise<string | null> => {

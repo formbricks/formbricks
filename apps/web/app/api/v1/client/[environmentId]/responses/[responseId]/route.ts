@@ -1,11 +1,11 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseUpdateInput, ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -63,13 +63,7 @@ const validateResponse = (
 };
 
 export const PUT = withV1ApiWrapper({
-  handler: async ({
-    req,
-    props,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ responseId: string }> };
-  }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
     const params = await props.params;
     const { responseId } = params;
 
@@ -98,7 +92,18 @@ export const PUT = withV1ApiWrapper({
     } catch (error) {
       const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
       return {
-        response: handleDatabaseError(error, req.url, endpoint, responseId),
+        response: handleDatabaseError(
+          error instanceof Error ? error : new Error(String(error)),
+          req.url,
+          endpoint,
+          responseId
+        ),
+      };
+    }
+
+    if (!response) {
+      return {
+        response: responses.notFoundResponse("Response", responseId, true),
       };
     }
 
@@ -115,7 +120,18 @@ export const PUT = withV1ApiWrapper({
     } catch (error) {
       const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
       return {
-        response: handleDatabaseError(error, req.url, endpoint, responseId),
+        response: handleDatabaseError(
+          error instanceof Error ? error : new Error(String(error)),
+          req.url,
+          endpoint,
+          responseId
+        ),
+      };
+    }
+
+    if (!survey) {
+      return {
+        response: responses.notFoundResponse("Survey", response.surveyId, true),
       };
     }
 
@@ -128,7 +144,7 @@ export const PUT = withV1ApiWrapper({
     // Validate response data for "other" options exceeding character limit
     const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
       responseData: inputValidation.data.data,
-      surveyQuestions: survey.questions,
+      surveyQuestions: survey.questions as unknown as TSurveyElement[],
       responseLanguage: inputValidation.data.language,
     });
 
@@ -173,6 +189,14 @@ export const PUT = withV1ApiWrapper({
           response: responses.internalServerErrorResponse(error.message),
         };
       }
+
+      logger.error(
+        { error, url: req.url },
+        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      );
+      return {
+        response: responses.internalServerErrorResponse("Something went wrong"),
+      };
     }
 
     const { quotaFull, ...responseData } = updatedResponse;

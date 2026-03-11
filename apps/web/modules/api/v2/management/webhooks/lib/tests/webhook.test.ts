@@ -34,9 +34,12 @@ describe("getWebhooks", () => {
   const count = fakeWebhooks.length;
 
   test("returns ok response with webhooks and meta", async () => {
-    vi.mocked(prisma.$transaction).mockResolvedValueOnce([fakeWebhooks, count]);
+    vi.mocked(prisma.$transaction).mockResolvedValueOnce([fakeWebhooks, count] as [
+      typeof fakeWebhooks,
+      number,
+    ]);
 
-    const result = await getWebhooks(environmentId, params as TGetWebhooksFilter);
+    const result = await getWebhooks([environmentId], params as TGetWebhooksFilter);
     expect(result.ok).toBe(true);
 
     if (result.ok) {
@@ -52,11 +55,11 @@ describe("getWebhooks", () => {
   test("returns error when prisma.$transaction throws", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Test error"));
 
-    const result = await getWebhooks(environmentId, params as TGetWebhooksFilter);
+    const result = await getWebhooks([environmentId], params as TGetWebhooksFilter);
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toEqual("internal_server_error");
+      expect((result.error as { type: string })?.type).toEqual("internal_server_error");
     }
   });
 });
@@ -81,6 +84,7 @@ describe("createWebhook", () => {
     surveyIds: inputWebhook.surveyIds,
     createdAt: new Date(),
     updatedAt: new Date(),
+    secret: null,
   };
 
   test("creates a webhook", async () => {
@@ -112,8 +116,10 @@ describe("createWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error.type).toEqual("bad_request");
-      expect(result.error.details[0].field).toEqual("url");
+      expect((result.error as { type: string }).type).toEqual("bad_request");
+      expect((result.error as { type: string; details: { field: string }[] }).details[0].field).toEqual(
+        "url"
+      );
     }
 
     expect(prisma.webhook.create).not.toHaveBeenCalled();
@@ -126,8 +132,10 @@ describe("createWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error.type).toEqual("internal_server_error");
-      expect(result.error.details[0].field).toEqual("url");
+      expect((result.error as { type: string }).type).toEqual("internal_server_error");
+      expect((result.error as { type: string; details: { field: string }[] }).details[0].field).toEqual(
+        "url"
+      );
     }
 
     expect(prisma.webhook.create).not.toHaveBeenCalled();
@@ -140,7 +148,7 @@ describe("createWebhook", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error.type).toEqual("internal_server_error");
+      expect((result.error as { type: string }).type).toEqual("internal_server_error");
     }
   });
 });

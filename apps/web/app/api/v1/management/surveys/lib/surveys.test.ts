@@ -24,7 +24,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn) => fn), // Mock reactCache to just execute the function
+    cache: vi.fn((fn: Function) => fn), // Mock reactCache to just execute the function
   };
 });
 
@@ -34,40 +34,42 @@ const surveyId1 = "survey1";
 const surveyId2 = "survey2";
 const surveyId3 = "survey3";
 
+type PrismaSurvey = Awaited<ReturnType<typeof prisma.survey.findMany>>[number];
+
 const mockSurveyPrisma1 = {
   id: surveyId1,
   environmentId: environmentId1,
   name: "Survey 1",
   updatedAt: new Date(),
-};
+} as unknown as PrismaSurvey;
 const mockSurveyPrisma2 = {
   id: surveyId2,
   environmentId: environmentId1,
   name: "Survey 2",
   updatedAt: new Date(),
-};
+} as unknown as PrismaSurvey;
 const mockSurveyPrisma3 = {
   id: surveyId3,
   environmentId: environmentId2,
   name: "Survey 3",
   updatedAt: new Date(),
-};
+} as unknown as PrismaSurvey;
 
 const mockSurveyTransformed1: TSurvey = {
   ...mockSurveyPrisma1,
   displayPercentage: null,
   segment: null,
-} as TSurvey;
+} as unknown as TSurvey;
 const mockSurveyTransformed2: TSurvey = {
   ...mockSurveyPrisma2,
   displayPercentage: null,
   segment: null,
-} as TSurvey;
+} as unknown as TSurvey;
 const mockSurveyTransformed3: TSurvey = {
   ...mockSurveyPrisma3,
   displayPercentage: null,
   segment: null,
-} as TSurvey;
+} as unknown as TSurvey;
 
 describe("getSurveys (Management API)", () => {
   beforeEach(() => {

@@ -107,12 +107,13 @@ export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[
     if (Array.isArray(obj)) {
       obj.forEach((item) => processObject(item));
     } else if (obj && typeof obj === "object") {
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          if (key === "default" && typeof obj[key] === "string") {
-            addLanguageKeys(obj as { default: string; [key: string]: string });
+      const record = obj as Record<string, unknown>;
+      for (const key in record) {
+        if (record.hasOwnProperty(key)) {
+          if (key === "default" && typeof record[key] === "string") {
+            addLanguageKeys(record as unknown as { default: string; [key: string]: string });
           } else {
-            processObject(obj[key]);
+            processObject(record[key]);
           }
         }
       }

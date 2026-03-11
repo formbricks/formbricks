@@ -177,9 +177,11 @@ export const FaviconCustomizationSettings = ({
               id="favicon-input"
               allowedFileExtensions={allowedFileExtensions}
               environmentId={environmentId}
-              onFileUpload={(files: string[]) => {
-                setFaviconUrl(files[0]);
-                setIsEditing(true);
+              onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
+                if (files?.[0]) {
+                  setFaviconUrl(files[0]);
+                  setIsEditing(true);
+                }
               }}
               disabled={isReadOnly}
               maxSizeInMB={MAX_FAVICON_SIZE_MB}

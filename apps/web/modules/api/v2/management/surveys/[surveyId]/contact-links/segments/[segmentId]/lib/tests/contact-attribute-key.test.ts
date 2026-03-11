@@ -13,7 +13,9 @@ vi.mock("@formbricks/database", () => ({
 
 describe("getContactAttributeKeys", () => {
   const mockEnvironmentId = "mock-env-123";
-  const mockContactAttributeKeys = [{ key: "email" }, { key: "name" }, { key: "userId" }];
+  const mockContactAttributeKeys = [{ key: "email" }, { key: "name" }, { key: "userId" }] as Awaited<
+    ReturnType<typeof prisma.contactAttributeKey.findMany>
+  >;
 
   beforeEach(() => {
     vi.clearAllMocks();

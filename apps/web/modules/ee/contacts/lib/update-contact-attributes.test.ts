@@ -48,6 +48,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
       {
         id: "key2",
@@ -59,6 +60,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
       {
         id: "key3",
@@ -70,6 +72,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
     ];
 
@@ -127,6 +130,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
     ];
     const mockUpdatedKeys = [
@@ -140,6 +144,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
       {
         id: "key2",
@@ -151,6 +156,7 @@ describe("updateContactAttributes", () => {
         type: "custom" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
     ];
 
@@ -181,6 +187,7 @@ describe("updateContactAttributes", () => {
         type: "custom",
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
     ]);
   });
@@ -211,6 +218,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
     ];
     const mockUpdatedAttributes = {
@@ -260,6 +268,7 @@ describe("updateContactAttributes", () => {
         type: "default" as const,
         isUnique: false,
         description: null,
+        dataType: "string" as const,
       },
     ];
     const mockUpdatedAttributes = {

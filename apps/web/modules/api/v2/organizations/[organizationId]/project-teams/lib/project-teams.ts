@@ -36,7 +36,12 @@ export const getProjectTeams = async (
       },
     });
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "projectTeam", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 
@@ -56,7 +61,12 @@ export const createProjectTeam = async (
 
     return ok(projectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "projectTeam", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 
@@ -78,7 +88,12 @@ export const updateProjectTeam = async (
 
     return ok(updatedProjectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "projectTeam", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 
@@ -98,6 +113,11 @@ export const deleteProjectTeam = async (
 
     return ok(deletedProjectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "projectTeam", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };

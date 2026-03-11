@@ -105,7 +105,7 @@ export const SummaryPage = ({
       setDisplays(data);
       setHasMoreDisplays(data.length === DISPLAYS_PER_PAGE);
     } catch (error) {
-      toast.error(error);
+      toast.error(error instanceof Error ? error.message : String(error));
       setDisplays([]);
       setHasMoreDisplays(false);
     } finally {

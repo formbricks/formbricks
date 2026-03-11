@@ -87,7 +87,7 @@ interface PricingTableProps {
   usageCycleStart: Date;
   usageCycleEnd: Date;
   hasBillingRights: boolean;
-  currentCloudPlan: "hobby" | "pro" | "scale" | "unknown";
+  currentCloudPlan: "hobby" | "pro" | "scale" | "custom" | "unknown";
   currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
@@ -95,12 +95,13 @@ interface PricingTableProps {
 }
 
 const getCurrentCloudPlanLabel = (
-  plan: "hobby" | "pro" | "scale" | "unknown",
+  plan: "hobby" | "pro" | "scale" | "custom" | "unknown",
   t: (key: string) => string
 ) => {
   if (plan === "hobby") return t("environments.settings.billing.plan_hobby");
   if (plan === "pro") return t("environments.settings.billing.plan_pro");
   if (plan === "scale") return t("environments.settings.billing.plan_scale");
+  if (plan === "custom") return t("environments.settings.billing.plan_custom");
   return t("environments.settings.billing.plan_unknown");
 };
 
@@ -222,14 +223,14 @@ export const PricingTable = ({
         toast.error(t("common.something_went_wrong_please_try_again"));
       }
     } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } finally {
       setIsRetryingStripeSetup(false);
     }
   };
 
-  const responsesUnlimitedCheck =
-    currentCloudPlan === "scale" && organization.billing.limits.monthly.responses === null;
-  const projectsUnlimitedCheck =
-    currentCloudPlan === "scale" && organization.billing.limits.projects === null;
+  const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
+  const projectsUnlimitedCheck = organization.billing.limits.projects === null;
   const usageCycleLabel = `${usageCycleStart.toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
     year: "numeric",
     month: "short",
@@ -244,7 +245,7 @@ export const PricingTable = ({
 
   return (
     <main>
-      <div className="flex flex-col gap-4">
+      <div className="flex max-w-4xl flex-col gap-4">
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
             <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
@@ -300,19 +301,19 @@ export const PricingTable = ({
                 )}
               </div>
             </div>
+            <div className="flex flex-col gap-2">
+              <UsageCard
+                metric={t("common.responses")}
+                currentCount={responseCount}
+                limit={organization.billing.limits.monthly.responses}
+                isUnlimited={responsesUnlimitedCheck}
+                unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
+              />
 
-            <UsageCard
-              metric={t("common.responses")}
-              currentCount={responseCount}
-              limit={organization.billing.limits.monthly.responses}
-              isUnlimited={responsesUnlimitedCheck}
-              unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
-            />
-
-            <p className="text-sm text-slate-500">
-              {t("environments.settings.billing.usage_cycle")}: {usageCycleLabel}
-            </p>
-
+              <p className="text-sm text-slate-500">
+                {t("environments.settings.billing.usage_cycle")}: {usageCycleLabel}
+              </p>
+            </div>
             <UsageCard
               metric={t("common.workspaces")}
               currentCount={projectCount}

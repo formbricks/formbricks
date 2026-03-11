@@ -114,7 +114,7 @@ describe("createResponse", () => {
 
   test("should handle finished response and calculate TTC", async () => {
     const finishedInput = { ...mockResponseInput, finished: true };
-    await createResponse(finishedInput);
+    await createResponse(finishedInput, prisma);
     expect(calculateTtcTotal).toHaveBeenCalledWith(mockResponseInput.ttc);
     expect(prisma.response.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -134,13 +134,13 @@ describe("createResponse", () => {
       clientVersion: "test",
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
-    await expect(createResponse(mockResponseInput)).rejects.toThrow(DatabaseError);
+    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw original error on other Prisma errors", async () => {
     const genericError = new Error("Generic database error");
     vi.mocked(prisma.response.create).mockRejectedValue(genericError);
-    await expect(createResponse(mockResponseInput)).rejects.toThrow(genericError);
+    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(genericError);
   });
 });
 
@@ -169,7 +169,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: undefined,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
 
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponseInput.surveyId,
@@ -223,7 +223,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: mockQuotaFull,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
 
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponseInput.surveyId,
@@ -277,7 +277,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: mockQuotaFull,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
 
     expect(result).toEqual({
       id: responseId,

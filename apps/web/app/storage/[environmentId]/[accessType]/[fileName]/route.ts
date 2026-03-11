@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { TAccessType, ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
+import { ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/auth";
@@ -14,7 +14,7 @@ import { logFileDeletion } from "./lib/audit-logs";
 
 export const GET = async (
   request: NextRequest,
-  props: { params: Promise<{ environmentId: string; accessType: TAccessType; fileName: string }> }
+  props: { params: Promise<{ environmentId: string; accessType: string; fileName: string }> }
 ): Promise<Response> => {
   const params = await props.params;
   const paramValidation = ZDownloadFileRequest.safeParse(params);
@@ -109,7 +109,9 @@ export const DELETE = async (
         await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
       }
     } catch (error) {
-      return responses.tooManyRequestsResponse(error.message);
+      return responses.tooManyRequestsResponse(
+        error instanceof Error ? error.message : "Unknown error occurred"
+      );
     }
   }
 

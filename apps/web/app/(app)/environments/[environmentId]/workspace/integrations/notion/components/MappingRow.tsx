@@ -65,7 +65,7 @@ const MappingErrorMessage = ({
               question_label: element.label,
               col_name: col.name,
               col_type: col.type,
-              mapped_type: TYPE_MAPPING[element.id].join(" ,"),
+              mapped_type: (TYPE_MAPPING as Record<string, string[]>)[element.id].join(" ,"),
             })}
           </>
         );
@@ -135,7 +135,7 @@ export const MappingRow = ({
           return copy;
         }
 
-        const isValidColType = TYPE_MAPPING[item.type].includes(col.type);
+        const isValidColType = (TYPE_MAPPING as Record<string, string[]>)[item.type]?.includes(col.type);
         if (!isValidColType) {
           copy[idx] = {
             ...copy[idx],
@@ -166,7 +166,7 @@ export const MappingRow = ({
           return copy;
         }
 
-        const isValidElemType = TYPE_MAPPING[elem.type].includes(item.type);
+        const isValidElemType = (TYPE_MAPPING as Record<string, string[]>)[elem.type]?.includes(item.type);
         if (!isValidElemType) {
           copy[idx] = {
             ...copy[idx],

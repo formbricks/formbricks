@@ -133,7 +133,9 @@ export const createContact = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "contact", issue: error.message }],
+      details: [
+        { field: "contact", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

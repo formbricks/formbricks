@@ -36,43 +36,33 @@ const checkQuotasEnabled = async (organizationId: string) => {
 };
 
 export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQuotaAction).action(
-  withAuditLogging(
-    "deleted",
-    "quota",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDeleteQuotaAction>;
-    }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-      await checkQuotasEnabled(organizationId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+  withAuditLogging("deleted", "quota", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    await checkQuotasEnabled(organizationId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
 
-      const result = await deleteQuota(parsedInput.quotaId);
+    const result = await deleteQuota(parsedInput.quotaId);
 
-      ctx.auditLoggingCtx.oldObject = result;
-      return result;
-    }
-  )
+    ctx.auditLoggingCtx.oldObject = result;
+    return result;
+  })
 );
 
 const ZUpdateQuotaAction = z.object({
@@ -81,42 +71,32 @@ const ZUpdateQuotaAction = z.object({
 });
 
 export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQuotaAction).action(
-  withAuditLogging(
-    "updated",
-    "quota",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZUpdateQuotaAction>;
-    }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
-      await checkQuotasEnabled(organizationId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+  withAuditLogging("updated", "quota", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+    await checkQuotasEnabled(organizationId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
-      ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
-      ctx.auditLoggingCtx.oldObject = parsedInput.quota;
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
-    }
-  )
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
+    ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
+    ctx.auditLoggingCtx.oldObject = parsedInput.quota;
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
 );
 
 const ZCreateQuotaAction = z.object({
@@ -124,41 +104,31 @@ const ZCreateQuotaAction = z.object({
 });
 
 export const createQuotaAction = authenticatedActionClient.inputSchema(ZCreateQuotaAction).action(
-  withAuditLogging(
-    "created",
-    "quota",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZCreateQuotaAction>;
-    }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
-      await checkQuotasEnabled(organizationId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+  withAuditLogging("created", "quota", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+    await checkQuotasEnabled(organizationId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      const result = await createQuota(parsedInput.quota);
-      ctx.auditLoggingCtx.quotaId = result.id;
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
-    }
-  )
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    const result = await createQuota(parsedInput.quota);
+    ctx.auditLoggingCtx.quotaId = result.id;
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
 );
 
 const ZGetQuotaResponseCountAction = z.object({

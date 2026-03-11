@@ -121,7 +121,7 @@ export const getApiKeyWithPermissions = reactCache(
           });
       }
 
-      return apiKeyData;
+      return apiKeyData as TApiKeyWithEnvironmentAndProject;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

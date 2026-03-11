@@ -571,10 +571,15 @@ checksums:
     environments/actions/test_match: 401f40fa811c3945bda3e019f242e388
     environments/actions/test_your_url: 4c35b97b614d4f20f92aa449cc748e8d
     environments/actions/this_action_was_created_automatically_you_cannot_make_changes_to_it: 6eddf2420a18408b9c8d9db6ab5ca34b
+    environments/actions/this_action_will_be_triggered_after_user_stays_on_page: 3ae729d24e828fdd473a233078f91074
     environments/actions/this_action_will_be_triggered_when_the_page_is_loaded: 8d28f30cf56f50ea79aef8dd2b02185d
     environments/actions/this_action_will_be_triggered_when_the_user_scrolls_50_percent_of_the_page: 60230ad129853377af1066e10f3b3c22
     environments/actions/this_action_will_be_triggered_when_the_user_tries_to_leave_the_page: 504fa734659524933e3489823d820265
     environments/actions/this_is_a_code_action_please_make_changes_in_your_code_base: 27e64863fdebca791ca129ac0c3da3d5
+    environments/actions/time_in_seconds: 822be76950e5f614ed23f52ba1d4825f
+    environments/actions/time_in_seconds_placeholder: e54a4c40e0c6b43fb2e97bd32cab8da8
+    environments/actions/time_in_seconds_with_unit: a743b7844c71ddad364a93872682ae9e
+    environments/actions/time_on_page: b712a3e809669be7384a52a801777408
     environments/actions/track_new_user_action: 7133de99e7561128cfc6631ab2e592de
     environments/actions/track_user_action_to_display_surveys_or_create_user_segment: 2794a2dc51e48f1178d5d759db68029c
     environments/actions/url: ca97457614226960d41dd18c3c29c86b
@@ -911,7 +916,9 @@ checksums:
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/cancelling: 6e46e789720395bfa1e3a4b3b1519634
-    environments/settings/billing/manage_subscription: 31cafd367fc70d656d8dd979d537dc96
+    environments/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
+    environments/settings/billing/manage_subscription: b83a75127b8eabc21dfa1e0f7104db56
+    environments/settings/billing/plan_custom: b7b89901f46267f532600a23cfc54ae2
     environments/settings/billing/plan_hobby: 3e96a8e688032f9bd21b436bc70c19d5
     environments/settings/billing/plan_pro: 682b3c9feab30112b4454cb5bb7974b1
     environments/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c
@@ -924,11 +931,23 @@ checksums:
     environments/settings/billing/scale_feature_quota: 31fb6b5e846dd44de140a69fd3e4c067
     environments/settings/billing/scale_feature_spam: 8a8229b6ac3f3e0427fd347cb667ce11
     environments/settings/billing/scale_feature_teams: f6e8428f6cdb227176a5fa8c5c95c976
+    environments/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
+    environments/settings/billing/select_plan_header_title: d851e9fa093ddb248924cf99e1d79b4e
     environments/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
+    environments/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     environments/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     environments/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
+    environments/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
+    environments/settings/billing/trial_feature_api_access: d7aabb2de18beb5bd30c274cd768a2a9
+    environments/settings/billing/trial_feature_collaboration: a43509fffe319e14d69a981ef2791517
+    environments/settings/billing/trial_feature_email_followups: add368efdd84c5aef8886f369d54cbed
+    environments/settings/billing/trial_feature_quotas: 3a67818b3901bdaa72abc62db72ab170
+    environments/settings/billing/trial_feature_webhooks: 8d7f034e006b2fe0eb8fa9b8f1abef51
+    environments/settings/billing/trial_feature_whitelabel: 624a7aeca6a0fa65935c63fd7a8e9638
+    environments/settings/billing/trial_no_credit_card: 01c70aa6e1001815a9a11951394923ca
+    environments/settings/billing/trial_title: 23d0d2cbe306ae0f784b8289bf66a2c7
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2

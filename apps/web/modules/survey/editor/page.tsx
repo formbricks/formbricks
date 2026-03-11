@@ -30,7 +30,7 @@ import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
-export const generateMetadata = async (props) => {
+export const generateMetadata = async (props: { params: Promise<{ surveyId: string }> }) => {
   const params = await props.params;
   const survey = await getSurvey(params.surveyId);
   return {
@@ -38,7 +38,10 @@ export const generateMetadata = async (props) => {
   };
 };
 
-export const SurveyEditorPage = async (props) => {
+export const SurveyEditorPage = async (props: {
+  params: Promise<{ environmentId: string; surveyId: string }>;
+  searchParams: Promise<{ mode?: string }>;
+}) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
 

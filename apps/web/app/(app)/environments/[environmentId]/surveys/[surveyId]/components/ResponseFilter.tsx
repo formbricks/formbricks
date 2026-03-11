@@ -198,7 +198,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     };
     setFilterValue({ ...filterValue });
   };
-  const handleRemoveMultiSelect = (value: string[], index) => {
+  const handleRemoveMultiSelect = (value: string[], index: number) => {
     filterValue.filter[index] = {
       ...filterValue.filter[index],
       filterType: {

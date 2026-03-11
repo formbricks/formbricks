@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
-import { TActionClass } from "@formbricks/types/action-classes";
+import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
 import {
   createActionClassZodResolver,
   useActionClassKeys,
@@ -165,7 +165,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { name: "existingAction" };
 
-      validateActionNameUniqueness(data, ["existingAction"], ctx, mockT);
+      validateActionNameUniqueness(data as TActionClassInput, ["existingAction"], ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
         code: "custom",
@@ -178,7 +178,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { name: "uniqueAction" };
 
-      validateActionNameUniqueness(data, ["existingAction"], ctx, mockT);
+      validateActionNameUniqueness(data as TActionClassInput, ["existingAction"], ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -187,7 +187,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { name: undefined };
 
-      validateActionNameUniqueness(data, ["existingAction"], ctx, mockT);
+      validateActionNameUniqueness(data as unknown as TActionClassInput, ["existingAction"], ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -198,7 +198,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { type: "code", key: "existingKey" };
 
-      validateActionKeyUniqueness(data, ["existingKey"], ctx, mockT);
+      validateActionKeyUniqueness(data as TActionClassInput, ["existingKey"], ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
         code: "custom",
@@ -211,7 +211,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { type: "code", key: "uniqueKey" };
 
-      validateActionKeyUniqueness(data, ["existingKey"], ctx, mockT);
+      validateActionKeyUniqueness(data as TActionClassInput, ["existingKey"], ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -220,7 +220,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { type: "noCode", key: "existingKey" };
 
-      validateActionKeyUniqueness(data, ["existingKey"], ctx, mockT);
+      validateActionKeyUniqueness(data as TActionClassInput, ["existingKey"], ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -229,7 +229,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { type: "code", key: undefined };
 
-      validateActionKeyUniqueness(data, ["existingKey"], ctx, mockT);
+      validateActionKeyUniqueness(data as unknown as TActionClassInput, ["existingKey"], ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -248,7 +248,7 @@ describe("action-utils", () => {
 
       vi.mocked(isValidCssSelector).mockReturnValue(false);
 
-      validateCssSelector(data, ctx, mockT);
+      validateCssSelector(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
         code: "custom",
@@ -269,7 +269,7 @@ describe("action-utils", () => {
 
       vi.mocked(isValidCssSelector).mockReturnValue(true);
 
-      validateCssSelector(data, ctx, mockT);
+      validateCssSelector(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -281,7 +281,7 @@ describe("action-utils", () => {
         noCodeConfig: { type: "pageView" },
       };
 
-      validateCssSelector(data, ctx, mockT);
+      validateCssSelector(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -290,7 +290,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { type: "code" };
 
-      validateCssSelector(data, ctx, mockT);
+      validateCssSelector(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -306,7 +306,7 @@ describe("action-utils", () => {
         },
       };
 
-      validateUrlFilterRegex(data, ctx, mockT);
+      validateUrlFilterRegex(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledWith({
         code: "custom",
@@ -324,7 +324,7 @@ describe("action-utils", () => {
         },
       };
 
-      validateUrlFilterRegex(data, ctx, mockT);
+      validateUrlFilterRegex(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -338,7 +338,7 @@ describe("action-utils", () => {
         },
       };
 
-      validateUrlFilterRegex(data, ctx, mockT);
+      validateUrlFilterRegex(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -347,7 +347,7 @@ describe("action-utils", () => {
       const ctx = createMockContext();
       const data = { type: "code" };
 
-      validateUrlFilterRegex(data, ctx, mockT);
+      validateUrlFilterRegex(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).not.toHaveBeenCalled();
     });
@@ -364,7 +364,7 @@ describe("action-utils", () => {
         },
       };
 
-      validateUrlFilterRegex(data, ctx, mockT);
+      validateUrlFilterRegex(data as TActionClassInput, ctx, mockT);
 
       expect(ctx.addIssue).toHaveBeenCalledTimes(1);
       expect(ctx.addIssue).toHaveBeenCalledWith({

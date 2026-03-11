@@ -4,6 +4,10 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import {
+  ShareSettingsType,
+  ShareViaType,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Badge } from "@/modules/ui/components/badge";
 
@@ -13,9 +17,9 @@ interface SuccessViewProps {
   publicDomain: string;
   setSurveyUrl: (url: string) => void;
   user: TUser;
-  tabs: { id: string; label: string; icon: React.ElementType }[];
-  handleViewChange: (view: string) => void;
-  handleEmbedViewWithTab: (tabId: string) => void;
+  tabs: { id: ShareViaType | ShareSettingsType; label: string; icon: React.ElementType }[];
+  handleViewChange: (view: "start" | "share") => void;
+  handleEmbedViewWithTab: (tabId: ShareViaType | ShareSettingsType) => void;
   isReadOnly: boolean;
 }
 

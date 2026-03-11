@@ -86,7 +86,7 @@ vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
     debug: vi.fn(),
-    withContext: (context: Record<string, any>) => {
+    withContext: (context: Record<string, unknown>) => {
       return {
         ...context,
         debug: vi.fn(),
@@ -179,7 +179,7 @@ describe("handleSsoCallback", () => {
         ...mockUser,
         email: mockUser.email,
         accounts: [{ provider: mockAccount.provider }],
-      });
+      } as any);
 
       const result = await handleSsoCallback({
         user: mockUser,
@@ -211,7 +211,7 @@ describe("handleSsoCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser as any);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(updateUser).mockResolvedValue({ ...existingUser, email: mockUser.email });
 
@@ -233,11 +233,12 @@ describe("handleSsoCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser as any);
       vi.mocked(getUserByEmail).mockResolvedValue({
         id: "another-user-id",
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
+        identityProvider: "google",
         locale: mockUser.locale,
         isActive: true,
       });
@@ -259,6 +260,7 @@ describe("handleSsoCallback", () => {
         id: "existing-user-id",
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
+        identityProvider: "google",
         locale: mockUser.locale,
         isActive: true,
       });

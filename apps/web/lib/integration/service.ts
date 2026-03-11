@@ -19,7 +19,7 @@ const transformIntegration = (integration: TIntegration): TIntegration => {
         createdAt: new Date(data.createdAt),
       })),
     },
-  };
+  } as TIntegration;
 };
 
 export const createOrUpdateIntegration = async (

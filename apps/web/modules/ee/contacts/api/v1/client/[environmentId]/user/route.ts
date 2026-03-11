@@ -1,11 +1,11 @@
-import { NextRequest, userAgent } from "next/server";
+import { userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ZEnvironmentId } from "@formbricks/types/environment";
 import { ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
@@ -34,13 +34,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({
-    req,
-    props,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ environmentId: string }> };
-  }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
 
     try {

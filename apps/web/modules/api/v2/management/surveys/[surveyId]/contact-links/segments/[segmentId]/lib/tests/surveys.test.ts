@@ -28,7 +28,9 @@ describe("getSurvey", () => {
   });
 
   test("should return survey data when survey is found", async () => {
-    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(mockSurvey);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(
+      mockSurvey as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+    );
 
     const result = await getSurvey(mockSurveyId);
 

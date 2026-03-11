@@ -4,7 +4,6 @@ import { z } from "zod";
 import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/actions";
 import { updateOrganizationFaviconUrl } from "@/modules/ee/whitelabel/favicon-customization/lib/organization";
@@ -17,37 +16,27 @@ const ZUpdateOrganizationFaviconUrlAction = z.object({
 export const updateOrganizationFaviconUrlAction = authenticatedActionClient
   .inputSchema(ZUpdateOrganizationFaviconUrlAction)
   .action(
-    withAuditLogging(
-      "updated",
-      "organization",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZUpdateOrganizationFaviconUrlAction>;
-      }) => {
-        const { organizationId, faviconUrl } = parsedInput;
+    withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, faviconUrl } = parsedInput;
 
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-          ],
-        });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
 
-        await checkWhiteLabelPermission(organizationId);
+      await checkWhiteLabelPermission(organizationId);
 
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.newObject = { faviconUrl };
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.newObject = { faviconUrl };
 
-        return await updateOrganizationFaviconUrl(organizationId, faviconUrl);
-      }
-    )
+      return await updateOrganizationFaviconUrl(organizationId, faviconUrl);
+    })
   );
 
 const ZRemoveOrganizationFaviconUrlAction = z.object({
@@ -57,30 +46,20 @@ const ZRemoveOrganizationFaviconUrlAction = z.object({
 export const removeOrganizationFaviconUrlAction = authenticatedActionClient
   .inputSchema(ZRemoveOrganizationFaviconUrlAction)
   .action(
-    withAuditLogging(
-      "updated",
-      "organization",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZRemoveOrganizationFaviconUrlAction>;
-      }) => {
-        const { organizationId } = parsedInput;
+    withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId } = parsedInput;
 
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [{ type: "organization", roles: ["owner", "manager"] }],
-        });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [{ type: "organization", roles: ["owner", "manager"] }],
+      });
 
-        await checkWhiteLabelPermission(organizationId);
+      await checkWhiteLabelPermission(organizationId);
 
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.oldObject = { faviconUrl: "" };
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.oldObject = { faviconUrl: "" };
 
-        return await updateOrganizationFaviconUrl(organizationId, null);
-      }
-    )
+      return await updateOrganizationFaviconUrl(organizationId, null);
+    })
   );

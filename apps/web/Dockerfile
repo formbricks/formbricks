@@ -18,7 +18,7 @@ FROM node:24-alpine3.23 AS base
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN npm install --ignore-scripts -g corepack@latest 
+RUN npm install --ignore-scripts -g corepack@latest
 RUN corepack enable
 RUN corepack prepare pnpm@10.28.2 --activate
 
@@ -74,9 +74,10 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Update npm to latest, then create user
+# Upgrade Alpine system packages to pick up security patches, update npm to latest, then create user
 # Note: npm's bundled tar has a known vulnerability but npm is only used during build, not at runtime
-RUN npm install --ignore-scripts -g npm@latest \
+RUN apk update && apk upgrade --no-cache \
+    && npm install --ignore-scripts -g npm@latest \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
