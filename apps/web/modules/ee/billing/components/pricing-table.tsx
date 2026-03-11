@@ -223,6 +223,8 @@ export const PricingTable = ({
         toast.error(t("common.something_went_wrong_please_try_again"));
       }
     } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } finally {
       setIsRetryingStripeSetup(false);
     }
   };

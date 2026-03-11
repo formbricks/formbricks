@@ -153,6 +153,7 @@ export const retryStripeSetupAction = authenticatedActionClient
     });
 
     await ensureCloudStripeSetupForOrganization(parsedInput.organizationId);
+    return { success: true };
   });
 
 const ZStartScaleTrialAction = z.object({
