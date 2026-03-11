@@ -1,3 +1,4 @@
+import { ContactAttributeKey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -21,7 +22,7 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("react", () => ({ cache: (fn) => fn }));
+vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 
 const environmentId = "env-1";
 const mockKeys = [
@@ -35,7 +36,9 @@ describe("getContactAttributeKeys", () => {
   });
 
   test("returns attribute keys for environment", async () => {
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockKeys);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(
+      mockKeys as unknown as ContactAttributeKey[]
+    );
     const result = await getContactAttributeKeys(environmentId);
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({ where: { environmentId } });
     expect(result).toEqual(mockKeys);
@@ -62,7 +65,7 @@ describe("getContactAttributeKeyById", () => {
       name: "Email",
       description: "Customer email",
     };
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(key);
+    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(key as unknown as ContactAttributeKey);
 
     const result = await getContactAttributeKeyById(id);
 
@@ -95,7 +98,7 @@ describe("createContactAttributeKey", () => {
       environmentId,
       type: "custom",
     };
-    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(created);
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(created as unknown as ContactAttributeKey);
 
     const result = await createContactAttributeKey(data);
 
@@ -120,7 +123,7 @@ describe("createContactAttributeKey", () => {
       description: "",
       environmentId,
       type: "custom",
-    });
+    } as unknown as ContactAttributeKey);
 
     await createContactAttributeKey(data);
 
@@ -172,7 +175,10 @@ describe("updateContactAttributeKey", () => {
 
   test("throws OperationNotAllowedError when trying to update a default key", async () => {
     const id = "default-id";
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id, type: "default" });
+    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({
+      id,
+      type: "default",
+    } as unknown as ContactAttributeKey);
 
     await expect(updateContactAttributeKey(id, { name: "New" })).rejects.toThrow(OperationNotAllowedError);
     expect(prisma.contactAttributeKey.update).not.toHaveBeenCalled();
@@ -180,15 +186,18 @@ describe("updateContactAttributeKey", () => {
 
   test("updates a non-default key", async () => {
     const id = "custom-id";
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id, type: "custom" });
+    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({
+      id,
+      type: "custom",
+    } as unknown as ContactAttributeKey);
     const updated = { id, key: "email", environmentId, type: "custom", name: "Email", description: null };
-    vi.mocked(prisma.contactAttributeKey.update).mockResolvedValue(updated);
+    vi.mocked(prisma.contactAttributeKey.update).mockResolvedValue(updated as unknown as ContactAttributeKey);
 
-    const result = await updateContactAttributeKey(id, { name: "Email", description: null });
+    const result = await updateContactAttributeKey(id, { name: "Email", description: undefined });
 
     expect(prisma.contactAttributeKey.update).toHaveBeenCalledWith({
       where: { id },
-      data: { name: "Email", description: null },
+      data: { name: "Email", description: undefined },
     });
     expect(result).toEqual(updated);
   });
@@ -209,7 +218,10 @@ describe("deleteContactAttributeKey", () => {
 
   test("throws OperationNotAllowedError when trying to delete a default key", async () => {
     const id = "default-id";
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id, type: "default" });
+    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({
+      id,
+      type: "default",
+    } as unknown as ContactAttributeKey);
 
     await expect(deleteContactAttributeKey(id)).rejects.toThrow(OperationNotAllowedError);
     expect(prisma.contactAttributeKey.delete).not.toHaveBeenCalled();
@@ -217,9 +229,12 @@ describe("deleteContactAttributeKey", () => {
 
   test("deletes a non-default key", async () => {
     const id = "custom-id";
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id, type: "custom" });
+    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({
+      id,
+      type: "custom",
+    } as unknown as ContactAttributeKey);
     const deleted = { id, key: "email", environmentId, type: "custom", name: "Email", description: null };
-    vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValue(deleted);
+    vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValue(deleted as unknown as ContactAttributeKey);
 
     const result = await deleteContactAttributeKey(id);
 

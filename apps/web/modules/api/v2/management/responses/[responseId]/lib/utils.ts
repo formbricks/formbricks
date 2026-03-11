@@ -10,7 +10,11 @@ export const findAndDeleteUploadedFilesInResponse = async (
   questions: Survey["questions"]
 ): Promise<Result<void, ApiErrorResponseV2>> => {
   const fileUploadQuestions = new Set(
-    questions.filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload).map((q) => q.id)
+    questions
+      .filter(
+        (question: { type: string; id: string }) => question.type === TSurveyQuestionTypeEnum.FileUpload
+      )
+      .map((q: { type: string; id: string }) => q.id)
   );
 
   const fileUrls = Object.entries(responseData)

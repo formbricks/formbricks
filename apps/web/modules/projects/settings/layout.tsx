@@ -6,7 +6,10 @@ export const metadata: Metadata = {
   title: "Configuration",
 };
 
-export const ProjectSettingsLayout = async (props) => {
+export const ProjectSettingsLayout = async (props: {
+  params: Promise<{ environmentId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
   const { children } = props;
 

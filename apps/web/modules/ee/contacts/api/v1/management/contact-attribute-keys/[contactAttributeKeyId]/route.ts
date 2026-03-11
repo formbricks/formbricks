@@ -1,9 +1,8 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import {
   deleteContactAttributeKey,
@@ -32,10 +31,11 @@ export const GET = withV1ApiWrapper({
   handler: async ({
     props,
     authentication,
-  }: {
-    props: { params: Promise<{ contactAttributeKeyId: string }> };
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ contactAttributeKeyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const params = await props.params;
 
@@ -74,13 +74,15 @@ export const DELETE = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    props: { params: Promise<{ contactAttributeKeyId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ contactAttributeKeyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.contactAttributeKeyId;
+    if (auditLog) {
+      auditLog.targetId = params.contactAttributeKeyId;
+    }
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
@@ -93,7 +95,9 @@ export const DELETE = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.attributeKey;
+      if (auditLog) {
+        auditLog.oldObject = result.attributeKey;
+      }
       if (result.attributeKey.type === "default") {
         return {
           response: responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted"),
@@ -119,14 +123,15 @@ export const PUT = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ contactAttributeKeyId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ contactAttributeKeyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.contactAttributeKeyId;
+    if (auditLog) {
+      auditLog.targetId = params.contactAttributeKeyId;
+    }
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
@@ -138,7 +143,9 @@ export const PUT = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.attributeKey;
+      if (auditLog) {
+        auditLog.oldObject = result.attributeKey;
+      }
 
       let contactAttributeKeyUpdate;
       try {
@@ -164,7 +171,9 @@ export const PUT = withV1ApiWrapper({
         inputValidation.data
       );
       if (updatedAttributeClass) {
-        auditLog.newObject = updatedAttributeClass;
+        if (auditLog) {
+          auditLog.newObject = updatedAttributeClass;
+        }
         return {
           response: responses.successResponse(updatedAttributeClass),
         };

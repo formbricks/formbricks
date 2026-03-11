@@ -33,7 +33,7 @@ export const deleteTag = async (
 
     return err({
       code: TagError.UNEXPECTED_ERROR,
-      message: error.message,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };
@@ -61,7 +61,7 @@ export const updateTagName = async (
 
     return err({
       code: TagError.UNEXPECTED_ERROR,
-      message: error.message,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };
@@ -145,7 +145,7 @@ export const mergeTags = async (
   } catch (error) {
     return err({
       code: TagError.UNEXPECTED_ERROR,
-      message: error.message,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };

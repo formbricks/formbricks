@@ -78,7 +78,9 @@ export function AddMemberRole({
                 {roles.map((role) => (
                   <SelectItem key={role} value={role}>
                     <P className="capitalize">{role}</P>
-                    <Muted className="text-slate-500">{rolesDescription[role]}</Muted>
+                    <Muted className="text-slate-500">
+                      {(rolesDescription as Record<string, string>)[role]}
+                    </Muted>
                   </SelectItem>
                 ))}
               </SelectGroup>

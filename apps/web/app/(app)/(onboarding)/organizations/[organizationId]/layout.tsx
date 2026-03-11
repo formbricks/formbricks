@@ -8,7 +8,10 @@ import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
-const ProjectOnboardingLayout = async (props) => {
+const ProjectOnboardingLayout = async (props: {
+  params: Promise<{ organizationId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;

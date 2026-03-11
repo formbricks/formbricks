@@ -22,7 +22,9 @@ describe("getResponse", () => {
   });
 
   test("returns response when found", async () => {
-    vi.mocked(prisma.response.findFirst).mockResolvedValue(mockResponse);
+    vi.mocked(prisma.response.findFirst).mockResolvedValue(
+      mockResponse as Awaited<ReturnType<typeof prisma.response.findFirst>>
+    );
 
     const result = await getResponse(mockContactId, mockSurveyId);
 

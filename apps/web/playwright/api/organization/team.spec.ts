@@ -6,7 +6,7 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Teams", () => {
   test("Create, Retrieve, Update, and Delete Teams via API", async ({ page, users, request }) => {
-    let apiKey;
+    let apiKey: string;
     try {
       ({ apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
@@ -14,7 +14,8 @@ test.describe("API Tests for Teams", () => {
       throw error;
     }
 
-    let organizationId, createdTeamId: string;
+    let organizationId: string;
+    let createdTeamId: string;
 
     // Get organization ID using the me endpoint
     await test.step("Get Organization ID", async () => {
@@ -24,7 +25,7 @@ test.describe("API Tests for Teams", () => {
         },
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { organizationId: string } };
 
       expect(responseBody.data).toBeTruthy();
       expect(responseBody.data.organizationId).toBeTruthy();
@@ -47,7 +48,7 @@ test.describe("API Tests for Teams", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { name: string; id: string } };
       expect(responseBody.data.name).toEqual("New Team from API");
       createdTeamId = responseBody.data.id;
     });
@@ -62,9 +63,9 @@ test.describe("API Tests for Teams", () => {
         params: queryParams,
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string }[] };
       expect(Array.isArray(responseBody.data)).toBe(true);
-      expect(responseBody.data.find((team: any) => team.id === createdTeamId)).toBeTruthy();
+      expect(responseBody.data.find((team) => team.id === createdTeamId)).toBeTruthy();
     });
 
     await test.step("Update Team by ID via API", async () => {
@@ -80,7 +81,7 @@ test.describe("API Tests for Teams", () => {
         data: updatedTeamBody,
       });
       expect(response.ok()).toBe(true);
-      const responseJson = await response.json();
+      const responseJson = (await response.json()) as { data: { name: string } };
       expect(responseJson.data.name).toBe("Updated Team from API");
     });
 
@@ -91,7 +92,7 @@ test.describe("API Tests for Teams", () => {
         },
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { id: string; name: string } };
       expect(responseBody.data.id).toEqual(createdTeamId);
       expect(responseBody.data.name).toEqual("Updated Team from API");
     });

@@ -88,6 +88,10 @@ const mockSurvey: TSurvey = {
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
   showLanguageSwitch: false,
+  blocks: [],
+  isCaptureIpEnabled: false,
+  metadata: {},
+  slug: null,
 };
 
 const mockResponseInput: TResponseInputV2 = {

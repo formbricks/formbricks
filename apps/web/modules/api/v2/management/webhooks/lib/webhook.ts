@@ -43,7 +43,9 @@ export const getWebhooks = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhooks", issue: error.message }],
+      details: [
+        { field: "webhooks", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -91,7 +93,9 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

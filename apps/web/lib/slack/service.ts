@@ -68,7 +68,7 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw new UnknownError(error);
+    throw new UnknownError(error instanceof Error ? error.message : String(error));
   }
 };
 

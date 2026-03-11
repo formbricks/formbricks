@@ -15,7 +15,10 @@ export const BillingSlider = ({ className, value, max }: BillingSliderProps) => 
     <div className={cn("relative h-2 w-full overflow-hidden rounded-full bg-slate-200", className)}>
       <div
         style={{ width: `${percentage}%` }}
-        className={cn("h-full rounded-full transition-all", percentage >= 90 ? "bg-red-500" : "bg-slate-800")}
+        className={cn(
+          "h-full rounded-full transition-all",
+          percentage >= 90 ? "bg-amber-600" : "bg-slate-800"
+        )}
       />
     </div>
   );

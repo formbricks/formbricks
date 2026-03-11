@@ -6,7 +6,8 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Webhooks", () => {
   test("Create, Retrieve, Update, and Delete Webhooks via API", async ({ page, users, request }) => {
-    let environmentId, apiKey;
+    let environmentId: string;
+    let apiKey: string;
 
     try {
       ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));

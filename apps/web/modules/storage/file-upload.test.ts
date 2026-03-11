@@ -200,7 +200,10 @@ describe("fileUploadModule.toBase64", () => {
     const promise = fileUploadModule.toBase64(dummyFile);
 
     // Trigger the onload manually
-    mockFileReaderInstance.onload?.call(mockFileReaderInstance as unknown as FileReader, new Error("load"));
+    mockFileReaderInstance.onload?.call(
+      mockFileReaderInstance as unknown as FileReader,
+      new Event("load") as unknown as ProgressEvent<FileReader>
+    );
 
     const result = await promise;
     expect(result).toBe("data:text/plain;base64,aGVsbG8=");
@@ -224,7 +227,10 @@ describe("fileUploadModule.toBase64", () => {
     const promise = fileUploadModule.toBase64(dummyFile);
 
     // Simulate error
-    mockFileReaderInstance.onerror?.call(mockFileReaderInstance as unknown as FileReader, new Error("error"));
+    mockFileReaderInstance.onerror?.call(
+      mockFileReaderInstance as unknown as FileReader,
+      new Event("error") as unknown as ProgressEvent<FileReader>
+    );
 
     await expect(promise).rejects.toThrow();
   });

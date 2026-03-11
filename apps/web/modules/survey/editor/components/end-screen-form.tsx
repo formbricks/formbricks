@@ -3,7 +3,7 @@
 import { PlusIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
@@ -21,7 +21,9 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  updateSurvey: (input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }>) => void;
+  updateSurvey: (
+    input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
+  ) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
   isStorageConfigured: boolean;

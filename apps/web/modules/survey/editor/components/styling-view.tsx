@@ -136,12 +136,12 @@ export const StylingView = ({
   }, [overwriteThemeStyling]);
 
   useEffect(() => {
-    const subscription = form.watch((data: TSurveyStyling) => {
+    const subscription = form.watch((data) => {
       setLocalSurvey((prev) => ({
         ...prev,
         styling: {
           ...prev.styling,
-          ...data,
+          ...(data as TSurveyStyling),
         },
       }));
     });

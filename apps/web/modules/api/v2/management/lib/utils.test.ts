@@ -14,7 +14,13 @@ describe("buildCommonFilterQuery", () => {
     };
     const startDate = new Date("2024-01-01");
 
-    const result = buildCommonFilterQuery(query, { startDate });
+    const result = buildCommonFilterQuery(query, {
+      limit: 10,
+      skip: 0,
+      sortBy: "createdAt" as const,
+      order: "desc" as const,
+      startDate,
+    });
 
     expect(result.where?.createdAt).toEqual({
       lte: new Date("2024-12-31"),
@@ -33,7 +39,13 @@ describe("buildCommonFilterQuery", () => {
     };
     const endDate = new Date("2024-12-31");
 
-    const result = buildCommonFilterQuery(query, { endDate });
+    const result = buildCommonFilterQuery(query, {
+      limit: 10,
+      skip: 0,
+      sortBy: "createdAt" as const,
+      order: "desc" as const,
+      endDate,
+    });
 
     expect(result.where?.createdAt).toEqual({
       gte: new Date("2024-01-01"),

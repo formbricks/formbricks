@@ -31,7 +31,7 @@ describe("ActionClass Service", () => {
 
   describe("getActionClasses", () => {
     test("should return action classes for environment", async () => {
-      const mockActionClasses = [
+      const mockActionClasses: TActionClass[] = [
         {
           id: "id1",
           createdAt: new Date(),
@@ -40,7 +40,7 @@ describe("ActionClass Service", () => {
           description: "desc",
           type: "code",
           key: "key1",
-          noCodeConfig: {},
+          noCodeConfig: null,
           environmentId: "env1",
         },
       ];
@@ -65,7 +65,7 @@ describe("ActionClass Service", () => {
 
   describe("getActionClassByEnvironmentIdAndName", () => {
     test("should return action class when found", async () => {
-      const mockActionClass = {
+      const mockActionClass: TActionClass = {
         id: "id2",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -73,7 +73,11 @@ describe("ActionClass Service", () => {
         description: "desc2",
         type: "noCode",
         key: null,
-        noCodeConfig: {},
+        noCodeConfig: {
+          type: "click",
+          elementSelector: { cssSelector: "button" },
+          urlFilters: [],
+        },
         environmentId: "env2",
       };
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
@@ -103,7 +107,7 @@ describe("ActionClass Service", () => {
 
   describe("getActionClass", () => {
     test("should return action class when found", async () => {
-      const mockActionClass = {
+      const mockActionClass: TActionClass = {
         id: "id3",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -111,7 +115,7 @@ describe("ActionClass Service", () => {
         description: "desc3",
         type: "code",
         key: "key3",
-        noCodeConfig: {},
+        noCodeConfig: null,
         environmentId: "env3",
       };
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();

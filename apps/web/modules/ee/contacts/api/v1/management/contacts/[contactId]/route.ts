@@ -1,6 +1,6 @@
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { deleteContact, getContact } from "./lib/contact";
@@ -26,13 +26,11 @@ const fetchAndAuthorizeContact = async (
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    props,
-    authentication,
-  }: {
-    props: { params: Promise<{ contactId: string }> };
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ props, authentication }: THandlerParams<{ params: Promise<{ contactId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const params = await props.params;
 
@@ -72,13 +70,15 @@ export const DELETE = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    props: { params: Promise<{ contactId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ contactId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.contactId;
+    if (auditLog) {
+      auditLog.targetId = params.contactId;
+    }
 
     try {
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
@@ -100,7 +100,9 @@ export const DELETE = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.contact;
+      if (auditLog) {
+        auditLog.oldObject = result.contact;
+      }
 
       await deleteContact(params.contactId);
       return {

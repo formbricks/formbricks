@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import { type TSurveyElement, TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -17,7 +17,7 @@ interface RatingElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyRatingElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyRatingElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { CssSelector } from "./components/css-selector";
@@ -40,6 +41,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
                     { value: "pageView", label: t("environments.actions.page_view") },
                     { value: "exitIntent", label: t("environments.actions.exit_intent") },
                     { value: "fiftyPercentScroll", label: t("environments.actions.fifty_percent_scroll") },
+                    { value: "pageDwell", label: t("environments.actions.time_on_page") },
                   ]}
                 />
               </div>
@@ -94,6 +96,42 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
               )}
             </AlertDescription>
           </Alert>
+        )}
+        {watch("noCodeConfig.type") === "pageDwell" && (
+          <div className="flex flex-col gap-2">
+            <Alert>
+              <InfoIcon className="h-4 w-4" />
+              <AlertTitle>{t("environments.actions.time_on_page")}</AlertTitle>
+              <AlertDescription>
+                {t("environments.actions.this_action_will_be_triggered_after_user_stays_on_page")}
+              </AlertDescription>
+            </Alert>
+            <FormField
+              control={control}
+              name="noCodeConfig.timeInSeconds"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{t("environments.actions.time_in_seconds")}</Label>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={3600}
+                      placeholder={t("environments.actions.time_in_seconds_placeholder")}
+                      disabled={isReadOnly}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        field.onChange(val === "" ? undefined : Number(val));
+                      }}
+                    />
+                  </FormControl>
+                  <FormError />
+                </FormItem>
+              )}
+            />
+          </div>
         )}
         <PageUrlSelector form={form} isReadOnly={isReadOnly} />
       </div>

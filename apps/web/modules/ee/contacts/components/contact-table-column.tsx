@@ -72,7 +72,7 @@ export const generateContactTableColumns = (
           id: attr.key,
           accessorKey: attr.key,
           header: attr.name ?? attr.key,
-          cell: ({ row }) => {
+          cell: ({ row }: { row: { original: TContactTableData } }) => {
             const attribute = row.original.attributes.find((a) => a.key === attr.key);
             if (!attribute) return null;
             const formattedValue = formatAttributeValue(attribute.value, attribute.dataType);

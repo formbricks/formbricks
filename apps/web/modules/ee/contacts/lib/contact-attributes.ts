@@ -33,10 +33,10 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
       select: selectContactAttribute,
     });
 
-    return prismaAttributes.reduce((acc, attr) => {
+    return prismaAttributes.reduce<TContactAttributes>((acc, attr) => {
       acc[attr.attributeKey.key] = readAttributeValue(attr, attr.attributeKey.dataType);
       return acc;
-    }, {}) as TContactAttributes;
+    }, {});
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

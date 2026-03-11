@@ -4,7 +4,10 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
-const OnboardingLayout = async (props) => {
+const OnboardingLayout = async (props: {
+  params: Promise<{ environmentId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;

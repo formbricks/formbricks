@@ -222,6 +222,6 @@ export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup
 
   return {
     connector: genericConditions.connector,
-    conditions: genericConditions.conditions.map(convertCondition),
-  };
+    conditions: genericConditions.conditions.map((c) => ("conditions" in c ? c : convertCondition(c))),
+  } as TSurveyQuotaLogic;
 };
