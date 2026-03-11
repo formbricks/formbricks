@@ -242,7 +242,7 @@ export const PricingTable = ({
 
   return (
     <main>
-      <div className="flex flex-col gap-4">
+      <div className="flex max-w-4xl flex-col gap-4">
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
             <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
@@ -298,19 +298,19 @@ export const PricingTable = ({
                 )}
               </div>
             </div>
+            <div className="flex flex-col gap-2">
+              <UsageCard
+                metric={t("common.responses")}
+                currentCount={responseCount}
+                limit={organization.billing.limits.monthly.responses}
+                isUnlimited={responsesUnlimitedCheck}
+                unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
+              />
 
-            <UsageCard
-              metric={t("common.responses")}
-              currentCount={responseCount}
-              limit={organization.billing.limits.monthly.responses}
-              isUnlimited={responsesUnlimitedCheck}
-              unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
-            />
-
-            <p className="text-sm text-slate-500">
-              {t("environments.settings.billing.usage_cycle")}: {usageCycleLabel}
-            </p>
-
+              <p className="text-sm text-slate-500">
+                {t("environments.settings.billing.usage_cycle")}: {usageCycleLabel}
+              </p>
+            </div>
             <UsageCard
               metric={t("common.workspaces")}
               currentCount={projectCount}
