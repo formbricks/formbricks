@@ -910,7 +910,8 @@ checksums:
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/cancelling: 6e46e789720395bfa1e3a4b3b1519634
     environments/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
-    environments/settings/billing/manage_subscription: 31cafd367fc70d656d8dd979d537dc96
+    environments/settings/billing/manage_subscription: b83a75127b8eabc21dfa1e0f7104db56
+    environments/settings/billing/plan_custom: b7b89901f46267f532600a23cfc54ae2
     environments/settings/billing/plan_hobby: 3e96a8e688032f9bd21b436bc70c19d5
     environments/settings/billing/plan_pro: 682b3c9feab30112b4454cb5bb7974b1
     environments/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c

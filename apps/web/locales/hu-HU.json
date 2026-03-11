@@ -965,7 +965,7 @@
       "billing": {
         "cancelling": "Lemondás folyamatban",
         "failed_to_start_trial": "A próbaidőszak indítása sikertelen. Kérjük, próbálja meg újra.",
-        "manage_subscription": "Feliratkozás kezelése",
+        "manage_subscription": "Előfizetés kezelése",
         "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",

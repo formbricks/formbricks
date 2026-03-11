@@ -965,7 +965,7 @@
       "billing": {
         "cancelling": "正在取消",
         "failed_to_start_trial": "试用启动失败，请重试。",
-        "manage_subscription": "管理 订阅",
+        "manage_subscription": "管理订阅",
         "plan_custom": "Custom",
         "plan_hobby": "兴趣版",
         "plan_pro": "专业版",

@@ -965,7 +965,7 @@
       "billing": {
         "cancelling": "A cancelar",
         "failed_to_start_trial": "Falha ao iniciar o período de teste. Por favor, tenta novamente.",
-        "manage_subscription": "Gerir Subscrição",
+        "manage_subscription": "Gerir subscrição",
         "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
