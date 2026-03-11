@@ -1,6 +1,7 @@
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
 
 interface PlanPageProps {
@@ -16,7 +17,7 @@ const Page = async (props: PlanPageProps) => {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
   }
 
-  const { session } = await getOrganizationAuth(params.organizationId);
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return redirect(`/auth/login`);
