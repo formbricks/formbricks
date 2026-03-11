@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -74,9 +75,16 @@ export const SurveyDropDownMenu = ({
         toast.error(getFormattedErrorMessage(result));
         return;
       }
+      posthog.capture("survey_deleted", {
+        survey_id: surveyId,
+        survey_name: survey.name,
+        survey_type: survey.type,
+        environment_id: environmentId,
+      });
       deleteSurvey(surveyId);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
     } catch (error) {
+      posthog.captureException(error);
       toast.error(t("environments.surveys.error_deleting_survey"));
     } finally {
       setLoading(false);
@@ -112,12 +120,20 @@ export const SurveyDropDownMenu = ({
         if (transformedDuplicatedSurvey?.data) {
           onSurveysCopied?.();
         }
+        posthog.capture("survey_duplicated", {
+          original_survey_id: surveyId,
+          new_survey_id: duplicatedSurveyResponse.data.id,
+          survey_name: survey.name,
+          survey_type: survey.type,
+          environment_id: environmentId,
+        });
         toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
+      posthog.captureException(error);
       toast.error(t("environments.surveys.survey_duplication_error"));
     }
     setLoading(false);

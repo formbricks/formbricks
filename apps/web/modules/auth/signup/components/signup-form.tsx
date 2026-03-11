@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -128,6 +129,17 @@ export const SignupForm = ({
         : `/auth/verification-requested?token=${token}`;
 
       if (createUserResponse?.data) {
+        posthog.identify(data.email, {
+          email: data.email,
+          name: data.name,
+        });
+        posthog.capture("user_signed_up", {
+          email: data.email,
+          name: data.name,
+          email_verification_disabled: emailVerificationDisabled,
+          has_invite_token: !!inviteToken,
+          is_formbricks_cloud: isFormbricksCloud,
+        });
         router.push(url);
 
         if (!emailTokenActionResponse?.data) {

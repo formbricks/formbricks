@@ -7,6 +7,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getPostHogClient } from "@/lib/posthog-server";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
@@ -194,6 +195,19 @@ export const PUT = withV1ApiWrapper({
         environmentId: survey.environmentId,
         surveyId: survey.id,
         response: responseData,
+      });
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: survey.environmentId,
+        event: "survey_response_finished",
+        properties: {
+          surveyId: survey.id,
+          surveyName: survey.name,
+          surveyType: survey.type,
+          environmentId: survey.environmentId,
+          responseId: responseData.id,
+        },
       });
     }
 

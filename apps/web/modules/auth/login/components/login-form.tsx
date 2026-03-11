@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -119,9 +120,17 @@ export const LoginForm = ({
       }
 
       if (!signInResponse?.error) {
+        posthog.identify(data.email.toLowerCase(), {
+          email: data.email.toLowerCase(),
+        });
+        posthog.capture("user_logged_in", {
+          email: data.email.toLowerCase(),
+          login_method: "email",
+        });
         router.push(searchParams?.get("callbackUrl") ?? "/");
       }
     } catch (error) {
+      posthog.captureException(error);
       toast.error(error.toString());
     }
   };

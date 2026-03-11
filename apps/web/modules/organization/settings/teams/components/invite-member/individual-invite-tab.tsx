@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -90,6 +91,11 @@ export const IndividualInviteTab = ({
   const submitEventClass = async () => {
     const data = getValues();
     data.role = data.role || OrganizationRole.owner;
+    posthog.capture("member_invited", {
+      invitee_email: data.email,
+      invitee_role: data.role,
+      team_count: data.teamIds?.length ?? 0,
+    });
     onSubmit([data]);
     router.refresh();
     setOpen(false);

@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
+import { getPostHogClient } from "@/lib/posthog-server";
 import { getStripeClient } from "./stripe-client";
 
 export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
@@ -53,6 +54,19 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     },
     "Subscription activated"
   );
+
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: checkoutSession.metadata.organizationId,
+    event: "subscription_upgraded",
+    properties: {
+      organization_id: checkoutSession.metadata.organizationId,
+      plan: PROJECT_FEATURE_KEYS.STARTUP,
+      period,
+      checkout_session_id: checkoutSession.id,
+    },
+  });
+  await posthog.shutdown();
 
   const stripeCustomer = await stripe.customers.retrieve(checkoutSession.customer as string);
   if (stripeCustomer && !stripeCustomer.deleted) {

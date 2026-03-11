@@ -1,6 +1,7 @@
 "use client";
 
 import { Copy, SquareArrowOutUpRight } from "lucide-react";
+import posthog from "posthog-js";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -69,6 +70,12 @@ export const ShareSurveyLink = ({
           aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
+            posthog.capture("survey_link_copied", {
+              surveyId: survey.id,
+              surveyName: survey.name,
+              surveyType: survey.type,
+              singleUse: survey.singleUse?.enabled ?? false,
+            });
             toast.success(t("common.copied_to_clipboard"));
           }}>
           {t("common.copy")}

@@ -3,6 +3,7 @@
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -225,6 +226,11 @@ export const UploadContactsCSVButton = ({
       }
 
       setError("");
+      posthog.capture("contacts_imported", {
+        environmentId,
+        contactCount: csvResponse.length,
+        duplicateAction: duplicateContactsAction,
+      });
       toast.success(t("environments.contacts.upload_contacts_success"));
       resetState(true);
 

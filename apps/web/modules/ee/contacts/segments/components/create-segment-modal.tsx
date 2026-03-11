@@ -2,6 +2,7 @@
 
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -92,6 +93,10 @@ export function CreateSegmentModal({
       });
 
       if (createSegmentResponse?.data) {
+        posthog.capture("segment_created", {
+          environmentId,
+          filterCount: segment.filters.length,
+        });
         toast.success(t("environments.segments.segment_saved_successfully"));
         handleResetState();
         router.refresh();

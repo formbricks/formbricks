@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -107,6 +108,13 @@ export const PricingTable = ({
   };
 
   const onUpgrade = async (planId: string) => {
+    posthog.capture("upgrade_plan_clicked", {
+      plan_id: planId,
+      billing_period: planPeriod,
+      current_plan: organization.billing.plan,
+      organization_id: organization.id,
+    });
+
     if (planId === "startup") {
       await upgradePlan(
         planPeriod === "monthly"

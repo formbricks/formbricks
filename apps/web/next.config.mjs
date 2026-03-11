@@ -48,6 +48,7 @@ const nextConfig = {
     ],
   },
   turbopack: {},
+  skipTrailingSlashRedirect: true,
   experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {
@@ -406,6 +407,14 @@ const nextConfig = {
   },
   async rewrites() {
     return [
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://eu-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://eu.i.posthog.com/:path*",
+      },
       {
         source: "/api/packages/website",
         destination: "/js/formbricks.umd.cjs",

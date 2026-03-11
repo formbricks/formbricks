@@ -2,6 +2,7 @@
 
 import { ApiKeyPermission } from "@prisma/client";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -171,6 +172,10 @@ export const AddApiKeyModal = ({
       label: data.label,
       environmentPermissions,
       organizationAccess: selectedOrganizationAccess,
+    });
+
+    posthog.capture("api_key_created", {
+      permissionCount: environmentPermissions.length,
     });
 
     reset();

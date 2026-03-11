@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -102,6 +103,13 @@ export const CreateProjectModal = ({
       );
 
       if (productionEnvironment) {
+        posthog.capture("workspace_created", {
+          project_id: createProjectResponse.data.id,
+          project_name: data.name,
+          organization_id: organizationId,
+          environment_id: productionEnvironment.id,
+          team_count: data.teamIds?.length ?? 0,
+        });
         toast.success(t("common.workspace_created_successfully"));
         setOpen(false);
         form.reset();

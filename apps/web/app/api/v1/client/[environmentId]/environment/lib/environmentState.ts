@@ -5,6 +5,7 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
+import { getPostHogClient } from "@/lib/posthog-server";
 import { getEnvironmentStateData } from "./data";
 
 /**
@@ -31,6 +32,15 @@ export const getEnvironmentState = async (
         await prisma.environment.update({
           where: { id: environmentId },
           data: { appSetupCompleted: true },
+        });
+
+        getPostHogClient().capture({
+          distinctId: environmentId,
+          event: "formbricks_js_connected",
+          properties: {
+            environmentId,
+            projectId: environment.project?.id,
+          },
         });
       }
 
