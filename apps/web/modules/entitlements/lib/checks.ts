@@ -2,7 +2,7 @@ import "server-only";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { getOrganizationEntitlementsContext } from "./provider";
-import { isEntitlementFeature } from "./types";
+import { type TEntitlementFeature, isEntitlementFeature } from "./types";
 
 const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLicenseFeatures>> = {
   "hide-branding": "removeBranding",
@@ -12,11 +12,14 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   contacts: "contacts",
 };
 
-const TRIAL_RESTRICTED_ENTITLEMENTS = new Set<string>([
+const TRIAL_RESTRICTED_ENTITLEMENT_KEYS = [
   CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FOLLOW_UPS,
   CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CUSTOM_LINKS_IN_SURVEYS,
   CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CUSTOM_REDIRECT_URL,
-]);
+] as const satisfies readonly TEntitlementFeature[];
+
+const isTrialRestrictedEntitlement = (featureLookupKey: TEntitlementFeature): boolean =>
+  TRIAL_RESTRICTED_ENTITLEMENT_KEYS.some((restrictedFeature) => restrictedFeature === featureLookupKey);
 
 export const hasOrganizationEntitlement = async (
   organizationId: string,
@@ -47,7 +50,7 @@ export const hasOrganizationEntitlementWithLicenseGuard = async (
   if (
     context.source === "cloud_stripe" &&
     context.subscriptionStatus === "trialing" &&
-    TRIAL_RESTRICTED_ENTITLEMENTS.has(featureLookupKey)
+    isTrialRestrictedEntitlement(featureLookupKey)
   ) {
     return false;
   }
