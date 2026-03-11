@@ -8,6 +8,8 @@ import {
   syncOrganizationBillingFromStripe,
 } from "./organization-billing";
 
+vi.mock("server-only", () => ({}));
+
 const mocks = vi.hoisted(() => ({
   isCloud: true,
   getBillingCacheKey: vi.fn(),
@@ -28,6 +30,11 @@ const mocks = vi.hoisted(() => ({
   subscriptionsCancel: vi.fn(),
   pricesList: vi.fn(),
   entitlementsList: vi.fn(),
+  customersList: vi.fn(),
+  customersRetrieve: vi.fn(),
+  customersUpdate: vi.fn(),
+  prismaMembershipFindFirst: vi.fn(),
+  loggerInfo: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -59,6 +66,9 @@ vi.mock("@formbricks/database", () => ({
       upsert: mocks.prismaOrganizationBillingUpsert,
       update: mocks.prismaOrganizationBillingUpdate,
     },
+    membership: {
+      findFirst: mocks.prismaMembershipFindFirst,
+    },
   },
 }));
 
@@ -72,6 +82,7 @@ vi.mock("@/lib/cache", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     warn: mocks.loggerWarn,
+    info: mocks.loggerInfo,
   },
 }));
 
@@ -85,7 +96,12 @@ vi.mock("./stripe-plan", async (importOriginal) => {
 
 vi.mock("./stripe-client", () => ({
   stripeClient: {
-    customers: { create: mocks.customersCreate },
+    customers: {
+      create: mocks.customersCreate,
+      list: mocks.customersList,
+      retrieve: mocks.customersRetrieve,
+      update: mocks.customersUpdate,
+    },
     products: {
       list: mocks.productsList,
       retrieve: mocks.productsRetrieve,
@@ -111,6 +127,8 @@ describe("organization-billing", () => {
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.customersList.mockResolvedValue({ data: [] });
+    mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.productsList.mockResolvedValue({
       data: [
         {
@@ -157,28 +175,34 @@ describe("organization-billing", () => {
     expect(mocks.customersCreate).not.toHaveBeenCalled();
   });
 
-  test("ensureStripeCustomerForOrganization returns existing customer id", async () => {
+  test("ensureStripeCustomerForOrganization reuses Stripe customer found by owner email", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
     });
-    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
-      stripeCustomerId: "cus_existing",
-      limits: {
-        projects: 3,
-        monthly: {
-          responses: 1500,
-        },
-      },
-      usageCycleAnchor: new Date(),
-      stripe: null,
+    mocks.prismaMembershipFindFirst.mockResolvedValue({
+      user: { email: "owner@example.com" },
     });
+    mocks.customersList.mockResolvedValue({
+      data: [{ id: "cus_existing", deleted: false }],
+    });
+    mocks.customersUpdate.mockResolvedValue({ id: "cus_existing" });
 
     const result = await ensureStripeCustomerForOrganization("org_1");
 
     expect(result).toEqual({ customerId: "cus_existing" });
     expect(mocks.customersCreate).not.toHaveBeenCalled();
-    expect(mocks.prismaOrganizationBillingUpsert).not.toHaveBeenCalled();
+    expect(mocks.customersUpdate).toHaveBeenCalledWith("cus_existing", {
+      name: "Org 1",
+      metadata: { organizationId: "org_1" },
+    });
+    expect(mocks.prismaOrganizationBillingUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org_1" },
+        create: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
+        update: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
+      })
+    );
   });
 
   test("ensureStripeCustomerForOrganization creates and stores a Stripe customer", async () => {
@@ -567,18 +591,9 @@ describe("organization-billing", () => {
       id: "org_1",
       name: "Org 1",
     });
+    // ensureStripeCustomerForOrganization no longer reads billing;
+    // reconcile and sync each read billing once
     mocks.prismaOrganizationBillingFindUnique
-      .mockResolvedValueOnce({
-        stripeCustomerId: null,
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-          },
-        },
-        usageCycleAnchor: new Date(),
-        stripe: {},
-      })
       .mockResolvedValueOnce({
         stripeCustomerId: "cus_new",
         limits: {
