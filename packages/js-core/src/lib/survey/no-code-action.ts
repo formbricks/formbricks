@@ -31,8 +31,20 @@ const trackNoCodeExitIntentActionHandler = createTrackNoCodeActionWithContext("e
 const trackNoCodeScrollActionHandler = createTrackNoCodeActionWithContext("scroll");
 const trackNoCodeTimeOnPageActionHandler = createTrackNoCodeActionWithContext("time on page");
 
-// Time on Page timer state: key = action name, value = page context + timeout ID (running) or null (already fired)
-const timeOnPageTimers = new Map<string, { pageKey: string; timerId: number | null }>();
+// Time on Page timer state per action name
+interface TimeOnPageRunning {
+  status: "running";
+  pageKey: string;
+  timerId: ReturnType<typeof setTimeout>;
+}
+
+interface TimeOnPageFired {
+  status: "fired";
+  pageKey: string;
+}
+
+type TimeOnPageState = TimeOnPageRunning | TimeOnPageFired;
+const timeOnPageTimers = new Map<string, TimeOnPageState>();
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -59,9 +71,8 @@ const checkTimeOnPage = (actionClasses: TEnvironmentStateActionClass[]): void =>
   for (const event of noCodeTimeOnPageActionClasses) {
     const config = event.noCodeConfig as Extract<typeof event.noCodeConfig, { type: "pageDwell" }>;
 
-    const urlFilters = config.urlFilters;
-    const connector = config.urlFiltersConnector ?? "or";
-    const isValidUrl = handleUrlFilters(urlFilters, connector);
+    const { urlFilters, urlFiltersConnector: connector } = config;
+    const isValidUrl = handleUrlFilters(urlFilters, connector ?? "or");
 
     if (!isValidUrl) continue;
 
@@ -70,7 +81,7 @@ const checkTimeOnPage = (actionClasses: TEnvironmentStateActionClass[]): void =>
     const existing = timeOnPageTimers.get(event.name);
     if (existing?.pageKey === currentPageKey) continue;
 
-    if (existing?.timerId != null) {
+    if (existing?.status === "running") {
       logger.debug(`Time on page timer for "${event.name}" restarting — page changed to ${currentPageKey}`);
       clearTimeout(existing.timerId);
     }
@@ -83,16 +94,16 @@ const checkTimeOnPage = (actionClasses: TEnvironmentStateActionClass[]): void =>
       logger.debug(
         `Time on page timer for "${actionName}" completed after ${timeInSeconds.toString()}s — firing action`
       );
-      timeOnPageTimers.set(actionName, { pageKey: currentPageKey, timerId: null });
+      timeOnPageTimers.set(actionName, { status: "fired", pageKey: currentPageKey });
       void queue.add(trackNoCodeTimeOnPageActionHandler, CommandType.GeneralAction, true, actionName);
     }, timeInSeconds * 1000);
-    timeOnPageTimers.set(actionName, { pageKey: currentPageKey, timerId: timerId as unknown as number });
+    timeOnPageTimers.set(actionName, { status: "running", pageKey: currentPageKey, timerId });
   }
 
   for (const [actionName, entry] of timeOnPageTimers) {
     if (matchingTimeOnPageActionNames.has(actionName)) continue;
 
-    if (entry.timerId !== null) {
+    if (entry.status === "running") {
       logger.debug(
         `Time on page timer for "${actionName}" interrupted — user navigated away before completion`
       );
@@ -333,7 +344,7 @@ export const removeScrollDepthListener = (): void => {
 // Time on Page Cleanup
 export const clearTimeOnPageTimers = (): void => {
   for (const [, entry] of timeOnPageTimers) {
-    if (entry.timerId !== null) {
+    if (entry.status === "running") {
       clearTimeout(entry.timerId);
     }
   }
