@@ -1,7 +1,7 @@
-import { Organization } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { getOrganizationBillingByEnvironmentId } from "./organization";
 
 vi.mock("@formbricks/database", () => ({
@@ -19,21 +19,17 @@ vi.mock("@formbricks/logger", () => ({
 
 describe("getOrganizationBillingByEnvironmentId", () => {
   const environmentId = "env-123";
-  const mockBillingData: Organization["billing"] = {
+  const mockBillingData: TOrganizationBilling = {
     limits: {
-      monthly: { miu: 0, responses: 0 },
+      monthly: { responses: 0 },
       projects: 3,
     },
-    period: "monthly",
-    periodStart: new Date(),
-    plan: "scale",
+    usageCycleAnchor: new Date(),
     stripeCustomerId: "mock-stripe-customer-id",
   };
 
   test("returns billing when organization is found", async () => {
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: mockBillingData } as Awaited<
-      ReturnType<typeof prisma.organization.findFirst>
-    >);
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: mockBillingData } as any);
     const result = await getOrganizationBillingByEnvironmentId(environmentId);
     expect(result).toEqual(mockBillingData);
     expect(prisma.organization.findFirst).toHaveBeenCalledWith({
@@ -49,7 +45,14 @@ describe("getOrganizationBillingByEnvironmentId", () => {
         },
       },
       select: {
-        billing: true,
+        billing: {
+          select: {
+            stripeCustomerId: true,
+            limits: true,
+            usageCycleAnchor: true,
+            stripe: true,
+          },
+        },
       },
     });
   });

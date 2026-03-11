@@ -59,7 +59,6 @@ describe("checkExternalUrlsPermission", () => {
 
   const mockOrganizationBilling = {
     id: mockOrganizationId,
-    plan: "free",
   };
 
   beforeEach(() => {

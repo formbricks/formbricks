@@ -15,7 +15,7 @@ export const GET = withV1ApiWrapper({
     }
 
     try {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(
@@ -51,7 +51,7 @@ export const POST = withV1ApiWrapper({
     }
 
     try {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(

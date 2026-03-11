@@ -5,13 +5,11 @@ import { type JSX, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
-import { ProBadge } from "@/modules/ui/components/pro-badge";
 
 interface Tab {
   id: TSurveyEditorTabs;
   label: string;
   icon: JSX.Element;
-  isPro?: boolean;
 }
 
 interface SurveyEditorTabsProps {
@@ -19,7 +17,6 @@ interface SurveyEditorTabsProps {
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   isStylingTabVisible?: boolean;
   isCxMode: boolean;
-  isSurveyFollowUpsAllowed: boolean;
 }
 
 export const SurveyEditorTabs = ({
@@ -27,7 +24,6 @@ export const SurveyEditorTabs = ({
   setActiveId,
   isStylingTabVisible,
   isCxMode,
-  isSurveyFollowUpsAllowed = false,
 }: SurveyEditorTabsProps) => {
   const { t } = useTranslation();
   const tabsComputed = useMemo(() => {
@@ -51,7 +47,6 @@ export const SurveyEditorTabs = ({
         id: "followUps",
         label: t("environments.surveys.edit.follow_ups"),
         icon: <MailIcon className="h-5 w-5" />,
-        isPro: !isSurveyFollowUpsAllowed,
       },
     ];
 
@@ -59,7 +54,7 @@ export const SurveyEditorTabs = ({
       return tabs;
     }
     return tabs.filter((tab) => tab.id !== "styling");
-  }, [isStylingTabVisible, isSurveyFollowUpsAllowed, t]);
+  }, [isStylingTabVisible, t]);
 
   // Hide settings tab in CX mode
   let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
@@ -81,7 +76,6 @@ export const SurveyEditorTabs = ({
             aria-current={tab.id === activeId ? "page" : undefined}>
             {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
             {tab.label}
-            {tab.isPro && <ProBadge />}
           </button>
         ))}
       </nav>

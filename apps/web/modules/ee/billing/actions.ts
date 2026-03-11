@@ -3,46 +3,16 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { STRIPE_PRICE_LOOKUP_KEYS, WEBAPP_URL } from "@/lib/constants";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
-import { createSubscription } from "@/modules/ee/billing/api/lib/create-subscription";
 import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
-
-const ZUpgradePlanAction = z.object({
-  environmentId: ZId,
-  priceLookupKey: z.enum(STRIPE_PRICE_LOOKUP_KEYS),
-});
-
-export const upgradePlanAction = authenticatedActionClient.inputSchema(ZUpgradePlanAction).action(
-  withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing"],
-        },
-      ],
-    });
-
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createSubscription(
-      organizationId,
-      parsedInput.environmentId,
-      parsedInput.priceLookupKey
-    );
-    ctx.auditLoggingCtx.newObject = { priceLookupKey: parsedInput.priceLookupKey };
-    return result;
-  })
-);
+import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
+import { stripeClient } from "@/modules/ee/billing/lib/stripe-client";
 
 const ZManageSubscriptionAction = z.object({
   environmentId: ZId,
@@ -102,4 +72,69 @@ export const isSubscriptionCancelledAction = authenticatedActionClient
     });
 
     return await isSubscriptionCancelled(parsedInput.organizationId);
+  });
+
+const ZCreatePricingTableCustomerSessionAction = z.object({
+  environmentId: ZId,
+});
+
+export const createPricingTableCustomerSessionAction = authenticatedActionClient
+  .inputSchema(ZCreatePricingTableCustomerSessionAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", organizationId);
+    }
+
+    if (!organization.billing?.stripeCustomerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+    }
+
+    if (!stripeClient) {
+      return { clientSecret: null };
+    }
+
+    const customerSession = await stripeClient.customerSessions.create({
+      customer: organization.billing.stripeCustomerId,
+      components: {
+        pricing_table: {
+          enabled: true,
+        },
+      },
+    });
+
+    return { clientSecret: customerSession.client_secret ?? null };
+  });
+
+const ZRetryStripeSetupAction = z.object({
+  organizationId: ZId,
+});
+
+export const retryStripeSetupAction = authenticatedActionClient
+  .inputSchema(ZRetryStripeSetupAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    await ensureCloudStripeSetupForOrganization(parsedInput.organizationId);
   });

@@ -235,16 +235,13 @@ export const mockOrganizationOutput: TOrganization = {
   isAIEnabled: false,
   billing: {
     stripeCustomerId: null,
-    plan: "free",
-    period: "monthly",
     limits: {
       projects: 3,
       monthly: {
         responses: 1500,
-        miu: 2000,
       },
     },
-    periodStart: currentDate,
+    usageCycleAnchor: currentDate,
   },
 };
 

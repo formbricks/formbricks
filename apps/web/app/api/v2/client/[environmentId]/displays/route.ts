@@ -3,6 +3,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZDisplayCreateInputV2 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
 
@@ -39,7 +40,8 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   if (inputValidation.data.contactId) {
-    const isContactsEnabled = await getIsContactsEnabled();
+    const organizationId = await getOrganizationIdFromEnvironmentId(params.environmentId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }

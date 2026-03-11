@@ -6,6 +6,7 @@ import { ResourceNotFoundError, ValidationError } from "@formbricks/types/errors
 import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
 
@@ -93,7 +94,8 @@ export const POST = withV1ApiWrapper({
 
       const { userId, attributes } = jsonInput;
 
-      const isContactsEnabled = await getIsContactsEnabled();
+      const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(

@@ -663,20 +663,39 @@ model Project {
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAIEnabled - Controls access to AI-powered features
 model Organization {
-  id          String       @id @default(cuid())
-  createdAt   DateTime     @default(now()) @map(name: "created_at")
-  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  id          String               @id @default(cuid())
+  createdAt   DateTime             @default(now()) @map(name: "created_at")
+  updatedAt   DateTime             @updatedAt @map(name: "updated_at")
   name        String
   memberships Membership[]
   projects    Project[]
-  /// [OrganizationBilling]
-  billing     Json
+  billing     OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel  Json         @default("{}")
+  whitelabel  Json                 @default("{}")
   invites     Invite[]
-  isAIEnabled Boolean      @default(false)
+  isAIEnabled Boolean              @default(false)
   teams       Team[]
   apiKeys     ApiKey[]
+}
+
+/// Stores billing and Stripe synchronization data for an organization.
+///
+/// @property organizationId - Reference to the organization
+/// @property stripeCustomerId - Stripe customer ID for cloud billing
+/// @property limits - Plan limits used by feature and quota checks
+/// @property usageCycleAnchor - Stable anchor used to derive the current monthly usage cycle
+/// @property stripe - Stripe synchronization snapshot data
+model OrganizationBilling {
+  organizationId   String       @id @map(name: "organization_id")
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stripeCustomerId String?      @unique @map(name: "stripe_customer_id")
+  /// [OrganizationBillingPlanLimits]
+  limits           Json
+  usageCycleAnchor DateTime?    @map(name: "usage_cycle_anchor")
+  /// [OrganizationStripeBilling]
+  stripe           Json?
+  createdAt        DateTime     @default(now()) @map(name: "created_at")
+  updatedAt        DateTime     @updatedAt @map(name: "updated_at")
 }
 
 enum OrganizationRole {

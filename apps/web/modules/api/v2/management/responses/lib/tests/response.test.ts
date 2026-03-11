@@ -35,11 +35,15 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: true,
-  IS_PRODUCTION: false,
-  ENCRYPTION_KEY: "test",
-}));
+vi.mock("@/lib/constants", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/constants")>("@/lib/constants");
+  return {
+    ...actual,
+    IS_FORMBRICKS_CLOUD: true,
+    IS_PRODUCTION: false,
+    ENCRYPTION_KEY: "test",
+  };
+});
 
 describe("Response Lib", () => {
   beforeEach(() => {

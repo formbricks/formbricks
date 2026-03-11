@@ -47,7 +47,7 @@ export const updateProjectBrandingAction = authenticatedActionClient.inputSchema
       if (!organization) {
         throw new Error("Organization not found");
       }
-      const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);
+      const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
 
       if (parsedInput.data.inAppSurveyBranding !== undefined) {
         if (!canRemoveBranding) {

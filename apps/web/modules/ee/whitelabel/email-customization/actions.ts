@@ -21,7 +21,7 @@ export const checkWhiteLabelPermission = async (organizationId: string) => {
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isWhiteLabelAllowed = await getWhiteLabelPermission(organization.billing.plan);
+  const isWhiteLabelAllowed = await getWhiteLabelPermission(organizationId);
 
   if (!isWhiteLabelAllowed) {
     throw new OperationNotAllowedError("White label is not allowed for this organization");

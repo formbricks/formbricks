@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
@@ -24,7 +25,11 @@ const mockOrganization = {
   name: "Test Org",
   createdAt: new Date(),
   updatedAt: new Date(),
-  billing: { plan: "free", limits: { monthly: { responses: null } } } as any, // Default no limit
+  billing: {
+    stripeCustomerId: null,
+    limits: { projects: 3, monthly: { responses: null } },
+    usageCycleAnchor: new Date(),
+  } as TOrganizationBilling, // Default no limit
 } as unknown as Organization;
 
 const mockResponseInput: TResponseInput = {
@@ -107,6 +112,7 @@ vi.mock("@/lib/constants", () => ({
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
+  STRIPE_API_VERSION: "2026-01-28.clover",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
 }));

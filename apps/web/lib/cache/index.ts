@@ -1,6 +1,19 @@
 import "server-only";
-import { type CacheKey, type CacheService, getCacheService } from "@formbricks/cache";
+import type { RedisClientType } from "redis";
+import { getCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
+
+type CacheResult<T, E = { code: string }> = { ok: true; data: T } | { ok: false; error: E };
+
+type CacheService = {
+  get<T>(key: string): Promise<CacheResult<T | null>>;
+  exists(key: string): Promise<CacheResult<boolean>>;
+  set(key: string, value: unknown, ttlMs?: number): Promise<CacheResult<void>>;
+  del(keys: string[]): Promise<CacheResult<void>>;
+  tryLock(key: string, value: string, ttlMs: number): Promise<CacheResult<boolean>>;
+  withCache<T>(fn: () => Promise<T>, key: string, ttlMs: number): Promise<T>;
+  getRedisClient(): RedisClientType | null;
+};
 
 // Expose an async-leaning service to reflect lazy init for sync members like getRedisClient
 type AsyncCacheService = Omit<CacheService, "getRedisClient"> & {
@@ -18,7 +31,7 @@ export const cache = new Proxy({} as AsyncCacheService, {
   get(_target, prop: keyof CacheService) {
     // Special-case: withCache must never fail; fall back to direct fn on init failure.
     if (prop === "withCache") {
-      return async <T>(fn: () => Promise<T>, ...rest: [CacheKey, number]) => {
+      return async <T>(fn: () => Promise<T>, ...rest: [string, number]) => {
         try {
           const cacheServiceResult = await getCacheService();
 
@@ -26,7 +39,8 @@ export const cache = new Proxy({} as AsyncCacheService, {
             return await fn();
           }
 
-          return cacheServiceResult.data.withCache(fn, ...rest);
+          const cacheService = cacheServiceResult.data as CacheService;
+          return cacheService.withCache(fn, ...rest);
         } catch (error) {
           logger.warn({ error }, "Cache unavailable; executing function directly");
           return await fn();
@@ -40,7 +54,8 @@ export const cache = new Proxy({} as AsyncCacheService, {
         if (!cacheServiceResult.ok) {
           return null;
         }
-        return cacheServiceResult.data.getRedisClient();
+        const cacheService = cacheServiceResult.data as CacheService;
+        return cacheService.getRedisClient();
       };
     }
 
@@ -49,11 +64,16 @@ export const cache = new Proxy({} as AsyncCacheService, {
       const cacheServiceResult = await getCacheService();
 
       if (!cacheServiceResult.ok) {
-        return { ok: false, error: cacheServiceResult.error };
+        return {
+          ok: false,
+          error: cacheServiceResult.error,
+        } as unknown as ReturnType<CacheService[typeof prop]>;
       }
-      const method = cacheServiceResult.data[prop] as (...args: unknown[]) => unknown;
 
-      return await method.apply(cacheServiceResult.data, args);
+      const cacheService = cacheServiceResult.data as CacheService;
+      const method = cacheService[prop] as (...args: unknown[]) => unknown;
+
+      return await method.apply(cacheService, args);
     };
   },
 });

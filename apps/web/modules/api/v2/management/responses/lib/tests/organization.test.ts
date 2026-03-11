@@ -87,7 +87,16 @@ describe("Organization Lib", () => {
       const result = await getOrganizationBilling(organizationId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
         where: { id: organizationId },
-        select: { billing: true },
+        select: {
+          billing: {
+            select: {
+              stripeCustomerId: true,
+              limits: true,
+              usageCycleAnchor: true,
+              stripe: true,
+            },
+          },
+        },
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -183,18 +192,22 @@ describe("Organization Lib", () => {
       }
     });
 
-    test("return error if billing plan is not free and periodStart is not set", async () => {
+    test("return response count when usageCycleAnchor is not set", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-        billing: { ...organizationBilling, periodStart: null },
+        billing: { ...organizationBilling, usageCycleAnchor: null },
       } as OrgFindFirst);
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(
+        organizationEnvironments as unknown as OrgFindUnique
+      );
+      vi.mocked(prisma.response.aggregate).mockResolvedValue({
+        _count: { id: 5 },
+      } as unknown as ResponseAggregate);
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toEqual({
-          type: "internal_server_error",
-          details: [{ field: "organization", issue: "billing period start is not set" }],
-        });
+      expect(result.ok).toBe(true);
+      expect(prisma.response.aggregate).toHaveBeenCalledTimes(1);
+      if (result.ok) {
+        expect(result.data).toBe(5);
       }
     });
 
@@ -211,24 +224,6 @@ describe("Organization Lib", () => {
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);
       expect(prisma.response.aggregate).toHaveBeenCalled();
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBe(5);
-      }
-    });
-
-    test("return for a free plan", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-        billing: { ...organizationBilling, plan: "free" },
-      } as OrgFindFirst);
-      vi.mocked(prisma.response.aggregate).mockResolvedValue({
-        _count: { id: 5 },
-      } as unknown as ResponseAggregate);
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(
-        organizationEnvironments as unknown as OrgFindUnique
-      );
-
-      const result = await getMonthlyOrganizationResponseCount(organizationId);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toBe(5);
