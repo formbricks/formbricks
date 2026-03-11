@@ -1,3 +1,4 @@
+import type { TOrganizationStripeSubscriptionStatus } from "@formbricks/types/organizations";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type {
   TEnterpriseLicenseFeatures,
@@ -35,5 +36,6 @@ export type TOrganizationEntitlementsContext = {
   licenseStatus: TEnterpriseLicenseStatusReturn;
   licenseFeatures: TEnterpriseLicenseFeatures | null;
   stripeCustomerId: string | null;
+  subscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
   usageCycleAnchor: Date | null;
 };

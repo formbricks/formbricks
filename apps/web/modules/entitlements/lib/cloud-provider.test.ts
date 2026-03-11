@@ -49,6 +49,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
+      subscriptionStatus: null,
       usageCycleAnchor,
     });
   });
@@ -67,6 +68,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     expect(result.features).toEqual([]);
     expect(result.limits).toEqual({ projects: null, monthlyResponses: null });
     expect(result.stripeCustomerId).toBeNull();
+    expect(result.subscriptionStatus).toBeNull();
     expect(result.usageCycleAnchor).toBeNull();
   });
 
@@ -96,5 +98,19 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual(["rbac"]);
+  });
+
+  test("exposes subscription status from billing stripe snapshot", async () => {
+    mockGetBilling.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { projects: 5, monthly: { responses: 1000 } },
+      usageCycleAnchor: null,
+      stripe: { features: ["follow-ups"], subscriptionStatus: "trialing" },
+    } as any);
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+
+    const result = await getCloudOrganizationEntitlementsContext("org1");
+
+    expect(result.subscriptionStatus).toBe("trialing");
   });
 });
