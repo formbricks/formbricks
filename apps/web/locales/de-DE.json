@@ -966,6 +966,7 @@
         "cancelling": "Wird storniert",
         "failed_to_start_trial": "Die Testversion konnte nicht gestartet werden. Bitte versuche es erneut.",
         "manage_subscription": "Abonnement verwalten",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",

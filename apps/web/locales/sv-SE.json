@@ -966,6 +966,7 @@
         "cancelling": "Avbryter",
         "failed_to_start_trial": "Kunde inte starta provperioden. Försök igen.",
         "manage_subscription": "Hantera prenumeration",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Skala",

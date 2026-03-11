@@ -966,6 +966,7 @@
         "cancelling": "Cancelando",
         "failed_to_start_trial": "No se pudo iniciar la prueba. Por favor, inténtalo de nuevo.",
         "manage_subscription": "Gestionar suscripción",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",

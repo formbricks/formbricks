@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZStorageUrl } from "./common";
 
-export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "unknown"]);
+export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "custom", "unknown"]);
 export type TCloudBillingPlan = z.infer<typeof ZCloudBillingPlan>;
 export const ZOrganizationStripeSubscriptionStatus = z.enum([
   "trialing",

@@ -966,6 +966,7 @@
         "cancelling": "Annulation en cours",
         "failed_to_start_trial": "Échec du démarrage de l'essai. Réessaye.",
         "manage_subscription": "Gérer l'abonnement",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",
