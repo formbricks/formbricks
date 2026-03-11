@@ -44,10 +44,10 @@ export const getContactByUserId = async (
       return ok(null);
     }
 
-    const contactAttributes = contact.attributes.reduce((acc, attr) => {
+    const contactAttributes = contact.attributes.reduce<TContactAttributes>((acc, attr) => {
       acc[attr.attributeKey.key] = attr.value;
       return acc;
-    }, {}) as TContactAttributes;
+    }, {});
 
     return ok({
       id: contact.id,
@@ -56,7 +56,9 @@ export const getContactByUserId = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "contact", issue: error.message }],
+      details: [
+        { field: "contact", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

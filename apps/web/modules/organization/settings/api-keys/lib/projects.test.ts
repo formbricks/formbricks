@@ -60,7 +60,9 @@ describe("Projects Management", () => {
 
   describe("getProjectsByOrganizationId", () => {
     test("retrieves projects by organization ID successfully", async () => {
-      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
+      vi.mocked(prisma.project.findMany).mockResolvedValueOnce(
+        mockProjects as unknown as Awaited<ReturnType<typeof prisma.project.findMany>>
+      );
 
       const result = await getProjectsByOrganizationId("org123");
 

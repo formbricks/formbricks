@@ -93,6 +93,7 @@ const baseSurveyData: TSurveyCreateInputWithEnvironmentId = {
   languages: [],
   type: "link",
   welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+  blocks: [],
   followUps: [],
 };
 

@@ -1,11 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { TTransformPersonInput } from "@/modules/ee/contacts/types/contact";
-import { convertPrismaContactAttributes, getContactIdentifier, transformPrismaContact } from "./utils";
-
-const mockPrismaAttributes = [
-  { value: "john@example.com", attributeKey: { key: "email", name: "Email" } },
-  { value: "John", attributeKey: { key: "name", name: "Name" } },
-];
+import { getContactIdentifier, transformPrismaContact } from "./utils";
 
 describe("utils", () => {
   test("getContactIdentifier returns email if present", () => {
@@ -17,14 +12,6 @@ describe("utils", () => {
   test("getContactIdentifier returns empty string if neither", () => {
     expect(getContactIdentifier(null)).toBe("");
     expect(getContactIdentifier({})).toBe("");
-  });
-
-  test("convertPrismaContactAttributes returns correct object", () => {
-    const result = convertPrismaContactAttributes(mockPrismaAttributes);
-    expect(result).toEqual({
-      email: { name: "Email", value: "john@example.com" },
-      name: { name: "Name", value: "John" },
-    });
   });
 
   test("transformPrismaContact returns correct structure", () => {

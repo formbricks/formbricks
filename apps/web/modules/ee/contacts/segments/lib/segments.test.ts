@@ -892,7 +892,7 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
@@ -940,7 +940,7 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
@@ -971,7 +971,7 @@ describe("Segment Service Tests", () => {
       const nonExistentSegmentId = "non-existent-segment";
 
       // Mock findUnique to return null, which causes getSegment to throw
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === nonExistentSegmentId) {
           return null;
         }
@@ -1253,7 +1253,7 @@ describe("Segment Service Tests", () => {
       // compareValues will attempt ('30' as string).startsWith('3'), which should throw a TypeError
       // This TypeError should be caught by the try...catch in evaluateSegment
       await expect(evaluateSegment(userData, filters)).rejects.toThrow(TypeError); // Expect a TypeError specifically
-      expect(logger.error).toHaveBeenCalledWith("Error evaluating segment", expect.any(TypeError));
+      expect(logger.error).toHaveBeenCalledWith(expect.any(TypeError), "Error evaluating segment");
     });
   });
 });

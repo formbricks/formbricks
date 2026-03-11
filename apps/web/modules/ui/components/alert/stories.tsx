@@ -103,7 +103,7 @@ const meta: Meta<StoryProps> = {
 export default meta;
 
 // Our story type just specifies Alert props plus our story options
-type Story = StoryObj<typeof Alert> & { args: StoryOptions };
+type Story = StoryObj<StoryProps>;
 
 // Create a common render function to reduce duplication
 const renderAlert = (args: StoryProps) => {

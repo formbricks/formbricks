@@ -8,7 +8,10 @@ import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 
-const OnboardingLayout = async (props) => {
+const OnboardingLayout = async (props: {
+  params: Promise<{ organizationId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;

@@ -26,10 +26,10 @@ export type TSessionAuthentication = Session | null;
 
 // Interface for handler function parameters
 export interface THandlerParams<TProps = unknown> {
-  req?: NextRequest;
-  props?: TProps;
+  req: NextRequest;
+  props: TProps;
   auditLog?: TApiAuditLog;
-  authentication?: TApiKeyAuthentication | TSessionAuthentication;
+  authentication?: TApiV1Authentication;
 }
 
 // Interface for wrapper function parameters
@@ -79,7 +79,7 @@ const handleRateLimiting = async (
       await applyClientRateLimit(customRateLimitConfig);
     }
   } catch (error) {
-    return responses.tooManyRequestsResponse(error.message);
+    return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
   }
 
   return null;
@@ -262,31 +262,7 @@ const getRouteType = (
  * @returns Wrapped handler function that returns the final HTTP response
  *
  */
-export const withV1ApiWrapper: {
-  <TResult extends { response: Response }, TProps = unknown>(
-    params: TWithV1ApiWrapperParams<TResult, TProps> & {
-      handler: (
-        params: THandlerParams<TProps> & { authentication?: TApiKeyAuthentication }
-      ) => Promise<TResult>;
-    }
-  ): (req: NextRequest, props: TProps) => Promise<Response>;
-
-  <TResult extends { response: Response }, TProps = unknown>(
-    params: TWithV1ApiWrapperParams<TResult, TProps> & {
-      handler: (
-        params: THandlerParams<TProps> & { authentication?: TSessionAuthentication }
-      ) => Promise<TResult>;
-    }
-  ): (req: NextRequest, props: TProps) => Promise<Response>;
-
-  <TResult extends { response: Response }, TProps = unknown>(
-    params: TWithV1ApiWrapperParams<TResult, TProps> & {
-      handler: (
-        params: THandlerParams<TProps> & { authentication?: TApiV1Authentication }
-      ) => Promise<TResult>;
-    }
-  ): (req: NextRequest, props: TProps) => Promise<Response>;
-} = <TResult extends { response: Response }, TProps = unknown>(
+export const withV1ApiWrapper = <TResult extends { response: Response }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
   const { handler, action, targetType, customRateLimitConfig } = params;

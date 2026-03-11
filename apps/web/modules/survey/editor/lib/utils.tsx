@@ -24,7 +24,7 @@ import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
+import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
@@ -95,8 +95,8 @@ export const formatTextWithSlashes = (
   });
 };
 
-const getElementIconMapping = (t: TFunction) =>
-  getElementTypes(t).reduce(
+const getElementIconMapping = (t: TFunction): Record<string, TElement["icon"]> =>
+  getElementTypes(t).reduce<Record<string, TElement["icon"]>>(
     (prev, curr) => ({
       ...prev,
       [curr.id]: curr.icon,

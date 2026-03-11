@@ -1,17 +1,15 @@
-import { NextRequest } from "next/server";
 import { responses } from "@/app/lib/api/response";
-import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_AUTH_URL, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TSessionAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }) => {
+    // session authentication
+    if (!authentication || !("user" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const environmentId = req.headers.get("environmentId");
 
     if (!environmentId) {

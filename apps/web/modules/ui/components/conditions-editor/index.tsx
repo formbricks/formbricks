@@ -179,8 +179,8 @@ export function ConditionsEditor({
                 showSearch
                 groupedOptions={leftOperandOptions}
                 value={config.formatLeftOperandValue(condition)}
-                onChangeValue={(val: string, option) => {
-                  handleLeftOperandChange(condition, val, option);
+                onChangeValue={(val: string | number | string[], option) => {
+                  handleLeftOperandChange(condition, String(val), option);
                 }}
               />
             </div>
@@ -191,8 +191,8 @@ export function ConditionsEditor({
                 showSearch={false}
                 options={operatorOptions}
                 value={condition.operator}
-                onChangeValue={(val: string) => {
-                  handleOperatorChange(condition, val);
+                onChangeValue={(val: string | number | string[]) => {
+                  handleOperatorChange(condition, String(val));
                 }}
               />
             </div>

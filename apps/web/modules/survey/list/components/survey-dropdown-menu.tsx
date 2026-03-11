@@ -142,7 +142,7 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
-  const handleEditforActiveSurvey = (e) => {
+  const handleEditforActiveSurvey = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDropDownOpen(false);
     setIsCautionDialogOpen(true);

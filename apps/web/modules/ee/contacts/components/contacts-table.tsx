@@ -116,10 +116,10 @@ export const ContactsTable = ({
       const initialVisibility = table
         .getAllLeafColumns()
         .map((column) => column.id)
-        .reduce((acc, curr) => {
+        .reduce<Record<string, boolean>>((acc, curr) => {
           acc[curr] = false;
           return acc;
-        }, {}) as Record<string, true>;
+        }, {});
 
       const userIdVisibility = data.findIndex((contact) => contact.userId) !== -1;
 

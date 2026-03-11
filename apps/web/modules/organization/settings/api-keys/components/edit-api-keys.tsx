@@ -39,7 +39,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   const [isLoading, setIsLoading] = useState(false);
   const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
 
-  const handleOpenDeleteKeyModal = (e, apiKey) => {
+  const handleOpenDeleteKeyModal = (e: React.MouseEvent, apiKey: TApiKeyWithEnvironmentPermission) => {
     e.preventDefault();
     setActiveKey(apiKey);
     setIsDeleteKeyModalOpen(true);
@@ -128,7 +128,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
     setViewPermissionsOpen(false);
   };
 
-  const ApiKeyDisplay = ({ apiKey }) => {
+  const ApiKeyDisplay = ({ apiKey }: { apiKey: string }) => {
     const copyToClipboard = () => {
       navigator.clipboard.writeText(apiKey);
       toast.success(t("environments.workspace.api_keys.api_key_copied_to_clipboard"));
@@ -192,7 +192,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                 key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden pr-4 sm:col-span-5 sm:block">
-                  <ApiKeyDisplay apiKey={apiKey.actualKey} />
+                  <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   {timeSince(apiKey.createdAt.toString(), locale)}

@@ -107,7 +107,7 @@ const DeleteOrganizationModal = ({
 }: DeleteOrganizationModalProps) => {
   const [inputValue, setInputValue] = useState("");
   const { t } = useTranslation();
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 

@@ -39,7 +39,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
           }
         }
       } catch (error) {
-        logger.error("Failed to generate QR code:", error);
+        logger.error(error as Error, "Failed to generate QR code");
         setHasError(true);
       } finally {
         setIsLoading(false);
@@ -66,7 +66,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
       downloadInstance.download({ name: "survey-qr-code", extension: "png" });
       toast.success(t("environments.surveys.summary.qr_code_download_with_start_soon"));
     } catch (error) {
-      logger.error("Failed to download QR code:", error);
+      logger.error(error as Error, "Failed to download QR code");
       toast.error(t("environments.surveys.summary.qr_code_download_failed"));
     } finally {
       setIsDownloading(false);

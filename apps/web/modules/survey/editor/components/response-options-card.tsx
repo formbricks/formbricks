@@ -16,7 +16,7 @@ import { Slider } from "@/modules/ui/components/slider";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
   responseCount: number;
   isSpamProtectionAllowed: boolean;
 }
@@ -143,7 +143,7 @@ export const ResponseOptionsCard = ({
     }
   };
 
-  const handleInputResponse = (e) => {
+  const handleInputResponse = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseInt(e.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
@@ -153,7 +153,7 @@ export const ResponseOptionsCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleInputResponseBlur = (e) => {
+  const handleInputResponseBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (parseInt(e.target.value) === 0) {
       toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
@@ -189,10 +189,15 @@ export const ResponseOptionsCard = ({
 
   const handleThresholdChange = (value: number) => {
     setRecaptchaThreshold(value);
-    setLocalSurvey((prevSurvey) => ({
-      ...prevSurvey,
-      recaptcha: { ...prevSurvey.recaptcha, threshold: value },
-    }));
+    setLocalSurvey(
+      (prevSurvey: TSurvey): TSurvey => ({
+        ...prevSurvey,
+        recaptcha: {
+          enabled: prevSurvey.recaptcha?.enabled ?? false,
+          threshold: value,
+        },
+      })
+    );
   };
 
   return (

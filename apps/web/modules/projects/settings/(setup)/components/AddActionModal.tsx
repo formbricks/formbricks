@@ -1,7 +1,7 @@
 "use client";
 
 import { MousePointerClickIcon } from "lucide-react";
-import { useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
@@ -19,7 +19,7 @@ interface AddActionModalProps {
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   open: boolean;
-  setOpen: (open: boolean) => void;
+  setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export const AddActionModal = ({

@@ -165,12 +165,12 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
-  const extractMetadataKeys = useCallback((obj, parentKey = "") => {
+  const extractMetadataKeys = useCallback((obj: Record<string, unknown>, parentKey = "") => {
     let keys: string[] = [];
 
     for (let key in obj) {
       if (typeof obj[key] === "object" && obj[key] !== null) {
-        keys = keys.concat(extractMetadataKeys(obj[key], parentKey + key + " - "));
+        keys = keys.concat(extractMetadataKeys(obj[key] as Record<string, unknown>, parentKey + key + " - "));
       } else {
         keys.push(parentKey + key);
       }

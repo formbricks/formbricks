@@ -10,7 +10,7 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 
-const Page = async (props) => {
+const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

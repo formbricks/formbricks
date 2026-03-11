@@ -36,7 +36,7 @@ export const NotionWrapper = ({
 }: NotionWrapperProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
-    notionIntegration ? notionIntegration.config.key?.bot_id : false
+    notionIntegration ? !!notionIntegration.config.key?.bot_id : false
   );
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TIntegrationNotionConfigData & { index: number }) | null

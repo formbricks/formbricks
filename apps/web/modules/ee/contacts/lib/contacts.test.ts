@@ -180,7 +180,7 @@ describe("Contacts Lib", () => {
     });
 
     test("returns null when segment is not found", async () => {
-      vi.mocked(getSegment).mockResolvedValue(null);
+      vi.mocked(getSegment).mockResolvedValue(null as any);
 
       const result = await getContactsInSegment(mockSegmentId);
 
@@ -755,8 +755,8 @@ describe("Contacts Lib", () => {
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
 
       expect(result).toHaveLength(2);
-      expect(result?.[0].contactId).toBe("contact-1");
-      expect(result?.[0].surveyUrl).toBe("https://survey.com/c/token1");
+      expect(result![0]!.contactId).toBe("contact-1");
+      expect(result![0]!.surveyUrl).toBe("https://survey.com/c/token1");
     });
 
     test("generates survey links with expiration", async () => {
@@ -786,8 +786,9 @@ describe("Contacts Lib", () => {
 
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, 7);
 
-      expect(result).toHaveLength(1);
-      expect(result?.[0].expirationDays).toBe(7);
+      const links = result!;
+      expect(links).toHaveLength(1);
+      expect(links[0]!.expirationDays).toBe(7);
       expect(getContactSurveyLink).toHaveBeenCalledWith("contact-1", mockSurveyId, 7);
     });
 
@@ -821,12 +822,13 @@ describe("Contacts Lib", () => {
 
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
 
-      expect(result).toHaveLength(1);
-      expect(result?.[0].contactId).toBe("contact-1");
+      const links = result!;
+      expect(links).toHaveLength(1);
+      expect(links[0]!.contactId).toBe("contact-1");
     });
 
     test("returns null when getContactsInSegment fails", async () => {
-      vi.mocked(getSegment).mockResolvedValue(null);
+      vi.mocked(getSegment).mockResolvedValue(null as any);
 
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
 

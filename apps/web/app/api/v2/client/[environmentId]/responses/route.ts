@@ -43,7 +43,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
   try {
     responseInput = await request.json();
   } catch (error) {
-    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+    return responses.badRequestResponse(
+      "Invalid JSON in request body",
+      { error: error instanceof Error ? error.message : "Unknown error occurred" },
+      true
+    );
   }
 
   const { environmentId } = params;
@@ -156,7 +160,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
       return responses.badRequestResponse(error.message);
     }
     logger.error({ error, url: request.url }, "Error creating response");
-    return responses.internalServerErrorResponse(error.message);
+    return responses.internalServerErrorResponse(
+      error instanceof Error ? error.message : "Unknown error occurred"
+    );
   }
   const { quotaFull, ...responseData } = response;
 
