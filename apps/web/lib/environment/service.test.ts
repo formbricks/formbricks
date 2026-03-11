@@ -1,4 +1,4 @@
-import { EnvironmentType, Prisma } from "@prisma/client";
+import { EnvironmentType, Prisma, Project } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -99,7 +99,7 @@ describe("Environment Service", () => {
             ...mockEnvironments[1],
           },
         ],
-      });
+      } as unknown as Project);
 
       const result = await getEnvironments("clh6pzwx90000e9ogjr0mf7sy");
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TBaseFilters, TSegment } from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
@@ -77,7 +77,7 @@ describe("checkForRecursiveSegmentFilter", () => {
       ],
     };
 
-    vi.mocked(getSegment).mockResolvedValue(referencedSegment as unknown as TSegment);
+    vi.mocked(getSegment).mockResolvedValue(referencedSegment as unknown as TSegmentWithSurveyNames);
 
     // Act & Assert
     // The function should complete without throwing an error

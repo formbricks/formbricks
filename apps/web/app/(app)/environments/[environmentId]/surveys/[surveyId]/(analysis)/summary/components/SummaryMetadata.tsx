@@ -15,7 +15,7 @@ interface SummaryMetadataProps {
   isQuotasAllowed: boolean;
 }
 
-const formatTime = (ttc) => {
+const formatTime = (ttc: number) => {
   const seconds = ttc / 1000;
   let formattedValue;
 

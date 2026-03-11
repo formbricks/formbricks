@@ -7,6 +7,7 @@ import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 // Mock the translation function
 const mockT = vi.fn((key: string) => `mockTranslate(${key})`);
 const logicRules = getLogicRules(mockT as unknown as TFunction);
+const elementRules = logicRules.element as Record<string, { options: TLogicRuleOption }>;
 
 describe("getLogicRules", () => {
   test("should return correct structure for question rules", () => {
@@ -35,7 +36,7 @@ describe("getLogicRules", () => {
 
   describe("Question Specific Rules", () => {
     test("OpenText.text", () => {
-      const openTextTextRules = logicRules.element[TSurveyQuestionTypeEnum.OpenText + ".text"];
+      const openTextTextRules = elementRules[TSurveyQuestionTypeEnum.OpenText + ".text"];
       expect(openTextTextRules).toBeDefined();
       expect(openTextTextRules.options).toEqual([
         {
@@ -82,7 +83,7 @@ describe("getLogicRules", () => {
     });
 
     test("OpenText.number", () => {
-      const openTextNumberRules = logicRules.element[TSurveyQuestionTypeEnum.OpenText + ".number"];
+      const openTextNumberRules = elementRules[TSurveyQuestionTypeEnum.OpenText + ".number"];
       expect(openTextNumberRules).toBeDefined();
       expect(openTextNumberRules.options).toEqual([
         { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
@@ -103,7 +104,7 @@ describe("getLogicRules", () => {
     });
 
     test("MultipleChoiceSingle", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.MultipleChoiceSingle];
+      const rules = elementRules[TSurveyQuestionTypeEnum.MultipleChoiceSingle];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -130,7 +131,7 @@ describe("getLogicRules", () => {
     });
 
     test("MultipleChoiceMulti", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.MultipleChoiceMulti];
+      const rules = elementRules[TSurveyQuestionTypeEnum.MultipleChoiceMulti];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -169,7 +170,7 @@ describe("getLogicRules", () => {
     });
 
     test("PictureSelection", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.PictureSelection];
+      const rules = elementRules[TSurveyQuestionTypeEnum.PictureSelection];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -208,7 +209,7 @@ describe("getLogicRules", () => {
     });
 
     test("Rating", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Rating];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Rating];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
@@ -229,7 +230,7 @@ describe("getLogicRules", () => {
     });
 
     test("NPS", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.NPS];
+      const rules = elementRules[TSurveyQuestionTypeEnum.NPS];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
@@ -250,7 +251,7 @@ describe("getLogicRules", () => {
     });
 
     test("CTA", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.CTA];
+      const rules = elementRules[TSurveyQuestionTypeEnum.CTA];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -265,7 +266,7 @@ describe("getLogicRules", () => {
     });
 
     test("Consent", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Consent];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Consent];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -280,7 +281,7 @@ describe("getLogicRules", () => {
     });
 
     test("Date", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Date];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Date];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -311,7 +312,7 @@ describe("getLogicRules", () => {
     });
 
     test("FileUpload", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.FileUpload];
+      const rules = elementRules[TSurveyQuestionTypeEnum.FileUpload];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -326,7 +327,7 @@ describe("getLogicRules", () => {
     });
 
     test("Ranking", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Ranking];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Ranking];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -341,7 +342,7 @@ describe("getLogicRules", () => {
     });
 
     test("Cal", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Cal];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Cal];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -356,7 +357,7 @@ describe("getLogicRules", () => {
     });
 
     test("Matrix", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Matrix];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Matrix];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -375,7 +376,7 @@ describe("getLogicRules", () => {
     });
 
     test("Matrix.row", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Matrix + ".row"];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Matrix + ".row"];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -402,7 +403,7 @@ describe("getLogicRules", () => {
     });
 
     test("Address", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.Address];
+      const rules = elementRules[TSurveyQuestionTypeEnum.Address];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
@@ -417,7 +418,7 @@ describe("getLogicRules", () => {
     });
 
     test("ContactInfo", () => {
-      const rules = logicRules.element[TSurveyQuestionTypeEnum.ContactInfo];
+      const rules = elementRules[TSurveyQuestionTypeEnum.ContactInfo];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {

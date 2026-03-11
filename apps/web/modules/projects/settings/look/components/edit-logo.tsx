@@ -146,9 +146,11 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
             id="logo-input"
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
             environmentId={environmentId}
-            onFileUpload={(files: string[]) => {
-              setLogoUrl(files[0]);
-              setIsEditing(true);
+            onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
+              if (files?.[0]) {
+                setLogoUrl(files[0]);
+                setIsEditing(true);
+              }
             }}
             disabled={isReadOnly}
             maxSizeInMB={5}

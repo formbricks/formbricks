@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyContactInfoElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -17,7 +17,7 @@ interface ContactInfoElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyContactInfoElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyContactInfoElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;

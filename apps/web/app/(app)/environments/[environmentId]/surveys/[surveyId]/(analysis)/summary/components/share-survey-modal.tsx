@@ -75,17 +75,7 @@ export const ShareSurveyModal = ({
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
   const { t } = useTranslation();
-  const linkTabs: {
-    id: ShareViaType | ShareSettingsType;
-    type: LinkTabsType;
-    label: string;
-    icon: React.ElementType;
-    title: string;
-    description: string;
-    componentType: React.ComponentType<unknown>;
-    componentProps: unknown;
-    disabled?: boolean;
-  }[] = useMemo(() => {
+  const linkTabs = useMemo(() => {
     const tabs = [
       {
         id: ShareViaType.ANON_LINKS,

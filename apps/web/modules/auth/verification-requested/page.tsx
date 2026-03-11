@@ -6,7 +6,11 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
 
-export const VerificationRequestedPage = async ({ searchParams }) => {
+export const VerificationRequestedPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ token: string }>;
+}) => {
   const t = await getTranslate();
   const { token } = await searchParams;
   try {

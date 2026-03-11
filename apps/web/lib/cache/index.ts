@@ -1,7 +1,7 @@
 import "server-only";
+import type { RedisClientType } from "redis";
 import { getCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
-import type { RedisClientType } from "redis";
 
 type CacheResult<T, E = { code: string }> = { ok: true; data: T } | { ok: false; error: E };
 
@@ -69,8 +69,9 @@ export const cache = new Proxy({} as AsyncCacheService, {
           error: cacheServiceResult.error,
         } as unknown as ReturnType<CacheService[typeof prop]>;
       }
+
       const cacheService = cacheServiceResult.data as CacheService;
-      const method = cacheService[prop];
+      const method = cacheService[prop] as (...args: unknown[]) => unknown;
 
       return await method.apply(cacheService, args);
     };

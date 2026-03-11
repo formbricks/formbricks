@@ -23,8 +23,7 @@ const baseProject: Project = {
   clickOutsideClose: false,
   overlay: "none",
   logo: null,
-  brandColor: null,
-  highlightBorderColor: null,
+  customHeadScripts: null,
 };
 
 describe("getProjectByEnvironmentId", () => {

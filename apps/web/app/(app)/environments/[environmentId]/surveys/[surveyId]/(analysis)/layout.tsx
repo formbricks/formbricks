@@ -27,7 +27,7 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
   };
 };
 
-const SurveyLayout = async ({ children }) => {
+const SurveyLayout = async ({ children }: { children: React.ReactNode }) => {
   return <ResponseFilterProvider>{children}</ResponseFilterProvider>;
 };
 

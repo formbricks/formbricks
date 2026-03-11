@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import {
   Dialog,
   DialogBody,
@@ -19,7 +20,7 @@ import { IndividualInviteTab } from "./individual-invite-tab";
 interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
+  onSubmit: (data: TInvitee[]) => void;
   teams: TOrganizationTeam[];
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;

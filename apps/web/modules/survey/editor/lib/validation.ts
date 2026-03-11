@@ -150,12 +150,13 @@ export const validationRules = {
     let fieldsToValidate = ["upperLabel", "lowerLabel"];
 
     for (const field of fieldsToValidate) {
+      const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
       if (
-        element[field] &&
-        typeof element[field][defaultLanguageCode] !== "undefined" &&
-        element[field][defaultLanguageCode].trim() !== ""
+        fieldValue &&
+        typeof fieldValue[defaultLanguageCode] !== "undefined" &&
+        fieldValue[defaultLanguageCode].trim() !== ""
       ) {
-        isValid = isValid && isLabelValidForAllLanguages(element[field], languages);
+        isValid = isValid && isLabelValidForAllLanguages(fieldValue, languages);
       }
     }
 
@@ -165,7 +166,12 @@ export const validationRules = {
 
 // Main validation function
 export const validateElement = (element: TSurveyElement, surveyLanguages: TSurveyLanguage[]): boolean => {
-  const specificValidation = validationRules[element.type];
+  const specificValidation = (
+    validationRules as Record<
+      string,
+      ((element: TSurveyElement, languages: TSurveyLanguage[]) => boolean) | undefined
+    >
+  )[element.type];
   const defaultValidation = validationRules.defaultValidation;
 
   const specificValidationResult = specificValidation ? specificValidation(element, surveyLanguages) : true;

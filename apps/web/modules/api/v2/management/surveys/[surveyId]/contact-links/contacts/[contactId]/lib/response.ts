@@ -20,6 +20,11 @@ export const getResponse = reactCache(async (contactId: string, surveyId: string
 
     return ok(response);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 });

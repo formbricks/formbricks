@@ -49,6 +49,7 @@ const attributeKeys: TContactAttributeKey[] = [
     name: "Name",
     description: null,
     type: "default",
+    dataType: "string",
     environmentId,
   },
   {
@@ -60,6 +61,7 @@ const attributeKeys: TContactAttributeKey[] = [
     name: "Email",
     description: null,
     type: "default",
+    dataType: "string",
     environmentId,
   },
   {
@@ -71,6 +73,7 @@ const attributeKeys: TContactAttributeKey[] = [
     name: "Custom Attribute",
     description: null,
     type: "custom",
+    dataType: "string",
     environmentId,
   },
 ];
@@ -126,6 +129,7 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
     ];
@@ -156,6 +160,7 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
     ];
@@ -295,6 +300,7 @@ describe("updateAttributes", () => {
         name: "Email",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
       {
@@ -306,6 +312,7 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
       {
@@ -317,6 +324,7 @@ describe("updateAttributes", () => {
         name: "First Name",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
       {
@@ -328,6 +336,7 @@ describe("updateAttributes", () => {
         name: "Custom Attribute",
         description: null,
         type: "custom",
+        dataType: "string",
         environmentId,
       },
     ];
@@ -382,6 +391,7 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
     ];
@@ -416,6 +426,7 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
+        dataType: "string",
         environmentId,
       },
     ];

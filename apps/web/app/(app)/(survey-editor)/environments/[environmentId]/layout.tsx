@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 
-const SurveyEditorEnvironmentLayout = async (props) => {
+const SurveyEditorEnvironmentLayout = async (props: {
+  params: Promise<{ environmentId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;

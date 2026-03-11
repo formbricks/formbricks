@@ -88,6 +88,9 @@ export const createDefaultTeamMembership = async (userId: string) => {
       userId
     );
   } catch (error) {
-    logger.error("Error creating default team membership", error);
+    logger.error(
+      error instanceof Error ? error : new Error(String(error)),
+      "Error creating default team membership"
+    );
   }
 };

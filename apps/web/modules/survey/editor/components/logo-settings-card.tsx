@@ -62,8 +62,8 @@ export const LogoSettingsCard = ({
     });
   };
 
-  const handleFileInputChange = async (files: string[]) => {
-    if (files.length > 0) {
+  const handleFileInputChange = async (files: string[] | undefined, _fileType: "image" | "video") => {
+    if (files && files.length > 0) {
       setLogoUrl(files[0]);
     }
   };

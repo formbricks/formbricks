@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull, TSurveyQuota } from "@formbricks/types/quota";
@@ -151,7 +150,7 @@ describe("createResponse V2", () => {
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
 
-    vi.mocked(validateInputs).mockImplementation(() => {});
+    vi.mocked(validateInputs).mockImplementation((() => {}) as typeof validateInputs);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization as any);
     vi.mocked(getContact).mockResolvedValue(mockContact);
     vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
@@ -171,7 +170,9 @@ describe("createResponse V2", () => {
 
   test("should throw ResourceNotFoundError if organization not found", async () => {
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
-    await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(ResourceNotFoundError);
+    await expect(
+      createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+    ).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should throw DatabaseError on Prisma known request error", async () => {
@@ -180,17 +181,27 @@ describe("createResponse V2", () => {
       clientVersion: "test",
     });
     vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
-    await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(DatabaseError);
+    await expect(
+      createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+    ).rejects.toThrow(DatabaseError);
   });
 
   test("should throw original error on other errors", async () => {
     const genericError = new Error("Generic database error");
     vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
-    await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(genericError);
+    await expect(
+      createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+    ).rejects.toThrow(genericError);
   });
 
   test("should correctly map prisma tags to response tags", async () => {
-    const mockTag: TTag = { id: "tag1", name: "Tag 1", environmentId };
+    const mockTag: TTag = {
+      id: "tag1",
+      name: "Tag 1",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     const prismaResponseWithTags = {
       ...mockResponsePrisma,
       tags: [{ tag: mockTag }],
@@ -198,7 +209,7 @@ describe("createResponse V2", () => {
 
     vi.mocked(mockTx.response.create).mockResolvedValue(prismaResponseWithTags as any);
 
-    const result = await createResponse(mockResponseInput, mockTx);
+    const result = await createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient);
     expect(result.tags).toEqual([mockTag]);
   });
 });

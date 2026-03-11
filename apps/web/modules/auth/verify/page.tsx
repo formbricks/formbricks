@@ -3,7 +3,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { SignIn } from "@/modules/auth/verify/components/sign-in";
 
-export const VerifyPage = async ({ searchParams }) => {
+export const VerifyPage = async ({ searchParams }: { searchParams: Promise<{ token?: string }> }) => {
   const t = await getTranslate();
   const { token } = await searchParams;
 

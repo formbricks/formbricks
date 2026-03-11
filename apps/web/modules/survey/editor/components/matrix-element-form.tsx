@@ -9,7 +9,7 @@ import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement, TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -26,7 +26,7 @@ interface MatrixElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyMatrixElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyMatrixElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;

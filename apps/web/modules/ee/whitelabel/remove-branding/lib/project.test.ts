@@ -64,7 +64,7 @@ describe("updateProjectBranding", () => {
       logo: null,
     };
 
-    vi.mocked(prisma.project.update).mockResolvedValue(mockProject);
+    vi.mocked(prisma.project.update).mockResolvedValue(mockProject as any);
     vi.mocked(validateInputs).mockReturnValue([
       "test-project-id",
       { linkSurveyBranding: false, inAppSurveyBranding: false },

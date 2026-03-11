@@ -3,6 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
+import { type Dispatch, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -12,7 +13,7 @@ import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/surv
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   activeElementId: string | null;
   setActiveElementId: (id: string | null) => void;
   quotas: TSurveyQuota[];

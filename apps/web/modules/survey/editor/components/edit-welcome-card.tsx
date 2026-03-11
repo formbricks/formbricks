@@ -4,7 +4,12 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -44,7 +49,7 @@ export const EditWelcomeCard = ({
 
   let open = activeElementId == "start";
 
-  const setOpen = (e) => {
+  const setOpen = (e: boolean) => {
     if (e) {
       setActiveElementId("start");
     } else {
@@ -52,7 +57,9 @@ export const EditWelcomeCard = ({
     }
   };
 
-  const updateSurvey = (data: Partial<TSurveyWelcomeCard>) => {
+  const updateSurvey = (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => {
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -121,8 +128,10 @@ export const EditWelcomeCard = ({
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string[]) => {
-                  updateSurvey({ fileUrl: url[0] });
+                onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
+                  if (url?.[0]) {
+                    updateSurvey({ fileUrl: url[0] });
+                  }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
                 isStorageConfigured={isStorageConfigured}

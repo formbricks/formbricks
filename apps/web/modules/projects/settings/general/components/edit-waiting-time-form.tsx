@@ -52,7 +52,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ project, i
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
     }
   };
 

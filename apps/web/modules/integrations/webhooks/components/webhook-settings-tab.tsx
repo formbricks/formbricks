@@ -80,11 +80,12 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       return true;
     } catch (err) {
       setHittingEndpoint(false);
+      const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
-        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${err.message.length < 250 ? `${t("common.error")}:  ${err.message}` : t("environments.integrations.webhooks.please_check_console")}`,
-        { className: err.message.length < 250 ? "break-all" : "" }
+        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? `${t("common.error")}:  ${errMessage}` : t("environments.integrations.webhooks.please_check_console")}`,
+        { className: errMessage.length < 250 ? "break-all" : "" }
       );
-      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), err.message);
+      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
       setEndpointAccessible(false);
       return false;
     }
@@ -95,7 +96,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     setSelectedSurveys([]);
   };
 
-  const handleSelectedSurveyChange = (surveyId) => {
+  const handleSelectedSurveyChange = (surveyId: string) => {
     setSelectedSurveys((prevSelectedSurveys) => {
       if (prevSelectedSurveys.includes(surveyId)) {
         return prevSelectedSurveys.filter((id) => id !== surveyId);
@@ -105,7 +106,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     });
   };
 
-  const handleCheckboxChange = (selectedValue) => {
+  const handleCheckboxChange = (selectedValue: PipelineTriggers) => {
     setSelectedTriggers((prevValues) => {
       if (prevValues.includes(selectedValue)) {
         return prevValues.filter((value) => value !== selectedValue);
@@ -115,7 +116,12 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     });
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: {
+    name: string | null;
+    url: string;
+    triggers: PipelineTriggers[];
+    surveyIds: string[];
+  }) => {
     if (selectedTriggers.length === 0) {
       toast.error(t("common.please_select_at_least_one_trigger"));
       return;
@@ -132,9 +138,9 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     }
 
     const updatedData: TWebhookInput = {
-      name: data.name,
+      name: data.name ?? "",
       url: data.url as string,
-      source: data.source,
+      source: webhook.source as TWebhookInput["source"],
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
     };

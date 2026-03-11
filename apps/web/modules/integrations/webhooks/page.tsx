@@ -11,7 +11,7 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const WebhooksPage = async (props) => {
+export const WebhooksPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

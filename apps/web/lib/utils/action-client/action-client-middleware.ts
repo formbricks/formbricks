@@ -9,7 +9,7 @@ import { type TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 
 export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
   return {
-    ...issues.reduce((acc, issue) => {
+    ...issues.reduce<Record<string, { _errors: string[] }>>((acc, issue) => {
       acc[issue.path.join(".")] = {
         _errors: [issue.message],
       };
@@ -69,7 +69,8 @@ const checkProjectTeamAccess = async (accessItem: any, userId: string) => {
   if (!projectPermission) return false;
   if (
     accessItem.minPermission !== undefined &&
-    teamPermissionWeight[projectPermission] < teamPermissionWeight[accessItem.minPermission]
+    teamPermissionWeight[projectPermission as keyof typeof teamPermissionWeight] <
+      teamPermissionWeight[accessItem.minPermission as keyof typeof teamPermissionWeight]
   ) {
     return false;
   }
@@ -82,7 +83,8 @@ const checkTeamAccess = async (accessItem: any, userId: string) => {
   if (!teamRole) return false;
   if (
     accessItem.minPermission !== undefined &&
-    teamRoleWeight[teamRole] < teamRoleWeight[accessItem.minPermission]
+    teamRoleWeight[teamRole as keyof typeof teamRoleWeight] <
+      teamRoleWeight[accessItem.minPermission as keyof typeof teamRoleWeight]
   ) {
     return false;
   }
