@@ -966,6 +966,7 @@
         "cancelling": "正在取消",
         "failed_to_start_trial": "無法開始試用。請再試一次。",
         "manage_subscription": "管理訂閱",
+        "plan_custom": "Custom",
         "plan_hobby": "興趣版",
         "plan_pro": "專業版",
         "plan_scale": "規模版",

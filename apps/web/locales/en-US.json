@@ -966,6 +966,7 @@
         "cancelling": "Cancelling",
         "failed_to_start_trial": "Failed to start trial. Please try again.",
         "manage_subscription": "Manage subscription",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",

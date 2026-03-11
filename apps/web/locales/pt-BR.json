@@ -966,6 +966,7 @@
         "cancelling": "Cancelando",
         "failed_to_start_trial": "Falha ao iniciar o período de teste. Por favor, tente novamente.",
         "manage_subscription": "Gerenciar Assinatura",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",

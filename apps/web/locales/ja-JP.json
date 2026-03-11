@@ -966,6 +966,7 @@
         "cancelling": "キャンセル中",
         "failed_to_start_trial": "トライアルの開始に失敗しました。もう一度お試しください。",
         "manage_subscription": "サブスクリプションを管理",
+        "plan_custom": "Custom",
         "plan_hobby": "Hobby",
         "plan_pro": "Pro",
         "plan_scale": "Scale",

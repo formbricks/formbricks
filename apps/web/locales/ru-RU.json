@@ -966,6 +966,7 @@
         "cancelling": "Отмена",
         "failed_to_start_trial": "Не удалось запустить пробный период. Попробуйте снова.",
         "manage_subscription": "Управление подпиской",
+        "plan_custom": "Custom",
         "plan_hobby": "Хобби",
         "plan_pro": "Pro",
         "plan_scale": "Scale",

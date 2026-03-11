@@ -87,7 +87,7 @@ interface PricingTableProps {
   usageCycleStart: Date;
   usageCycleEnd: Date;
   hasBillingRights: boolean;
-  currentCloudPlan: "hobby" | "pro" | "scale" | "unknown";
+  currentCloudPlan: "hobby" | "pro" | "scale" | "custom" | "unknown";
   currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
@@ -95,12 +95,13 @@ interface PricingTableProps {
 }
 
 const getCurrentCloudPlanLabel = (
-  plan: "hobby" | "pro" | "scale" | "unknown",
+  plan: "hobby" | "pro" | "scale" | "custom" | "unknown",
   t: (key: string) => string
 ) => {
   if (plan === "hobby") return t("environments.settings.billing.plan_hobby");
   if (plan === "pro") return t("environments.settings.billing.plan_pro");
   if (plan === "scale") return t("environments.settings.billing.plan_scale");
+  if (plan === "custom") return t("environments.settings.billing.plan_custom");
   return t("environments.settings.billing.plan_unknown");
 };
 

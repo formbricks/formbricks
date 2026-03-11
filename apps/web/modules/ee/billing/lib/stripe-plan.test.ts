@@ -16,6 +16,9 @@ describe("stripe-plan", () => {
     expect(
       getCloudPlanFromProduct(product({ id: "prod_scale", metadata: { formbricks_plan: "scale" } }))
     ).toBe("scale");
+    expect(
+      getCloudPlanFromProduct(product({ id: "prod_custom", metadata: { formbricks_plan: "custom" } }))
+    ).toBe("custom");
   });
 
   test("falls back to unknown for missing or unknown products", () => {
