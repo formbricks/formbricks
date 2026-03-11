@@ -1,13 +1,16 @@
 "use server";
 
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { gethasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
 const ZCreateOrganizationAction = z.object({
@@ -42,6 +45,15 @@ export const createOrganizationAction = authenticatedActionClient
           role: "owner",
           accepted: true,
         });
+
+        if (IS_FORMBRICKS_CLOUD) {
+          ensureCloudStripeSetupForOrganization(newOrganization.id).catch((error) => {
+            logger.error(
+              { error, organizationId: newOrganization.id },
+              "Stripe setup failed after organization creation"
+            );
+          });
+        }
 
         ctx.auditLoggingCtx.organizationId = newOrganization.id;
         ctx.auditLoggingCtx.newObject = newOrganization;

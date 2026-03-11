@@ -203,48 +203,8 @@ describe("Organization Service", () => {
         },
         select: organizationSelect,
       });
-      if (IS_FORMBRICKS_CLOUD) {
-        expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
-      } else {
-        expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
-      }
-    });
-
-    test("should still return organization when Stripe setup fails", async () => {
-      const expectedBilling = {
-        limits: {
-          projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
-          monthly: {
-            responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
-          },
-        },
-        stripeCustomerId: null,
-        usageCycleAnchor: null,
-      };
-
-      const mockOrganization = {
-        id: "org1",
-        name: "Test Org",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        billing: expectedBilling,
-        isAIEnabled: false,
-        whitelabel: false,
-      };
-
-      vi.mocked(prisma.organization.create).mockResolvedValue(mockOrganization);
-      vi.mocked(ensureCloudStripeSetupForOrganization).mockRejectedValueOnce(
-        new Error("stripe temporarily unavailable")
-      );
-
-      const result = await createOrganization({ name: "Test Org" });
-
-      expect(result).toEqual(mockOrganization);
-      if (IS_FORMBRICKS_CLOUD) {
-        expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("org1");
-      } else {
-        expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
-      }
+      // Stripe setup is now handled by the caller after membership creation
+      expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
     });
 
     test("should throw DatabaseError on prisma error", async () => {

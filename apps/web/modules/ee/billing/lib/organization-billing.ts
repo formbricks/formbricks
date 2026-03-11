@@ -483,17 +483,21 @@ export const ensureStripeCustomerForOrganization = async (
   let existingCustomer: Stripe.Customer | null = null;
 
   if (ownerEmail) {
-    existingCustomer = await findStripeCustomerByEmail(ownerEmail);
-    if (existingCustomer) {
-      // Update the existing customer's metadata to point to the new org
-      await stripeClient.customers.update(existingCustomer.id, {
-        name: organization.name,
-        metadata: { organizationId: organization.id },
-      });
-      logger.info(
-        { organizationId, customerId: existingCustomer.id, email: ownerEmail },
-        "Reusing existing Stripe customer for new organization"
-      );
+    const foundCustomer = await findStripeCustomerByEmail(ownerEmail);
+    if (foundCustomer) {
+      // Only reuse if this customer is not already linked to another org's billing record
+      const existingBillingOwner = await findOrganizationIdByStripeCustomerId(foundCustomer.id);
+      if (!existingBillingOwner || existingBillingOwner === organizationId) {
+        existingCustomer = foundCustomer;
+        await stripeClient.customers.update(existingCustomer.id, {
+          name: organization.name,
+          metadata: { organizationId: organization.id },
+        });
+        logger.info(
+          { organizationId, customerId: existingCustomer.id, email: ownerEmail },
+          "Reusing existing Stripe customer for new organization"
+        );
+      }
     }
   }
 
