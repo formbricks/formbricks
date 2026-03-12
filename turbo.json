@@ -167,6 +167,7 @@
         "IS_FORMBRICKS_CLOUD",
         "CHATWOOT_WEBSITE_TOKEN",
         "CHATWOOT_BASE_URL",
+        "POSTHOG_KEY",
         "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
