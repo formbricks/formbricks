@@ -1,0 +1,248 @@
+---
+title: "Backbone Collection Merge Fix"
+description: "How to fix the 'updateFrom method not found' error when using Backbone.Collection with merge option"
+icon: "code"
+---
+
+## Problem Description
+
+When using Backbone.js Collections with the `merge: true` option, you may encounter the following error:
+
+```
+TypeError: Object [object Object] has no method 'updateFrom'
+```
+
+This error occurs when calling `collection.add(model, { merge: true })` on a model that doesn't have an `updateFrom` method defined.
+
+## Root Cause
+
+In Backbone.js, when you add a model to a collection with `merge: true`, Backbone attempts to merge the new data with existing models in the collection. Some Backbone implementations or plugins expect models to have an `updateFrom` method to handle the merging logic.
+
+### Example of the Problem
+
+```javascript
+// Problem: Model without updateFrom method
+var Member = Backbone.Model.extend({
+    defaults: {
+        id: null,
+        name: '',
+        version: 1
+    }
+});
+
+var MemberCollection = Backbone.Collection.extend({
+    model: Member
+});
+
+// In your view
+merge: function(member) {
+    var existing = this.collection.get(member.id);
+    if (existing && existing.get('version') > member.get('version')) {
+        return;
+    }
+
+    // This will fail if the model doesn't have updateFrom method
+    this.collection.add(member, {
+        merge: true,
+        sort: options.sort !== false ? true : false
+    });
+}
+```
+
+## Solution
+
+Add the `updateFrom` method to your Backbone Model definition. This method should handle merging attributes from another model instance.
+
+### Fixed Implementation
+
+```javascript
+// Solution: Model with updateFrom method
+var Member = Backbone.Model.extend({
+    defaults: {
+        id: null,
+        name: '',
+        version: 1
+    },
+
+    /**
+     * Updates this model's attributes from another model instance
+     * @param {Backbone.Model} model - The source model to update from
+     * @param {Object} options - Options to pass to set()
+     */
+    updateFrom: function(model, options) {
+        if (!model) {
+            return this;
+        }
+
+        // Get the attributes from the source model
+        var attrs = model.attributes ? model.attributes : model;
+
+        // Update this model with the new attributes
+        this.set(attrs, options);
+
+        return this;
+    }
+});
+
+var MemberCollection = Backbone.Collection.extend({
+    model: Member
+});
+
+// Now this will work correctly
+merge: function(member) {
+    var existing = this.collection.get(member.id);
+    if (existing && existing.get('version') > member.get('version')) {
+        return;
+    }
+
+    // This will now successfully merge using the updateFrom method
+    this.collection.add(member, {
+        merge: true,
+        sort: options.sort !== false ? true : false
+    });
+}
+```
+
+## Alternative Solution: Using Standard Backbone Merge
+
+If you're using standard Backbone.js (without custom plugins), you can rely on Backbone's built-in merge functionality:
+
+```javascript
+var Member = Backbone.Model.extend({
+    defaults: {
+        id: null,
+        name: '',
+        version: 1
+    }
+});
+
+var MemberCollection = Backbone.Collection.extend({
+    model: Member
+});
+
+// Standard Backbone merge behavior
+merge: function(member) {
+    var existing = this.collection.get(member.id);
+    
+    // Check version before merging
+    if (existing && existing.get('version') > member.get('version')) {
+        return;
+    }
+
+    // Backbone will automatically call set() on existing models
+    this.collection.add(member, {
+        merge: true,
+        sort: options.sort !== false
+    });
+}
+```
+
+## Best Practices
+
+### 1. Version Control
+
+Always check version numbers before merging to prevent outdated data from overwriting newer data:
+
+```javascript
+merge: function(member) {
+    var existing = this.collection.get(member.id);
+    if (existing && existing.get('version') > member.get('version')) {
+        return; // Skip outdated updates
+    }
+    this.collection.add(member, { merge: true });
+}
+```
+
+### 2. Validation
+
+Validate incoming model data before merging:
+
+```javascript
+updateFrom: function(model, options) {
+    if (!model || !model.id) {
+        throw new Error('Invalid model: missing id');
+    }
+    
+    var attrs = model.attributes || model;
+    this.set(attrs, _.extend({ validate: true }, options));
+    
+    return this;
+}
+```
+
+### 3. Silent Updates
+
+Consider using `silent: true` in options if you don't want to trigger change events during batch updates:
+
+```javascript
+this.collection.add(members, {
+    merge: true,
+    silent: true
+});
+```
+
+### 4. Error Handling
+
+Wrap merge operations in try-catch blocks:
+
+```javascript
+try {
+    this.collection.add(member, { merge: true });
+} catch (e) {
+    console.error('Failed to merge member:', e);
+    // Handle error appropriately
+}
+```
+
+## Testing the Fix
+
+Here's a test case to verify the fix works correctly:
+
+```javascript
+describe('Member Model', function() {
+    it('should have updateFrom method', function() {
+        var member = new Member({ id: 1, name: 'John' });
+        expect(member.updateFrom).toBeDefined();
+        expect(typeof member.updateFrom).toBe('function');
+    });
+
+    it('should update attributes from another model', function() {
+        var member1 = new Member({ id: 1, name: 'John', version: 1 });
+        var member2 = new Member({ id: 1, name: 'John Doe', version: 2 });
+        
+        member1.updateFrom(member2);
+        
+        expect(member1.get('name')).toBe('John Doe');
+        expect(member1.get('version')).toBe(2);
+    });
+
+    it('should merge models in collection', function() {
+        var collection = new MemberCollection([
+            { id: 1, name: 'John', version: 1 }
+        ]);
+        
+        var updatedMember = new Member({ id: 1, name: 'John Doe', version: 2 });
+        
+        // This should not throw an error
+        expect(function() {
+            collection.add(updatedMember, { merge: true });
+        }).not.toThrow();
+        
+        expect(collection.get(1).get('name')).toBe('John Doe');
+    });
+});
+```
+
+## Complete Example
+
+A complete working example is available in [backbone-collection-merge-fix.js](./backbone-collection-merge-fix.js).
+
+## Related Resources
+
+- [Backbone.js Collection.add documentation](http://backbonejs.org/#Collection-add)
+- [Backbone.js Model.set documentation](http://backbonejs.org/#Model-set)
+- Stack Overflow: "Backbone Collection merge option"
+
+## Issue Reference
+
+**Fixes FORMBRICKS-RN**: This fix resolves the error `TypeError: Object [object Object] has no method 'updateFrom'` that occurs when using `Backbone.Collection.add()` with `merge: true` on models lacking the `updateFrom` method.
