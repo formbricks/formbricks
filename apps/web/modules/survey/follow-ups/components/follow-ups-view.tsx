@@ -19,7 +19,6 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   isFormbricksCloud: boolean;
-  isTrialing: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   locale: TUserLocale;
@@ -32,7 +31,6 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
   isFormbricksCloud,
-  isTrialing,
   userEmail,
   teamMemberDetails,
   locale,
