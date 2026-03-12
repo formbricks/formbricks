@@ -405,7 +405,20 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    const posthogRewrites = process.env.POSTHOG_KEY
+      ? [
+          {
+            source: "/ingest/static/:path*",
+            destination: "https://eu-assets.i.posthog.com/static/:path*",
+          },
+          {
+            source: "/ingest/:path*",
+            destination: "https://eu.i.posthog.com/:path*",
+          },
+        ]
+      : [];
     return [
+      ...posthogRewrites,
       {
         source: "/api/packages/website",
         destination: "/js/formbricks.umd.cjs",

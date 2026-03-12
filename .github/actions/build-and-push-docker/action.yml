@@ -285,12 +285,14 @@ runs:
           encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
           redis_url=${{ env.DUMMY_REDIS_URL }}
           sentry_auth_token=${{ env.SENTRY_AUTH_TOKEN }}
+          posthog_key=${{ env.POSTHOG_KEY }}
       env:
         DEPOT_PROJECT_TOKEN: ${{ env.DEPOT_PROJECT_TOKEN }}
         DUMMY_DATABASE_URL: ${{ env.DUMMY_DATABASE_URL }}
         DUMMY_ENCRYPTION_KEY: ${{ env.DUMMY_ENCRYPTION_KEY }}
         DUMMY_REDIS_URL: ${{ env.DUMMY_REDIS_URL }}
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
+        POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
 
     - name: Sign GHCR image (GHCR only)
       if: ${{ inputs.registry_type == 'ghcr' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}
