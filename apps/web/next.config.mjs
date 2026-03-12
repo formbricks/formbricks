@@ -404,17 +404,22 @@ const nextConfig = {
       },
     ];
   },
-  skipTrailingSlashRedirect: true,
   async rewrites() {
+    const posthogRewrites =
+      process.env.IS_FORMBRICKS_CLOUD === "1" && process.env.POSTHOG_KEY && process.env.POSTHOG_REGION
+        ? [
+            {
+              source: "/ingest/static/:path*",
+              destination: `https://${process.env.POSTHOG_REGION}-assets.i.posthog.com/static/:path*`,
+            },
+            {
+              source: "/ingest/:path*",
+              destination: `https://${process.env.POSTHOG_REGION}.i.posthog.com/:path*`,
+            },
+          ]
+        : [];
     return [
-      {
-        source: "/ingest/static/:path*",
-        destination: "https://eu-assets.i.posthog.com/static/:path*",
-      },
-      {
-        source: "/ingest/:path*",
-        destination: "https://eu.i.posthog.com/:path*",
-      },
+      ...posthogRewrites,
       {
         source: "/api/packages/website",
         destination: "/js/formbricks.umd.cjs",
