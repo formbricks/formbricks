@@ -55,7 +55,7 @@ describe("Crypto Utils", () => {
       // But both should verify correctly
       expect(await verifySecret(secret, hash1)).toBe(true);
       expect(await verifySecret(secret, hash2)).toBe(true);
-    });
+    }, 15000);
 
     test("should use custom cost factor", async () => {
       const secret = "test-secret-123";

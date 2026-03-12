@@ -75,9 +75,13 @@ export const recheckLicenseAction = authenticatedActionClient
       try {
         freshLicense = await fetchLicenseFresh();
       } catch (error) {
-        // 400 = invalid license key — return directly so the UI shows the correct message
-        if (error instanceof LicenseApiError && error.status === 400) {
-          return { active: false, status: "invalid_license" as const };
+        // 400 = invalid license key, 403 = license bound to another instance.
+        // Return directly so the UI shows the correct message.
+        if (error instanceof LicenseApiError && (error.status === 400 || error.status === 403)) {
+          return {
+            active: false,
+            status: error.status === 400 ? ("invalid_license" as const) : ("instance_mismatch" as const),
+          };
         }
         throw error;
       }

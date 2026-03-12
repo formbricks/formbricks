@@ -2,7 +2,7 @@ import type { TOrganizationStripeSubscriptionStatus } from "@formbricks/types/or
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type {
   TEnterpriseLicenseFeatures,
-  TEnterpriseLicenseStatusReturn,
+  TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
 export type TEntitlementSource = "cloud_stripe" | "self_hosted_license";
@@ -33,7 +33,7 @@ export type TOrganizationEntitlementsContext = {
   source: TEntitlementSource;
   features: TEntitlementFeature[];
   limits: TEntitlementLimits;
-  licenseStatus: TEnterpriseLicenseStatusReturn;
+  licenseStatus: TLicenseStatus;
   licenseFeatures: TEnterpriseLicenseFeatures | null;
   stripeCustomerId: string | null;
   subscriptionStatus: TOrganizationStripeSubscriptionStatus | null;

@@ -462,6 +462,37 @@ describe("License Core Logic", () => {
       });
     });
 
+    test("should return instance_mismatch when API returns 403", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "production",
+          VERCEL_URL: "some.vercel.url",
+          FORMBRICKS_COM_URL: "https://app.formbricks.com",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      fetch.mockResolvedValueOnce({ ok: false, status: 403 } as any);
+
+      const license = await getEnterpriseLicense();
+
+      expect(license).toEqual({
+        active: false,
+        features: expect.objectContaining({ projects: 3 }),
+        lastChecked: expect.any(Date),
+        isPendingDowngrade: false,
+        fallbackLevel: "default" as const,
+        status: "instance_mismatch" as const,
+      });
+    });
+
     test("should skip polling and fetch directly when Redis is unavailable (tryLock error)", async () => {
       vi.resetModules();
       vi.doMock("@/lib/env", () => ({
