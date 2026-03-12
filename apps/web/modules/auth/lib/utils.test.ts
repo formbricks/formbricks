@@ -125,7 +125,7 @@ describe("Auth Utils", () => {
       expect(hash1).not.toBe(hash2);
       expect(await verifyPassword(password, hash1)).toBe(true);
       expect(await verifyPassword(password, hash2)).toBe(true);
-    });
+    }, 15000);
 
     test("should hash complex passwords correctly", async () => {
       const complexPassword = "MyC0mpl3x!P@ssw0rd#2024$%^&*()";

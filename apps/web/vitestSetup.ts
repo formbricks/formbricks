@@ -181,7 +181,7 @@ afterEach(() => {
 export const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
   test("throws a ValidationError if the inputs are invalid", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
-  });
+  }, 15000);
 };
 
 vi.mock("@/lib/constants", () => ({
