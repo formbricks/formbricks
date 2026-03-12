@@ -17,6 +17,7 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
     },
     segment: {
+      findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
@@ -154,6 +155,16 @@ describe("Survey Editor Library Tests", () => {
 
     beforeEach(() => {
       vi.mocked(prisma.survey.update).mockResolvedValue(mockSurvey as any);
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({
+        id: "segment1",
+        environmentId: "env123",
+        title: "Test Segment",
+        isPrivate: false,
+        filters: [],
+        description: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
       vi.mocked(prisma.segment.update).mockResolvedValue({
         id: "segment1",
         environmentId: "env123",

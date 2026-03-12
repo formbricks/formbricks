@@ -98,54 +98,96 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         }
 
         try {
-          // update the segment:
-          let updatedInput: Prisma.SegmentUpdateInput = {
-            ...segment,
-            surveys: undefined,
-          };
-
-          if (segment.surveys) {
-            updatedInput = {
-              ...segment,
-              surveys: {
-                connect: segment.surveys.map((surveyId) => ({ id: surveyId })),
-              },
-            };
-          }
-
-          await prisma.segment.update({
+          // Check if segment exists to handle race conditions where it may have been deleted
+          const existingSegment = await prisma.segment.findUnique({
             where: { id: segment.id },
-            data: updatedInput,
-            select: {
-              surveys: { select: { id: true } },
-              environmentId: true,
-              id: true,
-            },
           });
+
+          if (!existingSegment) {
+            // Segment was deleted, recreate it as a private segment
+            await prisma.survey.update({
+              where: { id: surveyId },
+              data: {
+                segment: {
+                  connectOrCreate: {
+                    where: {
+                      environmentId_title: {
+                        environmentId,
+                        title: surveyId,
+                      },
+                    },
+                    create: {
+                      title: surveyId,
+                      isPrivate: true,
+                      filters: segment.filters || [],
+                      description: segment.description,
+                      environment: {
+                        connect: {
+                          id: environmentId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            });
+          } else {
+            // Segment exists, update it normally
+            let updatedInput: Prisma.SegmentUpdateInput = {
+              ...segment,
+              surveys: undefined,
+            };
+
+            if (segment.surveys) {
+              updatedInput = {
+                ...segment,
+                surveys: {
+                  connect: segment.surveys.map((surveyId) => ({ id: surveyId })),
+                },
+              };
+            }
+
+            await prisma.segment.update({
+              where: { id: segment.id },
+              data: updatedInput,
+              select: {
+                surveys: { select: { id: true } },
+                environmentId: true,
+                id: true,
+              },
+            });
+          }
         } catch (error) {
           logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
         }
       } else {
         if (segment.isPrivate) {
-          // disconnect the private segment first and then delete:
-          await prisma.segment.update({
+          // Check if segment exists before attempting to disconnect and delete
+          const existingSegment = await prisma.segment.findUnique({
             where: { id: segment.id },
-            data: {
-              surveys: {
-                disconnect: {
-                  id: surveyId,
-                },
-              },
-            },
           });
 
-          // delete the private segment:
-          await prisma.segment.delete({
-            where: {
-              id: segment.id,
-            },
-          });
+          if (existingSegment) {
+            // disconnect the private segment first and then delete:
+            await prisma.segment.update({
+              where: { id: segment.id },
+              data: {
+                surveys: {
+                  disconnect: {
+                    id: surveyId,
+                  },
+                },
+              },
+            });
+
+            // delete the private segment:
+            await prisma.segment.delete({
+              where: {
+                id: segment.id,
+              },
+            });
+          }
         } else {
           await prisma.survey.update({
             where: {
