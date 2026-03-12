@@ -13,7 +13,7 @@
     "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
-    "@react-email/components": "1.0.8",
+    "@react-email/components": "1.0.9",
     "react-email": "5.2.9"
   },
   "devDependencies": {

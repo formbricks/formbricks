@@ -12,18 +12,18 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.1",
-    "@storybook/addon-a11y": "10.2.15",
-    "@storybook/addon-links": "10.2.15",
-    "@storybook/addon-onboarding": "10.2.15",
-    "@storybook/react-vite": "10.2.15",
-    "@typescript-eslint/eslint-plugin": "8.56.1",
+    "@storybook/addon-a11y": "10.2.17",
+    "@storybook/addon-links": "10.2.17",
+    "@storybook/addon-onboarding": "10.2.17",
+    "@storybook/react-vite": "10.2.17",
+    "@typescript-eslint/eslint-plugin": "8.57.0",
     "@tailwindcss/vite": "4.2.1",
-    "@typescript-eslint/parser": "8.56.1",
+    "@typescript-eslint/parser": "8.57.0",
     "@vitejs/plugin-react": "5.1.4",
     "eslint-plugin-react-refresh": "0.4.26",
-    "eslint-plugin-storybook": "10.2.14",
-    "storybook": "10.2.15",
+    "eslint-plugin-storybook": "10.2.17",
+    "storybook": "10.2.17",
     "vite": "7.3.1",
-    "@storybook/addon-docs": "10.2.15"
+    "@storybook/addon-docs": "10.2.17"
   }
 }
