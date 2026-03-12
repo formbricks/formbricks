@@ -7,21 +7,20 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { recheckLicenseAction } from "@/modules/ee/license-check/actions";
+import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { SettingsCard } from "../../../components/SettingsCard";
 
-type LicenseStatus = "active" | "expired" | "instance_mismatch" | "unreachable" | "invalid_license";
-
 interface EnterpriseLicenseStatusProps {
-  status: LicenseStatus;
+  status: TLicenseStatus;
   gracePeriodEnd?: Date;
   environmentId: string;
 }
 
 const getBadgeConfig = (
-  status: LicenseStatus,
+  status: TLicenseStatus,
   t: TFunction
 ): { type: "success" | "error" | "warning" | "gray"; label: string } => {
   switch (status) {

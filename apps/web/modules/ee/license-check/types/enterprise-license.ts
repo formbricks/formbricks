@@ -29,7 +29,7 @@ export const ZEnterpriseLicenseDetails = z.object({
 
 export type TEnterpriseLicenseDetails = z.infer<typeof ZEnterpriseLicenseDetails>;
 
-export type TEnterpriseLicenseStatusReturn =
+export type TLicenseStatus =
   | "active"
   | "expired"
   | "instance_mismatch"

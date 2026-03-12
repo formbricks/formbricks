@@ -14,7 +14,7 @@ import { getInstanceId } from "@/lib/instance";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
-  TEnterpriseLicenseStatusReturn,
+  TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
 // Configuration
@@ -52,7 +52,7 @@ type TEnterpriseLicenseResult = {
   lastChecked: Date;
   isPendingDowngrade: boolean;
   fallbackLevel: FallbackLevel;
-  status: TEnterpriseLicenseStatusReturn;
+  status: TLicenseStatus;
 };
 
 type TPreviousResult = {
@@ -586,7 +586,7 @@ const computeLicenseState = async (
         lastChecked: previousResult.lastChecked,
         isPendingDowngrade: true,
         fallbackLevel: "grace" as const,
-        status: (liveLicenseDetails?.status as TEnterpriseLicenseStatusReturn) ?? "unreachable",
+        status: liveLicenseDetails?.status ?? "unreachable",
       };
       memoryCache = { data: graceResult, timestamp: Date.now() };
       return graceResult;
