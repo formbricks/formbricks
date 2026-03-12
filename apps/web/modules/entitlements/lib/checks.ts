@@ -19,7 +19,7 @@ const TRIAL_RESTRICTED_ENTITLEMENT_KEYS = [
 ] as const satisfies readonly TEntitlementFeature[];
 
 const isTrialRestrictedEntitlement = (featureLookupKey: TEntitlementFeature): boolean =>
-  TRIAL_RESTRICTED_ENTITLEMENT_KEYS.some((restrictedFeature) => restrictedFeature === featureLookupKey);
+  (TRIAL_RESTRICTED_ENTITLEMENT_KEYS as readonly TEntitlementFeature[]).includes(featureLookupKey);
 
 export const hasOrganizationEntitlement = async (
   organizationId: string,
