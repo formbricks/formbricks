@@ -187,7 +187,7 @@ export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.
 export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
 
 export const POSTHOG_KEY = env.POSTHOG_KEY;
-export const POSTHOG_REGION = env.POSTHOG_REGION ?? "eu";
+export const POSTHOG_REGION = env.POSTHOG_REGION;
 export const IS_POSTHOG_CONFIGURED = Boolean(env.POSTHOG_KEY && env.POSTHOG_REGION);
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
