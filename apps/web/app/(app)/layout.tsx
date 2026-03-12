@@ -5,9 +5,7 @@ import {
   CHATWOOT_BASE_URL,
   CHATWOOT_WEBSITE_TOKEN,
   IS_CHATWOOT_CONFIGURED,
-  IS_POSTHOG_CONFIGURED,
   POSTHOG_KEY,
-  POSTHOG_REGION,
 } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -27,14 +25,8 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <NoMobileOverlay />
-      {IS_POSTHOG_CONFIGURED && user && (
-        <PostHogIdentify
-          posthogKey={POSTHOG_KEY!}
-          posthogRegion={POSTHOG_REGION!}
-          userId={user.id}
-          email={user.email}
-          name={user.name}
-        />
+      {POSTHOG_KEY && user && (
+        <PostHogIdentify posthogKey={POSTHOG_KEY} userId={user.id} email={user.email} name={user.name} />
       )}
       {IS_CHATWOOT_CONFIGURED && (
         <ChatwootWidget

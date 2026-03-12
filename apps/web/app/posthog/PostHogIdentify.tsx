@@ -5,20 +5,19 @@ import { useEffect, useRef } from "react";
 
 interface PostHogIdentifyProps {
   posthogKey: string;
-  posthogRegion: string;
   userId: string;
   email: string;
   name: string | null;
 }
 
-export const PostHogIdentify = ({ posthogKey, posthogRegion, userId, email, name }: PostHogIdentifyProps) => {
+export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIdentifyProps) => {
   const lastIdentifiedUserId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!posthog.__loaded) {
       posthog.init(posthogKey, {
         api_host: "/ingest",
-        ui_host: `https://${posthogRegion}.i.posthog.com`,
+        ui_host: "https://eu.i.posthog.com",
         defaults: "2026-01-30",
         capture_exceptions: true,
         debug: process.env.NODE_ENV === "development",
@@ -31,7 +30,7 @@ export const PostHogIdentify = ({ posthogKey, posthogRegion, userId, email, name
 
     posthog.identify(userId, { email, name });
     lastIdentifiedUserId.current = userId;
-  }, [posthogKey, posthogRegion, userId, email, name]);
+  }, [posthogKey, userId, email, name]);
 
   return null;
 };
