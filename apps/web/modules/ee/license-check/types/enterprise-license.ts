@@ -32,6 +32,7 @@ export type TEnterpriseLicenseDetails = z.infer<typeof ZEnterpriseLicenseDetails
 export type TEnterpriseLicenseStatusReturn =
   | "active"
   | "expired"
+  | "instance_mismatch"
   | "unreachable"
   | "invalid_license"
   | "no-license";
