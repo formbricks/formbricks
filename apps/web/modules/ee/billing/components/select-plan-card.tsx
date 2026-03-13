@@ -11,7 +11,8 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
-import { startHobbyAction, startScaleTrialAction } from "@/modules/ee/billing/actions";
+import { startProTrialAction } from "@/modules/ee/billing/actions";
+import { startHobbyAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
@@ -35,17 +36,21 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
   const { t } = useTranslation();
 
   const TRIAL_FEATURE_KEYS = [
-    t("environments.settings.billing.trial_feature_whitelabel"),
-    t("environments.settings.billing.trial_feature_collaboration"),
+    t("environments.settings.billing.trial_feature_unlimited_seats"),
+    t("environments.settings.billing.trial_feature_hide_branding"),
+    t("environments.settings.billing.trial_feature_respondent_identification"),
+    t("environments.settings.billing.trial_feature_contact_segment_management"),
+    t("environments.settings.billing.trial_feature_attribute_segmentation"),
+    t("environments.settings.billing.trial_feature_mobile_sdks"),
+    t("environments.settings.billing.trial_feature_email_followups"),
     t("environments.settings.billing.trial_feature_webhooks"),
     t("environments.settings.billing.trial_feature_api_access"),
-    t("environments.settings.billing.trial_feature_quotas"),
   ] as const;
 
   const handleStartTrial = async () => {
     setIsStartingTrial(true);
     try {
-      const result = await startScaleTrialAction({ organizationId });
+      const result = await startProTrialAction({ organizationId });
       if (result?.data) {
         router.push(nextUrl);
       } else if (result?.serverError === "trial_already_used") {

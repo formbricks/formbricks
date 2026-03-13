@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { startHobbyAction, startScaleTrialAction } from "./actions";
+import { startHobbyAction, startProTrialAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
   checkAuthorizationUpdated: vi.fn(),
   getOrganization: vi.fn(),
-  createScaleTrialSubscription: vi.fn(),
+  createProTrialSubscription: vi.fn(),
   ensureCloudStripeSetupForOrganization: vi.fn(),
   ensureStripeCustomerForOrganization: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
   syncOrganizationBillingFromStripe: vi.fn(),
   getOrganizationIdFromEnvironmentId: vi.fn(),
   createCustomerPortalSession: vi.fn(),
+  createSetupCheckoutSession: vi.fn(),
   isSubscriptionCancelled: vi.fn(),
   stripeCustomerSessionsCreate: vi.fn(),
 }));
@@ -47,12 +48,16 @@ vi.mock("@/modules/ee/billing/api/lib/create-customer-portal-session", () => ({
   createCustomerPortalSession: mocks.createCustomerPortalSession,
 }));
 
+vi.mock("@/modules/ee/billing/api/lib/create-setup-checkout-session", () => ({
+  createSetupCheckoutSession: mocks.createSetupCheckoutSession,
+}));
+
 vi.mock("@/modules/ee/billing/api/lib/is-subscription-cancelled", () => ({
   isSubscriptionCancelled: mocks.isSubscriptionCancelled,
 }));
 
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
-  createScaleTrialSubscription: mocks.createScaleTrialSubscription,
+  createProTrialSubscription: mocks.createProTrialSubscription,
   ensureCloudStripeSetupForOrganization: mocks.ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization: mocks.ensureStripeCustomerForOrganization,
   reconcileCloudStripeSubscriptionsForOrganization: mocks.reconcileCloudStripeSubscriptionsForOrganization,
@@ -78,7 +83,7 @@ describe("billing actions", () => {
       },
     });
     mocks.ensureStripeCustomerForOrganization.mockResolvedValue({ customerId: "cus_1" });
-    mocks.createScaleTrialSubscription.mockResolvedValue(undefined);
+    mocks.createProTrialSubscription.mockResolvedValue(undefined);
     mocks.reconcileCloudStripeSubscriptionsForOrganization.mockResolvedValue(undefined);
     mocks.syncOrganizationBillingFromStripe.mockResolvedValue(undefined);
   });
@@ -131,24 +136,21 @@ describe("billing actions", () => {
     expect(result).toEqual({ success: true });
   });
 
-  test("startScaleTrialAction uses ensured customer when org snapshot has no stripe customer id", async () => {
-    const result = await startScaleTrialAction({
+  test("startProTrialAction uses ensured customer when org snapshot has no stripe customer id", async () => {
+    const result = await startProTrialAction({
       ctx: { user: { id: "user_1" } },
       parsedInput: { organizationId: "org_1" },
     } as any);
 
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");
-    expect(mocks.createScaleTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1");
-    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
-      "org_1",
-      "scale-trial"
-    );
+    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1");
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1", "pro-trial");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });
   });
 
-  test("startScaleTrialAction reuses an existing stripe customer id", async () => {
+  test("startProTrialAction reuses an existing stripe customer id", async () => {
     mocks.getOrganization.mockResolvedValue({
       id: "org_1",
       billing: {
@@ -156,17 +158,14 @@ describe("billing actions", () => {
       },
     });
 
-    const result = await startScaleTrialAction({
+    const result = await startProTrialAction({
       ctx: { user: { id: "user_1" } },
       parsedInput: { organizationId: "org_1" },
     } as any);
 
     expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
-    expect(mocks.createScaleTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing");
-    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
-      "org_1",
-      "scale-trial"
-    );
+    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing");
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1", "pro-trial");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });
   });
