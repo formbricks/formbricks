@@ -372,7 +372,7 @@ checksums:
     common/something_went_wrong: a3cd2f01c073f1f5ff436d4b132d39cf
     common/something_went_wrong_please_try_again: c62a7718d9a1e9c4ffb707807550f836
     common/sort_by: 8adf3dbc5668379558957662f0c43563
-    common/start_free_trial: 4fab76a3fc5d5c94e3248cd279cfdd14
+    common/upgrade_plan: 4fab76a3fc5d5c94e3248cd279cfdd14
     common/status: 4e1fcce15854d824919b4a582c697c90
     common/step_by_step_manual: 2894a07952a4fd11d98d5d8f1088690c
     common/storage_not_configured: b0c3e339f6d71f23fdd189e7bcb076f6
