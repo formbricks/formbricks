@@ -34,7 +34,7 @@ export const invalidateOrganizationBillingCache = async (organizationId: string)
   await cache.del([getBillingCacheKey(organizationId)]);
 };
 
-const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
+export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
     projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
