@@ -42,7 +42,13 @@ function compareDateOperands(
     });
     return false;
   }
-  if (rightDate === null) return false;
+  if (rightDate === null) {
+    console.warn(`[logic] ${operator}: could not parse right date`, {
+      elementId: rightField.id,
+      value: rightValue,
+    });
+    return false;
+  }
   return compare(leftDate, rightDate);
 }
 

@@ -19,8 +19,8 @@ function parseValueToDate(value: string, format: DateStorageFormat): Date | unde
   if (!trimmed) return undefined;
   const parts = trimmed.split("-");
   if (parts.length !== 3) return undefined;
+  if (parts.some((p) => !/^\d+$/.test(p))) return undefined;
   const nums = parts.map((p) => Number.parseInt(p, 10));
-  if (nums.some(Number.isNaN)) return undefined;
   const useIso = ISO_FIRST_CHARS.test(trimmed);
   const effective = useIso ? DEFAULT_DATE_STORAGE_FORMAT : format;
   const order = DATE_STORAGE_FORMATS[effective].parseOrder;

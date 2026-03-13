@@ -60,6 +60,11 @@ export function parseDateByFormat(
  * Try to parse a date string using each known storage format in order.
  * Use when the storage format is unknown (e.g. recall placeholders).
  *
+ * Ambiguity: Values like "03-05-2024" can be March 5th (M-d-y) or May 3rd (d-M-y).
+ * Formats are tried in DATE_STORAGE_FORMATS_LIST order (M-d-y, then d-M-y, then y-M-d);
+ * the first successful parse is returned. M-d-y is preferred when format metadata is
+ * unavailable so that common US-style input is accepted first.
+ *
  * @param value - Stored date string
  * @returns Parsed Date or null if no format matched
  */

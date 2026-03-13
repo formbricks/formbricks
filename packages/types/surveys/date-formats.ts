@@ -53,5 +53,9 @@ export const DATE_STORAGE_FORMATS: Record<TSurveyDateStorageFormat, DateFormatDe
   },
 };
 
-/** All format ids as an array (for iteration, e.g. try-parse or dropdowns). */
+/**
+ * All format ids as an array (for iteration, e.g. dropdowns or try-parse).
+ * When used for try-parse without format metadata, the first matching format wins;
+ * order is M-d-y, d-M-y, y-M-d (see parseDateWithFormats in @formbricks/surveys).
+ */
 export const DATE_STORAGE_FORMATS_LIST: TSurveyDateStorageFormat[] = [...DATE_STORAGE_FORMAT_IDS];
