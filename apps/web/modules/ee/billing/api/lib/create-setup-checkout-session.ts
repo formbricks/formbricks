@@ -36,7 +36,7 @@ export const createSetupCheckoutSession = async (
       address: "auto",
       name: "auto",
     },
-    success_url: returnUrl,
+    success_url: `${returnUrl}?checkout_success=1`,
     cancel_url: returnUrl,
     metadata: {
       organizationId,

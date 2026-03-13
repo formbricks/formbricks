@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -124,6 +124,7 @@ export const PricingTable = ({
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
   const [pricingTableCustomerSessionClientSecret, setPricingTableCustomerSessionClientSecret] = useState<
@@ -164,6 +165,13 @@ export const PricingTable = ({
     stripePricingTableId,
     stripePublishableKey,
   ]);
+
+  useEffect(() => {
+    if (searchParams.get("checkout_success")) {
+      const timer = setTimeout(() => router.refresh(), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
