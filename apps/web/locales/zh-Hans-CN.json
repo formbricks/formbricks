@@ -995,7 +995,6 @@
         "trial_already_used": "该邮箱地址已使用过免费试用。请升级至付费计划。",
         "trial_feature_api_access": "获取完整 API 访问权限",
         "trial_feature_collaboration": "所有团队和协作功能",
-        "trial_feature_email_followups": "设置邮件跟进",
         "trial_feature_quotas": "管理配额",
         "trial_feature_webhooks": "设置自定义 Webhook",
         "trial_feature_whitelabel": "完全白标化的问卷调查",
