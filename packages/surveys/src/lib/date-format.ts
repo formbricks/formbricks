@@ -2,9 +2,10 @@ import {
   DATE_FORMAT_PARSE_ORDER,
   DATE_STORAGE_FORMATS_LIST,
   DEFAULT_DATE_STORAGE_FORMAT,
+  type TSurveyDateStorageFormat,
 } from "@formbricks/types/surveys/date-formats";
 
-export type { TSurveyDateStorageFormat } from "@formbricks/types/surveys/date-formats";
+export type { TSurveyDateStorageFormat };
 
 const ISO_FIRST_CHARS = /^\d{4}/;
 
