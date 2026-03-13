@@ -29,6 +29,7 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -167,6 +168,25 @@ export const MainNavigation = ({
     if (isOwnerOrManager) loadReleases();
   }, [isOwnerOrManager]);
 
+  const trialDaysRemaining = useMemo(() => {
+    if (!isFormbricksCloud || organization.billing.stripe?.subscriptionStatus !== "trialing") return null;
+    const trialEnd = organization.billing.stripe.trialEnd;
+    if (!trialEnd) return null;
+    const msPerDay = 86_400_000;
+    return Math.ceil((new Date(trialEnd).getTime() - Date.now()) / msPerDay);
+  }, [
+    isFormbricksCloud,
+    organization.billing.stripe?.subscriptionStatus,
+    organization.billing.stripe?.trialEnd,
+  ]);
+
+  const trialLabel = useMemo(() => {
+    if (trialDaysRemaining === null) return "";
+    if (trialDaysRemaining <= 0) return t("common.trial_expired");
+    if (trialDaysRemaining === 1) return t("common.trial_one_day_remaining");
+    return t("common.trial_days_remaining", { count: trialDaysRemaining });
+  }, [trialDaysRemaining, t]);
+
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
   return (
@@ -238,6 +258,17 @@ export const MainNavigation = ({
                   <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
                   {t("common.new_version_available", { version: latestVersion })}
                 </p>
+              </Link>
+            )}
+
+            {/* Trial Days Remaining */}
+            {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
+              <Link href={`/environments/${environment.id}/settings/billing`} className="m-2 block">
+                <Alert
+                  variant={trialDaysRemaining <= 3 ? "error" : trialDaysRemaining <= 7 ? "warning" : "info"}
+                  size="small">
+                  <AlertTitle>{trialLabel}</AlertTitle>
+                </Alert>
               </Link>
             )}
 

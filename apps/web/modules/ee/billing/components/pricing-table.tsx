@@ -92,6 +92,7 @@ interface PricingTableProps {
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
   isStripeSetupIncomplete: boolean;
+  trialDaysRemaining: number | null;
 }
 
 const getCurrentCloudPlanLabel = (
@@ -118,6 +119,7 @@ export const PricingTable = ({
   stripePublishableKey,
   stripePricingTableId,
   isStripeSetupIncomplete,
+  trialDaysRemaining,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -229,6 +231,13 @@ export const PricingTable = ({
     }
   };
 
+  const trialAlertTitle = useMemo(() => {
+    if (trialDaysRemaining === null) return "";
+    if (trialDaysRemaining <= 0) return t("common.trial_expired");
+    if (trialDaysRemaining === 1) return t("common.trial_one_day_remaining");
+    return t("common.trial_days_remaining", { count: trialDaysRemaining });
+  }, [trialDaysRemaining, t]);
+
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
   const projectsUnlimitedCheck = organization.billing.limits.projects === null;
   const usageCycleLabel = `${usageCycleStart.toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
@@ -246,6 +255,17 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex max-w-4xl flex-col gap-4">
+        {trialDaysRemaining !== null && (
+          <Alert variant={trialDaysRemaining <= 3 ? "error" : trialDaysRemaining <= 7 ? "warning" : "info"}>
+            <AlertTitle>{trialAlertTitle}</AlertTitle>
+            <AlertDescription>{t("environments.settings.billing.trial_alert_description")}</AlertDescription>
+            {hasBillingRights && (
+              <AlertButton onClick={() => void openCustomerPortal()}>
+                {t("environments.settings.billing.add_payment_method")}
+              </AlertButton>
+            )}
+          </Alert>
+        )}
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
             <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
@@ -261,7 +281,7 @@ export const PricingTable = ({
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
           buttonInfo={
-            canManageSubscription
+            canManageSubscription && currentSubscriptionStatus !== "trialing"
               ? {
                   text: t("environments.settings.billing.manage_subscription"),
                   onClick: () => void openCustomerPortal(),

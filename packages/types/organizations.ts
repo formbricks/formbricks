@@ -23,6 +23,7 @@ export const ZOrganizationStripeBilling = z.object({
   lastStripeEventCreatedAt: z.string().nullable().optional(),
   lastSyncedAt: z.string().nullable().optional(),
   lastSyncedEventId: z.string().nullable().optional(),
+  trialEnd: z.string().nullable().optional(),
 });
 export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 

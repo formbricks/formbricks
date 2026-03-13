@@ -10,6 +10,7 @@ export type TCloudBillingDisplayContext = {
   organizationId: string;
   currentCloudPlan: TCloudBillingDisplayPlan;
   currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
+  trialDaysRemaining: number | null;
   usageCycleStart: Date;
   usageCycleEnd: Date;
   billing: NonNullable<Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>>;
@@ -27,6 +28,19 @@ const resolveCurrentSubscriptionStatus = (
   return billing.stripe?.subscriptionStatus ?? null;
 };
 
+const MS_PER_DAY = 86_400_000;
+
+const resolveTrialDaysRemaining = (
+  billing: NonNullable<Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>>
+): number | null => {
+  if (billing.stripe?.subscriptionStatus !== "trialing" || !billing.stripe.trialEnd) {
+    return null;
+  }
+
+  const trialEndDate = new Date(billing.stripe.trialEnd);
+  return Math.ceil((trialEndDate.getTime() - Date.now()) / MS_PER_DAY);
+};
+
 export const getCloudBillingDisplayContext = async (
   organizationId: string
 ): Promise<TCloudBillingDisplayContext> => {
@@ -42,6 +56,7 @@ export const getCloudBillingDisplayContext = async (
     organizationId,
     currentCloudPlan: resolveCurrentCloudPlan(billing),
     currentSubscriptionStatus: resolveCurrentSubscriptionStatus(billing),
+    trialDaysRemaining: resolveTrialDaysRemaining(billing),
     usageCycleStart: usageCycleWindow.start,
     usageCycleEnd: usageCycleWindow.end,
     billing,

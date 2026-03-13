@@ -407,6 +407,9 @@ checksums:
     common/title: 344e64395eaff6822a57d18623853e1a
     common/top_left: aa61bb29b56df3e046b6d68d89ee8986
     common/top_right: 241f95c923846911aaf13af6109333e5
+    common/trial_days_remaining: 914ff3132895e410bf0f862433ccb49e
+    common/trial_expired: ca9f0532ac40ca427ca1ba4c86454e07
+    common/trial_one_day_remaining: 2d64d39fca9589c4865357817bcc24d5
     common/try_again: 33dd8820e743e35a66e6977f69e9d3b5
     common/type: f04471a7ddac844b9ad145eb9911ef75
     common/unknown_survey: dd8f6985e17ccf19fac1776e18b2c498
@@ -937,6 +940,7 @@ checksums:
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     environments/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
+    environments/settings/billing/trial_alert_description: cf6d490ca2c264238481915fa97738c9
     environments/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     environments/settings/billing/trial_feature_api_access: d7aabb2de18beb5bd30c274cd768a2a9
     environments/settings/billing/trial_feature_collaboration: a43509fffe319e14d69a981ef2791517
@@ -944,10 +948,11 @@ checksums:
     environments/settings/billing/trial_feature_webhooks: 8d7f034e006b2fe0eb8fa9b8f1abef51
     environments/settings/billing/trial_feature_whitelabel: 624a7aeca6a0fa65935c63fd7a8e9638
     environments/settings/billing/trial_no_credit_card: 01c70aa6e1001815a9a11951394923ca
-    environments/settings/billing/trial_title: 23d0d2cbe306ae0f784b8289bf66a2c7
+    environments/settings/billing/trial_title: 7869e23df37b8d4c9ea3e2dbdfa26736
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
+    environments/settings/billing/upgrade_now: 059e020c0eddd549ac6c6369a427915a
     environments/settings/billing/usage_cycle: 4986315c0b486c7490bab6ada2205bee
     environments/settings/billing/used: 9e2eff0ac536d11a9f8fcb055dd68f2e
     environments/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b
