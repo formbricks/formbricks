@@ -4,7 +4,11 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { DATE_STORAGE_FORMAT_IDS, DATE_STORAGE_FORMAT_LABELS } from "@formbricks/types/surveys/date-formats";
+import {
+  DATE_STORAGE_FORMAT_IDS,
+  DATE_STORAGE_FORMAT_LABELS,
+  type TSurveyDateStorageFormat,
+} from "@formbricks/types/surveys/date-formats";
 import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -112,7 +116,9 @@ export const DateElementForm = ({
           <OptionsSwitch
             options={dateOptions}
             currentOption={element.format}
-            handleOptionChange={(value: string) => updateElement(elementIdx, { format: value })}
+            handleOptionChange={(value: string) =>
+              updateElement(elementIdx, { format: value as TSurveyDateStorageFormat })
+            }
           />
         </div>
       </div>

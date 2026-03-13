@@ -110,7 +110,7 @@ function DateElement({
     setDate((prevDate) => {
       if (!newDate) return undefined;
       if (prevDate?.getTime() !== newDate.getTime()) return newDate;
-      return prevDate ?? undefined;
+      return prevDate;
     });
   }, [value, outputFormat]);
 

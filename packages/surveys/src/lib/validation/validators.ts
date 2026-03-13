@@ -4,7 +4,7 @@ import {
   DEFAULT_DATE_STORAGE_FORMAT,
   type TSurveyDateStorageFormat,
 } from "@formbricks/types/surveys/date-formats";
-import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
   TValidationRuleParamsContains,

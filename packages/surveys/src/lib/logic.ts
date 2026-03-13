@@ -3,7 +3,7 @@ import { type TResponseData, type TResponseVariables } from "@formbricks/types/r
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
-import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { type TSurveyVariable } from "@formbricks/types/surveys/types";
 import { parseDateByFormat } from "@/lib/date-format";
@@ -478,8 +478,8 @@ const evaluateSingleCondition = (
         return compareDateOperands(
           toDateOperandString(leftValue),
           toDateOperandString(rightValue),
-          leftField,
-          rightField,
+          leftField as TSurveyElement,
+          rightField as TSurveyElement,
           "isAfter",
           (l, r) => l.getTime() > r.getTime()
         );
@@ -487,8 +487,8 @@ const evaluateSingleCondition = (
         return compareDateOperands(
           toDateOperandString(leftValue),
           toDateOperandString(rightValue),
-          leftField,
-          rightField,
+          leftField as TSurveyElement,
+          rightField as TSurveyElement,
           "isBefore",
           (l, r) => l.getTime() < r.getTime()
         );

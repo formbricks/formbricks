@@ -3,11 +3,7 @@ import React from "react";
 import { logger } from "@formbricks/logger";
 import { TResponseDataValue } from "@formbricks/types/responses";
 import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
-import {
-  TSurveyDateElement,
-  TSurveyElement,
-  TSurveyElementTypeEnum,
-} from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
