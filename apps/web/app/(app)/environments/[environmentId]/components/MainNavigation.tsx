@@ -172,8 +172,10 @@ export const MainNavigation = ({
     if (!isFormbricksCloud || organization.billing.stripe?.subscriptionStatus !== "trialing") return null;
     const trialEnd = organization.billing.stripe.trialEnd;
     if (!trialEnd) return null;
+    const ts = new Date(trialEnd).getTime();
+    if (!Number.isFinite(ts)) return null;
     const msPerDay = 86_400_000;
-    return Math.ceil((new Date(trialEnd).getTime() - Date.now()) / msPerDay);
+    return Math.ceil((ts - Date.now()) / msPerDay);
   }, [
     isFormbricksCloud,
     organization.billing.stripe?.subscriptionStatus,

@@ -971,6 +971,7 @@
         "api_keys_description": "Gestionați cheile API pentru a accesa API-urile de administrare Formbricks"
       },
       "billing": {
+        "add_payment_method": "Adaugă o metodă de plată",
         "cancelling": "Anulare în curs",
         "failed_to_start_trial": "Nu am putut porni perioada de probă. Te rugăm să încerci din nou.",
         "manage_subscription": "Gestionează abonamentul",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "Configurarea facturării nu a fost finalizată cu succes. Încearcă din nou pentru a activa abonamentul.",
         "subscription": "Abonament",
         "subscription_description": "Gestionează-ți abonamentul și monitorizează-ți consumul",
-        "trial_alert_description": "Actualizează-ți planul pentru a păstra accesul la toate funcționalitățile.",
+        "trial_alert_description": "Adaugă o metodă de plată pentru a păstra accesul la toate funcționalitățile.",
         "trial_already_used": "O perioadă de probă gratuită a fost deja utilizată pentru această adresă de email. Te rugăm să treci la un plan plătit în schimb.",
         "trial_feature_api_access": "Obține acces complet la API",
         "trial_feature_collaboration": "Toate funcțiile de echipă și colaborare",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "Răspunsuri nelimitate",
         "unlimited_workspaces": "Workspaces nelimitate",
         "upgrade": "Actualizare",
-        "upgrade_now": "Actualizează acum",
         "usage_cycle": "Usage cycle",
         "used": "utilizat",
         "your_plan": "Planul tău"

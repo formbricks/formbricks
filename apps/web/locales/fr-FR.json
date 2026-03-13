@@ -971,6 +971,7 @@
         "api_keys_description": "Les clés d'API permettent d'accéder aux API de gestion de Formbricks."
       },
       "billing": {
+        "add_payment_method": "Ajouter un moyen de paiement",
         "cancelling": "Annulation en cours",
         "failed_to_start_trial": "Échec du démarrage de l'essai. Réessaye.",
         "manage_subscription": "Gérer l'abonnement",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "La configuration de la facturation n’a pas abouti. Merci de réessayer pour activer ton abonnement.",
         "subscription": "Abonnement",
         "subscription_description": "Gère ton abonnement et surveille ta consommation",
-        "trial_alert_description": "Passez à une offre payante pour conserver l'accès à toutes les fonctionnalités.",
+        "trial_alert_description": "Ajoute un moyen de paiement pour conserver l'accès à toutes les fonctionnalités.",
         "trial_already_used": "Un essai gratuit a déjà été utilisé pour cette adresse e-mail. Passe plutôt à un plan payant.",
         "trial_feature_api_access": "Accès complet à l'API",
         "trial_feature_collaboration": "Toutes les fonctionnalités d'équipe et de collaboration",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "Réponses illimitées",
         "unlimited_workspaces": "Projets illimités",
         "upgrade": "Mise à niveau",
-        "upgrade_now": "Passer à une offre supérieure",
         "usage_cycle": "Usage cycle",
         "used": "utilisé(s)",
         "your_plan": "Ton offre"

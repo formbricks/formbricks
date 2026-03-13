@@ -971,6 +971,7 @@
         "api_keys_description": "管理 API 金鑰以存取 Formbricks 管理 API"
       },
       "billing": {
+        "add_payment_method": "新增付款方式",
         "cancelling": "正在取消",
         "failed_to_start_trial": "無法開始試用。請再試一次。",
         "manage_subscription": "管理訂閱",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "帳單設定未成功完成，請重新操作以啟用訂閱。",
         "subscription": "訂閱",
         "subscription_description": "管理您的訂閱方案並監控用量",
-        "trial_alert_description": "升級您的方案以繼續使用所有功能。",
+        "trial_alert_description": "新增付款方式以繼續使用所有功能。",
         "trial_already_used": "此電子郵件地址已使用過免費試用。請改為升級至付費方案。",
         "trial_feature_api_access": "獲得完整 API 存取權限",
         "trial_feature_collaboration": "所有團隊與協作功能",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "無限回應",
         "unlimited_workspaces": "無限工作區",
         "upgrade": "升級",
-        "upgrade_now": "立即升級",
         "usage_cycle": "Usage cycle",
         "used": "已使用",
         "your_plan": "您的方案"

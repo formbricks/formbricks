@@ -916,6 +916,7 @@ checksums:
     environments/settings/api_keys/add_api_key: 1c11117b1d4665ccdeb68530381c6a9d
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
+    environments/settings/billing/add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
     environments/settings/billing/cancelling: 6e46e789720395bfa1e3a4b3b1519634
     environments/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
     environments/settings/billing/manage_subscription: b83a75127b8eabc21dfa1e0f7104db56
@@ -940,7 +941,7 @@ checksums:
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     environments/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
-    environments/settings/billing/trial_alert_description: cf6d490ca2c264238481915fa97738c9
+    environments/settings/billing/trial_alert_description: aba3076cc6814cc6128d425d3d1957e8
     environments/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     environments/settings/billing/trial_feature_api_access: d7aabb2de18beb5bd30c274cd768a2a9
     environments/settings/billing/trial_feature_collaboration: a43509fffe319e14d69a981ef2791517
@@ -952,7 +953,6 @@ checksums:
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
-    environments/settings/billing/upgrade_now: 059e020c0eddd549ac6c6369a427915a
     environments/settings/billing/usage_cycle: 4986315c0b486c7490bab6ada2205bee
     environments/settings/billing/used: 9e2eff0ac536d11a9f8fcb055dd68f2e
     environments/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b

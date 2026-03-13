@@ -971,6 +971,7 @@
         "api_keys_description": "Formbricks管理APIにアクセスするためのAPIキーを管理します"
       },
       "billing": {
+        "add_payment_method": "支払い方法を追加",
         "cancelling": "キャンセル中",
         "failed_to_start_trial": "トライアルの開始に失敗しました。もう一度お試しください。",
         "manage_subscription": "サブスクリプションを管理",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "請求情報の設定が正常に完了しませんでした。もう一度やり直してサブスクリプションを有効化してください。",
         "subscription": "サブスクリプション",
         "subscription_description": "サブスクリプションプランの管理や利用状況の確認はこちら",
-        "trial_alert_description": "すべての機能へのアクセスを維持するには、プランをアップグレードしてください。",
+        "trial_alert_description": "すべての機能へのアクセスを維持するには、支払い方法を追加してください。",
         "trial_already_used": "このメールアドレスでは既に無料トライアルが使用されています。代わりに有料プランにアップグレードしてください。",
         "trial_feature_api_access": "フルAPIアクセスを利用",
         "trial_feature_collaboration": "すべてのチーム・コラボレーション機能",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "無制限の回答",
         "unlimited_workspaces": "無制限ワークスペース",
         "upgrade": "アップグレード",
-        "upgrade_now": "今すぐアップグレード",
         "usage_cycle": "Usage cycle",
         "used": "使用済み",
         "your_plan": "ご利用プラン"

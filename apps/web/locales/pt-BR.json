@@ -971,6 +971,7 @@
         "api_keys_description": "Gerencie chaves de API para acessar as APIs de gerenciamento do Formbricks"
       },
       "billing": {
+        "add_payment_method": "Adicionar forma de pagamento",
         "cancelling": "Cancelando",
         "failed_to_start_trial": "Falha ao iniciar o período de teste. Por favor, tente novamente.",
         "manage_subscription": "Gerenciar assinatura",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "A configuração de cobrança não foi concluída com sucesso. Tente novamente para ativar sua assinatura.",
         "subscription": "Assinatura",
         "subscription_description": "Gerencie seu plano de assinatura e acompanhe seu uso",
-        "trial_alert_description": "Faça upgrade do seu plano para manter acesso a todos os recursos.",
+        "trial_alert_description": "Adicione uma forma de pagamento para manter o acesso a todos os recursos.",
         "trial_already_used": "Um período de teste gratuito já foi usado para este endereço de e-mail. Por favor, faça upgrade para um plano pago.",
         "trial_feature_api_access": "Obtenha acesso completo à API",
         "trial_feature_collaboration": "Todos os recursos de equipe e colaboração",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "Respostas Ilimitadas",
         "unlimited_workspaces": "Projetos ilimitados",
         "upgrade": "Atualizar",
-        "upgrade_now": "Fazer upgrade agora",
         "usage_cycle": "Usage cycle",
         "used": "usado",
         "your_plan": "Seu plano"

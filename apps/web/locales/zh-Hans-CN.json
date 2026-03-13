@@ -971,6 +971,7 @@
         "api_keys_description": "管理 API 密钥 以 访问 Formbricks 管理 API"
       },
       "billing": {
+        "add_payment_method": "添加支付方式",
         "cancelling": "正在取消",
         "failed_to_start_trial": "试用启动失败，请重试。",
         "manage_subscription": "管理订阅",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "账单设置未成功完成。请重试以激活订阅。",
         "subscription": "订阅",
         "subscription_description": "管理你的订阅套餐并监控用量",
-        "trial_alert_description": "升级您的套餐以继续使用所有功能。",
+        "trial_alert_description": "添加支付方式以继续使用所有功能。",
         "trial_already_used": "该邮箱地址已使用过免费试用。请升级至付费计划。",
         "trial_feature_api_access": "获取完整 API 访问权限",
         "trial_feature_collaboration": "所有团队和协作功能",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "无限反馈",
         "unlimited_workspaces": "无限工作区",
         "upgrade": "升级",
-        "upgrade_now": "立即升级",
         "usage_cycle": "Usage cycle",
         "used": "已用",
         "your_plan": "你的套餐"

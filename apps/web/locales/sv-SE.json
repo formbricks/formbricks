@@ -971,6 +971,7 @@
         "api_keys_description": "Hantera API-nycklar för åtkomst till Formbricks hanterings-API:er"
       },
       "billing": {
+        "add_payment_method": "Lägg till betalningsmetod",
         "cancelling": "Avbryter",
         "failed_to_start_trial": "Kunde inte starta provperioden. Försök igen.",
         "manage_subscription": "Hantera prenumeration",
@@ -995,7 +996,7 @@
         "stripe_setup_incomplete_description": "Faktureringsinställningen slutfördes inte riktigt. Försök igen för att aktivera ditt abonnemang.",
         "subscription": "Abonnemang",
         "subscription_description": "Hantera din abonnemangsplan och följ din användning",
-        "trial_alert_description": "Uppgradera din plan för att behålla tillgång till alla funktioner.",
+        "trial_alert_description": "Lägg till en betalningsmetod för att behålla tillgång till alla funktioner.",
         "trial_already_used": "En gratis provperiod har redan använts för denna e-postadress. Uppgradera till en betald plan istället.",
         "trial_feature_api_access": "Få full API-åtkomst",
         "trial_feature_collaboration": "Alla team- och samarbetsfunktioner",
@@ -1007,7 +1008,6 @@
         "unlimited_responses": "Obegränsade svar",
         "unlimited_workspaces": "Obegränsat antal arbetsytor",
         "upgrade": "Uppgradera",
-        "upgrade_now": "Uppgradera nu",
         "usage_cycle": "Usage cycle",
         "used": "använt",
         "your_plan": "Din plan"

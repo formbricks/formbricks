@@ -38,6 +38,9 @@ const resolveTrialDaysRemaining = (
   }
 
   const trialEndDate = new Date(billing.stripe.trialEnd);
+  if (!Number.isFinite(trialEndDate.getTime())) {
+    return null;
+  }
   return Math.ceil((trialEndDate.getTime() - Date.now()) / MS_PER_DAY);
 };
 
