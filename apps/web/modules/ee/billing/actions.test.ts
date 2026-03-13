@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { startScaleTrialAction, stayOnHobbyAction } from "./actions";
+import { startHobbyAction, startScaleTrialAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
   checkAuthorizationUpdated: vi.fn(),
@@ -83,8 +83,8 @@ describe("billing actions", () => {
     mocks.syncOrganizationBillingFromStripe.mockResolvedValue(undefined);
   });
 
-  test("stayOnHobbyAction ensures a customer, reconciles hobby, and syncs billing", async () => {
-    const result = await stayOnHobbyAction({
+  test("startHobbyAction ensures a customer, reconciles hobby, and syncs billing", async () => {
+    const result = await startHobbyAction({
       ctx: { user: { id: "user_1" } },
       parsedInput: { organizationId: "org_1" },
     } as any);
@@ -103,7 +103,7 @@ describe("billing actions", () => {
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
       "org_1",
-      "stay-on-hobby"
+      "start-hobby"
     );
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });

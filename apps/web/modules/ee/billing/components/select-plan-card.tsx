@@ -11,7 +11,7 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
-import { startScaleTrialAction, stayOnHobbyAction } from "@/modules/ee/billing/actions";
+import { startHobbyAction, startScaleTrialAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
@@ -64,7 +64,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
   const handleContinueFree = async () => {
     setIsStayingOnHobby(true);
     try {
-      const result = await stayOnHobbyAction({ organizationId });
+      const result = await startHobbyAction({ organizationId });
       if (result?.data) {
         router.push(nextUrl);
       } else {

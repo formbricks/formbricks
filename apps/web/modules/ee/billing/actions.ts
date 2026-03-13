@@ -150,7 +150,7 @@ const ZStartScaleTrialAction = z.object({
   organizationId: ZId,
 });
 
-export const stayOnHobbyAction = authenticatedActionClient
+export const startHobbyAction = authenticatedActionClient
   .inputSchema(ZStartScaleTrialAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
@@ -174,7 +174,7 @@ export const stayOnHobbyAction = authenticatedActionClient
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "stay-on-hobby");
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "start-hobby");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };
   });
