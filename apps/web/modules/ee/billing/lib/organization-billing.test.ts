@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   customersUpdate: vi.fn(),
   prismaMembershipFindFirst: vi.fn(),
   loggerInfo: vi.fn(),
+  loggerError: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -83,6 +84,7 @@ vi.mock("@formbricks/logger", () => ({
   logger: {
     warn: mocks.loggerWarn,
     info: mocks.loggerInfo,
+    error: mocks.loggerError,
   },
 }));
 

@@ -490,8 +490,12 @@ export const ensureStripeCustomerForOrganization = async (
   // This reuses the old customer (and its trial history) when a user deletes their account
   // and signs up again with the same email.
   const owner = await getOrganizationOwner(organization.id);
-  const ownerEmail = owner?.email ?? null;
-  const ownerName = owner?.name ?? null;
+  if (!owner) {
+    logger.error({ organizationId }, "Cannot set up Stripe customer: organization has no owner");
+    return { customerId: null };
+  }
+
+  const { email: ownerEmail, name: ownerName } = owner;
   let existingCustomer: Stripe.Customer | null = null;
 
   if (ownerEmail) {
@@ -518,7 +522,7 @@ export const ensureStripeCustomerForOrganization = async (
     (await stripeClient.customers.create(
       {
         name: ownerName ?? undefined,
-        email: ownerEmail ?? undefined,
+        email: ownerEmail,
         metadata: { organizationId: organization.id, organizationName: organization.name },
       },
       { idempotencyKey: `ensure-customer-${organization.id}` }
