@@ -130,8 +130,9 @@ export const PricingTable = ({
   >(null);
 
   const isUpgradeablePlan = currentCloudPlan === "hobby" || currentCloudPlan === "unknown";
+  const isTrialing = currentSubscriptionStatus === "trialing";
   const showPricingTable =
-    hasBillingRights && isUpgradeablePlan && !!stripePublishableKey && !!stripePricingTableId;
+    hasBillingRights && isUpgradeablePlan && !isTrialing && !!stripePublishableKey && !!stripePricingTableId;
   const canManageSubscription =
     hasBillingRights && !isUpgradeablePlan && !!organization.billing.stripeCustomerId;
   const stripeLocaleOverride = useMemo(
@@ -344,7 +345,7 @@ export const PricingTable = ({
           </div>
         </SettingsCard>
 
-        {currentCloudPlan === "pro" && (
+        {currentCloudPlan === "pro" && !isTrialing && (
           <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-slate-800 p-6 shadow-sm">
             <div className="flex items-center justify-between gap-6">
               <div className="flex flex-col gap-1.5">

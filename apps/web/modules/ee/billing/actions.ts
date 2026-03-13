@@ -12,7 +12,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
 import {
-  createScaleTrialSubscription,
+  createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
@@ -149,7 +149,7 @@ const ZStartScaleTrialAction = z.object({
   organizationId: ZId,
 });
 
-export const startScaleTrialAction = authenticatedActionClient
+export const startProTrialAction = authenticatedActionClient
   .inputSchema(ZStartScaleTrialAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
@@ -172,8 +172,8 @@ export const startScaleTrialAction = authenticatedActionClient
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await createScaleTrialSubscription(parsedInput.organizationId, organization.billing.stripeCustomerId);
-    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "scale-trial");
+    await createProTrialSubscription(parsedInput.organizationId, organization.billing.stripeCustomerId);
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "pro-trial");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };
   });
