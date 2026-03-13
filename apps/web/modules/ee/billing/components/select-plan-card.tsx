@@ -61,7 +61,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
     }
   };
 
-  const handleContinueFree = async () => {
+  const handleContinueHobby = async () => {
     setIsStartingHobby(true);
     try {
       const result = await startHobbyAction({ organizationId });
@@ -133,7 +133,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
       </div>
 
       <button
-        onClick={handleContinueFree}
+        onClick={handleContinueHobby}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
         {isStartingHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
