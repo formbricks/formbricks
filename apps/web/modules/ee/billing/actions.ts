@@ -10,6 +10,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
+import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
 import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
 import {
   createProTrialSubscription,
@@ -144,6 +145,54 @@ export const retryStripeSetupAction = authenticatedActionClient
     await ensureCloudStripeSetupForOrganization(parsedInput.organizationId);
     return { success: true };
   });
+
+const ZCreateTrialPaymentCheckoutAction = z.object({
+  environmentId: ZId,
+});
+
+export const createTrialPaymentCheckoutAction = authenticatedActionClient
+  .inputSchema(ZCreateTrialPaymentCheckoutAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      const organization = await getOrganization(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", organizationId);
+      }
+
+      if (!organization.billing.stripeCustomerId) {
+        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+      }
+
+      const subscriptionId = organization.billing.stripe?.subscriptionId;
+      if (!subscriptionId) {
+        throw new ResourceNotFoundError("subscription", organizationId);
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      const returnUrl = `${WEBAPP_URL}/environments/${parsedInput.environmentId}/settings/billing`;
+      const checkoutUrl = await createSetupCheckoutSession(
+        organization.billing.stripeCustomerId,
+        subscriptionId,
+        returnUrl,
+        organizationId
+      );
+
+      ctx.auditLoggingCtx.newObject = { checkoutUrl };
+      return checkoutUrl;
+    })
+  );
 
 const ZStartScaleTrialAction = z.object({
   organizationId: ZId,

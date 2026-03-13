@@ -1008,6 +1008,7 @@
         "trial_feature_unlimited_seats": "Korlátlan számú felhasználói hely",
         "trial_feature_webhooks": "Egyéni webhookok",
         "trial_no_credit_card": "14 napos próbaidőszak, bankkártya nélkül",
+        "trial_payment_method_added_description": "Minden rendben! A Pro csomag automatikusan folytatódik a próbaidőszak lejárta után.",
         "trial_title": "Szerezze meg a Formbricks Pro-t ingyen!",
         "unlimited_responses": "Korlátlan válaszok",
         "unlimited_workspaces": "Korlátlan munkaterület",

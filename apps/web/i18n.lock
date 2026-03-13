@@ -953,6 +953,7 @@ checksums:
     environments/settings/billing/trial_feature_unlimited_seats: a3257d5b6a23bfbc4b7fd1108087a823
     environments/settings/billing/trial_feature_webhooks: 5ead39fba97fbd37835a476ee67fdd94
     environments/settings/billing/trial_no_credit_card: 01c70aa6e1001815a9a11951394923ca
+    environments/settings/billing/trial_payment_method_added_description: 872a5c557f56bafc9b7ec4895f9c33e8
     environments/settings/billing/trial_title: f2c3791c1fb2970617ec0f2d243a931b
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173

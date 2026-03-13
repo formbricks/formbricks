@@ -19,6 +19,7 @@ export const ZOrganizationStripeBilling = z.object({
   plan: ZCloudBillingPlan.optional(),
   subscriptionStatus: ZOrganizationStripeSubscriptionStatus.nullable().optional(),
   subscriptionId: z.string().nullable().optional(),
+  hasPaymentMethod: z.boolean().optional(),
   features: z.array(z.string()).optional(),
   lastStripeEventCreatedAt: z.string().nullable().optional(),
   lastSyncedAt: z.string().nullable().optional(),

@@ -12,6 +12,7 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   createPricingTableCustomerSessionAction,
+  createTrialPaymentCheckoutAction,
   isSubscriptionCancelledAction,
   manageSubscriptionAction,
   retryStripeSetupAction,
@@ -216,6 +217,20 @@ export const PricingTable = ({
     }
   };
 
+  const openTrialPaymentCheckout = async () => {
+    try {
+      const response = await createTrialPaymentCheckoutAction({ environmentId });
+      if (response?.data && typeof response.data === "string") {
+        globalThis.location.href = response.data;
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+      }
+    } catch (error) {
+      console.error("Failed to create checkout session:", error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    }
+  };
+
   const retryStripeSetup = async () => {
     setIsRetryingStripeSetup(true);
     try {
@@ -256,17 +271,27 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex max-w-4xl flex-col gap-4">
-        {trialDaysRemaining !== null && (
-          <Alert variant={trialDaysRemaining <= 3 ? "error" : trialDaysRemaining <= 7 ? "warning" : "info"}>
-            <AlertTitle>{trialAlertTitle}</AlertTitle>
-            <AlertDescription>{t("environments.settings.billing.trial_alert_description")}</AlertDescription>
-            {hasBillingRights && (
-              <AlertButton onClick={() => void openCustomerPortal()}>
-                {t("environments.settings.billing.add_payment_method")}
-              </AlertButton>
-            )}
-          </Alert>
-        )}
+        {trialDaysRemaining !== null &&
+          (organization.billing.stripe?.hasPaymentMethod ? (
+            <Alert variant="success">
+              <AlertTitle>{trialAlertTitle}</AlertTitle>
+              <AlertDescription>
+                {t("environments.settings.billing.trial_payment_method_added_description")}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert variant={trialDaysRemaining <= 3 ? "error" : trialDaysRemaining <= 7 ? "warning" : "info"}>
+              <AlertTitle>{trialAlertTitle}</AlertTitle>
+              <AlertDescription>
+                {t("environments.settings.billing.trial_alert_description")}
+              </AlertDescription>
+              {hasBillingRights && (
+                <AlertButton onClick={() => void openTrialPaymentCheckout()}>
+                  {t("environments.settings.billing.add_payment_method")}
+                </AlertButton>
+              )}
+            </Alert>
+          ))}
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
             <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>

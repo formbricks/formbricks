@@ -619,6 +619,7 @@ export const syncOrganizationBillingFromStripe = async (
       plan: cloudPlan,
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
+      hasPaymentMethod: subscription?.default_payment_method != null,
       features: featureLookupKeys,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
