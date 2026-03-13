@@ -5,7 +5,7 @@ import {
   type TSurveyDateStorageFormat,
 } from "@formbricks/types/surveys/date-formats";
 
-export type { TSurveyDateStorageFormat };
+export type { TSurveyDateStorageFormat } from "@formbricks/types/surveys/date-formats";
 
 const ISO_FIRST_CHARS = /^\d{4}/;
 
