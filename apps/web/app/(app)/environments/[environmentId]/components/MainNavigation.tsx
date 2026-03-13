@@ -169,7 +169,7 @@ export const MainNavigation = ({
   }, [isOwnerOrManager]);
 
   const trialDaysRemaining = useMemo(() => {
-    if (!isFormbricksCloud || organization.billing.stripe?.subscriptionStatus !== "trialing") return null;
+    if (!isFormbricksCloud || organization.billing?.stripe?.subscriptionStatus !== "trialing") return null;
     const trialEnd = organization.billing.stripe.trialEnd;
     if (!trialEnd) return null;
     const ts = new Date(trialEnd).getTime();
@@ -178,8 +178,8 @@ export const MainNavigation = ({
     return Math.ceil((ts - Date.now()) / msPerDay);
   }, [
     isFormbricksCloud,
-    organization.billing.stripe?.subscriptionStatus,
-    organization.billing.stripe?.trialEnd,
+    organization.billing?.stripe?.subscriptionStatus,
+    organization.billing?.stripe?.trialEnd,
   ]);
 
   const trialLabel = useMemo(() => {
