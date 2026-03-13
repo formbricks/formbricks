@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseDateByFormat } from "./date-format";
+import { parseDateByFormat, parseDateWithFormats } from "./date-format";
 
 describe("parseDateByFormat", () => {
   test("parses ISO (y-M-d) string with default format", () => {
@@ -97,5 +97,35 @@ describe("parseDateByFormat", () => {
     expect(result!.getFullYear()).toBe(2024);
     expect(result!.getMonth()).toBe(2);
     expect(result!.getDate()).toBe(5);
+  });
+});
+
+describe("parseDateWithFormats", () => {
+  test("parses ISO string (y-M-d)", () => {
+    const result = parseDateWithFormats("2024-03-13");
+    expect(result).not.toBeNull();
+    expect(result!.getFullYear()).toBe(2024);
+    expect(result!.getDate()).toBe(13);
+  });
+
+  test("parses d-M-y string when format unknown", () => {
+    const result = parseDateWithFormats("20-03-2026");
+    expect(result).not.toBeNull();
+    expect(result!.getFullYear()).toBe(2026);
+    expect(result!.getMonth()).toBe(2);
+    expect(result!.getDate()).toBe(20);
+  });
+
+  test("parses M-d-y string when format unknown", () => {
+    const result = parseDateWithFormats("03-20-2026");
+    expect(result).not.toBeNull();
+    expect(result!.getFullYear()).toBe(2026);
+    expect(result!.getMonth()).toBe(2);
+    expect(result!.getDate()).toBe(20);
+  });
+
+  test("returns null for unparseable string", () => {
+    expect(parseDateWithFormats("not-a-date")).toBeNull();
+    expect(parseDateWithFormats("")).toBeNull();
   });
 });

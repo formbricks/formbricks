@@ -480,6 +480,36 @@ describe("recall utility functions", () => {
       expect(result).toBe("You joined on January 1st, 2023");
     });
 
+    test("formats d-M-y date values in recall", () => {
+      const text = "Event on #recall:eventDate/fallback:none#";
+      const responseData: TResponseData = {
+        eventDate: "20-03-2026",
+      };
+
+      const result = parseRecallInfo(text, responseData);
+      expect(result).toBe("Event on January 1st, 2023");
+    });
+
+    test("formats M-d-y date values in recall", () => {
+      const text = "Due #recall:dueDate/fallback:none#";
+      const responseData: TResponseData = {
+        dueDate: "03-20-2026",
+      };
+
+      const result = parseRecallInfo(text, responseData);
+      expect(result).toBe("Due January 1st, 2023");
+    });
+
+    test("leaves non-date string unchanged in recall", () => {
+      const text = "Note: #recall:note/fallback:none#";
+      const responseData: TResponseData = {
+        note: "some text",
+      };
+
+      const result = parseRecallInfo(text, responseData);
+      expect(result).toBe("Note: some text");
+    });
+
     test("formats array values as comma-separated list", () => {
       const text = "Your selections: #recall:preferences/fallback:none#";
       const responseData: TResponseData = {

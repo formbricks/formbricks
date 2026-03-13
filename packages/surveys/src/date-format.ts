@@ -1,1 +1,1 @@
-export { parseDateByFormat, type TSurveyDateStorageFormat } from "./lib/date-format";
+export { parseDateByFormat, parseDateWithFormats, type TSurveyDateStorageFormat } from "./lib/date-format";

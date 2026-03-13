@@ -77,3 +77,20 @@ export function parseDateByFormat(value: string, format: TSurveyDateStorageForma
 
   return date;
 }
+
+const STORAGE_FORMATS: TSurveyDateStorageFormat[] = ["y-M-d", "d-M-y", "M-d-y"];
+
+/**
+ * Try to parse a date string using each known storage format in order.
+ * Use when the storage format is unknown (e.g. recall placeholders).
+ *
+ * @param value - Stored date string
+ * @returns Parsed Date or null if no format matched
+ */
+export function parseDateWithFormats(value: string): Date | null {
+  for (const format of STORAGE_FORMATS) {
+    const parsed = parseDateByFormat(value, format);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+}
