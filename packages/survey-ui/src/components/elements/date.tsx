@@ -12,21 +12,21 @@ import { getDateFnsLocale } from "@/lib/locale";
 
 export type DateStorageFormat = TSurveyDateStorageFormat;
 
-const ISO_FIRST_CHARS = /^\d{4}/;
+/** Optional whitespace + three hyphen-separated digit segments (validates shape and digits in one pass). */
+const DATE_PARTS_REGEX = /^\s*(\d+)-(\d+)-(\d+)\s*$/;
 
 function parseValueToDate(value: string, format: DateStorageFormat): Date | undefined {
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-  const parts = trimmed.split("-");
-  if (parts.length !== 3) return undefined;
-  if (parts.some((p) => !/^\d+$/.test(p))) return undefined;
-  const nums = parts.map((p) => Number.parseInt(p, 10));
-  const useIso = ISO_FIRST_CHARS.test(trimmed);
-  const effective = useIso ? DEFAULT_DATE_STORAGE_FORMAT : format;
-  const order = DATE_STORAGE_FORMATS[effective].parseOrder;
+  const match = DATE_PARTS_REGEX.exec(value);
+  if (!match) return undefined;
+
+  const nums = [Number.parseInt(match[1], 10), Number.parseInt(match[2], 10), Number.parseInt(match[3], 10)];
+  format = match[1].length === 4 ? DEFAULT_DATE_STORAGE_FORMAT : format;
+  const order = DATE_STORAGE_FORMATS[format].parseOrder;
+
   const year = nums[order.yearIdx];
   const month = nums[order.monthIdx];
   const day = nums[order.dayIdx];
+
   if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
   const date = new Date(year, month - 1, day);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
