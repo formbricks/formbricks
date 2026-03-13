@@ -6,27 +6,17 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
-interface ConfirmationPageProps {
-  environmentId?: string;
-}
-
 const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
 
-export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
+export const ConfirmationPage = () => {
   const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
-  const [resolvedEnvironmentId, setResolvedEnvironmentId] = useState(environmentId ?? null);
+  const [resolvedEnvironmentId, setResolvedEnvironmentId] = useState<string | null>(null);
 
   useEffect(() => {
     setShowConfetti(true);
 
     if (globalThis.window === undefined) {
-      return;
-    }
-
-    if (environmentId) {
-      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
-      setResolvedEnvironmentId(environmentId);
       return;
     }
 
@@ -36,7 +26,7 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
     if (storedEnvironmentId) {
       setResolvedEnvironmentId(storedEnvironmentId);
     }
-  }, [environmentId]);
+  }, []);
 
   return (
     <div className="h-full w-full">

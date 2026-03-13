@@ -1,6 +1,9 @@
 import "server-only";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
+import { logger } from "@formbricks/logger";
+import {
+  getDefaultOrganizationBilling,
+  getOrganizationBillingWithReadThroughSync,
+} from "@/modules/ee/billing/lib/organization-billing";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { type TOrganizationEntitlementsContext, isEntitlementFeature } from "./types";
 
@@ -19,7 +22,23 @@ export const getCloudOrganizationEntitlementsContext = async (
   ]);
 
   if (!billing) {
-    throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+    logger.warn({ organizationId }, "Organization billing not found, using default entitlements");
+    const defaultBilling = getDefaultOrganizationBilling();
+
+    return {
+      organizationId,
+      source: "cloud_stripe",
+      features: [],
+      limits: {
+        projects: defaultBilling.limits?.projects ?? null,
+        monthlyResponses: defaultBilling.limits?.monthly?.responses ?? null,
+      },
+      licenseStatus: license.status,
+      licenseFeatures: license.features,
+      stripeCustomerId: null,
+      subscriptionStatus: null,
+      usageCycleAnchor: null,
+    };
   }
 
   return {
@@ -33,6 +52,7 @@ export const getCloudOrganizationEntitlementsContext = async (
     licenseStatus: license.status,
     licenseFeatures: license.features,
     stripeCustomerId: billing.stripeCustomerId ?? null,
+    subscriptionStatus: billing.stripe?.subscriptionStatus ?? null,
     usageCycleAnchor: toDateOrNull(billing.usageCycleAnchor),
   };
 };

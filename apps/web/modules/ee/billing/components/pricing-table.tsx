@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -12,10 +12,12 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   createPricingTableCustomerSessionAction,
+  createTrialPaymentCheckoutAction,
   isSubscriptionCancelledAction,
   manageSubscriptionAction,
   retryStripeSetupAction,
 } from "../actions";
+import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
 const STRIPE_SUPPORTED_LOCALES = new Set([
@@ -92,6 +94,7 @@ interface PricingTableProps {
   stripePublishableKey: string | null;
   stripePricingTableId: string | null;
   isStripeSetupIncomplete: boolean;
+  trialDaysRemaining: number | null;
 }
 
 const getCurrentCloudPlanLabel = (
@@ -118,9 +121,11 @@ export const PricingTable = ({
   stripePublishableKey,
   stripePricingTableId,
   isStripeSetupIncomplete,
+  trialDaysRemaining,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
   const [pricingTableCustomerSessionClientSecret, setPricingTableCustomerSessionClientSecret] = useState<
@@ -128,8 +133,9 @@ export const PricingTable = ({
   >(null);
 
   const isUpgradeablePlan = currentCloudPlan === "hobby" || currentCloudPlan === "unknown";
+  const isTrialing = currentSubscriptionStatus === "trialing";
   const showPricingTable =
-    hasBillingRights && isUpgradeablePlan && !!stripePublishableKey && !!stripePricingTableId;
+    hasBillingRights && isUpgradeablePlan && !isTrialing && !!stripePublishableKey && !!stripePricingTableId;
   const canManageSubscription =
     hasBillingRights && !isUpgradeablePlan && !!organization.billing.stripeCustomerId;
   const stripeLocaleOverride = useMemo(
@@ -160,6 +166,13 @@ export const PricingTable = ({
     stripePricingTableId,
     stripePublishableKey,
   ]);
+
+  useEffect(() => {
+    if (searchParams.get("checkout_success")) {
+      const timer = setTimeout(() => router.refresh(), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -213,6 +226,20 @@ export const PricingTable = ({
     }
   };
 
+  const openTrialPaymentCheckout = async () => {
+    try {
+      const response = await createTrialPaymentCheckoutAction({ environmentId });
+      if (response?.data && typeof response.data === "string") {
+        globalThis.location.href = response.data;
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+      }
+    } catch (error) {
+      console.error("Failed to create checkout session:", error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    }
+  };
+
   const retryStripeSetup = async () => {
     setIsRetryingStripeSetup(true);
     try {
@@ -246,6 +273,25 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex max-w-4xl flex-col gap-4">
+        {trialDaysRemaining !== null &&
+          (organization.billing.stripe?.hasPaymentMethod ? (
+            <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod>
+              <AlertDescription>
+                {t("environments.settings.billing.trial_payment_method_added_description")}
+              </AlertDescription>
+            </TrialAlert>
+          ) : (
+            <TrialAlert trialDaysRemaining={trialDaysRemaining}>
+              <AlertDescription>
+                {t("environments.settings.billing.trial_alert_description")}
+              </AlertDescription>
+              {hasBillingRights && (
+                <AlertButton onClick={() => void openTrialPaymentCheckout()}>
+                  {t("environments.settings.billing.add_payment_method")}
+                </AlertButton>
+              )}
+            </TrialAlert>
+          ))}
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
             <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
@@ -261,7 +307,7 @@ export const PricingTable = ({
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
           buttonInfo={
-            canManageSubscription
+            canManageSubscription && currentSubscriptionStatus !== "trialing"
               ? {
                   text: t("environments.settings.billing.manage_subscription"),
                   onClick: () => void openCustomerPortal(),
@@ -324,7 +370,7 @@ export const PricingTable = ({
           </div>
         </SettingsCard>
 
-        {currentCloudPlan === "pro" && (
+        {currentCloudPlan === "pro" && !isTrialing && (
           <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-slate-800 p-6 shadow-sm">
             <div className="flex items-center justify-between gap-6">
               <div className="flex flex-col gap-1.5">

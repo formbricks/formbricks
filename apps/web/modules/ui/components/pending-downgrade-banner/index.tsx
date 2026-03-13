@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 
 interface PendingDowngradeBannerProps {
   lastChecked: Date;
@@ -12,7 +13,7 @@ interface PendingDowngradeBannerProps {
   isPendingDowngrade: boolean;
   environmentId: string;
   locale: TUserLocale;
-  status: "active" | "expired" | "unreachable" | "no-license" | "invalid_license";
+  status: TLicenseStatus;
 }
 
 export const PendingDowngradeBanner = ({

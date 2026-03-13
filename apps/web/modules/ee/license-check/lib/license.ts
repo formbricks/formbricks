@@ -14,7 +14,7 @@ import { getInstanceId } from "@/lib/instance";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
-  TEnterpriseLicenseStatusReturn,
+  TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
 // Configuration
@@ -52,7 +52,7 @@ type TEnterpriseLicenseResult = {
   lastChecked: Date;
   isPendingDowngrade: boolean;
   fallbackLevel: FallbackLevel;
-  status: TEnterpriseLicenseStatusReturn;
+  status: TLicenseStatus;
 };
 
 type TPreviousResult = {
@@ -407,8 +407,9 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       return fetchLicenseFromServerInternal(retryCount + 1);
     }
 
-    // 400 = invalid license key — propagate so callers can distinguish from unreachable
-    if (res.status === 400) {
+    // 400 = invalid license key, 403 = license bound to another instance.
+    // Propagate both so callers can distinguish them from unreachable.
+    if (res.status === 400 || res.status === 403) {
       throw error;
     }
 
@@ -585,7 +586,7 @@ const computeLicenseState = async (
         lastChecked: previousResult.lastChecked,
         isPendingDowngrade: true,
         fallbackLevel: "grace" as const,
-        status: (liveLicenseDetails?.status as TEnterpriseLicenseStatusReturn) ?? "unreachable",
+        status: liveLicenseDetails?.status ?? "unreachable",
       };
       memoryCache = { data: graceResult, timestamp: Date.now() };
       return graceResult;
@@ -632,14 +633,15 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
     try {
       liveLicenseDetails = await fetchLicense();
     } catch (error) {
-      if (error instanceof LicenseApiError && error.status === 400) {
+      if (error instanceof LicenseApiError && (error.status === 400 || error.status === 403)) {
+        const status = error.status === 400 ? "invalid_license" : "instance_mismatch";
         const invalidResult: TEnterpriseLicenseResult = {
           active: false,
           features: DEFAULT_FEATURES,
           lastChecked: new Date(),
           isPendingDowngrade: false,
           fallbackLevel: "default" as const,
-          status: "invalid_license" as const,
+          status,
         };
         memoryCache = { data: invalidResult, timestamp: Date.now() };
         return invalidResult;

@@ -1,6 +1,12 @@
 import { getServerSession } from "next-auth";
 import { ChatwootWidget } from "@/app/chatwoot/ChatwootWidget";
-import { CHATWOOT_BASE_URL, CHATWOOT_WEBSITE_TOKEN, IS_CHATWOOT_CONFIGURED } from "@/lib/constants";
+import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
+import {
+  CHATWOOT_BASE_URL,
+  CHATWOOT_WEBSITE_TOKEN,
+  IS_CHATWOOT_CONFIGURED,
+  POSTHOG_KEY,
+} from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -19,6 +25,9 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <NoMobileOverlay />
+      {POSTHOG_KEY && user && (
+        <PostHogIdentify posthogKey={POSTHOG_KEY} userId={user.id} email={user.email} name={user.name} />
+      )}
       {IS_CHATWOOT_CONFIGURED && (
         <ChatwootWidget
           userEmail={user?.email}

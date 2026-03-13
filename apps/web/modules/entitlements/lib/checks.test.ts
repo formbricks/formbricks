@@ -31,6 +31,7 @@ const baseContext: TOrganizationEntitlementsContext = {
   licenseStatus: "no-license",
   licenseFeatures: null,
   stripeCustomerId: "cus_1",
+  subscriptionStatus: null,
   usageCycleAnchor: null,
 };
 
@@ -59,6 +60,33 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
   test("returns true when no license and feature present", async () => {
     mockGetContext.mockResolvedValue(baseContext);
     expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "rbac")).toBe(true);
+  });
+
+  test("returns false for trial-restricted follow-ups while trialing", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["follow-ups"],
+      subscriptionStatus: "trialing",
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "follow-ups")).toBe(false);
+  });
+
+  test("returns false for trial-restricted custom links while trialing", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["custom-links-in-surveys"],
+      subscriptionStatus: "trialing",
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "custom-links-in-surveys")).toBe(false);
+  });
+
+  test("returns false for trial-restricted custom redirect while trialing", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["custom-redirect-url"],
+      subscriptionStatus: "trialing",
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "custom-redirect-url")).toBe(false);
   });
 
   test("returns false when feature not present", async () => {
@@ -102,9 +130,19 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
       ...baseContext,
       features: ["custom-redirect-url"],
       licenseStatus: "active",
+      subscriptionStatus: "active",
       licenseFeatures: {} as TOrganizationEntitlementsContext["licenseFeatures"],
     });
     expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "custom-redirect-url")).toBe(true);
+  });
+
+  test("does not affect unrelated features while trialing", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["rbac"],
+      subscriptionStatus: "trialing",
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "rbac")).toBe(true);
   });
 });
 

@@ -16,6 +16,47 @@ const relevantEvents = new Set([
   "entitlements.active_entitlement_summary.updated",
 ]);
 
+/**
+ * When a setup-mode Checkout Session completes, the customer has just provided a
+ * payment method + billing address.  We attach that payment method as the default
+ * on the customer (for future invoices) and on the trial subscription so Stripe
+ * can charge it when the trial ends.
+ */
+const handleSetupCheckoutCompleted = async (
+  session: Stripe.Checkout.Session,
+  stripe: Stripe
+): Promise<void> => {
+  if (session.mode !== "setup" || !session.setup_intent) return;
+
+  const setupIntentId =
+    typeof session.setup_intent === "string" ? session.setup_intent : session.setup_intent.id;
+
+  const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+  const paymentMethodId =
+    typeof setupIntent.payment_method === "string"
+      ? setupIntent.payment_method
+      : setupIntent.payment_method?.id;
+
+  if (!paymentMethodId) {
+    logger.warn({ sessionId: session.id }, "Setup checkout completed but no payment method found");
+    return;
+  }
+
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  if (customerId) {
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: paymentMethodId },
+    });
+  }
+
+  const subscriptionId = session.metadata?.subscriptionId;
+  if (subscriptionId) {
+    await stripe.subscriptions.update(subscriptionId, {
+      default_payment_method: paymentMethodId,
+    });
+  }
+};
+
 const getMetadataOrganizationId = (eventObject: Stripe.Event.Data.Object): string | null => {
   if (!("metadata" in eventObject) || !eventObject.metadata) {
     return null;
@@ -101,6 +142,10 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   }
 
   try {
+    if (event.type === "checkout.session.completed") {
+      await handleSetupCheckoutCompleted(event.data.object, stripe);
+    }
+
     await reconcileCloudStripeSubscriptionsForOrganization(organizationId, event.id);
     await syncOrganizationBillingFromStripe(organizationId, {
       id: event.id,

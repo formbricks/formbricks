@@ -190,7 +190,7 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization);
+      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization, result.survey);
       if (featureCheckResult) {
         return {
           response: featureCheckResult,

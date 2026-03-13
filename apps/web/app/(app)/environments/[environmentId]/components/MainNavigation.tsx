@@ -28,6 +28,7 @@ import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
@@ -167,6 +168,20 @@ export const MainNavigation = ({
     if (isOwnerOrManager) loadReleases();
   }, [isOwnerOrManager]);
 
+  const trialDaysRemaining = useMemo(() => {
+    if (!isFormbricksCloud || organization.billing?.stripe?.subscriptionStatus !== "trialing") return null;
+    const trialEnd = organization.billing.stripe.trialEnd;
+    if (!trialEnd) return null;
+    const ts = new Date(trialEnd).getTime();
+    if (!Number.isFinite(ts)) return null;
+    const msPerDay = 86_400_000;
+    return Math.ceil((ts - Date.now()) / msPerDay);
+  }, [
+    isFormbricksCloud,
+    organization.billing?.stripe?.subscriptionStatus,
+    organization.billing?.stripe?.trialEnd,
+  ]);
+
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
   return (
@@ -238,6 +253,13 @@ export const MainNavigation = ({
                   <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
                   {t("common.new_version_available", { version: latestVersion })}
                 </p>
+              </Link>
+            )}
+
+            {/* Trial Days Remaining */}
+            {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
+              <Link href={`/environments/${environment.id}/settings/billing`} className="m-2 block">
+                <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
               </Link>
             )}
 

@@ -67,6 +67,7 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
     --mount=type=secret,id=redis_url \
     --mount=type=secret,id=sentry_auth_token \
+    --mount=type=secret,id=posthog_key \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 #
@@ -121,8 +122,11 @@ RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 
-COPY --from=installer /app/node_modules/uuid ./node_modules/uuid
-RUN chmod -R 755 ./node_modules/uuid
+# Runtime migrations import uuid v7 from the database package, so copy the
+# database package's resolved install instead of the repo-root hoisted version.
+COPY --from=installer /app/packages/database/node_modules/uuid ./node_modules/uuid
+RUN chmod -R 755 ./node_modules/uuid \
+    && node --input-type=module -e "import('uuid').then((module) => { if (typeof module.v7 !== 'function') throw new Error('uuid v7 missing in runtime image'); })"
 
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes

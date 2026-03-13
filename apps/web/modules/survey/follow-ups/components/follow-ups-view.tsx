@@ -48,7 +48,9 @@ export const FollowUpsView = ({
           description={t("environments.surveys.edit.follow_ups_empty_description")}
           buttons={[
             {
-              text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+              text: isFormbricksCloud
+                ? t("environments.settings.billing.upgrade")
+                : t("common.request_trial_license"),
               href: isFormbricksCloud
                 ? `/environments/${localSurvey.environmentId}/settings/billing`
                 : "https://formbricks.com/docs/self-hosting/license",

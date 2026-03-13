@@ -94,7 +94,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       </PageHeader>
       {hasLicense ? (
         <EnterpriseLicenseStatus
-          status={licenseState.status as "active" | "expired" | "unreachable" | "invalid_license"}
+          status={licenseState.status}
           gracePeriodEnd={
             licenseState.status === "unreachable"
               ? new Date(licenseState.lastChecked.getTime() + GRACE_PERIOD_MS)

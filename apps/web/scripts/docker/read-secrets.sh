@@ -35,6 +35,16 @@ if [ -z "${REDIS_URL:-}" ]; then
 fi
 export REDIS_URL
 
+if [ -f "/run/secrets/posthog_key" ]; then
+  IFS= read -r POSTHOG_KEY < /run/secrets/posthog_key || true
+fi
+if [ -n "${POSTHOG_KEY:-}" ]; then
+  export POSTHOG_KEY
+  echo "✅ POSTHOG_KEY secret found. PostHog proxy rewrites will be generated."
+else
+  echo "ℹ️  POSTHOG_KEY secret not found. PostHog proxy rewrites will not be generated."
+fi
+
 if [ -f "/run/secrets/sentry_auth_token" ]; then
   # Only upload sourcemaps on amd64 platform to avoid duplicate uploads
   # Sourcemaps are platform-agnostic, so we only need to upload once
@@ -59,6 +69,7 @@ echo "  DATABASE_URL: $([ -n "${DATABASE_URL:-}" ] && printf '[SET]' || printf '
 echo "  ENCRYPTION_KEY: $([ -n "${ENCRYPTION_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  REDIS_URL: $([ -n "${REDIS_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  SENTRY_AUTH_TOKEN: $([ -n "${SENTRY_AUTH_TOKEN:-}" ] && printf '[SET]' || printf '[NOT SET]')"
+echo "  POSTHOG_KEY: $([ -n "${POSTHOG_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  TARGETARCH: $([ -n "${TARGETARCH:-}" ] && printf '%s' "${TARGETARCH}" || printf '[NOT SET]')"
 
 exec "$@" 

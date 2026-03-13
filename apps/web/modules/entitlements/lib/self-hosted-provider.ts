@@ -55,6 +55,7 @@ export const getSelfHostedOrganizationEntitlementsContext = async (
     licenseStatus: license.status,
     licenseFeatures: license.features,
     stripeCustomerId: null,
+    subscriptionStatus: null,
     usageCycleAnchor: null,
   };
 };

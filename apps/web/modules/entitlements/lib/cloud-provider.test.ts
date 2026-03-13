@@ -1,13 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import type { TOrganizationBilling } from "@formbricks/types/organizations";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getCloudOrganizationEntitlementsContext } from "./cloud-provider";
 
 vi.mock("server-only", () => ({}));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: { warn: vi.fn() },
+}));
+
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
+  getDefaultOrganizationBilling: () => ({
+    limits: { projects: 1, monthly: { responses: 250 } },
+    stripeCustomerId: null,
+    usageCycleAnchor: null,
+  }),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
@@ -17,26 +26,52 @@ vi.mock("@/modules/ee/license-check/lib/license", () => ({
 const mockGetBilling = vi.mocked(getOrganizationBillingWithReadThroughSync);
 const mockGetLicense = vi.mocked(getEnterpriseLicense);
 
+const createBillingFixture = (overrides: Partial<TOrganizationBilling> = {}): TOrganizationBilling => ({
+  stripeCustomerId: null,
+  limits: {
+    projects: null,
+    monthly: {
+      responses: null,
+    },
+  },
+  usageCycleAnchor: null,
+  ...overrides,
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 describe("getCloudOrganizationEntitlementsContext", () => {
-  test("throws ResourceNotFoundError when billing is null", async () => {
+  test("returns default entitlements when billing is null", async () => {
     mockGetBilling.mockResolvedValue(null);
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
-    await expect(getCloudOrganizationEntitlementsContext("org1")).rejects.toThrow(ResourceNotFoundError);
+    const result = await getCloudOrganizationEntitlementsContext("org1");
+
+    expect(result).toEqual({
+      organizationId: "org1",
+      source: "cloud_stripe",
+      features: [],
+      limits: { projects: 1, monthlyResponses: 250 },
+      licenseStatus: "no-license",
+      licenseFeatures: null,
+      stripeCustomerId: null,
+      subscriptionStatus: null,
+      usageCycleAnchor: null,
+    });
   });
 
   test("returns context with billing data", async () => {
     const usageCycleAnchor = new Date("2025-01-01");
-    mockGetBilling.mockResolvedValue({
-      stripeCustomerId: "cus_1",
-      limits: { projects: 5, monthly: { responses: 1000 } },
-      usageCycleAnchor,
-      stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
-    } as any);
+    mockGetBilling.mockResolvedValue(
+      createBillingFixture({
+        stripeCustomerId: "cus_1",
+        limits: { projects: 5, monthly: { responses: 1000 } },
+        usageCycleAnchor,
+        stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
+      })
+    );
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
@@ -49,17 +84,13 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
+      subscriptionStatus: null,
       usageCycleAnchor,
     });
   });
 
   test("handles missing stripe features and limits gracefully", async () => {
-    mockGetBilling.mockResolvedValue({
-      stripeCustomerId: null,
-      limits: {},
-      usageCycleAnchor: null,
-      stripe: null,
-    } as any);
+    mockGetBilling.mockResolvedValue(createBillingFixture({ stripe: null }));
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
@@ -67,16 +98,17 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     expect(result.features).toEqual([]);
     expect(result.limits).toEqual({ projects: null, monthlyResponses: null });
     expect(result.stripeCustomerId).toBeNull();
+    expect(result.subscriptionStatus).toBeNull();
     expect(result.usageCycleAnchor).toBeNull();
   });
 
   test("parses string usageCycleAnchor to Date", async () => {
-    mockGetBilling.mockResolvedValue({
-      stripeCustomerId: null,
-      limits: {},
-      usageCycleAnchor: "2025-06-15T00:00:00.000Z",
-      stripe: null,
-    } as any);
+    mockGetBilling.mockResolvedValue(
+      createBillingFixture({
+        usageCycleAnchor: "2025-06-15T00:00:00.000Z",
+        stripe: null,
+      })
+    );
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
@@ -85,16 +117,30 @@ describe("getCloudOrganizationEntitlementsContext", () => {
   });
 
   test("filters out invalid feature keys from stripe", async () => {
-    mockGetBilling.mockResolvedValue({
-      stripeCustomerId: null,
-      limits: {},
-      usageCycleAnchor: null,
-      stripe: { features: ["rbac", "invalid-feature-xyz"] },
-    } as any);
+    mockGetBilling.mockResolvedValue(
+      createBillingFixture({
+        stripe: { features: ["rbac", "invalid-feature-xyz"] },
+      })
+    );
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual(["rbac"]);
+  });
+
+  test("exposes subscription status from billing stripe snapshot", async () => {
+    mockGetBilling.mockResolvedValue(
+      createBillingFixture({
+        stripeCustomerId: "cus_1",
+        limits: { projects: 5, monthly: { responses: 1000 } },
+        stripe: { features: ["follow-ups"], subscriptionStatus: "trialing" },
+      })
+    );
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+
+    const result = await getCloudOrganizationEntitlementsContext("org1");
+
+    expect(result.subscriptionStatus).toBe("trialing");
   });
 });

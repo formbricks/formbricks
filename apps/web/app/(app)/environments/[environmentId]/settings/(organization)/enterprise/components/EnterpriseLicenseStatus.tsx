@@ -7,21 +7,20 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { recheckLicenseAction } from "@/modules/ee/license-check/actions";
+import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { SettingsCard } from "../../../components/SettingsCard";
 
-type LicenseStatus = "active" | "expired" | "unreachable" | "invalid_license";
-
 interface EnterpriseLicenseStatusProps {
-  status: LicenseStatus;
+  status: TLicenseStatus;
   gracePeriodEnd?: Date;
   environmentId: string;
 }
 
 const getBadgeConfig = (
-  status: LicenseStatus,
+  status: TLicenseStatus,
   t: TFunction
 ): { type: "success" | "error" | "warning" | "gray"; label: string } => {
   switch (status) {
@@ -29,6 +28,11 @@ const getBadgeConfig = (
       return { type: "success", label: t("environments.settings.enterprise.license_status_active") };
     case "expired":
       return { type: "error", label: t("environments.settings.enterprise.license_status_expired") };
+    case "instance_mismatch":
+      return {
+        type: "error",
+        label: t("environments.settings.enterprise.license_status_instance_mismatch"),
+      };
     case "unreachable":
       return { type: "warning", label: t("environments.settings.enterprise.license_status_unreachable") };
     case "invalid_license":
@@ -59,6 +63,8 @@ export const EnterpriseLicenseStatus = ({
       if (result?.data) {
         if (result.data.status === "unreachable") {
           toast.error(t("environments.settings.enterprise.recheck_license_unreachable"));
+        } else if (result.data.status === "instance_mismatch") {
+          toast.error(t("environments.settings.enterprise.recheck_license_instance_mismatch"));
         } else if (result.data.status === "invalid_license") {
           toast.error(t("environments.settings.enterprise.recheck_license_invalid"));
         } else {
@@ -125,6 +131,13 @@ export const EnterpriseLicenseStatus = ({
           <Alert variant="error" size="small">
             <AlertDescription className="overflow-visible whitespace-normal">
               {t("environments.settings.enterprise.license_invalid_description")}
+            </AlertDescription>
+          </Alert>
+        )}
+        {status === "instance_mismatch" && (
+          <Alert variant="error" size="small">
+            <AlertDescription className="overflow-visible whitespace-normal">
+              {t("environments.settings.enterprise.license_instance_mismatch_description")}
             </AlertDescription>
           </Alert>
         )}

@@ -54,10 +54,10 @@
     "@playwright/test": "1.58.2",
     "eslint": "8.57.1",
     "husky": "9.1.7",
-    "lint-staged": "16.3.2",
+    "lint-staged": "16.3.3",
     "rimraf": "6.1.3",
     "tsx": "4.21.0",
-    "turbo": "2.8.13"
+    "turbo": "2.8.16"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -73,7 +73,7 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.32.1",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -83,22 +83,14 @@
   "pnpm": {
     "overrides": {
       "axios": ">=1.12.2",
-      "uuid": "11.1.0",
       "node-forge": ">=1.3.2",
-      "tar-fs": "2.1.4",
       "tar": ">=7.5.11",
-      "minimatch@~9.0": "9.0.9",
       "typeorm": ">=0.3.26",
-      "systeminformation": "5.27.14",
-      "qs": ">=6.14.1",
-      "preact": ">=10.26.10",
       "fast-xml-parser": "5.4.2",
-      "diff": ">=8.0.3",
-      "@isaacs/brace-expansion": ">=5.0.1",
-      "@microsoft/api-extractor": ">=7.57.6"
+      "diff": ">=8.0.3"
     },
     "comments": {
-      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | node-forge (Dependabot #230) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates | tar (CVE-2026-23745/23950/24842/26960) - awaiting @boxyhq/saml-jackson/sqlite3 dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update | systeminformation (Dependabot #241) - awaiting @opentelemetry/host-metrics update | qs (Dependabot #245) - awaiting googleapis-common and stripe updates | preact (Dependabot #247) - awaiting next-auth update | fast-xml-parser (CVE-2026-25896/26278) - awaiting @boxyhq/saml-jackson update | diff (Dependabot #269) - awaiting @microsoft/api-extractor update | @isaacs/brace-expansion (Dependabot #271) - awaiting upstream updates | @microsoft/api-extractor - overridden until vite-plugin-dts lock resolution catches up | minimatch (CVE-2026-26996/27903/27904) - awaiting upstream updates"
+      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | node-forge (Dependabot #230) - awaiting @boxyhq/saml-jackson update | tar (CVE-2026-23745/23950/24842/26960) - awaiting @boxyhq/saml-jackson/sqlite3 dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update | fast-xml-parser (CVE-2026-25896/26278) - awaiting exact upstream pin updates | diff (Dependabot #269) - awaiting upstream patch range adoption"
     },
     "patchedDependencies": {
       "next-auth@4.24.13": "patches/next-auth@4.24.13.patch"

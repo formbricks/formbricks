@@ -34,7 +34,7 @@ export const invalidateOrganizationBillingCache = async (organizationId: string)
   await cache.del([getBillingCacheKey(organizationId)]);
 };
 
-const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
+export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
     projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
@@ -300,10 +300,10 @@ const ensureHobbySubscription = async (
 };
 
 /**
- * Checks whether the given email has already used a Scale trial on any Stripe customer.
+ * Checks whether the given email has already used a Pro trial on any Stripe customer.
  * Searches all customers with that email and inspects their subscription history.
  */
-const hasEmailUsedScaleTrial = async (email: string, scaleProductId: string): Promise<boolean> => {
+const hasEmailUsedProTrial = async (email: string, proProductId: string): Promise<boolean> => {
   if (!stripeClient) return false;
 
   const customers = await stripeClient.customers.list({
@@ -318,23 +318,23 @@ const hasEmailUsedScaleTrial = async (email: string, scaleProductId: string): Pr
       limit: 100,
     });
 
-    const hadScaleTrial = subscriptions.data.some(
+    const hadProTrial = subscriptions.data.some(
       (sub) =>
         sub.trial_start != null &&
         sub.items.data.some((item) => {
           const productId =
             typeof item.price.product === "string" ? item.price.product : item.price.product.id;
-          return productId === scaleProductId;
+          return productId === proProductId;
         })
     );
 
-    if (hadScaleTrial) return true;
+    if (hadProTrial) return true;
   }
 
   return false;
 };
 
-export const createScaleTrialSubscription = async (
+export const createProTrialSubscription = async (
   organizationId: string,
   customerId: string
 ): Promise<void> => {
@@ -345,30 +345,29 @@ export const createScaleTrialSubscription = async (
     limit: 100,
   });
 
-  const scaleProduct = products.data.find((product) => product.metadata.formbricks_plan === "scale");
-  if (!scaleProduct) {
-    throw new Error("Stripe product metadata formbricks_plan=scale not found");
+  const proProduct = products.data.find((product) => product.metadata.formbricks_plan === "pro");
+  if (!proProduct) {
+    throw new Error("Stripe product metadata formbricks_plan=pro not found");
   }
 
-  // Check if the email has already used a Scale trial across any Stripe customer
   const customer = await stripeClient.customers.retrieve(customerId);
   if (!customer.deleted && customer.email) {
-    const alreadyUsed = await hasEmailUsedScaleTrial(customer.email, scaleProduct.id);
+    const alreadyUsed = await hasEmailUsedProTrial(customer.email, proProduct.id);
     if (alreadyUsed) {
       throw new OperationNotAllowedError("trial_already_used");
     }
   }
 
   const defaultPrice =
-    typeof scaleProduct.default_price === "string" ? null : (scaleProduct.default_price ?? null);
+    typeof proProduct.default_price === "string" ? null : (proProduct.default_price ?? null);
 
   const fallbackPrices = await stripeClient.prices.list({
-    product: scaleProduct.id,
+    product: proProduct.id,
     active: true,
     limit: 100,
   });
 
-  const scalePrice =
+  const proPrice =
     defaultPrice ??
     fallbackPrices.data.find(
       (price) => price.recurring?.interval === "month" && price.recurring.usage_type === "licensed"
@@ -376,14 +375,14 @@ export const createScaleTrialSubscription = async (
     fallbackPrices.data[0] ??
     null;
 
-  if (!scalePrice) {
-    throw new Error(`No active price found for Stripe scale product ${scaleProduct.id}`);
+  if (!proPrice) {
+    throw new Error(`No active price found for Stripe pro product ${proProduct.id}`);
   }
 
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
-      items: [{ price: scalePrice.id, quantity: 1 }],
+      items: [{ price: proPrice.id, quantity: 1 }],
       trial_period_days: 14,
       trial_settings: {
         end_behavior: {
@@ -395,7 +394,7 @@ export const createScaleTrialSubscription = async (
       },
       metadata: { organizationId },
     },
-    { idempotencyKey: `create-scale-trial-${organizationId}` }
+    { idempotencyKey: `create-pro-trial-${organizationId}` }
   );
 };
 
@@ -440,12 +439,15 @@ const ensureOrganizationBillingRecord = async (
  * Finds the email of the organization owner by looking up the membership with role "owner"
  * and joining to the user table.
  */
-const getOrganizationOwnerEmail = async (organizationId: string): Promise<string | null> => {
+const getOrganizationOwner = async (
+  organizationId: string
+): Promise<{ email: string; name: string | null } | null> => {
   const membership = await prisma.membership.findFirst({
     where: { organizationId, role: "owner" },
-    select: { user: { select: { email: true } } },
+    select: { user: { select: { email: true, name: true } } },
   });
-  return membership?.user.email ?? null;
+  if (!membership) return null;
+  return { email: membership.user.email, name: membership.user.name };
 };
 
 /**
@@ -483,10 +485,16 @@ export const ensureStripeCustomerForOrganization = async (
     return { customerId: null };
   }
 
-  // Look up the org owner's email and check if a Stripe customer already exists for it.
+  // Look up the org owner's email/name and check if a Stripe customer already exists for it.
   // This reuses the old customer (and its trial history) when a user deletes their account
   // and signs up again with the same email.
-  const ownerEmail = await getOrganizationOwnerEmail(organization.id);
+  const owner = await getOrganizationOwner(organization.id);
+  if (!owner) {
+    logger.error({ organizationId }, "Cannot set up Stripe customer: organization has no owner");
+    return { customerId: null };
+  }
+
+  const { email: ownerEmail, name: ownerName } = owner;
   let existingCustomer: Stripe.Customer | null = null;
 
   if (ownerEmail) {
@@ -497,8 +505,8 @@ export const ensureStripeCustomerForOrganization = async (
       if (!existingBillingOwner || existingBillingOwner === organizationId) {
         existingCustomer = foundCustomer;
         await stripeClient.customers.update(existingCustomer.id, {
-          name: organization.name,
-          metadata: { organizationId: organization.id },
+          name: ownerName ?? undefined,
+          metadata: { organizationId: organization.id, organizationName: organization.name },
         });
         logger.info(
           { organizationId, customerId: existingCustomer.id, email: ownerEmail },
@@ -512,9 +520,9 @@ export const ensureStripeCustomerForOrganization = async (
     existingCustomer ??
     (await stripeClient.customers.create(
       {
-        name: organization.name,
-        email: ownerEmail ?? undefined,
-        metadata: { organizationId: organization.id },
+        name: ownerName ?? undefined,
+        email: ownerEmail,
+        metadata: { organizationId: organization.id, organizationName: organization.name },
       },
       { idempotencyKey: `ensure-customer-${organization.id}` }
     ));
@@ -620,10 +628,14 @@ export const syncOrganizationBillingFromStripe = async (
       plan: cloudPlan,
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
+      hasPaymentMethod: subscription?.default_payment_method != null,
       features: featureLookupKeys,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,
+      trialEnd: subscription?.trial_end
+        ? new Date(subscription.trial_end * 1000).toISOString()
+        : (existingStripeSnapshot?.trialEnd ?? null),
     },
   };
 
@@ -778,7 +790,17 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   }
 
   if (subscriptionsWithPlanLevel.length === 0) {
-    await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    // Re-check active subscriptions to guard against concurrent reconciliation calls
+    // (e.g. webhook + bootstrap) both seeing 0 and creating duplicate hobbies.
+    const freshSubscriptions = await client.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
+
+    if (freshSubscriptions.data.length === 0) {
+      await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    }
   }
 };
 
