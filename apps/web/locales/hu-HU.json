@@ -995,7 +995,6 @@
         "trial_already_used": "Ehhez az e-mail címhez már igénybe vettek ingyenes próbaidőszakot. Kérjük, válasszon helyette fizetős csomagot.",
         "trial_feature_api_access": "Teljes API-hozzáférés megszerzése",
         "trial_feature_collaboration": "Minden csapat- és együttműködési funkció",
-        "trial_feature_email_followups": "E-mail követések beállítása",
         "trial_feature_quotas": "Kvóták kezelése",
         "trial_feature_webhooks": "Egyéni webhookok beállítása",
         "trial_feature_whitelabel": "Teljesen fehércímkés felmérések",

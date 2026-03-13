@@ -995,7 +995,6 @@
         "trial_already_used": "Für diese E-Mail-Adresse wurde bereits eine kostenlose Testversion genutzt. Bitte upgraden Sie stattdessen auf einen kostenpflichtigen Plan.",
         "trial_feature_api_access": "Vollen API-Zugriff erhalten",
         "trial_feature_collaboration": "Alle Team- und Kollaborationsfunktionen",
-        "trial_feature_email_followups": "E-Mail-Nachfassaktionen einrichten",
         "trial_feature_quotas": "Kontingente verwalten",
         "trial_feature_webhooks": "Benutzerdefinierte Webhooks einrichten",
         "trial_feature_whitelabel": "Vollständig white-labeled Umfragen",

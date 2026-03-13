@@ -995,7 +995,6 @@
         "trial_already_used": "Já foi utilizado um período de teste gratuito para este endereço de email. Por favor, atualiza para um plano pago.",
         "trial_feature_api_access": "Obtém acesso completo à API",
         "trial_feature_collaboration": "Todas as funcionalidades de equipa e colaboração",
-        "trial_feature_email_followups": "Configura acompanhamentos por email",
         "trial_feature_quotas": "Gere quotas",
         "trial_feature_webhooks": "Configura webhooks personalizados",
         "trial_feature_whitelabel": "Inquéritos totalmente personalizados",

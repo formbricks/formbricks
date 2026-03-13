@@ -995,7 +995,6 @@
         "trial_already_used": "En gratis provperiod har redan använts för denna e-postadress. Uppgradera till en betald plan istället.",
         "trial_feature_api_access": "Få full API-åtkomst",
         "trial_feature_collaboration": "Alla team- och samarbetsfunktioner",
-        "trial_feature_email_followups": "Konfigurera uppföljningsmejl",
         "trial_feature_quotas": "Hantera kvoter",
         "trial_feature_webhooks": "Konfigurera anpassade webhooks",
         "trial_feature_whitelabel": "Helt white-label-anpassade enkäter",

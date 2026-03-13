@@ -995,7 +995,6 @@
         "trial_already_used": "此電子郵件地址已使用過免費試用。請改為升級至付費方案。",
         "trial_feature_api_access": "獲得完整 API 存取權限",
         "trial_feature_collaboration": "所有團隊與協作功能",
-        "trial_feature_email_followups": "設定電子郵件追蹤",
         "trial_feature_quotas": "管理配額",
         "trial_feature_webhooks": "設定自訂 Webhook",
         "trial_feature_whitelabel": "完全白標問卷調查",
