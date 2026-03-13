@@ -783,7 +783,17 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   }
 
   if (subscriptionsWithPlanLevel.length === 0) {
-    await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    // Re-check active subscriptions to guard against concurrent reconciliation calls
+    // (e.g. webhook + bootstrap) both seeing 0 and creating duplicate hobbies.
+    const freshSubscriptions = await client.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
+
+    if (freshSubscriptions.data.length === 0) {
+      await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    }
   }
 };
 
