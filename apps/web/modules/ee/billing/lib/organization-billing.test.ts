@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   customersUpdate: vi.fn(),
   prismaMembershipFindFirst: vi.fn(),
   loggerInfo: vi.fn(),
+  loggerError: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -83,6 +84,7 @@ vi.mock("@formbricks/logger", () => ({
   logger: {
     warn: mocks.loggerWarn,
     info: mocks.loggerInfo,
+    error: mocks.loggerError,
   },
 }));
 
@@ -181,7 +183,7 @@ describe("organization-billing", () => {
       name: "Org 1",
     });
     mocks.prismaMembershipFindFirst.mockResolvedValue({
-      user: { email: "owner@example.com" },
+      user: { email: "owner@example.com", name: "Owner Name" },
     });
     mocks.customersList.mockResolvedValue({
       data: [{ id: "cus_existing", deleted: false }],
@@ -193,8 +195,8 @@ describe("organization-billing", () => {
     expect(result).toEqual({ customerId: "cus_existing" });
     expect(mocks.customersCreate).not.toHaveBeenCalled();
     expect(mocks.customersUpdate).toHaveBeenCalledWith("cus_existing", {
-      name: "Org 1",
-      metadata: { organizationId: "org_1" },
+      name: "Owner Name",
+      metadata: { organizationId: "org_1", organizationName: "Org 1" },
     });
     expect(mocks.prismaOrganizationBillingUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -209,6 +211,9 @@ describe("organization-billing", () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
+    });
+    mocks.prismaMembershipFindFirst.mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner Name" },
     });
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: null,
@@ -228,8 +233,9 @@ describe("organization-billing", () => {
     expect(result).toEqual({ customerId: "cus_new" });
     expect(mocks.customersCreate).toHaveBeenCalledWith(
       {
-        name: "Org 1",
-        metadata: { organizationId: "org_1" },
+        name: "Owner Name",
+        email: "owner@example.com",
+        metadata: { organizationId: "org_1", organizationName: "Org 1" },
       },
       { idempotencyKey: "ensure-customer-org_1" }
     );
@@ -767,26 +773,30 @@ describe("organization-billing", () => {
         stripe: {},
       });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
-    mocks.subscriptionsList.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({
-      data: [
-        {
-          id: "sub_hobby",
-          created: 1739923200,
-          status: "active",
-          billing_cycle_anchor: 1739923200,
-          items: {
-            data: [
-              {
-                price: {
-                  product: { id: "prod_hobby" },
-                  recurring: { usage_type: "licensed", interval: "month" },
+    mocks.subscriptionsList
+      .mockResolvedValueOnce({ data: [] }) // reconciliation initial list (status: "all")
+      .mockResolvedValueOnce({ data: [] }) // fresh re-check before hobby creation (status: "active")
+      .mockResolvedValueOnce({
+        // sync reads subscriptions after hobby is created
+        data: [
+          {
+            id: "sub_hobby",
+            created: 1739923200,
+            status: "active",
+            billing_cycle_anchor: 1739923200,
+            items: {
+              data: [
+                {
+                  price: {
+                    product: { id: "prod_hobby" },
+                    recurring: { usage_type: "licensed", interval: "month" },
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
 
     await ensureCloudStripeSetupForOrganization("org_1");
 
