@@ -38,7 +38,6 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
     t("environments.settings.billing.trial_feature_collaboration"),
     t("environments.settings.billing.trial_feature_webhooks"),
     t("environments.settings.billing.trial_feature_api_access"),
-    t("environments.settings.billing.trial_feature_email_followups"),
     t("environments.settings.billing.trial_feature_quotas"),
   ] as const;
 
