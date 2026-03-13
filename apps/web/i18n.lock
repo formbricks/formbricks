@@ -917,22 +917,45 @@ checksums:
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
-    environments/settings/billing/cancelling: 6e46e789720395bfa1e3a4b3b1519634
+    environments/settings/billing/continue_to_checkout: 38651b0c357a4792830d526f3b27f426
+    environments/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
+    environments/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424
+    environments/settings/billing/custom_plan_description: 53faa38123cc74e5adc7e59630641d66
+    environments/settings/billing/custom_plan_title: f3b71be0d1cd4f81a177ada040119f30
     environments/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
-    environments/settings/billing/manage_subscription: b83a75127b8eabc21dfa1e0f7104db56
+    environments/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
+    environments/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
+    environments/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
+    environments/settings/billing/most_popular: 03051978338d93d9abdd999bc06284f9
+    environments/settings/billing/pending_change_removed: c80cc7f1f83f28db186e897fb18282a3
+    environments/settings/billing/pending_plan_badge: 1283929a2810dcf6110765f387dc118e
+    environments/settings/billing/pending_plan_change_description: a50400c802ab04c23019d8219c5e7e1c
+    environments/settings/billing/pending_plan_change_title: 730a8df084494ccf06c0a2f44c28f9fc
+    environments/settings/billing/pending_plan_cta: 1283929a2810dcf6110765f387dc118e
+    environments/settings/billing/per_month: 64e96490ee2d7811496cf04adae30aa4
+    environments/settings/billing/per_year: bf02408d157486e53c15a521a5645617
+    environments/settings/billing/plan_change_applied: d1e04599487247dd0e21a7d99785dc7a
+    environments/settings/billing/plan_change_scheduled: 16455d4aa9a152b156ee434d8c7e34d4
     environments/settings/billing/plan_custom: b7b89901f46267f532600a23cfc54ae2
+    environments/settings/billing/plan_feature_everything_in_hobby: 5417a498136fa29988c8215291e3fd8b
+    environments/settings/billing/plan_feature_everything_in_pro: 3f5129ff1f01eed4f051a8790ed62997
     environments/settings/billing/plan_hobby: 3e96a8e688032f9bd21b436bc70c19d5
+    environments/settings/billing/plan_hobby_description: 1fa1cf69b42ec82727aebc5ef1ec24a2
+    environments/settings/billing/plan_hobby_feature_responses: d1e6c1d83f5e57cbae2a09e6a818a25d
+    environments/settings/billing/plan_hobby_feature_workspaces: 02a34669419ed7f30f728980f54d42ef
     environments/settings/billing/plan_pro: 682b3c9feab30112b4454cb5bb7974b1
+    environments/settings/billing/plan_pro_description: c067978e9fc4624c33726ed0e0d7f752
+    environments/settings/billing/plan_pro_feature_responses: e16ffe385051a16dba76538c13d97a5f
+    environments/settings/billing/plan_pro_feature_workspaces: 819874022b491209ca7f0f1ab1e3daea
     environments/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c
+    environments/settings/billing/plan_scale_description: ef5c66e0b52686f56319e31388bd8409
+    environments/settings/billing/plan_scale_feature_responses: 0b74bf8d089c738ebb7f0867bdd7d7f1
+    environments/settings/billing/plan_scale_feature_workspaces: 6bd1b676b9470ca8cc4e73be3ffd4bef
+    environments/settings/billing/plan_selection_description: 8367b137b31234cafe0e297a35b0b599
+    environments/settings/billing/plan_selection_title: 8b814effdaee1787281b740f67482d7d
     environments/settings/billing/plan_unknown: 5cd12b882fe90320f93130c1b50e2e32
     environments/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
     environments/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
-    environments/settings/billing/scale_banner_description: 79a9734c77ab0336d5d2fadb5f2151be
-    environments/settings/billing/scale_banner_title: a2a78f57ebcbf444ad881ece234b8f45
-    environments/settings/billing/scale_feature_api: 67231215e5452944b86edc2bc47d2a16
-    environments/settings/billing/scale_feature_quota: 31fb6b5e846dd44de140a69fd3e4c067
-    environments/settings/billing/scale_feature_spam: 8a8229b6ac3f3e0427fd347cb667ce11
-    environments/settings/billing/scale_feature_teams: f6e8428f6cdb227176a5fa8c5c95c976
     environments/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
     environments/settings/billing/select_plan_header_title: d851e9fa093ddb248924cf99e1d79b4e
     environments/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
@@ -941,6 +964,9 @@ checksums:
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     environments/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
+    environments/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623
+    environments/settings/billing/switch_plan_now: dad56622a1916fe5d1a2bda5b0393194
+    environments/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     environments/settings/billing/trial_alert_description: aba3076cc6814cc6128d425d3d1957e8
     environments/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     environments/settings/billing/trial_feature_api_access: 8c6d03728c3d9470616eb5cee5f9f65d
@@ -958,8 +984,10 @@ checksums:
     environments/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     environments/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     environments/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
+    environments/settings/billing/upgrade_now: 059e020c0eddd549ac6c6369a427915a
     environments/settings/billing/usage_cycle: 4986315c0b486c7490bab6ada2205bee
     environments/settings/billing/used: 9e2eff0ac536d11a9f8fcb055dd68f2e
+    environments/settings/billing/yearly: 87f43e016c19cb25860f456549a2f431
     environments/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b
     environments/settings/domain/customize_favicon_description: d3ac29934a66fd56294c0d8069fbc11e
     environments/settings/domain/customize_favicon_with_higher_plan: 43a6b834a8fd013c52923863d62248f3

@@ -136,12 +136,14 @@ describe("organization-billing", () => {
         {
           id: "prod_hobby",
           metadata: { formbricks_plan: "hobby" },
+          active: true,
           default_price: null,
         },
       ],
     });
     mocks.productsRetrieve.mockImplementation(async (productId: string) => ({
       id: productId,
+      active: true,
       metadata:
         productId === "prod_hobby"
           ? { formbricks_plan: "hobby" }
@@ -152,7 +154,100 @@ describe("organization-billing", () => {
               : {},
     }));
     mocks.pricesList.mockResolvedValue({
-      data: [{ id: "price_hobby_1" }],
+      data: [
+        {
+          id: "price_hobby_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "hobby",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_hobby", active: true, metadata: { formbricks_plan: "hobby" } },
+        },
+        {
+          id: "price_pro_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 8900,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        {
+          id: "price_pro_yearly",
+          active: true,
+          currency: "usd",
+          unit_amount: 89000,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "base",
+            formbricks_interval: "yearly",
+          },
+          recurring: { usage_type: "licensed", interval: "year" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        {
+          id: "price_pro_responses",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "responses",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "metered", interval: "month" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        {
+          id: "price_scale_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 39000,
+          metadata: {
+            formbricks_plan: "scale",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+        },
+        {
+          id: "price_scale_yearly",
+          active: true,
+          currency: "usd",
+          unit_amount: 390000,
+          metadata: {
+            formbricks_plan: "scale",
+            formbricks_price_kind: "base",
+            formbricks_interval: "yearly",
+          },
+          recurring: { usage_type: "licensed", interval: "year" },
+          product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+        },
+        {
+          id: "price_scale_responses",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "scale",
+            formbricks_price_kind: "responses",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "metered", interval: "month" },
+          product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+        },
+      ],
+      has_more: false,
     });
     mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
     mocks.prismaOrganizationBillingCreate.mockResolvedValue({
@@ -360,7 +455,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_pro" },
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "year" },
                 },
               },
@@ -434,7 +530,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_scale" },
+                  metadata: {},
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -497,7 +594,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_scale" },
+                  metadata: {},
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -542,7 +640,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_pro" },
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -592,6 +691,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
@@ -608,6 +708,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
@@ -788,7 +889,8 @@ describe("organization-billing", () => {
               data: [
                 {
                   price: {
-                    product: { id: "prod_hobby" },
+                    metadata: {},
+                    product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                     recurring: { usage_type: "licensed", interval: "month" },
                   },
                 },
@@ -800,19 +902,10 @@ describe("organization-billing", () => {
 
     await ensureCloudStripeSetupForOrganization("org_1");
 
-    expect(mocks.productsList).toHaveBeenCalledWith({
-      active: true,
-      limit: 100,
-    });
-    expect(mocks.pricesList).toHaveBeenCalledWith({
-      product: "prod_hobby",
-      active: true,
-      limit: 100,
-    });
     expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
       {
         customer: "cus_new",
-        items: [{ price: "price_hobby_1", quantity: 1 }],
+        items: [{ price: "price_hobby_monthly", quantity: 1 }],
         metadata: { organizationId: "org_1" },
       },
       { idempotencyKey: "ensure-hobby-subscription-org_1-bootstrap" }
@@ -848,6 +941,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                 },
               },
@@ -862,6 +956,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                 },
               },

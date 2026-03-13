@@ -4,13 +4,23 @@ import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
+  type TCloudBillingInterval,
   type TOrganizationBilling,
+  type TOrganizationStripePendingChange,
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import {
+  type TStandardCloudPlan,
+  getCatalogItemForPlan,
+  getCatalogItemsForPlan,
+  getIntervalFromPrice,
+  getPlanFromPrice,
+  getPriceKindFromPrice,
+} from "./stripe-billing-catalog";
 import { stripeClient } from "./stripe-client";
 import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-plan";
 
@@ -171,6 +181,142 @@ const hydrateSubscriptionProducts = async <
   }));
 };
 
+const hydratePrices = async <
+  TPriceContainer extends {
+    price: string | Stripe.Price | Stripe.DeletedPrice;
+  },
+>(
+  items: TPriceContainer[]
+): Promise<Array<TPriceContainer & { price: Stripe.Price }>> => {
+  if (!stripeClient || items.length === 0) {
+    return items.filter(
+      (item): item is TPriceContainer & { price: Stripe.Price } =>
+        typeof item.price !== "string" && !item.price.deleted
+    );
+  }
+  const client = stripeClient;
+
+  const missingPriceIds = [
+    ...new Set(items.flatMap((item) => (typeof item.price === "string" ? [item.price] : []))),
+  ];
+
+  const retrievedPrices = await Promise.all(
+    missingPriceIds.map(
+      async (priceId) =>
+        [
+          priceId,
+          await client.prices.retrieve(priceId, {
+            expand: ["product"],
+          }),
+        ] as const
+    )
+  );
+
+  const pricesById = new Map(retrievedPrices);
+
+  return items.flatMap((item) => {
+    if (typeof item.price !== "string") {
+      if (item.price.deleted) {
+        return [];
+      }
+
+      return [{ ...item, price: item.price }];
+    }
+
+    const price = pricesById.get(item.price);
+    if (!price) {
+      return [];
+    }
+
+    return [{ ...item, price }];
+  });
+};
+
+const getBasePriceFromSubscription = (
+  subscription: {
+    items: {
+      data: Array<{
+        id?: string;
+        price: Stripe.Price;
+      }>;
+    };
+  } | null
+): Stripe.Price | null => {
+  if (!subscription) {
+    return null;
+  }
+
+  return (
+    subscription.items.data.find((item) => {
+      const plan = getPlanFromPrice(item.price);
+      const kind = getPriceKindFromPrice(item.price);
+
+      return plan !== null && kind === "base";
+    })?.price ?? null
+  );
+};
+
+const resolveSubscriptionInterval = (
+  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>
+): TCloudBillingInterval | null => {
+  return getIntervalFromPrice(getBasePriceFromSubscription(subscription));
+};
+
+const mapSubscriptionItemsToScheduleItems = (
+  items: Array<{
+    price: Stripe.Price;
+    quantity?: number | null;
+  }>
+): Array<Stripe.SubscriptionScheduleUpdateParams.Phase.Item> => {
+  return items.map((item) => ({
+    price: item.price.id,
+    quantity: item.quantity ?? 1,
+  }));
+};
+
+const getPendingPlanChangeFromSchedule = async (
+  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>
+): Promise<TOrganizationStripePendingChange | null> => {
+  if (!stripeClient || !subscription?.schedule) {
+    return null;
+  }
+
+  const scheduleId =
+    typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+  const schedule = await stripeClient.subscriptionSchedules.retrieve(scheduleId);
+  const currentPhaseEnd = schedule.current_phase?.end_date ?? null;
+
+  if (!currentPhaseEnd) {
+    return null;
+  }
+
+  const nextPhase = schedule.phases.find((phase) => phase.start_date >= currentPhaseEnd);
+  if (!nextPhase) {
+    return null;
+  }
+
+  const phaseItems = await hydratePrices(
+    nextPhase.items.map((item) => ({
+      price: item.price,
+      quantity: item.quantity,
+    }))
+  );
+
+  const basePrice = phaseItems.find((item) => getPriceKindFromPrice(item.price) === "base")?.price ?? null;
+  const targetPlan = getPlanFromPrice(basePrice);
+
+  if (!targetPlan) {
+    return null;
+  }
+
+  return {
+    type: "plan_change",
+    targetPlan,
+    targetInterval: getIntervalFromPrice(basePrice),
+    effectiveAt: new Date(nextPhase.start_date * 1000).toISOString(),
+  };
+};
+
 const getSubscriptionTopPlanLevel = (
   subscription: {
     items: {
@@ -251,48 +397,42 @@ const resolveUsageCycleAnchor = (
   return new Date(subscription.billing_cycle_anchor * 1000);
 };
 
+const resolvePendingChangeEffectiveAt = (
+  subscription: Awaited<ReturnType<typeof resolveCurrentSubscription>>
+): string | null => {
+  if (!subscription) {
+    return null;
+  }
+
+  if (subscription.cancel_at) {
+    return new Date(subscription.cancel_at * 1000).toISOString();
+  }
+
+  const currentPeriodEnd = subscription.items.data.reduce<number | null>((latestEnd, item) => {
+    const itemPeriodEnd = item.current_period_end ?? null;
+
+    if (itemPeriodEnd == null) {
+      return latestEnd;
+    }
+
+    return latestEnd == null ? itemPeriodEnd : Math.max(latestEnd, itemPeriodEnd);
+  }, null);
+
+  return currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
+};
+
 const ensureHobbySubscription = async (
   organizationId: string,
   customerId: string,
   idempotencySuffix: string
 ): Promise<void> => {
   if (!stripeClient) return;
-
-  const products = await stripeClient.products.list({
-    active: true,
-    limit: 100,
-  });
-
-  const hobbyProduct = products.data.find((product) => product.metadata.formbricks_plan === "hobby");
-  if (!hobbyProduct) {
-    throw new Error("Stripe product metadata formbricks_plan=hobby not found");
-  }
-
-  const defaultPrice =
-    typeof hobbyProduct.default_price === "string" ? null : (hobbyProduct.default_price ?? null);
-
-  const fallbackPrices = await stripeClient.prices.list({
-    product: hobbyProduct.id,
-    active: true,
-    limit: 100,
-  });
-
-  const hobbyPrice =
-    defaultPrice ??
-    fallbackPrices.data.find(
-      (price) => price.recurring?.interval === "month" && price.recurring.usage_type === "licensed"
-    ) ??
-    fallbackPrices.data[0] ??
-    null;
-
-  if (!hobbyPrice) {
-    throw new Error(`No active price found for Stripe hobby product ${hobbyProduct.id}`);
-  }
+  const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
-      items: [{ price: hobbyPrice.id, quantity: 1 }],
+      items: hobbyItems,
       metadata: { organizationId },
     },
     { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${idempotencySuffix}` }
@@ -339,50 +479,24 @@ export const createProTrialSubscription = async (
   customerId: string
 ): Promise<void> => {
   if (!stripeClient) return;
-
-  const products = await stripeClient.products.list({
-    active: true,
-    limit: 100,
-  });
-
-  const proProduct = products.data.find((product) => product.metadata.formbricks_plan === "pro");
-  if (!proProduct) {
-    throw new Error("Stripe product metadata formbricks_plan=pro not found");
-  }
+  const proCatalogItem = await getCatalogItemForPlan("pro", "monthly");
+  const proProductId =
+    typeof proCatalogItem.basePrice.product === "string"
+      ? proCatalogItem.basePrice.product
+      : proCatalogItem.basePrice.product.id;
 
   const customer = await stripeClient.customers.retrieve(customerId);
   if (!customer.deleted && customer.email) {
-    const alreadyUsed = await hasEmailUsedProTrial(customer.email, proProduct.id);
+    const alreadyUsed = await hasEmailUsedProTrial(customer.email, proProductId);
     if (alreadyUsed) {
       throw new OperationNotAllowedError("trial_already_used");
     }
   }
 
-  const defaultPrice =
-    typeof proProduct.default_price === "string" ? null : (proProduct.default_price ?? null);
-
-  const fallbackPrices = await stripeClient.prices.list({
-    product: proProduct.id,
-    active: true,
-    limit: 100,
-  });
-
-  const proPrice =
-    defaultPrice ??
-    fallbackPrices.data.find(
-      (price) => price.recurring?.interval === "month" && price.recurring.usage_type === "licensed"
-    ) ??
-    fallbackPrices.data[0] ??
-    null;
-
-  if (!proPrice) {
-    throw new Error(`No active price found for Stripe pro product ${proProduct.id}`);
-  }
-
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
-      items: [{ price: proPrice.id, quantity: 1 }],
+      items: await getCatalogItemsForPlan("pro", "monthly"),
       trial_period_days: 14,
       trial_settings: {
         end_behavior: {
@@ -396,6 +510,227 @@ export const createProTrialSubscription = async (
     },
     { idempotencyKey: `create-pro-trial-${organizationId}` }
   );
+};
+
+export const createPaidPlanCheckoutSession = async (input: {
+  organizationId: string;
+  customerId: string;
+  environmentId: string;
+  plan: Exclude<TStandardCloudPlan, "hobby">;
+  interval: TCloudBillingInterval;
+}): Promise<string> => {
+  if (!stripeClient) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const items = await getCatalogItemsForPlan(input.plan, input.interval);
+  const session = await stripeClient.checkout.sessions.create({
+    mode: "subscription",
+    customer: input.customerId,
+    line_items: items,
+    client_reference_id: input.organizationId,
+    billing_address_collection: "required",
+    tax_id_collection: {
+      enabled: true,
+      required: "if_supported",
+    },
+    customer_update: {
+      address: "auto",
+      name: "auto",
+    },
+    success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${input.environmentId}&checkout_success=1`,
+    cancel_url: `${WEBAPP_URL}/environments/${input.environmentId}/settings/billing`,
+    metadata: {
+      organizationId: input.organizationId,
+      targetPlan: input.plan,
+      targetInterval: input.interval,
+    },
+    subscription_data: {
+      metadata: {
+        organizationId: input.organizationId,
+      },
+    },
+  });
+
+  if (!session.url) {
+    throw new Error("Stripe did not return a Checkout Session URL");
+  }
+
+  return session.url;
+};
+
+const getRequiredActiveSubscription = async (
+  organizationId: string,
+  customerId: string
+): Promise<NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>> => {
+  const subscription = await resolveCurrentSubscription(customerId);
+
+  if (!subscription) {
+    throw new ResourceNotFoundError("subscription", organizationId);
+  }
+
+  return subscription;
+};
+
+const clearPendingPlanState = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+): Promise<void> => {
+  if (!stripeClient) {
+    return;
+  }
+
+  if (subscription.cancel_at_period_end) {
+    await stripeClient.subscriptions.update(subscription.id, {
+      cancel_at_period_end: false,
+    });
+  }
+
+  if (subscription.schedule) {
+    const scheduleId =
+      typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+
+    await stripeClient.subscriptionSchedules.release(scheduleId, {
+      preserve_cancel_date: false,
+    });
+  }
+};
+
+const updateSubscriptionItemsImmediately = async (
+  organizationId: string,
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  targetPlan: TStandardCloudPlan,
+  targetInterval: TCloudBillingInterval
+): Promise<void> => {
+  if (!stripeClient) {
+    return;
+  }
+
+  const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
+  const existingDeletions = subscription.items.data.map((item) => ({
+    id: item.id,
+    deleted: true as const,
+  }));
+
+  await stripeClient.subscriptions.update(subscription.id, {
+    cancel_at_period_end: false,
+    items: [...existingDeletions, ...targetItems],
+    proration_behavior: "always_invoice",
+    payment_behavior: "allow_incomplete",
+    ...(subscription.trial_end ? { trial_end: subscription.trial_end } : {}),
+    metadata: {
+      organizationId,
+    },
+  });
+};
+
+const scheduleSubscriptionPlanChange = async (
+  organizationId: string,
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  targetPlan: TStandardCloudPlan,
+  targetInterval: TCloudBillingInterval
+): Promise<void> => {
+  if (!stripeClient) {
+    return;
+  }
+
+  if (subscription.cancel_at_period_end) {
+    await stripeClient.subscriptions.update(subscription.id, {
+      cancel_at_period_end: false,
+    });
+  }
+
+  const currentItems = mapSubscriptionItemsToScheduleItems(subscription.items.data);
+  const targetCatalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
+  const targetItems = mapSubscriptionItemsToScheduleItems([
+    { price: targetCatalogItem.basePrice, quantity: 1 },
+    ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice, quantity: 1 }] : []),
+  ]);
+
+  const existingScheduleId =
+    typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule?.id;
+
+  const schedule = existingScheduleId
+    ? await stripeClient.subscriptionSchedules.retrieve(existingScheduleId)
+    : await stripeClient.subscriptionSchedules.create({
+        from_subscription: subscription.id,
+      });
+
+  const currentPhase = schedule.current_phase;
+
+  if (!currentPhase) {
+    throw new Error(`Stripe subscription schedule ${schedule.id} has no current phase`);
+  }
+
+  await stripeClient.subscriptionSchedules.update(schedule.id, {
+    end_behavior: "release",
+    proration_behavior: "none",
+    phases: [
+      {
+        start_date: currentPhase.start_date,
+        end_date: currentPhase.end_date,
+        items: currentItems,
+      },
+      {
+        start_date: currentPhase.end_date,
+        items: targetItems,
+        duration: {
+          interval: targetPlan === "hobby" ? "month" : targetInterval === "monthly" ? "month" : "year",
+          interval_count: 1,
+        },
+        metadata: {
+          organizationId,
+          targetPlan,
+          targetInterval,
+        },
+      },
+    ],
+  });
+};
+
+export const switchOrganizationToCloudPlan = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+}): Promise<{ mode: "immediate" | "scheduled" }> => {
+  const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
+  const currentPlan = resolveCloudPlanFromSubscription(subscription);
+  const currentInterval = resolveSubscriptionInterval(subscription);
+
+  const isImmediateUpgrade = CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
+  const isSameSelection = currentPlan === input.targetPlan && currentInterval === input.targetInterval;
+
+  if (isSameSelection) {
+    return { mode: "immediate" };
+  }
+
+  await clearPendingPlanState(subscription);
+
+  if (isImmediateUpgrade) {
+    await updateSubscriptionItemsImmediately(
+      input.organizationId,
+      subscription,
+      input.targetPlan,
+      input.targetInterval
+    );
+    return { mode: "immediate" };
+  }
+
+  await scheduleSubscriptionPlanChange(
+    input.organizationId,
+    subscription,
+    input.targetPlan,
+    input.targetInterval
+  );
+  return { mode: "scheduled" };
+};
+
+export const undoPendingOrganizationPlanChange = async (
+  organizationId: string,
+  customerId: string
+): Promise<void> => {
+  const subscription = await getRequiredActiveSubscription(organizationId, customerId);
+  await clearPendingPlanState(subscription);
 };
 
 const ensureOrganizationBillingRecord = async (
@@ -584,8 +919,20 @@ export const syncOrganizationBillingFromStripe = async (
   ]);
 
   const cloudPlan = resolveCloudPlanFromSubscription(subscription);
+  const billingInterval = resolveSubscriptionInterval(subscription);
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
+  const pendingChangeEffectiveAt = resolvePendingChangeEffectiveAt(subscription);
+  const pendingChange =
+    (await getPendingPlanChangeFromSchedule(subscription)) ??
+    (subscription?.cancel_at_period_end && pendingChangeEffectiveAt
+      ? {
+          type: "plan_change" as const,
+          targetPlan: "hobby" as const,
+          targetInterval: "monthly" as const,
+          effectiveAt: pendingChangeEffectiveAt,
+        }
+      : null);
   const previousLimits = billing.limits;
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
@@ -626,10 +973,12 @@ export const syncOrganizationBillingFromStripe = async (
     stripe: {
       ...billing.stripe,
       plan: cloudPlan,
+      interval: billingInterval,
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
       hasPaymentMethod: subscription?.default_payment_method != null,
       features: featureLookupKeys,
+      pendingChange,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,

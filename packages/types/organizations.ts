@@ -3,6 +3,8 @@ import { ZStorageUrl } from "./common";
 
 export const ZCloudBillingPlan = z.enum(["hobby", "pro", "scale", "custom", "unknown"]);
 export type TCloudBillingPlan = z.infer<typeof ZCloudBillingPlan>;
+export const ZCloudBillingInterval = z.enum(["monthly", "yearly"]);
+export type TCloudBillingInterval = z.infer<typeof ZCloudBillingInterval>;
 export const ZOrganizationStripeSubscriptionStatus = z.enum([
   "trialing",
   "active",
@@ -15,8 +17,17 @@ export const ZOrganizationStripeSubscriptionStatus = z.enum([
 ]);
 export type TOrganizationStripeSubscriptionStatus = z.infer<typeof ZOrganizationStripeSubscriptionStatus>;
 
+export const ZOrganizationStripePendingChange = z.object({
+  type: z.literal("plan_change"),
+  targetPlan: z.enum(["hobby", "pro", "scale"]),
+  targetInterval: ZCloudBillingInterval.nullable(),
+  effectiveAt: z.string(),
+});
+export type TOrganizationStripePendingChange = z.infer<typeof ZOrganizationStripePendingChange>;
+
 export const ZOrganizationStripeBilling = z.object({
   plan: ZCloudBillingPlan.optional(),
+  interval: ZCloudBillingInterval.nullable().optional(),
   subscriptionStatus: ZOrganizationStripeSubscriptionStatus.nullable().optional(),
   subscriptionId: z.string().nullable().optional(),
   hasPaymentMethod: z.boolean().optional(),
@@ -25,6 +36,7 @@ export const ZOrganizationStripeBilling = z.object({
   lastSyncedAt: z.string().nullable().optional(),
   lastSyncedEventId: z.string().nullable().optional(),
   trialEnd: z.string().nullable().optional(),
+  pendingChange: ZOrganizationStripePendingChange.nullable().optional(),
 });
 export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 
