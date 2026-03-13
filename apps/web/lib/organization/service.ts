@@ -308,12 +308,7 @@ export const deleteOrganization = async (organizationId: string) => {
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {
-      cleanupStripeCustomer(stripeCustomerId).catch((error) => {
-        logger.error(
-          { error, organizationId, stripeCustomerId },
-          "Failed to clean up Stripe customer after organization deletion"
-        );
-      });
+      await cleanupStripeCustomer(stripeCustomerId);
     }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
