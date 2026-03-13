@@ -175,6 +175,16 @@ export const addPageUrlEventListeners = (): void => {
       window.dispatchEvent(event);
     };
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- We need to access the original method
+    const originalReplaceState = history.replaceState;
+
+    // eslint-disable-next-line func-names -- We need an anonymous function here
+    history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args);
+      const event = new Event("replacestate");
+      window.dispatchEvent(event);
+    };
+
     isHistoryPatched = true;
   }
 

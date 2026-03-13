@@ -17,6 +17,7 @@ import {
   removeExitIntentListener,
   removePageUrlEventListeners,
   removeScrollDepthListener,
+  setIsHistoryPatched,
 } from "@/lib/survey/no-code-action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
 import { type TActionClassNoCodeConfig } from "@/types/survey";
@@ -637,6 +638,32 @@ describe("addPageUrlEventListeners additional cases", () => {
 
     (window.addEventListener as Mock).mockRestore();
     dispatchEventSpy.mockRestore();
+  });
+
+  test("patched history.replaceState dispatches a 'replacestate' event", () => {
+    const addEventListenerMock = vi.fn();
+    const removeEventListenerMock = vi.fn();
+    const originalReplaceState = vi.fn();
+    const dispatchEventMock = vi.fn();
+    vi.stubGlobal("window", {
+      addEventListener: addEventListenerMock,
+      removeEventListener: removeEventListenerMock,
+      dispatchEvent: dispatchEventMock,
+    });
+    vi.stubGlobal("history", { pushState: vi.fn(), replaceState: originalReplaceState });
+
+    // Reset patching state so addPageUrlEventListeners patches history fresh
+    setIsHistoryPatched(false);
+    removePageUrlEventListeners();
+    addPageUrlEventListeners();
+
+    // Call the patched replaceState
+    history.replaceState({}, "", "/replaced-url");
+
+    expect(originalReplaceState).toHaveBeenCalledWith({}, "", "/replaced-url");
+    expect(dispatchEventMock).toHaveBeenCalledWith(expect.objectContaining({ type: "replacestate" }));
+
+    (window.addEventListener as Mock).mockRestore();
   });
 });
 
