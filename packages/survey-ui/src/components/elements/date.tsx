@@ -1,37 +1,32 @@
 import * as React from "react";
+import {
+  DATE_FORMAT_OUTPUT_ORDER,
+  DATE_FORMAT_PARSE_ORDER,
+  DEFAULT_DATE_STORAGE_FORMAT,
+  type TSurveyDateStorageFormat,
+} from "@formbricks/types/surveys/date-formats";
 import { Calendar } from "@/components/general/calendar";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { getDateFnsLocale } from "@/lib/locale";
 
-/** Storage format for date response values: M=month, d=day, y=year */
-export type DateStorageFormat = "M-d-y" | "d-M-y" | "y-M-d";
+export type DateStorageFormat = TSurveyDateStorageFormat;
+
+const ISO_FIRST_CHARS = /^\d{4}/;
 
 function parseValueToDate(value: string, format: DateStorageFormat): Date | undefined {
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
   const parts = trimmed.split("-");
   if (parts.length !== 3) return undefined;
-  const [a, b, c] = parts.map((p) => parseInt(p, 10));
-  if (Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(c)) return undefined;
-  const useIso = /^\d{4}/.test(trimmed);
-  const effective = useIso ? "y-M-d" : format;
-  let year: number;
-  let month: number;
-  let day: number;
-  if (effective === "y-M-d") {
-    year = a;
-    month = b;
-    day = c;
-  } else if (effective === "d-M-y") {
-    day = a;
-    month = b;
-    year = c;
-  } else {
-    month = a;
-    day = b;
-    year = c;
-  }
+  const nums = parts.map((p) => Number.parseInt(p, 10));
+  if (nums.some(Number.isNaN)) return undefined;
+  const useIso = ISO_FIRST_CHARS.test(trimmed);
+  const effective = useIso ? DEFAULT_DATE_STORAGE_FORMAT : format;
+  const order = DATE_FORMAT_PARSE_ORDER[effective];
+  const year = nums[order.yearIdx];
+  const month = nums[order.monthIdx];
+  const day = nums[order.dayIdx];
   if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
   const date = new Date(year, month - 1, day);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
@@ -40,16 +35,9 @@ function parseValueToDate(value: string, format: DateStorageFormat): Date | unde
 }
 
 function formatDateForStorage(year: string, month: string, day: string, format: DateStorageFormat): string {
-  switch (format) {
-    case "y-M-d":
-      return `${year}-${month}-${day}`;
-    case "M-d-y":
-      return `${month}-${day}-${year}`;
-    case "d-M-y":
-      return `${day}-${month}-${year}`;
-    default:
-      return `${year}-${month}-${day}`;
-  }
+  const comps = [year, month, day];
+  const [i, j, k] = DATE_FORMAT_OUTPUT_ORDER[format];
+  return `${comps[i]}-${comps[j]}-${comps[k]}`;
 }
 
 interface DateElementProps {
@@ -96,7 +84,7 @@ function DateElement({
   inputId,
   value,
   onChange,
-  outputFormat = "y-M-d",
+  outputFormat = DEFAULT_DATE_STORAGE_FORMAT,
   required = false,
   requiredLabel,
   minDate,
@@ -121,8 +109,8 @@ function DateElement({
     const newDate = parseValueToDate(value, outputFormat);
     setDate((prevDate) => {
       if (!newDate) return undefined;
-      if (!prevDate || newDate.getTime() !== prevDate.getTime()) return newDate;
-      return prevDate;
+      if (prevDate?.getTime() !== newDate.getTime()) return newDate;
+      return prevDate ?? undefined;
     });
   }, [value, outputFormat]);
 

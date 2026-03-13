@@ -10,6 +10,7 @@ import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
+import { DATE_STORAGE_FORMAT_IDS } from "./date-formats";
 import {
   type TSurveyElement,
   TSurveyElementTypeEnum,
@@ -560,7 +561,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Date),
   html: ZI18nString.optional(),
-  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+  format: z.enum(DATE_STORAGE_FORMAT_IDS),
 });
 
 /**

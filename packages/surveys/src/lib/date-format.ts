@@ -1,14 +1,17 @@
-/**
- * Date storage format for survey date elements.
- * Values are stored in response data in this order: y = year, M = month, d = day.
- */
-export type TSurveyDateStorageFormat = "M-d-y" | "d-M-y" | "y-M-d";
+import {
+  DATE_FORMAT_PARSE_ORDER,
+  DATE_STORAGE_FORMATS_LIST,
+  DEFAULT_DATE_STORAGE_FORMAT,
+  type TSurveyDateStorageFormat,
+} from "@formbricks/types/surveys/date-formats";
+
+export type { TSurveyDateStorageFormat };
 
 const ISO_FIRST_CHARS = /^\d{4}/;
 
 /**
  * Parse a date string stored in response data using the element's storage format.
- * Pure function, synchronous, no I/O.
+ * Uses the format registry from @formbricks/types for data-driven parsing.
  *
  * Backward compatibility: if the value starts with 4 digits (YYYY), it is treated
  * as ISO (y-M-d) regardless of format, so legacy YYYY-MM-DD values parse correctly.
@@ -17,7 +20,10 @@ const ISO_FIRST_CHARS = /^\d{4}/;
  * @param format - The format used when the value was stored; defaults to "y-M-d" (ISO)
  * @returns Parsed Date in local time, or null if invalid
  */
-export function parseDateByFormat(value: string, format: TSurveyDateStorageFormat = "y-M-d"): Date | null {
+export function parseDateByFormat(
+  value: string,
+  format: TSurveyDateStorageFormat = DEFAULT_DATE_STORAGE_FORMAT
+): Date | null {
   const trimmed = value?.trim();
   if (!trimmed || typeof trimmed !== "string") {
     return null;
@@ -28,44 +34,16 @@ export function parseDateByFormat(value: string, format: TSurveyDateStorageForma
     return null;
   }
 
-  // Backward compat: value starts with 4 digits (year) => treat as ISO
   const useIso = ISO_FIRST_CHARS.test(trimmed);
-  const effectiveFormat = useIso ? "y-M-d" : format;
+  const effectiveFormat = useIso ? DEFAULT_DATE_STORAGE_FORMAT : format;
 
-  let year: number;
-  let month: number;
-  let day: number;
+  const order = DATE_FORMAT_PARSE_ORDER[effectiveFormat];
+  const nums = parts.map((p) => Number.parseInt(p, 10));
+  if (nums.some(Number.isNaN)) return null;
+  const year = nums[order.yearIdx];
+  const month = nums[order.monthIdx];
+  const day = nums[order.dayIdx];
 
-  switch (effectiveFormat) {
-    case "y-M-d": {
-      const [y, m, d] = parts.map((p) => parseInt(p, 10));
-      if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
-      year = y;
-      month = m;
-      day = d;
-      break;
-    }
-    case "d-M-y": {
-      const [d, m, y] = parts.map((p) => parseInt(p, 10));
-      if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
-      year = y;
-      month = m;
-      day = d;
-      break;
-    }
-    case "M-d-y": {
-      const [m, d, y] = parts.map((p) => parseInt(p, 10));
-      if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
-      year = y;
-      month = m;
-      day = d;
-      break;
-    }
-    default:
-      return null;
-  }
-
-  // Month 1-12, day 1-31; Date constructor uses 0-indexed month
   if (month < 1 || month > 12 || day < 1 || day > 31) {
     return null;
   }
@@ -78,8 +56,6 @@ export function parseDateByFormat(value: string, format: TSurveyDateStorageForma
   return date;
 }
 
-const STORAGE_FORMATS: TSurveyDateStorageFormat[] = ["y-M-d", "d-M-y", "M-d-y"];
-
 /**
  * Try to parse a date string using each known storage format in order.
  * Use when the storage format is unknown (e.g. recall placeholders).
@@ -88,7 +64,7 @@ const STORAGE_FORMATS: TSurveyDateStorageFormat[] = ["y-M-d", "d-M-y", "M-d-y"];
  * @returns Parsed Date or null if no format matched
  */
 export function parseDateWithFormats(value: string): Date | null {
-  for (const format of STORAGE_FORMATS) {
+  for (const format of DATE_STORAGE_FORMATS_LIST) {
     const parsed = parseDateByFormat(value, format);
     if (parsed !== null) return parsed;
   }

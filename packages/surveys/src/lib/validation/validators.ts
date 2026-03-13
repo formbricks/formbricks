@@ -1,5 +1,9 @@
 import type { TFunction } from "i18next";
 import type { TResponseDataValue } from "@formbricks/types/responses";
+import {
+  DEFAULT_DATE_STORAGE_FORMAT,
+  type TSurveyDateStorageFormat,
+} from "@formbricks/types/surveys/date-formats";
 import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
@@ -31,22 +35,22 @@ import { parseDateByFormat } from "@/lib/date-format";
 import { countSelections } from "./validators/selection-utils";
 import { validateEmail, validatePhone, validateUrl } from "./validators/validation-utils";
 
-function getDateElementFormat(element: TSurveyElement): "M-d-y" | "d-M-y" | "y-M-d" {
+function getDateElementFormat(element: TSurveyElement): TSurveyDateStorageFormat {
   if (element.type === "date" && "format" in element) {
-    return (element as TSurveyDateElement).format ?? "y-M-d";
+    return element.format ?? DEFAULT_DATE_STORAGE_FORMAT;
   }
-  return "y-M-d";
+  return DEFAULT_DATE_STORAGE_FORMAT;
 }
 
 function parseForDateComparison(
   value: string,
-  format: "M-d-y" | "d-M-y" | "y-M-d",
+  format: TSurveyDateStorageFormat,
   element: TSurveyElement,
   ruleName: string,
   paramDates: [string] | [string, string]
 ): { valueDate: Date; paramDates: Date[] } | null {
   const valueDate = parseDateByFormat(value, format);
-  const parsedParams = paramDates.map((d) => parseDateByFormat(d, "y-M-d"));
+  const parsedParams = paramDates.map((d) => parseDateByFormat(d, DEFAULT_DATE_STORAGE_FORMAT));
   if (valueDate === null) {
     console.warn(`[date validation] ${ruleName}: could not parse response date`, {
       elementId: element.id,
@@ -55,7 +59,7 @@ function parseForDateComparison(
     });
     return null;
   }
-  if (parsedParams.some((d) => d === null)) return null;
+  if (parsedParams.includes(null)) return null;
   return { valueDate, paramDates: parsedParams as Date[] };
 }
 

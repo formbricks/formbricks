@@ -2,6 +2,7 @@ import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { logger } from "@formbricks/logger";
 import { TResponseDataValue } from "@formbricks/types/responses";
+import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
 import {
   TSurveyDateElement,
   TSurveyElement,
@@ -68,7 +69,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyElementTypeEnum.Date:
       if (typeof responseData === "string") {
-        const format = (element as TSurveyDateElement).format ?? "y-M-d";
+        const format = element.format ?? DEFAULT_DATE_STORAGE_FORMAT;
         const formatted = formatStoredDateForDisplay(responseData, format, responseData);
         if (formatted === responseData) {
           logger.warn(

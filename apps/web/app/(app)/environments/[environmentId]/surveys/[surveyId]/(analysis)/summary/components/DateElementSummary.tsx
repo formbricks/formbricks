@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
 import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -32,7 +33,7 @@ export const DateElementSummary = ({ elementSummary, environmentId, survey, loca
   };
 
   const renderResponseValue = (value: string) => {
-    const format = elementSummary.element?.format ?? "y-M-d";
+    const format = elementSummary.element?.format ?? DEFAULT_DATE_STORAGE_FORMAT;
     return formatStoredDateForDisplay(value, format, `${t("common.invalid_date")}(${value})`);
   };
 

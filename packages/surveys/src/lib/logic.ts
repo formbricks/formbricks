@@ -2,6 +2,7 @@ import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
 import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { type TSurveyVariable } from "@formbricks/types/surveys/types";
@@ -9,11 +10,18 @@ import { parseDateByFormat } from "@/lib/date-format";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getElementsFromSurveyBlocks } from "./utils";
 
+/** Coerce to string for date comparison; avoids Object's default stringification. */
+function toDateOperandString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return "";
+}
+
 function parseDateOperand(value: string, field: TSurveyElement | ""): Date | null {
   const format =
     field && typeof field === "object" && field.type === TSurveyElementTypeEnum.Date && "format" in field
-      ? ((field as TSurveyDateElement).format ?? "y-M-d")
-      : "y-M-d";
+      ? (field.format ?? DEFAULT_DATE_STORAGE_FORMAT)
+      : DEFAULT_DATE_STORAGE_FORMAT;
   return parseDateByFormat(value, format);
 }
 
@@ -26,7 +34,7 @@ function compareDateOperands(
   compare: (left: Date, right: Date) => boolean
 ): boolean {
   const leftDate = parseDateOperand(leftValue, leftField);
-  const rightDate = parseDateOperand(String(rightValue), rightField);
+  const rightDate = parseDateOperand(rightValue, rightField);
   if (leftDate === null) {
     console.warn(`[logic] ${operator}: could not parse left date`, {
       elementId: leftField.id,
@@ -468,19 +476,19 @@ const evaluateSingleCondition = (
         return leftValue !== "clicked";
       case "isAfter":
         return compareDateOperands(
-          String(leftValue),
-          String(rightValue),
-          leftField as TSurveyElement,
-          rightField as TSurveyElement,
+          toDateOperandString(leftValue),
+          toDateOperandString(rightValue),
+          leftField,
+          rightField,
           "isAfter",
           (l, r) => l.getTime() > r.getTime()
         );
       case "isBefore":
         return compareDateOperands(
-          String(leftValue),
-          String(rightValue),
-          leftField as TSurveyElement,
-          rightField as TSurveyElement,
+          toDateOperandString(leftValue),
+          toDateOperandString(rightValue),
+          leftField,
+          rightField,
           "isBefore",
           (l, r) => l.getTime() < r.getTime()
         );
