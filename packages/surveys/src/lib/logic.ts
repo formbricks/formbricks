@@ -17,6 +17,27 @@ function parseDateOperand(value: string, field: TSurveyElement | ""): Date | nul
   return parseDateByFormat(value, format);
 }
 
+function compareDateOperands(
+  leftValue: string,
+  rightValue: string,
+  leftField: TSurveyElement,
+  rightField: TSurveyElement,
+  operator: string,
+  compare: (left: Date, right: Date) => boolean
+): boolean {
+  const leftDate = parseDateOperand(leftValue, leftField);
+  const rightDate = parseDateOperand(String(rightValue), rightField);
+  if (leftDate === null) {
+    console.warn(`[logic] ${operator}: could not parse left date`, {
+      elementId: leftField.id,
+      value: leftValue,
+    });
+    return false;
+  }
+  if (rightDate === null) return false;
+  return compare(leftDate, rightDate);
+}
+
 const getVariableValue = (
   variables: TSurveyVariable[],
   variableId: string,
@@ -274,18 +295,14 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            const leftDate = parseDateOperand(leftValue, leftField as TSurveyElement);
-            const rightDate = parseDateOperand(String(rightValue), rightField as TSurveyElement);
-            if (leftDate === null || rightDate === null) {
-              if (leftDate === null) {
-                console.warn("[logic] equals: could not parse left date", {
-                  elementId: (leftField as TSurveyElement).id,
-                  value: leftValue,
-                });
-              }
-              return false;
-            }
-            return leftDate.getTime() === rightDate.getTime();
+            return compareDateOperands(
+              leftValue,
+              String(rightValue),
+              leftField as TSurveyElement,
+              rightField as TSurveyElement,
+              "equals",
+              (l, r) => l.getTime() === r.getTime()
+            );
           }
         }
 
@@ -299,18 +316,14 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            const leftDate = parseDateOperand(leftValue, leftField as TSurveyElement);
-            const rightDate = parseDateOperand(String(rightValue), rightField as TSurveyElement);
-            if (leftDate === null || rightDate === null) {
-              if (leftDate === null) {
-                console.warn("[logic] equals: could not parse left date", {
-                  elementId: (leftField as TSurveyElement).id,
-                  value: leftValue,
-                });
-              }
-              return false;
-            }
-            return leftDate.getTime() === rightDate.getTime();
+            return compareDateOperands(
+              leftValue,
+              String(rightValue),
+              leftField as TSurveyElement,
+              rightField as TSurveyElement,
+              "equals",
+              (l, r) => l.getTime() === r.getTime()
+            );
           }
         }
 
@@ -339,18 +352,14 @@ const evaluateSingleCondition = (
           typeof leftValue === "string" &&
           typeof rightValue === "string"
         ) {
-          const leftDate = parseDateOperand(leftValue, leftField as TSurveyElement);
-          const rightDate = parseDateOperand(String(rightValue), rightField as TSurveyElement);
-          if (leftDate === null || rightDate === null) {
-            if (leftDate === null) {
-              console.warn("[logic] doesNotEqual: could not parse left date", {
-                elementId: (leftField as TSurveyElement).id,
-                value: leftValue,
-              });
-            }
-            return false;
-          }
-          return leftDate.getTime() !== rightDate.getTime();
+          return compareDateOperands(
+            leftValue,
+            String(rightValue),
+            leftField as TSurveyElement,
+            rightField as TSurveyElement,
+            "doesNotEqual",
+            (l, r) => l.getTime() !== r.getTime()
+          );
         }
 
         if (condition.rightOperand?.type === "element") {
@@ -363,18 +372,14 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            const leftDate = parseDateOperand(leftValue, leftField as TSurveyElement);
-            const rightDate = parseDateOperand(String(rightValue), rightField as TSurveyElement);
-            if (leftDate === null || rightDate === null) {
-              if (leftDate === null) {
-                console.warn("[logic] doesNotEqual: could not parse left date", {
-                  elementId: (leftField as TSurveyElement).id,
-                  value: leftValue,
-                });
-              }
-              return false;
-            }
-            return leftDate.getTime() !== rightDate.getTime();
+            return compareDateOperands(
+              leftValue,
+              String(rightValue),
+              leftField as TSurveyElement,
+              rightField as TSurveyElement,
+              "doesNotEqual",
+              (l, r) => l.getTime() !== r.getTime()
+            );
           }
         }
 
@@ -461,34 +466,24 @@ const evaluateSingleCondition = (
         return leftValue === "clicked";
       case "isNotClicked":
         return leftValue !== "clicked";
-      case "isAfter": {
-        const leftDate = parseDateOperand(String(leftValue), leftField as TSurveyElement);
-        const rightDate = parseDateOperand(String(rightValue), rightField as TSurveyElement);
-        if (leftDate === null || rightDate === null) {
-          if (leftDate === null) {
-            console.warn("[logic] isAfter: could not parse left date", {
-              leftValue,
-              rightValue,
-            });
-          }
-          return false;
-        }
-        return leftDate.getTime() > rightDate.getTime();
-      }
-      case "isBefore": {
-        const leftDate = parseDateOperand(String(leftValue), leftField as TSurveyElement);
-        const rightDate = parseDateOperand(String(rightValue), rightField as TSurveyElement);
-        if (leftDate === null || rightDate === null) {
-          if (leftDate === null) {
-            console.warn("[logic] isBefore: could not parse left date", {
-              leftValue,
-              rightValue,
-            });
-          }
-          return false;
-        }
-        return leftDate.getTime() < rightDate.getTime();
-      }
+      case "isAfter":
+        return compareDateOperands(
+          String(leftValue),
+          String(rightValue),
+          leftField as TSurveyElement,
+          rightField as TSurveyElement,
+          "isAfter",
+          (l, r) => l.getTime() > r.getTime()
+        );
+      case "isBefore":
+        return compareDateOperands(
+          String(leftValue),
+          String(rightValue),
+          leftField as TSurveyElement,
+          rightField as TSurveyElement,
+          "isBefore",
+          (l, r) => l.getTime() < r.getTime()
+        );
       case "isBooked":
         return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":
