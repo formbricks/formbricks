@@ -48,9 +48,13 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
     const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
-    // Get OpenGraph metadata
-    const surveyBrandColor = survey.styling?.brandColor?.light;
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
+    // Use project brand color when survey doesn't override theme styling
+    const projectStyling = environmentContext.project.styling;
+    const brandColor =
+      projectStyling?.allowStyleOverwrite && survey.styling?.overwriteThemeStyling
+        ? survey.styling.brandColor?.light
+        : projectStyling?.brandColor?.light;
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
     // Override with the custom image URL
     if (baseMetadata.openGraph) {

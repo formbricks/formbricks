@@ -15,14 +15,20 @@ export const getMetadataForLinkSurvey = async (
   }
 
   const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode, survey);
-  const surveyBrandColor = survey.styling?.brandColor?.light;
 
   // Fetch organization whitelabel data for custom favicon
   const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
   const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
+  // Use project brand color when survey doesn't override theme styling
+  const projectStyling = environmentContext.project.styling;
+  const brandColor =
+    projectStyling?.allowStyleOverwrite && survey.styling?.overwriteThemeStyling
+      ? survey.styling.brandColor?.light
+      : projectStyling?.brandColor?.light;
+
   // Use the shared function for creating the base metadata but override with custom data
-  const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
+  const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
   // Override with the custom image URL
   if (baseMetadata.openGraph) {
