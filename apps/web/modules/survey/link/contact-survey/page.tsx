@@ -10,7 +10,11 @@ import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
-import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "@/modules/survey/link/lib/metadata-utils";
+import {
+  getBasicSurveyMetadata,
+  getMetadataBrandColor,
+  getSurveyOpenGraphMetadata,
+} from "@/modules/survey/link/lib/metadata-utils";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 
 interface ContactSurveyPageProps {
@@ -48,9 +52,8 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
     const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
-    // Get OpenGraph metadata
-    const surveyBrandColor = survey.styling?.brandColor?.light;
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
+    const brandColor = getMetadataBrandColor(environmentContext.project.styling, survey.styling);
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
     // Override with the custom image URL
     if (baseMetadata.openGraph) {
