@@ -1,7 +1,6 @@
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { logger } from "@formbricks/logger";
-import { parseDateByFormat } from "@formbricks/surveys/date-format";
 import { TResponseDataValue } from "@formbricks/types/responses";
 import {
   TSurveyDateElement,
@@ -13,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
@@ -70,16 +69,14 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.Date:
       if (typeof responseData === "string") {
         const format = (element as TSurveyDateElement).format ?? "y-M-d";
-        const parsedDate = parseDateByFormat(responseData, format);
-        if (parsedDate === null) {
+        const formatted = formatStoredDateForDisplay(responseData, format, responseData);
+        if (formatted === responseData) {
           logger.warn(
             { elementId: element.id, format, value: responseData },
             "[RenderResponse] could not parse date response value"
           );
-          return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{responseData}</p>;
         }
-        const formattedDate = formatDateWithOrdinal(parsedDate);
-        return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDate}</p>;
+        return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formatted}</p>;
       }
       break;
     case TSurveyElementTypeEnum.PictureSelection:

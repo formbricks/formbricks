@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { parseDateByFormat } from "@formbricks/surveys/date-format";
 import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -34,12 +33,7 @@ export const DateElementSummary = ({ elementSummary, environmentId, survey, loca
 
   const renderResponseValue = (value: string) => {
     const format = elementSummary.element?.format ?? "y-M-d";
-    const parsedDate = parseDateByFormat(value, format);
-
-    if (parsedDate === null) {
-      return `${t("common.invalid_date")}(${value})`;
-    }
-    return formatDateWithOrdinal(parsedDate);
+    return formatStoredDateForDisplay(value, format, `${t("common.invalid_date")}(${value})`);
   };
 
   return (
