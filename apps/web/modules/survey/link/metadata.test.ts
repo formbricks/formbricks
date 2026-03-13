@@ -2,11 +2,7 @@ import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
-import {
-  getBasicSurveyMetadata,
-  getMetadataBrandColor,
-  getSurveyOpenGraphMetadata,
-} from "./lib/metadata-utils";
+import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
