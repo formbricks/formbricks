@@ -307,7 +307,8 @@ export const PricingTable = ({
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
           buttonInfo={
-            canManageSubscription && currentSubscriptionStatus !== "trialing"
+            (canManageSubscription && currentSubscriptionStatus !== "trialing") ||
+            (hasBillingRights && !!organization.billing.stripe?.hasPaymentMethod)
               ? {
                   text: t("environments.settings.billing.manage_subscription"),
                   onClick: () => void openCustomerPortal(),
