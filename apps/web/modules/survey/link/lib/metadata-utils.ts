@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { TProject, TProjectStyling } from "@formbricks/types/project";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
