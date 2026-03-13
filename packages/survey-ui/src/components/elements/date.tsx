@@ -15,7 +15,7 @@ export type DateStorageFormat = TSurveyDateStorageFormat;
 const ISO_FIRST_CHARS = /^\d{4}/;
 
 function parseValueToDate(value: string, format: DateStorageFormat): Date | undefined {
-  const trimmed = value?.trim();
+  const trimmed = value.trim();
   if (!trimmed) return undefined;
   const parts = trimmed.split("-");
   if (parts.length !== 3) return undefined;
