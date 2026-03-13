@@ -940,7 +940,6 @@ checksums:
     environments/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     environments/settings/billing/trial_feature_api_access: d7aabb2de18beb5bd30c274cd768a2a9
     environments/settings/billing/trial_feature_collaboration: a43509fffe319e14d69a981ef2791517
-    environments/settings/billing/trial_feature_email_followups: add368efdd84c5aef8886f369d54cbed
     environments/settings/billing/trial_feature_quotas: 3a67818b3901bdaa72abc62db72ab170
     environments/settings/billing/trial_feature_webhooks: 8d7f034e006b2fe0eb8fa9b8f1abef51
     environments/settings/billing/trial_feature_whitelabel: 624a7aeca6a0fa65935c63fd7a8e9638

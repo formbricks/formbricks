@@ -995,7 +995,6 @@
         "trial_already_used": "A free trial has already been used for this email address. Please upgrade to a paid plan instead.",
         "trial_feature_api_access": "Get full API access",
         "trial_feature_collaboration": "All team & collaboration features",
-        "trial_feature_email_followups": "Setup email follow-ups",
         "trial_feature_quotas": "Manage quotas",
         "trial_feature_webhooks": "Setup custom webhooks",
         "trial_feature_whitelabel": "Fully white-labeled surveys",
