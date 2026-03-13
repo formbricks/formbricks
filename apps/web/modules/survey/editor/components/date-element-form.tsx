@@ -5,8 +5,8 @@ import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  DATE_STORAGE_FORMATS,
   DATE_STORAGE_FORMAT_IDS,
-  DATE_STORAGE_FORMAT_LABELS,
   type TSurveyDateStorageFormat,
 } from "@formbricks/types/surveys/date-formats";
 import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -34,7 +34,7 @@ interface IDateElementFormProps {
 
 const dateOptions = DATE_STORAGE_FORMAT_IDS.map((value) => ({
   value,
-  label: DATE_STORAGE_FORMAT_LABELS[value],
+  label: DATE_STORAGE_FORMATS[value].label,
 }));
 
 export const DateElementForm = ({

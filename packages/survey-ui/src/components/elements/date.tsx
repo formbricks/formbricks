@@ -1,9 +1,9 @@
 import * as React from "react";
 import {
-  DATE_FORMAT_OUTPUT_ORDER,
-  DATE_FORMAT_PARSE_ORDER,
+  DATE_STORAGE_FORMATS,
   DEFAULT_DATE_STORAGE_FORMAT,
   type TSurveyDateStorageFormat,
+  getOutputOrder,
 } from "@formbricks/types/surveys/date-formats";
 import { Calendar } from "@/components/general/calendar";
 import { ElementError } from "@/components/general/element-error";
@@ -23,7 +23,7 @@ function parseValueToDate(value: string, format: DateStorageFormat): Date | unde
   if (nums.some(Number.isNaN)) return undefined;
   const useIso = ISO_FIRST_CHARS.test(trimmed);
   const effective = useIso ? DEFAULT_DATE_STORAGE_FORMAT : format;
-  const order = DATE_FORMAT_PARSE_ORDER[effective];
+  const order = DATE_STORAGE_FORMATS[effective].parseOrder;
   const year = nums[order.yearIdx];
   const month = nums[order.monthIdx];
   const day = nums[order.dayIdx];
@@ -36,7 +36,7 @@ function parseValueToDate(value: string, format: DateStorageFormat): Date | unde
 
 function formatDateForStorage(year: string, month: string, day: string, format: DateStorageFormat): string {
   const comps = [year, month, day];
-  const [i, j, k] = DATE_FORMAT_OUTPUT_ORDER[format];
+  const [i, j, k] = getOutputOrder(DATE_STORAGE_FORMATS[format].parseOrder);
   return `${comps[i]}-${comps[j]}-${comps[k]}`;
 }
 

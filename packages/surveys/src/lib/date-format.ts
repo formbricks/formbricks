@@ -1,5 +1,5 @@
 import {
-  DATE_FORMAT_PARSE_ORDER,
+  DATE_STORAGE_FORMATS,
   DATE_STORAGE_FORMATS_LIST,
   DEFAULT_DATE_STORAGE_FORMAT,
   type TSurveyDateStorageFormat,
@@ -37,7 +37,7 @@ export function parseDateByFormat(
   const useIso = ISO_FIRST_CHARS.test(trimmed);
   const effectiveFormat = useIso ? DEFAULT_DATE_STORAGE_FORMAT : format;
 
-  const order = DATE_FORMAT_PARSE_ORDER[effectiveFormat];
+  const order = DATE_STORAGE_FORMATS[effectiveFormat].parseOrder;
   const nums = parts.map((p) => Number.parseInt(p, 10));
   if (nums.some(Number.isNaN)) return null;
   const year = nums[order.yearIdx];
