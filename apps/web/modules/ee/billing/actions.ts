@@ -250,7 +250,9 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       targetInterval: parsedInput.targetInterval,
     });
 
-    await syncOrganizationBillingFromStripe(organizationId);
+    if (result.mode === "immediate") {
+      await syncOrganizationBillingFromStripe(organizationId);
+    }
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = {

@@ -77,6 +77,29 @@ const getDateFromBilling = (value: string | null | undefined): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const updatePendingPlanChangeSnapshot = async (
+  organizationId: string,
+  pendingChange: TOrganizationStripePendingChange | null
+): Promise<void> => {
+  const existingBilling = await ensureOrganizationBillingRecord(organizationId);
+  if (!existingBilling) {
+    throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+  }
+
+  await prisma.organizationBilling.update({
+    where: { organizationId },
+    data: {
+      stripe: {
+        ...(existingBilling.stripe ?? {}),
+        pendingChange,
+        lastSyncedAt: new Date().toISOString(),
+      },
+    },
+  });
+
+  await invalidateOrganizationBillingCache(organizationId);
+};
+
 const listAllActiveEntitlements = async (customerId: string): Promise<string[]> => {
   if (!stripeClient) return [];
 
@@ -347,6 +370,7 @@ const resolveCurrentSubscription = async (customerId: string) => {
     customer: customerId,
     status: "all",
     limit: 20,
+    expand: ["data.schedule"],
   });
   const subscriptionsWithProducts = await hydrateSubscriptionProducts(subscriptions.data);
 
@@ -573,6 +597,7 @@ const getRequiredActiveSubscription = async (
 };
 
 const clearPendingPlanState = async (
+  organizationId: string,
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
 ): Promise<void> => {
   if (!stripeClient) {
@@ -593,6 +618,8 @@ const clearPendingPlanState = async (
       preserve_cancel_date: false,
     });
   }
+
+  await updatePendingPlanChangeSnapshot(organizationId, null);
 };
 
 const updateSubscriptionItemsImmediately = async (
@@ -628,9 +655,9 @@ const scheduleSubscriptionPlanChange = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   targetPlan: TStandardCloudPlan,
   targetInterval: TCloudBillingInterval
-): Promise<void> => {
+): Promise<TOrganizationStripePendingChange> => {
   if (!stripeClient) {
-    return;
+    throw new Error("Stripe is not configured");
   }
 
   if (subscription.cancel_at_period_end) {
@@ -661,7 +688,7 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error(`Stripe subscription schedule ${schedule.id} has no current phase`);
   }
 
-  await stripeClient.subscriptionSchedules.update(schedule.id, {
+  const updatedSchedule = await stripeClient.subscriptionSchedules.update(schedule.id, {
     end_behavior: "release",
     proration_behavior: "none",
     phases: [
@@ -685,6 +712,22 @@ const scheduleSubscriptionPlanChange = async (
       },
     ],
   });
+
+  const nextPhase = updatedSchedule.phases.find((phase) => phase.start_date >= currentPhase.end_date);
+  if (!nextPhase) {
+    throw new Error(`Stripe subscription schedule ${updatedSchedule.id} has no next phase`);
+  }
+
+  const pendingChange: TOrganizationStripePendingChange = {
+    type: "plan_change",
+    targetPlan,
+    targetInterval: targetPlan === "hobby" ? "monthly" : targetInterval,
+    effectiveAt: new Date(nextPhase.start_date * 1000).toISOString(),
+  };
+
+  await updatePendingPlanChangeSnapshot(organizationId, pendingChange);
+
+  return pendingChange;
 };
 
 export const switchOrganizationToCloudPlan = async (input: {
@@ -692,7 +735,7 @@ export const switchOrganizationToCloudPlan = async (input: {
   customerId: string;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
-}): Promise<{ mode: "immediate" | "scheduled" }> => {
+}): Promise<{ mode: "immediate" | "scheduled"; pendingChange: TOrganizationStripePendingChange | null }> => {
   const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
   const currentInterval = resolveSubscriptionInterval(subscription);
@@ -701,10 +744,10 @@ export const switchOrganizationToCloudPlan = async (input: {
   const isSameSelection = currentPlan === input.targetPlan && currentInterval === input.targetInterval;
 
   if (isSameSelection) {
-    return { mode: "immediate" };
+    return { mode: "immediate", pendingChange: null };
   }
 
-  await clearPendingPlanState(subscription);
+  await clearPendingPlanState(input.organizationId, subscription);
 
   if (isImmediateUpgrade) {
     await updateSubscriptionItemsImmediately(
@@ -713,16 +756,16 @@ export const switchOrganizationToCloudPlan = async (input: {
       input.targetPlan,
       input.targetInterval
     );
-    return { mode: "immediate" };
+    return { mode: "immediate", pendingChange: null };
   }
 
-  await scheduleSubscriptionPlanChange(
+  const pendingChange = await scheduleSubscriptionPlanChange(
     input.organizationId,
     subscription,
     input.targetPlan,
     input.targetInterval
   );
-  return { mode: "scheduled" };
+  return { mode: "scheduled", pendingChange };
 };
 
 export const undoPendingOrganizationPlanChange = async (
@@ -730,7 +773,7 @@ export const undoPendingOrganizationPlanChange = async (
   customerId: string
 ): Promise<void> => {
   const subscription = await getRequiredActiveSubscription(organizationId, customerId);
-  await clearPendingPlanState(subscription);
+  await clearPendingPlanState(organizationId, subscription);
 };
 
 const ensureOrganizationBillingRecord = async (
