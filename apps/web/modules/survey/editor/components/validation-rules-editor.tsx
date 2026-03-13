@@ -94,6 +94,17 @@ export const ValidationRulesEditor = ({
 
   const handleDisable = () => {
     onUpdateValidation({ rules: [], logic: validationLogic });
+    // Reset inputType to "text" when disabling validation for OpenText elements.
+    // Without this, the HTML input keeps its type (e.g. "url"), which still enforces
+    // browser-native format validation even though the user toggled validation off.
+    if (
+      elementType === TSurveyElementTypeEnum.OpenText &&
+      onUpdateInputType &&
+      inputType !== undefined &&
+      inputType !== "text"
+    ) {
+      onUpdateInputType("text");
+    }
   };
 
   const handleAddRule = (insertAfterIndex: number) => {
