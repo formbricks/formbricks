@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
@@ -82,6 +84,21 @@ export const getBasicSurveyMetadata = async (
     survey: surveyData,
     ogImage,
   };
+};
+
+/**
+ * Determines the brand color for OG metadata based on project and survey styling settings.
+ * Uses project brand color unless the project allows style overwrite AND the survey overrides the theme.
+ */
+export const getMetadataBrandColor = (
+  projectStyling: unknown,
+  surveyStyling?: TSurveyStyling | null
+): string | undefined => {
+  const ps = projectStyling as TProjectStyling | null;
+  if (!ps?.allowStyleOverwrite) {
+    return ps?.brandColor?.light;
+  }
+  return surveyStyling?.overwriteThemeStyling ? surveyStyling.brandColor?.light : ps.brandColor?.light;
 };
 
 /**

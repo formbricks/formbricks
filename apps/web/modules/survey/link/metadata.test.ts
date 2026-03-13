@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
-import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
+import {
+  getBasicSurveyMetadata,
+  getMetadataBrandColor,
+  getSurveyOpenGraphMetadata,
+} from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
@@ -17,10 +21,14 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
 }));
 
-vi.mock("./lib/metadata-utils", () => ({
-  getSurveyOpenGraphMetadata: vi.fn(),
-  getBasicSurveyMetadata: vi.fn(),
-}));
+vi.mock("./lib/metadata-utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./lib/metadata-utils")>();
+  return {
+    ...actual,
+    getSurveyOpenGraphMetadata: vi.fn(),
+    getBasicSurveyMetadata: vi.fn(),
+  };
+});
 
 describe("getMetadataForLinkSurvey", () => {
   const mockSurveyId = "survey-123";

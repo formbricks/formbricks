@@ -7,6 +7,7 @@ import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import {
   getBasicSurveyMetadata,
   getBrandColorForURL,
+  getMetadataBrandColor,
   getNameForURL,
   getSurveyOpenGraphMetadata,
 } from "./metadata-utils";
@@ -250,6 +251,39 @@ describe("Metadata Utils", () => {
         "default"
       );
       expect(result.title).toBe("Welcome @User");
+    });
+  });
+
+  describe("getMetadataBrandColor", () => {
+    test("returns survey brand color when project allows override and survey overrides theme", () => {
+      const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#0000ff");
+    });
+
+    test("returns project brand color when survey does not override theme", () => {
+      const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: false, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#ff0000");
+    });
+
+    test("returns project brand color when project disallows style overwrite", () => {
+      const projectStyling = { allowStyleOverwrite: false, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#ff0000");
+    });
+
+    test("returns undefined when project styling is null", () => {
+      expect(getMetadataBrandColor(null, null)).toBeUndefined();
+    });
+
+    test("returns project brand color when survey styling is null", () => {
+      const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+
+      expect(getMetadataBrandColor(projectStyling, null)).toBe("#ff0000");
     });
   });
 
