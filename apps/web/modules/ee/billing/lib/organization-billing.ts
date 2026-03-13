@@ -291,10 +291,17 @@ const mapSubscriptionItemsToScheduleItems = (
     quantity?: number | null;
   }>
 ): Array<Stripe.SubscriptionScheduleUpdateParams.Phase.Item> => {
-  return items.map((item) => ({
-    price: item.price.id,
-    quantity: item.quantity ?? 1,
-  }));
+  return items.map((item) => {
+    const scheduleItem: Stripe.SubscriptionScheduleUpdateParams.Phase.Item = {
+      price: item.price.id,
+    };
+
+    if (item.price.recurring?.usage_type !== "metered") {
+      scheduleItem.quantity = item.quantity ?? 1;
+    }
+
+    return scheduleItem;
+  });
 };
 
 const getPendingPlanChangeFromSchedule = async (
@@ -676,6 +683,7 @@ const scheduleSubscriptionPlanChange = async (
   const existingScheduleId =
     typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule?.id;
 
+  const createdSchedule = !existingScheduleId;
   const schedule = existingScheduleId
     ? await stripeClient.subscriptionSchedules.retrieve(existingScheduleId)
     : await stripeClient.subscriptionSchedules.create({
@@ -688,30 +696,45 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error(`Stripe subscription schedule ${schedule.id} has no current phase`);
   }
 
-  const updatedSchedule = await stripeClient.subscriptionSchedules.update(schedule.id, {
-    end_behavior: "release",
-    proration_behavior: "none",
-    phases: [
-      {
-        start_date: currentPhase.start_date,
-        end_date: currentPhase.end_date,
-        items: currentItems,
-      },
-      {
-        start_date: currentPhase.end_date,
-        items: targetItems,
-        duration: {
-          interval: targetPlan === "hobby" ? "month" : targetInterval === "monthly" ? "month" : "year",
-          interval_count: 1,
+  let updatedSchedule: Stripe.SubscriptionSchedule;
+
+  try {
+    updatedSchedule = await stripeClient.subscriptionSchedules.update(schedule.id, {
+      end_behavior: "release",
+      proration_behavior: "none",
+      phases: [
+        {
+          start_date: currentPhase.start_date,
+          end_date: currentPhase.end_date,
+          items: currentItems,
         },
-        metadata: {
-          organizationId,
-          targetPlan,
-          targetInterval,
+        {
+          start_date: currentPhase.end_date,
+          items: targetItems,
+          metadata: {
+            organizationId,
+            targetPlan,
+            targetInterval,
+          },
         },
-      },
-    ],
-  });
+      ],
+    });
+  } catch (error) {
+    if (createdSchedule) {
+      try {
+        await stripeClient.subscriptionSchedules.release(schedule.id, {
+          preserve_cancel_date: false,
+        });
+      } catch (releaseError) {
+        logger.error(
+          { error: releaseError, organizationId, scheduleId: schedule.id },
+          "Failed to release newly created Stripe schedule after plan change update error"
+        );
+      }
+    }
+
+    throw error;
+  }
 
   const nextPhase = updatedSchedule.phases.find((phase) => phase.start_date >= currentPhase.end_date);
   if (!nextPhase) {
