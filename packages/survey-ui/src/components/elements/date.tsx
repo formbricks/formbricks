@@ -13,15 +13,15 @@ import { getDateFnsLocale } from "@/lib/locale";
 export type DateStorageFormat = TSurveyDateStorageFormat;
 
 /** Optional whitespace + three hyphen-separated digit segments (validates shape and digits in one pass). */
-const DATE_PARTS_REGEX = /^\s*(\d+)-(\d+)-(\d+)\s*$/;
+const DATE_PARTS_REGEX = /^\s*(?<part1>\d+)-(?<part2>\d+)-(?<part3>\d+)\s*$/;
 
 function parseValueToDate(value: string, format: DateStorageFormat): Date | undefined {
   const match = DATE_PARTS_REGEX.exec(value);
-  if (!match) return undefined;
-
-  const nums = [Number.parseInt(match[1], 10), Number.parseInt(match[2], 10), Number.parseInt(match[3], 10)];
-  format = match[1].length === 4 ? DEFAULT_DATE_STORAGE_FORMAT : format;
-  const order = DATE_STORAGE_FORMATS[format].parseOrder;
+  if (!match?.groups) return undefined;
+  const { part1, part2, part3 } = match.groups;
+  const nums = [Number.parseInt(part1, 10), Number.parseInt(part2, 10), Number.parseInt(part3, 10)];
+  const effectiveFormat = part1.length === 4 ? DEFAULT_DATE_STORAGE_FORMAT : format;
+  const order = DATE_STORAGE_FORMATS[effectiveFormat].parseOrder;
 
   const year = nums[order.yearIdx];
   const month = nums[order.monthIdx];
