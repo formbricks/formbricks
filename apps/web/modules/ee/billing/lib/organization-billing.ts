@@ -34,7 +34,7 @@ export const invalidateOrganizationBillingCache = async (organizationId: string)
   await cache.del([getBillingCacheKey(organizationId)]);
 };
 
-const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
+export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
     projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
@@ -440,12 +440,15 @@ const ensureOrganizationBillingRecord = async (
  * Finds the email of the organization owner by looking up the membership with role "owner"
  * and joining to the user table.
  */
-const getOrganizationOwnerEmail = async (organizationId: string): Promise<string | null> => {
+const getOrganizationOwner = async (
+  organizationId: string
+): Promise<{ email: string; name: string | null } | null> => {
   const membership = await prisma.membership.findFirst({
     where: { organizationId, role: "owner" },
-    select: { user: { select: { email: true } } },
+    select: { user: { select: { email: true, name: true } } },
   });
-  return membership?.user.email ?? null;
+  if (!membership) return null;
+  return { email: membership.user.email, name: membership.user.name };
 };
 
 /**
@@ -483,10 +486,16 @@ export const ensureStripeCustomerForOrganization = async (
     return { customerId: null };
   }
 
-  // Look up the org owner's email and check if a Stripe customer already exists for it.
+  // Look up the org owner's email/name and check if a Stripe customer already exists for it.
   // This reuses the old customer (and its trial history) when a user deletes their account
   // and signs up again with the same email.
-  const ownerEmail = await getOrganizationOwnerEmail(organization.id);
+  const owner = await getOrganizationOwner(organization.id);
+  if (!owner) {
+    logger.error({ organizationId }, "Cannot set up Stripe customer: organization has no owner");
+    return { customerId: null };
+  }
+
+  const { email: ownerEmail, name: ownerName } = owner;
   let existingCustomer: Stripe.Customer | null = null;
 
   if (ownerEmail) {
@@ -497,8 +506,8 @@ export const ensureStripeCustomerForOrganization = async (
       if (!existingBillingOwner || existingBillingOwner === organizationId) {
         existingCustomer = foundCustomer;
         await stripeClient.customers.update(existingCustomer.id, {
-          name: organization.name,
-          metadata: { organizationId: organization.id },
+          name: ownerName ?? undefined,
+          metadata: { organizationId: organization.id, organizationName: organization.name },
         });
         logger.info(
           { organizationId, customerId: existingCustomer.id, email: ownerEmail },
@@ -512,9 +521,9 @@ export const ensureStripeCustomerForOrganization = async (
     existingCustomer ??
     (await stripeClient.customers.create(
       {
-        name: organization.name,
-        email: ownerEmail ?? undefined,
-        metadata: { organizationId: organization.id },
+        name: ownerName ?? undefined,
+        email: ownerEmail,
+        metadata: { organizationId: organization.id, organizationName: organization.name },
       },
       { idempotencyKey: `ensure-customer-${organization.id}` }
     ));
@@ -778,7 +787,17 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   }
 
   if (subscriptionsWithPlanLevel.length === 0) {
-    await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    // Re-check active subscriptions to guard against concurrent reconciliation calls
+    // (e.g. webhook + bootstrap) both seeing 0 and creating duplicate hobbies.
+    const freshSubscriptions = await client.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
+
+    if (freshSubscriptions.data.length === 0) {
+      await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    }
   }
 };
 

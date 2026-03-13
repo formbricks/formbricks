@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TOrganizationBilling } from "@formbricks/types/organizations";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
@@ -7,8 +6,17 @@ import { getCloudOrganizationEntitlementsContext } from "./cloud-provider";
 
 vi.mock("server-only", () => ({}));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: { warn: vi.fn() },
+}));
+
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
+  getDefaultOrganizationBilling: () => ({
+    limits: { projects: 1, monthly: { responses: 250 } },
+    stripeCustomerId: null,
+    usageCycleAnchor: null,
+  }),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
@@ -35,11 +43,23 @@ beforeEach(() => {
 });
 
 describe("getCloudOrganizationEntitlementsContext", () => {
-  test("throws ResourceNotFoundError when billing is null", async () => {
+  test("returns default entitlements when billing is null", async () => {
     mockGetBilling.mockResolvedValue(null);
     mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
 
-    await expect(getCloudOrganizationEntitlementsContext("org1")).rejects.toThrow(ResourceNotFoundError);
+    const result = await getCloudOrganizationEntitlementsContext("org1");
+
+    expect(result).toEqual({
+      organizationId: "org1",
+      source: "cloud_stripe",
+      features: [],
+      limits: { projects: 1, monthlyResponses: 250 },
+      licenseStatus: "no-license",
+      licenseFeatures: null,
+      stripeCustomerId: null,
+      subscriptionStatus: null,
+      usageCycleAnchor: null,
+    });
   });
 
   test("returns context with billing data", async () => {
