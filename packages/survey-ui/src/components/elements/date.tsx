@@ -4,6 +4,54 @@ import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { getDateFnsLocale } from "@/lib/locale";
 
+/** Storage format for date response values: M=month, d=day, y=year */
+export type DateStorageFormat = "M-d-y" | "d-M-y" | "y-M-d";
+
+function parseValueToDate(value: string, format: DateStorageFormat): Date | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  const parts = trimmed.split("-");
+  if (parts.length !== 3) return undefined;
+  const [a, b, c] = parts.map((p) => parseInt(p, 10));
+  if (Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(c)) return undefined;
+  const useIso = /^\d{4}/.test(trimmed);
+  const effective = useIso ? "y-M-d" : format;
+  let year: number;
+  let month: number;
+  let day: number;
+  if (effective === "y-M-d") {
+    year = a;
+    month = b;
+    day = c;
+  } else if (effective === "d-M-y") {
+    day = a;
+    month = b;
+    year = c;
+  } else {
+    month = a;
+    day = b;
+    year = c;
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
+    return undefined;
+  return date;
+}
+
+function formatDateForStorage(year: string, month: string, day: string, format: DateStorageFormat): string {
+  switch (format) {
+    case "y-M-d":
+      return `${year}-${month}-${day}`;
+    case "M-d-y":
+      return `${month}-${day}-${year}`;
+    case "d-M-y":
+      return `${day}-${month}-${year}`;
+    default:
+      return `${year}-${month}-${day}`;
+  }
+}
+
 interface DateElementProps {
   /** Unique identifier for the element container */
   elementId: string;
@@ -13,10 +61,12 @@ interface DateElementProps {
   description?: string;
   /** Unique identifier for the date input */
   inputId: string;
-  /** Current date value in ISO format (YYYY-MM-DD) */
+  /** Current date value (format depends on outputFormat; legacy is often YYYY-MM-DD) */
   value?: string;
   /** Callback function called when the date value changes */
   onChange: (value: string) => void;
+  /** Format for the value passed to onChange (default y-M-d = ISO) */
+  outputFormat?: DateStorageFormat;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
   /** Custom label for the required indicator */
@@ -46,6 +96,7 @@ function DateElement({
   inputId,
   value,
   onChange,
+  outputFormat = "y-M-d",
   required = false,
   requiredLabel,
   minDate,
@@ -57,42 +108,31 @@ function DateElement({
   imageUrl,
   videoUrl,
 }: Readonly<DateElementProps>): React.JSX.Element {
-  // Initialize date from value string, parsing as local time to avoid timezone issues
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (!value) return undefined;
-    // Parse YYYY-MM-DD format as local date (not UTC)
-    const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
+    return parseValueToDate(value, outputFormat);
   });
 
-  // Sync date state when value prop changes
   React.useEffect(() => {
-    if (value) {
-      // Parse YYYY-MM-DD format as local date (not UTC)
-      const [year, month, day] = value.split("-").map(Number);
-      const newDate = new Date(year, month - 1, day);
-      setDate((prevDate) => {
-        // Only update if the date actually changed to avoid unnecessary re-renders
-        if (!prevDate || newDate.getTime() !== prevDate.getTime()) {
-          return newDate;
-        }
-        return prevDate;
-      });
-    } else {
+    if (!value) {
       setDate(undefined);
+      return;
     }
-  }, [value]);
+    const newDate = parseValueToDate(value, outputFormat);
+    setDate((prevDate) => {
+      if (!newDate) return undefined;
+      if (!prevDate || newDate.getTime() !== prevDate.getTime()) return newDate;
+      return prevDate;
+    });
+  }, [value, outputFormat]);
 
-  // Convert Date to ISO string (YYYY-MM-DD) when date changes
   const handleDateSelect = (selectedDate: Date | undefined): void => {
     setDate(selectedDate);
     if (selectedDate) {
-      // Convert to ISO format (YYYY-MM-DD) using local time to avoid timezone issues
       const year = String(selectedDate.getFullYear());
       const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const day = String(selectedDate.getDate()).padStart(2, "0");
-      const isoString = `${year}-${month}-${day}`;
-      onChange(isoString);
+      onChange(formatDateForStorage(year, month, day, outputFormat));
     } else {
       onChange("");
     }

@@ -1,7 +1,13 @@
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
+import { logger } from "@formbricks/logger";
+import { parseDateByFormat } from "@formbricks/surveys/date-format";
 import { TResponseDataValue } from "@formbricks/types/responses";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyDateElement,
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
@@ -63,10 +69,16 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyElementTypeEnum.Date:
       if (typeof responseData === "string") {
-        const parsedDate = new Date(responseData);
-
-        const formattedDate = isNaN(parsedDate.getTime()) ? responseData : formatDateWithOrdinal(parsedDate);
-
+        const format = (element as TSurveyDateElement).format ?? "y-M-d";
+        const parsedDate = parseDateByFormat(responseData, format);
+        if (parsedDate === null) {
+          logger.warn(
+            { elementId: element.id, format, value: responseData },
+            "[RenderResponse] could not parse date response value"
+          );
+          return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{responseData}</p>;
+        }
+        const formattedDate = formatDateWithOrdinal(parsedDate);
         return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDate}</p>;
       }
       break;

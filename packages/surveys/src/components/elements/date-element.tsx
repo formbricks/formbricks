@@ -68,6 +68,7 @@ export function DateElement({
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         value={value}
         onChange={handleChange}
+        outputFormat={element.format ?? "y-M-d"}
         minDate={getMinDate()}
         maxDate={getMaxDate()}
         required={isRequired}

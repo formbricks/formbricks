@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { parseDateByFormat } from "@formbricks/surveys/date-format";
 import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -32,13 +33,13 @@ export const DateElementSummary = ({ elementSummary, environmentId, survey, loca
   };
 
   const renderResponseValue = (value: string) => {
-    const parsedDate = new Date(value);
+    const format = elementSummary.element?.format ?? "y-M-d";
+    const parsedDate = parseDateByFormat(value, format);
 
-    const formattedDate = isNaN(parsedDate.getTime())
-      ? `${t("common.invalid_date")}(${value})`
-      : formatDateWithOrdinal(parsedDate);
-
-    return formattedDate;
+    if (parsedDate === null) {
+      return `${t("common.invalid_date")}(${value})`;
+    }
+    return formatDateWithOrdinal(parsedDate);
   };
 
   return (

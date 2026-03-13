@@ -87,6 +87,7 @@ const config = ({ mode }) => {
         entry: {
           index: resolve(__dirname, "src/index.ts"),
           validation: resolve(__dirname, "src/validation.ts"),
+          "date-format": resolve(__dirname, "src/date-format.ts"),
         },
         formats: ["es"],
       },
