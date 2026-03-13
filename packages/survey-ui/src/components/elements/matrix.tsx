@@ -130,7 +130,7 @@ function Matrix({
                     disabled={disabled}
                     aria-required={required}
                     aria-invalid={Boolean(errorMessage)}>
-                    <tr className={cn("relative", baseBgColor)}>
+                    <tr className={cn("relative", baseBgColor)} dir={dir}>
                       {/* Row label */}
                       <th scope="row" className={cn("rounded-s-input p-2 align-middle")}>
                         <div className="flex flex-col gap-0 leading-none">
