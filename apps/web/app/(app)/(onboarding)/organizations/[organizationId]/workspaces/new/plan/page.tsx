@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { TCloudBillingPlan } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
+
+const PAID_PLANS: TCloudBillingPlan[] = ["pro", "scale", "custom"];
 
 interface PlanPageProps {
   params: Promise<{
@@ -27,7 +30,7 @@ const Page = async (props: PlanPageProps) => {
   // Redirect them directly to the next onboarding step.
   const billing = await getOrganizationBillingWithReadThroughSync(params.organizationId);
   const currentPlan = billing?.stripe?.plan;
-  const hasExistingSubscription = currentPlan !== undefined && currentPlan !== "hobby";
+  const hasExistingSubscription = currentPlan !== undefined && PAID_PLANS.includes(currentPlan);
 
   if (hasExistingSubscription) {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
