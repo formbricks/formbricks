@@ -109,6 +109,28 @@ describe("billing actions", () => {
     expect(result).toEqual({ success: true });
   });
 
+  test("startHobbyAction reuses an existing stripe customer id", async () => {
+    mocks.getOrganization.mockResolvedValue({
+      id: "org_1",
+      billing: {
+        stripeCustomerId: "cus_existing",
+      },
+    });
+
+    const result = await startHobbyAction({
+      ctx: { user: { id: "user_1" } },
+      parsedInput: { organizationId: "org_1" },
+    } as any);
+
+    expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
+      "org_1",
+      "start-hobby"
+    );
+    expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
+    expect(result).toEqual({ success: true });
+  });
+
   test("startScaleTrialAction uses ensured customer when org snapshot has no stripe customer id", async () => {
     const result = await startScaleTrialAction({
       ctx: { user: { id: "user_1" } },
@@ -118,6 +140,29 @@ describe("billing actions", () => {
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.createScaleTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1");
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
+      "org_1",
+      "scale-trial"
+    );
+    expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
+    expect(result).toEqual({ success: true });
+  });
+
+  test("startScaleTrialAction reuses an existing stripe customer id", async () => {
+    mocks.getOrganization.mockResolvedValue({
+      id: "org_1",
+      billing: {
+        stripeCustomerId: "cus_existing",
+      },
+    });
+
+    const result = await startScaleTrialAction({
+      ctx: { user: { id: "user_1" } },
+      parsedInput: { organizationId: "org_1" },
+    } as any);
+
+    expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
+    expect(mocks.createScaleTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing");
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
       "org_1",
       "scale-trial"

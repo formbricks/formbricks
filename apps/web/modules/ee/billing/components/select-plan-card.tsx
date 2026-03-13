@@ -31,7 +31,7 @@ const CUSTOMER_LOGOS = [
 export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
-  const [isStayingOnHobby, setIsStayingOnHobby] = useState(false);
+  const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
 
   const TRIAL_FEATURE_KEYS = [
@@ -62,18 +62,18 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
   };
 
   const handleContinueFree = async () => {
-    setIsStayingOnHobby(true);
+    setIsStartingHobby(true);
     try {
       const result = await startHobbyAction({ organizationId });
       if (result?.data) {
         router.push(nextUrl);
       } else {
         toast.error(t("common.something_went_wrong_please_try_again"));
-        setIsStayingOnHobby(false);
+        setIsStartingHobby(false);
       }
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
-      setIsStayingOnHobby(false);
+      setIsStartingHobby(false);
     }
   };
 
@@ -107,7 +107,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
             onClick={handleStartTrial}
             className="mt-4 w-full"
             loading={isStartingTrial}
-            disabled={isStartingTrial || isStayingOnHobby}>
+            disabled={isStartingTrial || isStartingHobby}>
             {t("common.start_free_trial")}
           </Button>
         </div>
@@ -134,9 +134,9 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
 
       <button
         onClick={handleContinueFree}
-        disabled={isStartingTrial || isStayingOnHobby}
+        disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStayingOnHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
+        {isStartingHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
       </button>
     </div>
   );

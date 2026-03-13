@@ -169,7 +169,9 @@ export const startHobbyAction = authenticatedActionClient
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
     }
 
-    const { customerId } = await ensureStripeCustomerForOrganization(parsedInput.organizationId);
+    const customerId =
+      organization.billing?.stripeCustomerId ??
+      (await ensureStripeCustomerForOrganization(parsedInput.organizationId)).customerId;
     if (!customerId) {
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
@@ -198,7 +200,9 @@ export const startScaleTrialAction = authenticatedActionClient
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
     }
 
-    const { customerId } = await ensureStripeCustomerForOrganization(parsedInput.organizationId);
+    const customerId =
+      organization.billing?.stripeCustomerId ??
+      (await ensureStripeCustomerForOrganization(parsedInput.organizationId)).customerId;
     if (!customerId) {
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
