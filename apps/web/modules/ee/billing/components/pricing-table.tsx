@@ -17,6 +17,7 @@ import {
   manageSubscriptionAction,
   retryStripeSetupAction,
 } from "../actions";
+import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
 const STRIPE_SUPPORTED_LOCALES = new Set([
@@ -255,13 +256,6 @@ export const PricingTable = ({
     }
   };
 
-  const trialAlertTitle = useMemo(() => {
-    if (trialDaysRemaining === null) return "";
-    if (trialDaysRemaining <= 0) return t("common.trial_expired");
-    if (trialDaysRemaining === 1) return t("common.trial_one_day_remaining");
-    return t("common.trial_days_remaining", { count: trialDaysRemaining });
-  }, [trialDaysRemaining, t]);
-
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
   const projectsUnlimitedCheck = organization.billing.limits.projects === null;
   const usageCycleLabel = `${usageCycleStart.toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
@@ -281,15 +275,13 @@ export const PricingTable = ({
       <div className="flex max-w-4xl flex-col gap-4">
         {trialDaysRemaining !== null &&
           (organization.billing.stripe?.hasPaymentMethod ? (
-            <Alert variant="success">
-              <AlertTitle>{trialAlertTitle}</AlertTitle>
+            <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod>
               <AlertDescription>
                 {t("environments.settings.billing.trial_payment_method_added_description")}
               </AlertDescription>
-            </Alert>
+            </TrialAlert>
           ) : (
-            <Alert variant={trialDaysRemaining <= 3 ? "error" : trialDaysRemaining <= 7 ? "warning" : "info"}>
-              <AlertTitle>{trialAlertTitle}</AlertTitle>
+            <TrialAlert trialDaysRemaining={trialDaysRemaining}>
               <AlertDescription>
                 {t("environments.settings.billing.trial_alert_description")}
               </AlertDescription>
@@ -298,7 +290,7 @@ export const PricingTable = ({
                   {t("environments.settings.billing.add_payment_method")}
                 </AlertButton>
               )}
-            </Alert>
+            </TrialAlert>
           ))}
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">

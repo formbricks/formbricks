@@ -28,8 +28,8 @@ import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
-import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -182,13 +182,6 @@ export const MainNavigation = ({
     organization.billing?.stripe?.trialEnd,
   ]);
 
-  const trialLabel = useMemo(() => {
-    if (trialDaysRemaining === null) return "";
-    if (trialDaysRemaining <= 0) return t("common.trial_expired");
-    if (trialDaysRemaining === 1) return t("common.trial_one_day_remaining");
-    return t("common.trial_days_remaining", { count: trialDaysRemaining });
-  }, [trialDaysRemaining, t]);
-
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
   return (
@@ -266,11 +259,7 @@ export const MainNavigation = ({
             {/* Trial Days Remaining */}
             {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
               <Link href={`/environments/${environment.id}/settings/billing`} className="m-2 block">
-                <Alert
-                  variant={trialDaysRemaining <= 3 ? "error" : trialDaysRemaining <= 7 ? "warning" : "info"}
-                  size="small">
-                  <AlertTitle>{trialLabel}</AlertTitle>
-                </Alert>
+                <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
               </Link>
             )}
 
