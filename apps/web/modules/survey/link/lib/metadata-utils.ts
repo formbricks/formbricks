@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { TProjectStyling } from "@formbricks/types/project";
+import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -91,14 +91,16 @@ export const getBasicSurveyMetadata = async (
  * Uses project brand color unless the project allows style overwrite AND the survey overrides the theme.
  */
 export const getMetadataBrandColor = (
-  projectStyling: unknown,
+  projectStyling: TProjectStyling,
   surveyStyling?: TSurveyStyling | null
 ): string | undefined => {
-  const ps = projectStyling as TProjectStyling | null;
-  if (!ps?.allowStyleOverwrite) {
-    return ps?.brandColor?.light;
+  if (!projectStyling.allowStyleOverwrite) {
+    return projectStyling.brandColor?.light;
   }
-  return surveyStyling?.overwriteThemeStyling ? surveyStyling.brandColor?.light : ps.brandColor?.light;
+
+  return surveyStyling?.overwriteThemeStyling
+    ? surveyStyling.brandColor?.light
+    : projectStyling.brandColor?.light;
 };
 
 /**

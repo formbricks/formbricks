@@ -276,10 +276,6 @@ describe("Metadata Utils", () => {
       expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#ff0000");
     });
 
-    test("returns undefined when project styling is null", () => {
-      expect(getMetadataBrandColor(null, null)).toBeUndefined();
-    });
-
     test("returns project brand color when survey styling is null", () => {
       const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
 
