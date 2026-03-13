@@ -14,6 +14,7 @@ import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscri
 import {
   createScaleTrialSubscription,
   ensureCloudStripeSetupForOrganization,
+  ensureStripeCustomerForOrganization,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
 } from "@/modules/ee/billing/lib/organization-billing";
@@ -149,6 +150,35 @@ const ZStartScaleTrialAction = z.object({
   organizationId: ZId,
 });
 
+export const stayOnHobbyAction = authenticatedActionClient
+  .inputSchema(ZStartScaleTrialAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(parsedInput.organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
+    }
+
+    const { customerId } = await ensureStripeCustomerForOrganization(parsedInput.organizationId);
+    if (!customerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
+    }
+
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "stay-on-hobby");
+    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    return { success: true };
+  });
+
 export const startScaleTrialAction = authenticatedActionClient
   .inputSchema(ZStartScaleTrialAction)
   .action(async ({ ctx, parsedInput }) => {
@@ -168,11 +198,12 @@ export const startScaleTrialAction = authenticatedActionClient
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
     }
 
-    if (!organization.billing?.stripeCustomerId) {
+    const { customerId } = await ensureStripeCustomerForOrganization(parsedInput.organizationId);
+    if (!customerId) {
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await createScaleTrialSubscription(parsedInput.organizationId, organization.billing.stripeCustomerId);
+    await createScaleTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "scale-trial");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };

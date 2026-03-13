@@ -11,7 +11,7 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
-import { startScaleTrialAction } from "@/modules/ee/billing/actions";
+import { startScaleTrialAction, stayOnHobbyAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
@@ -31,6 +31,7 @@ const CUSTOMER_LOGOS = [
 export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const [isStayingOnHobby, setIsStayingOnHobby] = useState(false);
   const { t } = useTranslation();
 
   const TRIAL_FEATURE_KEYS = [
@@ -60,8 +61,20 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
     }
   };
 
-  const handleContinueFree = () => {
-    router.push(nextUrl);
+  const handleContinueFree = async () => {
+    setIsStayingOnHobby(true);
+    try {
+      const result = await stayOnHobbyAction({ organizationId });
+      if (result?.data) {
+        router.push(nextUrl);
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+        setIsStayingOnHobby(false);
+      }
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      setIsStayingOnHobby(false);
+    }
   };
 
   return (
@@ -94,7 +107,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
             onClick={handleStartTrial}
             className="mt-4 w-full"
             loading={isStartingTrial}
-            disabled={isStartingTrial}>
+            disabled={isStartingTrial || isStayingOnHobby}>
             {t("common.start_free_trial")}
           </Button>
         </div>
@@ -121,8 +134,9 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
 
       <button
         onClick={handleContinueFree}
+        disabled={isStartingTrial || isStayingOnHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {t("environments.settings.billing.stay_on_hobby_plan")}
+        {isStayingOnHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
       </button>
     </div>
   );
