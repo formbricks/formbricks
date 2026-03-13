@@ -59,6 +59,7 @@ export const PricingPage = async (props: { params: Promise<{ environmentId: stri
         stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
         stripePricingTableId={env.STRIPE_PRICING_TABLE_ID ?? null}
         isStripeSetupIncomplete={!organizationWithSyncedBilling.billing.stripeCustomerId}
+        trialDaysRemaining={cloudBillingDisplayContext.trialDaysRemaining}
       />
     </PageContentWrapper>
   );
