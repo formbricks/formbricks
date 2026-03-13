@@ -61,7 +61,7 @@ describe("getMetadataForLinkSurvey", () => {
       project: {
         id: "project-123",
         name: "Test Project",
-        styling: null,
+        styling: { allowStyleOverwrite: true },
         logo: null,
         linkSurveyBranding: true,
         customHeadScripts: null,
