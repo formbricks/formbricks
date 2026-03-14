@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "Adaugă o metodă de plată",
+        "billing_interval_toggle": "Interval de facturare",
         "continue_to_checkout": "Continuă la finalizare",
         "current_plan_badge": "Curent",
         "current_plan_cta": "Plan curent",

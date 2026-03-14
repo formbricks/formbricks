@@ -2,7 +2,11 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  AuthorizationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { ZCloudBillingInterval } from "@formbricks/types/organizations";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
@@ -56,7 +60,7 @@ export const manageSubscriptionAction = authenticatedActionClient
         organization.billing.stripeCustomerId,
         `${WEBAPP_URL}/environments/${parsedInput.environmentId}/settings/billing`
       );
-      ctx.auditLoggingCtx.newObject = { portalSession: result };
+      ctx.auditLoggingCtx.newObject = { portalSessionCreated: true };
       return result;
     })
   );
@@ -92,6 +96,10 @@ export const createPlanCheckoutAction = authenticatedActionClient
         throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
+      if (organization.billing.stripe?.subscriptionId) {
+        throw new OperationNotAllowedError("paid_checkout_requires_no_existing_subscription");
+      }
+
       const checkoutUrl = await createPaidPlanCheckoutSession({
         organizationId,
         customerId: organization.billing.stripeCustomerId,
@@ -102,7 +110,7 @@ export const createPlanCheckoutAction = authenticatedActionClient
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.newObject = {
-        checkoutUrl,
+        checkoutCreated: true,
         targetPlan: parsedInput.targetPlan,
         targetInterval: parsedInput.targetInterval,
       };
@@ -176,7 +184,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
         organizationId
       );
 
-      ctx.auditLoggingCtx.newObject = { checkoutUrl };
+      ctx.auditLoggingCtx.newObject = { setupCheckoutCreated: true };
       return checkoutUrl;
     })
   );
@@ -214,11 +222,18 @@ export const startProTrialAction = authenticatedActionClient
     return { success: true };
   });
 
-const ZChangeBillingPlanAction = z.object({
-  environmentId: ZId,
-  targetPlan: z.enum(["hobby", "pro", "scale"]),
-  targetInterval: ZCloudBillingInterval,
-});
+const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
+  z.object({
+    environmentId: ZId,
+    targetPlan: z.literal("hobby"),
+    targetInterval: z.literal("monthly"),
+  }),
+  z.object({
+    environmentId: ZId,
+    targetPlan: z.enum(["pro", "scale"]),
+    targetInterval: ZCloudBillingInterval,
+  }),
+]);
 
 export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZChangeBillingPlanAction).action(
   withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {

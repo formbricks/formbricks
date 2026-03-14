@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "支払い方法を追加",
+        "billing_interval_toggle": "請求間隔",
         "continue_to_checkout": "お支払いに進む",
         "current_plan_badge": "現在のプラン",
         "current_plan_cta": "現在のプラン",

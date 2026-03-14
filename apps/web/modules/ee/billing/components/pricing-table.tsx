@@ -147,6 +147,7 @@ export const PricingTable = ({
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const isTrialing = currentSubscriptionStatus === "trialing";
   const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
+  const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canManageBillingDetails = hasBillingRights && !!organization.billing.stripeCustomerId;
   const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
   const usageCycleLabel = `${formatDate(usageCycleStart, locale)} - ${formatDate(usageCycleEnd, locale)}`;
@@ -263,6 +264,11 @@ export const PricingTable = ({
 
     try {
       if (!hasPaymentMethod && plan !== "hobby") {
+        if (existingSubscriptionId) {
+          await openTrialPaymentCheckout();
+          return;
+        }
+
         persistEnvironmentId();
         const response = await createPlanCheckoutAction({
           environmentId,
@@ -279,11 +285,18 @@ export const PricingTable = ({
         return;
       }
 
-      const response = await changeBillingPlanAction({
-        environmentId,
-        targetPlan: plan,
-        targetInterval: plan === "hobby" ? "monthly" : interval,
-      });
+      const response =
+        plan === "hobby"
+          ? await changeBillingPlanAction({
+              environmentId,
+              targetPlan: "hobby",
+              targetInterval: "monthly",
+            })
+          : await changeBillingPlanAction({
+              environmentId,
+              targetPlan: plan,
+              targetInterval: interval,
+            });
 
       if (response?.data?.mode === "immediate") {
         toast.success(t("environments.settings.billing.plan_change_applied"));
@@ -335,7 +348,9 @@ export const PricingTable = ({
     }
 
     if (!hasPaymentMethod && plan !== "hobby") {
-      return t("environments.settings.billing.continue_to_checkout");
+      return existingSubscriptionId
+        ? t("environments.settings.billing.add_payment_method")
+        : t("environments.settings.billing.continue_to_checkout");
     }
 
     if (currentPlanLevel === null) {
@@ -474,11 +489,17 @@ export const PricingTable = ({
             title={t("environments.settings.billing.plan_selection_title")}
             description={t("environments.settings.billing.plan_selection_description")}>
             <div className="flex flex-col gap-6">
-              <div className="flex w-fit rounded-xl border border-slate-200 bg-slate-100 p-1">
+              <div
+                className="flex w-fit rounded-xl border border-slate-200 bg-slate-100 p-1"
+                role="tablist"
+                aria-label={t("environments.settings.billing.billing_interval_toggle")}>
                 {(["monthly", "yearly"] as const).map((interval) => (
                   <button
                     key={interval}
                     type="button"
+                    role="tab"
+                    aria-selected={selectedInterval === interval}
+                    tabIndex={selectedInterval === interval ? 0 : -1}
                     onClick={() => setSelectedInterval(interval)}
                     className={cn(
                       "rounded-lg px-5 py-2 text-sm font-medium transition-colors",

@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "添加支付方式",
+        "billing_interval_toggle": "账单周期",
         "continue_to_checkout": "继续结账",
         "current_plan_badge": "当前",
         "current_plan_cta": "当前方案",

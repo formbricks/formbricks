@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "Lägg till betalningsmetod",
+        "billing_interval_toggle": "Faktureringsintervall",
         "continue_to_checkout": "Fortsätt till kassan",
         "current_plan_badge": "Nuvarande",
         "current_plan_cta": "Nuvarande abonnemang",

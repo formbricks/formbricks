@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "Добавить способ оплаты",
+        "billing_interval_toggle": "Интервал выставления счетов",
         "continue_to_checkout": "Перейти к оформлению",
         "current_plan_badge": "Текущий",
         "current_plan_cta": "Текущий тариф",

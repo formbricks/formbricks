@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "Add payment method",
+        "billing_interval_toggle": "Billing interval",
         "continue_to_checkout": "Continue to checkout",
         "current_plan_badge": "Current",
         "current_plan_cta": "Current plan",

@@ -917,6 +917,7 @@ checksums:
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
+    environments/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     environments/settings/billing/continue_to_checkout: 38651b0c357a4792830d526f3b27f426
     environments/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
     environments/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424

@@ -972,6 +972,7 @@
       },
       "billing": {
         "add_payment_method": "Fizetési mód hozzáadása",
+        "billing_interval_toggle": "Számlázási időszak",
         "continue_to_checkout": "Tovább a fizetéshez",
         "current_plan_badge": "Jelenlegi",
         "current_plan_cta": "Jelenlegi csomag",

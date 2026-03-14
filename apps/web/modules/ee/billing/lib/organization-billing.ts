@@ -554,6 +554,17 @@ export const createPaidPlanCheckoutSession = async (input: {
     throw new Error("Stripe is not configured");
   }
 
+  const catalogItem = await getCatalogItemForPlan(input.plan, input.interval);
+  const checkoutIntervals = new Set<Stripe.Price.Recurring.Interval>(
+    [catalogItem.basePrice.recurring?.interval, catalogItem.responsePrice?.recurring?.interval].filter(
+      (interval): interval is Stripe.Price.Recurring.Interval => interval != null
+    )
+  );
+
+  if (checkoutIntervals.size > 1) {
+    throw new OperationNotAllowedError("mixed_interval_checkout_unsupported");
+  }
+
   const items = await getCatalogItemsForPlan(input.plan, input.interval);
   const session = await stripeClient.checkout.sessions.create({
     mode: "subscription",
@@ -677,7 +688,7 @@ const scheduleSubscriptionPlanChange = async (
   const targetCatalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
   const targetItems = mapSubscriptionItemsToScheduleItems([
     { price: targetCatalogItem.basePrice, quantity: 1 },
-    ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice, quantity: 1 }] : []),
+    ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice }] : []),
   ]);
 
   const existingScheduleId =
@@ -770,12 +781,16 @@ export const switchOrganizationToCloudPlan = async (input: {
     return { mode: "immediate", pendingChange: null };
   }
 
+  const hadPendingPlanState = subscription.schedule != null || subscription.cancel_at_period_end;
   await clearPendingPlanState(input.organizationId, subscription);
+  const nextMutableSubscription = hadPendingPlanState
+    ? await getRequiredActiveSubscription(input.organizationId, input.customerId)
+    : subscription;
 
   if (isImmediateUpgrade) {
     await updateSubscriptionItemsImmediately(
       input.organizationId,
-      subscription,
+      nextMutableSubscription,
       input.targetPlan,
       input.targetInterval
     );
@@ -784,7 +799,7 @@ export const switchOrganizationToCloudPlan = async (input: {
 
   const pendingChange = await scheduleSubscriptionPlanChange(
     input.organizationId,
-    subscription,
+    nextMutableSubscription,
     input.targetPlan,
     input.targetInterval
   );
