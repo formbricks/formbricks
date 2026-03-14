@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 const mocks = vi.hoisted(() => ({
   pricesList: vi.fn(),
+  cacheWithCache: vi.fn(),
 }));
 
 vi.mock("./stripe-client", () => ({
@@ -11,6 +12,14 @@ vi.mock("./stripe-client", () => ({
     prices: {
       list: mocks.pricesList,
     },
+  },
+}));
+
+const cacheStore = vi.hoisted(() => new Map<string, unknown>());
+
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: mocks.cacheWithCache,
   },
 }));
 
@@ -51,6 +60,17 @@ describe("stripe-billing-catalog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    cacheStore.clear();
+
+    mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>, key: string) => {
+      if (cacheStore.has(key)) {
+        return cacheStore.get(key);
+      }
+
+      const value = await fn();
+      cacheStore.set(key, value);
+      return value;
+    });
   });
 
   test("resolves the metadata-backed billing catalog", async () => {
@@ -128,5 +148,58 @@ describe("stripe-billing-catalog", () => {
     await expect(getCatalogItemsForPlan("pro", "monthly")).rejects.toThrow(
       "Expected exactly one Stripe price for pro/base/monthly, but found 0"
     );
+  });
+
+  test("reuses the shared cached catalog across module reloads", async () => {
+    mocks.pricesList.mockResolvedValue({
+      data: [
+        createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+        createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+        createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+        createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+        createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+        createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+        createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+      ],
+      has_more: false,
+    });
+
+    const firstModule = await import("./stripe-billing-catalog");
+    await firstModule.getStripeBillingCatalogDisplay();
+
+    vi.resetModules();
+
+    const secondModule = await import("./stripe-billing-catalog");
+    await secondModule.getStripeBillingCatalogDisplay();
+
+    expect(mocks.pricesList).toHaveBeenCalledTimes(1);
+    expect(mocks.cacheWithCache).toHaveBeenCalledTimes(2);
+  });
+
+  test("falls back to direct Stripe fetch when shared cache is unavailable", async () => {
+    mocks.pricesList.mockResolvedValue({
+      data: [
+        createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+        createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+        createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+        createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+        createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+        createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+        createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+      ],
+      has_more: false,
+    });
+    mocks.cacheWithCache.mockImplementationOnce(async (fn: () => Promise<unknown>) => await fn());
+
+    const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+
+    await expect(getStripeBillingCatalogDisplay()).resolves.toMatchObject({
+      hobby: {
+        monthly: {
+          plan: "hobby",
+        },
+      },
+    });
+    expect(mocks.pricesList).toHaveBeenCalledTimes(1);
   });
 });

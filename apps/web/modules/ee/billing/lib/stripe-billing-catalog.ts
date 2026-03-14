@@ -1,7 +1,11 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import Stripe from "stripe";
+import { createCacheKey } from "@formbricks/cache";
 import type { TCloudBillingInterval } from "@formbricks/types/organizations";
+import { cache } from "@/lib/cache";
+import { env } from "@/lib/env";
+import { hashString } from "@/lib/hash-string";
 import { stripeClient } from "./stripe-client";
 
 export type TStandardCloudPlan = "hobby" | "pro" | "scale";
@@ -54,6 +58,15 @@ export type TStripeBillingCatalogDisplay = {
 };
 
 const STANDARD_CLOUD_PLANS = new Set<TStandardCloudPlan>(["hobby", "pro", "scale"]);
+const STRIPE_BILLING_CATALOG_CACHE_TTL_MS = 10 * 60 * 1000;
+const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v1";
+
+const getStripeBillingCatalogCacheKey = () =>
+  createCacheKey.custom(
+    "billing",
+    "stripe_catalog",
+    `${hashString(env.STRIPE_SECRET_KEY ?? "stripe-unconfigured")}-${STRIPE_BILLING_CATALOG_CACHE_VERSION}`
+  );
 
 const getPriceProduct = (price: Stripe.Price): Stripe.Product | Stripe.DeletedProduct | null => {
   if (typeof price.product === "string") {
@@ -170,7 +183,7 @@ const getSinglePrice = (
   return matches[0];
 };
 
-export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBillingCatalog> => {
+const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
   }
@@ -219,6 +232,14 @@ export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBilli
       },
     },
   };
+};
+
+export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBillingCatalog> => {
+  return await cache.withCache(
+    fetchStripeBillingCatalog,
+    getStripeBillingCatalogCacheKey(),
+    STRIPE_BILLING_CATALOG_CACHE_TTL_MS
+  );
 });
 
 export const getStripeBillingCatalogDisplay = reactCache(async (): Promise<TStripeBillingCatalogDisplay> => {

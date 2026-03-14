@@ -16,6 +16,7 @@ vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
   isCloud: true,
   getBillingCacheKey: vi.fn(),
+  getCustomCacheKey: vi.fn(),
   prismaOrganizationFindUnique: vi.fn(),
   prismaOrganizationBillingFindUnique: vi.fn(),
   prismaOrganizationBillingCreate: vi.fn(),
@@ -63,6 +64,7 @@ vi.mock("@formbricks/cache", () => ({
     organization: {
       billing: mocks.getBillingCacheKey,
     },
+    custom: mocks.getCustomCacheKey,
   },
 }));
 
@@ -149,6 +151,11 @@ describe("organization-billing", () => {
     vi.clearAllMocks();
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
+    mocks.getCustomCacheKey.mockImplementation(
+      (namespace: string, identifier: string, subresource?: string) =>
+        [namespace, identifier, subresource].filter(Boolean).join(":")
+    );
+    mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
