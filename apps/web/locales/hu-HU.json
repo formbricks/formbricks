@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Fizetési mód hozzáadása",
         "billing_interval_toggle": "Számlázási időszak",
-        "continue_to_checkout": "Tovább a fizetéshez",
         "current_plan_badge": "Jelenlegi",
         "current_plan_cta": "Jelenlegi csomag",
         "custom_plan_description": "A szervezete egyedi számlázási beállítással rendelkezik. Továbbra is válthat az alábbi standard csomagok egyikére.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "A Hobby csomagnál szeretnék maradni",
         "stripe_setup_incomplete": "Számlázás beállítása nem teljes",
         "stripe_setup_incomplete_description": "A számlázás beállítása nem sikerült teljesen. Aktiválja előfizetését az újrapróbálkozással.",
+        "subscribe": "Feliratkozás",
         "subscription": "Előfizetés",
         "subscription_description": "Kezelje előfizetését és kövesse nyomon a használatot",
         "switch_at_period_end": "Váltás az időszak végén",

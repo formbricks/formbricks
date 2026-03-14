@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Adicionar forma de pagamento",
         "billing_interval_toggle": "Intervalo de cobrança",
-        "continue_to_checkout": "Continuar para o pagamento",
         "current_plan_badge": "Atual",
         "current_plan_cta": "Plano atual",
         "custom_plan_description": "Sua organização está em uma configuração de cobrança personalizada. Você ainda pode mudar para um dos planos padrão abaixo.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "Quero continuar no plano Hobby",
         "stripe_setup_incomplete": "Configuração de cobrança incompleta",
         "stripe_setup_incomplete_description": "A configuração de cobrança não foi concluída com sucesso. Tente novamente para ativar sua assinatura.",
+        "subscribe": "Assinar",
         "subscription": "Assinatura",
         "subscription_description": "Gerencie seu plano de assinatura e acompanhe seu uso",
         "switch_at_period_end": "Mudar no final do período",

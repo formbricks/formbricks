@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   type TCloudBillingInterval,
+  type TCloudBillingPlan,
   type TOrganizationBilling,
   type TOrganizationStripePendingChange,
   type TOrganizationStripeSubscriptionStatus,
@@ -86,11 +87,13 @@ const updatePendingPlanChangeSnapshot = async (
     throw new ResourceNotFoundError("OrganizationBilling", organizationId);
   }
 
+  const nextStripeSnapshot = existingBilling.stripe ? { ...existingBilling.stripe } : {};
+
   await prisma.organizationBilling.update({
     where: { organizationId },
     data: {
       stripe: {
-        ...(existingBilling.stripe ?? {}),
+        ...nextStripeSnapshot,
         pendingChange,
         lastSyncedAt: new Date().toISOString(),
       },
@@ -698,10 +701,8 @@ const scheduleSubscriptionPlanChange = async (
   const schedule = existingScheduleId
     ? await stripeClient.subscriptionSchedules.retrieve(existingScheduleId)
     : await stripeClient.subscriptionSchedules.create({
+        // Stripe rejects metadata when cloning from an existing subscription.
         from_subscription: subscription.id,
-        metadata: {
-          organizationId,
-        },
       });
 
   const currentPhase = schedule.current_phase;
@@ -978,55 +979,31 @@ export const ensureStripeCustomerForOrganization = async (
   return { customerId: customer.id };
 };
 
-export const syncOrganizationBillingFromStripe = async (
-  organizationId: string,
+const shouldSkipStripeSyncForEvent = (
+  existingStripeSnapshot: TOrganizationBilling["stripe"],
   event?: { id: string; created: number }
-): Promise<TOrganizationBilling | null> => {
-  if (!IS_FORMBRICKS_CLOUD || !stripeClient) {
-    return null;
-  }
-
-  const billing = await ensureOrganizationBillingRecord(organizationId);
-  if (!billing) {
-    return null;
-  }
-
-  const customerId = billing.stripeCustomerId;
-  if (!customerId) return billing;
-
-  const existingStripeSnapshot = billing.stripe;
+) => {
   const previousEventDate = getDateFromBilling(existingStripeSnapshot?.lastStripeEventCreatedAt ?? null);
   const incomingEventDate = event ? new Date(event.created * 1000) : null;
 
   if (event?.id && existingStripeSnapshot?.lastSyncedEventId === event.id) {
-    return billing;
+    return { shouldSkip: true as const, previousEventDate, incomingEventDate };
   }
 
   if (incomingEventDate && previousEventDate && incomingEventDate < previousEventDate) {
-    return billing;
+    return { shouldSkip: true as const, previousEventDate, incomingEventDate };
   }
 
-  const [subscription, featureLookupKeys] = await Promise.all([
-    resolveCurrentSubscription(customerId),
-    listAllActiveEntitlements(customerId),
-  ]);
+  return { shouldSkip: false as const, previousEventDate, incomingEventDate };
+};
 
-  const cloudPlan = resolveCloudPlanFromSubscription(subscription);
-  const billingInterval = resolveSubscriptionInterval(subscription);
-  const subscriptionStatus = resolveSubscriptionStatus(subscription);
-  const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
-  const pendingChangeEffectiveAt = resolvePendingChangeEffectiveAt(subscription);
-  const pendingChange =
-    (await getPendingPlanChangeFromSchedule(subscription)) ??
-    (subscription?.cancel_at_period_end && pendingChangeEffectiveAt
-      ? {
-          type: "plan_change" as const,
-          targetPlan: "hobby" as const,
-          targetInterval: "monthly" as const,
-          effectiveAt: pendingChangeEffectiveAt,
-        }
-      : null);
-  const previousLimits = billing.limits;
+const resolveEntitlementDrivenLimits = (
+  organizationId: string,
+  customerId: string,
+  cloudPlan: TCloudBillingPlan,
+  featureLookupKeys: string[],
+  previousLimits: TOrganizationBilling["limits"]
+) => {
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
 
@@ -1054,14 +1031,80 @@ export const syncOrganizationBillingFromStripe = async (
     );
   }
 
+  return {
+    projects: projectsLimit,
+    monthly: {
+      responses: responsesIncludedLimit,
+    },
+  };
+};
+
+const resolvePendingPlanChange = async (subscription: Stripe.Subscription | null) => {
+  const pendingChangeEffectiveAt = resolvePendingChangeEffectiveAt(subscription);
+
+  const scheduledPlanChange = await getPendingPlanChangeFromSchedule(subscription);
+  if (scheduledPlanChange) {
+    return scheduledPlanChange;
+  }
+
+  if (subscription?.cancel_at_period_end && pendingChangeEffectiveAt) {
+    return {
+      type: "plan_change" as const,
+      targetPlan: "hobby" as const,
+      targetInterval: "monthly" as const,
+      effectiveAt: pendingChangeEffectiveAt,
+    };
+  }
+
+  return null;
+};
+
+export const syncOrganizationBillingFromStripe = async (
+  organizationId: string,
+  event?: { id: string; created: number }
+): Promise<TOrganizationBilling | null> => {
+  if (!IS_FORMBRICKS_CLOUD || !stripeClient) {
+    return null;
+  }
+
+  const billing = await ensureOrganizationBillingRecord(organizationId);
+  if (!billing) {
+    return null;
+  }
+
+  const customerId = billing.stripeCustomerId;
+  if (!customerId) return billing;
+
+  const existingStripeSnapshot = billing.stripe;
+  const { shouldSkip, previousEventDate, incomingEventDate } = shouldSkipStripeSyncForEvent(
+    existingStripeSnapshot,
+    event
+  );
+  if (shouldSkip) {
+    return billing;
+  }
+
+  const [subscription, featureLookupKeys] = await Promise.all([
+    resolveCurrentSubscription(customerId),
+    listAllActiveEntitlements(customerId),
+  ]);
+
+  const cloudPlan = resolveCloudPlanFromSubscription(subscription);
+  const billingInterval = resolveSubscriptionInterval(subscription);
+  const subscriptionStatus = resolveSubscriptionStatus(subscription);
+  const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
+  const pendingChange = await resolvePendingPlanChange(subscription);
+  const limits = resolveEntitlementDrivenLimits(
+    organizationId,
+    customerId,
+    cloudPlan,
+    featureLookupKeys,
+    billing.limits
+  );
+
   const updatedBilling: TOrganizationBilling = {
     stripeCustomerId: customerId,
-    limits: {
-      projects: projectsLimit,
-      monthly: {
-        responses: responsesIncludedLimit,
-      },
-    },
+    limits,
     usageCycleAnchor,
     stripe: {
       ...billing.stripe,

@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Adaugă o metodă de plată",
         "billing_interval_toggle": "Interval de facturare",
-        "continue_to_checkout": "Continuă la finalizare",
         "current_plan_badge": "Curent",
         "current_plan_cta": "Plan curent",
         "custom_plan_description": "Organizația ta folosește o configurație de facturare personalizată. Poți totuși să treci la unul dintre planurile standard de mai jos.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "Vreau să rămân pe planul Hobby",
         "stripe_setup_incomplete": "Configurare facturare incompletă",
         "stripe_setup_incomplete_description": "Configurarea facturării nu a fost finalizată cu succes. Încearcă din nou pentru a activa abonamentul.",
+        "subscribe": "Abonează-te",
         "subscription": "Abonament",
         "subscription_description": "Gestionează-ți abonamentul și monitorizează-ți consumul",
         "switch_at_period_end": "Schimbă la sfârșitul perioadei",

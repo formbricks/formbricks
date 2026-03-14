@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Adicionar método de pagamento",
         "billing_interval_toggle": "Intervalo de faturação",
-        "continue_to_checkout": "Continuar para o checkout",
         "current_plan_badge": "Atual",
         "current_plan_cta": "Plano atual",
         "custom_plan_description": "A tua organização tem uma configuração de faturação personalizada. Podes mudar para um dos planos padrão abaixo.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "Quero manter o plano Hobby",
         "stripe_setup_incomplete": "Configuração de faturação incompleta",
         "stripe_setup_incomplete_description": "A configuração de faturação não foi concluída com sucesso. Por favor, tenta novamente para ativar a tua subscrição.",
+        "subscribe": "Subscrever",
         "subscription": "Subscrição",
         "subscription_description": "Gere o teu plano de subscrição e acompanha a tua utilização",
         "switch_at_period_end": "Mudar no fim do período",

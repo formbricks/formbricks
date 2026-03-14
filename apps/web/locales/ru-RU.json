@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Добавить способ оплаты",
         "billing_interval_toggle": "Интервал выставления счетов",
-        "continue_to_checkout": "Перейти к оформлению",
         "current_plan_badge": "Текущий",
         "current_plan_cta": "Текущий тариф",
         "custom_plan_description": "Ваша организация использует индивидуальные настройки оплаты. Вы все равно можете переключиться на один из стандартных тарифов ниже.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "Я хочу остаться на тарифе Hobby",
         "stripe_setup_incomplete": "Настройка оплаты не завершена",
         "stripe_setup_incomplete_description": "Настройка оплаты не была завершена. Пожалуйста, повторите попытку, чтобы активировать вашу подписку.",
+        "subscribe": "Подписаться",
         "subscription": "Подписка",
         "subscription_description": "Управляйте своим тарифом и следите за использованием",
         "switch_at_period_end": "Переключить в конце периода",

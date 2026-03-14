@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "新增付款方式",
         "billing_interval_toggle": "帳單週期",
-        "continue_to_checkout": "前往結帳",
         "current_plan_badge": "目前",
         "current_plan_cta": "目前方案",
         "custom_plan_description": "您的組織使用自訂計費設定。您仍可切換至下方的標準方案。",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "我想繼續使用 Hobby 方案",
         "stripe_setup_incomplete": "帳單設定尚未完成",
         "stripe_setup_incomplete_description": "帳單設定未成功完成，請重新操作以啟用訂閱。",
+        "subscribe": "訂閱",
         "subscription": "訂閱",
         "subscription_description": "管理您的訂閱方案並監控用量",
         "switch_at_period_end": "週期結束時切換",

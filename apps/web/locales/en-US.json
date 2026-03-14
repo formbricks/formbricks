@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Add payment method",
         "billing_interval_toggle": "Billing interval",
-        "continue_to_checkout": "Continue to checkout",
         "current_plan_badge": "Current",
         "current_plan_cta": "Current plan",
         "custom_plan_description": "Your organization is on a custom billing setup. You can still switch to one of the standard plans below.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "I want to stay on the Hobby plan",
         "stripe_setup_incomplete": "Billing setup incomplete",
         "stripe_setup_incomplete_description": "Billing setup did not complete successfully. Please retry to activate your subscription.",
+        "subscribe": "Subscribe",
         "subscription": "Subscription",
         "subscription_description": "Manage your subscription plan and monitor your usage",
         "switch_at_period_end": "Switch at period end",

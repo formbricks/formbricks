@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Lägg till betalningsmetod",
         "billing_interval_toggle": "Faktureringsintervall",
-        "continue_to_checkout": "Fortsätt till kassan",
         "current_plan_badge": "Nuvarande",
         "current_plan_cta": "Nuvarande abonnemang",
         "custom_plan_description": "Din organisation har en anpassad faktureringslösning. Du kan fortfarande byta till något av standardabonnemangen nedan.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "Jag vill behålla Hobby-planen",
         "stripe_setup_incomplete": "Faktureringsinställningar ofullständiga",
         "stripe_setup_incomplete_description": "Faktureringsinställningen slutfördes inte riktigt. Försök igen för att aktivera ditt abonnemang.",
+        "subscribe": "Prenumerera",
         "subscription": "Abonnemang",
         "subscription_description": "Hantera din abonnemangsplan och följ din användning",
         "switch_at_period_end": "Byt vid periodens slut",

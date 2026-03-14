@@ -32,6 +32,7 @@ import { UsageCard } from "./usage-card";
 const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
+type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
   organization: TOrganization;
@@ -50,7 +51,7 @@ interface PricingTableProps {
   billingCatalog: TStripeBillingCatalogDisplay;
 }
 
-const STANDARD_PLAN_LEVEL: Record<"hobby" | "pro" | "scale", number> = {
+const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {
   hobby: 0,
   pro: 1,
   scale: 2,
@@ -85,11 +86,55 @@ const formatDate = (date: Date, locale: string) =>
   });
 
 type TPlanCardData = {
-  plan: "hobby" | "pro" | "scale";
+  plan: TStandardPlan;
   interval: TCloudBillingInterval;
   amount: string;
   description: string;
   features: string[];
+};
+
+const getPlanPeriodLabel = (
+  plan: TStandardPlan,
+  interval: TCloudBillingInterval,
+  t: (key: string) => string
+) => {
+  if (plan === "hobby" || interval === "monthly") {
+    return t("environments.settings.billing.per_month");
+  }
+
+  return t("environments.settings.billing.per_year");
+};
+
+const getPlanChangePayload = (environmentId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
+  plan === "hobby"
+    ? {
+        environmentId,
+        targetPlan: "hobby" as const,
+        targetInterval: "monthly" as const,
+      }
+    : {
+        environmentId,
+        targetPlan: plan,
+        targetInterval: interval,
+      };
+
+const getPlanChangeSuccessMessage = (
+  mode: "immediate" | "scheduled" | undefined,
+  t: (key: string) => string
+) => {
+  if (mode === "scheduled") {
+    return t("environments.settings.billing.plan_change_scheduled");
+  }
+
+  return t("environments.settings.billing.plan_change_applied");
+};
+
+const getActionErrorMessage = (serverError: string, t: (key: string) => string) => {
+  if (serverError === "mixed_interval_checkout_unsupported") {
+    return t("environments.settings.billing.yearly_checkout_unavailable");
+  }
+
+  return t("common.something_went_wrong_please_try_again");
 };
 
 export const PricingTable = ({
@@ -195,15 +240,26 @@ export const PricingTable = ({
 
   const openBillingPortal = async () => {
     const response = await manageSubscriptionAction({ environmentId });
+    if (response?.serverError) {
+      toast.error(getActionErrorMessage(response.serverError, t));
+      return;
+    }
     if (response?.data && typeof response.data === "string") {
       router.push(response.data);
+      return;
     }
+
+    toast.error(t("common.something_went_wrong_please_try_again"));
   };
 
   const openTrialPaymentCheckout = async () => {
     try {
       persistEnvironmentId();
       const response = await createTrialPaymentCheckoutAction({ environmentId });
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
       if (response?.data && typeof response.data === "string") {
         globalThis.location.href = response.data;
         return;
@@ -219,6 +275,10 @@ export const PricingTable = ({
     setIsRetryingStripeSetup(true);
     try {
       const response = await retryStripeSetupAction({ organizationId: organization.id });
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
       if (response?.data) {
         router.refresh();
         return;
@@ -231,59 +291,56 @@ export const PricingTable = ({
     }
   };
 
-  const handlePlanAction = async (plan: "hobby" | "pro" | "scale", interval: TCloudBillingInterval) => {
+  const redirectToPlanCheckout = async (
+    plan: Exclude<TStandardPlan, "hobby">,
+    interval: TCloudBillingInterval
+  ) => {
+    if (existingSubscriptionId) {
+      await openTrialPaymentCheckout();
+      return true;
+    }
+
+    if (interval === "yearly") {
+      toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
+      return true;
+    }
+
+    persistEnvironmentId();
+    const response = await createPlanCheckoutAction({
+      environmentId,
+      targetPlan: plan,
+      targetInterval: interval,
+    });
+    if (response?.serverError) {
+      toast.error(getActionErrorMessage(response.serverError, t));
+      return true;
+    }
+
+    if (response?.data && typeof response.data === "string") {
+      globalThis.location.href = response.data;
+      return true;
+    }
+
+    toast.error(t("common.something_went_wrong_please_try_again"));
+    return true;
+  };
+
+  const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     const actionKey = `${plan}-${interval}`;
     setIsPlanActionPending(actionKey);
 
     try {
       if (!hasPaymentMethod && plan !== "hobby") {
-        if (existingSubscriptionId) {
-          await openTrialPaymentCheckout();
-          return;
-        }
-
-        if (interval === "yearly") {
-          toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
-          return;
-        }
-
-        persistEnvironmentId();
-        const response = await createPlanCheckoutAction({
-          environmentId,
-          targetPlan: plan === "scale" ? "scale" : "pro",
-          targetInterval: interval,
-        });
-
-        if (response?.data && typeof response.data === "string") {
-          globalThis.location.href = response.data;
-          return;
-        }
-
-        toast.error(t("common.something_went_wrong_please_try_again"));
+        await redirectToPlanCheckout(plan, interval);
         return;
       }
 
-      const response =
-        plan === "hobby"
-          ? await changeBillingPlanAction({
-              environmentId,
-              targetPlan: "hobby",
-              targetInterval: "monthly",
-            })
-          : await changeBillingPlanAction({
-              environmentId,
-              targetPlan: plan,
-              targetInterval: interval,
-            });
-
-      if (response?.data?.mode === "immediate") {
-        toast.success(t("environments.settings.billing.plan_change_applied"));
-      } else if (response?.data?.mode === "scheduled") {
-        toast.success(t("environments.settings.billing.plan_change_scheduled"));
-      } else {
-        toast.success(t("environments.settings.billing.plan_change_applied"));
+      const response = await changeBillingPlanAction(getPlanChangePayload(environmentId, plan, interval));
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
       }
-
+      toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
       router.refresh();
     } catch (error) {
       console.error("Failed to change billing plan:", error);
@@ -304,6 +361,10 @@ export const PricingTable = ({
     setIsPlanActionPending("undo");
     try {
       const response = await undoPendingPlanChangeAction({ environmentId });
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
       if (response?.data) {
         toast.success(t("environments.settings.billing.pending_change_removed"));
         router.refresh();
@@ -319,7 +380,7 @@ export const PricingTable = ({
     }
   };
 
-  const getCtaLabel = (plan: "hobby" | "pro" | "scale", interval: TCloudBillingInterval) => {
+  const getCtaLabel = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     const isCurrentSelection =
       currentCloudPlan === plan && (plan === "hobby" || currentBillingInterval === interval);
     if (isCurrentSelection) {
@@ -335,7 +396,7 @@ export const PricingTable = ({
     if (!hasPaymentMethod && plan !== "hobby") {
       return existingSubscriptionId
         ? t("environments.settings.billing.add_payment_method")
-        : t("environments.settings.billing.continue_to_checkout");
+        : t("environments.settings.billing.subscribe");
     }
 
     if (currentPlanLevel === null) {
@@ -549,11 +610,7 @@ export const PricingTable = ({
                           {planCard.amount}
                         </span>
                         <span className="pb-1 text-sm text-slate-500">
-                          {planCard.plan === "hobby"
-                            ? t("environments.settings.billing.per_month")
-                            : planCard.interval === "monthly"
-                              ? t("environments.settings.billing.per_month")
-                              : t("environments.settings.billing.per_year")}
+                          {getPlanPeriodLabel(planCard.plan, planCard.interval, t)}
                         </span>
                       </div>
 

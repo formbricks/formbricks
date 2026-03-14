@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "Ajouter un moyen de paiement",
         "billing_interval_toggle": "Intervalle de facturation",
-        "continue_to_checkout": "Continuer vers le paiement",
         "current_plan_badge": "Actuel",
         "current_plan_cta": "Formule actuelle",
         "custom_plan_description": "Votre organisation dispose d'une configuration de facturation personnalisée. Tu peux toujours basculer vers l'une des formules standard ci-dessous.",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "Je veux rester sur le plan Hobby",
         "stripe_setup_incomplete": "Configuration de la facturation incomplète",
         "stripe_setup_incomplete_description": "La configuration de la facturation n’a pas abouti. Merci de réessayer pour activer ton abonnement.",
+        "subscribe": "S'abonner",
         "subscription": "Abonnement",
         "subscription_description": "Gère ton abonnement et surveille ta consommation",
         "switch_at_period_end": "Changer à la fin de la période",

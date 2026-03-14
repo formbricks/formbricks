@@ -698,9 +698,6 @@ describe("organization-billing", () => {
     });
     expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith({
       from_subscription: "sub_1",
-      metadata: {
-        organizationId: "org_1",
-      },
     });
     expect(mocks.subscriptionSchedulesUpdate).toHaveBeenCalledWith(
       "sched_new",
@@ -875,9 +872,6 @@ describe("organization-billing", () => {
     });
     expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith({
       from_subscription: "sub_1",
-      metadata: {
-        organizationId: "org_1",
-      },
     });
     expect(mocks.subscriptionSchedulesRetrieve).not.toHaveBeenCalledWith("sched_existing");
   });

@@ -973,7 +973,6 @@
       "billing": {
         "add_payment_method": "添加支付方式",
         "billing_interval_toggle": "账单周期",
-        "continue_to_checkout": "继续结账",
         "current_plan_badge": "当前",
         "current_plan_cta": "当前方案",
         "custom_plan_description": "您的组织使用的是自定义计费设置。您仍然可以切换到下面的标准方案。",
@@ -1018,6 +1017,7 @@
         "stay_on_hobby_plan": "我想继续使用免费版计划",
         "stripe_setup_incomplete": "账单设置未完成",
         "stripe_setup_incomplete_description": "账单设置未成功完成。请重试以激活订阅。",
+        "subscribe": "订阅",
         "subscription": "订阅",
         "subscription_description": "管理你的订阅套餐并监控用量",
         "switch_at_period_end": "在周期结束时切换",
