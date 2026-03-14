@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "utilizat",
         "yearly": "Anual",
+        "yearly_checkout_unavailable": "Plata anuală nu este disponibilă încă. Adaugă mai întâi o metodă de plată pe un abonament lunar sau contactează asistența.",
         "your_plan": "Planul tău"
       },
       "domain": {

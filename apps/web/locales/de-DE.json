@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "verwendet",
         "yearly": "Jährlich",
+        "yearly_checkout_unavailable": "Die jährliche Abrechnung ist noch nicht verfügbar. Füge zuerst eine Zahlungsmethode bei einem monatlichen Plan hinzu oder kontaktiere den Support.",
         "your_plan": "Dein Tarif"
       },
       "domain": {

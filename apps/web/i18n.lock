@@ -989,6 +989,7 @@ checksums:
     environments/settings/billing/usage_cycle: 4986315c0b486c7490bab6ada2205bee
     environments/settings/billing/used: 9e2eff0ac536d11a9f8fcb055dd68f2e
     environments/settings/billing/yearly: 87f43e016c19cb25860f456549a2f431
+    environments/settings/billing/yearly_checkout_unavailable: f7b694de0e554c8583d8aaa4740e01a2
     environments/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b
     environments/settings/domain/customize_favicon_description: d3ac29934a66fd56294c0d8069fbc11e
     environments/settings/domain/customize_favicon_with_higher_plan: 43a6b834a8fd013c52923863d62248f3

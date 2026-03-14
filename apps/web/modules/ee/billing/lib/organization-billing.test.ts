@@ -698,10 +698,16 @@ describe("organization-billing", () => {
     });
     expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith({
       from_subscription: "sub_1",
+      metadata: {
+        organizationId: "org_1",
+      },
     });
     expect(mocks.subscriptionSchedulesUpdate).toHaveBeenCalledWith(
       "sched_new",
       expect.objectContaining({
+        metadata: {
+          organizationId: "org_1",
+        },
         phases: [
           {
             start_date: 1739923200,
@@ -869,8 +875,55 @@ describe("organization-billing", () => {
     });
     expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith({
       from_subscription: "sub_1",
+      metadata: {
+        organizationId: "org_1",
+      },
     });
     expect(mocks.subscriptionSchedulesRetrieve).not.toHaveBeenCalledWith("sched_existing");
+  });
+
+  test("switchOrganizationToCloudPlan returns early for the current selection without disturbing pending state", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result).toEqual({ mode: "immediate", pendingChange: null });
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
   });
 
   test("switchOrganizationToCloudPlan releases a newly created schedule when update fails", async () => {
@@ -947,6 +1000,70 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_new", {
       preserve_cancel_date: false,
     });
+  });
+
+  test("switchOrganizationToCloudPlan rejects schedules without a current phase end date", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.subscriptionSchedulesCreate.mockResolvedValue({
+      id: "sched_new",
+      current_phase: { start_date: 1739923200, end_date: null },
+      phases: [{ start_date: 1739923200, end_date: null, items: [] }],
+    });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("current phase has no end date");
+
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
   });
 
   test("undoPendingOrganizationPlanChange clears the pending snapshot", async () => {

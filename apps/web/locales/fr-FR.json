@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "utilisé(s)",
         "yearly": "Annuel",
+        "yearly_checkout_unavailable": "Le paiement annuel n'est pas encore disponible. Ajoute d'abord un moyen de paiement sur un forfait mensuel ou contacte le support.",
         "your_plan": "Ton offre"
       },
       "domain": {

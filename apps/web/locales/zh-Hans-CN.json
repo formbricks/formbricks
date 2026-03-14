@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "已用",
         "yearly": "按年付费",
+        "yearly_checkout_unavailable": "年度结算暂不可用。请先在月度套餐中添加付款方式，或联系客服。",
         "your_plan": "你的套餐"
       },
       "domain": {

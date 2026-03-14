@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "usado",
         "yearly": "Anual",
+        "yearly_checkout_unavailable": "O checkout anual ainda não está disponível. Adicione um método de pagamento em um plano mensal primeiro ou entre em contato com o suporte.",
         "your_plan": "Seu plano"
       },
       "domain": {

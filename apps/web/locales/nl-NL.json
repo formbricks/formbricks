@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "gebruikt",
         "yearly": "Jaarlijks",
+        "yearly_checkout_unavailable": "Jaarlijkse checkout is nog niet beschikbaar. Voeg eerst een betaalmethode toe bij een maandelijks abonnement of neem contact op met support.",
         "your_plan": "Jouw abonnement"
       },
       "domain": {

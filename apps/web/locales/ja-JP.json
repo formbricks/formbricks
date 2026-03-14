@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "使用済み",
         "yearly": "年間",
+        "yearly_checkout_unavailable": "年間プランのチェックアウトはまだご利用いただけません。まず月間プランでお支払い方法を追加するか、サポートにお問い合わせください。",
         "your_plan": "ご利用プラン"
       },
       "domain": {

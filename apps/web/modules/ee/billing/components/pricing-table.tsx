@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   type TCloudBillingInterval,
   type TOrganization,
@@ -24,41 +25,13 @@ import {
   retryStripeSetupAction,
   undoPendingPlanChangeAction,
 } from "../actions";
+import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
 const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
-
-type TBillingCatalogDisplay = {
-  hobby: {
-    monthly: {
-      currency: string;
-      unitAmount: number | null;
-    };
-  };
-  pro: {
-    monthly: {
-      currency: string;
-      unitAmount: number | null;
-    };
-    yearly: {
-      currency: string;
-      unitAmount: number | null;
-    };
-  };
-  scale: {
-    monthly: {
-      currency: string;
-      unitAmount: number | null;
-    };
-    yearly: {
-      currency: string;
-      unitAmount: number | null;
-    };
-  };
-};
 
 interface PricingTableProps {
   organization: TOrganization;
@@ -74,7 +47,7 @@ interface PricingTableProps {
   pendingChange: TOrganizationStripePendingChange | null;
   isStripeSetupIncomplete: boolean;
   trialDaysRemaining: number | null;
-  billingCatalog: TBillingCatalogDisplay;
+  billingCatalog: TStripeBillingCatalogDisplay;
 }
 
 const STANDARD_PLAN_LEVEL: Record<"hobby" | "pro" | "scale", number> = {
@@ -269,6 +242,11 @@ export const PricingTable = ({
           return;
         }
 
+        if (interval === "yearly") {
+          toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
+          return;
+        }
+
         persistEnvironmentId();
         const response = await createPlanCheckoutAction({
           environmentId,
@@ -309,7 +287,14 @@ export const PricingTable = ({
       router.refresh();
     } catch (error) {
       console.error("Failed to change billing plan:", error);
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      if (
+        error instanceof OperationNotAllowedError &&
+        error.message === "mixed_interval_checkout_unsupported"
+      ) {
+        toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+      }
     } finally {
       setIsPlanActionPending(null);
     }

@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "felhasználva",
         "yearly": "Éves",
+        "yearly_checkout_unavailable": "Az éves fizetés még nem érhető el. Kérjük, adjon hozzá fizetési módot egy havi előfizetéshez, vagy vegye fel a kapcsolatot az ügyfélszolgálattal.",
         "your_plan": "Az Ön csomagja"
       },
       "domain": {

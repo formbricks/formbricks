@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "已使用",
         "yearly": "年繳",
+        "yearly_checkout_unavailable": "年度結帳尚未開放。請先在月繳方案中新增付款方式，或聯絡客服。",
         "your_plan": "您的方案"
       },
       "domain": {

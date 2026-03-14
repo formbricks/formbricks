@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "använt",
         "yearly": "Årligen",
+        "yearly_checkout_unavailable": "Årlig betalning är inte tillgänglig ännu. Lägg till en betalningsmetod på en månatlig plan först eller kontakta support.",
         "your_plan": "Din plan"
       },
       "domain": {

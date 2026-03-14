@@ -699,6 +699,9 @@ const scheduleSubscriptionPlanChange = async (
     ? await stripeClient.subscriptionSchedules.retrieve(existingScheduleId)
     : await stripeClient.subscriptionSchedules.create({
         from_subscription: subscription.id,
+        metadata: {
+          organizationId,
+        },
       });
 
   const currentPhase = schedule.current_phase;
@@ -707,11 +710,20 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error(`Stripe subscription schedule ${schedule.id} has no current phase`);
   }
 
+  if (!currentPhase.end_date) {
+    throw new Error(
+      `Stripe subscription schedule ${schedule.id} current phase has no end date; cannot schedule a plan change`
+    );
+  }
+
   let updatedSchedule: Stripe.SubscriptionSchedule;
 
   try {
     updatedSchedule = await stripeClient.subscriptionSchedules.update(schedule.id, {
       end_behavior: "release",
+      metadata: {
+        organizationId,
+      },
       proration_behavior: "none",
       phases: [
         {

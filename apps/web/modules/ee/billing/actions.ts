@@ -2,11 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import {
-  AuthorizationError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZCloudBillingInterval } from "@formbricks/types/organizations";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
@@ -52,7 +48,7 @@ export const manageSubscriptionAction = authenticatedActionClient
       }
 
       if (!organization.billing.stripeCustomerId) {
-        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -167,7 +163,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
       }
 
       if (!organization.billing.stripeCustomerId) {
-        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
       const subscriptionId = organization.billing.stripe?.subscriptionId;
@@ -255,7 +251,7 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
     }
 
     if (!organization.billing.stripeCustomerId) {
-      throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
 
     const result = await switchOrganizationToCloudPlan({
@@ -268,6 +264,8 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
     if (result.mode === "immediate") {
       await syncOrganizationBillingFromStripe(organizationId);
     }
+    // Scheduled downgrades already persist the pending snapshot locally and
+    // the ensuing subscription_schedule webhook performs the full Stripe resync.
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = {
@@ -306,7 +304,7 @@ export const undoPendingPlanChangeAction = authenticatedActionClient
       }
 
       if (!organization.billing.stripeCustomerId) {
-        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
       await undoPendingOrganizationPlanChange(organizationId, organization.billing.stripeCustomerId);

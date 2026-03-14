@@ -1044,6 +1044,7 @@
         "usage_cycle": "Usage cycle",
         "used": "utilizado",
         "yearly": "Anual",
+        "yearly_checkout_unavailable": "O pagamento anual ainda não está disponível. Adiciona primeiro um método de pagamento num plano mensal ou contacta o suporte.",
         "your_plan": "O teu plano"
       },
       "domain": {
