@@ -36,7 +36,7 @@ export const TrialAlert = ({
   const variant = hasPaymentMethod ? "success" : getTrialVariant(trialDaysRemaining);
 
   return (
-    <Alert variant={variant} size={size}>
+    <Alert variant={variant} size={size} className="max-w-4xl">
       <AlertTitle>{title}</AlertTitle>
       {children}
     </Alert>

@@ -46,7 +46,7 @@ export const ContactsPageLayout = async ({
             description={upgradePromptDescription ?? t("environments.contacts.unlock_contacts_description")}
             buttons={[
               {
-                text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
+                text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
                   ? `/environments/${environmentId}/settings/billing`
                   : "https://formbricks.com/upgrade-self-hosting-license",

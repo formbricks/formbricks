@@ -99,7 +99,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
             className="mt-4 w-full"
             loading={isStartingTrial}
             disabled={isStartingTrial}>
-            {t("common.start_free_trial")}
+            {t("common.upgrade_plan")}
           </Button>
         </div>
 
