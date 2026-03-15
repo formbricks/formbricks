@@ -57,19 +57,53 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
       calLink: element.calUserName,
     });
 
-    // Set up error detection via MutationObserver for COEP/credentialless failures
-    const timer = setTimeout(() => {
-      const embedContainer = document.getElementById("cal-embed");
-      if (embedContainer) {
+    // Event-driven error detection via MutationObserver
+    let observer: MutationObserver | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (timer) clearTimeout(timer);
+      if (observer) observer.disconnect();
+    };
+
+    const embedContainer = document.getElementById("cal-embed");
+    if (embedContainer) {
+      observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLIFrameElement) {
+              node.addEventListener("load", () => {
+                cleanup();
+                setError(false);
+              });
+              node.addEventListener("error", () => {
+                cleanup();
+                setError(true);
+                setErrorMessage(
+                  "Failed to load booking widget. Your environment may be blocking cross-origin resources."
+                );
+              });
+            }
+          }
+        }
+      });
+
+      observer.observe(embedContainer, { childList: true, subtree: true });
+
+      // Fallback timeout in case no iframe appears at all
+      timer = setTimeout(() => {
         const iframe = embedContainer.querySelector("iframe");
         if (!iframe) {
+          cleanup();
           setError(true);
-          setErrorMessage("Failed to load booking widget. Your environment may be blocking cross-origin resources.");
+          setErrorMessage(
+            "Failed to load booking widget. Your environment may be blocking cross-origin resources."
+          );
         }
-      }
-    }, 5000);
+      }, 5000);
+    }
 
-    return () => clearTimeout(timer);
+    return cleanup;
   }, [cal, element.calHost, element.calUserName]);
 
   if (error) {
@@ -85,6 +119,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
               href={`https://${element.calHost || "cal.com"}/${element.calUserName}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => onSuccessfulBooking()}
               className="underline">
               {element.calHost || "cal.com"}/{element.calUserName}
             </a>
