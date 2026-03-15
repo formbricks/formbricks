@@ -1,5 +1,9 @@
 import type { TFunction } from "i18next";
 import type { TResponseDataValue } from "@formbricks/types/responses";
+import {
+  DEFAULT_DATE_STORAGE_FORMAT,
+  type TSurveyDateStorageFormat,
+} from "@formbricks/types/surveys/date-formats";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type {
   TValidationRuleParams,
@@ -27,8 +31,37 @@ import type {
   TValidationRuleType,
   TValidatorCheckResult,
 } from "@formbricks/types/surveys/validation-rules";
+import { parseDateByFormat } from "@/lib/date-format";
 import { countSelections } from "./validators/selection-utils";
 import { validateEmail, validatePhone, validateUrl } from "./validators/validation-utils";
+
+function getDateElementFormat(element: TSurveyElement): TSurveyDateStorageFormat {
+  if (element.type === "date" && "format" in element) {
+    return element.format ?? DEFAULT_DATE_STORAGE_FORMAT;
+  }
+  return DEFAULT_DATE_STORAGE_FORMAT;
+}
+
+function parseForDateComparison(
+  value: string,
+  format: TSurveyDateStorageFormat,
+  element: TSurveyElement,
+  ruleName: string,
+  paramDates: [string] | [string, string]
+): { valueDate: Date; paramDates: Date[] } | null {
+  const valueDate = parseDateByFormat(value, format);
+  const parsedParams = paramDates.map((d) => parseDateByFormat(d, DEFAULT_DATE_STORAGE_FORMAT));
+  if (valueDate === null) {
+    console.warn(`[date validation] ${ruleName}: could not parse response date`, {
+      elementId: element.id,
+      format,
+      value,
+    });
+    return null;
+  }
+  if (parsedParams.includes(null)) return null;
+  return { valueDate, paramDates: parsedParams as Date[] };
+}
 
 /**
  * Generic validator interface
@@ -349,14 +382,18 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
   },
   isLaterThan: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsIsLaterThan;
-      // Skip validation if value is empty
-      if (!value || typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      // Compare dates as strings (YYYY-MM-DD format)
-      return { valid: value > typedParams.date };
+      if (!value || typeof value !== "string" || value === "") return { valid: true };
+      const parsed = parseForDateComparison(value, getDateElementFormat(element), element, "isLaterThan", [
+        typedParams.date,
+      ]);
+      if (!parsed) return { valid: false };
+      return { valid: parsed.valueDate.getTime() > parsed.paramDates[0].getTime() };
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsLaterThan;
@@ -364,14 +401,18 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
   },
   isEarlierThan: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsIsEarlierThan;
-      // Skip validation if value is empty
-      if (!value || typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      // Compare dates as strings (YYYY-MM-DD format)
-      return { valid: value < typedParams.date };
+      if (!value || typeof value !== "string" || value === "") return { valid: true };
+      const parsed = parseForDateComparison(value, getDateElementFormat(element), element, "isEarlierThan", [
+        typedParams.date,
+      ]);
+      if (!parsed) return { valid: false };
+      return { valid: parsed.valueDate.getTime() < parsed.paramDates[0].getTime() };
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsEarlierThan;
@@ -379,14 +420,22 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
   },
   isBetween: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsIsBetween;
-      // Skip validation if value is empty
-      if (!value || typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      // Compare dates as strings (YYYY-MM-DD format)
-      return { valid: value > typedParams.startDate && value < typedParams.endDate };
+      if (!value || typeof value !== "string" || value === "") return { valid: true };
+      const parsed = parseForDateComparison(value, getDateElementFormat(element), element, "isBetween", [
+        typedParams.startDate,
+        typedParams.endDate,
+      ]);
+      if (!parsed) return { valid: false };
+      const t = parsed.valueDate.getTime();
+      return {
+        valid: t > parsed.paramDates[0].getTime() && t < parsed.paramDates[1].getTime(),
+      };
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsBetween;
@@ -394,14 +443,22 @@ export const validators: Record<TValidationRuleType, TValidator> = {
     },
   },
   isNotBetween: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      element: TSurveyElement
+    ): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsIsNotBetween;
-      // Skip validation if value is empty
-      if (!value || typeof value !== "string" || value === "") {
-        return { valid: true };
-      }
-      // Compare dates as strings (YYYY-MM-DD format)
-      return { valid: value < typedParams.startDate || value > typedParams.endDate };
+      if (!value || typeof value !== "string" || value === "") return { valid: true };
+      const parsed = parseForDateComparison(value, getDateElementFormat(element), element, "isNotBetween", [
+        typedParams.startDate,
+        typedParams.endDate,
+      ]);
+      if (!parsed) return { valid: false };
+      const t = parsed.valueDate.getTime();
+      return {
+        valid: t < parsed.paramDates[0].getTime() || t > parsed.paramDates[1].getTime(),
+      };
     },
     getDefaultMessage: (params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       const typedParams = params as TValidationRuleParamsIsNotBetween;

@@ -585,6 +585,58 @@ describe("validators", () => {
     });
   });
 
+  describe("date validators with element format and parse failure", () => {
+    const dateElementDMy: TSurveyElement = {
+      id: "date1",
+      type: TSurveyElementTypeEnum.Date,
+      headline: { default: "Date" },
+      required: false,
+      format: "d-M-y",
+    } as TSurveyElement;
+
+    test("isLaterThan uses element format d-M-y", () => {
+      const result = validators.isLaterThan.check("20-03-2026", { date: "2024-01-01" }, dateElementDMy);
+      expect(result.valid).toBe(true);
+    });
+
+    test("isEarlierThan uses element format d-M-y", () => {
+      const result = validators.isEarlierThan.check("01-01-2024", { date: "2024-12-31" }, dateElementDMy);
+      expect(result.valid).toBe(true);
+    });
+
+    test("isBetween with d-M-y value", () => {
+      const result = validators.isBetween.check(
+        "15-06-2024",
+        { startDate: "2024-01-01", endDate: "2024-12-31" },
+        dateElementDMy
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    test("isLaterThan returns valid false when response date is unparseable", () => {
+      const result = validators.isLaterThan.check("not-a-date", { date: "2024-01-01" }, dateElementDMy);
+      expect(result.valid).toBe(false);
+    });
+
+    test("isBetween returns valid false when response date is unparseable", () => {
+      const result = validators.isBetween.check(
+        "invalid",
+        { startDate: "2024-01-01", endDate: "2024-12-31" },
+        dateElementDMy
+      );
+      expect(result.valid).toBe(false);
+    });
+
+    test("isBetween returns valid false when param date is unparseable", () => {
+      const result = validators.isBetween.check(
+        "15-06-2024",
+        { startDate: "bad-start", endDate: "2024-12-31" },
+        dateElementDMy
+      );
+      expect(result.valid).toBe(false);
+    });
+  });
+
   describe("minRanked", () => {
     const rankingElement: TSurveyElement = {
       id: "rank1",

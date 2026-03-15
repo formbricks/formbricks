@@ -807,6 +807,57 @@ describe("Survey Logic", () => {
       );
     });
 
+    test("date equals with d-M-y stored value", () => {
+      const dataWithDMy: TResponseData = { ...mockData, q5: "01-01-2023" };
+      const condition: TConditionGroup = {
+        id: "g1",
+        connector: "and",
+        conditions: [
+          {
+            id: "c1",
+            operator: "equals",
+            leftOperand: { type: "element", value: "q5" },
+            rightOperand: { type: "static", value: "2023-01-01" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, dataWithDMy, mockVariablesData, condition, "default")).toBe(true);
+    });
+
+    test("date comparison returns false when response date is unparseable", () => {
+      const dataInvalidDate: TResponseData = { ...mockData, q5: "not-a-date" };
+      const condition: TConditionGroup = {
+        id: "g1",
+        connector: "and",
+        conditions: [
+          {
+            id: "c1",
+            operator: "equals",
+            leftOperand: { type: "element", value: "q5" },
+            rightOperand: { type: "static", value: "2023-01-01" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, dataInvalidDate, mockVariablesData, condition, "default")).toBe(false);
+    });
+
+    test("isAfter returns false when left date is unparseable", () => {
+      const dataInvalidDate: TResponseData = { ...mockData, q5: "invalid" };
+      const condition: TConditionGroup = {
+        id: "g1",
+        connector: "and",
+        conditions: [
+          {
+            id: "c1",
+            operator: "isAfter",
+            leftOperand: { type: "element", value: "q5" },
+            rightOperand: { type: "static", value: "2022-01-01" },
+          },
+        ],
+      };
+      expect(evaluateLogic(mockSurvey, dataInvalidDate, mockVariablesData, condition, "default")).toBe(false);
+    });
+
     test("evaluates array inclusion operators", () => {
       // Tests for includesAllOf, includesOneOf, etc.
       const includesAllOfCondition: TConditionGroup = {

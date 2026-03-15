@@ -27,6 +27,10 @@
     "./validation": {
       "types": "./dist/validation.d.ts",
       "import": "./dist/validation.js"
+    },
+    "./date-format": {
+      "types": "./dist/date-format.d.ts",
+      "import": "./dist/date-format.js"
     }
   },
   "scripts": {

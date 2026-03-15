@@ -806,6 +806,9 @@ importers:
 
   packages/survey-ui:
     dependencies:
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
       '@formkit/auto-animate':
         specifier: 0.9.0
         version: 0.9.0

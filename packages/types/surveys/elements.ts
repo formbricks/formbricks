@@ -3,6 +3,7 @@ import { ZStorageUrl, ZUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { TSurveyElementTypeEnum } from "./constants";
+import { DATE_STORAGE_FORMAT_IDS } from "./date-formats";
 import { FORBIDDEN_IDS } from "./validation";
 import { ZValidationRules } from "./validation-rules";
 
@@ -257,7 +258,7 @@ export type TSurveyPictureSelectionElement = z.infer<typeof ZSurveyPictureSelect
 export const ZSurveyDateElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Date),
   html: ZI18nString.optional(),
-  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+  format: z.enum(DATE_STORAGE_FORMAT_IDS),
   validation: ZValidation.optional(),
 });
 

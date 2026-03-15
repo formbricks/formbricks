@@ -2,11 +2,55 @@ import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { type TSurveyVariable } from "@formbricks/types/surveys/types";
+import { parseDateByFormat } from "@/lib/date-format";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getElementsFromSurveyBlocks } from "./utils";
+
+/** Coerce to string for date comparison; avoids Object's default stringification. */
+function toDateOperandString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return "";
+}
+
+function parseDateOperand(value: string, field: TSurveyElement | ""): Date | null {
+  const format =
+    field && typeof field === "object" && field.type === TSurveyElementTypeEnum.Date && "format" in field
+      ? (field.format ?? DEFAULT_DATE_STORAGE_FORMAT)
+      : DEFAULT_DATE_STORAGE_FORMAT;
+  return parseDateByFormat(value, format);
+}
+
+function compareDateOperands(
+  leftValue: string,
+  rightValue: string,
+  leftField: TSurveyElement,
+  rightField: TSurveyElement,
+  operator: string,
+  compare: (left: Date, right: Date) => boolean
+): boolean {
+  const leftDate = parseDateOperand(leftValue, leftField);
+  const rightDate = parseDateOperand(rightValue, rightField);
+  if (leftDate === null) {
+    console.warn(`[logic] ${operator}: could not parse left date`, {
+      elementId: leftField.id,
+      value: leftValue,
+    });
+    return false;
+  }
+  if (rightDate === null) {
+    console.warn(`[logic] ${operator}: could not parse right date`, {
+      elementId: rightField.id,
+      value: rightValue,
+    });
+    return false;
+  }
+  return compare(leftDate, rightDate);
+}
 
 const getVariableValue = (
   variables: TSurveyVariable[],
@@ -265,12 +309,17 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            // when left value is of date question and right value is string
-            return new Date(leftValue).getTime() === new Date(rightValue).getTime();
+            return compareDateOperands(
+              leftValue,
+              String(rightValue),
+              leftField as TSurveyElement,
+              rightField as TSurveyElement,
+              "equals",
+              (l, r) => l.getTime() === r.getTime()
+            );
           }
         }
 
-        // when left value is of openText, hiddenField, variable and right value is of multichoice
         if (condition.rightOperand?.type === "element") {
           if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
@@ -281,7 +330,14 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            return new Date(leftValue).getTime() === new Date(rightValue).getTime();
+            return compareDateOperands(
+              leftValue,
+              String(rightValue),
+              leftField as TSurveyElement,
+              rightField as TSurveyElement,
+              "equals",
+              (l, r) => l.getTime() === r.getTime()
+            );
           }
         }
 
@@ -304,17 +360,22 @@ const evaluateSingleCondition = (
           return !leftValue.includes(rightValue);
         }
 
-        // when left value is of date question and right value is string
         if (
           condition.leftOperand.type === "element" &&
           (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
           typeof leftValue === "string" &&
           typeof rightValue === "string"
         ) {
-          return new Date(leftValue).getTime() !== new Date(rightValue).getTime();
+          return compareDateOperands(
+            leftValue,
+            String(rightValue),
+            leftField as TSurveyElement,
+            rightField as TSurveyElement,
+            "doesNotEqual",
+            (l, r) => l.getTime() !== r.getTime()
+          );
         }
 
-        // when left value is of openText, hiddenField, variable and right value is of multichoice
         if (condition.rightOperand?.type === "element") {
           if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
@@ -325,7 +386,14 @@ const evaluateSingleCondition = (
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
-            return new Date(leftValue).getTime() !== new Date(rightValue).getTime();
+            return compareDateOperands(
+              leftValue,
+              String(rightValue),
+              leftField as TSurveyElement,
+              rightField as TSurveyElement,
+              "doesNotEqual",
+              (l, r) => l.getTime() !== r.getTime()
+            );
           }
         }
 
@@ -413,9 +481,23 @@ const evaluateSingleCondition = (
       case "isNotClicked":
         return leftValue !== "clicked";
       case "isAfter":
-        return new Date(String(leftValue)) > new Date(String(rightValue));
+        return compareDateOperands(
+          toDateOperandString(leftValue),
+          toDateOperandString(rightValue),
+          leftField as TSurveyElement,
+          rightField as TSurveyElement,
+          "isAfter",
+          (l, r) => l.getTime() > r.getTime()
+        );
       case "isBefore":
-        return new Date(String(leftValue)) < new Date(String(rightValue));
+        return compareDateOperands(
+          toDateOperandString(leftValue),
+          toDateOperandString(rightValue),
+          leftField as TSurveyElement,
+          rightField as TSurveyElement,
+          "isBefore",
+          (l, r) => l.getTime() < r.getTime()
+        );
       case "isBooked":
         return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":

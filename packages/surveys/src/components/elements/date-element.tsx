@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { DateElement as SurveyUIDateElement } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -68,6 +69,7 @@ export function DateElement({
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         value={value}
         onChange={handleChange}
+        outputFormat={element.format ?? DEFAULT_DATE_STORAGE_FORMAT}
         minDate={getMinDate()}
         maxDate={getMaxDate()}
         required={isRequired}

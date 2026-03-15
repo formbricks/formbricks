@@ -4,6 +4,11 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  DATE_STORAGE_FORMATS,
+  DATE_STORAGE_FORMAT_IDS,
+  type TSurveyDateStorageFormat,
+} from "@formbricks/types/surveys/date-formats";
 import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -27,20 +32,10 @@ interface IDateElementFormProps {
   isExternalUrlsAllowed?: boolean;
 }
 
-const dateOptions = [
-  {
-    value: "M-d-y",
-    label: "MM-DD-YYYY",
-  },
-  {
-    value: "d-M-y",
-    label: "DD-MM-YYYY",
-  },
-  {
-    value: "y-M-d",
-    label: "YYYY-MM-DD",
-  },
-];
+const dateOptions = DATE_STORAGE_FORMAT_IDS.map((value) => ({
+  value,
+  label: DATE_STORAGE_FORMATS[value].label,
+}));
 
 export const DateElementForm = ({
   element,
@@ -122,7 +117,7 @@ export const DateElementForm = ({
             options={dateOptions}
             currentOption={element.format}
             handleOptionChange={(value: string) =>
-              updateElement(elementIdx, { format: value as "M-d-y" | "d-M-y" | "y-M-d" })
+              updateElement(elementIdx, { format: value as TSurveyDateStorageFormat })
             }
           />
         </div>

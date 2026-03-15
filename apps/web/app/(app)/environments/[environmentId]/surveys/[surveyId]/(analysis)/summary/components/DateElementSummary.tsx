@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DEFAULT_DATE_STORAGE_FORMAT } from "@formbricks/types/surveys/date-formats";
 import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -32,13 +33,8 @@ export const DateElementSummary = ({ elementSummary, environmentId, survey, loca
   };
 
   const renderResponseValue = (value: string) => {
-    const parsedDate = new Date(value);
-
-    const formattedDate = isNaN(parsedDate.getTime())
-      ? `${t("common.invalid_date")}(${value})`
-      : formatDateWithOrdinal(parsedDate);
-
-    return formattedDate;
+    const format = elementSummary.element?.format ?? DEFAULT_DATE_STORAGE_FORMAT;
+    return formatStoredDateForDisplay(value, format, `${t("common.invalid_date")}(${value})`);
   };
 
   return (
