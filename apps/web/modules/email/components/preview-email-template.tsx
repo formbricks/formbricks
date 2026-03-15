@@ -481,7 +481,7 @@ function EmailFooter(): React.JSX.Element {
   return (
     <Container className="m-auto mt-8 text-center">
       <Link className="text-signature-color text-xs" href="https://formbricks.com/" target="_blank">
-        Powered by Formbricks
+        {t("common.powered_by_formbricks")}
       </Link>
     </Container>
   );
