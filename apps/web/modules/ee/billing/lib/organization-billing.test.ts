@@ -467,6 +467,40 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
   });
 
+  test("syncOrganizationBillingFromStripe stores hobby plan when customer has no active subscription", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+    const result = await syncOrganizationBillingFromStripe("org_1");
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripeCustomerId: "cus_1",
+        stripe: expect.objectContaining({
+          plan: "hobby",
+          subscriptionStatus: null,
+          subscriptionId: null,
+          features: [],
+          lastSyncedAt: expect.any(String),
+        }),
+      }),
+    });
+    expect(result?.stripe?.plan).toBe("hobby");
+    expect(result?.stripe?.subscriptionStatus).toBeNull();
+  });
+
   test("syncOrganizationBillingFromStripe ignores duplicate webhook events", async () => {
     const billing = {
       stripeCustomerId: "cus_1",
@@ -1564,73 +1598,50 @@ describe("organization-billing", () => {
     expect(mocks.prismaOrganizationFindUnique).not.toHaveBeenCalled();
   });
 
-  test("ensureCloudStripeSetupForOrganization provisions hobby subscription when org has no active subscription", async () => {
+  test("ensureCloudStripeSetupForOrganization creates customer and syncs billing without provisioning hobby", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValueOnce({
       id: "org_1",
       name: "Org 1",
     });
-    // ensureStripeCustomerForOrganization no longer reads billing;
-    // reconcile and sync each read billing once
-    mocks.prismaOrganizationBillingFindUnique
-      .mockResolvedValueOnce({
-        stripeCustomerId: "cus_new",
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-          },
+    mocks.prismaMembershipFindFirst.mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner Name" },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_new",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
         },
-        usageCycleAnchor: new Date(),
-        stripe: {},
-      })
-      .mockResolvedValueOnce({
-        stripeCustomerId: "cus_new",
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-          },
-        },
-        usageCycleAnchor: new Date(),
-        stripe: {},
-      });
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {},
+    });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
-    mocks.subscriptionsList
-      .mockResolvedValueOnce({ data: [] }) // reconciliation initial list (status: "all")
-      .mockResolvedValueOnce({ data: [] }) // fresh re-check before hobby creation (status: "active")
-      .mockResolvedValueOnce({
-        // sync reads subscriptions after hobby is created
-        data: [
-          {
-            id: "sub_hobby",
-            created: 1739923200,
-            status: "active",
-            billing_cycle_anchor: 1739923200,
-            items: {
-              data: [
-                {
-                  price: {
-                    metadata: {},
-                    product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
-                    recurring: { usage_type: "licensed", interval: "month" },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
 
     await ensureCloudStripeSetupForOrganization("org_1");
 
-    expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+    expect(mocks.customersCreate).toHaveBeenCalledWith(
       {
-        customer: "cus_new",
-        items: [{ price: "price_hobby_monthly", quantity: 1 }],
-        metadata: { organizationId: "org_1" },
+        name: "Owner Name",
+        email: "owner@example.com",
+        metadata: { organizationId: "org_1", organizationName: "Org 1" },
       },
-      { idempotencyKey: "ensure-hobby-subscription-org_1-bootstrap" }
+      { idempotencyKey: "ensure-customer-org_1" }
     );
+    expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripeCustomerId: "cus_new",
+        stripe: expect.objectContaining({
+          plan: "hobby",
+          subscriptionStatus: null,
+          subscriptionId: null,
+        }),
+      }),
+    });
   });
 
   test("reconcileCloudStripeSubscriptionsForOrganization cancels hobby when paid subscription is active", async () => {
