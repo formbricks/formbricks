@@ -1019,7 +1019,6 @@
         "stay_on_hobby_plan": "Я хочу остаться на тарифе Hobby",
         "stripe_setup_incomplete": "Настройка оплаты не завершена",
         "stripe_setup_incomplete_description": "Настройка оплаты не была завершена. Пожалуйста, повторите попытку, чтобы активировать вашу подписку.",
-        "subscribe": "Подписаться",
         "subscription": "Подписка",
         "subscription_description": "Управляйте своим тарифом и следите за использованием",
         "switch_at_period_end": "Переключить в конце периода",

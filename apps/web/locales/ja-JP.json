@@ -1019,7 +1019,6 @@
         "stay_on_hobby_plan": "Hobbyプランを継続する",
         "stripe_setup_incomplete": "請求情報の設定が未完了",
         "stripe_setup_incomplete_description": "請求情報の設定が正常に完了しませんでした。もう一度やり直してサブスクリプションを有効化してください。",
-        "subscribe": "購読する",
         "subscription": "サブスクリプション",
         "subscription_description": "サブスクリプションプランの管理や利用状況の確認はこちら",
         "switch_at_period_end": "期間終了時に切り替え",

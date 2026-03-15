@@ -1019,7 +1019,6 @@
         "stay_on_hobby_plan": "我想继续使用免费版计划",
         "stripe_setup_incomplete": "账单设置未完成",
         "stripe_setup_incomplete_description": "账单设置未成功完成。请重试以激活订阅。",
-        "subscribe": "订阅",
         "subscription": "订阅",
         "subscription_description": "管理你的订阅套餐并监控用量",
         "switch_at_period_end": "在周期结束时切换",

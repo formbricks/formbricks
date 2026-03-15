@@ -1019,7 +1019,6 @@
         "stay_on_hobby_plan": "A Hobby csomagnál szeretnék maradni",
         "stripe_setup_incomplete": "Számlázás beállítása nem teljes",
         "stripe_setup_incomplete_description": "A számlázás beállítása nem sikerült teljesen. Aktiválja előfizetését az újrapróbálkozással.",
-        "subscribe": "Feliratkozás",
         "subscription": "Előfizetés",
         "subscription_description": "Kezelje előfizetését és kövesse nyomon a használatot",
         "switch_at_period_end": "Váltás az időszak végén",

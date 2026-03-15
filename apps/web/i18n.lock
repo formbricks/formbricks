@@ -964,7 +964,6 @@ checksums:
     environments/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     environments/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
-    environments/settings/billing/subscribe: 5107e4c6230f58346b3af3061a57cfb8
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     environments/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
     environments/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623
