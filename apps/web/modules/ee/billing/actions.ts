@@ -15,6 +15,7 @@ import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscri
 import {
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
+  ensureStripeCustomerForOrganization,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
 } from "@/modules/ee/billing/lib/organization-billing";
@@ -198,6 +199,37 @@ const ZStartScaleTrialAction = z.object({
   organizationId: ZId,
 });
 
+export const startHobbyAction = authenticatedActionClient
+  .inputSchema(ZStartScaleTrialAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(parsedInput.organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
+    }
+
+    const customerId =
+      organization.billing?.stripeCustomerId ??
+      (await ensureStripeCustomerForOrganization(parsedInput.organizationId)).customerId;
+    if (!customerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
+    }
+
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "start-hobby");
+    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    return { success: true };
+  });
+
 export const startProTrialAction = authenticatedActionClient
   .inputSchema(ZStartScaleTrialAction)
   .action(async ({ ctx, parsedInput }) => {
@@ -217,11 +249,14 @@ export const startProTrialAction = authenticatedActionClient
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
     }
 
-    if (!organization.billing?.stripeCustomerId) {
+    const customerId =
+      organization.billing?.stripeCustomerId ??
+      (await ensureStripeCustomerForOrganization(parsedInput.organizationId)).customerId;
+    if (!customerId) {
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await createProTrialSubscription(parsedInput.organizationId, organization.billing.stripeCustomerId);
+    await createProTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "pro-trial");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };
