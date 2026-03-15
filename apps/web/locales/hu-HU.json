@@ -263,6 +263,8 @@
     "key": "Kulcs",
     "label": "Címke",
     "language": "Nyelv",
+    "javascript_required": "JavaScript szükséges",
+    "javascript_required_description": "A Formbricks használatához JavaScript szükséges. Kérjük, engedélyezze a JavaScriptet a böngésző beállításaiban a folytatáshoz.",
     "last_name": "Vezetéknév",
     "learn_more": "Tudjon meg többet",
     "license_expired": "A licenc lejárt",

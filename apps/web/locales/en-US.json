@@ -263,6 +263,8 @@
     "key": "Key",
     "label": "Label",
     "language": "Language",
+    "javascript_required": "JavaScript Required",
+    "javascript_required_description": "Formbricks requires JavaScript to function properly. Please enable JavaScript in your browser settings to continue.",
     "last_name": "Last Name",
     "learn_more": "Learn more",
     "license_expired": "License Expired",
