@@ -433,13 +433,12 @@ export const PricingTable = ({
           ))}
 
         {pendingChange && (
-          <Alert>
+          <Alert variant="info" className="max-w-4xl">
             <AlertTitle>{t("environments.settings.billing.pending_plan_change_title")}</AlertTitle>
             <AlertDescription>
-              {t("environments.settings.billing.pending_plan_change_description", {
-                plan: getCurrentCloudPlanLabel(pendingChange.targetPlan, t),
-                date: formatDate(new Date(pendingChange.effectiveAt), locale),
-              })}
+              {t("environments.settings.billing.pending_plan_change_description")
+                .replace("{{plan}}", getCurrentCloudPlanLabel(pendingChange.targetPlan, t))
+                .replace("{{date}}", formatDate(new Date(pendingChange.effectiveAt), locale))}
             </AlertDescription>
             {hasBillingRights && (
               <AlertButton onClick={() => void undoPendingChange()} loading={isPlanActionPending === "undo"}>
@@ -472,7 +471,7 @@ export const PricingTable = ({
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
           buttonInfo={
-            canManageBillingDetails
+            canManageBillingDetails && !isTrialing
               ? {
                   text: t("environments.settings.billing.manage_billing_details"),
                   onClick: () => void openBillingPortal(),
@@ -580,10 +579,10 @@ export const PricingTable = ({
                     <div
                       key={`${planCard.plan}-${planCard.interval}`}
                       className={cn(
-                        "flex h-full flex-col rounded-2xl border bg-white p-6 shadow-sm",
+                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-sm",
                         planCard.plan === "pro" ? "border-slate-900/20" : "border-slate-200"
                       )}>
-                      <div className="mb-4 flex items-center gap-2">
+                      <div className="mb-4 flex min-h-7 items-start gap-2">
                         {planCard.plan === "pro" && (
                           <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
                             {t("environments.settings.billing.most_popular")}
@@ -601,13 +600,15 @@ export const PricingTable = ({
                         )}
                       </div>
 
-                      <h3 className="text-3xl font-semibold text-slate-900">
-                        {getCurrentCloudPlanLabel(planCard.plan, t)}
-                      </h3>
-                      <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
+                      <div className="min-h-32">
+                        <h3 className="text-3xl font-semibold text-slate-900">
+                          {getCurrentCloudPlanLabel(planCard.plan, t)}
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
+                      </div>
 
-                      <div className="mt-8 flex items-end gap-2">
-                        <span className="text-5xl font-semibold tracking-tight text-slate-900">
+                      <div className="mt-4 flex min-h-[3rem] items-end gap-2">
+                        <span className="text-3xl font-normal tracking-tight text-slate-900">
                           {planCard.amount}
                         </span>
                         <span className="pb-1 text-sm text-slate-500">
@@ -616,7 +617,8 @@ export const PricingTable = ({
                       </div>
 
                       <Button
-                        className="mt-8"
+                        variant="secondary"
+                        className="mt-8 self-start"
                         disabled={isDisabled}
                         loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
                         onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
