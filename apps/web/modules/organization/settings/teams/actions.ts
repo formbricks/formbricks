@@ -32,9 +32,11 @@ const ZDeleteInviteAction = z.object({
 
 export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteInviteAction).action(
   withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
+      organizationId,
       access: [
         {
           type: "organization",
@@ -42,7 +44,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
         },
       ],
     });
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
     return await deleteInvite(parsedInput.inviteId);

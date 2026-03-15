@@ -6,13 +6,18 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const logApiErrorEdge = (request: Request, error: ApiErrorResponseV2): void => {
   const correlationId = request.headers.get("x-request-id") ?? "";
+  const method = request.method;
+  const url = new URL(request.url);
+  const path = url.pathname;
 
   // Send the error to Sentry if the DSN is set and the error type is internal_server_error
   // This is useful for tracking down issues without overloading Sentry with errors
   if (SENTRY_DSN && IS_PRODUCTION && error.type === "internal_server_error") {
-    // Use Sentry scope to add correlation ID as a tag for easy filtering
+    // Use Sentry scope to add correlation ID and request context as tags for easy filtering
     Sentry.withScope((scope) => {
       scope.setTag("correlationId", correlationId);
+      scope.setTag("method", method);
+      scope.setTag("path", path);
       scope.setLevel("error");
 
       scope.setExtra("originalError", error);
@@ -24,6 +29,8 @@ export const logApiErrorEdge = (request: Request, error: ApiErrorResponseV2): vo
   logger
     .withContext({
       correlationId,
+      method,
+      path,
       error,
     })
     .error("API V2 Error Details");

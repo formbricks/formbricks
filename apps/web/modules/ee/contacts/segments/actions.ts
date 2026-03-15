@@ -104,7 +104,7 @@ const ZUpdateSegmentAction = z.object({
 
 export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdateSegmentAction).action(
   withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
