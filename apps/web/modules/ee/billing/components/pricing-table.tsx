@@ -1,85 +1,39 @@
 "use client";
 
+import { CheckIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Script from "next/script";
-import { createElement, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TOrganization, TOrganizationStripeSubscriptionStatus } from "@formbricks/types/organizations";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  type TCloudBillingInterval,
+  type TOrganization,
+  type TOrganizationStripePendingChange,
+  type TOrganizationStripeSubscriptionStatus,
+} from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import {
-  createPricingTableCustomerSessionAction,
+  changeBillingPlanAction,
+  createPlanCheckoutAction,
   createTrialPaymentCheckoutAction,
-  isSubscriptionCancelledAction,
   manageSubscriptionAction,
   retryStripeSetupAction,
+  undoPendingPlanChangeAction,
 } from "../actions";
+import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
-const STRIPE_SUPPORTED_LOCALES = new Set([
-  "bg",
-  "cs",
-  "da",
-  "de",
-  "el",
-  "en",
-  "en-GB",
-  "es",
-  "es-419",
-  "et",
-  "fi",
-  "fil",
-  "fr",
-  "fr-CA",
-  "hr",
-  "hu",
-  "id",
-  "it",
-  "ja",
-  "ko",
-  "lt",
-  "lv",
-  "ms",
-  "mt",
-  "nb",
-  "nl",
-  "pl",
-  "pt",
-  "pt-BR",
-  "ro",
-  "ru",
-  "sk",
-  "sl",
-  "sv",
-  "th",
-  "tr",
-  "vi",
-  "zh",
-  "zh-HK",
-  "zh-TW",
-]);
-
-const getStripeLocaleOverride = (locale?: string): string | undefined => {
-  if (!locale) return undefined;
-
-  const normalizedLocale = locale.trim();
-  if (STRIPE_SUPPORTED_LOCALES.has(normalizedLocale)) {
-    return normalizedLocale;
-  }
-
-  const baseLocale = normalizedLocale.split("-")[0];
-  if (STRIPE_SUPPORTED_LOCALES.has(baseLocale)) {
-    return baseLocale;
-  }
-
-  return undefined;
-};
-
 const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
+
+type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
+type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
   organization: TOrganization;
@@ -89,23 +43,99 @@ interface PricingTableProps {
   usageCycleStart: Date;
   usageCycleEnd: Date;
   hasBillingRights: boolean;
-  currentCloudPlan: "hobby" | "pro" | "scale" | "custom" | "unknown";
+  currentCloudPlan: TDisplayPlan;
+  currentBillingInterval: TCloudBillingInterval | null;
   currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
-  stripePublishableKey: string | null;
-  stripePricingTableId: string | null;
+  pendingChange: TOrganizationStripePendingChange | null;
   isStripeSetupIncomplete: boolean;
   trialDaysRemaining: number | null;
+  billingCatalog: TStripeBillingCatalogDisplay;
 }
 
-const getCurrentCloudPlanLabel = (
-  plan: "hobby" | "pro" | "scale" | "custom" | "unknown",
-  t: (key: string) => string
-) => {
+const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {
+  hobby: 0,
+  pro: 1,
+  scale: 2,
+};
+
+const getCurrentCloudPlanLabel = (plan: TDisplayPlan, t: (key: string) => string) => {
   if (plan === "hobby") return t("environments.settings.billing.plan_hobby");
   if (plan === "pro") return t("environments.settings.billing.plan_pro");
   if (plan === "scale") return t("environments.settings.billing.plan_scale");
   if (plan === "custom") return t("environments.settings.billing.plan_custom");
   return t("environments.settings.billing.plan_unknown");
+};
+
+const formatMoney = (currency: string, unitAmount: number | null, locale: string) => {
+  if (unitAmount == null) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: unitAmount % 100 === 0 ? 0 : 2,
+  }).format(unitAmount / 100);
+};
+
+const formatDate = (date: Date, locale: string) =>
+  date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+
+type TPlanCardData = {
+  plan: TStandardPlan;
+  interval: TCloudBillingInterval;
+  amount: string;
+  description: string;
+  features: string[];
+};
+
+const getPlanPeriodLabel = (
+  plan: TStandardPlan,
+  interval: TCloudBillingInterval,
+  t: (key: string) => string
+) => {
+  if (plan === "hobby" || interval === "monthly") {
+    return t("environments.settings.billing.per_month");
+  }
+
+  return t("environments.settings.billing.per_year");
+};
+
+const getPlanChangePayload = (environmentId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
+  plan === "hobby"
+    ? {
+        environmentId,
+        targetPlan: "hobby" as const,
+        targetInterval: "monthly" as const,
+      }
+    : {
+        environmentId,
+        targetPlan: plan,
+        targetInterval: interval,
+      };
+
+const getPlanChangeSuccessMessage = (
+  mode: "immediate" | "scheduled" | undefined,
+  t: (key: string) => string
+) => {
+  if (mode === "scheduled") {
+    return t("environments.settings.billing.plan_change_scheduled");
+  }
+
+  return t("environments.settings.billing.plan_change_applied");
+};
+
+const getActionErrorMessage = (serverError: string, t: (key: string) => string) => {
+  if (serverError === "mixed_interval_checkout_unsupported") {
+    return t("environments.settings.billing.yearly_checkout_unavailable");
+  }
+
+  return t("common.something_went_wrong_please_try_again");
 };
 
 export const PricingTable = ({
@@ -117,55 +147,36 @@ export const PricingTable = ({
   usageCycleEnd,
   hasBillingRights,
   currentCloudPlan,
+  currentBillingInterval,
   currentSubscriptionStatus,
-  stripePublishableKey,
-  stripePricingTableId,
+  pendingChange,
   isStripeSetupIncomplete,
   trialDaysRemaining,
+  billingCatalog,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
-  const [cancellingOn, setCancellingOn] = useState<Date | null>(null);
-  const [pricingTableCustomerSessionClientSecret, setPricingTableCustomerSessionClientSecret] = useState<
-    string | null
-  >(null);
-
-  const isUpgradeablePlan = currentCloudPlan === "hobby" || currentCloudPlan === "unknown";
-  const isTrialing = currentSubscriptionStatus === "trialing";
-  const showPricingTable =
-    hasBillingRights && isUpgradeablePlan && !isTrialing && !!stripePublishableKey && !!stripePricingTableId;
-  const canManageSubscription =
-    hasBillingRights && !isUpgradeablePlan && !!organization.billing.stripeCustomerId;
-  const stripeLocaleOverride = useMemo(
-    () => getStripeLocaleOverride(i18n.resolvedLanguage ?? i18n.language),
-    [i18n.language, i18n.resolvedLanguage]
+  const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
+  const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
+    currentBillingInterval ?? "monthly"
   );
-  const stripePricingTableProps = useMemo(() => {
-    const props: Record<string, string> = {
-      "pricing-table-id": stripePricingTableId ?? "",
-      "publishable-key": stripePublishableKey ?? "",
-    };
 
-    if (stripeLocaleOverride) {
-      props["__locale-override"] = stripeLocaleOverride;
-    }
-
-    if (pricingTableCustomerSessionClientSecret) {
-      props["customer-session-client-secret"] = pricingTableCustomerSessionClientSecret;
-    } else {
-      props["client-reference-id"] = organization.id;
-    }
-
-    return props;
-  }, [
-    organization.id,
-    pricingTableCustomerSessionClientSecret,
-    stripeLocaleOverride,
-    stripePricingTableId,
-    stripePublishableKey,
-  ]);
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const isTrialing = currentSubscriptionStatus === "trialing";
+  const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
+  const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
+  const canShowSubscriptionButton =
+    hasBillingRights && !isTrialing && !!organization.billing.stripeCustomerId;
+  const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
+  const usageCycleLabel = `${formatDate(usageCycleStart, locale)} - ${formatDate(usageCycleEnd, locale)}`;
+  const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
+  const projectsUnlimitedCheck = organization.billing.limits.projects === null;
+  const currentPlanLevel =
+    currentCloudPlan === "hobby" || currentCloudPlan === "pro" || currentCloudPlan === "scale"
+      ? STANDARD_PLAN_LEVEL[currentCloudPlan]
+      : null;
 
   useEffect(() => {
     if (searchParams.get("checkout_success")) {
@@ -174,68 +185,90 @@ export const PricingTable = ({
     }
   }, [searchParams, router]);
 
-  useEffect(() => {
-    const checkSubscriptionStatus = async () => {
-      if (!hasBillingRights || !canManageSubscription) {
-        setCancellingOn(null);
-        return;
-      }
+  const planCards = useMemo<TPlanCardData[]>(() => {
+    return [
+      {
+        plan: "hobby",
+        interval: "monthly",
+        amount: formatMoney(
+          billingCatalog.hobby.monthly.currency,
+          billingCatalog.hobby.monthly.unitAmount,
+          locale
+        ),
+        description: t("environments.settings.billing.plan_hobby_description"),
+        features: [
+          t("environments.settings.billing.plan_hobby_feature_workspaces"),
+          t("environments.settings.billing.plan_hobby_feature_responses"),
+        ],
+      },
+      {
+        plan: "pro",
+        interval: selectedInterval,
+        amount: formatMoney(
+          billingCatalog.pro[selectedInterval].currency,
+          billingCatalog.pro[selectedInterval].unitAmount,
+          locale
+        ),
+        description: t("environments.settings.billing.plan_pro_description"),
+        features: [
+          t("environments.settings.billing.plan_feature_everything_in_hobby"),
+          t("environments.settings.billing.plan_pro_feature_workspaces"),
+          t("environments.settings.billing.plan_pro_feature_responses"),
+        ],
+      },
+      {
+        plan: "scale",
+        interval: selectedInterval,
+        amount: formatMoney(
+          billingCatalog.scale[selectedInterval].currency,
+          billingCatalog.scale[selectedInterval].unitAmount,
+          locale
+        ),
+        description: t("environments.settings.billing.plan_scale_description"),
+        features: [
+          t("environments.settings.billing.plan_feature_everything_in_pro"),
+          t("environments.settings.billing.plan_scale_feature_workspaces"),
+          t("environments.settings.billing.plan_scale_feature_responses"),
+        ],
+      },
+    ];
+  }, [billingCatalog, locale, selectedInterval, t]);
 
-      try {
-        const isSubscriptionCancelledResponse = await isSubscriptionCancelledAction({
-          organizationId: organization.id,
-        });
-        if (isSubscriptionCancelledResponse?.data) {
-          setCancellingOn(isSubscriptionCancelledResponse.data.date);
-        }
-      } catch {
-        // Ignore permission/network failures here and keep rendering billing UI.
-      }
-    };
-    checkSubscriptionStatus();
-  }, [canManageSubscription, hasBillingRights, organization.id]);
-
-  useEffect(() => {
-    if (!showPricingTable) {
-      setPricingTableCustomerSessionClientSecret(null);
-      return;
-    }
-
+  const persistEnvironmentId = () => {
     if (globalThis.window !== undefined) {
       globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
     }
+  };
 
-    const loadPricingTableCustomerSession = async () => {
-      try {
-        const response = await createPricingTableCustomerSessionAction({ environmentId });
-        setPricingTableCustomerSessionClientSecret(response?.data?.clientSecret ?? null);
-      } catch {
-        setPricingTableCustomerSessionClientSecret(null);
-      }
-    };
-
-    void loadPricingTableCustomerSession();
-  }, [environmentId, showPricingTable]);
-
-  const openCustomerPortal = async () => {
-    const manageSubscriptionResponse = await manageSubscriptionAction({
-      environmentId,
-    });
-    if (manageSubscriptionResponse?.data && typeof manageSubscriptionResponse.data === "string") {
-      router.push(manageSubscriptionResponse.data);
+  const openBillingPortal = async () => {
+    const response = await manageSubscriptionAction({ environmentId });
+    if (response?.serverError) {
+      toast.error(getActionErrorMessage(response.serverError, t));
+      return;
     }
+    if (response?.data && typeof response.data === "string") {
+      router.push(response.data);
+      return;
+    }
+
+    toast.error(t("common.something_went_wrong_please_try_again"));
   };
 
   const openTrialPaymentCheckout = async () => {
     try {
+      persistEnvironmentId();
       const response = await createTrialPaymentCheckoutAction({ environmentId });
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
       if (response?.data && typeof response.data === "string") {
         globalThis.location.href = response.data;
-      } else {
-        toast.error(t("common.something_went_wrong_please_try_again"));
+        return;
       }
+      toast.error(t("common.something_went_wrong_please_try_again"));
     } catch (error) {
-      console.error("Failed to create checkout session:", error);
+      console.error("Failed to create setup checkout session:", error);
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
@@ -244,11 +277,15 @@ export const PricingTable = ({
     setIsRetryingStripeSetup(true);
     try {
       const response = await retryStripeSetupAction({ organizationId: organization.id });
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
       if (response?.data) {
         router.refresh();
-      } else {
-        toast.error(t("common.something_went_wrong_please_try_again"));
+        return;
       }
+      toast.error(t("common.something_went_wrong_please_try_again"));
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
@@ -256,25 +293,126 @@ export const PricingTable = ({
     }
   };
 
-  const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
-  const projectsUnlimitedCheck = organization.billing.limits.projects === null;
-  const usageCycleLabel = `${usageCycleStart.toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  })} - ${usageCycleEnd.toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  })}`;
+  const redirectToPlanCheckout = async (
+    plan: Exclude<TStandardPlan, "hobby">,
+    interval: TCloudBillingInterval
+  ) => {
+    if (existingSubscriptionId) {
+      await openTrialPaymentCheckout();
+      return true;
+    }
+
+    if (interval === "yearly") {
+      toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
+      return true;
+    }
+
+    persistEnvironmentId();
+    const response = await createPlanCheckoutAction({
+      environmentId,
+      targetPlan: plan,
+      targetInterval: interval,
+    });
+    if (response?.serverError) {
+      toast.error(getActionErrorMessage(response.serverError, t));
+      return true;
+    }
+
+    if (response?.data && typeof response.data === "string") {
+      globalThis.location.href = response.data;
+      return true;
+    }
+
+    toast.error(t("common.something_went_wrong_please_try_again"));
+    return true;
+  };
+
+  const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    const actionKey = `${plan}-${interval}`;
+    setIsPlanActionPending(actionKey);
+
+    try {
+      if (!hasPaymentMethod && plan !== "hobby") {
+        await redirectToPlanCheckout(plan, interval);
+        return;
+      }
+
+      const response = await changeBillingPlanAction(getPlanChangePayload(environmentId, plan, interval));
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
+      toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to change billing plan:", error);
+      if (
+        error instanceof OperationNotAllowedError &&
+        error.message === "mixed_interval_checkout_unsupported"
+      ) {
+        toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+      }
+    } finally {
+      setIsPlanActionPending(null);
+    }
+  };
+
+  const undoPendingChange = async () => {
+    setIsPlanActionPending("undo");
+    try {
+      const response = await undoPendingPlanChangeAction({ environmentId });
+      if (response?.serverError) {
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
+      if (response?.data) {
+        toast.success(t("environments.settings.billing.pending_change_removed"));
+        router.refresh();
+        return;
+      }
+
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      console.error("Failed to undo pending plan change:", error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } finally {
+      setIsPlanActionPending(null);
+    }
+  };
+
+  const getCtaLabel = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    const isCurrentSelection =
+      currentCloudPlan === plan && (plan === "hobby" || currentBillingInterval === interval);
+    if (isCurrentSelection) {
+      return t("environments.settings.billing.current_plan_cta");
+    }
+
+    const isPendingSelection =
+      pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
+    if (isPendingSelection) {
+      return t("environments.settings.billing.pending_plan_cta");
+    }
+
+    if (!hasPaymentMethod && plan !== "hobby") {
+      return t("environments.settings.billing.upgrade_now");
+    }
+
+    if (currentPlanLevel === null) {
+      return t("environments.settings.billing.switch_plan_now");
+    }
+
+    return STANDARD_PLAN_LEVEL[plan] > currentPlanLevel
+      ? t("environments.settings.billing.upgrade_now")
+      : t("environments.settings.billing.switch_at_period_end");
+  };
 
   return (
     <main>
-      <div className="flex max-w-4xl flex-col gap-4">
+      <div className="flex max-w-6xl flex-col gap-4">
         {trialDaysRemaining !== null &&
-          (organization.billing.stripe?.hasPaymentMethod ? (
+          (hasPaymentMethod ? (
             <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod>
               <AlertDescription>
                 {t("environments.settings.billing.trial_payment_method_added_description")}
@@ -292,6 +430,23 @@ export const PricingTable = ({
               )}
             </TrialAlert>
           ))}
+
+        {pendingChange && (
+          <Alert variant="info" className="max-w-4xl">
+            <AlertTitle>{t("environments.settings.billing.pending_plan_change_title")}</AlertTitle>
+            <AlertDescription>
+              {t("environments.settings.billing.pending_plan_change_description")
+                .replace("{{plan}}", getCurrentCloudPlanLabel(pendingChange.targetPlan, t))
+                .replace("{{date}}", formatDate(new Date(pendingChange.effectiveAt), locale))}
+            </AlertDescription>
+            {hasBillingRights && (
+              <AlertButton onClick={() => void undoPendingChange()} loading={isPlanActionPending === "undo"}>
+                {t("environments.settings.billing.keep_current_plan")}
+              </AlertButton>
+            )}
+          </Alert>
+        )}
+
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
             <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
@@ -303,14 +458,24 @@ export const PricingTable = ({
             </AlertButton>
           </Alert>
         )}
+
+        {currentCloudPlan === "custom" && (
+          <Alert>
+            <AlertTitle>{t("environments.settings.billing.custom_plan_title")}</AlertTitle>
+            <AlertDescription>{t("environments.settings.billing.custom_plan_description")}</AlertDescription>
+          </Alert>
+        )}
+
         <SettingsCard
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
           buttonInfo={
-            canManageSubscription && currentSubscriptionStatus !== "trialing"
+            canShowSubscriptionButton
               ? {
-                  text: t("environments.settings.billing.manage_subscription"),
-                  onClick: () => void openCustomerPortal(),
+                  text: hasPaymentMethod
+                    ? t("environments.settings.billing.manage_billing_details")
+                    : t("environments.settings.billing.add_payment_method"),
+                  onClick: () => void (hasPaymentMethod ? openBillingPortal() : openTrialPaymentCheckout()),
                   variant: "default",
                 }
               : undefined
@@ -320,8 +485,19 @@ export const PricingTable = ({
               <p className="text-sm font-semibold text-slate-700">
                 {t("environments.settings.billing.your_plan")}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge type="success" size="normal" text={getCurrentCloudPlanLabel(currentCloudPlan, t)} />
+                {currentCloudPlan !== "hobby" && currentBillingInterval && (
+                  <Badge
+                    type="gray"
+                    size="normal"
+                    text={
+                      currentBillingInterval === "monthly"
+                        ? t("environments.settings.billing.monthly")
+                        : t("environments.settings.billing.yearly")
+                    }
+                  />
+                )}
                 {currentSubscriptionStatus === "trialing" && (
                   <Badge
                     type="warning"
@@ -329,24 +505,9 @@ export const PricingTable = ({
                     text={t("environments.settings.billing.status_trialing")}
                   />
                 )}
-                {cancellingOn && (
-                  <Badge
-                    type="warning"
-                    size="normal"
-                    text={`${t("environments.settings.billing.cancelling")}: ${cancellingOn.toLocaleDateString(
-                      "en-US",
-                      {
-                        weekday: "short",
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        timeZone: "UTC",
-                      }
-                    )}`}
-                  />
-                )}
               </div>
             </div>
+
             <div className="flex flex-col gap-2">
               <UsageCard
                 metric={t("common.responses")}
@@ -355,11 +516,11 @@ export const PricingTable = ({
                 isUnlimited={responsesUnlimitedCheck}
                 unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
               />
-
               <p className="text-sm text-slate-500">
                 {t("environments.settings.billing.usage_cycle")}: {usageCycleLabel}
               </p>
             </div>
+
             <UsageCard
               metric={t("common.workspaces")}
               currentCount={projectCount}
@@ -370,35 +531,136 @@ export const PricingTable = ({
           </div>
         </SettingsCard>
 
-        {currentCloudPlan === "pro" && !isTrialing && (
-          <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-slate-800 p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-6">
-              <div className="flex flex-col gap-1.5">
-                <h3 className="text-lg font-semibold text-white">
-                  {t("environments.settings.billing.scale_banner_title")}
-                </h3>
-                <p className="text-sm text-slate-300">
-                  {t("environments.settings.billing.scale_banner_description")}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
-                  <span>&#10003; {t("environments.settings.billing.scale_feature_teams")}</span>
-                  <span>&#10003; {t("environments.settings.billing.scale_feature_api")}</span>
-                  <span>&#10003; {t("environments.settings.billing.scale_feature_quota")}</span>
-                  <span>&#10003; {t("environments.settings.billing.scale_feature_spam")}</span>
-                </div>
+        {showPlanSelector && (
+          <SettingsCard
+            title={t("environments.settings.billing.plan_selection_title")}
+            description={t("environments.settings.billing.plan_selection_description")}>
+            <div className="flex flex-col gap-6">
+              <div
+                className="flex w-fit rounded-xl border border-slate-200 bg-slate-100 p-1"
+                role="tablist"
+                aria-label={t("environments.settings.billing.billing_interval_toggle")}>
+                {(["monthly", "yearly"] as const).map((interval) => (
+                  <button
+                    key={interval}
+                    type="button"
+                    role="tab"
+                    aria-selected={selectedInterval === interval}
+                    tabIndex={selectedInterval === interval ? 0 : -1}
+                    onClick={() => setSelectedInterval(interval)}
+                    className={cn(
+                      "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
+                      selectedInterval === interval
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-600 hover:text-slate-900"
+                    )}>
+                    {interval === "monthly"
+                      ? t("environments.settings.billing.monthly")
+                      : t("environments.settings.billing.yearly")}
+                  </button>
+                ))}
               </div>
-              <Button variant="secondary" size="sm" onClick={openCustomerPortal} className="shrink-0">
-                {t("environments.settings.billing.upgrade")}
-              </Button>
-            </div>
-          </div>
-        )}
 
-        {showPricingTable && (
-          <div className="mb-12 w-full max-w-4xl">
-            <Script src="https://js.stripe.com/v3/pricing-table.js" strategy="afterInteractive" />
-            {createElement("stripe-pricing-table", stripePricingTableProps)}
-          </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {planCards.map((planCard) => {
+                  const isCurrentSelection =
+                    currentCloudPlan === planCard.plan &&
+                    (planCard.plan === "hobby" || currentBillingInterval === planCard.interval);
+                  const isPendingSelection =
+                    pendingChange?.targetPlan === planCard.plan &&
+                    (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
+                  const isMissingPaymentMethodUpgrade =
+                    hasBillingRights &&
+                    !isStripeSetupIncomplete &&
+                    !isTrialing &&
+                    !isCurrentSelection &&
+                    !isPendingSelection &&
+                    !hasPaymentMethod &&
+                    planCard.plan !== "hobby";
+                  const isDisabled =
+                    !hasBillingRights ||
+                    isCurrentSelection ||
+                    isPendingSelection ||
+                    isStripeSetupIncomplete ||
+                    isMissingPaymentMethodUpgrade ||
+                    (isTrialing && !hasPaymentMethod);
+
+                  return (
+                    <div
+                      key={`${planCard.plan}-${planCard.interval}`}
+                      className={cn(
+                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-sm",
+                        planCard.plan === "pro" ? "border-slate-900/20" : "border-slate-200"
+                      )}>
+                      <div className="mb-4 flex min-h-7 items-start gap-2">
+                        {planCard.plan === "pro" && (
+                          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                            {t("environments.settings.billing.most_popular")}
+                          </span>
+                        )}
+                        {isCurrentSelection && (
+                          <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                            {t("environments.settings.billing.current_plan_badge")}
+                          </span>
+                        )}
+                        {isPendingSelection && (
+                          <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                            {t("environments.settings.billing.pending_plan_badge")}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="min-h-32">
+                        <h3 className="text-3xl font-semibold text-slate-900">
+                          {getCurrentCloudPlanLabel(planCard.plan, t)}
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
+                      </div>
+
+                      <div className="mt-4 flex min-h-[3rem] items-end gap-2">
+                        <span className="text-3xl font-normal tracking-tight text-slate-900">
+                          {planCard.amount}
+                        </span>
+                        <span className="pb-1 text-sm text-slate-500">
+                          {getPlanPeriodLabel(planCard.plan, planCard.interval, t)}
+                        </span>
+                      </div>
+
+                      <TooltipRenderer
+                        shouldRender={isMissingPaymentMethodUpgrade}
+                        triggerClass="block w-full"
+                        tooltipContent={t(
+                          "environments.settings.billing.add_payment_method_to_upgrade_tooltip"
+                        )}>
+                        <Button
+                          variant="secondary"
+                          className="mt-4 w-full"
+                          disabled={isDisabled}
+                          loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
+                          onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
+                          {getCtaLabel(planCard.plan, planCard.interval)}
+                        </Button>
+                      </TooltipRenderer>
+
+                      <div className="mt-8 border-t border-slate-100 pt-6">
+                        <p className="mb-4 text-sm font-semibold text-slate-900">
+                          {t("environments.settings.billing.this_includes")}
+                        </p>
+                        <ul className="space-y-3">
+                          {planCard.features.map((feature) => (
+                            <li key={feature} className="flex items-start gap-3 text-sm text-slate-700">
+                              <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </SettingsCard>
         )}
       </div>
     </main>

@@ -60,7 +60,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
                   buttons={[
                     {
                       text: IS_FORMBRICKS_CLOUD
-                        ? t("common.start_free_trial")
+                        ? t("common.upgrade_plan")
                         : t("common.request_trial_license"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/environments/${params.environmentId}/settings/billing`

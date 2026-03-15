@@ -28,6 +28,7 @@ export const ZOrganizationBilling = z.object({
   stripe: z
     .object({
       plan: z.enum(["hobby", "pro", "scale", "custom", "unknown"]).optional(),
+      interval: z.enum(["monthly", "yearly"]).nullable().optional(),
       subscriptionStatus: z
         .enum([
           "trialing",
@@ -42,10 +43,21 @@ export const ZOrganizationBilling = z.object({
         .nullable()
         .optional(),
       subscriptionId: z.string().nullable().optional(),
+      hasPaymentMethod: z.boolean().optional(),
       features: z.array(z.string()).optional(),
       lastStripeEventCreatedAt: z.string().nullable().optional(),
       lastSyncedAt: z.string().nullable().optional(),
       lastSyncedEventId: z.string().nullable().optional(),
+      trialEnd: z.string().nullable().optional(),
+      pendingChange: z
+        .object({
+          type: z.literal("plan_change"),
+          targetPlan: z.enum(["hobby", "pro", "scale"]),
+          targetInterval: z.enum(["monthly", "yearly"]).nullable(),
+          effectiveAt: z.string(),
+        })
+        .nullable()
+        .optional(),
     })
     .nullable()
     .optional(),
