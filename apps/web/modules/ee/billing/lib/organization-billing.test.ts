@@ -366,7 +366,7 @@ describe("organization-billing", () => {
     expect(mocks.customersCreate).not.toHaveBeenCalled();
   });
 
-  test("ensureStripeCustomerForOrganization reuses Stripe customer found by owner email", async () => {
+  test("ensureStripeCustomerForOrganization always creates a fresh Stripe customer", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
@@ -374,24 +374,24 @@ describe("organization-billing", () => {
     mocks.prismaMembershipFindFirst.mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner Name" },
     });
-    mocks.customersList.mockResolvedValue({
-      data: [{ id: "cus_existing", deleted: false }],
-    });
-    mocks.customersUpdate.mockResolvedValue({ id: "cus_existing" });
+    mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
 
     const result = await ensureStripeCustomerForOrganization("org_1");
 
-    expect(result).toEqual({ customerId: "cus_existing" });
-    expect(mocks.customersCreate).not.toHaveBeenCalled();
-    expect(mocks.customersUpdate).toHaveBeenCalledWith("cus_existing", {
-      name: "Owner Name",
-      metadata: { organizationId: "org_1", organizationName: "Org 1" },
-    });
+    expect(result).toEqual({ customerId: "cus_new" });
+    expect(mocks.customersCreate).toHaveBeenCalledWith(
+      {
+        name: "Owner Name",
+        email: "owner@example.com",
+        metadata: { organizationId: "org_1", organizationName: "Org 1" },
+      },
+      { idempotencyKey: "ensure-customer-org_1" }
+    );
     expect(mocks.prismaOrganizationBillingUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { organizationId: "org_1" },
-        create: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
-        update: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
+        create: expect.objectContaining({ stripeCustomerId: "cus_new" }),
+        update: expect.objectContaining({ stripeCustomerId: "cus_new" }),
       })
     );
   });

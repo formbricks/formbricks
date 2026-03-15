@@ -879,25 +879,6 @@ const getOrganizationOwner = async (
   return { email: membership.user.email, name: membership.user.name };
 };
 
-/**
- * Searches Stripe for an existing non-deleted customer with the given email.
- * Returns the first match, or null if none found.
- */
-const findStripeCustomerByEmail = async (email: string): Promise<Stripe.Customer | null> => {
-  if (!stripeClient) return null;
-
-  const customers = await stripeClient.customers.list({
-    email,
-    limit: 1,
-  });
-
-  const customer = customers.data[0];
-  if (customer && !customer.deleted) {
-    return customer;
-  }
-  return null;
-};
-
 export const ensureStripeCustomerForOrganization = async (
   organizationId: string
 ): Promise<{ customerId: string | null }> => {
@@ -914,9 +895,6 @@ export const ensureStripeCustomerForOrganization = async (
     return { customerId: null };
   }
 
-  // Look up the org owner's email/name and check if a Stripe customer already exists for it.
-  // This reuses the old customer (and its trial history) when a user deletes their account
-  // and signs up again with the same email.
   const owner = await getOrganizationOwner(organization.id);
   if (!owner) {
     logger.error({ organizationId }, "Cannot set up Stripe customer: organization has no owner");
@@ -924,37 +902,14 @@ export const ensureStripeCustomerForOrganization = async (
   }
 
   const { email: ownerEmail, name: ownerName } = owner;
-  let existingCustomer: Stripe.Customer | null = null;
-
-  if (ownerEmail) {
-    const foundCustomer = await findStripeCustomerByEmail(ownerEmail);
-    if (foundCustomer) {
-      // Only reuse if this customer is not already linked to another org's billing record
-      const existingBillingOwner = await findOrganizationIdByStripeCustomerId(foundCustomer.id);
-      if (!existingBillingOwner || existingBillingOwner === organizationId) {
-        existingCustomer = foundCustomer;
-        await stripeClient.customers.update(existingCustomer.id, {
-          name: ownerName ?? undefined,
-          metadata: { organizationId: organization.id, organizationName: organization.name },
-        });
-        logger.info(
-          { organizationId, customerId: existingCustomer.id, email: ownerEmail },
-          "Reusing existing Stripe customer for new organization"
-        );
-      }
-    }
-  }
-
-  const customer =
-    existingCustomer ??
-    (await stripeClient.customers.create(
-      {
-        name: ownerName ?? undefined,
-        email: ownerEmail,
-        metadata: { organizationId: organization.id, organizationName: organization.name },
-      },
-      { idempotencyKey: `ensure-customer-${organization.id}` }
-    ));
+  const customer = await stripeClient.customers.create(
+    {
+      name: ownerName ?? undefined,
+      email: ownerEmail,
+      metadata: { organizationId: organization.id, organizationName: organization.name },
+    },
+    { idempotencyKey: `ensure-customer-${organization.id}` }
+  );
 
   const defaultBilling = getDefaultOrganizationBilling();
 
