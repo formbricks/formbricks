@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
@@ -166,10 +167,8 @@ export const PricingTable = ({
   const isTrialing = currentSubscriptionStatus === "trialing";
   const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
-  const canManageBillingDetails =
-    hasBillingRights &&
-    !!organization.billing.stripeCustomerId &&
-    (hasPaymentMethod || currentCloudPlan !== "hobby");
+  const canShowSubscriptionButton =
+    hasBillingRights && !isTrialing && !!organization.billing.stripeCustomerId;
   const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
   const usageCycleLabel = `${formatDate(usageCycleStart, locale)} - ${formatDate(usageCycleEnd, locale)}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
@@ -397,7 +396,7 @@ export const PricingTable = ({
     }
 
     if (!hasPaymentMethod && plan !== "hobby") {
-      return t("environments.settings.billing.add_payment_method");
+      return t("environments.settings.billing.upgrade_now");
     }
 
     if (currentPlanLevel === null) {
@@ -471,10 +470,12 @@ export const PricingTable = ({
           title={t("environments.settings.billing.subscription")}
           description={t("environments.settings.billing.subscription_description")}
           buttonInfo={
-            canManageBillingDetails && !isTrialing
+            canShowSubscriptionButton
               ? {
-                  text: t("environments.settings.billing.manage_billing_details"),
-                  onClick: () => void openBillingPortal(),
+                  text: hasPaymentMethod
+                    ? t("environments.settings.billing.manage_billing_details")
+                    : t("environments.settings.billing.add_payment_method"),
+                  onClick: () => void (hasPaymentMethod ? openBillingPortal() : openTrialPaymentCheckout()),
                   variant: "default",
                 }
               : undefined
@@ -568,11 +569,20 @@ export const PricingTable = ({
                   const isPendingSelection =
                     pendingChange?.targetPlan === planCard.plan &&
                     (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
+                  const isMissingPaymentMethodUpgrade =
+                    hasBillingRights &&
+                    !isStripeSetupIncomplete &&
+                    !isTrialing &&
+                    !isCurrentSelection &&
+                    !isPendingSelection &&
+                    !hasPaymentMethod &&
+                    planCard.plan !== "hobby";
                   const isDisabled =
                     !hasBillingRights ||
                     isCurrentSelection ||
                     isPendingSelection ||
                     isStripeSetupIncomplete ||
+                    isMissingPaymentMethodUpgrade ||
                     (isTrialing && !hasPaymentMethod);
 
                   return (
@@ -616,14 +626,21 @@ export const PricingTable = ({
                         </span>
                       </div>
 
-                      <Button
-                        variant="secondary"
-                        className="mt-8 self-start"
-                        disabled={isDisabled}
-                        loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
-                        onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
-                        {getCtaLabel(planCard.plan, planCard.interval)}
-                      </Button>
+                      <TooltipRenderer
+                        shouldRender={isMissingPaymentMethodUpgrade}
+                        triggerClass="block w-full"
+                        tooltipContent={t(
+                          "environments.settings.billing.add_payment_method_to_upgrade_tooltip"
+                        )}>
+                        <Button
+                          variant="secondary"
+                          className="mt-4 w-full"
+                          disabled={isDisabled}
+                          loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
+                          onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
+                          {getCtaLabel(planCard.plan, planCard.interval)}
+                        </Button>
+                      </TooltipRenderer>
 
                       <div className="mt-8 border-t border-slate-100 pt-6">
                         <p className="mb-4 text-sm font-semibold text-slate-900">

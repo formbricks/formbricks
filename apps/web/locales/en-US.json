@@ -973,6 +973,7 @@
       },
       "billing": {
         "add_payment_method": "Add payment method",
+        "add_payment_method_to_upgrade_tooltip": "Please add a payment method above to upgrade to a paid plan",
         "billing_interval_toggle": "Billing interval",
         "current_plan_badge": "Current",
         "current_plan_cta": "Current plan",

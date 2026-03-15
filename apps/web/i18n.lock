@@ -372,7 +372,7 @@ checksums:
     common/something_went_wrong: a3cd2f01c073f1f5ff436d4b132d39cf
     common/something_went_wrong_please_try_again: c62a7718d9a1e9c4ffb707807550f836
     common/sort_by: 8adf3dbc5668379558957662f0c43563
-    common/start_free_trial: 4fab76a3fc5d5c94e3248cd279cfdd14
+    common/start_free_trial: e346e4ed7d138dcc873db187922369da
     common/status: 4e1fcce15854d824919b4a582c697c90
     common/step_by_step_manual: 2894a07952a4fd11d98d5d8f1088690c
     common/storage_not_configured: b0c3e339f6d71f23fdd189e7bcb076f6
@@ -417,6 +417,7 @@ checksums:
     common/update: 079fc039262fd31b10532929685c2d1b
     common/updated: 8aa8ff2dc2977ca4b269e80a513100b4
     common/updated_at: 8fdb85248e591254973403755dcc3724
+    common/upgrade_plan: 81c9e7a593c0e9290f7078ecdc1c6693
     common/upload: 4a6c84aa16db0f4e5697f49b45257bc7
     common/upload_failed: d4dd7b6ee4c1572e4136659f74d9632b
     common/upload_input_description: 64f59bc339568d52b8464b82546b70ea
@@ -917,6 +918,7 @@ checksums:
     environments/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     environments/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     environments/settings/billing/add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
+    environments/settings/billing/add_payment_method_to_upgrade_tooltip: 977005ad38bfe0800a78c21edcd16e4d
     environments/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     environments/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
     environments/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424
@@ -944,7 +946,7 @@ checksums:
     environments/settings/billing/plan_hobby_feature_responses: d1e6c1d83f5e57cbae2a09e6a818a25d
     environments/settings/billing/plan_hobby_feature_workspaces: 02a34669419ed7f30f728980f54d42ef
     environments/settings/billing/plan_pro: 682b3c9feab30112b4454cb5bb7974b1
-    environments/settings/billing/plan_pro_description: c067978e9fc4624c33726ed0e0d7f752
+    environments/settings/billing/plan_pro_description: 748c848ea0d8cf81a66704762edcd6f4
     environments/settings/billing/plan_pro_feature_responses: e16ffe385051a16dba76538c13d97a5f
     environments/settings/billing/plan_pro_feature_workspaces: 819874022b491209ca7f0f1ab1e3daea
     environments/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c
@@ -957,7 +959,7 @@ checksums:
     environments/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
     environments/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
     environments/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
-    environments/settings/billing/select_plan_header_title: d851e9fa093ddb248924cf99e1d79b4e
+    environments/settings/billing/select_plan_header_title: b15a9d86b819a7fae8e956a50572184c
     environments/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
     environments/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     environments/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
