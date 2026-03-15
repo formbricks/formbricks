@@ -4,6 +4,7 @@ import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getI18nLanguage } from "@/lib/i18n-utils";
+import { setLocaleBaseUrl } from "@/lib/i18n.config";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
 export const renderSurveyInline = (props: SurveyContainerProps) => {
@@ -19,8 +20,9 @@ export const renderSurvey = (props: SurveyContainerProps) => {
   // render SurveyNew
   // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
 
-  const { mode, containerId, languageCode } = props;
+  const { mode, containerId, languageCode, appUrl } = props;
 
+  setLocaleBaseUrl(`${appUrl || ""}/js/locales`);
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
 
