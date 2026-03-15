@@ -166,7 +166,10 @@ export const PricingTable = ({
   const isTrialing = currentSubscriptionStatus === "trialing";
   const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
-  const canManageBillingDetails = hasBillingRights && !!organization.billing.stripeCustomerId;
+  const canManageBillingDetails =
+    hasBillingRights &&
+    !!organization.billing.stripeCustomerId &&
+    (hasPaymentMethod || currentCloudPlan !== "hobby");
   const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
   const usageCycleLabel = `${formatDate(usageCycleStart, locale)} - ${formatDate(usageCycleEnd, locale)}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
@@ -394,9 +397,7 @@ export const PricingTable = ({
     }
 
     if (!hasPaymentMethod && plan !== "hobby") {
-      return existingSubscriptionId
-        ? t("environments.settings.billing.add_payment_method")
-        : t("environments.settings.billing.subscribe");
+      return t("environments.settings.billing.add_payment_method");
     }
 
     if (currentPlanLevel === null) {
