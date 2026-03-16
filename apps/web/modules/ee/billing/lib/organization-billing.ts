@@ -794,7 +794,7 @@ export const switchOrganizationToCloudPlan = async (input: {
     return { mode: "immediate", pendingChange: null };
   }
 
-  const hadPendingPlanState = subscription.schedule != null || subscription.cancel_at_period_end;
+  const hadPendingPlanState = Boolean(subscription.schedule) || subscription.cancel_at_period_end;
   await clearPendingPlanState(input.organizationId, subscription);
   const nextMutableSubscription = hadPendingPlanState
     ? await getRequiredActiveSubscription(input.organizationId, input.customerId)

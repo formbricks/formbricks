@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   type TCloudBillingInterval,
   type TOrganization,
@@ -350,14 +349,7 @@ export const PricingTable = ({
       router.refresh();
     } catch (error) {
       console.error("Failed to change billing plan:", error);
-      if (
-        error instanceof OperationNotAllowedError &&
-        error.message === "mixed_interval_checkout_unsupported"
-      ) {
-        toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
-      } else {
-        toast.error(t("common.something_went_wrong_please_try_again"));
-      }
+      toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
       setIsPlanActionPending(null);
     }
