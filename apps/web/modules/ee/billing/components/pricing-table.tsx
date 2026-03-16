@@ -330,7 +330,6 @@ export const PricingTable = ({
     }
 
     toast.error(t("common.something_went_wrong_please_try_again"));
-    return;
   };
 
   const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
