@@ -778,6 +778,83 @@ describe("organization-billing", () => {
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 
+  test("switchOrganizationToCloudPlan fails immediate upgrades when Stripe cannot collect the prorated invoice", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+
+    await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_1",
+      expect.objectContaining({
+        payment_behavior: "error_if_incomplete",
+        proration_behavior: "always_invoice",
+      })
+    );
+  });
+
   test("switchOrganizationToCloudPlan recreates a schedule after clearing an existing one", async () => {
     mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
       const productId = typeof product === "string" ? product : product.id;

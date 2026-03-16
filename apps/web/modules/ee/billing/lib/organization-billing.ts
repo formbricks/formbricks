@@ -663,7 +663,8 @@ const updateSubscriptionItemsImmediately = async (
     cancel_at_period_end: false,
     items: [...existingDeletions, ...targetItems],
     proration_behavior: "always_invoice",
-    payment_behavior: "allow_incomplete",
+    // We don't grant the upgraded plan until Stripe can actually collect the prorated invoice.
+    payment_behavior: "error_if_incomplete",
     ...(subscription.trial_end ? { trial_end: subscription.trial_end } : {}),
     metadata: {
       organizationId,
