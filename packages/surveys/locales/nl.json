@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "Het bestand moet kleiner zijn dan {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Geen geldige bestandstypen geselecteerd. Selecteer een geldig bestandstype.",
       "only_one_file_can_be_uploaded_at_a_time": "Er kan slechts één bestand tegelijk worden geüpload.",
+      "placeholder_text": "Klik of sleep bestanden om te uploaden",
       "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
+      "uploading": "Uploaden...",
       "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
     },
     "invalid_device_error": {

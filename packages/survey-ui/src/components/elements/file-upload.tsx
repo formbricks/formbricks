@@ -55,6 +55,8 @@ interface FileUploadProps {
   imageAltText?: string;
   /** Placeholder text for the file upload */
   placeholderText?: string;
+  /** Text to display while uploading */
+  uploadingText?: string;
 }
 
 interface UploadedFileItemProps {
@@ -230,6 +232,7 @@ function FileUpload({
   videoUrl,
   imageAltText,
   placeholderText = "Click or drag to upload files",
+  uploadingText = "Uploading...",
 }: Readonly<FileUploadProps>): React.JSX.Element {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -306,7 +309,7 @@ function FileUpload({
                 <p
                   className="text-muted-foreground font-medium"
                   style={{ fontSize: "var(--fb-input-font-size)" }}>
-                  Uploading...
+                  {uploadingText}
                 </p>
               </div>
             ) : null}
