@@ -240,6 +240,12 @@ export const PricingTable = ({
     }
   };
 
+  const navigateToExternalUrl = (url: string) => {
+    if (globalThis.window !== undefined) {
+      globalThis.window.location.href = url;
+    }
+  };
+
   const openBillingPortal = async () => {
     const response = await manageSubscriptionAction({ environmentId });
     if (response?.serverError) {
@@ -263,7 +269,7 @@ export const PricingTable = ({
         return;
       }
       if (response?.data && typeof response.data === "string") {
-        globalThis.location.href = response.data;
+        navigateToExternalUrl(response.data);
         return;
       }
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -296,15 +302,15 @@ export const PricingTable = ({
   const redirectToPlanCheckout = async (
     plan: Exclude<TStandardPlan, "hobby">,
     interval: TCloudBillingInterval
-  ) => {
+  ): Promise<void> => {
     if (existingSubscriptionId) {
       await openTrialPaymentCheckout();
-      return true;
+      return;
     }
 
     if (interval === "yearly") {
       toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
-      return true;
+      return;
     }
 
     persistEnvironmentId();
@@ -315,16 +321,16 @@ export const PricingTable = ({
     });
     if (response?.serverError) {
       toast.error(getActionErrorMessage(response.serverError, t));
-      return true;
+      return;
     }
 
     if (response?.data && typeof response.data === "string") {
-      globalThis.location.href = response.data;
-      return true;
+      navigateToExternalUrl(response.data);
+      return;
     }
 
     toast.error(t("common.something_went_wrong_please_try_again"));
-    return true;
+    return;
   };
 
   const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
