@@ -126,14 +126,21 @@ export const EditWelcomeCard = ({
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
                 id="welcome-card-image"
-                allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
+                allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic", "mp4", "mov", "webm"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
+                onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                   if (url?.[0]) {
-                    updateSurvey({ fileUrl: url[0] });
+                    const update =
+                      fileType === "video"
+                        ? { videoUrl: url[0], fileUrl: undefined }
+                        : { fileUrl: url[0], videoUrl: undefined };
+                    updateSurvey(update);
                   }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                videoUrl={localSurvey?.welcomeCard?.videoUrl}
+                isVideoAllowed={true}
+                maxSizeInMB={5}
                 isStorageConfigured={isStorageConfigured}
               />
             </div>
