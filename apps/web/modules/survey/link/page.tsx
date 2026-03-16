@@ -36,7 +36,12 @@ export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Meta
   // Extract language code from URL params
   const languageCode = typeof searchParams.lang === "string" ? searchParams.lang : undefined;
 
-  return getMetadataForLinkSurvey(params.surveyId, languageCode);
+  try {
+    return await getMetadataForLinkSurvey(params.surveyId, languageCode);
+  } catch (error) {
+    logger.error(error, "Error fetching metadata for link survey");
+    notFound();
+  }
 };
 
 export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
