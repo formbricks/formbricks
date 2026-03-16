@@ -672,6 +672,133 @@ const updateSubscriptionItemsImmediately = async (
   });
 };
 
+const getScheduleItemsForPlanChange = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  targetPlan: TStandardCloudPlan,
+  targetInterval: TCloudBillingInterval
+) => {
+  const currentItems = mapSubscriptionItemsToScheduleItems(subscription.items.data);
+  const targetCatalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
+  const targetItems = mapSubscriptionItemsToScheduleItems([
+    { price: targetCatalogItem.basePrice, quantity: 1 },
+    ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice }] : []),
+  ]);
+
+  return { currentItems, targetItems };
+};
+
+const getOrCreatePlanChangeSchedule = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+) => {
+  if (!stripeClient) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const existingScheduleId =
+    typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule?.id;
+
+  if (existingScheduleId) {
+    return {
+      schedule: await stripeClient.subscriptionSchedules.retrieve(existingScheduleId),
+      createdSchedule: false,
+    };
+  }
+
+  return {
+    schedule: await stripeClient.subscriptionSchedules.create({
+      // Stripe rejects metadata when cloning from an existing subscription.
+      from_subscription: subscription.id,
+    }),
+    createdSchedule: true,
+  };
+};
+
+const getCurrentSchedulePhase = (schedule: Stripe.SubscriptionSchedule) => {
+  const currentPhase = schedule.current_phase;
+
+  if (!currentPhase) {
+    throw new Error(`Stripe subscription schedule ${schedule.id} has no current phase`);
+  }
+
+  if (!currentPhase.end_date) {
+    throw new Error(
+      `Stripe subscription schedule ${schedule.id} current phase has no end date; cannot schedule a plan change`
+    );
+  }
+
+  return currentPhase;
+};
+
+const buildPlanChangePhases = (input: {
+  currentPhase: { start_date: number; end_date: number };
+  currentItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[];
+  targetItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[];
+  organizationId: string;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+}) => {
+  const { currentPhase, currentItems, targetItems, organizationId, targetPlan, targetInterval } = input;
+
+  return [
+    {
+      start_date: currentPhase.start_date,
+      end_date: currentPhase.end_date,
+      items: currentItems,
+    },
+    {
+      start_date: currentPhase.end_date,
+      items: targetItems,
+      metadata: {
+        organizationId,
+        targetPlan,
+        targetInterval,
+      },
+    },
+  ];
+};
+
+const rollbackFailedPlanChangeScheduleUpdate = async (input: {
+  organizationId: string;
+  subscriptionId: string;
+  scheduleId: string;
+  createdSchedule: boolean;
+  hadCancelAtPeriodEnd: boolean;
+}) => {
+  const { organizationId, subscriptionId, scheduleId, createdSchedule, hadCancelAtPeriodEnd } = input;
+
+  if (!stripeClient) {
+    return;
+  }
+
+  if (createdSchedule) {
+    try {
+      await stripeClient.subscriptionSchedules.release(scheduleId, {
+        preserve_cancel_date: false,
+      });
+    } catch (releaseError) {
+      logger.error(
+        { error: releaseError, organizationId, scheduleId },
+        "Failed to release newly created Stripe schedule after plan change update error"
+      );
+    }
+  }
+
+  if (!hadCancelAtPeriodEnd) {
+    return;
+  }
+
+  try {
+    await stripeClient.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
+    });
+  } catch (restoreError) {
+    logger.error(
+      { error: restoreError, organizationId, subscriptionId },
+      "Failed to restore Stripe cancel_at_period_end after plan change scheduling error"
+    );
+  }
+};
+
 const scheduleSubscriptionPlanChange = async (
   organizationId: string,
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
@@ -689,35 +816,13 @@ const scheduleSubscriptionPlanChange = async (
     });
   }
 
-  const currentItems = mapSubscriptionItemsToScheduleItems(subscription.items.data);
-  const targetCatalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
-  const targetItems = mapSubscriptionItemsToScheduleItems([
-    { price: targetCatalogItem.basePrice, quantity: 1 },
-    ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice }] : []),
-  ]);
-
-  const existingScheduleId =
-    typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule?.id;
-
-  const createdSchedule = !existingScheduleId;
-  const schedule = existingScheduleId
-    ? await stripeClient.subscriptionSchedules.retrieve(existingScheduleId)
-    : await stripeClient.subscriptionSchedules.create({
-        // Stripe rejects metadata when cloning from an existing subscription.
-        from_subscription: subscription.id,
-      });
-
-  const currentPhase = schedule.current_phase;
-
-  if (!currentPhase) {
-    throw new Error(`Stripe subscription schedule ${schedule.id} has no current phase`);
-  }
-
-  if (!currentPhase.end_date) {
-    throw new Error(
-      `Stripe subscription schedule ${schedule.id} current phase has no end date; cannot schedule a plan change`
-    );
-  }
+  const { currentItems, targetItems } = await getScheduleItemsForPlanChange(
+    subscription,
+    targetPlan,
+    targetInterval
+  );
+  const { schedule, createdSchedule } = await getOrCreatePlanChangeSchedule(subscription);
+  const currentPhase = getCurrentSchedulePhase(schedule);
 
   let updatedSchedule: Stripe.SubscriptionSchedule;
 
@@ -728,49 +833,23 @@ const scheduleSubscriptionPlanChange = async (
         organizationId,
       },
       proration_behavior: "none",
-      phases: [
-        {
-          start_date: currentPhase.start_date,
-          end_date: currentPhase.end_date,
-          items: currentItems,
-        },
-        {
-          start_date: currentPhase.end_date,
-          items: targetItems,
-          metadata: {
-            organizationId,
-            targetPlan,
-            targetInterval,
-          },
-        },
-      ],
+      phases: buildPlanChangePhases({
+        currentPhase,
+        currentItems,
+        targetItems,
+        organizationId,
+        targetPlan,
+        targetInterval,
+      }),
     });
   } catch (error) {
-    if (createdSchedule) {
-      try {
-        await stripeClient.subscriptionSchedules.release(schedule.id, {
-          preserve_cancel_date: false,
-        });
-      } catch (releaseError) {
-        logger.error(
-          { error: releaseError, organizationId, scheduleId: schedule.id },
-          "Failed to release newly created Stripe schedule after plan change update error"
-        );
-      }
-    }
-
-    if (hadCancelAtPeriodEnd) {
-      try {
-        await stripeClient.subscriptions.update(subscription.id, {
-          cancel_at_period_end: true,
-        });
-      } catch (restoreError) {
-        logger.error(
-          { error: restoreError, organizationId, subscriptionId: subscription.id },
-          "Failed to restore Stripe cancel_at_period_end after plan change scheduling error"
-        );
-      }
-    }
+    await rollbackFailedPlanChangeScheduleUpdate({
+      organizationId,
+      subscriptionId: subscription.id,
+      scheduleId: schedule.id,
+      createdSchedule,
+      hadCancelAtPeriodEnd,
+    });
 
     throw error;
   }
