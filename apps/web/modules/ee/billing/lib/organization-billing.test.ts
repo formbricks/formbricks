@@ -1598,7 +1598,7 @@ describe("organization-billing", () => {
     expect(mocks.prismaOrganizationFindUnique).not.toHaveBeenCalled();
   });
 
-  test("ensureCloudStripeSetupForOrganization creates customer and syncs billing without provisioning hobby", async () => {
+  test("ensureCloudStripeSetupForOrganization creates customer, provisions hobby subscription, and syncs billing", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValueOnce({
       id: "org_1",
       name: "Org 1",
@@ -1630,7 +1630,14 @@ describe("organization-billing", () => {
       },
       { idempotencyKey: "ensure-customer-org_1" }
     );
-    expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+      {
+        customer: "cus_new",
+        items: [{ price: "price_hobby_monthly", quantity: 1 }],
+        metadata: { organizationId: "org_1" },
+      },
+      { idempotencyKey: "ensure-hobby-subscription-org_1-bootstrap" }
+    );
     expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
       where: { organizationId: "org_1" },
       data: expect.objectContaining({
