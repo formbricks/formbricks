@@ -149,7 +149,7 @@ export const FaviconCustomizationSettings = ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: t("common.start_free_trial"),
+      text: t("common.upgrade_plan"),
       href: `/environments/${environmentId}/settings/billing`,
     },
     {

@@ -12,8 +12,12 @@ const relevantEvents = new Set([
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
-  "invoice.finalized",
   "entitlements.active_entitlement_summary.updated",
+  "subscription_schedule.created",
+  "subscription_schedule.updated",
+  "subscription_schedule.released",
+  "subscription_schedule.canceled",
+  "subscription_schedule.completed",
 ]);
 
 /**

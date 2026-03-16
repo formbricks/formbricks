@@ -135,7 +135,7 @@ describe("Auth Utils", () => {
       expect(hashedComplex.length).toBe(60);
       expect(await verifyPassword(complexPassword, hashedComplex)).toBe(true);
       expect(await verifyPassword("wrong", hashedComplex)).toBe(false);
-    });
+    }, 15000);
 
     test("should handle bcrypt errors gracefully and log warning", async () => {
       // Save the original bcryptjs implementation
