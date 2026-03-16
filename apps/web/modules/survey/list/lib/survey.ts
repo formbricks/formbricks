@@ -605,22 +605,26 @@ export const copySurveyToOtherEnvironment = async (
   }
 };
 
-export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, z.cuid2()]);
-  try {
-    const surveyCount = await prisma.survey.count({
-      where: {
-        environmentId: environmentId,
-      },
-    });
+/** Count surveys in an environment, optionally with the same filter as getSurveys (so total matches list). */
+export const getSurveyCount = reactCache(
+  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> => {
+    validateInputs([environmentId, z.cuid2()]);
+    try {
+      const surveyCount = await prisma.survey.count({
+        where: {
+          environmentId,
+          ...buildWhereClause(filterCriteria),
+        },
+      });
 
-    return surveyCount;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting survey count");
-      throw new DatabaseError(error.message);
+      return surveyCount;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error getting survey count");
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-});
+);

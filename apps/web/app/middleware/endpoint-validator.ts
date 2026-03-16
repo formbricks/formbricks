@@ -22,6 +22,8 @@ export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; i
 export const isManagementApiRoute = (
   url: string
 ): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
+  if (url.includes("/api/v3/app/"))
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Session };
   if (url.includes("/api/v1/management/storage"))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
   if (url.includes("/api/v1/webhooks"))
