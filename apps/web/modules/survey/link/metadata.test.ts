@@ -168,6 +168,14 @@ describe("getMetadataForLinkSurvey", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
+  test("calls notFound when survey is not found", async () => {
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(null as any);
+
+    await getMetadataForLinkSurvey(mockSurveyId);
+
+    expect(notFound).toHaveBeenCalled();
+  });
+
   test("handles metadata without openGraph property", async () => {
     const mockSurvey = {
       id: mockSurveyId,
