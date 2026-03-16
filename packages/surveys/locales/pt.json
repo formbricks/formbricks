@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "O arquivo deve ter menos de {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Nenhum tipo de arquivo válido selecionado. Por favor, selecione um tipo de arquivo válido.",
       "only_one_file_can_be_uploaded_at_a_time": "Apenas um arquivo pode ser carregado de cada vez.",
+      "placeholder_text": "Clique ou arraste para enviar ficheiros",
       "upload_failed": "Falha no carregamento! Por favor, tente novamente.",
+      "uploading": "A enviar...",
       "you_can_only_upload_a_maximum_of_files": "Você só pode carregar um máximo de {FILE_LIMIT} arquivos."
     },
     "invalid_device_error": {

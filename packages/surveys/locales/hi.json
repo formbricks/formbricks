@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "फ़ाइल {maxSizeInMB} MB से कम होनी चाहिए",
       "no_valid_file_types_selected": "कोई मान्य फ़ाइल प्रकार नहीं चुना गया है। कृपया एक मान्य फ़ाइल प्रकार चुनें।",
       "only_one_file_can_be_uploaded_at_a_time": "एक समय में केवल एक फ़ाइल अपलोड की जा सकती है।",
+      "placeholder_text": "फ़ाइलें अपलोड करने के लिए क्लिक करें या ड्रैग करें",
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
+      "uploading": "अपलोड हो रहा है...",
       "you_can_only_upload_a_maximum_of_files": "आप अधिकतम {FILE_LIMIT} फ़ाइलें ही अपलोड कर सकते हैं।"
     },
     "invalid_device_error": {

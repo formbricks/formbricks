@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZCloudBillingInterval } from "@formbricks/types/organizations";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -11,14 +12,16 @@ import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
-import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
 import {
+  createPaidPlanCheckoutSession,
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
+  ensureStripeCustomerForOrganization,
   reconcileCloudStripeSubscriptionsForOrganization,
+  switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
+  undoPendingOrganizationPlanChange,
 } from "@/modules/ee/billing/lib/organization-billing";
-import { stripeClient } from "@/modules/ee/billing/lib/stripe-client";
 
 const ZManageSubscriptionAction = z.object({
   environmentId: ZId,
@@ -46,7 +49,7 @@ export const manageSubscriptionAction = authenticatedActionClient
       }
 
       if (!organization.billing.stripeCustomerId) {
-        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -54,75 +57,64 @@ export const manageSubscriptionAction = authenticatedActionClient
         organization.billing.stripeCustomerId,
         `${WEBAPP_URL}/environments/${parsedInput.environmentId}/settings/billing`
       );
-      ctx.auditLoggingCtx.newObject = { portalSession: result };
+      ctx.auditLoggingCtx.newObject = { portalSessionCreated: true };
       return result;
     })
   );
 
-const ZIsSubscriptionCancelledAction = z.object({
-  organizationId: ZId,
-});
-
-export const isSubscriptionCancelledAction = authenticatedActionClient
-  .inputSchema(ZIsSubscriptionCancelledAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing"],
-        },
-      ],
-    });
-
-    return await isSubscriptionCancelled(parsedInput.organizationId);
-  });
-
-const ZCreatePricingTableCustomerSessionAction = z.object({
+const ZCreatePlanCheckoutAction = z.object({
   environmentId: ZId,
+  targetPlan: z.enum(["pro", "scale"]),
+  targetInterval: ZCloudBillingInterval,
 });
 
-export const createPricingTableCustomerSessionAction = authenticatedActionClient
-  .inputSchema(ZCreatePricingTableCustomerSessionAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing"],
-        },
-      ],
-    });
+export const createPlanCheckoutAction = authenticatedActionClient
+  .inputSchema(ZCreatePlanCheckoutAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
 
-    const organization = await getOrganization(organizationId);
-    if (!organization) {
-      throw new ResourceNotFoundError("organization", organizationId);
-    }
+      const organization = await getOrganization(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", organizationId);
+      }
 
-    if (!organization.billing?.stripeCustomerId) {
-      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
-    }
+      if (!organization.billing?.stripeCustomerId) {
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+      }
 
-    if (!stripeClient) {
-      return { clientSecret: null };
-    }
+      if (organization.billing.stripe?.subscriptionId) {
+        throw new OperationNotAllowedError("paid_checkout_requires_no_existing_subscription");
+      }
 
-    const customerSession = await stripeClient.customerSessions.create({
-      customer: organization.billing.stripeCustomerId,
-      components: {
-        pricing_table: {
-          enabled: true,
-        },
-      },
-    });
+      const checkoutUrl = await createPaidPlanCheckoutSession({
+        organizationId,
+        customerId: organization.billing.stripeCustomerId,
+        environmentId: parsedInput.environmentId,
+        plan: parsedInput.targetPlan,
+        interval: parsedInput.targetInterval,
+      });
 
-    return { clientSecret: customerSession.client_secret ?? null };
-  });
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.newObject = {
+        checkoutCreated: true,
+        targetPlan: parsedInput.targetPlan,
+        targetInterval: parsedInput.targetInterval,
+      };
+
+      return checkoutUrl;
+    })
+  );
 
 const ZRetryStripeSetupAction = z.object({
   organizationId: ZId,
@@ -172,7 +164,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
       }
 
       if (!organization.billing.stripeCustomerId) {
-        throw new AuthorizationError("You do not have an associated Stripe CustomerId");
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
       const subscriptionId = organization.billing.stripe?.subscriptionId;
@@ -189,7 +181,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
         organizationId
       );
 
-      ctx.auditLoggingCtx.newObject = { checkoutUrl };
+      ctx.auditLoggingCtx.newObject = { setupCheckoutCreated: true };
       return checkoutUrl;
     })
   );
@@ -197,6 +189,37 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
 const ZStartScaleTrialAction = z.object({
   organizationId: ZId,
 });
+
+export const startHobbyAction = authenticatedActionClient
+  .inputSchema(ZStartScaleTrialAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(parsedInput.organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
+    }
+
+    const customerId =
+      organization.billing?.stripeCustomerId ??
+      (await ensureStripeCustomerForOrganization(parsedInput.organizationId)).customerId;
+    if (!customerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
+    }
+
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "start-hobby");
+    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    return { success: true };
+  });
 
 export const startProTrialAction = authenticatedActionClient
   .inputSchema(ZStartScaleTrialAction)
@@ -217,12 +240,112 @@ export const startProTrialAction = authenticatedActionClient
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
     }
 
-    if (!organization.billing?.stripeCustomerId) {
+    const customerId =
+      organization.billing?.stripeCustomerId ??
+      (await ensureStripeCustomerForOrganization(parsedInput.organizationId)).customerId;
+    if (!customerId) {
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await createProTrialSubscription(parsedInput.organizationId, organization.billing.stripeCustomerId);
+    await createProTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "pro-trial");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };
   });
+
+const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
+  z.object({
+    environmentId: ZId,
+    targetPlan: z.literal("hobby"),
+    targetInterval: z.literal("monthly"),
+  }),
+  z.object({
+    environmentId: ZId,
+    targetPlan: z.enum(["pro", "scale"]),
+    targetInterval: ZCloudBillingInterval,
+  }),
+]);
+
+export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZChangeBillingPlanAction).action(
+  withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", organizationId);
+    }
+
+    if (!organization.billing.stripeCustomerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+    }
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId,
+      customerId: organization.billing.stripeCustomerId,
+      targetPlan: parsedInput.targetPlan,
+      targetInterval: parsedInput.targetInterval,
+    });
+
+    if (result.mode === "immediate") {
+      await syncOrganizationBillingFromStripe(organizationId);
+    }
+    // Scheduled downgrades already persist the pending snapshot locally and
+    // the ensuing subscription_schedule webhook performs the full Stripe resync.
+
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.newObject = {
+      targetPlan: parsedInput.targetPlan,
+      targetInterval: parsedInput.targetInterval,
+      mode: result.mode,
+    };
+
+    return result;
+  })
+);
+
+const ZUndoPendingPlanChangeAction = z.object({
+  environmentId: ZId,
+});
+
+export const undoPendingPlanChangeAction = authenticatedActionClient
+  .inputSchema(ZUndoPendingPlanChangeAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      const organization = await getOrganization(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", organizationId);
+      }
+
+      if (!organization.billing.stripeCustomerId) {
+        throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+      }
+
+      await undoPendingOrganizationPlanChange(organizationId, organization.billing.stripeCustomerId);
+      await syncOrganizationBillingFromStripe(organizationId);
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      return { success: true };
+    })
+  );

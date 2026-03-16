@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "A fájlnak kisebbnek kell lennie mint {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Nincs érvényes fájltípus kiválasztva. Válasszon egy érvényes fájltípust.",
       "only_one_file_can_be_uploaded_at_a_time": "Egyszerre csak egy fájl tölthető fel.",
+      "placeholder_text": "Kattints vagy húzd ide a fájlokat a feltöltéshez",
       "upload_failed": "A feltöltés nem sikerült! Próbálja meg újra.",
+      "uploading": "Feltöltés...",
       "you_can_only_upload_a_maximum_of_files": "Legfeljebb csak {FILE_LIMIT} fájlt tölthet fel."
     },
     "invalid_device_error": {

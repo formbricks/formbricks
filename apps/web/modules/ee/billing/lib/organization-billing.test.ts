@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  createPaidPlanCheckoutSession,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
   getOrganizationBillingWithReadThroughSync,
   reconcileCloudStripeSubscriptionsForOrganization,
+  switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
+  undoPendingOrganizationPlanChange,
 } from "./organization-billing";
 
 vi.mock("server-only", () => ({}));
@@ -13,6 +16,7 @@ vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
   isCloud: true,
   getBillingCacheKey: vi.fn(),
+  getCustomCacheKey: vi.fn(),
   prismaOrganizationFindUnique: vi.fn(),
   prismaOrganizationBillingFindUnique: vi.fn(),
   prismaOrganizationBillingCreate: vi.fn(),
@@ -23,12 +27,19 @@ const mocks = vi.hoisted(() => ({
   loggerWarn: vi.fn(),
   getCloudPlanFromProduct: vi.fn(),
   customersCreate: vi.fn(),
+  checkoutSessionsCreate: vi.fn(),
   productsList: vi.fn(),
   productsRetrieve: vi.fn(),
   subscriptionsList: vi.fn(),
   subscriptionsCreate: vi.fn(),
   subscriptionsCancel: vi.fn(),
+  subscriptionsUpdate: vi.fn(),
+  subscriptionSchedulesCreate: vi.fn(),
+  subscriptionSchedulesRetrieve: vi.fn(),
+  subscriptionSchedulesUpdate: vi.fn(),
+  subscriptionSchedulesRelease: vi.fn(),
   pricesList: vi.fn(),
+  pricesRetrieve: vi.fn(),
   entitlementsList: vi.fn(),
   customersList: vi.fn(),
   customersRetrieve: vi.fn(),
@@ -53,6 +64,7 @@ vi.mock("@formbricks/cache", () => ({
     organization: {
       billing: mocks.getBillingCacheKey,
     },
+    custom: mocks.getCustomCacheKey,
   },
 }));
 
@@ -108,12 +120,24 @@ vi.mock("./stripe-client", () => ({
       list: mocks.productsList,
       retrieve: mocks.productsRetrieve,
     },
+    checkout: {
+      sessions: {
+        create: mocks.checkoutSessionsCreate,
+      },
+    },
     subscriptions: {
       list: mocks.subscriptionsList,
       create: mocks.subscriptionsCreate,
       cancel: mocks.subscriptionsCancel,
+      update: mocks.subscriptionsUpdate,
     },
-    prices: { list: mocks.pricesList },
+    subscriptionSchedules: {
+      create: mocks.subscriptionSchedulesCreate,
+      retrieve: mocks.subscriptionSchedulesRetrieve,
+      update: mocks.subscriptionSchedulesUpdate,
+      release: mocks.subscriptionSchedulesRelease,
+    },
+    prices: { list: mocks.pricesList, retrieve: mocks.pricesRetrieve },
     entitlements: {
       activeEntitlements: {
         list: mocks.entitlementsList,
@@ -127,6 +151,11 @@ describe("organization-billing", () => {
     vi.clearAllMocks();
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
+    mocks.getCustomCacheKey.mockImplementation(
+      (namespace: string, identifier: string, subresource?: string) =>
+        [namespace, identifier, subresource].filter(Boolean).join(":")
+    );
+    mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
@@ -136,12 +165,14 @@ describe("organization-billing", () => {
         {
           id: "prod_hobby",
           metadata: { formbricks_plan: "hobby" },
+          active: true,
           default_price: null,
         },
       ],
     });
     mocks.productsRetrieve.mockImplementation(async (productId: string) => ({
       id: productId,
+      active: true,
       metadata:
         productId === "prod_hobby"
           ? { formbricks_plan: "hobby" }
@@ -152,7 +183,148 @@ describe("organization-billing", () => {
               : {},
     }));
     mocks.pricesList.mockResolvedValue({
-      data: [{ id: "price_hobby_1" }],
+      data: [
+        {
+          id: "price_hobby_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "hobby",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_hobby", active: true, metadata: { formbricks_plan: "hobby" } },
+        },
+        {
+          id: "price_pro_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 8900,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        {
+          id: "price_pro_yearly",
+          active: true,
+          currency: "usd",
+          unit_amount: 89000,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "base",
+            formbricks_interval: "yearly",
+          },
+          recurring: { usage_type: "licensed", interval: "year" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        {
+          id: "price_pro_responses",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "responses",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "metered", interval: "month" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        {
+          id: "price_scale_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 39000,
+          metadata: {
+            formbricks_plan: "scale",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+        },
+        {
+          id: "price_scale_yearly",
+          active: true,
+          currency: "usd",
+          unit_amount: 390000,
+          metadata: {
+            formbricks_plan: "scale",
+            formbricks_price_kind: "base",
+            formbricks_interval: "yearly",
+          },
+          recurring: { usage_type: "licensed", interval: "year" },
+          product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+        },
+        {
+          id: "price_scale_responses",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "scale",
+            formbricks_price_kind: "responses",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "metered", interval: "month" },
+          product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+        },
+      ],
+      has_more: false,
+    });
+    mocks.pricesRetrieve.mockImplementation(async (priceId: string) => {
+      const pricesById: Record<string, unknown> = {
+        price_hobby_monthly: {
+          id: "price_hobby_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "hobby",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_hobby", active: true, metadata: { formbricks_plan: "hobby" } },
+        },
+        price_pro_monthly: {
+          id: "price_pro_monthly",
+          active: true,
+          currency: "usd",
+          unit_amount: 8900,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "base",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "licensed", interval: "month" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+        price_pro_responses: {
+          id: "price_pro_responses",
+          active: true,
+          currency: "usd",
+          unit_amount: 0,
+          metadata: {
+            formbricks_plan: "pro",
+            formbricks_price_kind: "responses",
+            formbricks_interval: "monthly",
+          },
+          recurring: { usage_type: "metered", interval: "month" },
+          product: { id: "prod_pro", active: true, metadata: { formbricks_plan: "pro" } },
+        },
+      };
+      const price = pricesById[priceId];
+      if (!price) {
+        throw new Error(`Unknown mocked price ${priceId}`);
+      }
+      return price;
     });
     mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
     mocks.prismaOrganizationBillingCreate.mockResolvedValue({
@@ -166,6 +338,23 @@ describe("organization-billing", () => {
       usageCycleAnchor: new Date(),
       stripe: null,
     });
+    mocks.subscriptionSchedulesCreate.mockResolvedValue({
+      id: "sched_new",
+      current_phase: { start_date: 1739923200, end_date: 1742515200 },
+      phases: [{ start_date: 1739923200, end_date: 1742515200, items: [] }],
+    });
+    mocks.subscriptionSchedulesRetrieve.mockResolvedValue({
+      id: "sched_existing",
+      current_phase: { start_date: 1739923200, end_date: 1742515200 },
+      phases: [{ start_date: 1739923200, end_date: 1742515200, items: [] }],
+    });
+    mocks.subscriptionSchedulesUpdate.mockImplementation(async (_scheduleId, input) => ({
+      id: "sched_updated",
+      current_phase: { start_date: 1739923200, end_date: 1742515200 },
+      phases: input.phases,
+    }));
+    mocks.subscriptionSchedulesRelease.mockResolvedValue({});
+    mocks.subscriptionsUpdate.mockResolvedValue({});
   });
 
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
@@ -177,7 +366,7 @@ describe("organization-billing", () => {
     expect(mocks.customersCreate).not.toHaveBeenCalled();
   });
 
-  test("ensureStripeCustomerForOrganization reuses Stripe customer found by owner email", async () => {
+  test("ensureStripeCustomerForOrganization always creates a fresh Stripe customer", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValue({
       id: "org_1",
       name: "Org 1",
@@ -185,24 +374,24 @@ describe("organization-billing", () => {
     mocks.prismaMembershipFindFirst.mockResolvedValue({
       user: { email: "owner@example.com", name: "Owner Name" },
     });
-    mocks.customersList.mockResolvedValue({
-      data: [{ id: "cus_existing", deleted: false }],
-    });
-    mocks.customersUpdate.mockResolvedValue({ id: "cus_existing" });
+    mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
 
     const result = await ensureStripeCustomerForOrganization("org_1");
 
-    expect(result).toEqual({ customerId: "cus_existing" });
-    expect(mocks.customersCreate).not.toHaveBeenCalled();
-    expect(mocks.customersUpdate).toHaveBeenCalledWith("cus_existing", {
-      name: "Owner Name",
-      metadata: { organizationId: "org_1", organizationName: "Org 1" },
-    });
+    expect(result).toEqual({ customerId: "cus_new" });
+    expect(mocks.customersCreate).toHaveBeenCalledWith(
+      {
+        name: "Owner Name",
+        email: "owner@example.com",
+        metadata: { organizationId: "org_1", organizationName: "Org 1" },
+      },
+      { idempotencyKey: "ensure-customer-org_1" }
+    );
     expect(mocks.prismaOrganizationBillingUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { organizationId: "org_1" },
-        create: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
-        update: expect.objectContaining({ stripeCustomerId: "cus_existing" }),
+        create: expect.objectContaining({ stripeCustomerId: "cus_new" }),
+        update: expect.objectContaining({ stripeCustomerId: "cus_new" }),
       })
     );
   });
@@ -276,6 +465,40 @@ describe("organization-billing", () => {
 
     expect(result).toEqual(billing);
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
+  });
+
+  test("syncOrganizationBillingFromStripe stores hobby plan when customer has no active subscription", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+    const result = await syncOrganizationBillingFromStripe("org_1");
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripeCustomerId: "cus_1",
+        stripe: expect.objectContaining({
+          plan: "hobby",
+          subscriptionStatus: null,
+          subscriptionId: null,
+          features: [],
+          lastSyncedAt: expect.any(String),
+        }),
+      }),
+    });
+    expect(result?.stripe?.plan).toBe("hobby");
+    expect(result?.stripe?.subscriptionStatus).toBeNull();
   });
 
   test("syncOrganizationBillingFromStripe ignores duplicate webhook events", async () => {
@@ -360,7 +583,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_pro" },
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "year" },
                 },
               },
@@ -368,6 +592,9 @@ describe("organization-billing", () => {
           },
         },
       ],
+    });
+    mocks.checkoutSessionsCreate.mockResolvedValue({
+      url: "https://checkout.stripe.test/session",
     });
     mocks.entitlementsList.mockResolvedValue({
       data: [
@@ -412,6 +639,801 @@ describe("organization-billing", () => {
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 
+  test("createPaidPlanCheckoutSession rejects mixed-interval yearly checkout", async () => {
+    await expect(
+      createPaidPlanCheckoutSession({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        environmentId: "env_1",
+        plan: "pro",
+        interval: "yearly",
+      })
+    ).rejects.toThrow("mixed_interval_checkout_unsupported");
+
+    expect(mocks.checkoutSessionsCreate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan persists pending downgrade snapshot immediately", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+    });
+
+    expect(result).toEqual({
+      mode: "scheduled",
+      pendingChange: {
+        type: "plan_change",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+        effectiveAt: new Date(1742515200 * 1000).toISOString(),
+      },
+    });
+    expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith({
+      from_subscription: "sub_1",
+    });
+    expect(mocks.subscriptionSchedulesUpdate).toHaveBeenCalledWith(
+      "sched_new",
+      expect.objectContaining({
+        metadata: {
+          organizationId: "org_1",
+        },
+        phases: [
+          {
+            start_date: 1739923200,
+            end_date: 1742515200,
+            items: [{ price: "price_pro_monthly", quantity: 1 }, { price: "price_pro_responses" }],
+          },
+          {
+            start_date: 1742515200,
+            items: [{ price: "price_hobby_monthly", quantity: 1 }],
+            metadata: {
+              organizationId: "org_1",
+              targetPlan: "hobby",
+              targetInterval: "monthly",
+            },
+          },
+        ],
+      })
+    );
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: {
+        stripe: expect.objectContaining({
+          subscriptionId: "sub_1",
+          plan: "pro",
+          interval: "monthly",
+          hasPaymentMethod: true,
+          pendingChange: {
+            type: "plan_change",
+            targetPlan: "hobby",
+            targetInterval: "monthly",
+            effectiveAt: new Date(1742515200 * 1000).toISOString(),
+          },
+          lastSyncedAt: expect.any(String),
+        }),
+      },
+    });
+    expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
+  });
+
+  test("switchOrganizationToCloudPlan fails immediate upgrades when Stripe cannot collect the prorated invoice", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+
+    await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_1",
+      expect.objectContaining({
+        payment_behavior: "error_if_incomplete",
+        proration_behavior: "always_invoice",
+      })
+    );
+  });
+
+  test("switchOrganizationToCloudPlan updates an existing schedule in place", async () => {
+    mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
+      const productId = typeof product === "string" ? product : product.id;
+      return productId === "prod_scale" ? "scale" : "pro";
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_scale_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_monthly",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_scale_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_responses",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 5,
+        monthly: {
+          responses: 5000,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "scale",
+        interval: "monthly",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: new Date(1742515200 * 1000).toISOString(),
+        },
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("scheduled");
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalledWith("sched_existing", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesRetrieve).toHaveBeenCalledWith("sched_existing");
+    expect(mocks.subscriptionSchedulesUpdate).toHaveBeenCalledWith(
+      "sched_existing",
+      expect.objectContaining({
+        metadata: {
+          organizationId: "org_1",
+        },
+      })
+    );
+  });
+
+  test("switchOrganizationToCloudPlan returns early for the current selection without disturbing pending state", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result).toEqual({ mode: "immediate", pendingChange: null });
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan releases a newly created schedule when update fails", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.subscriptionSchedulesUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_new", {
+      preserve_cancel_date: false,
+    });
+  });
+
+  test("switchOrganizationToCloudPlan preserves an existing schedule when replacement fails", async () => {
+    mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
+      const productId = typeof product === "string" ? product : product.id;
+      return productId === "prod_scale" ? "scale" : "pro";
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_scale_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_monthly",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_scale_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_responses",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 5,
+        monthly: {
+          responses: 5000,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "scale",
+        interval: "monthly",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: new Date(1742515200 * 1000).toISOString(),
+        },
+      },
+    });
+    mocks.subscriptionSchedulesUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionSchedulesRetrieve).toHaveBeenCalledWith("sched_existing");
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalledWith("sched_existing", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan restores cancel_at_period_end when scheduling fails", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: true,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.subscriptionSchedulesUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionsUpdate).toHaveBeenNthCalledWith(1, "sub_1", {
+      cancel_at_period_end: false,
+    });
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_new", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionsUpdate).toHaveBeenNthCalledWith(2, "sub_1", {
+      cancel_at_period_end: true,
+    });
+  });
+
+  test("switchOrganizationToCloudPlan preserves an existing schedule when an immediate upgrade fails", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.subscriptionsUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalledWith("sched_existing", {
+      preserve_cancel_date: false,
+    });
+  });
+
+  test("switchOrganizationToCloudPlan rejects schedules without a current phase end date", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.subscriptionSchedulesCreate.mockResolvedValue({
+      id: "sched_new",
+      current_phase: { start_date: 1739923200, end_date: null },
+      phases: [{ start_date: 1739923200, end_date: null, items: [] }],
+    });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("current phase has no end date");
+
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+  });
+
+  test("undoPendingOrganizationPlanChange clears the pending snapshot", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: new Date(1742515200 * 1000).toISOString(),
+        },
+      },
+    });
+
+    await undoPendingOrganizationPlanChange("org_1", "cus_1");
+
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_existing", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: {
+        stripe: expect.objectContaining({
+          subscriptionId: "sub_1",
+          plan: "pro",
+          interval: "monthly",
+          pendingChange: null,
+          lastSyncedAt: expect.any(String),
+        }),
+      },
+    });
+  });
+
   test("syncOrganizationBillingFromStripe stores unlimited responses when entitlement is unlimited", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
@@ -434,7 +1456,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_scale" },
+                  metadata: {},
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -475,6 +1498,104 @@ describe("organization-billing", () => {
     expect(result?.stripe?.features).toEqual(["workspace-limit-5", "responses-included-unlimited"]);
   });
 
+  test("syncOrganizationBillingFromStripe mirrors a pending downgrade from subscription schedule", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: { id: "sched_1" },
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.subscriptionSchedulesRetrieve.mockResolvedValue({
+      id: "sched_1",
+      current_phase: { start_date: 1739923200, end_date: 1742515200 },
+      phases: [
+        {
+          start_date: 1739923200,
+          end_date: 1742515200,
+          items: [{ price: "price_pro_monthly", quantity: 1 }],
+        },
+        {
+          start_date: 1742515200,
+          items: [{ price: "price_hobby_monthly", quantity: 1 }],
+        },
+      ],
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1", {
+      id: "evt_schedule",
+      created: 1739923300,
+    });
+
+    expect(mocks.subscriptionsList).toHaveBeenCalledWith({
+      customer: "cus_1",
+      status: "all",
+      limit: 20,
+      expand: ["data.schedule"],
+    });
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: {
+        stripeCustomerId: "cus_1",
+        limits: {
+          projects: 3,
+          monthly: {
+            responses: 1500,
+          },
+        },
+        stripe: expect.objectContaining({
+          plan: "pro",
+          pendingChange: {
+            type: "plan_change",
+            targetPlan: "hobby",
+            targetInterval: "monthly",
+            effectiveAt: new Date(1742515200 * 1000).toISOString(),
+          },
+        }),
+        usageCycleAnchor: expect.any(Date),
+      },
+    });
+    expect(result?.stripe?.pendingChange).toEqual({
+      type: "plan_change",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+      effectiveAt: new Date(1742515200 * 1000).toISOString(),
+    });
+  });
+
   test("syncOrganizationBillingFromStripe prefers unlimited responses over numeric response entitlements", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
@@ -497,7 +1618,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_scale" },
+                  metadata: {},
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -542,7 +1664,8 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
-                  product: { id: "prod_pro" },
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
               },
@@ -592,6 +1715,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
@@ -608,6 +1732,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                   recurring: { usage_type: "licensed", interval: "month" },
                 },
@@ -742,81 +1867,57 @@ describe("organization-billing", () => {
     expect(mocks.prismaOrganizationFindUnique).not.toHaveBeenCalled();
   });
 
-  test("ensureCloudStripeSetupForOrganization provisions hobby subscription when org has no active subscription", async () => {
+  test("ensureCloudStripeSetupForOrganization creates customer, provisions hobby subscription, and syncs billing", async () => {
     mocks.prismaOrganizationFindUnique.mockResolvedValueOnce({
       id: "org_1",
       name: "Org 1",
     });
-    // ensureStripeCustomerForOrganization no longer reads billing;
-    // reconcile and sync each read billing once
-    mocks.prismaOrganizationBillingFindUnique
-      .mockResolvedValueOnce({
-        stripeCustomerId: "cus_new",
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-          },
+    mocks.prismaMembershipFindFirst.mockResolvedValue({
+      user: { email: "owner@example.com", name: "Owner Name" },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_new",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
         },
-        usageCycleAnchor: new Date(),
-        stripe: {},
-      })
-      .mockResolvedValueOnce({
-        stripeCustomerId: "cus_new",
-        limits: {
-          projects: 3,
-          monthly: {
-            responses: 1500,
-          },
-        },
-        usageCycleAnchor: new Date(),
-        stripe: {},
-      });
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {},
+    });
     mocks.customersCreate.mockResolvedValue({ id: "cus_new" });
-    mocks.subscriptionsList
-      .mockResolvedValueOnce({ data: [] }) // reconciliation initial list (status: "all")
-      .mockResolvedValueOnce({ data: [] }) // fresh re-check before hobby creation (status: "active")
-      .mockResolvedValueOnce({
-        // sync reads subscriptions after hobby is created
-        data: [
-          {
-            id: "sub_hobby",
-            created: 1739923200,
-            status: "active",
-            billing_cycle_anchor: 1739923200,
-            items: {
-              data: [
-                {
-                  price: {
-                    product: { id: "prod_hobby" },
-                    recurring: { usage_type: "licensed", interval: "month" },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
 
     await ensureCloudStripeSetupForOrganization("org_1");
 
-    expect(mocks.productsList).toHaveBeenCalledWith({
-      active: true,
-      limit: 100,
-    });
-    expect(mocks.pricesList).toHaveBeenCalledWith({
-      product: "prod_hobby",
-      active: true,
-      limit: 100,
-    });
+    expect(mocks.customersCreate).toHaveBeenCalledWith(
+      {
+        name: "Owner Name",
+        email: "owner@example.com",
+        metadata: { organizationId: "org_1", organizationName: "Org 1" },
+      },
+      { idempotencyKey: "ensure-customer-org_1" }
+    );
     expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
       {
         customer: "cus_new",
-        items: [{ price: "price_hobby_1", quantity: 1 }],
+        items: [{ price: "price_hobby_monthly", quantity: 1 }],
         metadata: { organizationId: "org_1" },
       },
       { idempotencyKey: "ensure-hobby-subscription-org_1-bootstrap" }
     );
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripeCustomerId: "cus_new",
+        stripe: expect.objectContaining({
+          plan: "hobby",
+          subscriptionStatus: null,
+          subscriptionId: null,
+        }),
+      }),
+    });
   });
 
   test("reconcileCloudStripeSubscriptionsForOrganization cancels hobby when paid subscription is active", async () => {
@@ -848,6 +1949,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" } },
                 },
               },
@@ -862,6 +1964,7 @@ describe("organization-billing", () => {
             data: [
               {
                 price: {
+                  metadata: {},
                   product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
                 },
               },

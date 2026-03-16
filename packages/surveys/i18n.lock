@@ -41,7 +41,9 @@ checksums:
     errors/file_input/file_size_exceeded_alert: d8e482a2ff05e78bbacaed9e9db9b5eb
     errors/file_input/no_valid_file_types_selected: 795acdedcffbcf06e57ea93fc16771ce
     errors/file_input/only_one_file_can_be_uploaded_at_a_time: 1eda42bd46887f9702049e23fa7cb127
+    errors/file_input/placeholder_text: 15b61e390b6c5501d3e3b9da9f6c7930
     errors/file_input/upload_failed: 735fdfc1a37ab035121328237ddd6fd0
+    errors/file_input/uploading: baef62e2015a34d6747ed6e4192a27b1
     errors/file_input/you_can_only_upload_a_maximum_of_files: 72fe144f81075e5b06bae53b3a84d4db
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
     errors/invalid_device_error/title: ea7dbb9970c717e4d466f8e1211bd461

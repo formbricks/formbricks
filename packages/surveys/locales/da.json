@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "Filen skal være mindre end {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Ingen gyldige filtyper valgt. Vælg venligst en gyldig filtype.",
       "only_one_file_can_be_uploaded_at_a_time": "Du kan kun uploade én fil ad gangen.",
+      "placeholder_text": "Klik eller træk for at uploade filer",
       "upload_failed": "Upload mislykkedes! Prøv venligst igen.",
+      "uploading": "Uploader...",
       "you_can_only_upload_a_maximum_of_files": "Du kan maksimalt uploade {FILE_LIMIT} filer."
     },
     "invalid_device_error": {

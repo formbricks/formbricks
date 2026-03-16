@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "يجب أن يكون حجم الملف أقل من {maxSizeInMB} ميجابايت",
       "no_valid_file_types_selected": "لم يتم اختيار أنواع ملفات صالحة. يرجى اختيار نوع ملف صالح.",
       "only_one_file_can_be_uploaded_at_a_time": "يمكن تحميل ملف واحد فقط في المرة الواحدة.",
+      "placeholder_text": "انقر أو اسحب لرفع الملفات",
       "upload_failed": "فشل التحميل! يرجى المحاولة مرة أخرى.",
+      "uploading": "جارٍ الرفع...",
       "you_can_only_upload_a_maximum_of_files": "يمكنك تحميل {FILE_LIMIT} ملفات كحد أقصى."
     },
     "invalid_device_error": {
