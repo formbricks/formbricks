@@ -922,11 +922,11 @@ export const ensureStripeCustomerForOrganization = async (
       stripeCustomerId: customer.id,
       limits: defaultBilling.limits,
       usageCycleAnchor: defaultBilling.usageCycleAnchor,
-      stripe: { lastSyncedAt: new Date().toISOString() },
+      stripe: { plan: "hobby", lastSyncedAt: new Date().toISOString() },
     },
     update: {
       stripeCustomerId: customer.id,
-      stripe: { lastSyncedAt: new Date().toISOString() },
+      stripe: { plan: "hobby", lastSyncedAt: new Date().toISOString() },
     },
   });
 
@@ -1247,5 +1247,6 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
 export const ensureCloudStripeSetupForOrganization = async (organizationId: string): Promise<void> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
   await ensureStripeCustomerForOrganization(organizationId);
+  await reconcileCloudStripeSubscriptionsForOrganization(organizationId, "bootstrap");
   await syncOrganizationBillingFromStripe(organizationId);
 };

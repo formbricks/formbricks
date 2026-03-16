@@ -167,8 +167,7 @@ export const PricingTable = ({
   const isTrialing = currentSubscriptionStatus === "trialing";
   const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
-  const canShowSubscriptionButton =
-    hasBillingRights && !isTrialing && !!organization.billing.stripeCustomerId;
+  const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
   const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
   const usageCycleLabel = `${formatDate(usageCycleStart, locale)} - ${formatDate(usageCycleEnd, locale)}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
