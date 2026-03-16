@@ -17,7 +17,73 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+  /*
+   * Widget CSS hardening
+   * -------------------
+   * The widget is embedded into arbitrary host pages (often via GTM).
+   * Host/global CSS resets can leak into the widget and add unexpected spacing
+   * or change form control typography.
+   *
+   * This is intentionally NOT a full reset (no `all: initial`) to avoid breaking
+   * Tailwind utilities and the widget's own CSS variables.
+   */
+  #fbjs {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      "Noto Sans", "Liberation Sans", sans-serif;
+    line-height: 1.5;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
 
+  /* Ensure consistent box model inside the widget regardless of host CSS */
+  #fbjs *,
+  #fbjs ::after,
+  #fbjs ::before {
+    box-sizing: border-box;
+  }
+
+  /*
+   * Neutralize the most common spacing leaks (margins/paddings from host styles).
+   * Our components and Tailwind utilities re-apply intended spacing.
+   */
+  #fbjs :where(p, h1, h2, h3, h4, h5, h6, blockquote, figure, dl, dd, pre) {
+    margin: 0;
+  }
+
+  #fbjs :where(ul, ol) {
+    margin: 0;
+    padding: 0;
+  }
+
+  #fbjs :where(li) {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Form controls should not inherit weird host resets (e.g. `button { all: unset; }`) */
+  #fbjs :where(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
+
+  #fbjs :where(button, input[type="button"], input[type="submit"], input[type="reset"]) {
+    -webkit-appearance: button;
+    appearance: button;
+    background: transparent;
+  }
+
+  #fbjs :where(input, select, textarea) {
+    background: transparent;
+  }
+
+  /* Media elements: avoid host `img { display:block; max-width:100% }` surprises */
+  #fbjs :where(img, svg, video, canvas, audio, iframe, embed, object) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Keep existing Tailwind v4 border compatibility */
   #fbjs *,
   #fbjs ::after,
   #fbjs ::before,
@@ -66,6 +132,7 @@
 #fbjs [data-variant="headline"] ul,
 #fbjs [data-variant="headline"] ol,
 #fbjs [data-variant="description"] ul,
+#fbjs [data-variant="headline"] ol,
 #fbjs [data-variant="description"] ol {
   list-style-position: outside;
   margin: 0.5em 0;
