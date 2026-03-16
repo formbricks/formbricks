@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "Файл должен быть меньше {maxSizeInMB} МБ",
       "no_valid_file_types_selected": "Не выбраны допустимые типы файлов. Пожалуйста, выберите допустимый тип файла.",
       "only_one_file_can_be_uploaded_at_a_time": "Можно загрузить только один файл за раз.",
+      "placeholder_text": "Нажмите или перетащите файлы для загрузки",
       "upload_failed": "Ошибка загрузки! Пожалуйста, попробуйте снова.",
+      "uploading": "Загрузка...",
       "you_can_only_upload_a_maximum_of_files": "Вы можете загрузить максимум {FILE_LIMIT} файлов."
     },
     "invalid_device_error": {

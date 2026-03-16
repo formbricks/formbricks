@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "Fayl hajmi {maxSizeInMB} MB dan kam bo'lishi kerak",
       "no_valid_file_types_selected": "Hech qanday yaroqli fayl turi tanlanmadi. Iltimos, yaroqli fayl turini tanlang.",
       "only_one_file_can_be_uploaded_at_a_time": "Bir vaqtning o'zida faqat bitta fayl yuklanishi mumkin.",
+      "placeholder_text": "Fayllarni yuklash uchun bosing yoki sudrab olib keling",
       "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
+      "uploading": "Yuklanmoqda...",
       "you_can_only_upload_a_maximum_of_files": "Siz faqat {FILE_LIMIT} ta faylni maksimal yuklashingiz mumkin."
     },
     "invalid_device_error": {

@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "ファイルは{maxSizeInMB}MB未満である必要があります",
       "no_valid_file_types_selected": "有効なファイルタイプが選択されていません。有効なファイルタイプを選択してください。",
       "only_one_file_can_be_uploaded_at_a_time": "一度にアップロードできるファイルは1つだけです。",
+      "placeholder_text": "クリックまたはドラッグしてファイルをアップロード",
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
+      "uploading": "アップロード中...",
       "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
     },
     "invalid_device_error": {

@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "Il file deve essere inferiore a {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Nessun tipo di file valido selezionato. Seleziona un tipo di file valido.",
       "only_one_file_can_be_uploaded_at_a_time": "È possibile caricare solo un file alla volta.",
+      "placeholder_text": "Clicca o trascina per caricare i file",
       "upload_failed": "Caricamento fallito! Riprova.",
+      "uploading": "Caricamento in corso...",
       "you_can_only_upload_a_maximum_of_files": "Puoi caricare un massimo di {FILE_LIMIT} file."
     },
     "invalid_device_error": {

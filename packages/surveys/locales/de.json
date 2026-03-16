@@ -43,7 +43,9 @@
       "file_size_exceeded_alert": "Die Datei sollte kleiner als {maxSizeInMB} MB sein",
       "no_valid_file_types_selected": "Keine gültigen Dateitypen ausgewählt. Bitte wählen Sie einen gültigen Dateityp.",
       "only_one_file_can_be_uploaded_at_a_time": "Es kann nur eine Datei gleichzeitig hochgeladen werden.",
+      "placeholder_text": "Klicke oder ziehe Dateien hierher zum Hochladen",
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
+      "uploading": "Wird hochgeladen...",
       "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
     },
     "invalid_device_error": {
