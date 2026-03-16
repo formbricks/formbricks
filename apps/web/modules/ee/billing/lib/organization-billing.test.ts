@@ -159,6 +159,12 @@ describe("organization-billing", () => {
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: null },
+      default_source: null,
+    });
     mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.productsList.mockResolvedValue({
       data: [
@@ -637,6 +643,64 @@ describe("organization-billing", () => {
       "custom-links-in-surveys",
     ]);
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
+  });
+
+  test("syncOrganizationBillingFromStripe marks migrated customers with customer-level payment methods", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          default_payment_method: null,
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: "pm_legacy_default" },
+      default_source: null,
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1");
+
+    expect(result?.stripe?.hasPaymentMethod).toBe(true);
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          stripe: expect.objectContaining({
+            hasPaymentMethod: true,
+          }),
+        }),
+      })
+    );
   });
 
   test("createPaidPlanCheckoutSession rejects mixed-interval yearly checkout", async () => {

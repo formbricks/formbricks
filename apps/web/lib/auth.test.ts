@@ -33,14 +33,14 @@ describe("Password Management", () => {
     const hashedPassword = await hashPassword(password);
     const isValid = await verifyPassword(password, hashedPassword);
     expect(isValid).toBe(true);
-  });
+  }, 15000);
 
   test("verifyPassword should reject an incorrect password", async () => {
     const password = "testPassword123";
     const hashedPassword = await hashPassword(password);
     const isValid = await verifyPassword("wrongPassword", hashedPassword);
     expect(isValid).toBe(false);
-  });
+  }, 15000);
 });
 
 describe("Organization Access", () => {

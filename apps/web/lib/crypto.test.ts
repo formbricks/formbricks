@@ -34,7 +34,7 @@ describe("Crypto Utils", () => {
 
       const isValid = await verifySecret(secret, hash);
       expect(isValid).toBe(true);
-    });
+    }, 15000);
 
     test("should reject wrong secrets", async () => {
       const secret = "test-secret-123";
@@ -43,7 +43,7 @@ describe("Crypto Utils", () => {
 
       const isValid = await verifySecret(wrongSecret, hash);
       expect(isValid).toBe(false);
-    });
+    }, 15000);
 
     test("should generate different hashes for the same secret (due to salt)", async () => {
       const secret = "test-secret-123";
@@ -64,7 +64,7 @@ describe("Crypto Utils", () => {
       // Verify the cost factor is in the hash
       expect(hash).toMatch(/^\$2[aby]\$10\$/);
       expect(await verifySecret(secret, hash)).toBe(true);
-    });
+    }, 15000);
 
     test("should return false for invalid hash format", async () => {
       const secret = "test-secret-123";

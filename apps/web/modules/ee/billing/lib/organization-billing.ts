@@ -1107,6 +1107,21 @@ const resolvePendingPlanChange = async (subscription: Stripe.Subscription | null
   return null;
 };
 
+const resolveHasPaymentMethod = (
+  subscription: Stripe.Subscription | null,
+  customer: Stripe.Customer | Stripe.DeletedCustomer
+) => {
+  if (subscription?.default_payment_method != null) {
+    return true;
+  }
+
+  if (customer.deleted) {
+    return false;
+  }
+
+  return customer.invoice_settings.default_payment_method != null || customer.default_source != null;
+};
+
 export const syncOrganizationBillingFromStripe = async (
   organizationId: string,
   event?: { id: string; created: number }
@@ -1132,9 +1147,10 @@ export const syncOrganizationBillingFromStripe = async (
     return billing;
   }
 
-  const [subscription, featureLookupKeys] = await Promise.all([
+  const [subscription, featureLookupKeys, customer] = await Promise.all([
     resolveCurrentSubscription(customerId),
     listAllActiveEntitlements(customerId),
+    stripeClient.customers.retrieve(customerId),
   ]);
 
   const cloudPlan = resolveCloudPlanFromSubscription(subscription);
@@ -1160,7 +1176,7 @@ export const syncOrganizationBillingFromStripe = async (
       interval: billingInterval,
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
-      hasPaymentMethod: subscription?.default_payment_method != null,
+      hasPaymentMethod: resolveHasPaymentMethod(subscription, customer),
       features: featureLookupKeys,
       pendingChange,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),

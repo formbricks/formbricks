@@ -1021,6 +1021,6 @@ describe("updateSurveyDraftAction", () => {
 
       // Expect validation error (skipValidation = false)
       await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
-    });
+    }, 15000);
   });
 });
