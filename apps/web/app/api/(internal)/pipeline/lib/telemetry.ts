@@ -212,6 +212,7 @@ const sendTelemetry = async (lastSent: number) => {
     google: !!env.GOOGLE_CLIENT_ID || ssoProviders.some((p) => p.provider === "google"),
     azureAd: !!env.AZUREAD_CLIENT_ID || ssoProviders.some((p) => p.provider === "azuread"),
     oidc: !!env.OIDC_CLIENT_ID || ssoProviders.some((p) => p.provider === "openid"),
+    saml: !!env.SAML_DATABASE_URL || ssoProviders.some((p) => p.provider === "saml"),
   };
 
   // Construct telemetry payload with usage statistics and configuration.
