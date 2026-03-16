@@ -682,7 +682,8 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error("Stripe is not configured");
   }
 
-  if (subscription.cancel_at_period_end) {
+  const hadCancelAtPeriodEnd = subscription.cancel_at_period_end;
+  if (hadCancelAtPeriodEnd) {
     await stripeClient.subscriptions.update(subscription.id, {
       cancel_at_period_end: false,
     });
@@ -758,6 +759,19 @@ const scheduleSubscriptionPlanChange = async (
       }
     }
 
+    if (hadCancelAtPeriodEnd) {
+      try {
+        await stripeClient.subscriptions.update(subscription.id, {
+          cancel_at_period_end: true,
+        });
+      } catch (restoreError) {
+        logger.error(
+          { error: restoreError, organizationId, subscriptionId: subscription.id },
+          "Failed to restore Stripe cancel_at_period_end after plan change scheduling error"
+        );
+      }
+    }
+
     throw error;
   }
 
@@ -795,25 +809,24 @@ export const switchOrganizationToCloudPlan = async (input: {
     return { mode: "immediate", pendingChange: null };
   }
 
-  const hadPendingPlanState = Boolean(subscription.schedule) || subscription.cancel_at_period_end;
-  await clearPendingPlanState(input.organizationId, subscription);
-  const nextMutableSubscription = hadPendingPlanState
-    ? await getRequiredActiveSubscription(input.organizationId, input.customerId)
-    : subscription;
-
   if (isImmediateUpgrade) {
     await updateSubscriptionItemsImmediately(
       input.organizationId,
-      nextMutableSubscription,
+      subscription,
       input.targetPlan,
       input.targetInterval
     );
+
+    if (subscription.schedule) {
+      await clearPendingPlanState(input.organizationId, subscription);
+    }
+
     return { mode: "immediate", pendingChange: null };
   }
 
   const pendingChange = await scheduleSubscriptionPlanChange(
     input.organizationId,
-    nextMutableSubscription,
+    subscription,
     input.targetPlan,
     input.targetInterval
   );

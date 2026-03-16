@@ -855,98 +855,54 @@ describe("organization-billing", () => {
     );
   });
 
-  test("switchOrganizationToCloudPlan recreates a schedule after clearing an existing one", async () => {
+  test("switchOrganizationToCloudPlan updates an existing schedule in place", async () => {
     mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
       const productId = typeof product === "string" ? product : product.id;
       return productId === "prod_scale" ? "scale" : "pro";
     });
-    mocks.subscriptionsList
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "sub_1",
-            status: "active",
-            billing_cycle_anchor: 1739923200,
-            cancel_at_period_end: false,
-            schedule: "sched_existing",
-            items: {
-              data: [
-                {
-                  id: "si_scale_base",
-                  current_period_end: 1742515200,
-                  price: {
-                    id: "price_scale_monthly",
-                    metadata: {
-                      formbricks_plan: "scale",
-                      formbricks_price_kind: "base",
-                      formbricks_interval: "monthly",
-                    },
-                    product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
-                    recurring: { usage_type: "licensed", interval: "month" },
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_scale_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_monthly",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
                   },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
                 },
-                {
-                  id: "si_scale_responses",
-                  current_period_end: 1742515200,
-                  price: {
-                    id: "price_scale_responses",
-                    metadata: {
-                      formbricks_plan: "scale",
-                      formbricks_price_kind: "responses",
-                      formbricks_interval: "monthly",
-                    },
-                    product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
-                    recurring: { usage_type: "metered", interval: "month" },
+              },
+              {
+                id: "si_scale_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_responses",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
                   },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
                 },
-              ],
-            },
+              },
+            ],
           },
-        ],
-      })
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "sub_1",
-            status: "active",
-            billing_cycle_anchor: 1739923200,
-            cancel_at_period_end: false,
-            schedule: null,
-            items: {
-              data: [
-                {
-                  id: "si_scale_base",
-                  current_period_end: 1742515200,
-                  price: {
-                    id: "price_scale_monthly",
-                    metadata: {
-                      formbricks_plan: "scale",
-                      formbricks_price_kind: "base",
-                      formbricks_interval: "monthly",
-                    },
-                    product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
-                    recurring: { usage_type: "licensed", interval: "month" },
-                  },
-                },
-                {
-                  id: "si_scale_responses",
-                  current_period_end: 1742515200,
-                  price: {
-                    id: "price_scale_responses",
-                    metadata: {
-                      formbricks_plan: "scale",
-                      formbricks_price_kind: "responses",
-                      formbricks_interval: "monthly",
-                    },
-                    product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
-                    recurring: { usage_type: "metered", interval: "month" },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      });
+        },
+      ],
+    });
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
       limits: {
@@ -978,13 +934,19 @@ describe("organization-billing", () => {
     });
 
     expect(result.mode).toBe("scheduled");
-    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_existing", {
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalledWith("sched_existing", {
       preserve_cancel_date: false,
     });
-    expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith({
-      from_subscription: "sub_1",
-    });
-    expect(mocks.subscriptionSchedulesRetrieve).not.toHaveBeenCalledWith("sched_existing");
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesRetrieve).toHaveBeenCalledWith("sched_existing");
+    expect(mocks.subscriptionSchedulesUpdate).toHaveBeenCalledWith(
+      "sched_existing",
+      expect.objectContaining({
+        metadata: {
+          organizationId: "org_1",
+        },
+      })
+    );
   });
 
   test("switchOrganizationToCloudPlan returns early for the current selection without disturbing pending state", async () => {
@@ -1103,6 +1065,236 @@ describe("organization-billing", () => {
     ).rejects.toThrow("stripe update failed");
 
     expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_new", {
+      preserve_cancel_date: false,
+    });
+  });
+
+  test("switchOrganizationToCloudPlan preserves an existing schedule when replacement fails", async () => {
+    mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
+      const productId = typeof product === "string" ? product : product.id;
+      return productId === "prod_scale" ? "scale" : "pro";
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_scale_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_monthly",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_scale_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_scale_responses",
+                  metadata: {
+                    formbricks_plan: "scale",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_scale", metadata: { formbricks_plan: "scale" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 5,
+        monthly: {
+          responses: 5000,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "scale",
+        interval: "monthly",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: new Date(1742515200 * 1000).toISOString(),
+        },
+      },
+    });
+    mocks.subscriptionSchedulesUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionSchedulesRetrieve).toHaveBeenCalledWith("sched_existing");
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalledWith("sched_existing", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan restores cancel_at_period_end when scheduling fails", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: true,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        projects: 3,
+        monthly: {
+          responses: 1500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "pro",
+        interval: "monthly",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.subscriptionSchedulesUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionsUpdate).toHaveBeenNthCalledWith(1, "sub_1", {
+      cancel_at_period_end: false,
+    });
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_new", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionsUpdate).toHaveBeenNthCalledWith(2, "sub_1", {
+      cancel_at_period_end: true,
+    });
+  });
+
+  test("switchOrganizationToCloudPlan preserves an existing schedule when an immediate upgrade fails", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: "sched_existing",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+              {
+                id: "si_pro_responses",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_responses",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "responses",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "metered", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.subscriptionsUpdate.mockRejectedValue(new Error("stripe update failed"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("stripe update failed");
+
+    expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalledWith("sched_existing", {
       preserve_cancel_date: false,
     });
   });
