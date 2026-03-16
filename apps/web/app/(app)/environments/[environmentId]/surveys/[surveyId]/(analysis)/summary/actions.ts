@@ -64,7 +64,6 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
 
 const ZResetSurveyAction = z.object({
   surveyId: ZId,
-  organizationId: ZId,
   projectId: ZId,
 });
 

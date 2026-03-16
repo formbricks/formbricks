@@ -21,7 +21,6 @@ import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZDeleteQuotaAction = z.object({
   quotaId: ZId,
-  surveyId: ZId,
 });
 
 const checkQuotasEnabled = async (organizationId: string) => {

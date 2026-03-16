@@ -32,7 +32,6 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
 
 const ZUpdateInviteAction = z.object({
   inviteId: ZUuid,
-  organizationId: ZId,
   data: ZInviteUpdateInput,
 });
 

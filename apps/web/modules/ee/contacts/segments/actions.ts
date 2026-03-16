@@ -97,7 +97,6 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
 );
 
 const ZUpdateSegmentAction = z.object({
-  environmentId: ZId,
   segmentId: ZId,
   data: ZSegmentUpdateInput,
 });

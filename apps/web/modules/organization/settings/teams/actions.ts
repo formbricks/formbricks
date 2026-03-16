@@ -27,7 +27,6 @@ import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInv
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
-  organizationId: ZId,
 });
 
 export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteInviteAction).action(
