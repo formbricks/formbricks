@@ -22,7 +22,8 @@ export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; i
 export const isManagementApiRoute = (
   url: string
 ): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
-  if (url.includes("/api/v3/app/"))
+  // V3 session API (browser app): surveys and future routes under /api/v3/surveys/...
+  if (/^\/api\/v3\/surveys(?:\/|$)/.test(url))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Session };
   if (url.includes("/api/v1/management/storage"))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };

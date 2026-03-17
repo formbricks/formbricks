@@ -46,7 +46,7 @@ function createRequest(url: string, requestId?: string): NextRequest {
   return new NextRequest(url, { headers });
 }
 
-describe("GET /api/v3/app/surveys", () => {
+describe("GET /api/v3/surveys", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     getServerSession.mockResolvedValue({
@@ -68,17 +68,14 @@ describe("GET /api/v3/app/surveys", () => {
 
   test("returns 401 when no session", async () => {
     getServerSession.mockResolvedValue(null);
-    const req = createRequest(`http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}`);
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(401);
     expect(requireSessionWorkspaceAccess).not.toHaveBeenCalled();
   });
 
   test("returns 200 with list envelope when session and valid workspaceId", async () => {
-    const req = createRequest(
-      `http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}`,
-      "req-456"
-    );
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-456");
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("application/json");
@@ -94,13 +91,13 @@ describe("GET /api/v3/app/surveys", () => {
       validWorkspaceId,
       "read",
       "req-456",
-      "/api/v3/app/surveys"
+      "/api/v3/surveys"
     );
     expect(getSurveys).toHaveBeenCalledWith(validWorkspaceId, 20, 0, undefined);
   });
 
   test("returns 400 when workspaceId is missing", async () => {
-    const req = createRequest("http://localhost/api/v3/app/surveys");
+    const req = createRequest("http://localhost/api/v3/surveys");
     const res = await GET(req, {} as any);
     expect(res.status).toBe(400);
     expect(res.headers.get("Content-Type")).toBe("application/problem+json");
@@ -112,7 +109,7 @@ describe("GET /api/v3/app/surveys", () => {
   });
 
   test("returns 400 when workspaceId is not cuid2", async () => {
-    const req = createRequest("http://localhost/api/v3/app/surveys?workspaceId=not-a-cuid");
+    const req = createRequest("http://localhost/api/v3/surveys?workspaceId=not-a-cuid");
     const res = await GET(req, {} as any);
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -121,9 +118,7 @@ describe("GET /api/v3/app/surveys", () => {
   });
 
   test("returns 400 when limit exceeds max", async () => {
-    const req = createRequest(
-      `http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}&limit=101`
-    );
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&limit=101`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -133,7 +128,7 @@ describe("GET /api/v3/app/surveys", () => {
   test("reflects limit, offset and total in meta and passes to getSurveys", async () => {
     vi.mocked(getSurveyCount).mockResolvedValue(42);
     const req = createRequest(
-      `http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}&limit=10&offset=5`
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&limit=10&offset=5`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
@@ -148,7 +143,7 @@ describe("GET /api/v3/app/surveys", () => {
     vi.mocked(getSurveys).mockResolvedValue([]);
     vi.mocked(getSurveyCount).mockResolvedValue(7);
     const req = createRequest(
-      `http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}&filterCriteria=${encodeURIComponent(JSON.stringify(filterCriteria))}`
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filterCriteria=${encodeURIComponent(JSON.stringify(filterCriteria))}`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
@@ -169,7 +164,7 @@ describe("GET /api/v3/app/surveys", () => {
       { status: 403, headers: { "Content-Type": "application/problem+json" } }
     );
     vi.mocked(requireSessionWorkspaceAccess).mockResolvedValueOnce(forbiddenResponse);
-    const req = createRequest(`http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}`);
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(403);
     expect(res.headers.get("Content-Type")).toBe("application/problem+json");
@@ -192,7 +187,7 @@ describe("GET /api/v3/app/surveys", () => {
       singleUse: null,
     };
     vi.mocked(getSurveys).mockResolvedValue([minimalSurvey as any]);
-    const req = createRequest(`http://localhost/api/v3/app/surveys?workspaceId=${validWorkspaceId}`);
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
     const body = await res.json();

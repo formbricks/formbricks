@@ -90,12 +90,12 @@ describe("endpoint-validator", () => {
   });
 
   describe("isManagementApiRoute", () => {
-    test("should return Session for v3 app routes", () => {
-      expect(isManagementApiRoute("/api/v3/app/surveys")).toEqual({
+    test("should return Session for v3 surveys routes", () => {
+      expect(isManagementApiRoute("/api/v3/surveys")).toEqual({
         isManagementApi: true,
         authenticationMethod: AuthenticationMethod.Session,
       });
-      expect(isManagementApiRoute("/api/v3/app/workspaces/abc/surveys")).toEqual({
+      expect(isManagementApiRoute("/api/v3/surveys/clxxxxxxxxxxxxxxxxxxxxxxxx")).toEqual({
         isManagementApi: true,
         authenticationMethod: AuthenticationMethod.Session,
       });

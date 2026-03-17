@@ -1,5 +1,5 @@
 /**
- * GET /api/v3/app/surveys — list surveys for a workspace.
+ * GET /api/v3/surveys — list surveys for a workspace.
  * Session auth; scope by workspaceId only (no environmentId in the API).
  */
 import { z } from "zod";
