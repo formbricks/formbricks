@@ -169,4 +169,59 @@ describe("UpdateQueue", () => {
       "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function"
     );
   });
+
+  test("hasPendingWork returns false when no updates and no flush in flight", () => {
+    expect(updateQueue.hasPendingWork()).toBe(false);
+  });
+
+  test("hasPendingWork returns true when updates are queued", () => {
+    updateQueue.updateUserId(mockUserId1);
+    expect(updateQueue.hasPendingWork()).toBe(true);
+  });
+
+  test("hasPendingWork returns true while processUpdates flush is in flight", () => {
+    (sendUpdates as Mock).mockReturnValue({
+      ok: true,
+      data: { hasWarnings: false },
+    });
+
+    updateQueue.updateUserId(mockUserId1);
+    // Start processing but don't await — the debounce means the flush is in-flight
+    void updateQueue.processUpdates();
+
+    expect(updateQueue.hasPendingWork()).toBe(true);
+  });
+
+  test("waitForPendingWork returns true immediately when no pending work", async () => {
+    const result = await updateQueue.waitForPendingWork();
+    expect(result).toBe(true);
+  });
+
+  test("waitForPendingWork returns true when processUpdates succeeds", async () => {
+    (sendUpdates as Mock).mockReturnValue({
+      ok: true,
+      data: { hasWarnings: false },
+    });
+
+    updateQueue.updateUserId(mockUserId1);
+    void updateQueue.processUpdates();
+
+    const result = await updateQueue.waitForPendingWork();
+
+    expect(result).toBe(true);
+    expect(updateQueue.hasPendingWork()).toBe(false);
+    expect(sendUpdates).toHaveBeenCalled();
+  });
+
+  test("waitForPendingWork returns false when processUpdates rejects", async () => {
+    loggerMock.mockReturnValue(mockLogger as unknown as Logger);
+    (sendUpdates as Mock).mockRejectedValue(new Error("network error"));
+
+    updateQueue.updateUserId(mockUserId1);
+    const processPromise = updateQueue.processUpdates().catch(() => {});
+
+    const result = await updateQueue.waitForPendingWork();
+    expect(result).toBe(false);
+    await processPromise;
+  });
 });

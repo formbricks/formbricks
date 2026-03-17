@@ -8,6 +8,7 @@ export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
   private updates: TUpdates | null = null;
   private debounceTimeout: NodeJS.Timeout | null = null;
+  private pendingFlush: Promise<void> | null = null;
   private readonly DEBOUNCE_DELAY = 500;
 
   private constructor() {}
@@ -63,6 +64,22 @@ export class UpdateQueue {
     return !this.updates;
   }
 
+  public hasPendingWork(): boolean {
+    return this.updates !== null || this.pendingFlush !== null;
+  }
+
+  public async waitForPendingWork(): Promise<boolean> {
+    if (!this.hasPendingWork()) return true;
+
+    const flush = this.pendingFlush ?? this.processUpdates();
+    try {
+      await flush;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public async processUpdates(): Promise<void> {
     const logger = Logger.getInstance();
     if (!this.updates) {
@@ -73,7 +90,7 @@ export class UpdateQueue {
       clearTimeout(this.debounceTimeout);
     }
 
-    return new Promise((resolve, reject) => {
+    const flushPromise = new Promise<void>((resolve, reject) => {
       const handler = async (): Promise<void> => {
         try {
           let currentUpdates = { ...this.updates };
@@ -147,8 +164,10 @@ export class UpdateQueue {
           }
 
           this.clearUpdates();
+          this.pendingFlush = null;
           resolve();
         } catch (error: unknown) {
+          this.pendingFlush = null;
           logger.error(
             `Failed to process updates: ${error instanceof Error ? error.message : "Unknown error"}`
           );
@@ -158,5 +177,8 @@ export class UpdateQueue {
 
       this.debounceTimeout = setTimeout(() => void handler(), this.DEBOUNCE_DELAY);
     });
+
+    this.pendingFlush = flushPromise;
+    return flushPromise;
   }
 }
