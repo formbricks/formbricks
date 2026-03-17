@@ -154,6 +154,7 @@ export const mockSurvey: TSurvey = {
   isVerifyEmailEnabled: false,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
+  autoAdvance: false,
   recaptcha: null,
   projectOverwrites: null,
   styling: null,

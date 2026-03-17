@@ -938,6 +938,7 @@ export const ZSurvey = z
     surveyClosedMessage: ZSurveyClosedMessage.nullable(),
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
+    autoAdvance: z.boolean().optional().default(false),
     isVerifyEmailEnabled: z.boolean(),
     recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),

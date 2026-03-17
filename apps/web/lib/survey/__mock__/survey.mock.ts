@@ -208,6 +208,7 @@ const baseSurveyProperties = {
     },
   ],
   isBackButtonHidden: false,
+  autoAdvance: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",

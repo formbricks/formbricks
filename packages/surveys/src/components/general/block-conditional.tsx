@@ -16,6 +16,15 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+// Element types that trigger auto-advance when answered
+const AUTO_ADVANCE_ELIGIBLE_TYPES = new Set([
+  TSurveyElementTypeEnum.MultipleChoiceSingle,
+  TSurveyElementTypeEnum.NPS,
+  TSurveyElementTypeEnum.Rating,
+  TSurveyElementTypeEnum.PictureSelection,
+  TSurveyElementTypeEnum.Cal,
+]);
+
 interface BlockConditionalProps {
   block: TSurveyBlock;
   value: TResponseData;
@@ -36,6 +45,8 @@ interface BlockConditionalProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
+  cardSize?: "normal" | "tall";
+  autoAdvance?: boolean;
 }
 
 export function BlockConditional({
@@ -58,6 +69,8 @@ export function BlockConditional({
   onOpenExternalURL,
   dir,
   fullSizeCards,
+  cardSize,
+  autoAdvance,
 }: BlockConditionalProps) {
   // Track the current element being filled (for TTC tracking)
   const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
@@ -68,6 +81,18 @@ export function BlockConditional({
   // Ref to collect TTC values synchronously (state updates are async)
   const ttcCollectorRef = useRef<TResponseTtc>({});
 
+  // Ref to track pending auto-submit timeout so we can cancel if needed
+  const autoSubmitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up auto-submit timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSubmitTimeoutRef.current) {
+        clearTimeout(autoSubmitTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle change for an individual element
   const handleElementChange = (elementId: string, responseData: TResponseData) => {
     // If user moved to a different element, we should track it
@@ -75,7 +100,52 @@ export function BlockConditional({
       setCurrentElementId(elementId);
     }
     // Merge with existing block data to preserve other element values
-    onChange({ ...value, ...responseData });
+    const mergedData = { ...value, ...responseData };
+    onChange(mergedData);
+
+    // Auto-advance logic
+    if (autoAdvance && block.elements.length > 1) {
+      const element = block.elements.find((el) => el.id === elementId);
+      if (element && AUTO_ADVANCE_ELIGIBLE_TYPES.has(element.type)) {
+        // For picture selection, only auto-advance if it's single-select mode
+        if (
+          element.type === TSurveyElementTypeEnum.PictureSelection &&
+          "allowMulti" in element &&
+          element.allowMulti
+        ) {
+          return;
+        }
+
+        const elementIndex = block.elements.findIndex((el) => el.id === elementId);
+        const nextElement = block.elements[elementIndex + 1];
+
+        if (nextElement) {
+          // Scroll to the next element
+          setTimeout(() => {
+            const nextElementDom = document.getElementById(`element-${nextElement.id}`);
+            if (nextElementDom) {
+              nextElementDom.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 100);
+        }
+
+        // Check if all elements now have values → auto-submit
+        const allAnswered = block.elements.every((el) => {
+          const val = el.id === elementId ? responseData[el.id] : mergedData[el.id];
+          return val !== undefined && val !== null && val !== "" && !(Array.isArray(val) && val.length === 0);
+        });
+
+        if (allAnswered) {
+          // Clear any previous pending auto-submit
+          if (autoSubmitTimeoutRef.current) {
+            clearTimeout(autoSubmitTimeoutRef.current);
+          }
+          autoSubmitTimeoutRef.current = setTimeout(() => {
+            handleBlockSubmit();
+          }, 600);
+        }
+      }
+    }
   };
 
   // Handler to collect TTC values synchronously (called from element form submissions)
@@ -281,14 +351,14 @@ export function BlockConditional({
   return (
     <div className={cn("space-y-6", fullSizeCards ? "h-full" : "")}>
       {/* Scrollable container for the entire block */}
-      <ScrollableContainer fullSizeCards={fullSizeCards}>
+      <ScrollableContainer fullSizeCards={fullSizeCards} cardSize={cardSize}>
         <div className="space-y-6">
           <div className="space-y-6">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 
               return (
-                <div key={element.id}>
+                <div key={element.id} id={`element-${element.id}`}>
                   <ElementConditional
                     element={element}
                     value={value[element.id]}

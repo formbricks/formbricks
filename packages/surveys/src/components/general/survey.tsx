@@ -68,6 +68,8 @@ export function Survey({
   hiddenFieldsRecord,
   shouldResetQuestionId,
   fullSizeCards = false,
+  cardSize,
+  autoAdvance,
   autoFocus,
   action,
   singleUseId,
@@ -817,6 +819,7 @@ export function Survey({
             variablesData={currentVariables}
             isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
+            cardSize={cardSize}
           />
         );
       } else if (blockIdx >= localSurvey.blocks.length) {
@@ -838,6 +841,7 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
               fullSizeCards={fullSizeCards}
+              cardSize={cardSize}
             />
           );
         }
@@ -871,6 +875,8 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}
               fullSizeCards={fullSizeCards}
+              cardSize={cardSize}
+              autoAdvance={autoAdvance}
             />
           )
         );

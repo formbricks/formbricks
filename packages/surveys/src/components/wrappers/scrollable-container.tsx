@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface ScrollableContainerProps {
   children: JSX.Element;
   fullSizeCards: boolean;
+  cardSize?: "normal" | "tall";
 }
 
 export interface ScrollableContainerHandle {
@@ -14,7 +15,10 @@ export interface ScrollableContainerHandle {
 }
 
 export const ScrollableContainer = forwardRef<ScrollableContainerHandle, ScrollableContainerProps>(
-  ({ children, fullSizeCards = false }: ScrollableContainerProps, ref: Ref<ScrollableContainerHandle>) => {
+  (
+    { children, fullSizeCards = false, cardSize = "normal" }: ScrollableContainerProps,
+    ref: Ref<ScrollableContainerHandle>
+  ) => {
     const [isAtBottom, setIsAtBottom] = useState(false);
     const [isAtTop, setIsAtTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -68,6 +72,8 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       maxHeight = "calc(100vh - 6rem)";
     } else if (isSurveyPreview) {
       maxHeight = "42dvh";
+    } else if (cardSize === "tall") {
+      maxHeight = "85dvh";
     } else {
       maxHeight = "60dvh";
     }

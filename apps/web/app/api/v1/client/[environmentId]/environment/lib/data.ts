@@ -131,6 +131,7 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             displayOption: true,
             hiddenFields: true,
             isBackButtonHidden: true,
+            autoAdvance: true,
             triggers: {
               select: {
                 actionClass: {

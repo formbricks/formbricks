@@ -260,6 +260,8 @@ export const PreviewSurvey = ({
                     }}
                     onFinished={onFinished}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
+                    cardSize={styling.cardSize ?? "normal"}
+                    autoAdvance={survey.autoAdvance ?? false}
                   />
                 </Modal>
               ) : (
@@ -287,6 +289,8 @@ export const PreviewSurvey = ({
                         setBlockId = f;
                       }}
                       isSpamProtectionEnabled={isSpamProtectionEnabled}
+                      cardSize={styling.cardSize ?? "normal"}
+                      autoAdvance={survey.autoAdvance ?? false}
                     />
                   </div>
                 </div>
@@ -363,6 +367,8 @@ export const PreviewSurvey = ({
                   }}
                   onFinished={onFinished}
                   isSpamProtectionEnabled={isSpamProtectionEnabled}
+                  cardSize={styling.cardSize ?? "normal"}
+                  autoAdvance={survey.autoAdvance ?? false}
                 />
               </Modal>
             ) : (
@@ -395,6 +401,8 @@ export const PreviewSurvey = ({
                       setBlockId = f;
                     }}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
+                    cardSize={styling.cardSize ?? "normal"}
+                    autoAdvance={survey.autoAdvance ?? false}
                   />
                 </div>
               </MediaBackground>

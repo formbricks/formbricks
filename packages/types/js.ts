@@ -32,6 +32,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     delay: true,
     projectOverwrites: true,
     isBackButtonHidden: true,
+    autoAdvance: true,
     recaptcha: true,
     externalDataSources: true,
   })

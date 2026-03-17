@@ -40,6 +40,7 @@ export const CardStylingSettings = ({
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";
   const roundness = form.watch("roundness") ?? 8;
+  const cardSize = form.watch("cardSize") ?? "normal";
 
   const [parent] = useAutoAnimate();
   return (
@@ -59,7 +60,7 @@ export const CardStylingSettings = ({
         )}>
         <div className="inline-flex px-4 py-4">
           {!isSettingsPage && (
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
                 className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -104,6 +105,48 @@ export const CardStylingSettings = ({
                           form.setValue("roundness", value[0]);
                         }}
                       />
+                    </div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="flex flex-col justify-center">
+            <FormField
+              control={form.control}
+              name="cardSize"
+              render={() => (
+                <FormItem>
+                  <div>
+                    <FormLabel>Card Height</FormLabel>
+                    <FormDescription>Set the maximum height of the survey card</FormDescription>
+                  </div>
+
+                  <FormControl>
+                    <div className="flex items-center gap-2 rounded-lg border bg-slate-50 p-3">
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("cardSize", "normal")}
+                        className={cn(
+                          "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                          cardSize === "normal" || !cardSize
+                            ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
+                            : "text-slate-600 hover:text-slate-900"
+                        )}>
+                        Normal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("cardSize", "tall")}
+                        className={cn(
+                          "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                          cardSize === "tall"
+                            ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
+                            : "text-slate-600 hover:text-slate-900"
+                        )}>
+                        Tall
+                      </button>
                     </div>
                   </FormControl>
                 </FormItem>

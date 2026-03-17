@@ -32,6 +32,8 @@ export interface SurveyBaseProps {
   hiddenFieldsRecord?: TResponseHiddenFieldValue;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;
+  cardSize?: "normal" | "tall";
+  autoAdvance?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

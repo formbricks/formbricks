@@ -26,6 +26,7 @@ interface WelcomeCardProps {
   variablesData: TResponseVariables;
   fullSizeCards: boolean;
   isPreviewMode?: boolean;
+  cardSize?: "normal" | "tall";
 }
 
 function TimerIcon() {
@@ -80,6 +81,7 @@ export function WelcomeCard({
   variablesData,
   fullSizeCards,
   isPreviewMode = false,
+  cardSize,
 }: WelcomeCardProps) {
   const { t } = useTranslation();
 
@@ -142,7 +144,7 @@ export function WelcomeCard({
   }, [isCurrent, isPreviewMode]);
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
+    <ScrollableContainer fullSizeCards={fullSizeCards} cardSize={cardSize}>
       <div>
         {fileUrl ? (
           <img src={fileUrl} className="mb-8 max-h-96 w-1/4 object-contain" alt={t("common.company_logo")} />

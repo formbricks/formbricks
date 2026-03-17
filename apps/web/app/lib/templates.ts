@@ -4913,6 +4913,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
     showLanguageSwitch: false,
     followUps: [],
     isBackButtonHidden: false,
+    autoAdvance: false,
     metadata: {},
     questions: [], // Required for build-time type checking (Zod defaults to [] at runtime)
     slug: null,

@@ -167,6 +167,8 @@ export const SurveyClientWrapper = ({
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed}
+        cardSize={survey.styling?.cardSize ?? "normal"}
+        autoAdvance={survey.autoAdvance ?? false}
         hiddenFieldsRecord={{
           ...hiddenFieldsRecord,
           ...getVerifiedEmail,

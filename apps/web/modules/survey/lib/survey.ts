@@ -38,6 +38,7 @@ export const selectSurvey = {
   showLanguageSwitch: true,
   recaptcha: true,
   isBackButtonHidden: true,
+  autoAdvance: true,
   metadata: true,
   slug: true,
   languages: {

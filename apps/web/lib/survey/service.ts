@@ -56,6 +56,7 @@ export const selectSurvey = {
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
+  autoAdvance: true,
   redirectUrl: true,
   projectOverwrites: true,
   styling: true,
