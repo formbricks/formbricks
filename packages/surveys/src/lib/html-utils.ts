@@ -15,7 +15,7 @@ export const stripInlineStyles = (html: string): string => {
   // `style-src` violations at parse time — before FORBID_ATTR can strip them.
   // The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by
   // fixed quote delimiters, so no backtracking can occur.
-  const preStripped = html.replace(/ style="[^"]*"| style='[^']*'/gi, "");
+  const preStripped = html.replaceAll(/ style="[^"]*"| style='[^']*'/gi, "");
 
   return DOMPurify.sanitize(preStripped, {
     FORBID_ATTR: ["style"],
