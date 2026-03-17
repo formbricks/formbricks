@@ -163,6 +163,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       }
     } else {
       setIsMultiLanguageActivated(true);
+      if (!open) {
+        setOpen(true);
+      }
     }
   };
 
