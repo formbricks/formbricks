@@ -294,7 +294,7 @@ export const withV1ApiWrapper = <TResult extends { response: Response }, TProps 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       if (unauthenticatedResponse) {
         const res = unauthenticatedResponse(req);
-        await processResponse(res, req, auditLog, undefined);
+        await processResponse(res, req, auditLog);
         return res;
       }
       return responses.notAuthenticatedResponse();
