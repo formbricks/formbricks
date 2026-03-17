@@ -14,7 +14,14 @@ import {
 } from "@/app/api/v3/lib/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getSurveyCount, getSurveys } from "@/modules/survey/list/lib/survey";
+import type { TSurvey } from "@/modules/survey/list/types/surveys";
 import { parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
+
+/** V3 list payload omits `singleUse` (app overview still loads it via server actions). */
+function toV3SurveyListItem(survey: TSurvey): Omit<TSurvey, "singleUse"> {
+  const { singleUse: _omit, ...rest } = survey;
+  return rest;
+}
 
 export const GET = withV1ApiWrapper({
   unauthenticatedResponse: (req) => {
@@ -66,7 +73,7 @@ export const GET = withV1ApiWrapper({
 
       return {
         response: successListResponse(
-          surveys,
+          surveys.map(toV3SurveyListItem),
           {
             limit: parsed.limit,
             offset: parsed.offset,

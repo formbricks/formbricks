@@ -216,12 +216,6 @@ components:
         updatedAt: { type: string, format: date-time }
         responseCount: { type: integer }
         creator: { type: object, nullable: true, properties: { name: { type: string } } }
-        singleUse:
-          type: object
-          nullable: true
-          properties:
-            enabled: { type: boolean }
-            isEncrypted: { type: boolean }
     Problem:
       type: object
       description: RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses typically include a machine-readable `code` field alongside `title`, `status`, `detail`, and `requestId`.
