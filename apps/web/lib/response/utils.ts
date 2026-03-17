@@ -669,9 +669,16 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const elements = modifiedElements.map((element, idx) => {
     const headline = getTextContent(getLocalizedValue(element.headline, "default")) ?? element.id;
     if (element.type === "matrix") {
-      return element.rows.map((row) => {
+      // Exclude "other" row from fixed columns — other responses are collected separately
+      const regularRows = element.rows.filter((row) => row.id !== "other");
+      const hasOtherRow = element.rows.some((row) => row.id === "other");
+      const headers = regularRows.map((row) => {
         return `${idx + 1}. ${headline} - ${getTextContent(getLocalizedValue(row.label, "default"))}`;
       });
+      if (hasOtherRow) {
+        headers.push(`${idx + 1}. ${headline} - Other`);
+      }
+      return headers;
     } else if (
       element.type === "multipleChoiceMulti" ||
       element.type === "multipleChoiceSingle" ||
@@ -740,13 +747,25 @@ export const getResponsesJson = (
 
       if (element.type === "matrix") {
         // For matrix elements, we need to handle each row separately
+        const regularRows = element.rows.filter((row) => row.id !== "other");
+        const hasOtherRow = element.rows.some((row) => row.id === "other");
+        const knownRowLabels = new Set(regularRows.map((row) => row.label.default));
+
         elementHeadline.forEach((headline, index) => {
           if (answer) {
-            const row = element.rows[index];
-            if (row && row.label.default && answer[row.label.default] !== undefined) {
-              jsonData[idx][headline] = answer[row.label.default];
+            if (hasOtherRow && index === regularRows.length) {
+              // Last column is the "Other" row — find the response key not matching any known row
+              const otherEntry = Object.entries(answer as Record<string, string>).find(
+                ([key]) => !knownRowLabels.has(key)
+              );
+              jsonData[idx][headline] = otherEntry ? `${otherEntry[0]}: ${otherEntry[1]}` : "";
             } else {
-              jsonData[idx][headline] = "";
+              const row = regularRows[index];
+              if (row && row.label.default && answer[row.label.default] !== undefined) {
+                jsonData[idx][headline] = answer[row.label.default];
+              } else {
+                jsonData[idx][headline] = "";
+              }
             }
           }
         });

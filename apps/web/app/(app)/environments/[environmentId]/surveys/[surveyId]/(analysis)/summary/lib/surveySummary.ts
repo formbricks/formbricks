@@ -827,25 +827,51 @@ export const getElementSummary = async (
         break;
       }
       case TSurveyElementTypeEnum.Matrix: {
-        const rows = element.rows.map((row) => getLocalizedValue(row.label, "default"));
+        // Filter out "other" row from regular rows
+        const regularMatrixRows = element.rows.filter((row) => row.id !== "other");
+        const hasOtherRow = element.rows.some((row) => row.id === "other");
+        const rows = regularMatrixRows.map((row) => getLocalizedValue(row.label, "default"));
         const columns = element.columns.map((column) => getLocalizedValue(column.label, "default"));
         let totalResponseCount = 0;
 
+        // Build set of known row labels across all languages for "other" detection
+        const knownRowLabels = new Set<string>();
+        regularMatrixRows.forEach((row) => {
+          Object.values(row.label).forEach((label) => {
+            if (typeof label === "string" && label) knownRowLabels.add(label);
+          });
+        });
+
         // Initialize count object
-        const countMap: Record<string, string> = rows.reduce((acc, row) => {
-          acc[row] = columns.reduce((colAcc, col) => {
-            colAcc[col] = 0;
-            return colAcc;
-          }, {});
-          return acc;
-        }, {});
+        const countMap: Record<string, Record<string, number>> = rows.reduce(
+          (acc: Record<string, Record<string, number>>, row) => {
+            acc[row] = columns.reduce(
+              (colAcc: Record<string, number>, col) => {
+                colAcc[col] = 0;
+                return colAcc;
+              },
+              {} as Record<string, number>
+            );
+            return acc;
+          },
+          {} as Record<string, Record<string, number>>
+        );
+
+        // Initialize "Other" row count map
+        const otherCountMap: Record<string, number> = columns.reduce(
+          (acc: Record<string, number>, col) => {
+            acc[col] = 0;
+            return acc;
+          },
+          {} as Record<string, number>
+        );
 
         responses.forEach((response) => {
           const selectedResponses = response.data[element.id] as Record<string, string>;
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
           if (selectedResponses) {
             totalResponseCount++;
-            element.rows.forEach((row) => {
+            regularMatrixRows.forEach((row) => {
               const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
               const colValue = element.columns.find((column) => {
                 return (
@@ -857,6 +883,21 @@ export const getElementSummary = async (
                 countMap[getLocalizedValue(row.label, "default")][colValueInDefaultLanguage] += 1;
               }
             });
+
+            // Collect "other" responses: any key not matching a known row label
+            if (hasOtherRow) {
+              Object.entries(selectedResponses).forEach(([rowLabel, colLabel]) => {
+                if (!knownRowLabels.has(rowLabel) && colLabel) {
+                  const colValue = element.columns.find((column) => {
+                    return getLocalizedValue(column.label, responseLanguageCode) === colLabel;
+                  });
+                  const colDefault = getLocalizedValue(colValue?.label, "default");
+                  if (colDefault && columns.includes(colDefault)) {
+                    otherCountMap[colDefault] += 1;
+                  }
+                }
+              });
+            }
           }
         });
 
@@ -878,6 +919,32 @@ export const getElementSummary = async (
 
           return { rowLabel: row, columnPercentages, totalResponsesForRow };
         });
+
+        // Append "Other" row summary if present
+        if (hasOtherRow) {
+          let totalOtherResponses = 0;
+          columns.forEach((col) => {
+            totalOtherResponses += otherCountMap[col];
+          });
+
+          if (totalOtherResponses > 0) {
+            const otherColumnPercentages = columns.map((col) => {
+              const count = otherCountMap[col];
+              const percentage =
+                totalOtherResponses > 0 ? ((count / totalOtherResponses) * 100).toFixed(2) : "0.00";
+              return {
+                column: col,
+                percentage: Number(percentage),
+              };
+            });
+
+            matrixSummary.push({
+              rowLabel: getLocalizedValue(element.rows.find((r) => r.id === "other")?.label, "default"),
+              columnPercentages: otherColumnPercentages,
+              totalResponsesForRow: totalOtherResponses,
+            });
+          }
+        }
 
         summary.push({
           type: element.type,

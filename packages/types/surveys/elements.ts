@@ -259,6 +259,7 @@ export const ZSurveyMatrixElement = ZSurveyElementBase.extend({
   rows: z.array(ZSurveyMatrixElementChoice),
   columns: z.array(ZSurveyMatrixElementChoice),
   shuffleOption: ZShuffleOption.optional().default("none"),
+  otherOptionPlaceholder: ZI18nString.optional(),
 });
 
 export type TSurveyMatrixElement = z.infer<typeof ZSurveyMatrixElement>;

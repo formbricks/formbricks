@@ -4,12 +4,12 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
+import { TShuffleOption, TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -49,17 +49,30 @@ export const MatrixElementForm = ({
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
 
+  const hasOtherRow = element.rows.some((row) => row.id === "other");
+  const regularRows = element.rows.filter((row) => row.id !== "other");
+
   const focusItem = (targetIdx: number, type: "row" | "column") => {
     const input = document.querySelector(`input[id="${type}-${targetIdx}"]`) as HTMLInputElement;
     if (input) input.focus();
   };
 
+  // Keep "other" row always last
+  const ensureOtherRowOrder = (rows: TSurveyMatrixElement["rows"]) => {
+    const regular = rows.filter((r) => r.id !== "other");
+    const otherRow = rows.find((r) => r.id === "other");
+    return [...regular, ...(otherRow ? [otherRow] : [])];
+  };
+
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
-      const updatedRows = [...element.rows, { id: createId(), label: createI18nString("", languageCodes) }];
+      const newRow = { id: createId(), label: createI18nString("", languageCodes) };
+      const updatedRows = ensureOtherRowOrder([...element.rows, newRow]);
       updateElement(elementIdx, { rows: updatedRows });
-      setTimeout(() => focusItem(updatedRows.length - 1, type), 0);
+      // Focus the new row (before "other" if present)
+      const newRowIdx = updatedRows.findIndex((r) => r.id === newRow.id);
+      setTimeout(() => focusItem(newRowIdx, type), 0);
     } else {
       const updatedColumns = [
         ...element.columns,
@@ -70,10 +83,39 @@ export const MatrixElementForm = ({
     }
   };
 
+  const addOtherRow = () => {
+    if (hasOtherRow) return;
+
+    const otherRow = {
+      id: "other",
+      label: createI18nString(t("common.other"), languageCodes),
+    };
+
+    const updatedRows = ensureOtherRowOrder([...element.rows, otherRow]);
+
+    updateElement(elementIdx, {
+      rows: updatedRows,
+      ...(element.shuffleOption === "all" && {
+        shuffleOption: "exceptLast" as TShuffleOption,
+      }),
+    });
+  };
+
+  const deleteOtherRow = () => {
+    const updatedRows = element.rows.filter((r) => r.id !== "other");
+    updateElement(elementIdx, { rows: updatedRows, otherOptionPlaceholder: undefined });
+  };
+
   // Function to delete a label input field
   const handleDeleteLabel = (type: "row" | "column", index: number) => {
     const labels = type === "row" ? element.rows : element.columns;
-    if (labels.length <= 2) return; // Prevent deleting below minimum length
+
+    // For rows, minimum of 2 applies to regular rows only
+    if (type === "row") {
+      if (regularRows.length <= 2 && labels[index].id !== "other") return;
+    } else {
+      if (labels.length <= 2) return;
+    }
 
     // check if the label is used in logic
     if (type === "column") {
@@ -87,6 +129,11 @@ export const MatrixElementForm = ({
         return;
       }
     } else {
+      // Handle "other" row deletion
+      if (labels[index].id === "other") {
+        deleteOtherRow();
+        return;
+      }
       const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString(), true);
       if (elementIdx !== -1) {
         toast.error(
@@ -156,6 +203,9 @@ export const MatrixElementForm = ({
 
       if (!active || !over || active.id === over.id) return;
 
+      // Skip drag for "other" row
+      if (type === "row" && (active.id === "other" || over.id === "other")) return;
+
       const items = type === "row" ? [...element.rows] : [...element.columns];
       const activeIndex = items.findIndex((item) => item.id === active.id);
       const overIndex = items.findIndex((item) => item.id === over.id);
@@ -189,6 +239,9 @@ export const MatrixElementForm = ({
     },
   };
   const [parent] = useAutoAnimate();
+
+  // Filter rows for sortable context — only regular rows are sortable
+  const sortableRows = element.rows.filter((row) => row.id !== "other");
 
   return (
     <form>
@@ -251,9 +304,9 @@ export const MatrixElementForm = ({
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
           <div className="mt-2">
             <DndContext id="matrix-rows" onDragEnd={(e) => handleMatrixDragEnd("row", e)}>
-              <SortableContext items={element.rows} strategy={verticalListSortingStrategy}>
+              <SortableContext items={sortableRows} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2" ref={parent}>
-                  {element.rows.map((row, index) => (
+                  {sortableRows.map((row, index) => (
                     <MatrixSortableItem
                       key={row.id}
                       choice={row}
@@ -265,7 +318,7 @@ export const MatrixElementForm = ({
                       updateMatrixLabel={updateMatrixLabel}
                       onDelete={(index) => handleDeleteLabel("row", index)}
                       onKeyDown={(e) => handleKeyDown(e, "row", index)}
-                      canDelete={element.rows.length > 2}
+                      canDelete={regularRows.length > 2}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={
@@ -279,17 +332,43 @@ export const MatrixElementForm = ({
                 </div>
               </SortableContext>
             </DndContext>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-2 w-fit"
-              onClick={(e) => {
-                e.preventDefault();
-                handleAddLabel("row");
-              }}>
-              <PlusIcon />
-              {t("environments.surveys.edit.add_row")}
-            </Button>
+            {/* "Other" row rendered outside SortableContext (non-draggable, always last) */}
+            {hasOtherRow && (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                  {t("common.other")}
+                </div>
+                <button type="button" className="text-slate-400 hover:text-red-500" onClick={deleteOtherRow}>
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-fit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddLabel("row");
+                }}>
+                <PlusIcon />
+                {t("environments.surveys.edit.add_row")}
+              </Button>
+              {!hasOtherRow && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-fit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    addOtherRow();
+                  }}>
+                  <PlusIcon />
+                  {t("environments.surveys.edit.add_other")}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         <div>

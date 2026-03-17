@@ -61,10 +61,12 @@ const handleI18nCheckForMatrixLabels = (
   element: TSurveyMatrixElement,
   languages: TSurveyLanguage[]
 ): boolean => {
-  const rowsAndColumns = [...element.rows, ...element.columns];
+  // Filter out "other" row — its label is system-generated and doesn't need i18n validation
+  const regularRows = element.rows.filter((row) => row.id !== "other");
+  const rowsAndColumns = [...regularRows, ...element.columns];
 
   const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(
-    element.rows.map((row) => row.label),
+    regularRows.map((row) => row.label),
     languages
   );
   const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(
