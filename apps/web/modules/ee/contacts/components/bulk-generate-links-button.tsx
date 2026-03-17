@@ -75,14 +75,19 @@ export const BulkGenerateLinksButton = ({
           return `"${escaped}"`;
         };
 
-        const headers = ["email", "firstName", "lastName", "userId", "personalLink"];
-        const rows = links.map((link) => [
-          link.attributes.email || "",
-          link.attributes.firstName || "",
-          link.attributes.lastName || "",
-          link.attributes.userId || "",
-          link.surveyUrl,
-        ]);
+        const headers = ["email", "firstName", "lastName", "userId", "personalLink", "baseLink"];
+        const rows = links.map((link) => {
+          // baseLink strips query params so mail merge can append ?questionId=value&skipPrefilled=true
+          const baseLink = link.surveyUrl.split("?")[0];
+          return [
+            link.attributes.email || "",
+            link.attributes.firstName || "",
+            link.attributes.lastName || "",
+            link.attributes.userId || "",
+            link.surveyUrl,
+            baseLink,
+          ];
+        });
 
         const csvContent = [
           headers.join(","),
