@@ -10,22 +10,22 @@ info:
 
     **Spec location:** `docs/api-v3-reference/openapi-surveys.yml` (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
-    **workspaceId (today)**  
+    **workspaceId (today)**
     Query param `workspaceId` is the **environment id** (survey container in the DB). The API uses the name *workspace* because the product is moving toward **Workspace** as the default container; until that exists, resolution is implemented in `workspace-context.ts` (single place to change when Environment is deprecated).
 
-    **Auth order**  
+    **Auth order**
     Session is verified **before** query validation. Unauthenticated callers get **401** without `invalid_params` for missing `workspaceId` (no query-shape leakage). With a session, missing/invalid query returns **400**.
 
-    **Pagination**  
+    **Pagination**
     **limit** + **offset** (not cursor). Suited to page-based UIs (page 1/2/3, previous/next). Cursor-based pagination is intentionally **not** offered here (one-directional “next” only); revisit only for a high-volume feed-style endpoint.
 
-    **Security**  
+    **Security**
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. List responses use `private, no-store`.
 
-    **OpenAPI**  
+    **OpenAPI**
     This YAML is **not** produced by `pnpm generate-api-specs` (that script only builds v2 → `docs/api-v2-reference/openapi.yml`). Update this file when the route contract changes.
 
-    **Next steps (out of scope for this spec)**  
+    **Next steps (out of scope for this spec)**
     Additional v3 survey endpoints (single survey, CRUD), frontend cutover from `getSurveysAction`, optional ETag/304, field selection — see Survey-Server-Actions.md Part III.
   version: 0.1.0
   x-implementation-notes:
@@ -39,7 +39,7 @@ paths:
   /api/v3/surveys:
     get:
       operationId: getSurveysV3
-      summary: List surveys (workspace-scoped)
+      summary: List surveys
       description: |
         Returns surveys for the workspace. Requires session cookie.
 
