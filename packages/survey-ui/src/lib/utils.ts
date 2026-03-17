@@ -27,20 +27,19 @@ export function cn(...inputs: ClassValue[]): string {
 export const stripInlineStyles = (html: string): string => {
   if (!html) return html;
 
-  // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
-  // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
-  // `style-src` violations if the input contains style attributes — even though
-  // FORBID_ATTR would remove them afterwards. By stripping them first, the
-  // browser's HTML parser never encounters them.
-  //
-  // ReDoS safety: all quantifiers (\s+, \s*, [^"]*,[^']*) are separated by
-  // fixed literals or are negated character classes — no two can compete over
-  // the same characters, so runtime is O(n). The length cap is defense-in-depth.
-  const MAX_HTML_LENGTH = 100_000;
-  const safeHtml = html.length > MAX_HTML_LENGTH ? html.slice(0, MAX_HTML_LENGTH) : html;
-  const preStripped = safeHtml.replace(/\s+style\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
+  let cleanHtml = html;
 
-  return DOMPurify.sanitize(preStripped, {
+  // In browser environments, pre-strip style attributes using DOMParser.
+  // DOMParser creates an inert document that does NOT trigger CSP violations,
+  // unlike DOMPurify's internal innerHTML which fires style-src violations
+  // at parse time — before FORBID_ATTR can strip them.
+  if (typeof DOMParser !== "undefined") {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    doc.querySelectorAll("[style]").forEach((el) => el.removeAttribute("style"));
+    cleanHtml = doc.body.innerHTML;
+  }
+
+  return DOMPurify.sanitize(cleanHtml, {
     FORBID_ATTR: ["style"],
     ADD_ATTR: ["target"],
     KEEP_CONTENT: true,
