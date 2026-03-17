@@ -9,6 +9,7 @@
     "source": "en",
     "targets": [
       "ar",
+      "cs",
       "da",
       "de",
       "es",
@@ -18,9 +19,12 @@
       "it",
       "ja",
       "nl",
+      "pl",
       "pt",
       "ro",
       "ru",
+      "sk",
+      "sr",
       "sv",
       "uz",
       "zh-Hans"
