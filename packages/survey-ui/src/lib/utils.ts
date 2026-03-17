@@ -32,7 +32,13 @@ export const stripInlineStyles = (html: string): string => {
   // `style-src` violations if the input contains style attributes — even though
   // FORBID_ATTR would remove them afterwards. By stripping them first, the
   // browser's HTML parser never encounters them.
-  const preStripped = html.replace(/\s+style\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
+  //
+  // ReDoS safety: all quantifiers (\s+, \s*, [^"]*,[^']*) are separated by
+  // fixed literals or are negated character classes — no two can compete over
+  // the same characters, so runtime is O(n). The length cap is defense-in-depth.
+  const MAX_HTML_LENGTH = 100_000;
+  const safeHtml = html.length > MAX_HTML_LENGTH ? html.slice(0, MAX_HTML_LENGTH) : html;
+  const preStripped = safeHtml.replace(/\s+style\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
 
   return DOMPurify.sanitize(preStripped, {
     FORBID_ATTR: ["style"],
