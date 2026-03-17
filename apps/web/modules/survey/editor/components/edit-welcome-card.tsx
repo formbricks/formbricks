@@ -126,7 +126,7 @@ export const EditWelcomeCard = ({
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
                 id="welcome-card-image"
-                allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic", "mp4", "mov", "webm"]}
+                allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 environmentId={environmentId}
                 onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                   if (url?.[0]) {
