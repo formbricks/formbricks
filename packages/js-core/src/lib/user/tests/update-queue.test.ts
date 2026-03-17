@@ -218,10 +218,55 @@ describe("UpdateQueue", () => {
     (sendUpdates as Mock).mockRejectedValue(new Error("network error"));
 
     updateQueue.updateUserId(mockUserId1);
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- intentionally swallowing rejection to avoid unhandled promise
     const processPromise = updateQueue.processUpdates().catch(() => {});
 
     const result = await updateQueue.waitForPendingWork();
     expect(result).toBe(false);
     await processPromise;
+  });
+
+  test("waitForPendingWork returns false when flush hangs past timeout", async () => {
+    vi.useFakeTimers();
+
+    // sendUpdates returns a promise that never resolves, simulating a network hang
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- intentionally never-resolving promise
+    (sendUpdates as Mock).mockReturnValue(new Promise(() => {}));
+
+    updateQueue.updateUserId(mockUserId1);
+    void updateQueue.processUpdates();
+
+    const resultPromise = updateQueue.waitForPendingWork();
+
+    // Advance past the debounce delay (500ms) so the handler fires and hangs on sendUpdates
+    await vi.advanceTimersByTimeAsync(500);
+    // Advance past the pending work timeout (5000ms)
+    await vi.advanceTimersByTimeAsync(5000);
+
+    const result = await resultPromise;
+    expect(result).toBe(false);
+
+    vi.useRealTimers();
+  });
+
+  test("processUpdates reuses pending flush instead of creating orphaned promises", async () => {
+    (sendUpdates as Mock).mockReturnValue({
+      ok: true,
+      data: { hasWarnings: false },
+    });
+
+    updateQueue.updateUserId(mockUserId1);
+
+    // First call creates the flush promise
+    const firstPromise = updateQueue.processUpdates();
+
+    // Second call while first is still pending should not create a new flush
+    updateQueue.updateAttributes({ name: mockAttributes.name });
+    const secondPromise = updateQueue.processUpdates();
+
+    // Both promises should resolve (second is not orphaned)
+    await Promise.all([firstPromise, secondPromise]);
+
+    expect(updateQueue.hasPendingWork()).toBe(false);
   });
 });

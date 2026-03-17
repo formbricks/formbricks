@@ -10,6 +10,7 @@ export class UpdateQueue {
   private debounceTimeout: NodeJS.Timeout | null = null;
   private pendingFlush: Promise<void> | null = null;
   private readonly DEBOUNCE_DELAY = 500;
+  private readonly PENDING_WORK_TIMEOUT = 5000;
 
   private constructor() {}
 
@@ -73,8 +74,13 @@ export class UpdateQueue {
 
     const flush = this.pendingFlush ?? this.processUpdates();
     try {
-      await flush;
-      return true;
+      const succeeded = await Promise.race([
+        flush.then(() => true as const),
+        new Promise<false>((resolve) => {
+          setTimeout(() => resolve(false), this.PENDING_WORK_TIMEOUT);
+        }),
+      ]);
+      return succeeded;
     } catch {
       return false;
     }
@@ -84,6 +90,11 @@ export class UpdateQueue {
     const logger = Logger.getInstance();
     if (!this.updates) {
       return;
+    }
+
+    // If a flush is already in flight, reuse it instead of creating a new promise
+    if (this.pendingFlush) {
+      return this.pendingFlush;
     }
 
     if (this.debounceTimeout) {
