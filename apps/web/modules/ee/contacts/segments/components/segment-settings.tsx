@@ -75,7 +75,6 @@ export function SegmentSettings({
     try {
       setIsUpdatingSegment(true);
       const data = await updateSegmentAction({
-        environmentId,
         segmentId: segment.id,
         data: {
           title: segment.title,

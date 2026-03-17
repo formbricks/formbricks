@@ -85,7 +85,6 @@ export const QuotasCard = ({
     setIsDeletingQuota(true);
     const deleteQuotaActionResult = await deleteQuotaAction({
       quotaId: quotaId,
-      surveyId: localSurvey.id,
     });
     if (deleteQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_deleted_successfull_toast"));

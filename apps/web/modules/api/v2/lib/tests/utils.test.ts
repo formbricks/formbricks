@@ -217,7 +217,7 @@ describe("utils", () => {
   });
 
   describe("logApiError", () => {
-    test("logs API error details", () => {
+    test("logs API error details with method and path", () => {
       // Mock the withContext method and its returned error method
       const errorMock = vi.fn();
       const withContextMock = vi.fn().mockReturnValue({
@@ -228,7 +228,7 @@ describe("utils", () => {
       const originalWithContext = logger.withContext;
       logger.withContext = withContextMock;
 
-      const mockRequest = new Request("http://localhost/api/test");
+      const mockRequest = new Request("http://localhost/api/v2/management/surveys", { method: "POST" });
       mockRequest.headers.set("x-request-id", "123");
 
       const error: ApiErrorResponseV2 = {
@@ -238,9 +238,11 @@ describe("utils", () => {
 
       logApiError(mockRequest, error);
 
-      // Verify withContext was called with the expected context
+      // Verify withContext was called with the expected context including method and path
       expect(withContextMock).toHaveBeenCalledWith({
         correlationId: "123",
+        method: "POST",
+        path: "/api/v2/management/surveys",
         error,
       });
 
@@ -275,6 +277,8 @@ describe("utils", () => {
       // Verify withContext was called with the expected context
       expect(withContextMock).toHaveBeenCalledWith({
         correlationId: "",
+        method: "GET",
+        path: "/api/test",
         error,
       });
 
@@ -285,7 +289,7 @@ describe("utils", () => {
       logger.withContext = originalWithContext;
     });
 
-    test("log API error details with SENTRY_DSN set", () => {
+    test("log API error details with SENTRY_DSN set includes method and path tags", () => {
       // Mock the withContext method and its returned error method
       const errorMock = vi.fn();
       const withContextMock = vi.fn().mockReturnValue({
@@ -295,11 +299,23 @@ describe("utils", () => {
       // Mock Sentry's captureException method
       vi.mocked(Sentry.captureException).mockImplementation((() => {}) as any);
 
+      // Capture the scope mock for tag verification
+      const scopeSetTagMock = vi.fn();
+      vi.mocked(Sentry.withScope).mockImplementation((callback: (scope: any) => void) => {
+        const mockScope = {
+          setTag: scopeSetTagMock,
+          setContext: vi.fn(),
+          setLevel: vi.fn(),
+          setExtra: vi.fn(),
+        };
+        callback(mockScope);
+      });
+
       // Replace the original withContext with our mock
       const originalWithContext = logger.withContext;
       logger.withContext = withContextMock;
 
-      const mockRequest = new Request("http://localhost/api/test");
+      const mockRequest = new Request("http://localhost/api/v2/management/surveys", { method: "DELETE" });
       mockRequest.headers.set("x-request-id", "123");
 
       const error: ApiErrorResponseV2 = {
@@ -309,17 +325,57 @@ describe("utils", () => {
 
       logApiError(mockRequest, error);
 
-      // Verify withContext was called with the expected context
+      // Verify withContext was called with the expected context including method and path
       expect(withContextMock).toHaveBeenCalledWith({
         correlationId: "123",
+        method: "DELETE",
+        path: "/api/v2/management/surveys",
         error,
       });
 
       // Verify error was called on the child logger
       expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
+      // Verify Sentry scope tags include method and path
+      expect(scopeSetTagMock).toHaveBeenCalledWith("correlationId", "123");
+      expect(scopeSetTagMock).toHaveBeenCalledWith("method", "DELETE");
+      expect(scopeSetTagMock).toHaveBeenCalledWith("path", "/api/v2/management/surveys");
+
       // Verify Sentry.captureException was called
       expect(Sentry.captureException).toHaveBeenCalled();
+
+      // Restore the original method
+      logger.withContext = originalWithContext;
+    });
+
+    test("does not send to Sentry for non-internal_server_error types", () => {
+      // Mock the withContext method and its returned error method
+      const errorMock = vi.fn();
+      const withContextMock = vi.fn().mockReturnValue({
+        error: errorMock,
+      });
+
+      vi.mocked(Sentry.captureException).mockClear();
+
+      // Replace the original withContext with our mock
+      const originalWithContext = logger.withContext;
+      logger.withContext = withContextMock;
+
+      const mockRequest = new Request("http://localhost/api/v2/management/surveys");
+      mockRequest.headers.set("x-request-id", "456");
+
+      const error: ApiErrorResponseV2 = {
+        type: "not_found",
+        details: [{ field: "survey", issue: "not found" }],
+      };
+
+      logApiError(mockRequest, error);
+
+      // Verify Sentry.captureException was NOT called for non-500 errors
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+
+      // But structured logging should still happen
+      expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
       // Restore the original method
       logger.withContext = originalWithContext;
