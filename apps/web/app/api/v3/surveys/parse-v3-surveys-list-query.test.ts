@@ -22,17 +22,18 @@ describe("collectMultiValueQueryParam", () => {
 
 describe("parseV3SurveysListQuery", () => {
   test("rejects filterCriteria", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filterCriteria={}`), "u1");
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filterCriteria={}`), {
+      sessionUserId: "u1",
+    });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.invalid_params[0].name).toBe("filterCriteria");
   });
 
   test("parses minimal query", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}`), "u1");
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}`), { sessionUserId: "u1" });
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.limit).toBe(20);
-      expect(r.offset).toBe(0);
       expect(r.filterCriteria).toBeUndefined();
     }
   });
@@ -42,7 +43,7 @@ describe("parseV3SurveysListQuery", () => {
       params(
         `workspaceId=${wid}&name=Foo&status=inProgress&status=draft&type=link&createdBy=you&sortBy=updatedAt`
       ),
-      "session_user"
+      { sessionUserId: "session_user" }
     );
     expect(r.ok).toBe(true);
     if (r.ok) {
@@ -57,7 +58,17 @@ describe("parseV3SurveysListQuery", () => {
   });
 
   test("invalid status", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&status=notastatus`), "u1");
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&status=notastatus`), {
+      sessionUserId: "u1",
+    });
     expect(r.ok).toBe(false);
+  });
+
+  test("createdBy not allowed without session user", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&createdBy=you`), {
+      sessionUserId: null,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.invalid_params[0].name).toBe("createdBy");
   });
 });

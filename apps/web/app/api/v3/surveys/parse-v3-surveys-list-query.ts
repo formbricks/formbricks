@@ -55,23 +55,29 @@ export type TV3SurveysListQueryParseResult =
 
 function buildFilterCriteria(
   q: TV3SurveysListQuery,
-  sessionUserId: string
+  sessionUserId: string | null
 ): TSurveyFilterCriteria | undefined {
   const f: TSurveyFilterCriteria = {};
   if (q.name) f.name = q.name;
   if (q.status?.length) f.status = q.status;
   if (q.type?.length) f.type = q.type;
-  if (q.createdBy?.length) {
+  if (q.createdBy?.length && sessionUserId) {
     f.createdBy = { userId: sessionUserId, value: q.createdBy };
   }
   if (q.sortBy) f.sortBy = q.sortBy;
   return Object.keys(f).length > 0 ? f : undefined;
 }
 
+export type TV3SurveysListQueryParseOptions = {
+  sessionUserId: string | null;
+};
+
 export function parseV3SurveysListQuery(
   searchParams: URLSearchParams,
-  sessionUserId: string
+  options: TV3SurveysListQueryParseOptions
 ): TV3SurveysListQueryParseResult {
+  const { sessionUserId } = options;
+
   if (searchParams.has("filterCriteria")) {
     return {
       ok: false,
@@ -88,6 +94,18 @@ export function parseV3SurveysListQuery(
   const statusVals = collectMultiValueQueryParam(searchParams, "status");
   const typeVals = collectMultiValueQueryParam(searchParams, "type");
   const createdByVals = collectMultiValueQueryParam(searchParams, "createdBy");
+
+  if (createdByVals.length > 0 && sessionUserId === null) {
+    return {
+      ok: false,
+      invalid_params: [
+        {
+          name: "createdBy",
+          reason: "The createdBy filter is only supported with session authentication (not API keys).",
+        },
+      ],
+    };
+  }
 
   const raw = {
     workspaceId: searchParams.get("workspaceId"),

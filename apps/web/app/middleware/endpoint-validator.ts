@@ -22,9 +22,9 @@ export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; i
 export const isManagementApiRoute = (
   url: string
 ): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
-  // V3 session API (browser app): surveys and future routes under /api/v3/surveys/...
+  // V3 surveys: session cookie or x-api-key (same pattern as management storage)
   if (/^\/api\/v3\/surveys(?:\/|$)/.test(url))
-    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Session };
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
   if (url.includes("/api/v1/management/storage"))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
   if (url.includes("/api/v1/webhooks"))

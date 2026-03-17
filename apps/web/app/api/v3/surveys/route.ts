@@ -1,10 +1,10 @@
 /**
  * GET /api/v3/surveys — list surveys for a workspace.
- * Session auth; scope by workspaceId only (no environmentId in the API).
+ * Session cookie or x-api-key; scope by workspaceId only.
  */
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   problem400,
   problem401,
@@ -27,13 +27,15 @@ export const GET = withV1ApiWrapper({
     const instance = new URL(req.url).pathname;
 
     try {
-      if (!authentication || !("user" in authentication) || !authentication.user?.id) {
+      if (!authentication) {
         return { response: problem401(requestId, "Not authenticated", instance) };
       }
-      const sessionUserId = authentication.user.id;
+
+      const sessionUserId =
+        "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
       const searchParams = new URL(req.url).searchParams;
-      const parsed = parseV3SurveysListQuery(searchParams, sessionUserId);
+      const parsed = parseV3SurveysListQuery(searchParams, { sessionUserId });
       if (!parsed.ok) {
         log.warn({ statusCode: 400, invalidParams: parsed.invalid_params }, "Validation failed");
         return {
@@ -44,7 +46,7 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const authResult = await requireSessionWorkspaceAccess(
+      const authResult = await requireV3WorkspaceAccess(
         authentication,
         parsed.workspaceId,
         "read",

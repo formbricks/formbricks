@@ -1,15 +1,24 @@
 /**
- * V3 app API session auth — require session + workspace access.
- * workspaceId is resolved via workspace-context (today: workspaceId = environmentId).
- * No environmentId in the API contract; callers only pass workspaceId.
+ * V3 API auth — session (browser) or API key with environment-scoped access.
  */
+import { ApiKeyPermission } from "@prisma/client";
 import { logger } from "@formbricks/logger";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TApiV1Authentication } from "@/app/lib/api/with-api-logging";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import type { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { problem401, problem403 } from "./response";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
+
+/** read/write/manage on an API key env all allow read-only list operations. */
+function apiKeyPermissionAllowsList(permission: ApiKeyPermission): boolean {
+  return (
+    permission === ApiKeyPermission.read ||
+    permission === ApiKeyPermission.write ||
+    permission === ApiKeyPermission.manage
+  );
+}
 
 /**
  * Require session and workspace access. workspaceId is resolved via the V3 workspace-context layer.
@@ -62,4 +71,42 @@ export async function requireSessionWorkspaceAccess(
     }
     throw err;
   }
+}
+
+/**
+ * Session or API key: authorize `workspaceId` for survey list (read).
+ * API keys must list the workspace environment with read-equivalent permission.
+ */
+export async function requireV3WorkspaceAccess(
+  authentication: TApiV1Authentication,
+  workspaceId: string,
+  minPermission: TTeamPermission,
+  requestId: string,
+  instance?: string
+): Promise<Response | V3WorkspaceContext> {
+  if (!authentication) {
+    return problem401(requestId, "Not authenticated", instance);
+  }
+
+  if ("user" in authentication && authentication.user?.id) {
+    return requireSessionWorkspaceAccess(authentication, workspaceId, minPermission, requestId, instance);
+  }
+
+  const keyAuth = authentication as TAuthenticationApiKey;
+  if (keyAuth.apiKeyId && Array.isArray(keyAuth.environmentPermissions)) {
+    const perm = keyAuth.environmentPermissions.find((e) => e.environmentId === workspaceId);
+    if (!perm || !apiKeyPermissionAllowsList(perm.permission)) {
+      logger
+        .withContext({ requestId, workspaceId })
+        .warn({ statusCode: 403 }, "API key not allowed for workspace");
+      return problem403(requestId, "You are not authorized to access this resource", instance);
+    }
+    return {
+      environmentId: workspaceId,
+      projectId: perm.projectId,
+      organizationId: keyAuth.organizationId,
+    };
+  }
+
+  return problem401(requestId, "Not authenticated", instance);
 }
