@@ -77,7 +77,9 @@ export class UpdateQueue {
       const succeeded = await Promise.race([
         flush.then(() => true as const),
         new Promise<false>((resolve) => {
-          setTimeout(() => resolve(false), this.PENDING_WORK_TIMEOUT);
+          setTimeout(() => {
+            resolve(false);
+          }, this.PENDING_WORK_TIMEOUT);
         }),
       ]);
       return succeeded;
