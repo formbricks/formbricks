@@ -1,9 +1,19 @@
+import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { getEnvironment } from "@/lib/utils/services";
-import { requireSessionWorkspaceAccess } from "./auth";
+import { requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    withContext: vi.fn(() => ({
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
+}));
 
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromProjectId: vi.fn(),
@@ -121,5 +131,116 @@ describe("requireSessionWorkspaceAccess", () => {
         { type: "projectTeam", projectId: "proj_abc", minPermission: "readWrite" },
       ],
     });
+  });
+});
+
+const keyBase = {
+  type: "apiKey" as const,
+  apiKeyId: "key_1",
+  organizationId: "org_k",
+  organizationAccess: { accessControl: { read: true, write: false } },
+};
+
+function envPerm(environmentId: string, permission: ApiKeyPermission = ApiKeyPermission.read) {
+  return {
+    environmentId,
+    environmentType: EnvironmentType.development,
+    projectId: "proj_k",
+    projectName: "K",
+    permission,
+  };
+}
+
+describe("requireV3WorkspaceAccess", () => {
+  test("401 when authentication is null", async () => {
+    const r = await requireV3WorkspaceAccess(null, "env_x", "read", requestId);
+    expect((r as Response).status).toBe(401);
+  });
+
+  test("delegates to session flow when user is present", async () => {
+    vi.mocked(getEnvironment).mockResolvedValueOnce({
+      id: "env_s",
+      projectId: "proj_s",
+    } as any);
+    vi.mocked(getOrganizationIdFromProjectId).mockResolvedValueOnce("org_s");
+    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(undefined as any);
+    const r = await requireV3WorkspaceAccess(
+      { user: { id: "user_1" }, expires: "" } as any,
+      "env_s",
+      "read",
+      requestId
+    );
+    expect(r).toEqual({
+      environmentId: "env_s",
+      projectId: "proj_s",
+      organizationId: "org_s",
+    });
+  });
+
+  test("returns context for API key with read on workspace", async () => {
+    const auth = {
+      ...keyBase,
+      environmentPermissions: [envPerm("ws_a", ApiKeyPermission.read)],
+    };
+    const r = await requireV3WorkspaceAccess(auth as any, "ws_a", "read", requestId);
+    expect(r).toEqual({
+      environmentId: "ws_a",
+      projectId: "proj_k",
+      organizationId: "org_k",
+    });
+  });
+
+  test("returns context for API key with write on workspace", async () => {
+    const auth = {
+      ...keyBase,
+      environmentPermissions: [envPerm("ws_b", ApiKeyPermission.write)],
+    };
+    const r = await requireV3WorkspaceAccess(auth as any, "ws_b", "read", requestId);
+    expect(r).toEqual({
+      environmentId: "ws_b",
+      projectId: "proj_k",
+      organizationId: "org_k",
+    });
+  });
+
+  test("403 when API key has no matching environment", async () => {
+    const auth = {
+      ...keyBase,
+      environmentPermissions: [envPerm("other_env")],
+    };
+    const r = await requireV3WorkspaceAccess(auth as any, "wanted", "read", requestId);
+    expect((r as Response).status).toBe(403);
+  });
+
+  test("403 when API key permission is not list-eligible (runtime value)", async () => {
+    const auth = {
+      ...keyBase,
+      environmentPermissions: [
+        {
+          ...envPerm("ws_c"),
+          permission: "invalid" as unknown as ApiKeyPermission,
+        },
+      ],
+    };
+    const r = await requireV3WorkspaceAccess(auth as any, "ws_c", "read", requestId);
+    expect((r as Response).status).toBe(403);
+  });
+
+  test("returns context for API key with manage on workspace", async () => {
+    const auth = {
+      ...keyBase,
+      environmentPermissions: [envPerm("ws_m", ApiKeyPermission.manage)],
+    };
+    const r = await requireV3WorkspaceAccess(auth as any, "ws_m", "read", requestId);
+    expect(r).toEqual({
+      environmentId: "ws_m",
+      projectId: "proj_k",
+      organizationId: "org_k",
+    });
+  });
+
+  test("401 when auth is neither session nor valid API key payload", async () => {
+    const r = await requireV3WorkspaceAccess({ user: {} } as any, "env", "read", requestId);
+    expect((r as Response).status).toBe(401);
   });
 });

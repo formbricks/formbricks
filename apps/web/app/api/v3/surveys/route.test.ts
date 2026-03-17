@@ -1,6 +1,7 @@
 import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { getSurveyCount, getSurveys } from "@/modules/survey/list/lib/survey";
 import { GET } from "./route";
@@ -303,5 +304,32 @@ describe("GET /api/v3/surveys", () => {
     expect(body.data[0]).not.toHaveProperty("blocks");
     expect(body.data[0]).not.toHaveProperty("singleUse");
     expect(body.data[0].id).toBe("s1");
+  });
+
+  test("returns 403 when getSurveys throws ResourceNotFoundError", async () => {
+    vi.mocked(getSurveys).mockRejectedValueOnce(new ResourceNotFoundError("survey", "s1"));
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-nf");
+    const res = await GET(req, {} as any);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.code).toBe("forbidden");
+  });
+
+  test("returns 500 when getSurveys throws DatabaseError", async () => {
+    vi.mocked(getSurveys).mockRejectedValueOnce(new DatabaseError("db down"));
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-db");
+    const res = await GET(req, {} as any);
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.code).toBe("internal_server_error");
+  });
+
+  test("returns 500 on unexpected error from getSurveys", async () => {
+    vi.mocked(getSurveys).mockRejectedValueOnce(new Error("boom"));
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-err");
+    const res = await GET(req, {} as any);
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.code).toBe("internal_server_error");
   });
 });
