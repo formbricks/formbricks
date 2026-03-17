@@ -27,19 +27,14 @@ export function cn(...inputs: ClassValue[]): string {
 export const stripInlineStyles = (html: string): string => {
   if (!html) return html;
 
-  let cleanHtml = html;
+  // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
+  // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
+  // `style-src` violations at parse time — before FORBID_ATTR can strip them.
+  // The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by
+  // fixed quote delimiters, so no backtracking can occur.
+  const preStripped = html.replace(/ style="[^"]*"| style='[^']*'/gi, "");
 
-  // In browser environments, pre-strip style attributes using DOMParser.
-  // DOMParser creates an inert document that does NOT trigger CSP violations,
-  // unlike DOMPurify's internal innerHTML which fires style-src violations
-  // at parse time — before FORBID_ATTR can strip them.
-  if (typeof DOMParser !== "undefined") {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    doc.querySelectorAll("[style]").forEach((el) => el.removeAttribute("style"));
-    cleanHtml = doc.body.innerHTML;
-  }
-
-  return DOMPurify.sanitize(cleanHtml, {
+  return DOMPurify.sanitize(preStripped, {
     FORBID_ATTR: ["style"],
     ADD_ATTR: ["target"],
     KEEP_CONTENT: true,
