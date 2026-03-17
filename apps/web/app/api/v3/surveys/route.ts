@@ -6,10 +6,10 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
-  problem400,
-  problem401,
-  problem403,
-  problem500,
+  problemBadRequest,
+  problemForbidden,
+  problemInternalError,
+  problemUnauthorized,
   successListResponse,
 } from "@/app/api/v3/lib/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -19,7 +19,7 @@ import { parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
 export const GET = withV1ApiWrapper({
   unauthenticatedResponse: (req) => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
-    return problem401(requestId, "Not authenticated", req.nextUrl.pathname);
+    return problemUnauthorized(requestId, "Not authenticated", req.nextUrl.pathname);
   },
   handler: async ({ req, authentication }) => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
@@ -28,7 +28,7 @@ export const GET = withV1ApiWrapper({
 
     try {
       if (!authentication) {
-        return { response: problem401(requestId, "Not authenticated", instance) };
+        return { response: problemUnauthorized(requestId, "Not authenticated", instance) };
       }
 
       const sessionUserId =
@@ -39,7 +39,7 @@ export const GET = withV1ApiWrapper({
       if (!parsed.ok) {
         log.warn({ statusCode: 400, invalidParams: parsed.invalid_params }, "Validation failed");
         return {
-          response: problem400(requestId, "Invalid query parameters", {
+          response: problemBadRequest(requestId, "Invalid query parameters", {
             invalid_params: parsed.invalid_params,
             instance,
           }),
@@ -79,15 +79,15 @@ export const GET = withV1ApiWrapper({
       if (err instanceof ResourceNotFoundError) {
         log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
         return {
-          response: problem403(requestId, "You are not authorized to access this resource", instance),
+          response: problemForbidden(requestId, "You are not authorized to access this resource", instance),
         };
       }
       if (err instanceof DatabaseError) {
         log.error({ error: err, statusCode: 500 }, "Database error");
-        return { response: problem500(requestId, "An unexpected error occurred.", instance) };
+        return { response: problemInternalError(requestId, "An unexpected error occurred.", instance) };
       }
       log.error({ error: err, statusCode: 500 }, "V3 surveys list unexpected error");
-      return { response: problem500(requestId, "An unexpected error occurred.", instance) };
+      return { response: problemInternalError(requestId, "An unexpected error occurred.", instance) };
     }
   },
 });

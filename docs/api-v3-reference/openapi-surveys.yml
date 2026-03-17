@@ -224,7 +224,7 @@ components:
             isEncrypted: { type: boolean }
     Problem:
       type: object
-      description: RFC 9457-style body from `problem400` / `problem401` / `problem403` / `problem500` (always includes `code` in practice)
+      description: RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses typically include a machine-readable `code` field alongside `title`, `status`, `detail`, and `requestId`.
       required: [title, status, detail, requestId]
       properties:
         type: { type: string, format: uri }

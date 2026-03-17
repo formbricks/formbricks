@@ -8,7 +8,7 @@ import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/err
 import type { TApiV1Authentication } from "@/app/lib/api/with-api-logging";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import type { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { problem401, problem403 } from "./response";
+import { problemForbidden, problemUnauthorized } from "./response";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
 
 /** read/write/manage on an API key env all allow read-only list operations. */
@@ -35,10 +35,10 @@ export async function requireSessionWorkspaceAccess(
 ): Promise<Response | V3WorkspaceContext> {
   // --- Session checks ---
   if (!authentication) {
-    return problem401(requestId, "Not authenticated", instance);
+    return problemUnauthorized(requestId, "Not authenticated", instance);
   }
   if (!("user" in authentication) || !authentication.user?.id) {
-    return problem401(requestId, "Session required", instance);
+    return problemUnauthorized(requestId, "Session required", instance);
   }
 
   const userId = authentication.user.id;
@@ -63,11 +63,11 @@ export async function requireSessionWorkspaceAccess(
     if (err instanceof ResourceNotFoundError) {
       // Return 403 (not 404) so we don't leak whether the workspace exists to unauthenticated or unauthorized callers.
       log.warn({ statusCode: 403, errorCode: err.name }, "Workspace not found");
-      return problem403(requestId, "You are not authorized to access this resource", instance);
+      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
     }
     if (err instanceof AuthorizationError) {
       log.warn({ statusCode: 403, errorCode: err.name }, "Forbidden");
-      return problem403(requestId, "You are not authorized to access this resource", instance);
+      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
     }
     throw err;
   }
@@ -85,7 +85,7 @@ export async function requireV3WorkspaceAccess(
   instance?: string
 ): Promise<Response | V3WorkspaceContext> {
   if (!authentication) {
-    return problem401(requestId, "Not authenticated", instance);
+    return problemUnauthorized(requestId, "Not authenticated", instance);
   }
 
   if ("user" in authentication && authentication.user?.id) {
@@ -99,7 +99,7 @@ export async function requireV3WorkspaceAccess(
       logger
         .withContext({ requestId, workspaceId })
         .warn({ statusCode: 403 }, "API key not allowed for workspace");
-      return problem403(requestId, "You are not authorized to access this resource", instance);
+      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
     }
     return {
       environmentId: workspaceId,
@@ -108,5 +108,5 @@ export async function requireV3WorkspaceAccess(
     };
   }
 
-  return problem401(requestId, "Not authenticated", instance);
+  return problemUnauthorized(requestId, "Not authenticated", instance);
 }

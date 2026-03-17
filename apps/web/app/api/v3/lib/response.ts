@@ -56,7 +56,7 @@ function problemResponse(
   return Response.json(body, { status, headers });
 }
 
-export function problem400(
+export function problemBadRequest(
   requestId: string,
   detail: string,
   options?: { invalid_params?: Array<{ name: string; reason: string }>; instance?: string }
@@ -68,7 +68,7 @@ export function problem400(
   });
 }
 
-export function problem401(
+export function problemUnauthorized(
   requestId: string,
   detail: string = "Not authenticated",
   instance?: string
@@ -79,7 +79,7 @@ export function problem401(
   });
 }
 
-export function problem403(
+export function problemForbidden(
   requestId: string,
   detail: string = "You are not authorized to access this resource",
   instance?: string
@@ -93,9 +93,9 @@ export function problem403(
 /**
  * 404 with resource details. Do not use for auth-sensitive or existence-sensitive resources:
  * the body includes resource_type and resource_id, which can leak existence to unauthenticated or unauthorized callers.
- * Prefer problem403 with a generic message for those cases.
+ * Prefer problemForbidden with a generic message for those cases.
  */
-export function problem404(
+export function problemNotFound(
   requestId: string,
   resourceType: string,
   resourceId: string | null,
@@ -108,7 +108,7 @@ export function problem404(
   });
 }
 
-export function problem500(
+export function problemInternalError(
   requestId: string,
   detail: string = "An unexpected error occurred.",
   instance?: string
@@ -119,7 +119,7 @@ export function problem500(
   });
 }
 
-export function problem429(requestId: string, detail: string, retryAfter?: number): Response {
+export function problemTooManyRequests(requestId: string, detail: string, retryAfter?: number): Response {
   const headers: Record<string, string> = {};
   if (retryAfter !== undefined) {
     headers["Retry-After"] = String(retryAfter);
