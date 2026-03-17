@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitize } from "isomorphic-dompurify";
 import { extendTailwindMerge } from "tailwind-merge";
 
 const twMerge = extendTailwindMerge({
@@ -34,7 +34,7 @@ export const stripInlineStyles = (html: string): string => {
   // fixed quote delimiters, so no backtracking can occur.
   const preStripped = html.replaceAll(/ style="[^"]*"| style='[^']*'/gi, "");
 
-  return DOMPurify.sanitize(preStripped, {
+  return sanitize(preStripped, {
     FORBID_ATTR: ["style"],
     ADD_ATTR: ["target"],
     KEEP_CONTENT: true,
