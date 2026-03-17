@@ -142,8 +142,17 @@ export function BlockConditional({
           if (autoSubmitTimeoutRef.current) {
             clearTimeout(autoSubmitTimeoutRef.current);
           }
+          // Build block responses now from mergedData to avoid stale closure on `value`
+          const blockResponses: TResponseData = {};
+          block.elements.forEach((el) => {
+            const val = el.id === elementId ? responseData[el.id] : mergedData[el.id];
+            if (val !== undefined) {
+              blockResponses[el.id] = val;
+            }
+          });
           autoSubmitTimeoutRef.current = setTimeout(() => {
-            handleBlockSubmit();
+            const blockTtc = collectTtcValues();
+            onSubmit(blockResponses, blockTtc);
           }, 600);
         }
       }
