@@ -38,7 +38,9 @@ vi.mock("@formbricks/logger", () => ({
 
 const getServerSession = vi.mocked((await import("next-auth")).getServerSession);
 
+/** Query param (workspace id in API); distinct from resolved DB environment id. */
 const validWorkspaceId = "clxx1234567890123456789012";
+const resolvedEnvironmentId = "clzz9876543210987654321098";
 
 function createRequest(url: string, requestId?: string): NextRequest {
   const headers: Record<string, string> = {};
@@ -54,7 +56,7 @@ describe("GET /api/v3/surveys", () => {
       expires: "2026-01-01",
     } as any);
     vi.mocked(requireSessionWorkspaceAccess).mockResolvedValue({
-      environmentId: validWorkspaceId,
+      environmentId: resolvedEnvironmentId,
       projectId: "proj_1",
       organizationId: "org_1",
     });
@@ -66,11 +68,12 @@ describe("GET /api/v3/surveys", () => {
     vi.clearAllMocks();
   });
 
-  test("returns 401 when no session", async () => {
+  test("returns 401 when no session (RFC 9457, handler not run)", async () => {
     getServerSession.mockResolvedValue(null);
     const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(401);
+    expect(res.headers.get("Content-Type")).toBe("application/problem+json");
     expect(requireSessionWorkspaceAccess).not.toHaveBeenCalled();
   });
 
@@ -93,7 +96,8 @@ describe("GET /api/v3/surveys", () => {
       "req-456",
       "/api/v3/surveys"
     );
-    expect(getSurveys).toHaveBeenCalledWith(validWorkspaceId, 20, 0, undefined);
+    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, undefined);
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
   });
 
   test("returns 400 when workspaceId is missing", async () => {
@@ -134,8 +138,8 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.meta).toEqual({ limit: 10, offset: 5, total: 42 });
-    expect(getSurveys).toHaveBeenCalledWith(validWorkspaceId, 10, 5, undefined);
-    expect(getSurveyCount).toHaveBeenCalledWith(validWorkspaceId, undefined);
+    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 10, 5, undefined);
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
   });
 
   test("passes filterCriteria to getSurveys and getSurveyCount so total matches filter", async () => {
@@ -149,8 +153,28 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.meta.total).toBe(7);
-    expect(getSurveys).toHaveBeenCalledWith(validWorkspaceId, 20, 0, filterCriteria);
-    expect(getSurveyCount).toHaveBeenCalledWith(validWorkspaceId, filterCriteria);
+    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, filterCriteria);
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, filterCriteria);
+  });
+
+  test("overrides createdBy.userId with session user so clients cannot spoof creator filter", async () => {
+    const clientSent = {
+      createdBy: { userId: "attacker_id", value: ["you" as const] },
+      sortBy: "updatedAt" as const,
+    };
+    const expectedForDb = {
+      createdBy: { userId: "user_1", value: ["you" as const] },
+      sortBy: "updatedAt" as const,
+    };
+    vi.mocked(getSurveys).mockResolvedValue([]);
+    vi.mocked(getSurveyCount).mockResolvedValue(1);
+    const req = createRequest(
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filterCriteria=${encodeURIComponent(JSON.stringify(clientSent))}`
+    );
+    const res = await GET(req, {} as any);
+    expect(res.status).toBe(200);
+    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, expectedForDb);
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, expectedForDb);
   });
 
   test("returns 403 when auth helper returns 403", async () => {

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { type TSurveyFilterCriteria, ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   problem400,
@@ -30,7 +30,7 @@ const ZQuery = z.object({
 });
 
 /** Parse optional JSON filterCriteria from query; invalid JSON is treated as missing. */
-function parseFilterCriteria(value: string | undefined): z.infer<typeof ZSurveyFilterCriteria> | undefined {
+function parseFilterCriteria(value: string | undefined): TSurveyFilterCriteria | undefined {
   if (!value) return undefined;
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -41,80 +41,96 @@ function parseFilterCriteria(value: string | undefined): z.infer<typeof ZSurveyF
   }
 }
 
+function applySessionToCreatedByFilter(
+  criteria: TSurveyFilterCriteria | undefined,
+  sessionUserId: string
+): TSurveyFilterCriteria | undefined {
+  if (!criteria?.createdBy) return criteria;
+  return {
+    ...criteria,
+    createdBy: {
+      ...criteria.createdBy,
+      userId: sessionUserId,
+    },
+  };
+}
+
 export const GET = withV1ApiWrapper({
+  unauthenticatedResponse: (req) => {
+    const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+    return problem401(requestId, "Not authenticated", req.nextUrl.pathname);
+  },
   handler: async ({ req, authentication }) => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
     const log = logger.withContext({ requestId });
-    // Instance for problem responses; path only, we do not read query until after auth.
     const instance = new URL(req.url).pathname;
 
-    // --- Auth first (security): never read or validate query params before confirming session.
-    // Unauthenticated requests must get 401 without leaking anything about the request (e.g. missing workspaceId).
-    if (!authentication || !("user" in authentication) || !authentication.user?.id) {
-      return { response: problem401(requestId, "Not authenticated", instance) };
-    }
-
-    // --- Parse and validate query (only after auth) ---
-    const searchParams = new URL(req.url).searchParams;
-    const workspaceId = searchParams.get("workspaceId");
-    const limitParam = searchParams.get("limit");
-    const offsetParam = searchParams.get("offset");
-    const filterCriteriaParam = searchParams.get("filterCriteria");
-
-    const queryResult = ZQuery.safeParse({
-      workspaceId,
-      limit: limitParam ?? undefined,
-      offset: offsetParam ?? undefined,
-      filterCriteria: filterCriteriaParam ?? undefined,
-    });
-
-    if (!queryResult.success) {
-      const invalidParams = queryResult.error.issues.map((issue) => ({
-        name: issue.path.join(".") || "query",
-        reason: issue.message,
-      }));
-      log.warn({ statusCode: 400, invalidParams }, "Validation failed");
-      const res = problem400(requestId, "Invalid query parameters", {
-        invalid_params: invalidParams,
-        instance,
-      });
-      return { response: res };
-    }
-
-    const filterCriteria = parseFilterCriteria(queryResult.data.filterCriteria);
-    // Client sent filterCriteria but it was invalid JSON or didn't match schema → 400
-    if (
-      filterCriteriaParam !== null &&
-      filterCriteriaParam !== undefined &&
-      filterCriteriaParam !== "" &&
-      filterCriteria === undefined
-    ) {
-      log.warn({ statusCode: 400 }, "Invalid filterCriteria JSON");
-      const res = problem400(requestId, "Invalid filterCriteria", {
-        invalid_params: [
-          { name: "filterCriteria", reason: "Must be valid JSON matching filter criteria schema" },
-        ],
-        instance,
-      });
-      return { response: res };
-    }
-
-    // --- Auth: session + workspace access; returns context (environmentId, projectId, organizationId) or error Response
-    const authResult = await requireSessionWorkspaceAccess(
-      authentication ?? null,
-      queryResult.data.workspaceId,
-      "read",
-      requestId,
-      instance
-    );
-    if (authResult instanceof Response) {
-      return { response: authResult };
-    }
-
-    const { environmentId } = authResult;
-
-    // --- Load surveys and total count in parallel (same filter so total matches list)
     try {
+      if (!authentication || !("user" in authentication) || !authentication.user?.id) {
+        return { response: problem401(requestId, "Not authenticated", instance) };
+      }
+      const sessionUserId = authentication.user.id;
+
+      const searchParams = new URL(req.url).searchParams;
+      const workspaceId = searchParams.get("workspaceId");
+      const limitParam = searchParams.get("limit");
+      const offsetParam = searchParams.get("offset");
+      const filterCriteriaParam = searchParams.get("filterCriteria");
+
+      const queryResult = ZQuery.safeParse({
+        workspaceId,
+        limit: limitParam ?? undefined,
+        offset: offsetParam ?? undefined,
+        filterCriteria: filterCriteriaParam ?? undefined,
+      });
+
+      if (!queryResult.success) {
+        const invalidParams = queryResult.error.issues.map((issue) => ({
+          name: issue.path.join(".") || "query",
+          reason: issue.message,
+        }));
+        log.warn({ statusCode: 400, invalidParams }, "Validation failed");
+        return {
+          response: problem400(requestId, "Invalid query parameters", {
+            invalid_params: invalidParams,
+            instance,
+          }),
+        };
+      }
+
+      const parsedFilterCriteria = parseFilterCriteria(queryResult.data.filterCriteria);
+      if (
+        filterCriteriaParam !== null &&
+        filterCriteriaParam !== undefined &&
+        filterCriteriaParam !== "" &&
+        parsedFilterCriteria === undefined
+      ) {
+        log.warn({ statusCode: 400 }, "Invalid filterCriteria JSON");
+        return {
+          response: problem400(requestId, "Invalid filterCriteria", {
+            invalid_params: [
+              { name: "filterCriteria", reason: "Must be valid JSON matching filter criteria schema" },
+            ],
+            instance,
+          }),
+        };
+      }
+
+      const filterCriteria = applySessionToCreatedByFilter(parsedFilterCriteria, sessionUserId);
+
+      const authResult = await requireSessionWorkspaceAccess(
+        authentication,
+        queryResult.data.workspaceId,
+        "read",
+        requestId,
+        instance
+      );
+      if (authResult instanceof Response) {
+        return { response: authResult };
+      }
+
+      const { environmentId } = authResult;
+
       const [surveys, total] = await Promise.all([
         getSurveys(environmentId, queryResult.data.limit, queryResult.data.offset, filterCriteria),
         getSurveyCount(environmentId, filterCriteria),
@@ -132,8 +148,6 @@ export const GET = withV1ApiWrapper({
         ),
       };
     } catch (err) {
-      // Map known errors to problem responses; rethrow the rest.
-      // Use 403 (not 404) for ResourceNotFoundError to avoid leaking resource type/id existence.
       if (err instanceof ResourceNotFoundError) {
         log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
         return {
@@ -144,7 +158,7 @@ export const GET = withV1ApiWrapper({
         log.error({ error: err, statusCode: 500 }, "Database error");
         return { response: problem500(requestId, "An unexpected error occurred.", instance) };
       }
-      log.error({ error: err, statusCode: 500 }, "Unexpected error");
+      log.error({ error: err, statusCode: 500 }, "V3 surveys list unexpected error");
       return { response: problem500(requestId, "An unexpected error occurred.", instance) };
     }
   },
