@@ -11,6 +11,7 @@ import {
   handleHiddenFields,
   shouldDisplayBasedOnPercentage,
 } from "@/lib/common/utils";
+import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TEnvironmentStateSurvey, type TUserState } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
 
@@ -59,6 +60,24 @@ export const renderWidget = async (
   }
 
   setIsSurveyRunning(true);
+
+  // Wait for pending user identification to complete before rendering
+  const updateQueue = UpdateQueue.getInstance();
+  if (updateQueue.hasPendingWork()) {
+    logger.debug("Waiting for pending user identification before rendering survey");
+    const identificationSucceeded = await updateQueue.waitForPendingWork();
+    if (!identificationSucceeded) {
+      const hasSegmentFilters = Array.isArray(survey.segment?.filters) && survey.segment.filters.length > 0;
+
+      if (hasSegmentFilters) {
+        logger.debug("User identification failed. Skipping survey with segment filters.");
+        setIsSurveyRunning(false);
+        return;
+      }
+
+      logger.debug("User identification failed but survey has no segment filters. Proceeding.");
+    }
+  }
 
   if (survey.delay) {
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay.toString()} seconds.`);
