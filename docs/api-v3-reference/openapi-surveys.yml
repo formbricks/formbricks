@@ -19,6 +19,9 @@ info:
     **Pagination**
     **limit** + **offset** (not cursor). Suited to page-based UIs (page 1/2/3, previous/next). Cursor-based pagination is intentionally **not** offered here (one-directional “next” only); revisit only for a high-volume feed-style endpoint.
 
+    **Filtering**
+    Filters and sort are **flat query parameters** (`name`, `status`, `type`, `createdBy`, `sortBy`). Arrays use repeated keys or comma-separated values (e.g. `status=draft&status=inProgress`).
+
     **Security**
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. List responses use `private, no-store`.
 
@@ -30,6 +33,7 @@ info:
   version: 0.1.0
   x-implementation-notes:
     route: apps/web/app/api/v3/surveys/route.ts
+    query-parser: apps/web/app/api/v3/surveys/parse-v3-surveys-list-query.ts
     auth: apps/web/app/api/v3/lib/auth.ts
     workspace-resolution: apps/web/app/api/v3/lib/workspace-context.ts
     openapi-generated: false
@@ -68,18 +72,49 @@ paths:
             default: 0
           description: Pagination offset (0-based). No cursor/`after` token — see API info for rationale.
         - in: query
-          name: filterCriteria
+          name: name
           schema:
             type: string
+            maxLength: 512
+          description: Case-insensitive substring match on survey name (same as in-app list filters).
+        - in: query
+          name: status
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [draft, inProgress, paused, completed]
+          style: form
+          explode: true
           description: |
-            URL-encoded JSON object (optional). Parsed with `ZSurveyFilterCriteria` after auth:
-            - **name** (string, optional)
-            - **status** (array of `draft` | `inProgress` | `paused` | `completed`, optional)
-            - **type** (array of `link` | `app`, optional)
-            - **createdBy** (optional): `{ "userId": string, "value": ["you"] | ["others"] | ["you","others"] }` — **`userId` is ignored; server overwrites with the session user id**
-            - **sortBy** (optional): `createdAt` | `updatedAt` | `name` | `relevance`
-
-            Omitted or empty → no filter. Non-empty param that is invalid JSON or fails schema → **400** with `invalid_params` on `filterCriteria`.
+            Survey status filter. Repeat the parameter (`status=draft&status=inProgress`) or use comma-separated values (`status=draft,inProgress`). Invalid values → **400**.
+        - in: query
+          name: type
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [link, app]
+          style: form
+          explode: true
+          description: Survey type filter (`link` / `app`). Same repeat-or-comma rules as `status`.
+        - in: query
+          name: createdBy
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [you, others]
+          style: form
+          explode: true
+          description: |
+            Creator scope (`you` / `others`). The server always applies the **authenticated user** as the creator subject; clients cannot impersonate another user.
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, name, relevance]
+          description: Sort order. Default is service-defined when omitted.
       responses:
         "200":
           description: Surveys retrieved successfully
@@ -108,7 +143,7 @@ paths:
                       offset: { type: integer }
                       total:
                         type: integer
-                        description: Count of surveys matching filterCriteria (same as list filter)
+                        description: Count of surveys matching the same filters as this list request
         "400":
           description: Bad Request
           content:

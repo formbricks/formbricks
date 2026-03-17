@@ -142,12 +142,12 @@ describe("GET /api/v3/surveys", () => {
     expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
   });
 
-  test("passes filterCriteria to getSurveys and getSurveyCount so total matches filter", async () => {
+  test("passes flat filter query to getSurveys and getSurveyCount so total matches filter", async () => {
     const filterCriteria = { status: ["inProgress"], sortBy: "updatedAt" as const };
     vi.mocked(getSurveys).mockResolvedValue([]);
     vi.mocked(getSurveyCount).mockResolvedValue(7);
     const req = createRequest(
-      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filterCriteria=${encodeURIComponent(JSON.stringify(filterCriteria))}`
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&status=inProgress&sortBy=updatedAt`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
@@ -157,11 +157,7 @@ describe("GET /api/v3/surveys", () => {
     expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, filterCriteria);
   });
 
-  test("overrides createdBy.userId with session user so clients cannot spoof creator filter", async () => {
-    const clientSent = {
-      createdBy: { userId: "attacker_id", value: ["you" as const] },
-      sortBy: "updatedAt" as const,
-    };
+  test("createdBy filter uses session user id only (no client userId param)", async () => {
     const expectedForDb = {
       createdBy: { userId: "user_1", value: ["you" as const] },
       sortBy: "updatedAt" as const,
@@ -169,12 +165,23 @@ describe("GET /api/v3/surveys", () => {
     vi.mocked(getSurveys).mockResolvedValue([]);
     vi.mocked(getSurveyCount).mockResolvedValue(1);
     const req = createRequest(
-      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filterCriteria=${encodeURIComponent(JSON.stringify(clientSent))}`
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&createdBy=you&sortBy=updatedAt`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
     expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, expectedForDb);
     expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, expectedForDb);
+  });
+
+  test("returns 400 when filterCriteria query param is used", async () => {
+    const req = createRequest(
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filterCriteria=${encodeURIComponent("{}")}`
+    );
+    const res = await GET(req, {} as any);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.invalid_params?.some((p: { name: string }) => p.name === "filterCriteria")).toBe(true);
+    expect(requireSessionWorkspaceAccess).not.toHaveBeenCalled();
   });
 
   test("returns 403 when auth helper returns 403", async () => {
