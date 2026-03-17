@@ -16,6 +16,7 @@ describe("v3 problem responses", () => {
       instance: "/p",
     });
     expect(res.status).toBe(400);
+    expect(res.headers.get("X-Request-Id")).toBe("rid");
     const body = await res.json();
     expect(body.code).toBe("bad_request");
     expect(body.requestId).toBe("rid");

@@ -50,6 +50,7 @@ function problemResponse(
   const headers: Record<string, string> = {
     "Content-Type": PROBLEM_JSON,
     "Cache-Control": CACHE_NO_STORE,
+    "X-Request-Id": requestId,
     ...options?.headers,
   };
 
