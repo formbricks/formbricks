@@ -10,14 +10,16 @@ import DOMPurify from "isomorphic-dompurify";
 export const stripInlineStyles = (html: string): string => {
   if (!html) return html;
 
-  // Use DOMPurify to safely remove style attributes
-  // This is more secure than regex-based approaches and handles edge cases properly
-  return DOMPurify.sanitize(html, {
+  // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
+  // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
+  // `style-src` violations if the input contains style attributes — even though
+  // FORBID_ATTR would remove them afterwards. By stripping them first, the
+  // browser's HTML parser never encounters them.
+  const preStripped = html.replace(/\s+style\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
+
+  return DOMPurify.sanitize(preStripped, {
     FORBID_ATTR: ["style"],
-    // Preserve the target attribute (e.g. target="_blank" on links) which is not
-    // in DOMPurify's default allow-list but is explicitly required downstream.
     ADD_ATTR: ["target"],
-    // Keep other attributes and tags as-is, only remove style attributes
     KEEP_CONTENT: true,
   });
 };
