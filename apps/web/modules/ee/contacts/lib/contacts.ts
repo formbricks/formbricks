@@ -1,11 +1,15 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import jwt from "jsonwebtoken";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { ENCRYPTION_KEY, ITEMS_PER_PAGE } from "@/lib/constants";
+import { symmetricEncrypt } from "@/lib/crypto";
+import { getPublicDomain } from "@/lib/getPublicUrl";
+import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
@@ -485,6 +489,103 @@ export const createContactsFromCSV = async (
     }
     throw error;
   }
+};
+
+export const generateBulkPersonalLinks = async (
+  environmentId: string,
+  surveyId: string,
+  expirationDays?: number
+) => {
+  if (!ENCRYPTION_KEY) {
+    throw new Error("Encryption key not found");
+  }
+
+  // Fetch survey once to get singleUse settings
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: { id: true, environmentId: true, singleUse: true },
+  });
+
+  if (!survey) {
+    throw new ValidationError("Survey not found");
+  }
+
+  if (survey.environmentId !== environmentId) {
+    throw new ValidationError("Survey does not belong to this environment");
+  }
+
+  const { enabled: isSingleUseEnabled, isEncrypted: isSingleUseEncrypted } = (survey.singleUse as {
+    enabled?: boolean;
+    isEncrypted?: boolean;
+  }) ?? {};
+
+  const requiredAttributes = ["userId", "firstName", "lastName", "email"];
+  const BATCH_SIZE = 500;
+  const allLinks: { contactId: string; attributes: Record<string, string>; surveyUrl: string }[] = [];
+
+  let skip = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const contacts = await prisma.contact.findMany({
+      where: { environmentId },
+      select: {
+        id: true,
+        attributes: {
+          where: {
+            attributeKey: {
+              key: { in: requiredAttributes },
+            },
+          },
+          select: {
+            attributeKey: { select: { key: true } },
+            value: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: BATCH_SIZE,
+      skip,
+    });
+
+    if (contacts.length === 0) break;
+
+    for (const contact of contacts) {
+      const attributes = contact.attributes.reduce(
+        (acc, attr) => {
+          acc[attr.attributeKey.key] = attr.value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
+      const encryptedContactId = symmetricEncrypt(contact.id, ENCRYPTION_KEY);
+      const encryptedSurveyId = symmetricEncrypt(surveyId, ENCRYPTION_KEY);
+
+      const tokenOptions: jwt.SignOptions = { algorithm: "HS256" };
+      if (expirationDays !== undefined && expirationDays > 0) {
+        tokenOptions.expiresIn = `${expirationDays}d`;
+      }
+
+      const token = jwt.sign(
+        { contactId: encryptedContactId, surveyId: encryptedSurveyId },
+        ENCRYPTION_KEY,
+        tokenOptions
+      );
+
+      let surveyUrl = `${getPublicDomain()}/c/${token}`;
+      if (isSingleUseEnabled) {
+        const singleUseId = generateSurveySingleUseId(isSingleUseEncrypted ?? false);
+        surveyUrl += `?suId=${singleUseId}`;
+      }
+
+      allLinks.push({ contactId: contact.id, attributes, surveyUrl });
+    }
+
+    if (contacts.length < BATCH_SIZE) break;
+    skip += BATCH_SIZE;
+  }
+
+  return allLinks;
 };
 
 export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {

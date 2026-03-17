@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributes } from "@formbricks/types/contact-attribute";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -13,7 +14,14 @@ import {
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  createContactsFromCSV,
+  deleteContact,
+  generateBulkPersonalLinks,
+  getContact,
+  getContacts,
+} from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 import {
   ZContactCSVAttributeMap,
@@ -190,3 +198,41 @@ export const updateContactAttributesAction = authenticatedActionClient
       }
     )
   );
+
+const ZGenerateBulkPersonalLinksAction = z.object({
+  environmentId: ZId,
+  surveyId: ZId,
+  expirationDays: z.number().int().positive().optional(),
+});
+
+export const generateBulkPersonalLinksAction = authenticatedActionClient
+  .schema(ZGenerateBulkPersonalLinksAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      throw new OperationNotAllowedError("Contacts are not enabled for this organization");
+    }
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
+    });
+
+    // generateBulkPersonalLinks validates surveyId belongs to environmentId internally
+    return generateBulkPersonalLinks(
+      parsedInput.environmentId,
+      parsedInput.surveyId,
+      parsedInput.expirationDays
+    );
+  });
