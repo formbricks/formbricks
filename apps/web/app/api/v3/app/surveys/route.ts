@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -22,7 +23,7 @@ const MAX_LIMIT = 100;
 
 /** Query schema: workspaceId required; limit/offset/filterCriteria optional. */
 const ZQuery = z.object({
-  workspaceId: z.string().cuid2(),
+  workspaceId: ZId,
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
   offset: z.coerce.number().int().min(0).default(0),
   filterCriteria: z.string().optional(),
