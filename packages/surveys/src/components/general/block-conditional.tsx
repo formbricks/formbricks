@@ -104,7 +104,7 @@ export function BlockConditional({
     onChange(mergedData);
 
     // Auto-advance logic
-    if (autoAdvance && block.elements.length > 1) {
+    if (autoAdvance) {
       const element = block.elements.find((el) => el.id === elementId);
       if (element && AUTO_ADVANCE_ELIGIBLE_TYPES.has(element.type)) {
         // For picture selection, only auto-advance if it's single-select mode
@@ -116,17 +116,19 @@ export function BlockConditional({
           return;
         }
 
-        const elementIndex = block.elements.findIndex((el) => el.id === elementId);
-        const nextElement = block.elements[elementIndex + 1];
+        // If multi-element block, scroll to next unanswered element
+        if (block.elements.length > 1) {
+          const elementIndex = block.elements.findIndex((el) => el.id === elementId);
+          const nextElement = block.elements[elementIndex + 1];
 
-        if (nextElement) {
-          // Scroll to the next element
-          setTimeout(() => {
-            const nextElementDom = document.getElementById(`element-${nextElement.id}`);
-            if (nextElementDom) {
-              nextElementDom.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 100);
+          if (nextElement) {
+            setTimeout(() => {
+              const nextElementDom = document.getElementById(`element-${nextElement.id}`);
+              if (nextElementDom) {
+                nextElementDom.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }, 100);
+          }
         }
 
         // Check if all elements now have values → auto-submit

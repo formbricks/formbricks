@@ -70,10 +70,10 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     let maxHeight: string;
     if (fullSizeCards) {
       maxHeight = "calc(100vh - 6rem)";
+    } else if (cardSize === "tall") {
+      maxHeight = isSurveyPreview ? "70dvh" : "85dvh";
     } else if (isSurveyPreview) {
       maxHeight = "42dvh";
-    } else if (cardSize === "tall") {
-      maxHeight = "85dvh";
     } else {
       maxHeight = "60dvh";
     }
