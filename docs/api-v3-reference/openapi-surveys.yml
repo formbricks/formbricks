@@ -40,12 +40,7 @@ paths:
     get:
       operationId: getSurveysV3
       summary: List surveys
-      description: |
-        Returns surveys for the workspace. Requires session cookie.
-
-        **Total count:** `meta.total` matches the same `filterCriteria` as the list (filtered count).
-
-        **403 vs 404:** Workspace not found or no access both yield **403** (RFC 9457 problem+json).
+      description: Returns surveys for the workspace. Requires session cookie.
       tags:
         - V3 Surveys
       parameters:
@@ -115,7 +110,7 @@ paths:
                         type: integer
                         description: Count of surveys matching filterCriteria (same as list filter)
         "400":
-          description: Bad Request — only after successful session check (invalid query or filterCriteria)
+          description: Bad Request
           content:
             application/problem+json:
               schema:
@@ -134,7 +129,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
         "429":
           description: |
-            Rate limit exceeded (wrapper). Uses the **legacy v1 JSON** shape from `responses.tooManyRequestsResponse`, not RFC 9457.
+            Rate limit exceeded (wrapper). Uses the **legacy v1 JSON** shape from `responses.tooManyRequestsResponse`.
           content:
             application/json:
               schema:
