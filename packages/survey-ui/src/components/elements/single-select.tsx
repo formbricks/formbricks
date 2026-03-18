@@ -1,4 +1,4 @@
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
 import {
@@ -8,14 +8,16 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/general/dropdown-menu";
+import {
+  DropdownSearchInput,
+  SEARCH_THRESHOLD,
+  useDropdownSearch,
+} from "@/components/general/dropdown-search";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
 import { cn } from "@/lib/utils";
-
-/** Number of options above which the search input is shown inside the dropdown */
-const SEARCH_THRESHOLD = 5;
 
 /**
  * Option for single-select element
@@ -107,45 +109,23 @@ function SingleSelect({
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
   const otherInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Search state for the dropdown variant
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const searchInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Total option count including "other" to determine whether to show search
+  // Search + side-locking for the dropdown variant
   const allDropdownOptionCount = options.length + (hasOtherOption ? 1 : 0);
   const showSearch = variant === "dropdown" && allDropdownOptionCount > SEARCH_THRESHOLD;
 
-  // Separate "none" option from regular options — "none" is always visible regardless of search
-  const noneOption = React.useMemo(() => options.find((opt) => opt.id === "none"), [options]);
-  const regularOptions = React.useMemo(() => options.filter((opt) => opt.id !== "none"), [options]);
-
-  // Filtered regular options based on the search query (only active when search is shown)
-  const filteredRegularOptions = React.useMemo(() => {
-    if (!showSearch || !searchQuery) return regularOptions;
-    const lowerQuery = searchQuery.toLowerCase();
-    return regularOptions.filter((opt) => opt.label.toLowerCase().includes(lowerQuery));
-  }, [showSearch, searchQuery, regularOptions]);
-
-  // Whether the "other" option matches the search
-  const otherMatchesSearch = React.useMemo(() => {
-    if (!hasOtherOption) return false;
-    if (!showSearch || !searchQuery) return true;
-    return otherOptionLabel.toLowerCase().includes(searchQuery.toLowerCase());
-  }, [showSearch, searchQuery, hasOtherOption, otherOptionLabel]);
-
-  const handleDropdownOpenChange = (open: boolean): void => {
-    if (!open) {
-      setSearchQuery("");
-    } else if (showSearch) {
-      // Focus the search input when dropdown opens, using the same double-defer pattern
-      // as the "other" input focus to win against Radix focus management.
-      globalThis.setTimeout(() => {
-        globalThis.requestAnimationFrame(() => {
-          searchInputRef.current?.focus();
-        });
-      }, 0);
-    }
-  };
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchInputRef,
+    lockedSide,
+    contentRef,
+    noneOption,
+    filteredRegularOptions,
+    otherMatchesSearch,
+    hasNoResults,
+    handleDropdownOpen,
+    handleDropdownClose,
+  } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
 
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
@@ -204,7 +184,11 @@ function SingleSelect({
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
-            <DropdownMenu onOpenChange={handleDropdownOpenChange}>
+            <DropdownMenu
+              onOpenChange={(open) => {
+                if (open) handleDropdownOpen();
+                else handleDropdownClose();
+              }}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -217,37 +201,19 @@ function SingleSelect({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+                ref={contentRef}
+                side={lockedSide}
+                avoidCollisions={lockedSide === undefined}
+                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)] overflow-hidden"
                 align="start">
                 {showSearch ? (
-                  <div className="border-option-border border-b px-2 py-2" role="search">
-                    <div className="relative flex items-center">
-                      <Search className="text-input-placeholder pointer-events-none absolute left-2 h-4 w-4 shrink-0" />
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={searchPlaceholder}
-                        dir={dir}
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") {
-                            if (searchQuery) {
-                              e.stopPropagation();
-                              setSearchQuery("");
-                            }
-                          } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                            // Let arrow keys propagate so Radix can move focus to options
-                          } else {
-                            e.stopPropagation();
-                          }
-                        }}
-                        className="bg-input-bg text-input-text placeholder:text-input-placeholder font-input font-input-weight w-full rounded-sm py-1 pr-2 pl-7 text-sm outline-none"
-                        aria-label={searchPlaceholder}
-                        autoComplete="off"
-                      />
-                    </div>
-                  </div>
+                  <DropdownSearchInput
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    searchInputRef={searchInputRef}
+                    placeholder={searchPlaceholder}
+                    dir={dir}
+                  />
                 ) : null}
                 <div className="max-h-[260px] overflow-y-auto">
                   <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
@@ -288,7 +254,7 @@ function SingleSelect({
                         </span>
                       </DropdownMenuRadioItem>
                     ) : null}
-                    {showSearch && filteredRegularOptions.length === 0 && !otherMatchesSearch ? (
+                    {hasNoResults ? (
                       <div className="text-input-placeholder px-2 py-4 text-center text-sm">
                         {searchNoResultsText}
                       </div>
