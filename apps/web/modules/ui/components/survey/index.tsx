@@ -50,11 +50,10 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
       }
 
       const scriptContent = await response.text();
-      const scriptElement = document.createElement("script");
-
-      scriptElement.textContent = scriptContent;
-
-      document.head.appendChild(scriptElement);
+      
+      // Execute the script content in the global scope to initialize window.formbricksSurveys
+      // Using indirect eval to ensure global scope execution
+      (0, eval)(scriptContent);
       setIsScriptLoaded(true);
       hasLoadedRef.current = true;
     } catch (error) {
