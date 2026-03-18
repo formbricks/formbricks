@@ -67,6 +67,8 @@ describe("widget-file", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
+    // @ts-expect-error -- cleaning up mock
+    delete window.formbricksSurveys;
 
     getInstanceConfigMock = vi.spyOn(Config, "getInstance");
     getInstanceLoggerMock = vi.spyOn(Logger, "getInstance").mockReturnValue(mockLogger as unknown as Logger);
@@ -462,6 +464,25 @@ describe("widget-file", () => {
       "User identification failed. Skipping survey with segment filters."
     );
     expect(window.formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
+  });
+
+  test("preloadSurveysScript adds a preload link and deduplicates subsequent calls", () => {
+    const createElementSpy = vi.spyOn(document, "createElement");
+    const appendChildSpy = vi.spyOn(document.head, "appendChild");
+
+    widget.preloadSurveysScript("https://fake.app");
+
+    expect(createElementSpy).toHaveBeenCalledWith("link");
+    expect(appendChildSpy).toHaveBeenCalledTimes(1);
+
+    const linkEl = createElementSpy.mock.results[0].value as Record<string, string>;
+    expect(linkEl.rel).toBe("preload");
+    expect(linkEl.as).toBe("script");
+    expect(linkEl.href).toBe("https://fake.app/js/surveys.umd.cjs");
+
+    // Second call should be a no-op (deduplication)
+    widget.preloadSurveysScript("https://fake.app");
+    expect(appendChildSpy).toHaveBeenCalledTimes(1);
   });
 
   test("renderWidget proceeds when identification fails but survey has no segment filters", async () => {
