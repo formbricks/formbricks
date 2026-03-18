@@ -29,7 +29,7 @@ export const GET = withV3ApiWrapper({
 
     try {
       const sessionUserId =
-        "user" in authentication && authentication.user?.id ? authentication.user.id : null;
+        authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
       const searchParams = new URL(req.url).searchParams;
       const parsed = parseV3SurveysListQuery(searchParams, { sessionUserId });

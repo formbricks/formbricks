@@ -291,16 +291,21 @@ async function getRelevanceSurveyListPage(
   environmentId: string,
   options: TGetSurveyListPageOptions & { sortBy: "relevance" }
 ): Promise<TSurveyListPage> {
+  if (options.cursor && options.cursor.sortBy !== "relevance") {
+    throw new InvalidInputError("The cursor does not match the requested sort order.");
+  }
+
+  const relevanceCursor = options.cursor;
   const pageRows: TSurveyRow[] = [];
   let remaining = options.limit;
 
-  if (!options.cursor || options.cursor.bucket === IN_PROGRESS_BUCKET) {
+  if (!relevanceCursor || relevanceCursor.bucket === IN_PROGRESS_BUCKET) {
     const inProgressRows = await findRelevanceRows(
       environmentId,
       remaining,
       options.filterCriteria,
       IN_PROGRESS_BUCKET,
-      options.cursor?.bucket === IN_PROGRESS_BUCKET ? options.cursor : null
+      relevanceCursor?.bucket === IN_PROGRESS_BUCKET ? relevanceCursor : null
     );
 
     const hasMoreInProgress = inProgressRows.length > remaining;
@@ -322,7 +327,7 @@ async function getRelevanceSurveyListPage(
   if (remaining <= 0) {
     const hasOtherRows =
       pageRows.length > 0 &&
-      (!options.cursor || options.cursor.bucket === IN_PROGRESS_BUCKET) &&
+      (!relevanceCursor || relevanceCursor.bucket === IN_PROGRESS_BUCKET) &&
       (await hasMoreRelevanceRowsInOtherBucket(environmentId, options.filterCriteria));
 
     return {
@@ -341,7 +346,7 @@ async function getRelevanceSurveyListPage(
     remaining,
     options.filterCriteria,
     OTHER_BUCKET,
-    options.cursor?.bucket === OTHER_BUCKET ? options.cursor : null
+    relevanceCursor?.bucket === OTHER_BUCKET ? relevanceCursor : null
   );
 
   const hasMoreOther = otherRows.length > remaining;
