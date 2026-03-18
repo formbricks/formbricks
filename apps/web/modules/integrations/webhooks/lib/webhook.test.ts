@@ -40,7 +40,11 @@ vi.mock("uuid", () => ({
 
 describe("testEndpoint", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.mocked(generateStandardWebhookSignature).mockReturnValue("signed-payload");
+    vi.mocked(validateWebhookUrl).mockResolvedValue(undefined);
+    vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
+    vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
 
   afterEach(() => {
