@@ -235,6 +235,15 @@ const nextConfig = {
         ],
       },
       {
+        source: "/auth/forgot-password/reset",
+        headers: [
+          {
+            key: "Referrer-Policy",
+            value: "no-referrer",
+          },
+        ],
+      },
+      {
         source: "/js/(.*)",
         headers: [
           {

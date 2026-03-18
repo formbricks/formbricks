@@ -8,27 +8,20 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
   let csrfToken: string;
   let testUser: { email: string; password: string };
 
-  test.beforeEach(async ({ request, users }) => {
-    // Get CSRF token for authentication requests
-    const csrfResponse = await request.get("/api/auth/csrf");
-    const csrfData = await csrfResponse.json();
-    csrfToken = csrfData.csrfToken;
+  test("should disable referrers on the password reset page", async ({ request }) => {
+    const response = await request.get("/auth/forgot-password/reset?token=test-token");
 
-    // Create a test user for "existing user" scenarios with unique email
-    const uniqueId = Date.now() + Math.random();
-    const userName = "Security Test User";
-    const userEmail = `security-test-${uniqueId}@example.com`;
-    await users.create({
-      name: userName,
-      email: userEmail,
-    });
-    testUser = {
-      email: userEmail,
-      password: userName, // The fixture uses the name as password
-    };
+    expect(response.status()).toBe(200);
+    expect(response.headers()["referrer-policy"]).toBe("no-referrer");
   });
 
   test.describe("DoS Protection - Password Length Limits", () => {
+    test.beforeEach(async ({ request }) => {
+      const csrfResponse = await request.get("/api/auth/csrf");
+      const csrfData = await csrfResponse.json();
+      csrfToken = csrfData.csrfToken;
+    });
+
     test("should handle extremely long passwords without crashing", async ({ request }) => {
       const email = "nonexistent-dos-test@example.com"; // Use non-existent email for DoS test
       const extremelyLongPassword = "A".repeat(50000); // 50,000 characters
@@ -126,6 +119,24 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
   });
 
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
+    test.beforeEach(async ({ request, users }) => {
+      const csrfResponse = await request.get("/api/auth/csrf");
+      const csrfData = await csrfResponse.json();
+      csrfToken = csrfData.csrfToken;
+
+      const uniqueId = Date.now() + Math.random();
+      const userName = "Security Test User";
+      const userEmail = `security-test-${uniqueId}@example.com`;
+      await users.create({
+        name: userName,
+        email: userEmail,
+      });
+      testUser = {
+        email: userEmail,
+        password: userName, // The fixture uses the name as password
+      };
+    });
+
     test("should not reveal user existence through response timing differences", async ({ request }) => {
       // Helper functions for statistical analysis
       const calculateMedian = (values: number[]): number => {
@@ -359,6 +370,12 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
   });
 
   test.describe("Security Headers and Response Safety", () => {
+    test.beforeEach(async ({ request }) => {
+      const csrfResponse = await request.get("/api/auth/csrf");
+      const csrfData = await csrfResponse.json();
+      csrfToken = csrfData.csrfToken;
+    });
+
     test("should include security headers in responses", async ({ request }) => {
       const response = await request.post("/api/auth/callback/credentials", {
         data: {

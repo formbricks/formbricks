@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -33,6 +34,7 @@ export const ResetPasswordForm = () => {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [token, setToken] = useState("");
 
   const form = useForm<TPasswordResetForm>({
     defaultValues: {
@@ -42,12 +44,24 @@ export const ResetPasswordForm = () => {
     resolver: zodResolver(ZPasswordResetForm),
   });
 
+  useEffect(() => {
+    const resetToken = searchParams?.get("token");
+    if (!resetToken) {
+      return;
+    }
+
+    setToken((currentToken) => currentToken || resetToken);
+
+    // Remove the token from the address bar after the page has loaded.
+    const sanitizedUrl = `${window.location.pathname}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", sanitizedUrl);
+  }, [searchParams]);
+
   const handleSubmit: SubmitHandler<TPasswordResetForm> = async (data) => {
     if (data.password !== data.confirmPassword) {
       toast.error(t("auth.forgot-password.reset.passwords_do_not_match"));
       return;
     }
-    const token = searchParams?.get("token");
     if (!token) {
       toast.error(t("auth.forgot-password.reset.no_token_provided"));
       return;
@@ -94,7 +108,7 @@ export const ResetPasswordForm = () => {
         <div>
           <Button
             type="submit"
-            disabled={!form.formState.isValid}
+            disabled={!form.formState.isValid || !token}
             className="w-full justify-center"
             loading={form.formState.isSubmitting}>
             {t("auth.forgot-password.reset_password")}
