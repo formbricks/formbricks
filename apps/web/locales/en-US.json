@@ -1717,6 +1717,7 @@
         "styling_set_to_theme_styles": "Styling set to theme styles",
         "subheading": "Subheading",
         "subtract": "Subtract -",
+        "survey_closed_message_heading_required": "Add a heading to the custom survey closed message.",
         "survey_completed_heading": "Survey Completed",
         "survey_completed_subheading": "This free & open-source survey has been closed",
         "survey_display_settings": "Survey Display Settings",

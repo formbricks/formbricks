@@ -151,11 +151,7 @@ export const validationRules = {
 
     for (const field of fieldsToValidate) {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
-      if (
-        fieldValue &&
-        typeof fieldValue[defaultLanguageCode] !== "undefined" &&
-        fieldValue[defaultLanguageCode].trim() !== ""
-      ) {
+      if (fieldValue?.[defaultLanguageCode] !== undefined && fieldValue[defaultLanguageCode].trim() !== "") {
         isValid = isValid && isLabelValidForAllLanguages(fieldValue, languages);
       }
     }
@@ -201,6 +197,16 @@ export const validateSurveyElementsInBatch = (
 
 const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {
   return !content || isLabelValidForAllLanguages(content, surveyLanguages);
+};
+
+const hasValidSurveyClosedMessageHeading = (survey: TSurvey): boolean => {
+  if (survey.type !== "link" || !survey.surveyClosedMessage) {
+    return true;
+  }
+
+  const heading = survey.surveyClosedMessage.heading?.trim() ?? "";
+
+  return heading.length > 0;
 };
 
 export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
@@ -284,6 +290,11 @@ export const isSurveyValid = (
       );
       return false;
     }
+  }
+
+  if (!hasValidSurveyClosedMessageHeading(survey)) {
+    toast.error(t("environments.surveys.edit.survey_closed_message_heading_required"));
+    return false;
   }
 
   return true;

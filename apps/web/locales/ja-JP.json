@@ -1717,6 +1717,7 @@
         "styling_set_to_theme_styles": "スタイルをテーマのスタイルに設定しました",
         "subheading": "サブ見出し",
         "subtract": "減算 -",
+        "survey_closed_message_heading_required": "カスタムアンケート終了メッセージに見出しを追加してください。",
         "survey_completed_heading": "フォームが完了しました",
         "survey_completed_subheading": "この無料のオープンソースフォームは閉鎖されました",
         "survey_display_settings": "フォーム表示設定",

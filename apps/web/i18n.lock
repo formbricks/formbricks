@@ -1644,6 +1644,7 @@ checksums:
     environments/surveys/edit/styling_set_to_theme_styles: f2c108bf422372b00cf7c87f1b042f69
     environments/surveys/edit/subheading: c0f6f57155692fd8006381518ce4fef0
     environments/surveys/edit/subtract: 2d83b8b9ef35110f2583ddc155b6c486
+    environments/surveys/edit/survey_closed_message_heading_required: f7c48e324c4a5c335ec68eaa27b2d67e
     environments/surveys/edit/survey_completed_heading: dae5ac4a02a886dc9d9fc40927091919
     environments/surveys/edit/survey_completed_subheading: db537c356c3ab6564d24de0d11a0fee2
     environments/surveys/edit/survey_display_settings: 8ed19e6a8e1376f7a1ba037d82c4ae11
