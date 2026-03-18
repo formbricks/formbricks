@@ -40,34 +40,24 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     isLoadingScript = true;
     try {
       const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
-      const response = await fetch(
-        scriptUrl,
-        process.env.NODE_ENV === "development" ? { cache: "no-store" } : {}
-      );
 
-      if (!response.ok) {
-        throw new Error("Failed to load the surveys package");
-      }
-
-      const scriptContent = await response.text();
-
-      // Create a blob URL from the script content and load it via script src
-      // This ensures the script executes properly and initializes window.formbricksSurveys
-      const blob = new Blob([scriptContent], { type: "application/javascript" });
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Wait for the script to load before proceeding
+      // Load the script directly via src to ensure proper execution
+      // This approach works with CSP and doesn't require blob URLs or eval
       await new Promise<void>((resolve, reject) => {
         const scriptElement = document.createElement("script");
-        scriptElement.src = blobUrl;
+        scriptElement.src = scriptUrl;
+        scriptElement.type = "text/javascript";
+
+        // Add cache-busting in development to ensure fresh script loads
+        if (process.env.NODE_ENV === "development") {
+          scriptElement.src += `?t=${Date.now()}`;
+        }
+
         scriptElement.onload = () => {
-          // Clean up the blob URL after script loads
-          URL.revokeObjectURL(blobUrl);
           resolve();
         };
         scriptElement.onerror = () => {
-          URL.revokeObjectURL(blobUrl);
-          reject(new Error("Failed to execute the surveys script"));
+          reject(new Error("Failed to load the surveys package"));
         };
 
         document.head.appendChild(scriptElement);
