@@ -29,7 +29,11 @@ export const ChatwootWidget = ({
         $chatwoot: {
           setUser: (
             userId: string,
-            userInfo: { email?: string | null; name?: string | null; isActiveCustomer?: boolean }
+            userInfo: {
+              email?: string | null;
+              name?: string | null;
+              custom_attributes?: Record<string, unknown>;
+            }
           ) => void;
         };
       }
@@ -38,11 +42,13 @@ export const ChatwootWidget = ({
       $chatwoot.setUser(userId, {
         email: userEmail,
         name: userName,
-        isActiveCustomer,
+        custom_attributes: {
+          isActiveCustomer,
+        },
       });
       userSetRef.current = true;
     }
-  }, [userId, userEmail, userName]);
+  }, [userId, userEmail, userName, isActiveCustomer]);
 
   useEffect(() => {
     if (!chatwootWebsiteToken) return;
@@ -76,7 +82,14 @@ export const ChatwootWidget = ({
       (
         globalThis as unknown as {
           $chatwoot: {
-            setUser: (userId: string, userInfo: { email?: string | null; name?: string | null }) => void;
+            setUser: (
+              userId: string,
+              userInfo: {
+                email?: string | null;
+                name?: string | null;
+                custom_attributes?: Record<string, unknown>;
+              }
+            ) => void;
           };
         }
       ).$chatwoot

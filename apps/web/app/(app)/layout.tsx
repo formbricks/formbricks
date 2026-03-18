@@ -21,11 +21,17 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   if (user?.isActive === false || user === null) {
     return <ClientLogout />;
   }
-  const organizations = await getOrganizationsByUserId(user.id);
-  const isActiveCustomer = organizations.some(
-    (organization) =>
-      organization.billing.stripe?.plan === "pro" || organization.billing.stripe?.plan === "scale"
-  );
+  let isActiveCustomer = false;
+  if (IS_CHATWOOT_CONFIGURED) {
+    const organizations = await getOrganizationsByUserId(user.id);
+    isActiveCustomer = organizations.some((organization) => {
+      const stripe = organization.billing.stripe;
+      const isPaidPlan = stripe?.plan === "pro" || stripe?.plan === "scale" || stripe?.plan === "custom";
+      const isActiveSubscription =
+        stripe?.subscriptionStatus === "active" || stripe?.subscriptionStatus === "trialing";
+      return isPaidPlan && isActiveSubscription;
+    });
+  }
 
   return (
     <>
