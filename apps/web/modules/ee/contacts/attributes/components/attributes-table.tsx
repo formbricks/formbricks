@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CollisionDetection,
   DndContext,
   type DragEndEvent,
   KeyboardSensor,
@@ -32,6 +33,42 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui
 import { deleteContactAttributeKeyAction } from "../actions";
 import { generateAttributeTableColumns } from "./attribute-table-column";
 import { EditAttributeModal } from "./edit-attribute-modal";
+
+/**
+ * Safari-safe collision detection that validates getBoundingClientRect() properties
+ * before using them. Safari can sometimes return DOMRect objects with undefined
+ * properties (particularly 'top'), which causes dnd-kit to throw TypeErrors.
+ */
+const safariSafeClosestCenter: CollisionDetection = (args) => {
+  const { droppableContainers } = args;
+
+  // Filter droppable containers to only include those with valid bounding rects
+  const validDroppableContainers = droppableContainers.filter((container) => {
+    const rect = container.rect.current;
+    if (!rect) return false;
+
+    // Check if all required properties exist and are numbers
+    return (
+      typeof rect.top === "number" &&
+      typeof rect.left === "number" &&
+      typeof rect.right === "number" &&
+      typeof rect.bottom === "number" &&
+      typeof rect.width === "number" &&
+      typeof rect.height === "number"
+    );
+  });
+
+  // If all containers were filtered out, return empty array (no collision)
+  if (validDroppableContainers.length === 0) {
+    return [];
+  }
+
+  // Call the original closestCenter with validated containers
+  return closestCenter({
+    ...args,
+    droppableContainers: validDroppableContainers,
+  });
+};
 
 interface AttributesTableProps {
   contactAttributeKeys: TContactAttributeKey[];
@@ -230,7 +267,7 @@ export const AttributesTable = ({
   return (
     <div className="w-full">
       <DndContext
-        collisionDetection={closestCenter}
+        collisionDetection={safariSafeClosestCenter}
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>

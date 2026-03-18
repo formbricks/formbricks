@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CollisionDetection,
   DndContext,
   DragEndEvent,
   PointerSensor,
@@ -55,6 +56,42 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { MultiLanguageCard } from "@/modules/survey/multi-language-surveys/components/multi-language-card";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
+
+/**
+ * Safari-safe collision detection that validates getBoundingClientRect() properties
+ * before using them. Safari can sometimes return DOMRect objects with undefined
+ * properties (particularly 'top'), which causes dnd-kit to throw TypeErrors.
+ */
+const safariSafeClosestCorners: CollisionDetection = (args) => {
+  const { droppableContainers } = args;
+
+  // Filter droppable containers to only include those with valid bounding rects
+  const validDroppableContainers = droppableContainers.filter((container) => {
+    const rect = container.rect.current;
+    if (!rect) return false;
+
+    // Check if all required properties exist and are numbers
+    return (
+      typeof rect.top === "number" &&
+      typeof rect.left === "number" &&
+      typeof rect.right === "number" &&
+      typeof rect.bottom === "number" &&
+      typeof rect.width === "number" &&
+      typeof rect.height === "number"
+    );
+  });
+
+  // If all containers were filtered out, return empty array (no collision)
+  if (validDroppableContainers.length === 0) {
+    return [];
+  }
+
+  // Call the original closestCorners with validated containers
+  return closestCorners({
+    ...args,
+    droppableContainers: validDroppableContainers,
+  });
+};
 
 interface ElementsViewProps {
   localSurvey: TSurvey;
@@ -863,7 +900,7 @@ export const ElementsView = ({
         id="blocks"
         sensors={sensors}
         onDragEnd={onBlockCardDragEnd}
-        collisionDetection={closestCorners}>
+        collisionDetection={safariSafeClosestCorners}>
         <BlocksDroppable
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
@@ -903,7 +940,7 @@ export const ElementsView = ({
           id="endings"
           sensors={sensors}
           onDragEnd={onEndingCardDragEnd}
-          collisionDetection={closestCorners}>
+          collisionDetection={safariSafeClosestCorners}>
           <SortableContext items={localSurvey.endings} strategy={verticalListSortingStrategy}>
             {localSurvey.endings.map((ending, index) => {
               return (

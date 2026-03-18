@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CollisionDetection,
   DndContext,
   DragEndEvent,
   PointerSensor,
@@ -23,6 +24,42 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { DataTableSettingsModalItem } from "./data-table-settings-modal-item";
+
+/**
+ * Safari-safe collision detection that validates getBoundingClientRect() properties
+ * before using them. Safari can sometimes return DOMRect objects with undefined
+ * properties (particularly 'top'), which causes dnd-kit to throw TypeErrors.
+ */
+const safariSafeClosestCorners: CollisionDetection = (args) => {
+  const { droppableContainers } = args;
+
+  // Filter droppable containers to only include those with valid bounding rects
+  const validDroppableContainers = droppableContainers.filter((container) => {
+    const rect = container.rect.current;
+    if (!rect) return false;
+
+    // Check if all required properties exist and are numbers
+    return (
+      typeof rect.top === "number" &&
+      typeof rect.left === "number" &&
+      typeof rect.right === "number" &&
+      typeof rect.bottom === "number" &&
+      typeof rect.width === "number" &&
+      typeof rect.height === "number"
+    );
+  });
+
+  // If all containers were filtered out, return empty array (no collision)
+  if (validDroppableContainers.length === 0) {
+    return [];
+  }
+
+  // Call the original closestCorners with validated containers
+  return closestCorners({
+    ...args,
+    droppableContainers: validDroppableContainers,
+  });
+};
 
 interface DataTableSettingsModalProps<T> {
   open: boolean;
@@ -66,7 +103,7 @@ export const DataTableSettingsModal = <T,>({
             id="table-settings"
             sensors={sensors}
             onDragEnd={handleDragEnd}
-            collisionDetection={closestCorners}>
+            collisionDetection={safariSafeClosestCorners}>
             <SortableContext items={columnOrder} strategy={verticalListSortingStrategy}>
               {columnOrder.map((columnId) => {
                 if (columnId === "select" || columnId === "createdAt") return;
