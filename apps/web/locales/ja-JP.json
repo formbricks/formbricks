@@ -1674,6 +1674,8 @@
         "response_limit_needs_to_exceed_number_of_received_responses": "回答数の上限は、受信済みの回答数 ({responseCount}) を超える必要があります。",
         "response_limits_redirections_and_more": "回答数の上限、リダイレクトなど。",
         "response_options": "回答オプション",
+        "reverse_order_occasionally": "Reverse order occasionally",
+        "reverse_order_occasionally_except_last": "Reverse order occasionally except last",
         "roundness": "丸み",
         "roundness_description": "角の丸みを調整します。",
         "row_used_in_logic_error": "この行は質問 {questionIndex} のロジックで使用されています。まず、ロジックから削除してください。",

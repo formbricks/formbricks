@@ -135,6 +135,52 @@ describe("getShuffledRowIndices", () => {
     expect(getShuffledRowIndices(1, "all")).toEqual([0]);
     expect(getShuffledRowIndices(1, "exceptLast")).toEqual([0]);
   });
+
+  test('should reverse all for "reverseOrder" when random < 0.5', () => {
+    // getSecureRandom returns < 0.5, so the array is reversed
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledRowIndices(4, "reverseOrder")).toEqual([3, 2, 1, 0]);
+  });
+
+  test('should keep original order for "reverseOrder" when random >= 0.5', () => {
+    // getSecureRandom returns >= 0.5, so the array is NOT reversed
+    setNextRandomNormalizedValue(0.7);
+    expect(getShuffledRowIndices(4, "reverseOrder")).toEqual([0, 1, 2, 3]);
+  });
+
+  test('should preserve all elements with "reverseOrder"', () => {
+    setNextRandomNormalizedValue(0.3);
+    const result = getShuffledRowIndices(5, "reverseOrder");
+    expect(result).toHaveLength(5);
+    expect(result.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  test('should reverse all except last for "reverseOrderExceptLast" when random < 0.5', () => {
+    // getSecureRandom returns < 0.5, so the array (minus last) is reversed
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledRowIndices(4, "reverseOrderExceptLast")).toEqual([2, 1, 0, 3]);
+  });
+
+  test('should keep original order for "reverseOrderExceptLast" when random >= 0.5', () => {
+    // getSecureRandom returns >= 0.5, so the array is NOT reversed
+    setNextRandomNormalizedValue(0.7);
+    expect(getShuffledRowIndices(4, "reverseOrderExceptLast")).toEqual([0, 1, 2, 3]);
+  });
+
+  test('should always keep last element in place for "reverseOrderExceptLast"', () => {
+    setNextRandomNormalizedValue(0.3);
+    const result = getShuffledRowIndices(5, "reverseOrderExceptLast");
+    expect(result[result.length - 1]).toBe(4);
+    expect(result).toHaveLength(5);
+    expect(result.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  test('should handle n=1 for "reverseOrder" and "reverseOrderExceptLast"', () => {
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledRowIndices(1, "reverseOrder")).toEqual([0]);
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledRowIndices(1, "reverseOrderExceptLast")).toEqual([0]);
+  });
 });
 
 describe("getShuffledChoicesIds", () => {
@@ -181,6 +227,56 @@ describe("getShuffledChoicesIds", () => {
     const singleChoice = [{ id: "s1", label: { en: "Single" } }];
     expect(getShuffledChoicesIds(singleChoice, "all")).toEqual(["s1"]);
     expect(getShuffledChoicesIds(singleChoice, "exceptLast")).toEqual(["s1"]);
+  });
+
+  test('should reverse all for "reverseOrder" when random < 0.5', () => {
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledChoicesIds(choicesBase, "reverseOrder")).toEqual(["c3", "c2", "c1"]);
+  });
+
+  test('should keep original order for "reverseOrder" when random >= 0.5', () => {
+    setNextRandomNormalizedValue(0.7);
+    expect(getShuffledChoicesIds(choicesBase, "reverseOrder")).toEqual(["c1", "c2", "c3"]);
+  });
+
+  test('should preserve "other" at end with "reverseOrder" when reversed', () => {
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledChoicesIds(choicesWithOther, "reverseOrder")).toEqual(["c3", "c2", "c1", "other"]);
+  });
+
+  test('should preserve all elements with "reverseOrder"', () => {
+    setNextRandomNormalizedValue(0.3);
+    const result = getShuffledChoicesIds(choicesBase, "reverseOrder");
+    expect(result).toHaveLength(3);
+    expect([...result].sort()).toEqual(["c1", "c2", "c3"]);
+  });
+
+  test('should reverse all except last for "reverseOrderExceptLast" when random < 0.5', () => {
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledChoicesIds(choicesBase, "reverseOrderExceptLast")).toEqual(["c2", "c1", "c3"]);
+  });
+
+  test('should keep original order for "reverseOrderExceptLast" when random >= 0.5', () => {
+    setNextRandomNormalizedValue(0.7);
+    expect(getShuffledChoicesIds(choicesBase, "reverseOrderExceptLast")).toEqual(["c1", "c2", "c3"]);
+  });
+
+  test('should keep last regular choice in place with "reverseOrderExceptLast", "other" appended after', () => {
+    setNextRandomNormalizedValue(0.3);
+    expect(getShuffledChoicesIds(choicesWithOther, "reverseOrderExceptLast")).toEqual([
+      "c2",
+      "c1",
+      "c3",
+      "other",
+    ]);
+  });
+
+  test('should always keep last regular element in place for "reverseOrderExceptLast"', () => {
+    setNextRandomNormalizedValue(0.3);
+    const result = getShuffledChoicesIds(choicesBase, "reverseOrderExceptLast");
+    expect(result[result.length - 1]).toBe("c3");
+    expect(result).toHaveLength(3);
+    expect([...result].sort()).toEqual(["c1", "c2", "c3"]);
   });
 });
 describe("getQuestionsFromSurvey", () => {

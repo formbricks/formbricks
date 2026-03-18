@@ -79,6 +79,16 @@ export const MultipleChoiceElementForm = ({
       label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
+    reverseOrder: {
+      id: "reverseOrder",
+      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      show: true,
+    },
   };
 
   const multipleChoiceOptionDisplayTypeOptions = [
@@ -168,6 +178,9 @@ export const MultipleChoiceElementForm = ({
       choices: newChoices,
       ...(element.shuffleOption === shuffleOptionsTypes.all.id && {
         shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+      }),
+      ...(element.shuffleOption === shuffleOptionsTypes.reverseOrder.id && {
+        shuffleOption: shuffleOptionsTypes.reverseOrderExceptLast.id as TShuffleOption,
       }),
     });
   };

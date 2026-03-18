@@ -115,6 +115,21 @@ export const RankingElementForm = ({
       label: t("environments.surveys.edit.randomize_all"),
       show: element.choices.length > 0,
     },
+    exceptLast: {
+      id: "exceptLast",
+      label: t("environments.surveys.edit.randomize_all_except_last"),
+      show: true,
+    },
+    reverseOrder: {
+      id: "reverseOrder",
+      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      show: true,
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      show: true,
+    },
   };
 
   useEffect(() => {
