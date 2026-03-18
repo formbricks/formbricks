@@ -16,10 +16,12 @@ import { ToasterClient } from "@/modules/ui/components/toaster-client";
 const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
   const user = session?.user?.id ? await getUser(session.user.id) : null;
+
   // If user account is deactivated, log them out instead of rendering the app
-  if (user?.isActive === false || user === null) {
+  if (user?.isActive === false) {
     return <ClientLogout />;
   }
+
   return (
     <>
       <NoMobileOverlay />
