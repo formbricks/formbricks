@@ -8,6 +8,7 @@ interface ChatwootWidgetProps {
   userEmail?: string | null;
   userName?: string | null;
   userId?: string | null;
+  isActiveCustomer: boolean;
 }
 
 const CHATWOOT_SCRIPT_ID = "chatwoot-script";
@@ -18,6 +19,7 @@ export const ChatwootWidget = ({
   userId,
   chatwootWebsiteToken,
   chatwootBaseUrl,
+  isActiveCustomer,
 }: ChatwootWidgetProps) => {
   const userSetRef = useRef(false);
 
@@ -25,7 +27,10 @@ export const ChatwootWidget = ({
     const $chatwoot = (
       globalThis as unknown as {
         $chatwoot: {
-          setUser: (userId: string, userInfo: { email?: string | null; name?: string | null }) => void;
+          setUser: (
+            userId: string,
+            userInfo: { email?: string | null; name?: string | null; isActiveCustomer?: boolean }
+          ) => void;
         };
       }
     ).$chatwoot;
@@ -33,6 +38,7 @@ export const ChatwootWidget = ({
       $chatwoot.setUser(userId, {
         email: userEmail,
         name: userName,
+        isActiveCustomer,
       });
       userSetRef.current = true;
     }

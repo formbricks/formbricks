@@ -7,6 +7,7 @@ import {
   IS_CHATWOOT_CONFIGURED,
   POSTHOG_KEY,
 } from "@/lib/constants";
+import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -16,11 +17,15 @@ import { ToasterClient } from "@/modules/ui/components/toaster-client";
 const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await getServerSession(authOptions);
   const user = session?.user?.id ? await getUser(session.user.id) : null;
-
   // If user account is deactivated, log them out instead of rendering the app
-  if (user?.isActive === false) {
+  if (user?.isActive === false || user === null) {
     return <ClientLogout />;
   }
+  const organizations = await getOrganizationsByUserId(user.id);
+  const isActiveCustomer = organizations.some(
+    (organization) =>
+      organization.billing.stripe?.plan === "pro" || organization.billing.stripe?.plan === "scale"
+  );
 
   return (
     <>
@@ -30,6 +35,7 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
       )}
       {IS_CHATWOOT_CONFIGURED && (
         <ChatwootWidget
+          isActiveCustomer={isActiveCustomer}
           userEmail={user?.email}
           userName={user?.name}
           userId={user?.id}
