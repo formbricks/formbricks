@@ -54,6 +54,16 @@ export enum OptionsType {
   QUOTAS = "Quotas",
 }
 
+const optionsTypeTranslationKeys: Record<OptionsType, string> = {
+  [OptionsType.ELEMENTS]: "common.elements",
+  [OptionsType.TAGS]: "common.tags",
+  [OptionsType.ATTRIBUTES]: "common.attributes",
+  [OptionsType.OTHERS]: "common.other_filters",
+  [OptionsType.META]: "common.meta",
+  [OptionsType.HIDDEN_FIELDS]: "common.hidden_fields",
+  [OptionsType.QUOTAS]: "common.quotas",
+};
+
 export type ElementOption = {
   label: string;
   elementType?: TSurveyElementTypeEnum;
@@ -218,7 +228,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             {options?.map((data) => (
               <Fragment key={data.header}>
                 {data?.option.length > 0 && (
-                  <CommandGroup heading={<p className="text-sm font-medium text-slate-600">{data.header}</p>}>
+                  <CommandGroup heading={<p className="text-sm font-medium text-slate-600">{t(optionsTypeTranslationKeys[data.header])}</p>}>
                     {data?.option?.map((o) => (
                       <CommandItem
                         key={o.id}
