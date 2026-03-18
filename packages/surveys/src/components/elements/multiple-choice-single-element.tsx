@@ -187,6 +187,8 @@ export function MultipleChoiceSingleElement({
         onOtherValueChange={handleOtherValueChange}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        searchPlaceholder={t("common.search")}
+        searchNoResultsText={t("common.no_results_found")}
       />
     </form>
   );

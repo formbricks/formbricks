@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
 import {
@@ -13,6 +13,9 @@ import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
 import { cn } from "@/lib/utils";
+
+/** Number of options above which the search input is shown inside the dropdown */
+const SEARCH_THRESHOLD = 5;
 
 /**
  * Option for single-select element
@@ -45,7 +48,7 @@ interface SingleSelectProps {
   requiredLabel?: string;
   /** Error message to display below the options */
   errorMessage?: string;
-  /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
+  /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-right), or 'auto' (auto-detect from content) */
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the options are disabled */
   disabled?: boolean;
@@ -67,6 +70,10 @@ interface SingleSelectProps {
   imageUrl?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
+  /** Placeholder text for the search input in dropdown mode */
+  searchPlaceholder?: string;
+  /** Message shown when search yields no results */
+  searchNoResultsText?: string;
 }
 
 function SingleSelect({
@@ -91,12 +98,54 @@ function SingleSelect({
   onOtherValueChange,
   imageUrl,
   videoUrl,
+  searchPlaceholder = "Search...",
+  searchNoResultsText = "No results found",
 }: Readonly<SingleSelectProps>): React.JSX.Element {
   // Ensure value is always a string or undefined
   const selectedValue = value ?? undefined;
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
   const otherInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Search state for the dropdown variant
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Total option count including "other" to determine whether to show search
+  const allDropdownOptionCount = options.length + (hasOtherOption ? 1 : 0);
+  const showSearch = variant === "dropdown" && allDropdownOptionCount > SEARCH_THRESHOLD;
+
+  // Separate "none" option from regular options — "none" is always visible regardless of search
+  const noneOption = React.useMemo(() => options.find((opt) => opt.id === "none"), [options]);
+  const regularOptions = React.useMemo(() => options.filter((opt) => opt.id !== "none"), [options]);
+
+  // Filtered regular options based on the search query (only active when search is shown)
+  const filteredRegularOptions = React.useMemo(() => {
+    if (!showSearch || !searchQuery) return regularOptions;
+    const lowerQuery = searchQuery.toLowerCase();
+    return regularOptions.filter((opt) => opt.label.toLowerCase().includes(lowerQuery));
+  }, [showSearch, searchQuery, regularOptions]);
+
+  // Whether the "other" option matches the search
+  const otherMatchesSearch = React.useMemo(() => {
+    if (!hasOtherOption) return false;
+    if (!showSearch || !searchQuery) return true;
+    return otherOptionLabel.toLowerCase().includes(searchQuery.toLowerCase());
+  }, [showSearch, searchQuery, hasOtherOption, otherOptionLabel]);
+
+  const handleDropdownOpenChange = (open: boolean): void => {
+    if (!open) {
+      setSearchQuery("");
+    } else if (showSearch) {
+      // Focus the search input when dropdown opens, using the same double-defer pattern
+      // as the "other" input focus to win against Radix focus management.
+      globalThis.setTimeout(() => {
+        globalThis.requestAnimationFrame(() => {
+          searchInputRef.current?.focus();
+        });
+      }, 0);
+    }
+  };
 
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
@@ -155,7 +204,7 @@ function SingleSelect({
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={handleDropdownOpenChange}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -168,12 +217,41 @@ function SingleSelect({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+                className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
                 align="start">
-                <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
-                  {options
-                    .filter((option) => option.id !== "none")
-                    .map((option) => {
+                {showSearch ? (
+                  <div className="border-option-border border-b px-2 py-2" role="search">
+                    <div className="relative flex items-center">
+                      <Search className="text-input-placeholder pointer-events-none absolute left-2 h-4 w-4 shrink-0" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={searchPlaceholder}
+                        dir={dir}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            if (searchQuery) {
+                              e.stopPropagation();
+                              setSearchQuery("");
+                            }
+                          } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                            // Let arrow keys propagate so Radix can move focus to options
+                          } else {
+                            e.stopPropagation();
+                          }
+                        }}
+                        className="bg-input-bg text-input-text placeholder:text-input-placeholder font-input font-input-weight w-full rounded-sm py-1 pr-2 pl-7 text-sm outline-none"
+                        aria-label={searchPlaceholder}
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+                <div className="max-h-[260px] overflow-y-auto">
+                  <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
+                    {filteredRegularOptions.map((option) => {
                       const optionId = `${inputId}-${option.id}`;
 
                       return (
@@ -187,34 +265,36 @@ function SingleSelect({
                         </DropdownMenuRadioItem>
                       );
                     })}
-                  {hasOtherOption && otherOptionId ? (
-                    <DropdownMenuRadioItem
-                      value={otherOptionId}
-                      id={`${inputId}-${otherOptionId}`}
-                      dir={dir}
-                      disabled={disabled}>
-                      <span className="font-input font-input-weight text-input-text">
-                        {otherValue || otherOptionLabel}
-                      </span>
-                    </DropdownMenuRadioItem>
-                  ) : null}
-                  {options
-                    .filter((option) => option.id === "none")
-                    .map((option) => {
-                      const optionId = `${inputId}-${option.id}`;
-
-                      return (
-                        <DropdownMenuRadioItem
-                          key={option.id}
-                          value={option.id}
-                          id={optionId}
-                          dir={dir}
-                          disabled={disabled}>
-                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
-                        </DropdownMenuRadioItem>
-                      );
-                    })}
-                </DropdownMenuRadioGroup>
+                    {otherMatchesSearch && otherOptionId ? (
+                      <DropdownMenuRadioItem
+                        value={otherOptionId}
+                        id={`${inputId}-${otherOptionId}`}
+                        dir={dir}
+                        disabled={disabled}>
+                        <span className="font-input font-input-weight text-input-text">
+                          {otherValue || otherOptionLabel}
+                        </span>
+                      </DropdownMenuRadioItem>
+                    ) : null}
+                    {noneOption ? (
+                      <DropdownMenuRadioItem
+                        key={noneOption.id}
+                        value={noneOption.id}
+                        id={`${inputId}-${noneOption.id}`}
+                        dir={dir}
+                        disabled={disabled}>
+                        <span className="font-input font-input-weight text-input-text">
+                          {noneOption.label}
+                        </span>
+                      </DropdownMenuRadioItem>
+                    ) : null}
+                    {showSearch && filteredRegularOptions.length === 0 && !otherMatchesSearch ? (
+                      <div className="text-input-placeholder px-2 py-4 text-center text-sm">
+                        {searchNoResultsText}
+                      </div>
+                    ) : null}
+                  </DropdownMenuRadioGroup>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
             {isOtherSelected ? (
