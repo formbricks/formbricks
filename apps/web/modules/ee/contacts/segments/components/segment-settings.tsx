@@ -133,6 +133,10 @@ export function SegmentSettings({
       return true;
     }
 
+    if (segment.filters.length === 0) {
+      return true;
+    }
+
     // parse the filters to check if they are valid
     const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
     if (!parsedFilters.success) {
