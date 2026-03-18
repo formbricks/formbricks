@@ -30,19 +30,45 @@ You can create webhooks either through the **Formbricks App UI** or programmatic
 
 ![Step two](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094259/j4a92z2q43twgamogpny.webp)
 
-- Add your webhook listener endpoint & test it to make sure it can receive the test endpoint otherwise you will not be able to save it.
+- Add your webhook listener endpoint and test it to make sure the endpoint is reachable and accepts `POST`
+  requests.
 
 ![Step three](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094617/image_kubsnz.jpg)
 
 - Now add the triggers you want to listen to and the surveys!
 
-- That’s it! Your webhooks will not start receiving data as soon as it arrives!
+- That’s it! Your webhooks will now start receiving data as soon as it arrives!
 
 ![Step five](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094816/image_xvrel1.jpg)
 
 ## **Creating Webhooks via API**
 
 Use our documented methods on the **Creation**, **List**, and **Deletion** endpoints of the Webhook API mentioned in our [API v2 playground](https://formbricks.com/docs/api-v2-reference/management-api-%3E-webhooks/get-webhooks).
+
+## Testing Webhooks Locally
+
+If you want to test a webhook consumer running on your machine before deploying it, you can expose your local
+endpoint with [ngrok](https://ngrok.com/docs/universal-gateway/http).
+
+<Steps>
+  <Step title="Start your local webhook listener">
+    Run your local endpoint on a port like `3000`.
+  </Step>
+  <Step title="Expose it with ngrok">
+    Create a public HTTPS URL for your local service, for example with `ngrok http http://localhost:3000`.
+  </Step>
+
+  <Step title="Use the public URL in Formbricks">
+    Paste the ngrok URL into your webhook endpoint, click **Test Endpoint**, and then save the webhook once the
+    endpoint is reachable.
+  </Step>
+</Steps>
+
+<Note>
+  To avoid sending unwanted test responses to production workflows, copy the survey to your [Test
+  Environment](/xm-and-surveys/core-features/test-environment) and use that survey copy in your development
+  workflow while validating the webhook setup.
+</Note>
 
 If you encounter any issues or need help setting up webhooks, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions). 😃
 
@@ -220,49 +246,47 @@ We provide the following webhook payloads, `responseCreated`, `responseUpdated`,
 Example of Response Created webhook payload:
 
 ```json
-[
-  {
+{
+  "data": {
+    "contact": null,
+    "contactAttributes": null,
+    "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "contact": null,
-      "contactAttributes": null,
-      "createdAt": "2025-07-24T07:47:29.507Z",
-      "data": {
-        "q1": "clicked"
-      },
-      "displayId": "displayId",
-      "endingId": null,
-      "finished": false,
-      "id": "responseId",
-      "language": "en",
-      "meta": {
-        "country": "DE",
-        "url": "https://app.formbricks.com/s/surveyId",
-        "userAgent": {
-          "browser": "Chrome",
-          "device": "desktop",
-          "os": "macOS"
-        }
-      },
-      "singleUseId": null,
-      "survey": {
-        "createdAt": "2025-07-20T10:30:00.000Z",
-        "status": "inProgress",
-        "title": "Customer Satisfaction Survey",
-        "type": "link",
-        "updatedAt": "2025-07-24T07:45:00.000Z"
-      },
-      "surveyId": "surveyId",
-      "tags": [],
-      "ttc": {
-        "q1": 2154.700000047684
-      },
-      "updatedAt": "2025-07-24T07:47:29.507Z",
-      "variables": {}
+      "welcome_card_cta": "clicked"
     },
-    "event": "responseCreated",
-    "webhookId": "webhookId"
-  }
-]
+    "displayId": "displayId",
+    "endingId": null,
+    "finished": false,
+    "id": "responseId",
+    "language": "en",
+    "meta": {
+      "country": "DE",
+      "url": "https://app.formbricks.com/s/surveyId",
+      "userAgent": {
+        "browser": "Chrome",
+        "device": "desktop",
+        "os": "macOS"
+      }
+    },
+    "singleUseId": null,
+    "survey": {
+      "createdAt": "2025-07-20T10:30:00.000Z",
+      "status": "inProgress",
+      "title": "Customer Satisfaction Survey",
+      "type": "link",
+      "updatedAt": "2025-07-24T07:45:00.000Z"
+    },
+    "surveyId": "surveyId",
+    "tags": [],
+    "ttc": {
+      "welcome_card_cta": 2154.700000047684
+    },
+    "updatedAt": "2025-07-24T07:47:29.507Z",
+    "variables": {}
+  },
+  "event": "responseCreated",
+  "webhookId": "webhookId"
+}
 ```
 
 ### Response Updated
@@ -270,51 +294,49 @@ Example of Response Created webhook payload:
 Example of Response Updated webhook payload:
 
 ```json
-[
-  {
+{
+  "data": {
+    "contact": null,
+    "contactAttributes": null,
+    "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "contact": null,
-      "contactAttributes": null,
-      "createdAt": "2025-07-24T07:47:29.507Z",
-      "data": {
-        "q1": "clicked",
-        "q2": "Just browsing"
-      },
-      "displayId": "displayId",
-      "endingId": null,
-      "finished": false,
-      "id": "responseId",
-      "language": "en",
-      "meta": {
-        "country": "DE",
-        "url": "https://app.formbricks.com/s/surveyId",
-        "userAgent": {
-          "browser": "Chrome",
-          "device": "desktop",
-          "os": "macOS"
-        }
-      },
-      "singleUseId": null,
-      "survey": {
-        "createdAt": "2025-07-20T10:30:00.000Z",
-        "status": "inProgress",
-        "title": "Customer Satisfaction Survey",
-        "type": "link",
-        "updatedAt": "2025-07-24T07:45:00.000Z"
-      },
-      "surveyId": "surveyId",
-      "tags": [],
-      "ttc": {
-        "q1": 2154.700000047684,
-        "q2": 3855.799999952316
-      },
-      "updatedAt": "2025-07-24T07:47:33.696Z",
-      "variables": {}
+      "visit_reason": "Just browsing",
+      "welcome_card_cta": "clicked"
     },
-    "event": "responseUpdated",
-    "webhookId": "webhookId"
-  }
-]
+    "displayId": "displayId",
+    "endingId": null,
+    "finished": false,
+    "id": "responseId",
+    "language": "en",
+    "meta": {
+      "country": "DE",
+      "url": "https://app.formbricks.com/s/surveyId",
+      "userAgent": {
+        "browser": "Chrome",
+        "device": "desktop",
+        "os": "macOS"
+      }
+    },
+    "singleUseId": null,
+    "survey": {
+      "createdAt": "2025-07-20T10:30:00.000Z",
+      "status": "inProgress",
+      "title": "Customer Satisfaction Survey",
+      "type": "link",
+      "updatedAt": "2025-07-24T07:45:00.000Z"
+    },
+    "surveyId": "surveyId",
+    "tags": [],
+    "ttc": {
+      "visit_reason": 3855.799999952316,
+      "welcome_card_cta": 2154.700000047684
+    },
+    "updatedAt": "2025-07-24T07:47:33.696Z",
+    "variables": {}
+  },
+  "event": "responseUpdated",
+  "webhookId": "webhookId"
+}
 ```
 
 ### Response Finished
@@ -322,50 +344,48 @@ Example of Response Updated webhook payload:
 Example of Response Finished webhook payload:
 
 ```json
-[
-  {
+{
+  "data": {
+    "contact": null,
+    "contactAttributes": null,
+    "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "contact": null,
-      "contactAttributes": null,
-      "createdAt": "2025-07-24T07:47:29.507Z",
-      "data": {
-        "q1": "clicked",
-        "q2": "accepted"
-      },
-      "displayId": "displayId",
-      "endingId": "endingId",
-      "finished": true,
-      "id": "responseId",
-      "language": "en",
-      "meta": {
-        "country": "DE",
-        "url": "https://app.formbricks.com/s/surveyId",
-        "userAgent": {
-          "browser": "Chrome",
-          "device": "desktop",
-          "os": "macOS"
-        }
-      },
-      "singleUseId": null,
-      "survey": {
-        "createdAt": "2025-07-20T10:30:00.000Z",
-        "status": "inProgress",
-        "title": "Customer Satisfaction Survey",
-        "type": "link",
-        "updatedAt": "2025-07-24T07:45:00.000Z"
-      },
-      "surveyId": "surveyId",
-      "tags": [],
-      "ttc": {
-        "_total": 4947.899999035763,
-        "q1": 2154.700000047684,
-        "q2": 2793.199999988079
-      },
-      "updatedAt": "2025-07-24T07:47:56.116Z",
-      "variables": {}
+      "newsletter_consent": "accepted",
+      "welcome_card_cta": "clicked"
     },
-    "event": "responseFinished",
-    "webhookId": "webhookId"
-  }
-]
+    "displayId": "displayId",
+    "endingId": "endingId",
+    "finished": true,
+    "id": "responseId",
+    "language": "en",
+    "meta": {
+      "country": "DE",
+      "url": "https://app.formbricks.com/s/surveyId",
+      "userAgent": {
+        "browser": "Chrome",
+        "device": "desktop",
+        "os": "macOS"
+      }
+    },
+    "singleUseId": null,
+    "survey": {
+      "createdAt": "2025-07-20T10:30:00.000Z",
+      "status": "inProgress",
+      "title": "Customer Satisfaction Survey",
+      "type": "link",
+      "updatedAt": "2025-07-24T07:45:00.000Z"
+    },
+    "surveyId": "surveyId",
+    "tags": [],
+    "ttc": {
+      "_total": 4947.899999035763,
+      "newsletter_consent": 2793.199999988079,
+      "welcome_card_cta": 2154.700000047684
+    },
+    "updatedAt": "2025-07-24T07:47:56.116Z",
+    "variables": {}
+  },
+  "event": "responseFinished",
+  "webhookId": "webhookId"
+}
 ```
