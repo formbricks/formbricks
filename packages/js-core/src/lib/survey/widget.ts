@@ -263,7 +263,7 @@ const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
     return surveysLoadPromise;
   }
 
-  surveysLoadPromise = new Promise<TFormbricksSurveys>((resolve, reject) => {
+  surveysLoadPromise = new Promise<TFormbricksSurveys>((resolve, reject: (reason: unknown) => void) => {
     const config = Config.getInstance();
     const script = document.createElement("script");
     script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
@@ -274,7 +274,7 @@ const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
     script.onerror = (error) => {
       surveysLoadPromise = null;
       console.error("Failed to load Formbricks Surveys library:", error);
-      reject(new Error(`Failed to load Formbricks Surveys library: ${error as string}`));
+      reject(new Error(`Failed to load Formbricks Surveys library`));
     };
     document.head.appendChild(script);
   });

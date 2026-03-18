@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Formbricks SDK Race Condition Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+    .log { margin: 4px 0; padding: 4px 8px; border-radius: 4px; }
+    .log.info { background: #16213e; }
+    .log.success { background: #1b4332; color: #95d5b2; }
+    .log.error { background: #4a1025; color: #ff6b6b; }
+    .log.warn { background: #3d2e00; color: #ffd166; }
+    button { margin: 8px 4px; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; }
+    #btn-normal { background: #4361ee; color: white; }
+    #btn-throttled { background: #f72585; color: white; }
+    #btn-blocked { background: #ff6d00; color: white; }
+    #btn-clear { background: #555; color: white; }
+    h2 { color: #7209b7; }
+    #logs { max-height: 500px; overflow-y: auto; }
+    .instructions { background: #16213e; padding: 16px; border-radius: 8px; margin-bottom: 16px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <h2>Formbricks SDK - Race Condition Reproduction</h2>
+
+  <div class="instructions">
+    <strong>How to use:</strong><br>
+    1. Update <code>APP_URL</code> and <code>ENVIRONMENT_ID</code> below to point to your Formbricks instance.<br>
+    2. Make sure you have at least one survey with a <strong>pageView</strong> trigger active in that environment.<br>
+    3. Open this file in a browser (serve it via a local server, e.g. <code>npx serve .</code>).<br>
+    4. Click the test buttons and observe the logs below.<br><br>
+    <strong>Test scenarios:</strong><br>
+    - <strong>Normal</strong>: Standard setup + page view trigger. Should work fine.<br>
+    - <strong>Throttled Network</strong>: Open DevTools → Network → set to "Slow 3G", then click. Tests if polling waits for slow download.<br>
+    - <strong>Blocked Main Thread</strong>: Simulates a heavy app by blocking the main thread for 3 seconds right after setup. Tests if the fix handles main thread contention.<br><br>
+    <strong>What to verify:</strong><br>
+    - Check the Network tab: <code>surveys.umd.cjs</code> should appear as a <strong>preloaded</strong> resource right after setup.<br>
+    - The survey should eventually render (or log a clean timeout error), never crash with <code>"Cannot read properties of undefined"</code>.
+  </div>
+
+  <button id="btn-normal">Test: Normal</button>
+  <button id="btn-blocked">Test: Block Main Thread (3s)</button>
+  <button id="btn-clear">Clear Logs</button>
+
+  <div id="logs"></div>
+
+  <script>
+    // ============================================================
+    // CONFIGURE THESE VALUES
+    // ============================================================
+    const APP_URL = "http://localhost:3000";  // Your Formbricks instance URL
+    const ENVIRONMENT_ID = "YOUR_ENVIRONMENT_ID";  // Your environment ID
+    // ============================================================
+
+    const logsEl = document.getElementById("logs");
+
+    function log(msg, type = "info") {
+      const el = document.createElement("div");
+      el.className = `log ${type}`;
+      el.textContent = `[${new Date().toISOString().slice(11, 23)}] ${msg}`;
+      logsEl.appendChild(el);
+      logsEl.scrollTop = logsEl.scrollHeight;
+      console.log(`[${type}] ${msg}`);
+    }
+
+    // Intercept console to capture SDK logs
+    const origWarn = console.warn;
+    const origError = console.error;
+    console.warn = function(...args) {
+      if (args[0]?.toString().includes("Formbricks")) log(args.join(" "), "warn");
+      origWarn.apply(console, args);
+    };
+    console.error = function(...args) {
+      if (args[0]?.toString().includes("Formbricks") || args[0]?.toString().includes("formbricks")) {
+        log(args.join(" "), "error");
+      }
+      origError.apply(console, args);
+    };
+
+    function cleanState() {
+      // Remove any existing formbricks scripts and preload links
+      document.querySelectorAll('script[src*="formbricks"], script[src*="surveys"]').forEach(el => el.remove());
+      document.querySelectorAll('link[href*="surveys"]').forEach(el => el.remove());
+
+      // Clear globals
+      delete window.formbricks;
+      delete window.formbricksSurveys;
+
+      // Clear localStorage
+      localStorage.removeItem("formbricks-js");
+
+      log("Cleaned up previous state");
+    }
+
+    function loadSDK() {
+      return new Promise((resolve, reject) => {
+        log("Loading formbricks.umd.cjs...");
+        const script = document.createElement("script");
+        script.src = `${APP_URL}/js/formbricks.umd.cjs`;
+        script.async = true;
+        script.onload = () => {
+          if (window.formbricks) {
+            log("formbricks.umd.cjs loaded successfully", "success");
+            resolve();
+          } else {
+            log("formbricks.umd.cjs loaded but window.formbricks is undefined!", "error");
+            reject(new Error("formbricks not on window"));
+          }
+        };
+        script.onerror = (err) => {
+          log("Failed to load formbricks.umd.cjs", "error");
+          reject(err);
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    async function runTest(options = {}) {
+      cleanState();
+
+      try {
+        await loadSDK();
+
+        log(`Calling formbricks.setup({ environmentId: "${ENVIRONMENT_ID}", appUrl: "${APP_URL}" })`);
+        const setupStart = performance.now();
+
+        await window.formbricks.setup({
+          environmentId: ENVIRONMENT_ID,
+          appUrl: APP_URL,
+        });
+
+        const setupDuration = (performance.now() - setupStart).toFixed(0);
+        log(`setup() completed in ${setupDuration}ms`, "success");
+
+        // Check if preload link was added
+        const preloadLink = document.querySelector('link[rel="preload"][href*="surveys.umd.cjs"]');
+        if (preloadLink) {
+          log("Preload <link> for surveys.umd.cjs found in <head>", "success");
+        } else {
+          log("No preload <link> for surveys.umd.cjs found — this is the old behavior (no preloading)", "warn");
+        }
+
+        if (options.blockMainThread) {
+          log(`Blocking main thread for ${options.blockMainThread}ms to simulate heavy app...`, "warn");
+          const end = Date.now() + options.blockMainThread;
+          while (Date.now() < end) {
+            // Busy loop — simulates heavy JS parsing/execution in a large app
+            Math.random() * Math.random();
+          }
+          log("Main thread unblocked", "info");
+        }
+
+        // Check if surveys.umd.cjs is already available (from preload)
+        if (window.formbricksSurveys) {
+          log("window.formbricksSurveys is already available (preload worked!)", "success");
+        } else {
+          log("window.formbricksSurveys is NOT yet available — will be loaded on survey trigger", "info");
+        }
+
+        log("Triggering page view action...");
+        await window.formbricks.track("pageView");
+        log("track('pageView') completed", "success");
+
+        // Give it a moment and check final state
+        setTimeout(() => {
+          if (window.formbricksSurveys) {
+            log("Final check: window.formbricksSurveys is available", "success");
+          } else {
+            log("Final check: window.formbricksSurveys is still NOT available", "warn");
+          }
+
+          const surveyContainer = document.getElementById("formbricks-modal-container");
+          if (surveyContainer) {
+            log("Survey modal container found in DOM — survey rendered!", "success");
+          } else {
+            log("No survey modal container found — either no survey matched or it hasn't rendered yet", "info");
+          }
+        }, 5000);
+
+      } catch (err) {
+        log(`Error: ${err.message}`, "error");
+      }
+    }
+
+    document.getElementById("btn-normal").onclick = () => runTest();
+    document.getElementById("btn-blocked").onclick = () => runTest({ blockMainThread: 3000 });
+    document.getElementById("btn-clear").onclick = () => { logsEl.innerHTML = ""; };
+  </script>
+</body>
+</html>
