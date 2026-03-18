@@ -161,6 +161,120 @@ describe("withV3ApiWrapper", () => {
     expect(body.requestId).toBe("req-invalid");
   });
 
+  test("parses body, repeated query params, and async route params", async () => {
+    const handler = vi.fn(async ({ parsedInput }) => {
+      expect(parsedInput).toEqual({
+        body: { name: "Survey API" },
+        query: { tag: ["a", "b"] },
+        params: { workspaceId: "ws_123" },
+      });
+
+      return Response.json(
+        { ok: true },
+        {
+          headers: {
+            "X-Request-Id": "handler-request-id",
+          },
+        }
+      );
+    });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        body: z.object({
+          name: z.string(),
+        }),
+        query: z.object({
+          tag: z.array(z.string()),
+        }),
+        params: z.object({
+          workspaceId: z.string(),
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys?tag=a&tag=b", {
+        method: "POST",
+        body: JSON.stringify({ name: "Survey API" }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      {
+        params: Promise.resolve({
+          workspaceId: "ws_123",
+        }),
+      } as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Request-Id")).toBe("handler-request-id");
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test("returns 400 problem response for malformed JSON input", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        body: z.object({
+          name: z.string(),
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        body: "{",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      {
+        name: "body",
+        reason: "Malformed JSON input, please check your request body",
+      },
+    ]);
+  });
+
+  test("returns 400 problem response for invalid route params", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        params: z.object({
+          workspaceId: z.string().min(3),
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {
+      params: Promise.resolve({
+        workspaceId: "x",
+      }),
+    } as never);
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+    const body = await response.json();
+    expect(body.invalid_params).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "workspaceId" })])
+    );
+  });
+
   test("returns 429 problem response when rate limited", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     mockGetServerSession.mockResolvedValue({
