@@ -1,19 +1,18 @@
 "use server";
 
-import { getServerSession } from "next-auth";
+import { TCloudBillingPlan } from "@formbricks/types/organizations";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 
-export const getIsActiveCustomer = async (): Promise<boolean> => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return false;
+export const getIsActiveCustomerAction = authenticatedActionClient.action(async ({ ctx }) => {
+  const paidBillingPlans = new Set<TCloudBillingPlan>(["pro", "scale", "custom"]);
 
-  const organizations = await getOrganizationsByUserId(session.user.id);
+  const organizations = await getOrganizationsByUserId(ctx.user.id);
   return organizations.some((organization) => {
     const stripe = organization.billing.stripe;
-    const isPaidPlan = stripe?.plan === "pro" || stripe?.plan === "scale" || stripe?.plan === "custom";
+    const isPaidPlan = stripe?.plan ? paidBillingPlans.has(stripe.plan) : false;
     const isActiveSubscription =
       stripe?.subscriptionStatus === "active" || stripe?.subscriptionStatus === "trialing";
     return isPaidPlan && isActiveSubscription;
   });
-};
+});

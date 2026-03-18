@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { getIsActiveCustomer } from "./actions";
+import { getIsActiveCustomerAction } from "./actions";
 
 interface ChatwootWidgetProps {
   chatwootBaseUrl: string;
@@ -55,8 +55,10 @@ export const ChatwootWidget = ({
     const $chatwoot = getChatwoot();
     if (!$chatwoot) return;
 
-    const isActiveCustomer = await getIsActiveCustomer();
-    $chatwoot.setCustomAttributes({ isActiveCustomer });
+    const response = await getIsActiveCustomerAction();
+    if (response?.data !== undefined) {
+      $chatwoot.setCustomAttributes({ isActiveCustomer: response.data });
+    }
     customerStatusSetRef.current = true;
   }, [getChatwoot]);
 
