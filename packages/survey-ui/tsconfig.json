@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ES2020", "ES2021.String"],
     "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]
