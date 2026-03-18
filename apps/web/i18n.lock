@@ -1012,6 +1012,25 @@ checksums:
     environments/settings/enterprise/enterprise_features: 3271476140733924b2a2477c4fdf3d12
     environments/settings/enterprise/get_an_enterprise_license_to_get_access_to_all_features: afd3c00f19097e88ed051800979eea44
     environments/settings/enterprise/keep_full_control_over_your_data_privacy_and_security: 43aa041cc3e2b2fdd35d2d34659a6b7a
+    environments/settings/enterprise/license_feature_access_control: bdc5ce7e88ad724d4abd3e8a07a9de5d
+    environments/settings/enterprise/license_feature_audit_logs: e93f59c176cfc8460d2bd56551ed78b8
+    environments/settings/enterprise/license_feature_contacts: fd76522bc82324ac914e124cdf9935b0
+    environments/settings/enterprise/license_feature_projects: 8ba082a84aa35cf851af1cf874b853e2
+    environments/settings/enterprise/license_feature_quotas: e6afead11b5b8ae627885ce2b84a548f
+    environments/settings/enterprise/license_feature_remove_branding: a5c71d43cd3ed25e6e48bca64e8ffc9f
+    environments/settings/enterprise/license_feature_saml: 86b76024524fc585b2c3950126ef6f62
+    environments/settings/enterprise/license_feature_spam_protection: e1fb0dd0723044bf040b92d8fc58015d
+    environments/settings/enterprise/license_feature_sso: 8c029b7dd2cb3aa1393d2814aba6cd7b
+    environments/settings/enterprise/license_feature_two_factor_auth: bc68ddd9c3c82225ef641f097e0940db
+    environments/settings/enterprise/license_feature_whitelabel: 81e9ec1d4230419f4230e6f5a318497c
+    environments/settings/enterprise/license_features_table_access: 550606d4a12bdf108c1b12b925ca1b3a
+    environments/settings/enterprise/license_features_table_description: d6260830d0703f5a2c9ed59c9da462e3
+    environments/settings/enterprise/license_features_table_disabled: 0889a3dfd914a7ef638611796b17bf72
+    environments/settings/enterprise/license_features_table_enabled: 20236664b7e62df0e767921b4450205f
+    environments/settings/enterprise/license_features_table_feature: 58f5f3f37862b6312a2f20ec1a1fd0e8
+    environments/settings/enterprise/license_features_table_title: 82d1d7b30d876cf4312f78140a90e394
+    environments/settings/enterprise/license_features_table_unlimited: e1a92523172cd1bdde5550689840e42d
+    environments/settings/enterprise/license_features_table_value: 34b0eaa85808b15cbc4be94c64d0146b
     environments/settings/enterprise/license_instance_mismatch_description: 00f47e33ff54fca52ce9b125cd77fda5
     environments/settings/enterprise/license_invalid_description: b500c22ab17893fdf9532d2bd94aa526
     environments/settings/enterprise/license_status: f6f85c59074ca2455321bd5288d94be8

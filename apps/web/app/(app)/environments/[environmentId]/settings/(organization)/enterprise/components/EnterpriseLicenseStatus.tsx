@@ -15,6 +15,7 @@ import { SettingsCard } from "../../../components/SettingsCard";
 
 interface EnterpriseLicenseStatusProps {
   status: TLicenseStatus;
+  lastChecked: Date;
   gracePeriodEnd?: Date;
   environmentId: string;
 }
@@ -44,6 +45,7 @@ const getBadgeConfig = (
 
 export const EnterpriseLicenseStatus = ({
   status,
+  lastChecked,
   gracePeriodEnd,
   environmentId,
 }: EnterpriseLicenseStatusProps) => {
@@ -92,7 +94,19 @@ export const EnterpriseLicenseStatus = ({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col gap-1.5">
-            <Badge type={badgeConfig.type} text={badgeConfig.label} size="normal" className="w-fit" />
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge type={badgeConfig.type} text={badgeConfig.label} size="normal" className="w-fit" />
+              <span className="text-sm text-slate-500">
+                {t("common.updated_at")}{" "}
+                {new Date(lastChecked).toLocaleString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           </div>
           <Button
             type="button"
