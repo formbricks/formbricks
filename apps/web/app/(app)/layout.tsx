@@ -7,7 +7,6 @@ import {
   IS_CHATWOOT_CONFIGURED,
   POSTHOG_KEY,
 } from "@/lib/constants";
-import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -21,18 +20,6 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   if (user?.isActive === false || user === null) {
     return <ClientLogout />;
   }
-  let isActiveCustomer = false;
-  if (IS_CHATWOOT_CONFIGURED) {
-    const organizations = await getOrganizationsByUserId(user.id);
-    isActiveCustomer = organizations.some((organization) => {
-      const stripe = organization.billing.stripe;
-      const isPaidPlan = stripe?.plan === "pro" || stripe?.plan === "scale" || stripe?.plan === "custom";
-      const isActiveSubscription =
-        stripe?.subscriptionStatus === "active" || stripe?.subscriptionStatus === "trialing";
-      return isPaidPlan && isActiveSubscription;
-    });
-  }
-
   return (
     <>
       <NoMobileOverlay />
@@ -41,7 +28,6 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
       )}
       {IS_CHATWOOT_CONFIGURED && (
         <ChatwootWidget
-          isActiveCustomer={isActiveCustomer}
           userEmail={user?.email}
           userName={user?.name}
           userId={user?.id}
