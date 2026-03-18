@@ -59,7 +59,7 @@ export const isValidActionClassUrlFilterValue = (value: string, rule: TActionCla
 const ZActionClassUrlFilter = z
   .object({
     value: z.string().trim().min(1, {
-      error: "Value must contain atleast 1 character",
+      error: "Value must contain at least 1 character",
     }),
     rule: ZActionClassPageUrlRule,
   })
