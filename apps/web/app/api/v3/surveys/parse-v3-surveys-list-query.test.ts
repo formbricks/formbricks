@@ -38,8 +38,22 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "foo",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, offset, name, status, type, createdBy, sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, name, status, type, createdBy, sortBy.",
       });
+  });
+
+  test("rejects the legacy after query parameter", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&after=legacy-cursor`), {
+      sessionUserId: "u1",
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.invalid_params[0]).toEqual({
+        name: "after",
+        reason:
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, name, status, type, createdBy, sortBy.",
+      });
+    }
   });
 
   test("parses minimal query", () => {
@@ -47,6 +61,8 @@ describe("parseV3SurveysListQuery", () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.limit).toBe(20);
+      expect(r.cursor).toBeNull();
+      expect(r.sortBy).toBe("updatedAt");
       expect(r.filterCriteria).toBeUndefined();
     }
   });
@@ -65,8 +81,8 @@ describe("parseV3SurveysListQuery", () => {
         status: ["inProgress", "draft"],
         type: ["link"],
         createdBy: { userId: "session_user", value: ["you"] },
-        sortBy: "updatedAt",
       });
+      expect(r.sortBy).toBe("updatedAt");
     }
   });
 
@@ -83,5 +99,20 @@ describe("parseV3SurveysListQuery", () => {
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.invalid_params[0].name).toBe("createdBy");
+  });
+
+  test("rejects an invalid cursor", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&cursor=not-a-real-cursor`), {
+      sessionUserId: "u1",
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.invalid_params).toEqual([
+        {
+          name: "cursor",
+          reason: "The cursor is invalid.",
+        },
+      ]);
+    }
   });
 });

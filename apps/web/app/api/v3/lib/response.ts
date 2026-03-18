@@ -133,16 +133,9 @@ export function problemTooManyRequests(requestId: string, detail: string, retryA
   });
 }
 
-/** List envelope for GET list endpoints */
-export type ListMeta = {
-  limit: number;
-  offset: number;
-  total?: number;
-};
-
-export function successListResponse<T>(
+export function successListResponse<T, TMeta extends Record<string, unknown>>(
   data: T[],
-  meta: ListMeta,
+  meta: TMeta,
   options?: { requestId?: string; cache?: string }
 ): Response {
   const headers: Record<string, string> = {

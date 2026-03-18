@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -119,6 +120,13 @@ async function getRouteParams<TProps>(props: TProps): Promise<Record<string, unk
 async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): Promise<TV3Authentication> {
   if (authMode === "none") {
     return null;
+  }
+
+  if (authMode === "both" && req.headers.has("x-api-key")) {
+    const apiKeyAuth = await authenticateRequest(req);
+    if (apiKeyAuth) {
+      return apiKeyAuth;
+    }
   }
 
   if (authMode === "session" || authMode === "both") {
@@ -265,7 +273,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
             log.warn({ error, statusCode: 429 }, "V3 API rate limit exceeded");
             return problemTooManyRequests(
               requestId,
-              error instanceof Error ? error.message : "Rate limit exceeded"
+              error instanceof Error ? error.message : "Rate limit exceeded",
+              error instanceof TooManyRequestsError ? error.retryAfter : undefined
             );
           }
         }

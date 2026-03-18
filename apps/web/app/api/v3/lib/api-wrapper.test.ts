@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { withV3ApiWrapper } from "./api-wrapper";
 
 const { mockAuthenticateRequest, mockGetServerSession } = vi.hoisted(() => ({
@@ -112,6 +113,7 @@ describe("withV3ApiWrapper", () => {
       expect.objectContaining({ namespace: "api:v3" }),
       "key_1"
     );
+    expect(mockGetServerSession).not.toHaveBeenCalled();
   });
 
   test("returns 401 problem response when authentication is required but missing", async () => {
@@ -165,7 +167,7 @@ describe("withV3ApiWrapper", () => {
       user: { id: "user_1" },
       expires: "2026-01-01",
     });
-    vi.mocked(applyRateLimit).mockRejectedValueOnce(new Error("Too many requests"));
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Too many requests", 60));
 
     const wrapped = withV3ApiWrapper({
       auth: "both",
@@ -175,6 +177,7 @@ describe("withV3ApiWrapper", () => {
     const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
 
     expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("60");
     const body = await response.json();
     expect(body.code).toBe("too_many_requests");
   });

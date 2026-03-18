@@ -127,7 +127,7 @@ describe("rateLimitConfigs", () => {
       mockEval.mockResolvedValue([1, 1]);
 
       const config = rateLimitConfigs.api.v1;
-      await expect(applyRateLimit(config, "api-key-123")).resolves.toBeUndefined();
+      await expect(applyRateLimit(config, "api-key-123")).resolves.toEqual({ allowed: true });
     });
 
     test("should enforce limits correctly for each config type", async () => {

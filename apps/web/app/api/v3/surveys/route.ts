@@ -12,7 +12,7 @@ import {
   problemInternalError,
   successListResponse,
 } from "@/app/api/v3/lib/response";
-import { getSurveyCount, getSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import type { TSurvey } from "@/modules/survey/list/types/surveys";
 import { parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
 
@@ -54,17 +54,18 @@ export const GET = withV3ApiWrapper({
 
       const { environmentId } = authResult;
 
-      const [surveys, total] = await Promise.all([
-        getSurveys(environmentId, parsed.limit, parsed.offset, parsed.filterCriteria),
-        getSurveyCount(environmentId, parsed.filterCriteria),
-      ]);
+      const { surveys, nextCursor } = await getSurveyListPage(environmentId, {
+        limit: parsed.limit,
+        cursor: parsed.cursor,
+        sortBy: parsed.sortBy,
+        filterCriteria: parsed.filterCriteria,
+      });
 
       return successListResponse(
         surveys.map(toV3SurveyListItem),
         {
           limit: parsed.limit,
-          offset: parsed.offset,
-          total,
+          nextCursor,
         },
         { requestId, cache: "private, no-store" }
       );

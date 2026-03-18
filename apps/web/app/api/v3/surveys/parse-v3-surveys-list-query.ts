@@ -10,6 +10,12 @@ import {
   ZSurveyStatus,
   ZSurveyType,
 } from "@formbricks/types/surveys/types";
+import {
+  type TSurveyListPageCursor,
+  type TSurveyListSort,
+  decodeSurveyListPageCursor,
+  normalizeSurveyListSort,
+} from "@/modules/survey/list/lib/survey-page";
 
 const V3_SURVEYS_DEFAULT_LIMIT = 20;
 const V3_SURVEYS_MAX_LIMIT = 100;
@@ -17,7 +23,7 @@ const V3_SURVEYS_MAX_LIMIT = 100;
 const SUPPORTED_QUERY_PARAMS = [
   "workspaceId",
   "limit",
-  "offset",
+  "cursor",
   "name",
   "status",
   "type",
@@ -43,7 +49,7 @@ export function collectMultiValueQueryParam(searchParams: URLSearchParams, key: 
 const ZV3SurveysListQuery = z.object({
   workspaceId: ZId,
   limit: z.coerce.number().int().min(1).max(V3_SURVEYS_MAX_LIMIT).default(V3_SURVEYS_DEFAULT_LIMIT),
-  offset: z.coerce.number().int().min(0).default(0),
+  cursor: z.string().min(1).optional(),
   name: z
     .string()
     .max(512)
@@ -62,7 +68,8 @@ export type TV3SurveysListQueryParseResult =
       ok: true;
       workspaceId: string;
       limit: number;
-      offset: number;
+      cursor: TSurveyListPageCursor | null;
+      sortBy: TSurveyListSort;
       filterCriteria: TSurveyFilterCriteria | undefined;
     }
   | { ok: false; invalid_params: InvalidParam[] };
@@ -89,7 +96,6 @@ function buildFilterCriteria(
   if (q.createdBy?.length && sessionUserId) {
     f.createdBy = { userId: sessionUserId, value: q.createdBy };
   }
-  if (q.sortBy) f.sortBy = q.sortBy;
   return Object.keys(f).length > 0 ? f : undefined;
 }
 
@@ -130,7 +136,7 @@ export function parseV3SurveysListQuery(
   const raw = {
     workspaceId: searchParams.get("workspaceId"),
     limit: searchParams.get("limit") ?? undefined,
-    offset: searchParams.get("offset") ?? undefined,
+    cursor: searchParams.get("cursor")?.trim() || undefined,
     name: searchParams.get("name") ?? undefined,
     status: statusVals.length > 0 ? statusVals : undefined,
     type: typeVals.length > 0 ? typeVals : undefined,
@@ -150,11 +156,31 @@ export function parseV3SurveysListQuery(
   }
 
   const q = result.data;
+  const sortBy = normalizeSurveyListSort(q.sortBy);
+  let cursor: TSurveyListPageCursor | null = null;
+
+  if (q.cursor) {
+    try {
+      cursor = decodeSurveyListPageCursor(q.cursor, sortBy);
+    } catch (error) {
+      return {
+        ok: false,
+        invalid_params: [
+          {
+            name: "cursor",
+            reason: error instanceof Error ? error.message : "The cursor is invalid.",
+          },
+        ],
+      };
+    }
+  }
+
   return {
     ok: true,
     workspaceId: q.workspaceId,
     limit: q.limit,
-    offset: q.offset,
+    cursor,
+    sortBy,
     filterCriteria: buildFilterCriteria(q, sessionUserId),
   };
 }

@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { getSurveyCount, getSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { GET } from "./route";
 
 const { mockAuthenticateRequest } = vi.hoisted(() => ({
@@ -33,10 +33,13 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/list/lib/survey", () => ({
-  getSurveys: vi.fn(),
-  getSurveyCount: vi.fn(),
-}));
+vi.mock("@/modules/survey/list/lib/survey-page", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/survey/list/lib/survey-page")>();
+  return {
+    ...actual,
+    getSurveyListPage: vi.fn(),
+  };
+});
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -110,8 +113,7 @@ describe("GET /api/v3/surveys", () => {
         organizationId: "org_1",
       };
     });
-    vi.mocked(getSurveys).mockResolvedValue([]);
-    vi.mocked(getSurveyCount).mockResolvedValue(0);
+    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null });
   });
 
   afterEach(() => {
@@ -141,8 +143,12 @@ describe("GET /api/v3/surveys", () => {
       "req-456",
       "/api/v3/surveys"
     );
-    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, undefined);
-    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
+    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+      limit: 20,
+      cursor: null,
+      sortBy: "updatedAt",
+      filterCriteria: undefined,
+    });
   });
 
   test("returns 200 with x-api-key when workspace is on the key", async () => {
@@ -160,8 +166,12 @@ describe("GET /api/v3/surveys", () => {
       "req-k",
       "/api/v3/surveys"
     );
-    expect(getSurveys).toHaveBeenCalledWith(validWorkspaceId, 20, 0, undefined);
-    expect(getSurveyCount).toHaveBeenCalledWith(validWorkspaceId, undefined);
+    expect(getSurveyListPage).toHaveBeenCalledWith(validWorkspaceId, {
+      limit: 20,
+      cursor: null,
+      sortBy: "updatedAt",
+      filterCriteria: undefined,
+    });
   });
 
   test("returns 403 when API key does not include workspace", async () => {
@@ -219,42 +229,54 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(400);
   });
 
-  test("reflects limit, offset and total in meta", async () => {
-    vi.mocked(getSurveyCount).mockResolvedValue(42);
-    const req = createRequest(
-      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&limit=10&offset=5`
-    );
+  test("reflects limit and nextCursor in meta", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [],
+      nextCursor: "cursor-123",
+    });
+    const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&limit=10`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.meta).toEqual({ limit: 10, offset: 5, total: 42 });
-    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 10, 5, undefined);
+    expect(body.meta).toEqual({ limit: 10, nextCursor: "cursor-123" });
+    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+      limit: 10,
+      cursor: null,
+      sortBy: "updatedAt",
+      filterCriteria: undefined,
+    });
   });
 
-  test("passes filter query to getSurveys and getSurveyCount", async () => {
-    const filterCriteria = { status: ["inProgress"], sortBy: "updatedAt" as const };
-    vi.mocked(getSurveyCount).mockResolvedValue(7);
+  test("passes filter query to getSurveyListPage", async () => {
+    const filterCriteria = { status: ["inProgress"] };
     const req = createRequest(
       `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&status=inProgress&sortBy=updatedAt`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
-    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, filterCriteria);
-    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, filterCriteria);
+    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+      limit: 20,
+      cursor: null,
+      sortBy: "updatedAt",
+      filterCriteria,
+    });
   });
 
   test("createdBy uses session user id", async () => {
     const expectedForDb = {
       createdBy: { userId: "user_1", value: ["you" as const] },
-      sortBy: "updatedAt" as const,
     };
-    vi.mocked(getSurveyCount).mockResolvedValue(1);
     const req = createRequest(
       `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&createdBy=you&sortBy=updatedAt`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
-    expect(getSurveys).toHaveBeenCalledWith(resolvedEnvironmentId, 20, 0, expectedForDb);
+    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+      limit: 20,
+      cursor: null,
+      sortBy: "updatedAt",
+      filterCriteria: expectedForDb,
+    });
   });
 
   test("returns 400 when filterCriteria is used", async () => {
@@ -284,20 +306,23 @@ describe("GET /api/v3/surveys", () => {
   });
 
   test("list items omit blocks and questions", async () => {
-    vi.mocked(getSurveys).mockResolvedValue([
-      {
-        id: "s1",
-        name: "Survey 1",
-        environmentId: "env_1",
-        type: "link",
-        status: "draft",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        responseCount: 0,
-        creator: { name: "Test" },
-        singleUse: null,
-      } as any,
-    ]);
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [
+        {
+          id: "s1",
+          name: "Survey 1",
+          environmentId: "env_1",
+          type: "link",
+          status: "draft",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          responseCount: 0,
+          creator: { name: "Test" },
+          singleUse: null,
+        } as any,
+      ],
+      nextCursor: null,
+    });
     const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`);
     const res = await GET(req, {} as any);
     const body = await res.json();
@@ -306,8 +331,8 @@ describe("GET /api/v3/surveys", () => {
     expect(body.data[0].id).toBe("s1");
   });
 
-  test("returns 403 when getSurveys throws ResourceNotFoundError", async () => {
-    vi.mocked(getSurveys).mockRejectedValueOnce(new ResourceNotFoundError("survey", "s1"));
+  test("returns 403 when getSurveyListPage throws ResourceNotFoundError", async () => {
+    vi.mocked(getSurveyListPage).mockRejectedValueOnce(new ResourceNotFoundError("survey", "s1"));
     const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-nf");
     const res = await GET(req, {} as any);
     expect(res.status).toBe(403);
@@ -315,8 +340,8 @@ describe("GET /api/v3/surveys", () => {
     expect(body.code).toBe("forbidden");
   });
 
-  test("returns 500 when getSurveys throws DatabaseError", async () => {
-    vi.mocked(getSurveys).mockRejectedValueOnce(new DatabaseError("db down"));
+  test("returns 500 when getSurveyListPage throws DatabaseError", async () => {
+    vi.mocked(getSurveyListPage).mockRejectedValueOnce(new DatabaseError("db down"));
     const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-db");
     const res = await GET(req, {} as any);
     expect(res.status).toBe(500);
@@ -324,8 +349,8 @@ describe("GET /api/v3/surveys", () => {
     expect(body.code).toBe("internal_server_error");
   });
 
-  test("returns 500 on unexpected error from getSurveys", async () => {
-    vi.mocked(getSurveys).mockRejectedValueOnce(new Error("boom"));
+  test("returns 500 on unexpected error from getSurveyListPage", async () => {
+    vi.mocked(getSurveyListPage).mockRejectedValueOnce(new Error("boom"));
     const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}`, "req-err");
     const res = await GET(req, {} as any);
     expect(res.status).toBe(500);

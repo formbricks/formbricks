@@ -74,7 +74,7 @@ describe("successListResponse", () => {
   test("sets X-Request-Id and default cache", async () => {
     const res = successListResponse(
       [{ a: 1 }],
-      { limit: 10, offset: 0, total: 1 },
+      { limit: 10, nextCursor: "cursor-1" },
       {
         requestId: "req-x",
       }
@@ -84,12 +84,12 @@ describe("successListResponse", () => {
     expect(res.headers.get("Cache-Control")).toContain("no-store");
     expect(await res.json()).toEqual({
       data: [{ a: 1 }],
-      meta: { limit: 10, offset: 0, total: 1 },
+      meta: { limit: 10, nextCursor: "cursor-1" },
     });
   });
 
   test("custom Cache-Control", async () => {
-    const res = successListResponse([], { limit: 5, offset: 0 }, { cache: "private, max-age=0" });
+    const res = successListResponse([], { limit: 5, nextCursor: null }, { cache: "private, max-age=0" });
     expect(res.headers.get("Cache-Control")).toBe("private, max-age=0");
   });
 });

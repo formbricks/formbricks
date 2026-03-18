@@ -11,13 +11,20 @@ import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
 
-/** read/write/manage on an API key env all allow read-only list operations. */
-function apiKeyPermissionAllowsList(permission: ApiKeyPermission): boolean {
-  return (
-    permission === ApiKeyPermission.read ||
-    permission === ApiKeyPermission.write ||
-    permission === ApiKeyPermission.manage
-  );
+function apiKeyPermissionAllows(permission: ApiKeyPermission, minPermission: TTeamPermission): boolean {
+  const grantedRank = {
+    [ApiKeyPermission.read]: 1,
+    [ApiKeyPermission.write]: 2,
+    [ApiKeyPermission.manage]: 3,
+  }[permission];
+
+  const requiredRank = {
+    read: 1,
+    readWrite: 2,
+    manage: 3,
+  }[minPermission];
+
+  return grantedRank >= requiredRank;
 }
 
 /**
@@ -69,10 +76,7 @@ export async function requireSessionWorkspaceAccess(
   }
 }
 
-/**
- * Session or API key: authorize `workspaceId` for survey list (read).
- * API keys must list the workspace environment with read-equivalent permission.
- */
+/** Session or API key: authorize `workspaceId` against the resolved V3 workspace context. */
 export async function requireV3WorkspaceAccess(
   authentication: TV3Authentication,
   workspaceId: string,
@@ -90,18 +94,28 @@ export async function requireV3WorkspaceAccess(
 
   const keyAuth = authentication as TAuthenticationApiKey;
   if (keyAuth.apiKeyId && Array.isArray(keyAuth.environmentPermissions)) {
-    const perm = keyAuth.environmentPermissions.find((e) => e.environmentId === workspaceId);
-    if (!perm || !apiKeyPermissionAllowsList(perm.permission)) {
-      logger
-        .withContext({ requestId, workspaceId })
-        .warn({ statusCode: 403 }, "API key not allowed for workspace");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    const log = logger.withContext({ requestId, workspaceId, apiKeyId: keyAuth.apiKeyId });
+
+    try {
+      const context = await resolveV3WorkspaceContext(workspaceId);
+      const permission = keyAuth.environmentPermissions.find(
+        (environmentPermission) => environmentPermission.environmentId === context.environmentId
+      );
+
+      if (!permission || !apiKeyPermissionAllows(permission.permission, minPermission)) {
+        log.warn({ statusCode: 403 }, "API key not allowed for workspace");
+        return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+      }
+
+      return context;
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        log.warn({ statusCode: 403, errorCode: error.name }, "Workspace not found");
+        return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+      }
+
+      throw error;
     }
-    return {
-      environmentId: workspaceId,
-      projectId: perm.projectId,
-      organizationId: keyAuth.organizationId,
-    };
   }
 
   return problemUnauthorized(requestId, "Not authenticated", instance);
