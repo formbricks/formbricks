@@ -4,6 +4,7 @@
 import "@testing-library/jest-dom/vitest";
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { z } from "zod";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
 import {
   createActionClassZodResolver,
@@ -44,9 +45,9 @@ const mockT = vi.fn((key: string, params?: any) => {
 
 // Helper to create mock context
 const createMockContext = () => {
-  const issues: unknown[] = [];
+  const issues: z.ZodIssue[] = [];
   return {
-    addIssue: vi.fn((issue: unknown) => issues.push(issue)),
+    addIssue: vi.fn((issue: z.ZodIssue) => issues.push(issue)),
     issues,
   } as any;
 };
