@@ -466,6 +466,191 @@ describe("widget-file", () => {
     expect(window.formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
   });
 
+  describe("loadFormbricksSurveysExternally and waitForSurveysGlobal", () => {
+    const scriptLoadMockConfig = {
+      get: vi.fn().mockReturnValue({
+        appUrl: "https://fake.app",
+        environmentId: "env_123",
+        environment: {
+          data: {
+            project: {
+              clickOutsideClose: true,
+              overlay: "none",
+              placement: "bottomRight",
+              inAppSurveyBranding: true,
+            },
+          },
+        },
+        user: {
+          data: {
+            userId: "user_abc",
+            contactId: "contact_abc",
+            displays: [],
+            responses: [],
+            lastDisplayAt: null,
+            language: "en",
+          },
+        },
+      }),
+      update: vi.fn(),
+    };
+
+    // Helper to get the script element passed to document.head.appendChild
+    const getAppendedScript = (): Record<string, unknown> => {
+      const appendChildMock = document.head.appendChild as unknown as Mock;
+      for (const call of appendChildMock.mock.calls) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock
+        const el = call[0] as any;
+        if (typeof el?.src === "string" && (el.src as string).includes("surveys.umd.cjs")) {
+          return el as Record<string, unknown>;
+        }
+      }
+      throw new Error("No script element for surveys.umd.cjs was appended to document.head");
+    };
+
+    beforeEach(() => {
+      // Reset mock return values that may have been overridden by previous tests
+      mockUpdateQueue.hasPendingWork.mockReturnValue(false);
+      mockUpdateQueue.waitForPendingWork.mockResolvedValue(true);
+    });
+
+    // Test onerror first so surveysLoadPromise is reset to null for subsequent tests
+    test("rejects when script fails to load (onerror) and allows retry", async () => {
+      getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
+      widget.setIsSurveyRunning(false);
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const renderPromise = widget.renderWidget({
+        ...mockSurvey,
+        delay: 0,
+      } as unknown as TEnvironmentStateSurvey);
+
+      const scriptEl = getAppendedScript();
+
+      expect(scriptEl.src).toBe("https://fake.app/js/surveys.umd.cjs");
+      expect(scriptEl.async).toBe(true);
+
+      // Simulate network error
+      (scriptEl.onerror as (error: unknown) => void)("Network error");
+
+      await expect(renderPromise).rejects.toThrow("Failed to load Formbricks Surveys library");
+      expect(consoleSpy).toHaveBeenCalledWith("Failed to load Formbricks Surveys library:", "Network error");
+
+      consoleSpy.mockRestore();
+    });
+
+    test("rejects when script loads but surveys global never becomes available (timeout)", async () => {
+      getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
+      widget.setIsSurveyRunning(false);
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.useFakeTimers();
+
+      const renderPromise = widget.renderWidget({
+        ...mockSurvey,
+        delay: 0,
+      } as unknown as TEnvironmentStateSurvey);
+
+      const scriptEl = getAppendedScript();
+
+      // Script loaded but window.formbricksSurveys is never set
+      (scriptEl.onload as () => void)();
+
+      // Attach rejection handler before advancing timers to prevent unhandled rejection
+      const rejectAssert = expect(renderPromise).rejects.toThrow("Failed to load Formbricks Surveys library");
+
+      // Advance past the 10s timeout (polls every 200ms)
+      await vi.advanceTimersByTimeAsync(10001);
+      await rejectAssert;
+
+      vi.useRealTimers();
+      consoleSpy.mockRestore();
+    });
+
+    test("resolves after polling when surveys global becomes available and applies stored nonce", async () => {
+      getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
+      widget.setIsSurveyRunning(false);
+
+      // Set nonce before surveys load to test nonce application
+      // @ts-expect-error -- setting test nonce
+      window.__formbricksNonce = "test-nonce-123";
+
+      vi.useFakeTimers();
+
+      const renderPromise = widget.renderWidget({
+        ...mockSurvey,
+        delay: 0,
+      } as unknown as TEnvironmentStateSurvey);
+
+      const scriptEl = getAppendedScript();
+
+      // Simulate script loaded
+      (scriptEl.onload as () => void)();
+
+      // Set the global after script "loads" — simulates browser finishing execution
+      // @ts-expect-error -- mock window.formbricksSurveys
+      window.formbricksSurveys = { renderSurvey: vi.fn(), setNonce: vi.fn() };
+
+      // Advance one polling interval for waitForSurveysGlobal to find it
+      await vi.advanceTimersByTimeAsync(200);
+
+      await renderPromise;
+
+      // Run remaining timers for survey.delay setTimeout
+      vi.runAllTimers();
+
+      expect(window.formbricksSurveys.setNonce).toHaveBeenCalledWith("test-nonce-123");
+      expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+        expect.objectContaining({
+          appUrl: "https://fake.app",
+          environmentId: "env_123",
+          contactId: "contact_abc",
+        })
+      );
+
+      vi.useRealTimers();
+      // @ts-expect-error -- cleanup
+      delete window.__formbricksNonce;
+    });
+
+    test("deduplicates concurrent calls (returns cached promise)", async () => {
+      getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
+      widget.setIsSurveyRunning(false);
+
+      // After the previous successful test, surveysLoadPromise holds a resolved promise.
+      // Calling renderWidget again (without formbricksSurveys on window, but with cached promise)
+      // should reuse the cached promise rather than creating a new script element.
+      // @ts-expect-error -- cleaning up mock to force dedup path
+      delete window.formbricksSurveys;
+
+      const appendChildSpy = vi.spyOn(document.head, "appendChild");
+
+      // @ts-expect-error -- mock window.formbricksSurveys
+      window.formbricksSurveys = { renderSurvey: vi.fn(), setNonce: vi.fn() };
+
+      vi.useFakeTimers();
+
+      await widget.renderWidget({
+        ...mockSurvey,
+        delay: 0,
+      } as unknown as TEnvironmentStateSurvey);
+
+      vi.advanceTimersByTime(0);
+
+      // No new script element should have been appended (dedup via early return or cached promise)
+      const scriptAppendCalls = appendChildSpy.mock.calls.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock
+        (call: any[]) => call[0]?.src?.includes?.("surveys.umd.cjs")
+      );
+      expect(scriptAppendCalls.length).toBe(0);
+
+      expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+  });
+
   test("preloadSurveysScript adds a preload link and deduplicates subsequent calls", () => {
     const createElementSpy = vi.spyOn(document, "createElement");
     const appendChildSpy = vi.spyOn(document.head, "appendChild");
