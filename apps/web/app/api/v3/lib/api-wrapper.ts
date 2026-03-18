@@ -239,6 +239,60 @@ function ensureRequestIdHeader(response: Response, requestId: string): Response 
   });
 }
 
+async function authenticateV3RequestOrRespond(
+  req: NextRequest,
+  authMode: TV3AuthMode,
+  requestId: string,
+  instance: string
+): Promise<
+  { authentication: TV3Authentication; response: null } | { authentication: null; response: Response }
+> {
+  const authentication = await authenticateV3Request(req, authMode);
+
+  if (!authentication && authMode !== "none") {
+    return {
+      authentication: null,
+      response: problemUnauthorized(requestId, getUnauthenticatedDetail(authMode), instance),
+    };
+  }
+
+  return {
+    authentication,
+    response: null,
+  };
+}
+
+async function applyV3RateLimitOrRespond(params: {
+  authentication: TV3Authentication;
+  enabled: boolean;
+  config: TRateLimitConfig;
+  requestId: string;
+  log: ReturnType<typeof logger.withContext>;
+}): Promise<Response | null> {
+  const { authentication, enabled, config, requestId, log } = params;
+  if (!enabled) {
+    return null;
+  }
+
+  const identifier = getRateLimitIdentifier(authentication);
+  if (!identifier) {
+    return null;
+  }
+
+  try {
+    await applyRateLimit(config, identifier);
+  } catch (error) {
+    log.warn({ error, statusCode: 429 }, "V3 API rate limit exceeded");
+    return problemTooManyRequests(
+      requestId,
+      error instanceof Error ? error.message : "Rate limit exceeded",
+      error instanceof TooManyRequestsError ? error.retryAfter : undefined
+    );
+  }
+
+  return null;
+}
+
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
   params: TWithV3ApiWrapperParams<S, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
@@ -254,9 +308,9 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     });
 
     try {
-      const authentication = await authenticateV3Request(req, auth);
-      if (!authentication && auth !== "none") {
-        return problemUnauthorized(requestId, getUnauthenticatedDetail(auth), instance);
+      const authResult = await authenticateV3RequestOrRespond(req, auth, requestId, instance);
+      if (authResult.response) {
+        return authResult.response;
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
@@ -264,26 +318,21 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return parsedInputResult.response;
       }
 
-      if (rateLimit) {
-        const identifier = getRateLimitIdentifier(authentication);
-        if (identifier) {
-          try {
-            await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v3, identifier);
-          } catch (error) {
-            log.warn({ error, statusCode: 429 }, "V3 API rate limit exceeded");
-            return problemTooManyRequests(
-              requestId,
-              error instanceof Error ? error.message : "Rate limit exceeded",
-              error instanceof TooManyRequestsError ? error.retryAfter : undefined
-            );
-          }
-        }
+      const rateLimitResponse = await applyV3RateLimitOrRespond({
+        authentication: authResult.authentication,
+        enabled: rateLimit,
+        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
+        requestId,
+        log,
+      });
+      if (rateLimitResponse) {
+        return rateLimitResponse;
       }
 
       const response = await handler({
         req,
         props,
-        authentication,
+        authentication: authResult.authentication,
         parsedInput: parsedInputResult.parsedInput,
         requestId,
         instance,

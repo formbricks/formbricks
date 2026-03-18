@@ -41,6 +41,10 @@ const ZSurveyListPageCursor = z.union([ZDateCursor, ZNameCursor, ZRelevanceCurso
 
 export type TSurveyListSort = NonNullable<TSurveyFilterCriteria["sortBy"]>;
 export type TSurveyListPageCursor = z.infer<typeof ZSurveyListPageCursor>;
+type TStandardSurveyListSort = Exclude<TSurveyListSort, "relevance">;
+type TStandardSurveyListCursor = Extract<TSurveyListPageCursor, { sortBy: TStandardSurveyListSort }>;
+type TRelevanceSurveyListCursor = Extract<TSurveyListPageCursor, { sortBy: "relevance" }>;
+type TRelevanceBucket = typeof IN_PROGRESS_BUCKET | typeof OTHER_BUCKET;
 
 export type TSurveyListPage = {
   surveys: TSurvey[];
@@ -93,9 +97,7 @@ function mapSurveyRows(rows: TSurveyRow[]): TSurvey[] {
   }));
 }
 
-function getSurveyOrderBy(
-  sortBy: Exclude<TSurveyListSort, "relevance">
-): Prisma.SurveyOrderByWithRelationInput[] {
+function getSurveyOrderBy(sortBy: TStandardSurveyListSort): Prisma.SurveyOrderByWithRelationInput[] {
   switch (sortBy) {
     case "name":
       return [{ name: "asc" }, { id: "asc" }];
@@ -140,8 +142,8 @@ function buildNameCursorWhere(cursorValue: string, cursorId: string): Prisma.Sur
 }
 
 function buildStandardCursorWhere(
-  sortBy: Exclude<TSurveyListSort, "relevance">,
-  cursor: Extract<TSurveyListPageCursor, { sortBy: "updatedAt" | "createdAt" | "name" }>
+  sortBy: TStandardSurveyListSort,
+  cursor: TStandardSurveyListCursor
 ): Prisma.SurveyWhereInput {
   switch (sortBy) {
     case "name":
@@ -166,10 +168,7 @@ function buildBaseWhere(
   };
 }
 
-function getStandardNextCursor(
-  survey: TSurveyRow,
-  sortBy: Exclude<TSurveyListSort, "relevance">
-): TSurveyListPageCursor {
+function getStandardNextCursor(survey: TSurveyRow, sortBy: TStandardSurveyListSort): TSurveyListPageCursor {
   switch (sortBy) {
     case "name":
       return {
@@ -196,10 +195,7 @@ function getStandardNextCursor(
   }
 }
 
-function getRelevanceNextCursor(
-  survey: TSurveyRow,
-  bucket: typeof IN_PROGRESS_BUCKET | typeof OTHER_BUCKET
-): TSurveyListPageCursor {
+function getRelevanceNextCursor(survey: TSurveyRow, bucket: TRelevanceBucket): TSurveyListPageCursor {
   return {
     version: SURVEY_LIST_CURSOR_VERSION,
     sortBy: "relevance",
@@ -212,9 +208,9 @@ function getRelevanceNextCursor(
 async function findSurveyRows(
   environmentId: string,
   limit: number,
-  sortBy: Exclude<TSurveyListSort, "relevance">,
+  sortBy: TStandardSurveyListSort,
   filterCriteria?: TSurveyFilterCriteria,
-  cursor?: Extract<TSurveyListPageCursor, { sortBy: "updatedAt" | "createdAt" | "name" }> | null,
+  cursor?: TStandardSurveyListCursor | null,
   extraWhere?: Prisma.SurveyWhereInput
 ): Promise<TSurveyRow[]> {
   const cursorWhere = cursor ? buildStandardCursorWhere(sortBy, cursor) : undefined;
@@ -230,37 +226,52 @@ async function findSurveyRows(
   });
 }
 
+function getLastSurveyRow(rows: TSurveyRow[]): TSurveyRow | null {
+  return rows.at(-1) ?? null;
+}
+
+function getPageRows<T>(rows: T[], limit: number): { pageRows: T[]; hasMore: boolean } {
+  const hasMore = rows.length > limit;
+  return {
+    pageRows: hasMore ? rows.slice(0, limit) : rows,
+    hasMore,
+  };
+}
+
+function buildSurveyListPage(rows: TSurveyRow[], cursor: TSurveyListPageCursor | null): TSurveyListPage {
+  return {
+    surveys: mapSurveyRows(rows),
+    nextCursor: cursor ? encodeSurveyListPageCursor(cursor) : null,
+  };
+}
+
 async function getStandardSurveyListPage(
   environmentId: string,
-  options: TGetSurveyListPageOptions & { sortBy: Exclude<TSurveyListSort, "relevance"> }
+  options: TGetSurveyListPageOptions & { sortBy: TStandardSurveyListSort }
 ): Promise<TSurveyListPage> {
   const surveyRows = await findSurveyRows(
     environmentId,
     options.limit,
     options.sortBy,
     options.filterCriteria,
-    options.cursor as Extract<TSurveyListPageCursor, { sortBy: "updatedAt" | "createdAt" | "name" }> | null
+    options.cursor as TStandardSurveyListCursor | null
   );
 
-  const hasMore = surveyRows.length > options.limit;
-  const pageRows = hasMore ? surveyRows.slice(0, options.limit) : surveyRows;
-  const nextCursor =
-    hasMore && pageRows.length > 0
-      ? encodeSurveyListPageCursor(getStandardNextCursor(pageRows[pageRows.length - 1], options.sortBy))
-      : null;
+  const { pageRows, hasMore } = getPageRows(surveyRows, options.limit);
+  const lastRow = getLastSurveyRow(pageRows);
 
-  return {
-    surveys: mapSurveyRows(pageRows),
-    nextCursor,
-  };
+  return buildSurveyListPage(
+    pageRows,
+    hasMore && lastRow ? getStandardNextCursor(lastRow, options.sortBy) : null
+  );
 }
 
 async function findRelevanceRows(
   environmentId: string,
   limit: number,
   filterCriteria: TSurveyFilterCriteria | undefined,
-  bucket: typeof IN_PROGRESS_BUCKET | typeof OTHER_BUCKET,
-  cursor: Extract<TSurveyListPageCursor, { sortBy: "relevance" }> | null
+  bucket: TRelevanceBucket,
+  cursor: TRelevanceSurveyListCursor | null
 ): Promise<TSurveyRow[]> {
   const statusWhere: Prisma.SurveyWhereInput =
     bucket === IN_PROGRESS_BUCKET ? { status: "inProgress" } : { status: { not: "inProgress" } };
@@ -287,58 +298,98 @@ async function hasMoreRelevanceRowsInOtherBucket(
   return otherRows.length > 0;
 }
 
+function getRelevanceCursor(cursor: TSurveyListPageCursor | null): TRelevanceSurveyListCursor | null {
+  if (cursor && cursor.sortBy !== "relevance") {
+    throw new InvalidInputError("The cursor does not match the requested sort order.");
+  }
+
+  return cursor;
+}
+
+function getRelevanceBucketCursor(
+  cursor: TRelevanceSurveyListCursor | null,
+  bucket: TRelevanceBucket
+): TRelevanceSurveyListCursor | null {
+  return cursor?.bucket === bucket ? cursor : null;
+}
+
+function shouldReadInProgressBucket(cursor: TRelevanceSurveyListCursor | null): boolean {
+  return !cursor || cursor.bucket === IN_PROGRESS_BUCKET;
+}
+
+function buildRelevancePage(rows: TSurveyRow[], bucket: TRelevanceBucket | null): TSurveyListPage {
+  const lastRow = getLastSurveyRow(rows);
+
+  return buildSurveyListPage(rows, bucket && lastRow ? getRelevanceNextCursor(lastRow, bucket) : null);
+}
+
+async function getInProgressRelevanceStep(
+  environmentId: string,
+  limit: number,
+  filterCriteria: TSurveyFilterCriteria | undefined,
+  cursor: TRelevanceSurveyListCursor | null
+): Promise<{ pageRows: TSurveyRow[]; remaining: number; response: TSurveyListPage | null }> {
+  const inProgressRows = await findRelevanceRows(
+    environmentId,
+    limit,
+    filterCriteria,
+    IN_PROGRESS_BUCKET,
+    getRelevanceBucketCursor(cursor, IN_PROGRESS_BUCKET)
+  );
+  const { pageRows, hasMore } = getPageRows(inProgressRows, limit);
+
+  return {
+    pageRows,
+    remaining: limit - pageRows.length,
+    response: hasMore ? buildRelevancePage(pageRows, IN_PROGRESS_BUCKET) : null,
+  };
+}
+
+async function buildInProgressOnlyRelevancePage(
+  environmentId: string,
+  rows: TSurveyRow[],
+  filterCriteria: TSurveyFilterCriteria | undefined,
+  cursor: TRelevanceSurveyListCursor | null
+): Promise<TSurveyListPage> {
+  const hasOtherRows =
+    rows.length > 0 &&
+    shouldReadInProgressBucket(cursor) &&
+    (await hasMoreRelevanceRowsInOtherBucket(environmentId, filterCriteria));
+
+  return buildRelevancePage(rows, hasOtherRows ? IN_PROGRESS_BUCKET : null);
+}
+
 async function getRelevanceSurveyListPage(
   environmentId: string,
   options: TGetSurveyListPageOptions & { sortBy: "relevance" }
 ): Promise<TSurveyListPage> {
-  if (options.cursor && options.cursor.sortBy !== "relevance") {
-    throw new InvalidInputError("The cursor does not match the requested sort order.");
-  }
-
-  const relevanceCursor = options.cursor;
+  const relevanceCursor = getRelevanceCursor(options.cursor);
   const pageRows: TSurveyRow[] = [];
   let remaining = options.limit;
 
-  if (!relevanceCursor || relevanceCursor.bucket === IN_PROGRESS_BUCKET) {
-    const inProgressRows = await findRelevanceRows(
+  if (shouldReadInProgressBucket(relevanceCursor)) {
+    const inProgressStep = await getInProgressRelevanceStep(
       environmentId,
       remaining,
       options.filterCriteria,
-      IN_PROGRESS_BUCKET,
-      relevanceCursor?.bucket === IN_PROGRESS_BUCKET ? relevanceCursor : null
+      relevanceCursor
     );
+    pageRows.push(...inProgressStep.pageRows);
 
-    const hasMoreInProgress = inProgressRows.length > remaining;
-    const inProgressPageRows = hasMoreInProgress ? inProgressRows.slice(0, remaining) : inProgressRows;
-    pageRows.push(...inProgressPageRows);
-
-    if (hasMoreInProgress && inProgressPageRows.length > 0) {
-      return {
-        surveys: mapSurveyRows(inProgressPageRows),
-        nextCursor: encodeSurveyListPageCursor(
-          getRelevanceNextCursor(inProgressPageRows[inProgressPageRows.length - 1], IN_PROGRESS_BUCKET)
-        ),
-      };
+    if (inProgressStep.response) {
+      return inProgressStep.response;
     }
 
-    remaining -= inProgressPageRows.length;
+    remaining = inProgressStep.remaining;
   }
 
   if (remaining <= 0) {
-    const hasOtherRows =
-      pageRows.length > 0 &&
-      (!relevanceCursor || relevanceCursor.bucket === IN_PROGRESS_BUCKET) &&
-      (await hasMoreRelevanceRowsInOtherBucket(environmentId, options.filterCriteria));
-
-    return {
-      surveys: mapSurveyRows(pageRows),
-      nextCursor:
-        hasOtherRows && pageRows.length > 0
-          ? encodeSurveyListPageCursor(
-              getRelevanceNextCursor(pageRows[pageRows.length - 1], IN_PROGRESS_BUCKET)
-            )
-          : null,
-    };
+    return await buildInProgressOnlyRelevancePage(
+      environmentId,
+      pageRows,
+      options.filterCriteria,
+      relevanceCursor
+    );
   }
 
   const otherRows = await findRelevanceRows(
@@ -346,22 +397,12 @@ async function getRelevanceSurveyListPage(
     remaining,
     options.filterCriteria,
     OTHER_BUCKET,
-    relevanceCursor?.bucket === OTHER_BUCKET ? relevanceCursor : null
+    getRelevanceBucketCursor(relevanceCursor, OTHER_BUCKET)
   );
-
-  const hasMoreOther = otherRows.length > remaining;
-  const otherPageRows = hasMoreOther ? otherRows.slice(0, remaining) : otherRows;
+  const { pageRows: otherPageRows, hasMore: hasMoreOther } = getPageRows(otherRows, remaining);
   pageRows.push(...otherPageRows);
 
-  return {
-    surveys: mapSurveyRows(pageRows),
-    nextCursor:
-      hasMoreOther && otherPageRows.length > 0
-        ? encodeSurveyListPageCursor(
-            getRelevanceNextCursor(otherPageRows[otherPageRows.length - 1], OTHER_BUCKET)
-          )
-        : null,
-  };
+  return buildRelevancePage(pageRows, hasMoreOther ? OTHER_BUCKET : null);
 }
 
 export async function getSurveyListPage(
