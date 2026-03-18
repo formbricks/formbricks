@@ -1,5 +1,6 @@
 import { Project, SurveyType } from "@prisma/client";
 import { type JSX, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -44,6 +45,7 @@ export const LinkSurveyWrapper = ({
   isBrandingEnabled,
   dir = "auto",
 }: LinkSurveyWrapperProps) => {
+  const { t } = useTranslation();
   //for embedded survey strip away all surrounding css
   const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
 
@@ -88,7 +90,7 @@ export const LinkSurveyWrapper = ({
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
-                  Survey Preview 👀
+                  {t("environments.surveys.edit.survey_preview")}
                   <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}
