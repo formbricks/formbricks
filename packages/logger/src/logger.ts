@@ -45,6 +45,8 @@ const baseLoggerConfig: LoggerOptions = {
  * - Both: optional pino-opentelemetry-transport for SigNoz log correlation when OTEL is configured
  */
 const buildTransport = (): LoggerOptions["transport"] => {
+  const isEdgeRuntime = process.env.NEXT_RUNTIME === "edge";
+
   const hasOtelEndpoint =
     process.env.NEXT_RUNTIME === "nodejs" && Boolean(process.env.OTEL_EXPORTER_OTLP_ENDPOINT);
 
@@ -77,6 +79,11 @@ const buildTransport = (): LoggerOptions["transport"] => {
   };
 
   if (!IS_PRODUCTION) {
+    // Edge Runtime does not support worker_threads — skip pino-pretty to avoid crashes
+    if (isEdgeRuntime) {
+      return undefined;
+    }
+
     // Development: pretty print + optional OTEL
     if (hasOtelEndpoint) {
       return { targets: [prettyTarget, otelTarget] };
