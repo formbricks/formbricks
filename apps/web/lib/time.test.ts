@@ -15,45 +15,45 @@ import {
 describe("Time Utilities", () => {
   describe("convertDateString", () => {
     test("should format date string correctly", () => {
-      expect(convertDateString("2024-03-20:12:30:00")).toBe("Mar 20, 2024");
+      expect(convertDateString("2024-03-20:12:30:00", "en-US")).toBe("Mar 20, 2024");
     });
 
     test("should return empty string for empty input", () => {
-      expect(convertDateString("")).toBe("");
+      expect(convertDateString("", "en-US")).toBe("");
     });
 
     test("should return null for null input", () => {
-      expect(convertDateString(null as any)).toBe(null);
+      expect(convertDateString(null as any, "en-US")).toBe(null);
     });
 
     test("should handle invalid date strings", () => {
-      expect(convertDateString("not-a-date")).toBe("Invalid Date");
+      expect(convertDateString("not-a-date", "en-US")).toBe("Invalid Date");
     });
   });
 
   describe("convertDateTimeString", () => {
     test("should format date and time string correctly", () => {
-      expect(convertDateTimeString("2024-03-20T15:30:00")).toBe("Wednesday, March 20, 2024 at 3:30 PM");
+      expect(convertDateTimeString("2024-03-20T15:30:00", "en-US")).toBe("Wednesday, March 20, 2024 at 3:30 PM");
     });
 
     test("should return empty string for empty input", () => {
-      expect(convertDateTimeString("")).toBe("");
+      expect(convertDateTimeString("", "en-US")).toBe("");
     });
   });
 
   describe("convertDateTimeStringShort", () => {
     test("should format date and time string in short format", () => {
-      expect(convertDateTimeStringShort("2024-03-20T15:30:00")).toBe("March 20, 2024 at 3:30 PM");
+      expect(convertDateTimeStringShort("2024-03-20T15:30:00", "en-US")).toBe("March 20, 2024 at 3:30 PM");
     });
 
     test("should return empty string for empty input", () => {
-      expect(convertDateTimeStringShort("")).toBe("");
+      expect(convertDateTimeStringShort("", "en-US")).toBe("");
     });
   });
 
   describe("convertTimeString", () => {
     test("should format time string correctly", () => {
-      expect(convertTimeString("2024-03-20T15:30:45")).toBe("3:30:45 PM");
+      expect(convertTimeString("2024-03-20T15:30:45", "en-US")).toBe("3:30:45 PM");
     });
   });
 

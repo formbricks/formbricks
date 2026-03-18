@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { convertDateTimeStringShort } from "@/lib/time";
@@ -19,6 +20,7 @@ interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
   environment: TEnvironment;
+  locale: TUserLocale;
   otherEnvActionClasses: TActionClass[];
   otherEnvironment: TEnvironment;
   isReadOnly: boolean;
@@ -31,6 +33,7 @@ export const ActionActivityTab = ({
   environmentId,
   environment,
   isReadOnly,
+  locale,
 }: ActivityTabProps) => {
   const { t } = useTranslation();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
@@ -138,13 +141,13 @@ export const ActionActivityTab = ({
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
           <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(actionClass.createdAt?.toString())}
+            {convertDateTimeStringShort(actionClass.createdAt?.toString(), locale)}
           </p>
         </div>{" "}
         <div>
           <Label className="text-xs font-normal text-slate-500">Last updated</Label>
           <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(actionClass.updatedAt?.toString())}
+            {convertDateTimeStringShort(actionClass.updatedAt?.toString(), locale)}
           </p>
         </div>
         <div>

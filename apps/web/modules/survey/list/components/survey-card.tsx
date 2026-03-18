@@ -82,7 +82,7 @@ export const SurveyCard = ({
           <SurveyTypeIndicator type={survey.type} />
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {convertDateString(survey.createdAt.toString())}
+          {convertDateString(survey.createdAt.toString(), locale)}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {timeSince(survey.updatedAt.toString(), locale)}

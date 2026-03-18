@@ -2,86 +2,7 @@ import { formatDistance, intlFormat } from "date-fns";
 import { de, enUS, es, fr, hu, ja, nl, pt, ptBR, ro, ru, sv, zhCN, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
 
-export const convertDateString = (dateString: string | null) => {
-  if (dateString === null) return null;
-  if (!dateString) {
-    return dateString;
-  }
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    return "Invalid Date";
-  }
-  return intlFormat(
-    date,
-    {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
-
-export const convertDateTimeString = (dateString: string) => {
-  if (!dateString) {
-    return dateString;
-  }
-  const date = new Date(dateString);
-  return intlFormat(
-    date,
-    {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
-
-export const convertDateTimeStringShort = (dateString: string) => {
-  if (!dateString) {
-    return dateString;
-  }
-  const date = new Date(dateString);
-  return intlFormat(
-    date,
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
-
-export const convertTimeString = (dateString: string) => {
-  const date = new Date(dateString);
-  return intlFormat(
-    date,
-    {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
-
-const getLocaleForTimeSince = (locale: TUserLocale) => {
+const getLocaleForDateTime = (locale: TUserLocale) => {
   switch (locale) {
     case "de-DE":
       return de;
@@ -114,11 +35,90 @@ const getLocaleForTimeSince = (locale: TUserLocale) => {
   }
 };
 
+export const convertDateString = (dateString: string | null, locale: TUserLocale) => {
+  if (dateString === null) return null;
+  if (!dateString) {
+    return dateString;
+  }
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return "Invalid Date";
+  }
+  return intlFormat(
+    date,
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    },
+    {
+      locale: getLocaleForDateTime(locale),
+    }
+  );
+};
+
+export const convertDateTimeString = (dateString: string, locale: TUserLocale) => {
+  if (!dateString) {
+    return dateString;
+  }
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    {
+      locale: getLocaleForDateTime(locale),
+    }
+  );
+};
+
+export const convertDateTimeStringShort = (dateString: string, locale: TUserLocale) => {
+  if (!dateString) {
+    return dateString;
+  }
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    {
+      locale: getLocaleForDateTime(locale),
+    }
+  );
+};
+
+export const convertTimeString = (dateString: string, locale: TUserLocale) => {
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    },
+    {
+      locale: getLocaleForDateTime(locale),
+    }
+  );
+};
+
 export const timeSince = (dateString: string, locale: TUserLocale) => {
   const date = new Date(dateString);
   return formatDistance(date, new Date(), {
     addSuffix: true,
-    locale: getLocaleForTimeSince(locale),
+    locale: getLocaleForDateTime(locale),
   });
 };
 
