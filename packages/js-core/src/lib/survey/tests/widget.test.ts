@@ -497,12 +497,12 @@ describe("widget-file", () => {
 
     // Helper to get the script element passed to document.head.appendChild
     const getAppendedScript = (): Record<string, unknown> => {
-      const appendChildMock = document.head.appendChild as unknown as Mock;
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- accessing mock for test assertions
+      const appendChildMock = vi.mocked(document.head.appendChild);
       for (const call of appendChildMock.mock.calls) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock
-        const el = call[0] as any;
-        if (typeof el?.src === "string" && (el.src as string).includes("surveys.umd.cjs")) {
-          return el as Record<string, unknown>;
+        const el = call[0] as unknown as Record<string, unknown>;
+        if (typeof el.src === "string" && el.src.includes("surveys.umd.cjs")) {
+          return el;
         }
       }
       throw new Error("No script element for surveys.umd.cjs was appended to document.head");
@@ -519,6 +519,7 @@ describe("widget-file", () => {
       getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
       widget.setIsSurveyRunning(false);
 
+      // eslint-disable-next-line @typescript-eslint/no-empty-function -- suppress console.error in test
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const renderPromise = widget.renderWidget({
@@ -544,6 +545,7 @@ describe("widget-file", () => {
       getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
       widget.setIsSurveyRunning(false);
 
+      // eslint-disable-next-line @typescript-eslint/no-empty-function -- suppress console.error in test
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       vi.useFakeTimers();
 
@@ -573,7 +575,6 @@ describe("widget-file", () => {
       widget.setIsSurveyRunning(false);
 
       // Set nonce before surveys load to test nonce application
-      // @ts-expect-error -- setting test nonce
       window.__formbricksNonce = "test-nonce-123";
 
       vi.useFakeTimers();
@@ -610,7 +611,6 @@ describe("widget-file", () => {
       );
 
       vi.useRealTimers();
-      // @ts-expect-error -- cleanup
       delete window.__formbricksNonce;
     });
 
@@ -639,10 +639,10 @@ describe("widget-file", () => {
       vi.advanceTimersByTime(0);
 
       // No new script element should have been appended (dedup via early return or cached promise)
-      const scriptAppendCalls = appendChildSpy.mock.calls.filter(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock
-        (call: any[]) => call[0]?.src?.includes?.("surveys.umd.cjs")
-      );
+      const scriptAppendCalls = appendChildSpy.mock.calls.filter((call: unknown[]) => {
+        const el = call[0] as Record<string, unknown> | undefined;
+        return typeof el?.src === "string" && el.src.includes("surveys.umd.cjs");
+      });
       expect(scriptAppendCalls.length).toBe(0);
 
       expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
