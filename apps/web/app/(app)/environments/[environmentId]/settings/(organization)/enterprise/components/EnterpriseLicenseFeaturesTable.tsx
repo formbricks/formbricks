@@ -1,11 +1,12 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { SettingsCard } from "../../../components/SettingsCard";
 
 type TPublicLicenseFeatureKey = Exclude<keyof TEnterpriseLicenseFeatures, "isMultiOrgEnabled" | "ai">;
 
@@ -15,66 +16,68 @@ type TFeatureDefinition = {
   docsUrl: string;
 };
 
-const featureDefinitions: TFeatureDefinition[] = [
-  {
-    key: "contacts",
-    labelKey: "environments.settings.enterprise.license_feature_contacts",
-    docsUrl:
-      "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
-  },
-  {
-    key: "projects",
-    labelKey: "environments.settings.enterprise.license_feature_projects",
-    docsUrl: "https://formbricks.com/docs/self-hosting/advanced/license",
-  },
-  {
-    key: "whitelabel",
-    labelKey: "environments.settings.enterprise.license_feature_whitelabel",
-    docsUrl:
-      "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
-  },
-  {
-    key: "removeBranding",
-    labelKey: "environments.settings.enterprise.license_feature_remove_branding",
-    docsUrl:
-      "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
-  },
-  {
-    key: "twoFactorAuth",
-    labelKey: "environments.settings.enterprise.license_feature_two_factor_auth",
-    docsUrl: "https://formbricks.com/docs/xm-and-surveys/core-features/user-management/two-factor-auth",
-  },
-  {
-    key: "sso",
-    labelKey: "environments.settings.enterprise.license_feature_sso",
-    docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/oidc-sso",
-  },
-  {
-    key: "saml",
-    labelKey: "environments.settings.enterprise.license_feature_saml",
-    docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/saml-sso",
-  },
-  {
-    key: "spamProtection",
-    labelKey: "environments.settings.enterprise.license_feature_spam_protection",
-    docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/spam-protection",
-  },
-  {
-    key: "auditLogs",
-    labelKey: "environments.settings.enterprise.license_feature_audit_logs",
-    docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging",
-  },
-  {
-    key: "accessControl",
-    labelKey: "environments.settings.enterprise.license_feature_access_control",
-    docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/team-access",
-  },
-  {
-    key: "quotas",
-    labelKey: "environments.settings.enterprise.license_feature_quotas",
-    docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/quota-management",
-  },
-];
+const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
+  return [
+    {
+      key: "contacts",
+      labelKey: t("environments.settings.enterprise.license_feature_contacts"),
+      docsUrl:
+        "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
+    },
+    {
+      key: "projects",
+      labelKey: t("environments.settings.enterprise.license_feature_projects"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/advanced/license",
+    },
+    {
+      key: "whitelabel",
+      labelKey: t("environments.settings.enterprise.license_feature_whitelabel"),
+      docsUrl:
+        "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+    },
+    {
+      key: "removeBranding",
+      labelKey: t("environments.settings.enterprise.license_feature_remove_branding"),
+      docsUrl:
+        "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+    },
+    {
+      key: "twoFactorAuth",
+      labelKey: t("environments.settings.enterprise.license_feature_two_factor_auth"),
+      docsUrl: "https://formbricks.com/docs/xm-and-surveys/core-features/user-management/two-factor-auth",
+    },
+    {
+      key: "sso",
+      labelKey: t("environments.settings.enterprise.license_feature_sso"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/oidc-sso",
+    },
+    {
+      key: "saml",
+      labelKey: t("environments.settings.enterprise.license_feature_saml"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/saml-sso",
+    },
+    {
+      key: "spamProtection",
+      labelKey: t("environments.settings.enterprise.license_feature_spam_protection"),
+      docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/spam-protection",
+    },
+    {
+      key: "auditLogs",
+      labelKey: t("environments.settings.enterprise.license_feature_audit_logs"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging",
+    },
+    {
+      key: "accessControl",
+      labelKey: t("environments.settings.enterprise.license_feature_access_control"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/team-access",
+    },
+    {
+      key: "quotas",
+      labelKey: t("environments.settings.enterprise.license_feature_quotas"),
+      docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/quota-management",
+    },
+  ];
+};
 
 interface EnterpriseLicenseFeaturesTableProps {
   features: TEnterpriseLicenseFeatures;
@@ -98,7 +101,7 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
           </TableRow>
         </TableHeader>
         <TableBody>
-          {featureDefinitions.map((feature) => {
+          {getFeatureDefinitions(t).map((feature) => {
             const value = features[feature.key];
             const isEnabled = typeof value === "boolean" ? value : value === null || value > 0;
             let displayValue: number | string = "—";
@@ -116,11 +119,11 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
                   <Badge
                     type={isEnabled ? "success" : "gray"}
                     size="normal"
-                    text={t(
+                    text={
                       isEnabled
-                        ? "environments.settings.enterprise.license_features_table_enabled"
-                        : "environments.settings.enterprise.license_features_table_disabled"
-                    )}
+                        ? t("environments.settings.enterprise.license_features_table_enabled")
+                        : t("environments.settings.enterprise.license_features_table_disabled")
+                    }
                   />
                 </TableCell>
                 <TableCell className="text-slate-600">{displayValue}</TableCell>
