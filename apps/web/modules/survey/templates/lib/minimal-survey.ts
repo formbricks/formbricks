@@ -42,6 +42,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   followUps: [],
   isBackButtonHidden: false,
   autoAdvance: false,
+  snowflakeSync: false,
   metadata: {},
   slug: null,
 });

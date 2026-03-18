@@ -79,6 +79,8 @@ const mockSurvey: TSurvey = {
   endings: [],
   followUps: [],
   isBackButtonHidden: false,
+  autoAdvance: false,
+  snowflakeSync: false,
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   projectOverwrites: null,

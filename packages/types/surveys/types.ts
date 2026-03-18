@@ -939,6 +939,7 @@ export const ZSurvey = z
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
     autoAdvance: z.boolean().optional().default(false),
+    snowflakeSync: z.boolean().optional().default(false),
     isVerifyEmailEnabled: z.boolean(),
     recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),

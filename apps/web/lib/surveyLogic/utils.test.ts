@@ -100,6 +100,8 @@ describe("surveyLogic", () => {
     delay: 0,
     displayPercentage: null,
     isBackButtonHidden: false,
+    autoAdvance: false,
+    snowflakeSync: false,
     projectOverwrites: null,
     styling: null,
     showLanguageSwitch: null,

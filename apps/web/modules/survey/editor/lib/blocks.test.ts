@@ -81,6 +81,8 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   showLanguageSwitch: null,
   recaptcha: null,
   isBackButtonHidden: false,
+  autoAdvance: false,
+  snowflakeSync: false,
   metadata: {},
 });
 

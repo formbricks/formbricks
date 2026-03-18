@@ -137,6 +137,7 @@ describe("Survey Logic", () => {
     recaptcha: { enabled: false, threshold: 0.5 },
     isBackButtonHidden: false,
     autoAdvance: false,
+    snowflakeSync: false,
     segment: null,
     welcomeCard: {
       enabled: true,

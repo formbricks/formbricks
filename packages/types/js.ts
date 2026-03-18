@@ -33,6 +33,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     projectOverwrites: true,
     isBackButtonHidden: true,
     autoAdvance: true,
+    snowflakeSync: true,
     recaptcha: true,
     externalDataSources: true,
   })

@@ -39,6 +39,7 @@ export const selectSurvey = {
   recaptcha: true,
   isBackButtonHidden: true,
   autoAdvance: true,
+  snowflakeSync: true,
   metadata: true,
   slug: true,
   languages: {

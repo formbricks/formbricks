@@ -132,6 +132,7 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             hiddenFields: true,
             isBackButtonHidden: true,
             autoAdvance: true,
+            snowflakeSync: true,
             triggers: {
               select: {
                 actionClass: {

@@ -57,6 +57,7 @@ export const selectSurvey = {
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
   autoAdvance: true,
+  snowflakeSync: true,
   redirectUrl: true,
   projectOverwrites: true,
   styling: true,

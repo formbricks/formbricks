@@ -148,6 +148,75 @@ export async function querySnowflakeMember(recordNumber: string): Promise<TMembe
 }
 
 /**
+ * Insert survey response rows into the SURVEYS.SURVEY_RESPONSES table.
+ * Failures are logged but never thrown — survey submission must not be blocked.
+ */
+export async function insertSurveyResponses(
+  rows: {
+    RESPONSE_ID: string;
+    SURVEY_ID: string;
+    SURVEY_NAME: string;
+    RECORD_NUMBER: string | null;
+    CREATED_AT: string;
+    FINISHED: boolean;
+    QUESTION_ID: string;
+    QUESTION_TEXT: string;
+    QUESTION_TYPE: string;
+    ANSWER: string;
+    LANGUAGE: string | null;
+    SOURCE_URL: string | null;
+  }[]
+): Promise<void> {
+  if (rows.length === 0) return;
+
+  const columns = [
+    "RESPONSE_ID",
+    "SURVEY_ID",
+    "SURVEY_NAME",
+    "RECORD_NUMBER",
+    "CREATED_AT",
+    "FINISHED",
+    "QUESTION_ID",
+    "QUESTION_TEXT",
+    "QUESTION_TYPE",
+    "ANSWER",
+    "LANGUAGE",
+    "SOURCE_URL",
+  ];
+
+  const placeholderRow = `(${columns.map(() => "?").join(", ")})`;
+  const placeholders = rows.map(() => placeholderRow).join(",\n");
+
+  const binds: any[] = [];
+  for (const row of rows) {
+    binds.push(
+      row.RESPONSE_ID,
+      row.SURVEY_ID,
+      row.SURVEY_NAME,
+      row.RECORD_NUMBER,
+      row.CREATED_AT,
+      row.FINISHED,
+      row.QUESTION_ID,
+      row.QUESTION_TEXT,
+      row.QUESTION_TYPE,
+      row.ANSWER,
+      row.LANGUAGE,
+      row.SOURCE_URL
+    );
+  }
+
+  const sql = `INSERT INTO SURVEY_RESPONSES (${columns.join(", ")})
+VALUES ${placeholders}`;
+
+  try {
+    await executeQuery(sql, binds);
+  } catch (error) {
+    console.error("[Snowflake Service] Failed to insert survey responses:", error);
+    // Swallow error — never block the survey pipeline
+  }
+}
+
+/**
  * Test Snowflake connection
  * Use this for health checks or debugging
  */

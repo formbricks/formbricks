@@ -53,6 +53,8 @@ const baseSurvey: TSurvey = {
   projectOverwrites: null,
   showLanguageSwitch: false,
   isBackButtonHidden: false,
+  autoAdvance: false,
+  snowflakeSync: false,
   followUps: [],
   recaptcha: { enabled: false, threshold: 0.5 },
   displayOption: "displayOnce",

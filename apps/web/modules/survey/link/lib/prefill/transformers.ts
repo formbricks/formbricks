@@ -22,6 +22,10 @@ export const transformMultipleChoiceSingle = (
 
   // If we have a matched choice, return its label
   if (matchedChoice) {
+    // If the matched choice is "other", return empty string to trigger the "other selected but empty" state
+    if (matchedChoice.id === "other") {
+      return "";
+    }
     return matchedChoice.label[language] || answer;
   }
 

@@ -155,6 +155,7 @@ export const mockSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
   autoAdvance: false,
+  snowflakeSync: false,
   recaptcha: null,
   projectOverwrites: null,
   styling: null,

@@ -209,6 +209,7 @@ const baseSurveyProperties = {
   ],
   isBackButtonHidden: false,
   autoAdvance: false,
+  snowflakeSync: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",

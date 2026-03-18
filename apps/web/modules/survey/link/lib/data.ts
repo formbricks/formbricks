@@ -49,6 +49,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         pin: true,
         isBackButtonHidden: true,
         autoAdvance: true,
+        snowflakeSync: true,
 
         // Single use configuration
         singleUse: true,

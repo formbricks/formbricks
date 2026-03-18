@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
+import { insertSurveyResponses } from "@/app/api/member-lookup/snowflake-service";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { CRON_SECRET } from "@/lib/constants";
@@ -19,6 +20,7 @@ import { sendResponseFinishedEmail } from "@/modules/email";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { handleIntegrations } from "./lib/handleIntegrations";
+import { buildSnowflakeRows } from "./lib/snowflake-sync";
 
 export const POST = async (request: Request) => {
   const requestHeaders = await headers();
@@ -227,6 +229,17 @@ export const POST = async (request: Request) => {
             status: "completed",
           },
         });
+      }
+    }
+
+    // Snowflake sync (if enabled for this survey)
+    if (survey.snowflakeSync) {
+      try {
+        const rows = await buildSnowflakeRows(survey, response);
+        await insertSurveyResponses(rows);
+      } catch (error) {
+        logger.error({ error, surveyId }, "Snowflake sync failed for survey response");
+        // Never block the response pipeline
       }
     }
 

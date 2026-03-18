@@ -389,6 +389,22 @@ export const ResponseOptionsCard = ({
             title="Auto-advance on answer"
             description="Automatically scroll to the next question and submit when all single-choice questions in a block are answered"
           />
+          <AdvancedOptionToggle
+            htmlId="snowflakeSync"
+            isChecked={localSurvey.snowflakeSync ?? false}
+            onToggle={() => {
+              setLocalSurvey({ ...localSurvey, snowflakeSync: !localSurvey.snowflakeSync });
+            }}
+            title="Sync responses to Snowflake"
+            description={
+              localSurvey.snowflakeSync &&
+              !localSurvey.hiddenFields?.fieldIds?.some((id) =>
+                ["recordnumber", "customerid", "contactid"].includes(id.toLowerCase())
+              )
+                ? "Warning: No recordnumber hidden field found — responses will sync but RECORD_NUMBER will be NULL unless contacts have this attribute"
+                : "Automatically send each response to the Snowflake data warehouse"
+            }
+          />
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

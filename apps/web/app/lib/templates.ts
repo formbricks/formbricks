@@ -4914,6 +4914,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
     followUps: [],
     isBackButtonHidden: false,
     autoAdvance: false,
+    snowflakeSync: false,
     metadata: {},
     questions: [], // Required for build-time type checking (Zod defaults to [] at runtime)
     slug: null,

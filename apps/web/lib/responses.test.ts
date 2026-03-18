@@ -247,6 +247,8 @@ describe("Response Processing", () => {
       },
       showLanguageSwitch: false,
       isBackButtonHidden: false,
+      autoAdvance: false,
+      snowflakeSync: false,
       isVerifyEmailEnabled: false,
       isSingleResponsePerEmailEnabled: false,
       displayPercentage: 100,

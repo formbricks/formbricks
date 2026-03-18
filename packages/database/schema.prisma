@@ -379,6 +379,7 @@ model Survey {
   isSingleResponsePerEmailEnabled Boolean          @default(false)
   isBackButtonHidden              Boolean          @default(false)
   autoAdvance                     Boolean          @default(false)
+  snowflakeSync                   Boolean          @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
