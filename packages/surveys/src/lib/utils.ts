@@ -90,7 +90,7 @@ export const getShuffledChoicesIds = (
   if (shuffleOption === "reverseOrderExceptLast") {
     // 50% chance to reverse all except the last element
     const lastElement = shuffledChoices.pop();
-    if (lastElement) {
+    if (lastElement !== undefined) {
       if (getSecureRandom() < 0.5) {
         shuffledChoices.reverse();
       }

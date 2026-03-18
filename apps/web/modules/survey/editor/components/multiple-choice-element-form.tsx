@@ -206,8 +206,18 @@ export const MultipleChoiceElementForm = ({
       setisInvalidValue(null);
     }
 
+    const hasRemainingSpecialChoices = newChoices.some((c) => c.id === "other" || c.id === "none");
+
     updateElement(elementIdx, {
       choices: newChoices,
+      ...(!hasRemainingSpecialChoices &&
+        element.shuffleOption === "reverseOrderExceptLast" && {
+          shuffleOption: "reverseOrder" as TShuffleOption,
+        }),
+      ...(!hasRemainingSpecialChoices &&
+        element.shuffleOption === "exceptLast" && {
+          shuffleOption: "all" as TShuffleOption,
+        }),
     });
   };
 
