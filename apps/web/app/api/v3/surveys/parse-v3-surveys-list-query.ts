@@ -4,15 +4,29 @@
  */
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import type { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import {
+  type TSurveyFilterCriteria,
+  ZSurveyFilters,
+  ZSurveyStatus,
+  ZSurveyType,
+} from "@formbricks/types/surveys/types";
 
-export const V3_SURVEYS_DEFAULT_LIMIT = 20;
-export const V3_SURVEYS_MAX_LIMIT = 100;
+const V3_SURVEYS_DEFAULT_LIMIT = 20;
+const V3_SURVEYS_MAX_LIMIT = 100;
 
-const ZStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
-const ZType = z.enum(["link", "app"]);
-const ZCreatedBy = z.enum(["you", "others"]);
-const ZSortBy = z.enum(["createdAt", "updatedAt", "name", "relevance"]);
+const SUPPORTED_QUERY_PARAMS = [
+  "workspaceId",
+  "limit",
+  "offset",
+  "name",
+  "status",
+  "type",
+  "createdBy",
+  "sortBy",
+] as const;
+const SUPPORTED_QUERY_PARAM_SET = new Set<string>(SUPPORTED_QUERY_PARAMS);
+
+type InvalidParam = { name: string; reason: string };
 
 /** Collect repeated query keys and comma-separated values: `status=a&status=b` or `status=a,b`. */
 export function collectMultiValueQueryParam(searchParams: URLSearchParams, key: string): string[] {
@@ -35,10 +49,10 @@ const ZV3SurveysListQuery = z.object({
     .max(512)
     .optional()
     .transform((s) => (s === undefined || s.trim() === "" ? undefined : s.trim())),
-  status: z.array(ZStatus).optional(),
-  type: z.array(ZType).optional(),
-  createdBy: z.array(ZCreatedBy).optional(),
-  sortBy: ZSortBy.optional(),
+  status: z.array(ZSurveyStatus).optional(),
+  type: z.array(ZSurveyType).optional(),
+  createdBy: ZSurveyFilters.shape.createdBy.optional(),
+  sortBy: ZSurveyFilters.shape.sortBy.optional(),
 });
 
 export type TV3SurveysListQuery = z.infer<typeof ZV3SurveysListQuery>;
@@ -51,7 +65,18 @@ export type TV3SurveysListQueryParseResult =
       offset: number;
       filterCriteria: TSurveyFilterCriteria | undefined;
     }
-  | { ok: false; invalid_params: Array<{ name: string; reason: string }> };
+  | { ok: false; invalid_params: InvalidParam[] };
+
+function getUnsupportedQueryParams(searchParams: URLSearchParams): InvalidParam[] {
+  const unsupportedParams = [
+    ...new Set(Array.from(searchParams.keys()).filter((key) => !SUPPORTED_QUERY_PARAM_SET.has(key))),
+  ];
+
+  return unsupportedParams.map((name) => ({
+    name,
+    reason: `Unsupported query parameter. Use only ${SUPPORTED_QUERY_PARAMS.join(", ")}.`,
+  }));
+}
 
 function buildFilterCriteria(
   q: TV3SurveysListQuery,
@@ -78,16 +103,11 @@ export function parseV3SurveysListQuery(
 ): TV3SurveysListQueryParseResult {
   const { sessionUserId } = options;
 
-  if (searchParams.has("filterCriteria")) {
+  const unsupportedQueryParams = getUnsupportedQueryParams(searchParams);
+  if (unsupportedQueryParams.length > 0) {
     return {
       ok: false,
-      invalid_params: [
-        {
-          name: "filterCriteria",
-          reason:
-            "Not supported. Use name, status, type, createdBy, and sortBy as query parameters (see OpenAPI).",
-        },
-      ],
+      invalid_params: unsupportedQueryParams,
     };
   }
 

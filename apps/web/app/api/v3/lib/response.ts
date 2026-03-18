@@ -4,13 +4,15 @@
  */
 
 const PROBLEM_JSON = "application/problem+json" as const;
-const CACHE_NO_STORE = "private, no-store";
+const CACHE_NO_STORE = "private, no-store" as const;
+
+export type InvalidParam = { name: string; reason: string };
 
 export type ProblemExtension = {
   code?: string;
   requestId: string;
   details?: Record<string, unknown>;
-  invalid_params?: Array<{ name: string; reason: string }>;
+  invalid_params?: InvalidParam[];
 };
 
 export type ProblemBody = {
@@ -31,7 +33,7 @@ function problemResponse(
     instance?: string;
     code?: string;
     details?: Record<string, unknown>;
-    invalid_params?: Array<{ name: string; reason: string }>;
+    invalid_params?: InvalidParam[];
     headers?: Record<string, string>;
   }
 ): Response {
@@ -60,7 +62,7 @@ function problemResponse(
 export function problemBadRequest(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: Array<{ name: string; reason: string }>; instance?: string }
+  options?: { invalid_params?: InvalidParam[]; instance?: string }
 ): Response {
   return problemResponse(400, "Bad Request", detail, requestId, {
     code: "bad_request",

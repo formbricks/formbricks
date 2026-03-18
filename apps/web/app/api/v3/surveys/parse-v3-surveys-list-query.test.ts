@@ -21,12 +21,25 @@ describe("collectMultiValueQueryParam", () => {
 });
 
 describe("parseV3SurveysListQuery", () => {
-  test("rejects filterCriteria", () => {
+  test("rejects unsupported query parameters like filterCriteria", () => {
     const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filterCriteria={}`), {
       sessionUserId: "u1",
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.invalid_params[0].name).toBe("filterCriteria");
+  });
+
+  test("rejects unknown query parameters", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&foo=bar`), {
+      sessionUserId: "u1",
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok)
+      expect(r.invalid_params[0]).toEqual({
+        name: "foo",
+        reason:
+          "Unsupported query parameter. Use only workspaceId, limit, offset, name, status, type, createdBy, sortBy.",
+      });
   });
 
   test("parses minimal query", () => {

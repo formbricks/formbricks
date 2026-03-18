@@ -5,10 +5,10 @@ import { ApiKeyPermission } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import type { TApiV1Authentication } from "@/app/lib/api/with-api-logging";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import type { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { problemForbidden, problemUnauthorized } from "./response";
+import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
 
 /** read/write/manage on an API key env all allow read-only list operations. */
@@ -27,7 +27,7 @@ function apiKeyPermissionAllowsList(permission: ApiKeyPermission): boolean {
  * We use 403 (not 404) when the workspace is not found to avoid leaking resource existence.
  */
 export async function requireSessionWorkspaceAccess(
-  authentication: TApiV1Authentication,
+  authentication: TV3Authentication,
   workspaceId: string,
   minPermission: TTeamPermission,
   requestId: string,
@@ -60,13 +60,9 @@ export async function requireSessionWorkspaceAccess(
 
     return context;
   } catch (err) {
-    if (err instanceof ResourceNotFoundError) {
-      // Return 403 (not 404) so we don't leak whether the workspace exists to unauthenticated or unauthorized callers.
-      log.warn({ statusCode: 403, errorCode: err.name }, "Workspace not found");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-    if (err instanceof AuthorizationError) {
-      log.warn({ statusCode: 403, errorCode: err.name }, "Forbidden");
+    if (err instanceof ResourceNotFoundError || err instanceof AuthorizationError) {
+      const message = err instanceof ResourceNotFoundError ? "Workspace not found" : "Forbidden";
+      log.warn({ statusCode: 403, errorCode: err.name }, message);
       return problemForbidden(requestId, "You are not authorized to access this resource", instance);
     }
     throw err;
@@ -78,7 +74,7 @@ export async function requireSessionWorkspaceAccess(
  * API keys must list the workspace environment with read-equivalent permission.
  */
 export async function requireV3WorkspaceAccess(
-  authentication: TApiV1Authentication,
+  authentication: TV3Authentication,
   workspaceId: string,
   minPermission: TTeamPermission,
   requestId: string,
