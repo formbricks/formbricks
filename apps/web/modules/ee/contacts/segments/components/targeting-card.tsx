@@ -124,7 +124,7 @@ export function TargetingCard({
   };
 
   const handleSaveAsNewSegmentUpdate = async (segmentId: string, data: TSegmentUpdateInput) => {
-    const updatedSegment = await updateSegmentAction({ segmentId, environmentId, data });
+    const updatedSegment = await updateSegmentAction({ segmentId, data });
     return updatedSegment?.data as TSegment;
   };
 
@@ -136,7 +136,7 @@ export function TargetingCard({
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error(t("environments.segments.invalid_segment"));
-      const result = await updateSegmentAction({ segmentId: segment.id, environmentId, data });
+      const result = await updateSegmentAction({ segmentId: segment.id, data });
       if (result?.serverError) {
         toast.error(getFormattedErrorMessage(result));
         return;

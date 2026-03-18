@@ -75,7 +75,6 @@ export function SegmentSettings({
     try {
       setIsUpdatingSegment(true);
       const data = await updateSegmentAction({
-        environmentId,
         segmentId: segment.id,
         data: {
           title: segment.title,
@@ -131,6 +130,10 @@ export function SegmentSettings({
     // check if title is empty
 
     if (!segment.title) {
+      return true;
+    }
+
+    if (segment.filters.length === 0) {
       return true;
     }
 

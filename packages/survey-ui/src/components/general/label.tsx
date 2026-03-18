@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import { sanitize } from "isomorphic-dompurify";
 import * as React from "react";
 import { cn, stripInlineStyles } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ function Label({
   const isHtml = childrenString ? isValidHTML(strippedContent) : false;
   const safeHtml =
     isHtml && strippedContent
-      ? DOMPurify.sanitize(strippedContent, {
+      ? sanitize(strippedContent, {
           ADD_ATTR: ["target"],
           FORBID_ATTR: ["style"],
         })

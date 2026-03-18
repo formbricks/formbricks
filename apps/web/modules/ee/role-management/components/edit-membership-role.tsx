@@ -65,7 +65,7 @@ export function EditMembershipRole({
       }
 
       if (inviteId) {
-        await updateInviteAction({ inviteId: inviteId, organizationId, data: { role } });
+        await updateInviteAction({ inviteId: inviteId, data: { role } });
       }
     } catch (error) {
       toast.error(t("common.something_went_wrong_please_try_again"));
