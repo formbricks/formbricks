@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { Instrumentation } from "next";
+import { type Instrumentation } from "next";
 import { isExpectedError } from "@formbricks/types/errors";
 import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
