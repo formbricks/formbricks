@@ -4,11 +4,14 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 const twMerge = extendTailwindMerge({
   extend: {
-    // Custom tokens from `packages/survey-ui/tailwind.config.ts`
-    fontSize: ["input", "option", "button"],
-    textColor: ["input-text", "input-placeholder", "option-label", "button-text"],
+    classGroups: {
+      // Custom tokens from `packages/survey-ui/tailwind.config.ts`
+      "font-size": ["text-input", "text-option", "text-button"],
+      "font-weight": ["font-input-weight", "font-option-weight", "font-button-weight"],
+      "text-color": ["text-input-text", "text-input-placeholder", "text-option-label", "text-button-text"],
+    },
   },
-} as Parameters<typeof extendTailwindMerge>[0]);
+});
 
 /**
  * Utility function to merge Tailwind CSS classes
