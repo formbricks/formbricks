@@ -535,7 +535,8 @@ describe("widget-file", () => {
       // Simulate network error
       (scriptEl.onerror as (error: unknown) => void)("Network error");
 
-      await expect(renderPromise).rejects.toThrow("Failed to load Formbricks Surveys library");
+      // renderWidget catches the error internally — it resolves, not rejects
+      await renderPromise;
       expect(consoleSpy).toHaveBeenCalledWith("Failed to load Formbricks Surveys library:", "Network error");
 
       consoleSpy.mockRestore();
@@ -559,12 +560,15 @@ describe("widget-file", () => {
       // Script loaded but window.formbricksSurveys is never set
       (scriptEl.onload as () => void)();
 
-      // Attach rejection handler before advancing timers to prevent unhandled rejection
-      const rejectAssert = expect(renderPromise).rejects.toThrow("Failed to load Formbricks Surveys library");
-
       // Advance past the 10s timeout (polls every 200ms)
       await vi.advanceTimersByTimeAsync(10001);
-      await rejectAssert;
+
+      await renderPromise;
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to load Formbricks Surveys library:",
+        expect.any(Error)
+      );
 
       vi.useRealTimers();
       consoleSpy.mockRestore();
