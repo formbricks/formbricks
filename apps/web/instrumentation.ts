@@ -1,9 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
-import { InstrumentationOnRequestError } from "next/dist/server/instrumentation/types";
+import { Instrumentation } from "next";
 import { isExpectedError } from "@formbricks/types/errors";
 import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
-export const onRequestError: InstrumentationOnRequestError = (...args) => {
+export const onRequestError: Instrumentation.onRequestError = (...args) => {
   const [error] = args;
 
   // Skip expected business-logic errors (AuthorizationError, ResourceNotFoundError, etc.)
