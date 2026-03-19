@@ -11,7 +11,7 @@ export const TagsLoading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation activeId="tags" />
+        <ProjectConfigNavigation activeId="tags" loading />
       </PageHeader>
       <SettingsCard
         title={t("environments.workspace.tags.manage_tags")}
