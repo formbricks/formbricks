@@ -95,7 +95,7 @@ function CTA({
               disabled={disabled}
               className="text-button font-button-weight flex items-center gap-2"
               variant={buttonVariant}
-              size={buttonVariant === "custom" ? null : undefined}>
+              size={"custom"}>
               {buttonLabel}
               <SquareArrowOutUpRightIcon className="size-4" />
             </Button>
