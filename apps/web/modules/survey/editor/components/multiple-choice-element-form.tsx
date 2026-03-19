@@ -83,6 +83,7 @@ export const MultipleChoiceElementForm = ({
   const multipleChoiceOptionDisplayTypeOptions = [
     { value: "list", label: t("environments.surveys.edit.list") },
     { value: "dropdown", label: t("environments.surveys.edit.dropdown") },
+    { value: "searchable-dropdown", label: t("environments.surveys.edit.searchable-dropdown") },
   ];
 
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {

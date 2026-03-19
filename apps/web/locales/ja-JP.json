@@ -1533,6 +1533,7 @@
         "save_and_close": "保存して閉じる",
         "scale": "尺度",
         "search_for_images": "画像を検索",
+        "searchable-dropdown": "Searchable-Dropdown",
         "seconds_after_trigger_the_survey_will_be_closed_if_no_response": "トリガーから数秒後に回答がない場合、フォームは閉じられます",
         "seconds_before_showing_the_survey": "秒後にフォームを表示します。",
         "select_field": "フィールドを選択",

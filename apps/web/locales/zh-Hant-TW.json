@@ -1533,6 +1533,7 @@
         "save_and_close": "儲存並關閉",
         "scale": "比例",
         "search_for_images": "搜尋圖片",
+        "searchable-dropdown": "Searchable-Dropdown",
         "seconds_after_trigger_the_survey_will_be_closed_if_no_response": "如果沒有回應，則在觸發後幾秒關閉問卷",
         "seconds_before_showing_the_survey": "秒後顯示問卷。",
         "select_field": "選擇欄位",

@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
 import { Checkbox } from "@/components/general/checkbox";
@@ -54,7 +54,7 @@ interface MultiSelectProps {
   /** Whether the options are disabled */
   disabled?: boolean;
   /** Display variant: 'list' shows checkboxes, 'dropdown' shows a dropdown menu */
-  variant?: "list" | "dropdown";
+  variant?: "list" | "dropdown" | "searchable-dropdown";
   /** Placeholder text for dropdown button when no options are selected */
   placeholder?: string;
   /** ID for the 'other' option that allows custom input */
@@ -76,14 +76,14 @@ interface MultiSelectProps {
 }
 
 // Shared className for option labels
-const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
+const optionLabelClassName = "font-option text-option font-option-weight text-option-label";                          
 
 // Shared className for option containers
 const getOptionContainerClassName = (isSelected: boolean, isDisabled: boolean): string =>
   cn(
     "relative flex flex-col border transition-colors outline-none",
     "rounded-option px-option-x py-option-y",
-    isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
+    isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",                            
     "focus-within:border-brand focus-within:bg-option-selected-bg",
     "hover:bg-option-hover-bg",
     isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
@@ -97,14 +97,14 @@ interface DropdownVariantProps {
   handleOptionRemove: (optionId: string) => void;
   disabled: boolean;
   headline: string;
-  errorMessage?: string;
+  errorMessage?: string;                                                                                              
   displayText: string;
   hasOtherOption: boolean;
   otherOptionId?: string;
   isOtherSelected: boolean;
   otherOptionLabel: string;
   otherValue: string;
-  handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;                                            
   otherOptionPlaceholder: string;
   dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
@@ -177,7 +177,7 @@ function DropdownVariant({
                     e.preventDefault();
                   }}
                   disabled={disabled}>
-                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>                 
                 </DropdownMenuCheckboxItem>
               );
             })}
@@ -225,6 +225,194 @@ function DropdownVariant({
             })}
         </DropdownMenuContent>
       </DropdownMenu>
+      {isOtherSelected ? (
+        <Input
+          ref={otherInputRef}
+          type="text"
+          value={otherValue}
+          onChange={handleOtherInputChange}
+          placeholder={otherOptionPlaceholder}
+          disabled={disabled}
+          aria-required={required}
+          dir={dir}
+          className="w-full"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+interface SearchableDropdownVariantProps extends DropdownVariantProps {
+  searchPlaceholder?: string;
+}
+
+function SearchableDropdownVariant({
+  inputId,
+  options,
+  selectedValues,
+  handleOptionAdd,
+  handleOptionRemove,
+  disabled,
+  headline,
+  errorMessage,
+  displayText,
+  hasOtherOption,
+  otherOptionId,
+  isOtherSelected,
+  otherOptionLabel,
+  otherValue,
+  handleOtherInputChange,
+  otherOptionPlaceholder,
+  dir,
+  otherInputRef,
+  required,
+  searchPlaceholder = "Search...",
+}: Readonly<SearchableDropdownVariantProps>): React.JSX.Element {
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleOptionToggle = (optionId: string) => {
+    if (selectedValues.includes(optionId)) {
+      handleOptionRemove(optionId);
+    } else {
+      handleOptionAdd(optionId);
+    }
+  };
+
+  const normalOptions = options.filter((o) => o.id !== "none");
+  const noneOptions = options.filter((o) => o.id === "none");
+
+  const query = searchQuery.trim().toLowerCase();
+
+  const filteredNormalOptions = query
+    ? normalOptions.filter((o) => o.label.toLowerCase().includes(query))
+    : normalOptions;
+
+  const showOtherOption =
+    hasOtherOption &&
+    otherOptionId &&
+    (!query || otherOptionLabel.toLowerCase().includes(query));
+
+  const filteredNoneOptions = query
+    ? noneOptions.filter((o) => o.label.toLowerCase().includes(query))
+    : noneOptions;
+
+  return (
+    <div className="space-y-2">
+      <ElementError errorMessage={errorMessage} dir={dir} />
+      <DropdownMenu
+        onOpenChange={(open) => {
+          if (open) {
+            // Reset search when opening
+            setSearchQuery("");
+            globalThis.setTimeout(() => searchInputRef.current?.focus(), 0);
+          }
+        }}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            disabled={disabled}
+            className="rounded-input bg-option-bg rounded-option border-option-border h-input my-0 w-full justify-between border"
+            aria-invalid={Boolean(errorMessage)}
+            aria-label={headline}>
+            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+            <ChevronDown className="label-headline ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)]"
+          align="start"
+          onCloseAutoFocus={(e) => e.preventDefault()}>
+
+          {/* Search input — sits above the scrollable list, not inside it */}
+          <div className="border-option-border flex items-center gap-2 border-b px-3 py-2">
+            <Search className="text-input-text h-4 w-4 shrink-0 opacity-50" style={{ width: 16, height: 16 }} />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              dir={dir}
+              className="font-input font-input-weight text-input-text placeholder:text-input-text w-full bg-transparent text-sm outline-none placeholder:opacity-50"
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-input-text shrink-0 opacity-50 hover:opacity-100">
+                <X style={{ width: 14, height: 14 }} />
+              </button>
+            ) : null}
+          </div>
+
+          {/* Scrollable options list */}
+          <div className="max-h-[240px] overflow-y-auto">
+            {filteredNormalOptions.map((option) => {
+              const isChecked = selectedValues.includes(option.id);
+              return (
+                <DropdownMenuCheckboxItem
+                  key={option.id}
+                  id={`${inputId}-${option.id}`}
+                  dir={dir}
+                  checked={isChecked}
+                  onCheckedChange={() => handleOptionToggle(option.id)}
+                  onSelect={(e) => e.preventDefault()}
+                  disabled={disabled}>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+
+            {showOtherOption && otherOptionId ? (
+              <DropdownMenuCheckboxItem
+                id={`${inputId}-${otherOptionId}`}
+                dir={dir}
+                checked={isOtherSelected}
+                onCheckedChange={() => {
+                  if (isOtherSelected) {
+                    handleOptionRemove(otherOptionId);
+                  } else {
+                    handleOptionAdd(otherOptionId);
+                  }
+                }}
+                onSelect={(e) => e.preventDefault()}
+                disabled={disabled}>
+                <span className="font-input font-input-weight text-input-text">{otherOptionLabel}</span>
+              </DropdownMenuCheckboxItem>
+            ) : null}
+
+            {filteredNoneOptions.map((option) => {
+              const isChecked = selectedValues.includes(option.id);
+              return (
+                <DropdownMenuCheckboxItem
+                  key={option.id}
+                  id={`${inputId}-${option.id}`}
+                  dir={dir}
+                  checked={isChecked}
+                  onCheckedChange={() => handleOptionToggle(option.id)}
+                  onSelect={(e) => e.preventDefault()}
+                  disabled={disabled}>
+                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+
+            {/* Empty state */}
+            {filteredNormalOptions.length === 0 &&
+              !showOtherOption &&
+              filteredNoneOptions.length === 0 ? (
+              <div className="text-input-text px-3 py-4 text-center text-sm opacity-50">
+                No options match your search
+              </div>
+            ) : null}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* "Other" free-text input shown below trigger when other is selected */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -523,6 +711,29 @@ function MultiSelect({
             dir={dir}
             otherInputRef={otherInputRef}
             required={required}
+          />
+        ) : variant === "searchable-dropdown" ? (
+          <SearchableDropdownVariant
+            inputId={inputId}
+            options={options}
+            selectedValues={selectedValues}
+            handleOptionAdd={handleOptionAdd}
+            handleOptionRemove={handleOptionRemove}
+            disabled={disabled}
+            headline={headline}
+            errorMessage={errorMessage}
+            displayText={displayText}
+            hasOtherOption={hasOtherOption}
+            otherOptionId={otherOptionId}
+            isOtherSelected={isOtherSelected}
+            otherOptionLabel={otherOptionLabel}
+            otherValue={otherValue}
+            handleOtherInputChange={handleOtherInputChange}
+            otherOptionPlaceholder={otherOptionPlaceholder}
+            dir={dir}
+            otherInputRef={otherInputRef}
+            required={required}
+            searchPlaceholder = {placeholder}
           />
         ) : (
           <ListVariant

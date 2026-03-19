@@ -1533,6 +1533,7 @@
         "save_and_close": "保存 和 关闭",
         "scale": "规模",
         "search_for_images": "搜索 图片",
+        "searchable-dropdown": "Searchable-Dropdown",
         "seconds_after_trigger_the_survey_will_be_closed_if_no_response": "触发后 如果 没有 应答 将 在 几秒 后 关闭 调查",
         "seconds_before_showing_the_survey": "显示问卷前 几秒",
         "select_field": "选择字段",

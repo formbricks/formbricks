@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
 import {
@@ -50,7 +50,7 @@ interface SingleSelectProps {
   /** Whether the options are disabled */
   disabled?: boolean;
   /** Display variant: 'list' shows radio buttons, 'dropdown' shows a dropdown menu */
-  variant?: "list" | "dropdown";
+  variant?: "list" | "dropdown" | "searchable-dropdown";
   /** Placeholder text for dropdown button when no option is selected */
   placeholder?: string;
   /** ID for the 'other' option that allows custom input */
@@ -97,6 +97,17 @@ function SingleSelect({
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
   const otherInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const query = searchQuery.trim().toLowerCase();
+
+  const filteredOptions =
+  variant === "searchable-dropdown"
+    ? options.filter((o) =>
+        o.label.toLowerCase().includes(query)
+      )
+    : options;
 
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
@@ -152,10 +163,17 @@ function SingleSelect({
 
       {/* Options */}
       <div className="space-y-2">
-        {variant === "dropdown" ? (
+        {variant === "dropdown" || variant === "searchable-dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
-            <DropdownMenu>
+            <DropdownMenu
+              onOpenChange={(open) => {
+                if (open && variant === "searchable-dropdown") {
+                  setSearchQuery("");
+                  globalThis.setTimeout(() => searchInputRef.current?.focus(), 0);
+                }
+              }}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -170,8 +188,34 @@ function SingleSelect({
               <DropdownMenuContent
                 className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
                 align="start">
+                  {variant === "searchable-dropdown" && (
+                    <div className="border-option-border flex items-center gap-2 border-b px-3 py-2">
+                      <Search className="text-input-text h-4 w-4 shrink-0 opacity-50" />
+
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search..."
+                        dir={dir}
+                        className="font-input font-input-weight text-input-text placeholder:text-input-text w-full bg-transparent text-sm outline-none placeholder:opacity-50"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+
+                      {searchQuery ? (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery("")}
+                          className="text-input-text shrink-0 opacity-50 hover:opacity-100"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
                 <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
-                  {options
+                  {filteredOptions
                     .filter((option) => option.id !== "none")
                     .map((option) => {
                       const optionId = `${inputId}-${option.id}`;
@@ -198,7 +242,7 @@ function SingleSelect({
                       </span>
                     </DropdownMenuRadioItem>
                   ) : null}
-                  {options
+                  {filteredOptions
                     .filter((option) => option.id === "none")
                     .map((option) => {
                       const optionId = `${inputId}-${option.id}`;

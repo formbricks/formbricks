@@ -46,7 +46,7 @@ const meta: Meta<StoryProps> = {
     },
     variant: {
       control: { type: "select" },
-      options: ["list", "dropdown"],
+      options: ["list", "dropdown", "searchable-dropdown"],
       description: "Display variant: 'list' shows radio buttons, 'dropdown' shows a dropdown menu",
       table: { category: "Layout" },
     },

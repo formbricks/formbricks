@@ -1533,6 +1533,7 @@
         "save_and_close": "Enregistrer et fermer",
         "scale": "Échelle",
         "search_for_images": "Rechercher des images",
+        "searchable-dropdown": "Searchable-Dropdown",
         "seconds_after_trigger_the_survey_will_be_closed_if_no_response": "Les secondes après le déclenchement, l'enquête sera fermée si aucune réponse n'est donnée.",
         "seconds_before_showing_the_survey": "secondes avant de montrer l'enquête.",
         "select_field": "Sélectionner un champ",
