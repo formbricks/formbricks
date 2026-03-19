@@ -106,7 +106,15 @@ export const renderWidget = async (
   const overlay = projectOverwrites.overlay ?? project.overlay;
   const placement = projectOverwrites.placement ?? project.placement;
   const isBrandingEnabled = project.inAppSurveyBranding;
-  const formbricksSurveys = await loadFormbricksSurveysExternally();
+
+  let formbricksSurveys: TFormbricksSurveys;
+  try {
+    formbricksSurveys = await loadFormbricksSurveysExternally();
+  } catch (error) {
+    logger.error(`Failed to load surveys library: ${String(error)}`);
+    setIsSurveyRunning(false);
+    return;
+  }
 
   const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
   const isSpamProtectionEnabled = Boolean(recaptchaSiteKey && survey.recaptcha?.enabled);
