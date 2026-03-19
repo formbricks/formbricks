@@ -85,9 +85,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
         `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${
-          errMessage.length < 250
-            ? `${t("common.error")}:  ${errMessage}`
-            : t("environments.integrations.webhooks.please_check_console")
+          errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")
         }`,
         { className: errMessage.length < 250 ? "break-all" : "" }
       );

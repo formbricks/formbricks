@@ -12,8 +12,40 @@ import {
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
+
+const getWebhookTestErrorMessage = async (statusCode: number): Promise<string | null> => {
+  switch (statusCode) {
+    case 500: {
+      const t = await getTranslate();
+      return t("environments.integrations.webhooks.endpoint_internal_server_error");
+    }
+    case 404: {
+      const t = await getTranslate();
+      return t("environments.integrations.webhooks.endpoint_not_found_error");
+    }
+    case 405: {
+      const t = await getTranslate();
+      return t("environments.integrations.webhooks.endpoint_method_not_allowed_error");
+    }
+    case 502: {
+      const t = await getTranslate();
+      return t("environments.integrations.webhooks.endpoint_bad_gateway_error");
+    }
+    case 503: {
+      const t = await getTranslate();
+      return t("environments.integrations.webhooks.endpoint_service_unavailable_error");
+    }
+    case 504: {
+      const t = await getTranslate();
+      return t("environments.integrations.webhooks.endpoint_gateway_timeout_error");
+    }
+    default:
+      return null;
+  }
+};
 
 export const updateWebhook = async (
   webhookId: string,
@@ -132,14 +164,14 @@ export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => 
 export const testEndpoint = async (url: string, secret?: string): Promise<boolean> => {
   await validateWebhookUrl(url);
 
+  if (isDiscordWebhook(url)) {
+    throw new UnknownError("Discord webhooks are currently not supported.");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    if (isDiscordWebhook(url)) {
-      throw new UnknownError("Discord webhooks are currently not supported.");
-    }
-
     const webhookMessageId = uuidv7();
     const webhookTimestamp = Math.floor(Date.now() / 1000);
     const body = JSON.stringify({ event: "testEndpoint" });
@@ -165,27 +197,27 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
       headers: requestHeaders,
       signal: controller.signal,
     });
-    clearTimeout(timeout);
     const statusCode = response.status;
+    const errorMessage = await getWebhookTestErrorMessage(statusCode);
 
-    if (statusCode >= 200 && statusCode < 300) {
-      return true;
-    } else {
-      const errorMessage = await response.text().then(
-        (text) => text.substring(0, 1000) // Limit error message size
-      );
-      throw new UnknownError(`Request failed with status code ${statusCode}: ${errorMessage}`);
+    if (errorMessage) {
+      throw new InvalidInputError(errorMessage);
     }
+
+    return true;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new UnknownError("Request timed out after 5 seconds");
     }
-    if (error instanceof UnknownError) {
+
+    if (error instanceof InvalidInputError || error instanceof UnknownError) {
       throw error;
     }
 
     throw new UnknownError(
       `Error while fetching the URL: ${error instanceof Error ? error.message : "Unknown error occurred"}`
     );
+  } finally {
+    clearTimeout(timeout);
   }
 };
