@@ -6,7 +6,7 @@ import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
-import { closeSurvey } from "@/lib/survey/widget";
+import { closeSurvey, preloadSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import {
@@ -315,6 +315,9 @@ export const setup = async (
   logger.debug("Adding event listeners");
   addEventListeners();
   addCleanupEventListeners();
+
+  // Preload surveys script so it's ready when a survey triggers
+  preloadSurveysScript(configInput.appUrl);
 
   setIsSetup(true);
   logger.debug("Set up complete");
