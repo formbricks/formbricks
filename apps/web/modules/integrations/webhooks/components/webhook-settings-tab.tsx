@@ -81,14 +81,11 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     } catch (err) {
       setHittingEndpoint(false);
       const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
-      console.error(
-        t("environments.integrations.webhooks.webhook_test_failed_due_to"),
-        err instanceof Error ? err : errMessage
-      );
       toast.error(
-        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${t("environments.integrations.webhooks.please_check_console")}`,
+        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")}`,
         { className: errMessage.length < 250 ? "break-all" : "" }
       );
+      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
       setEndpointAccessible(false);
       return false;
     }
