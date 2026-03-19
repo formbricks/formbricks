@@ -1,7 +1,19 @@
 import * as Sentry from "@sentry/nextjs";
+import { InstrumentationOnRequestError } from "next/dist/server/instrumentation/types";
+import { isExpectedError } from "@formbricks/types/errors";
 import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError: InstrumentationOnRequestError = (...args) => {
+  const [error] = args;
+
+  // Skip expected business-logic errors (AuthorizationError, ResourceNotFoundError, etc.)
+  // These are handled gracefully in the UI and don't need server-side Sentry reporting
+  if (error instanceof Error && isExpectedError(error)) {
+    return;
+  }
+
+  Sentry.captureRequestError(...args);
+};
 
 export const register = async () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
