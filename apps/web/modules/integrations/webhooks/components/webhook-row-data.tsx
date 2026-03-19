@@ -8,8 +8,6 @@ import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 
-const MAX_VISIBLE_SURVEYS = 3;
-
 const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
   let surveyNames: string[];
 
@@ -28,20 +26,16 @@ const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
     return <p className="text-slate-400">-</p>;
   }
 
-  const visible = surveyNames.slice(0, MAX_VISIBLE_SURVEYS);
-  const remaining = surveyNames.length - MAX_VISIBLE_SURVEYS;
-
   return (
-    <p className="text-slate-400" title={surveyNames.join(", ")}>
-      {visible.join(", ")}
-      {remaining > 0 && <span>{` +${remaining.toString()} more`}</span>}
+    <p className="truncate text-slate-400" title={surveyNames.join(", ")}>
+      {surveyNames.join(", ")}
     </p>
   );
 };
 
 const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   if (webhook.triggers.length === 0) {
-    return <p className="text-slate-400">No Triggers</p>;
+    return <p className="text-slate-400">{t("environments.integrations.webhooks.no_triggers")}</p>;
   } else {
     let cleanedTriggers = webhook.triggers.map((trigger) => {
       if (trigger === "responseCreated") {
