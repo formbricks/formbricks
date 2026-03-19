@@ -22,42 +22,48 @@ describe("collectMultiValueQueryParam", () => {
 
 describe("parseV3SurveysListQuery", () => {
   test("rejects unsupported query parameters like filterCriteria", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filterCriteria={}`), {
-      sessionUserId: "u1",
-    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filterCriteria={}`));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.invalid_params[0].name).toBe("filterCriteria");
   });
 
   test("rejects unknown query parameters", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&foo=bar`), {
-      sessionUserId: "u1",
-    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&foo=bar`));
     expect(r.ok).toBe(false);
     if (!r.ok)
       expect(r.invalid_params[0]).toEqual({
         name: "foo",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, name, status, type, createdBy, sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
       });
   });
 
   test("rejects the legacy after query parameter", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&after=legacy-cursor`), {
-      sessionUserId: "u1",
-    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&after=legacy-cursor`));
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.invalid_params[0]).toEqual({
         name: "after",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, name, status, type, createdBy, sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
+      });
+    }
+  });
+
+  test("rejects the legacy flat name query parameter", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&name=Foo`));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.invalid_params[0]).toEqual({
+        name: "name",
+        reason:
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
       });
     }
   });
 
   test("parses minimal query", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}`), { sessionUserId: "u1" });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}`));
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.limit).toBe(20);
@@ -67,12 +73,11 @@ describe("parseV3SurveysListQuery", () => {
     }
   });
 
-  test("builds filter from flat params and sets createdBy.userId from session", () => {
+  test("builds filter from explicit operator params", () => {
     const r = parseV3SurveysListQuery(
       params(
-        `workspaceId=${wid}&name=Foo&status=inProgress&status=draft&type=link&createdBy=you&sortBy=updatedAt`
-      ),
-      { sessionUserId: "session_user" }
+        `workspaceId=${wid}&filter[name][contains]=Foo&filter[status][in]=inProgress&filter[status][in]=draft&filter[type][in]=link&sortBy=updatedAt`
+      )
     );
     expect(r.ok).toBe(true);
     if (r.ok) {
@@ -80,31 +85,30 @@ describe("parseV3SurveysListQuery", () => {
         name: "Foo",
         status: ["inProgress", "draft"],
         type: ["link"],
-        createdBy: { userId: "session_user", value: ["you"] },
       });
       expect(r.sortBy).toBe("updatedAt");
     }
   });
 
   test("invalid status", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&status=notastatus`), {
-      sessionUserId: "u1",
-    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[status][in]=notastatus`));
     expect(r.ok).toBe(false);
   });
 
-  test("createdBy not allowed without session user", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&createdBy=you`), {
-      sessionUserId: null,
-    });
+  test("rejects the createdBy filter", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[createdBy][in]=you`));
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.invalid_params[0].name).toBe("createdBy");
+    if (!r.ok) {
+      expect(r.invalid_params[0]).toEqual({
+        name: "filter[createdBy][in]",
+        reason:
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
+      });
+    }
   });
 
   test("rejects an invalid cursor", () => {
-    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&cursor=not-a-real-cursor`), {
-      sessionUserId: "u1",
-    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&cursor=not-a-real-cursor`));
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.invalid_params).toEqual([

@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { GET } from "./route";
 
@@ -38,6 +39,14 @@ vi.mock("@/modules/survey/list/lib/survey-page", async (importOriginal) => {
   return {
     ...actual,
     getSurveyListPage: vi.fn(),
+  };
+});
+
+vi.mock("@/modules/survey/list/lib/survey", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/survey/list/lib/survey")>();
+  return {
+    ...actual,
+    getSurveyCount: vi.fn(),
   };
 });
 
@@ -114,6 +123,7 @@ describe("GET /api/v3/surveys", () => {
       };
     });
     vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null });
+    vi.mocked(getSurveyCount).mockResolvedValue(0);
   });
 
   afterEach(() => {
@@ -149,6 +159,7 @@ describe("GET /api/v3/surveys", () => {
       sortBy: "updatedAt",
       filterCriteria: undefined,
     });
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
   });
 
   test("returns 200 with x-api-key when workspace is on the key", async () => {
@@ -172,6 +183,7 @@ describe("GET /api/v3/surveys", () => {
       sortBy: "updatedAt",
       filterCriteria: undefined,
     });
+    expect(getSurveyCount).toHaveBeenCalledWith(validWorkspaceId, undefined);
   });
 
   test("returns 403 when API key does not include workspace", async () => {
@@ -195,18 +207,14 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(403);
   });
 
-  test("returns 400 when API key and createdBy filter", async () => {
-    getServerSession.mockResolvedValue(null);
-    mockAuthenticateRequest.mockResolvedValue(apiKeyAuth as any);
+  test("returns 400 when the createdBy filter is used", async () => {
     const req = createRequest(
-      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&createdBy=you`,
-      undefined,
-      { "x-api-key": "fbk_test" }
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filter[createdBy][in]=you`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.invalid_params?.some((p: { name: string }) => p.name === "createdBy")).toBe(true);
+    expect(body.invalid_params?.some((p: { name: string }) => p.name === "filter[createdBy][in]")).toBe(true);
     expect(requireV3WorkspaceAccess).not.toHaveBeenCalled();
   });
 
@@ -229,28 +237,30 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(400);
   });
 
-  test("reflects limit and nextCursor in meta", async () => {
+  test("reflects limit, nextCursor, and totalCount in meta", async () => {
     vi.mocked(getSurveyListPage).mockResolvedValue({
       surveys: [],
       nextCursor: "cursor-123",
     });
+    vi.mocked(getSurveyCount).mockResolvedValue(42);
     const req = createRequest(`http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&limit=10`);
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.meta).toEqual({ limit: 10, nextCursor: "cursor-123" });
+    expect(body.meta).toEqual({ limit: 10, nextCursor: "cursor-123", totalCount: 42 });
     expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
       limit: 10,
       cursor: null,
       sortBy: "updatedAt",
       filterCriteria: undefined,
     });
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
   });
 
   test("passes filter query to getSurveyListPage", async () => {
     const filterCriteria = { status: ["inProgress"] };
     const req = createRequest(
-      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&status=inProgress&sortBy=updatedAt`
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&filter[status][in]=inProgress&sortBy=updatedAt`
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
@@ -260,23 +270,7 @@ describe("GET /api/v3/surveys", () => {
       sortBy: "updatedAt",
       filterCriteria,
     });
-  });
-
-  test("createdBy uses session user id", async () => {
-    const expectedForDb = {
-      createdBy: { userId: "user_1", value: ["you" as const] },
-    };
-    const req = createRequest(
-      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&createdBy=you&sortBy=updatedAt`
-    );
-    const res = await GET(req, {} as any);
-    expect(res.status).toBe(200);
-    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
-      limit: 20,
-      cursor: null,
-      sortBy: "updatedAt",
-      filterCriteria: expectedForDb,
-    });
+    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, filterCriteria);
   });
 
   test("returns 400 when filterCriteria is used", async () => {
@@ -305,7 +299,7 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(403);
   });
 
-  test("list items omit blocks and questions", async () => {
+  test("list items omit blocks, singleUse, and _count", async () => {
     vi.mocked(getSurveyListPage).mockResolvedValue({
       surveys: [
         {
@@ -317,6 +311,7 @@ describe("GET /api/v3/surveys", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           responseCount: 0,
+          _count: { responses: 0 },
           creator: { name: "Test" },
           singleUse: null,
         } as any,
@@ -328,6 +323,7 @@ describe("GET /api/v3/surveys", () => {
     const body = await res.json();
     expect(body.data[0]).not.toHaveProperty("blocks");
     expect(body.data[0]).not.toHaveProperty("singleUse");
+    expect(body.data[0]).not.toHaveProperty("_count");
     expect(body.data[0].id).toBe("s1");
   });
 

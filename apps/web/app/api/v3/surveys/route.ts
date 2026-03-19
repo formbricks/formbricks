@@ -12,13 +12,14 @@ import {
   problemInternalError,
   successListResponse,
 } from "@/app/api/v3/lib/response";
+import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import type { TSurvey } from "@/modules/survey/list/types/surveys";
 import { parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
 
-/** V3 list payload omits `singleUse`. */
-function toV3SurveyListItem(survey: TSurvey): Omit<TSurvey, "singleUse"> {
-  const { singleUse: _omit, ...rest } = survey;
+/** V3 list payload omits unsupported fields and Prisma internals. */
+function toV3SurveyListItem(survey: TSurvey & { _count?: unknown }): Omit<TSurvey, "singleUse"> {
+  const { singleUse: _omit, _count: _omitCount, ...rest } = survey;
   return rest;
 }
 
@@ -28,11 +29,8 @@ export const GET = withV3ApiWrapper({
     const log = logger.withContext({ requestId });
 
     try {
-      const sessionUserId =
-        authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
-
       const searchParams = new URL(req.url).searchParams;
-      const parsed = parseV3SurveysListQuery(searchParams, { sessionUserId });
+      const parsed = parseV3SurveysListQuery(searchParams);
       if (!parsed.ok) {
         log.warn({ statusCode: 400, invalidParams: parsed.invalid_params }, "Validation failed");
         return problemBadRequest(requestId, "Invalid query parameters", {
@@ -54,18 +52,22 @@ export const GET = withV3ApiWrapper({
 
       const { environmentId } = authResult;
 
-      const { surveys, nextCursor } = await getSurveyListPage(environmentId, {
-        limit: parsed.limit,
-        cursor: parsed.cursor,
-        sortBy: parsed.sortBy,
-        filterCriteria: parsed.filterCriteria,
-      });
+      const [{ surveys, nextCursor }, totalCount] = await Promise.all([
+        getSurveyListPage(environmentId, {
+          limit: parsed.limit,
+          cursor: parsed.cursor,
+          sortBy: parsed.sortBy,
+          filterCriteria: parsed.filterCriteria,
+        }),
+        getSurveyCount(environmentId, parsed.filterCriteria),
+      ]);
 
       return successListResponse(
         surveys.map(toV3SurveyListItem),
         {
           limit: parsed.limit,
           nextCursor,
+          totalCount,
         },
         { requestId, cache: "private, no-store" }
       );

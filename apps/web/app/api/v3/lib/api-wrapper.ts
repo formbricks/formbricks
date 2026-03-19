@@ -310,11 +310,13 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     try {
       const authResult = await authenticateV3RequestOrRespond(req, auth, requestId, instance);
       if (authResult.response) {
+        log.warn({ statusCode: authResult.response.status }, "V3 API authentication failed");
         return authResult.response;
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
       if (!parsedInputResult.ok) {
+        log.warn({ statusCode: parsedInputResult.response.status }, "V3 API request validation failed");
         return parsedInputResult.response;
       }
 

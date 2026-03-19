@@ -20,21 +20,24 @@ import {
 const V3_SURVEYS_DEFAULT_LIMIT = 20;
 const V3_SURVEYS_MAX_LIMIT = 100;
 
+const FILTER_NAME_CONTAINS_QUERY_PARAM = "filter[name][contains]" as const;
+const FILTER_STATUS_IN_QUERY_PARAM = "filter[status][in]" as const;
+const FILTER_TYPE_IN_QUERY_PARAM = "filter[type][in]" as const;
+
 const SUPPORTED_QUERY_PARAMS = [
   "workspaceId",
   "limit",
   "cursor",
-  "name",
-  "status",
-  "type",
-  "createdBy",
+  FILTER_NAME_CONTAINS_QUERY_PARAM,
+  FILTER_STATUS_IN_QUERY_PARAM,
+  FILTER_TYPE_IN_QUERY_PARAM,
   "sortBy",
 ] as const;
 const SUPPORTED_QUERY_PARAM_SET = new Set<string>(SUPPORTED_QUERY_PARAMS);
 
 type InvalidParam = { name: string; reason: string };
 
-/** Collect repeated query keys and comma-separated values: `status=a&status=b` or `status=a,b`. */
+/** Collect repeated query keys and comma-separated values for operator-style filters. */
 export function collectMultiValueQueryParam(searchParams: URLSearchParams, key: string): string[] {
   const acc: string[] = [];
   for (const raw of searchParams.getAll(key)) {
@@ -50,14 +53,13 @@ const ZV3SurveysListQuery = z.object({
   workspaceId: ZId,
   limit: z.coerce.number().int().min(1).max(V3_SURVEYS_MAX_LIMIT).default(V3_SURVEYS_DEFAULT_LIMIT),
   cursor: z.string().min(1).optional(),
-  name: z
+  [FILTER_NAME_CONTAINS_QUERY_PARAM]: z
     .string()
     .max(512)
     .optional()
     .transform((s) => (s === undefined || s.trim() === "" ? undefined : s.trim())),
-  status: z.array(ZSurveyStatus).optional(),
-  type: z.array(ZSurveyType).optional(),
-  createdBy: ZSurveyFilters.shape.createdBy.optional(),
+  [FILTER_STATUS_IN_QUERY_PARAM]: z.array(ZSurveyStatus).optional(),
+  [FILTER_TYPE_IN_QUERY_PARAM]: z.array(ZSurveyType).optional(),
   sortBy: ZSurveyFilters.shape.sortBy.optional(),
 });
 
@@ -85,30 +87,15 @@ function getUnsupportedQueryParams(searchParams: URLSearchParams): InvalidParam[
   }));
 }
 
-function buildFilterCriteria(
-  q: TV3SurveysListQuery,
-  sessionUserId: string | null
-): TSurveyFilterCriteria | undefined {
+function buildFilterCriteria(q: TV3SurveysListQuery): TSurveyFilterCriteria | undefined {
   const f: TSurveyFilterCriteria = {};
-  if (q.name) f.name = q.name;
-  if (q.status?.length) f.status = q.status;
-  if (q.type?.length) f.type = q.type;
-  if (q.createdBy?.length && sessionUserId) {
-    f.createdBy = { userId: sessionUserId, value: q.createdBy };
-  }
+  if (q[FILTER_NAME_CONTAINS_QUERY_PARAM]) f.name = q[FILTER_NAME_CONTAINS_QUERY_PARAM];
+  if (q[FILTER_STATUS_IN_QUERY_PARAM]?.length) f.status = q[FILTER_STATUS_IN_QUERY_PARAM];
+  if (q[FILTER_TYPE_IN_QUERY_PARAM]?.length) f.type = q[FILTER_TYPE_IN_QUERY_PARAM];
   return Object.keys(f).length > 0 ? f : undefined;
 }
 
-export type TV3SurveysListQueryParseOptions = {
-  sessionUserId: string | null;
-};
-
-export function parseV3SurveysListQuery(
-  searchParams: URLSearchParams,
-  options: TV3SurveysListQueryParseOptions
-): TV3SurveysListQueryParseResult {
-  const { sessionUserId } = options;
-
+export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3SurveysListQueryParseResult {
   const unsupportedQueryParams = getUnsupportedQueryParams(searchParams);
   if (unsupportedQueryParams.length > 0) {
     return {
@@ -117,30 +104,16 @@ export function parseV3SurveysListQuery(
     };
   }
 
-  const statusVals = collectMultiValueQueryParam(searchParams, "status");
-  const typeVals = collectMultiValueQueryParam(searchParams, "type");
-  const createdByVals = collectMultiValueQueryParam(searchParams, "createdBy");
-
-  if (createdByVals.length > 0 && sessionUserId === null) {
-    return {
-      ok: false,
-      invalid_params: [
-        {
-          name: "createdBy",
-          reason: "The createdBy filter is only supported with session authentication (not API keys).",
-        },
-      ],
-    };
-  }
+  const statusVals = collectMultiValueQueryParam(searchParams, FILTER_STATUS_IN_QUERY_PARAM);
+  const typeVals = collectMultiValueQueryParam(searchParams, FILTER_TYPE_IN_QUERY_PARAM);
 
   const raw = {
     workspaceId: searchParams.get("workspaceId"),
     limit: searchParams.get("limit") ?? undefined,
     cursor: searchParams.get("cursor")?.trim() || undefined,
-    name: searchParams.get("name") ?? undefined,
-    status: statusVals.length > 0 ? statusVals : undefined,
-    type: typeVals.length > 0 ? typeVals : undefined,
-    createdBy: createdByVals.length > 0 ? createdByVals : undefined,
+    [FILTER_NAME_CONTAINS_QUERY_PARAM]: searchParams.get(FILTER_NAME_CONTAINS_QUERY_PARAM) ?? undefined,
+    [FILTER_STATUS_IN_QUERY_PARAM]: statusVals.length > 0 ? statusVals : undefined,
+    [FILTER_TYPE_IN_QUERY_PARAM]: typeVals.length > 0 ? typeVals : undefined,
     sortBy: searchParams.get("sortBy")?.trim() || undefined,
   };
 
@@ -181,6 +154,6 @@ export function parseV3SurveysListQuery(
     limit: q.limit,
     cursor,
     sortBy,
-    filterCriteria: buildFilterCriteria(q, sessionUserId),
+    filterCriteria: buildFilterCriteria(q),
   };
 }

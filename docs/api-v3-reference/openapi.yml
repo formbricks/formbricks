@@ -4,23 +4,23 @@
 
 openapi: 3.1.0
 info:
-  title: Formbricks API v3 (Surveys)
+  title: Formbricks API v3
   description: |
     **GET /api/v3/surveys** — authenticate with **session cookie** or **`x-api-key`** (management key with access to the workspace environment).
 
-    **Spec location:** `docs/api-v3-reference/openapi-surveys.yml` (alongside v2 at `docs/api-v2-reference/openapi.yml`).
+    **Spec location:** `docs/api-v3-reference/openapi.yml` (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
     **workspaceId (today)**
     Query param `workspaceId` is the **environment id** (survey container in the DB). The API uses the name *workspace* because the product is moving toward **Workspace** as the default container; until that exists, resolution is implemented in `workspace-context.ts` (single place to change when Environment is deprecated).
 
     **Auth**
-    Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation. **`createdBy` is session-only** (API key + `createdBy` → **400**).
+    Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
 
     **Pagination**
-    Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. There is no `offset` or `total` count in this contract.
+    Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. There is no `offset` in this contract.
 
     **Filtering**
-    Filters and sort are **flat query parameters** (`name`, `status`, `type`, `createdBy`, `sortBy`). Arrays use repeated keys or comma-separated values (e.g. `status=draft&status=inProgress`).
+    Filters use explicit operator-style query parameters under the **`filter[...]` family**. This endpoint supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
 
     **Security**
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. List responses use `private, no-store`.
@@ -71,13 +71,13 @@ paths:
           description: |
             Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
         - in: query
-          name: name
+          name: filter[name][contains]
           schema:
             type: string
             maxLength: 512
           description: Case-insensitive substring match on survey name (same as in-app list filters).
         - in: query
-          name: status
+          name: filter[status][in]
           schema:
             type: array
             items:
@@ -86,9 +86,9 @@ paths:
           style: form
           explode: true
           description: |
-            Survey status filter. Repeat the parameter (`status=draft&status=inProgress`) or use comma-separated values (`status=draft,inProgress`). Invalid values → **400**.
+            Survey status filter. Repeat the parameter (`filter[status][in]=draft&filter[status][in]=inProgress`) or use comma-separated values (`filter[status][in]=draft,inProgress`). Invalid values → **400**.
         - in: query
-          name: type
+          name: filter[type][in]
           schema:
             type: array
             items:
@@ -96,18 +96,7 @@ paths:
               enum: [link, app]
           style: form
           explode: true
-          description: Survey type filter (`link` / `app`). Same repeat-or-comma rules as `status`.
-        - in: query
-          name: createdBy
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [you, others]
-          style: form
-          explode: true
-          description: |
-            **Session only:** creator scope (`you` / `others`); server applies the signed-in user. **Not supported with API keys** (400).
+          description: Survey type filter (`link` / `app`). Same repeat-or-comma rules as `filter[status][in]`.
         - in: query
           name: sortBy
           schema:
@@ -136,13 +125,17 @@ paths:
                       $ref: "#/components/schemas/SurveyListItem"
                   meta:
                     type: object
-                    required: [limit, nextCursor]
+                    required: [limit, nextCursor, totalCount]
                     properties:
                       limit: { type: integer }
                       nextCursor:
                         type: string
                         nullable: true
                         description: Opaque cursor for the next page. `null` when there are no more results.
+                      totalCount:
+                        type: integer
+                        minimum: 0
+                        description: Total number of surveys matching the current filters across all pages.
         "400":
           description: Bad Request
           content:
