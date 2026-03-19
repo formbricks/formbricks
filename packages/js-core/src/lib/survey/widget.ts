@@ -106,7 +106,15 @@ export const renderWidget = async (
   const overlay = projectOverwrites.overlay ?? project.overlay;
   const placement = projectOverwrites.placement ?? project.placement;
   const isBrandingEnabled = project.inAppSurveyBranding;
-  const formbricksSurveys = await loadFormbricksSurveysExternally();
+
+  let formbricksSurveys: TFormbricksSurveys;
+  try {
+    formbricksSurveys = await loadFormbricksSurveysExternally();
+  } catch (error) {
+    logger.error(`Failed to load surveys library: ${String(error)}`);
+    setIsSurveyRunning(false);
+    return;
+  }
 
   const recaptchaSiteKey = config.get().environment.data.recaptchaSiteKey;
   const isSpamProtectionEnabled = Boolean(recaptchaSiteKey && survey.recaptcha?.enabled);
@@ -219,30 +227,87 @@ export const removeWidgetContainer = (): void => {
   document.getElementById(CONTAINER_ID)?.remove();
 };
 
-const loadFormbricksSurveysExternally = (): Promise<typeof globalThis.window.formbricksSurveys> => {
-  const config = Config.getInstance();
+const SURVEYS_LOAD_TIMEOUT_MS = 10000;
+const SURVEYS_POLL_INTERVAL_MS = 200;
 
+type TFormbricksSurveys = typeof globalThis.window.formbricksSurveys;
+
+let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
+
+const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- We need to check if the formbricksSurveys object exists
-    if (globalThis.window.formbricksSurveys) {
-      resolve(globalThis.window.formbricksSurveys);
-    } else {
-      const script = document.createElement("script");
-      script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
-      script.async = true;
-      script.onload = () => {
-        // Apply stored nonce if it was set before surveys package loaded
+    const startTime = Date.now();
+
+    const check = (): void => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
+      if (globalThis.window.formbricksSurveys) {
         const storedNonce = globalThis.window.__formbricksNonce;
         if (storedNonce) {
           globalThis.window.formbricksSurveys.setNonce(storedNonce);
         }
         resolve(globalThis.window.formbricksSurveys);
-      };
-      script.onerror = (error) => {
-        console.error("Failed to load Formbricks Surveys library:", error);
-        reject(new Error(`Failed to load Formbricks Surveys library: ${error as string}`));
-      };
-      document.head.appendChild(script);
-    }
+        return;
+      }
+
+      if (Date.now() - startTime >= SURVEYS_LOAD_TIMEOUT_MS) {
+        reject(new Error("Formbricks Surveys library did not become available within timeout"));
+        return;
+      }
+
+      setTimeout(check, SURVEYS_POLL_INTERVAL_MS);
+    };
+
+    check();
   });
+};
+
+const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
+  if (globalThis.window.formbricksSurveys) {
+    return Promise.resolve(globalThis.window.formbricksSurveys);
+  }
+
+  if (surveysLoadPromise) {
+    return surveysLoadPromise;
+  }
+
+  surveysLoadPromise = new Promise<TFormbricksSurveys>((resolve, reject: (error: unknown) => void) => {
+    const config = Config.getInstance();
+    const script = document.createElement("script");
+    script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
+    script.async = true;
+    script.onload = () => {
+      waitForSurveysGlobal()
+        .then(resolve)
+        .catch((error: unknown) => {
+          surveysLoadPromise = null;
+          console.error("Failed to load Formbricks Surveys library:", error);
+          reject(new Error(`Failed to load Formbricks Surveys library`));
+        });
+    };
+    script.onerror = (error) => {
+      surveysLoadPromise = null;
+      console.error("Failed to load Formbricks Surveys library:", error);
+      reject(new Error(`Failed to load Formbricks Surveys library`));
+    };
+    document.head.appendChild(script);
+  });
+
+  return surveysLoadPromise;
+};
+
+let isPreloaded = false;
+
+export const preloadSurveysScript = (appUrl: string): void => {
+  // Don't preload if already loaded or already preloading
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
+  if (globalThis.window.formbricksSurveys) return;
+  if (isPreloaded) return;
+
+  isPreloaded = true;
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "script";
+  link.href = `${appUrl}/js/surveys.umd.cjs`;
+  document.head.appendChild(link);
 };
