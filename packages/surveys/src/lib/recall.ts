@@ -29,7 +29,8 @@ const extractRecallInfo = (headline: string, id?: string): string | null => {
 export const replaceRecallInfo = (
   text: string,
   responseData: TResponseData,
-  variables: TResponseVariables
+  variables: TResponseVariables,
+  locale: string = "en-US"
 ): string => {
   let modifiedText = text;
 
@@ -56,7 +57,7 @@ export const replaceRecallInfo = (
     // Additional value formatting if it exists
     if (value) {
       if (isValidDateString(value)) {
-        value = formatDateWithOrdinal(new Date(value));
+        value = formatDateWithOrdinal(new Date(value), locale);
       } else if (Array.isArray(value)) {
         value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
       }
@@ -80,7 +81,8 @@ export const parseRecallInformation = (
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.headline, languageCode),
       responseData,
-      variables
+      variables,
+      languageCode
     );
   }
   if (
@@ -91,7 +93,8 @@ export const parseRecallInformation = (
     modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.subheader, languageCode),
       responseData,
-      variables
+      variables,
+      languageCode
     );
   }
   if (
@@ -103,7 +106,8 @@ export const parseRecallInformation = (
     modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.subheader, languageCode),
       responseData,
-      variables
+      variables,
+      languageCode
     );
   }
   return modifiedQuestion;

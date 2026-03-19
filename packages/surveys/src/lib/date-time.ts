@@ -37,16 +37,11 @@ export const isValidDateString = (value: string) => {
   return !isNaN(date.getTime());
 };
 
-const getOrdinalSuffix = (day: number): string => {
-  const suffixes = ["th", "st", "nd", "rd"];
-  const relevantDigits = day < 30 ? day % 20 : day % 30;
-  return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
-};
-
 export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): string => {
-  const dayOfWeek = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
-  const day = date.getDate();
-  const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(date);
-  const year = date.getFullYear();
-  return `${dayOfWeek}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
 };
