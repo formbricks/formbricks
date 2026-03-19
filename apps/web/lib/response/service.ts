@@ -4,6 +4,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { deleteSurveyResponseByResponseId } from "@/app/api/member-lookup/snowflake-service";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -635,6 +636,13 @@ export const deleteResponse = async (
 
     if (survey) {
       await findAndDeleteUploadedFilesInResponse(txResponse, survey);
+
+      // Fire-and-forget: clean up Snowflake rows for this response
+      if (survey.snowflakeSync) {
+        deleteSurveyResponseByResponseId(txResponse.id).catch((error) => {
+          logger.error({ error, responseId }, "Snowflake cleanup failed for deleted response");
+        });
+      }
     }
 
     return txResponse;

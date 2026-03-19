@@ -3,7 +3,10 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { deleteSurveyResponseByResponseId } from "@/app/api/member-lookup/snowflake-service";
+import { getSurvey } from "@/lib/survey/service";
 import { TResponse } from "@formbricks/types/responses";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
@@ -106,6 +109,15 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
     }
 
     await findAndDeleteUploadedFilesInResponse(deletedResponse.data, surveyQuestionsResult.data.questions);
+
+    // Fire-and-forget: clean up Snowflake rows for this response
+    getSurvey(deletedResponse.surveyId).then((survey) => {
+      if (survey?.snowflakeSync) {
+        deleteSurveyResponseByResponseId(deletedResponse.id).catch((error) => {
+          logger.error({ error, responseId }, "Snowflake cleanup failed for deleted response");
+        });
+      }
+    });
 
     return ok(deletedResponse);
   } catch (error) {

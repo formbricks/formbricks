@@ -217,6 +217,51 @@ VALUES ${placeholders}`;
 }
 
 /**
+ * Check whether Snowflake credentials are configured.
+ * Avoids attempting a connection when env vars are missing.
+ */
+export function isSnowflakeConfigured(): boolean {
+  return !!(
+    process.env.SNOWFLAKE_ACCOUNT &&
+    process.env.SNOWFLAKE_USERNAME &&
+    process.env.SNOWFLAKE_PASSWORD &&
+    process.env.SNOWFLAKE_DATABASE &&
+    process.env.SNOWFLAKE_WAREHOUSE
+  );
+}
+
+/**
+ * Delete all survey response rows for a given survey from Snowflake.
+ * Used when a survey is reset (all responses cleared).
+ *
+ * This is awaited by the caller so failures propagate — the caller
+ * decides whether to proceed with the local delete.
+ */
+export async function deleteSurveyResponsesBySurveyId(surveyId: string): Promise<void> {
+  if (!isSnowflakeConfigured()) return;
+
+  const sql = `DELETE FROM SURVEY_RESPONSES WHERE SURVEY_ID = ?`;
+  await executeQuery(sql, [surveyId]);
+}
+
+/**
+ * Delete all Snowflake rows for a single response.
+ * Intended to be called fire-and-forget; errors are caught internally.
+ */
+export async function deleteSurveyResponseByResponseId(responseId: string): Promise<void> {
+  if (!isSnowflakeConfigured()) return;
+
+  const sql = `DELETE FROM SURVEY_RESPONSES WHERE RESPONSE_ID = ?`;
+
+  try {
+    await executeQuery(sql, [responseId]);
+  } catch (error) {
+    // Logged but swallowed — single-response cleanup is best-effort
+    console.error("[Snowflake] Failed to delete response", responseId, error);
+  }
+}
+
+/**
  * Test Snowflake connection
  * Use this for health checks or debugging
  */

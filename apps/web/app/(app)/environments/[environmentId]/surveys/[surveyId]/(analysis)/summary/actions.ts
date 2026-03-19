@@ -15,6 +15,8 @@ import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
+import { deleteSurveyResponsesBySurveyId } from "@/app/api/member-lookup/snowflake-service";
+import { logger } from "@formbricks/logger";
 import { deleteResponsesAndDisplaysForSurvey } from "./lib/survey";
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({
@@ -99,19 +101,39 @@ export const resetSurveyAction = authenticatedActionClient.schema(ZResetSurveyAc
       ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
       ctx.auditLoggingCtx.oldObject = null;
 
+      const survey = await getSurvey(parsedInput.surveyId);
+
+      // Delete Snowflake rows FIRST — before local delete — so that if
+      // a new response arrives between the two operations it isn't
+      // silently wiped from Snowflake while still existing locally.
+      let snowflakeCleanedUp = false;
+      if (survey?.snowflakeSync) {
+        try {
+          await deleteSurveyResponsesBySurveyId(parsedInput.surveyId);
+          snowflakeCleanedUp = true;
+        } catch (error) {
+          logger.error(
+            { error, surveyId: parsedInput.surveyId },
+            "Snowflake cleanup failed during survey reset — proceeding with local delete"
+          );
+        }
+      }
+
       const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
         parsedInput.surveyId
       );
 
       ctx.auditLoggingCtx.newObject = {
-        deletedResponsesCount: deletedResponsesCount,
-        deletedDisplaysCount: deletedDisplaysCount,
+        deletedResponsesCount,
+        deletedDisplaysCount,
+        snowflakeCleanedUp,
       };
 
       return {
         success: true,
-        deletedResponsesCount: deletedResponsesCount,
-        deletedDisplaysCount: deletedDisplaysCount,
+        deletedResponsesCount,
+        deletedDisplaysCount,
+        snowflakeCleanedUp,
       };
     }
   )
