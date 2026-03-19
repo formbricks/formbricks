@@ -164,6 +164,7 @@ function DropdownVariant({
     lockedSide,
     contentRef,
     noneOption,
+    noneMatchesSearch,
     filteredRegularOptions,
     otherMatchesSearch,
     hasNoResults,
@@ -246,7 +247,7 @@ function DropdownVariant({
                 <span className="font-input font-input-weight text-input-text">{otherOptionLabel}</span>
               </DropdownMenuCheckboxItem>
             ) : null}
-            {noneOption ? (
+            {noneOption && noneMatchesSearch ? (
               <DropdownMenuCheckboxItem
                 key={noneOption.id}
                 id={`${inputId}-${noneOption.id}`}

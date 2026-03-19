@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import * as React from "react";
 
 /** Number of options above which the search input is shown inside the dropdown */
-export const SEARCH_THRESHOLD = 5;
+export const SEARCH_THRESHOLD = 3;
 
 interface UseDropdownSearchOptions<T extends { id: string; label: string }> {
   options: T[];
@@ -28,7 +28,7 @@ export function useDropdownSearch<T extends { id: string; label: string }>({
   const [lockedSide, setLockedSide] = React.useState<"top" | "bottom" | undefined>(undefined);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
-  // Separate "none" option from regular options — "none" is always visible regardless of search
+  // Separate "none" option from regular options so it renders at the bottom of the list
   const noneOption = React.useMemo(() => options.find((opt) => opt.id === "none"), [options]);
   const regularOptions = React.useMemo(() => options.filter((opt) => opt.id !== "none"), [options]);
 
@@ -46,7 +46,15 @@ export function useDropdownSearch<T extends { id: string; label: string }>({
     return otherOptionLabel.toLowerCase().includes(searchQuery.toLowerCase());
   }, [isSearchEnabled, searchQuery, hasOtherOption, otherOptionLabel]);
 
-  const hasNoResults = isSearchEnabled && filteredRegularOptions.length === 0 && !otherMatchesSearch;
+  // Whether the "none" option matches the search
+  const noneMatchesSearch = React.useMemo(() => {
+    if (!noneOption) return false;
+    if (!isSearchEnabled || !searchQuery) return true;
+    return noneOption.label.toLowerCase().includes(searchQuery.toLowerCase());
+  }, [isSearchEnabled, searchQuery, noneOption]);
+
+  const hasNoResults =
+    isSearchEnabled && filteredRegularOptions.length === 0 && !otherMatchesSearch && !noneMatchesSearch;
 
   const focusSearchAndLockSide = (): void => {
     searchInputRef.current?.focus();
@@ -75,6 +83,7 @@ export function useDropdownSearch<T extends { id: string; label: string }>({
     lockedSide,
     contentRef,
     noneOption,
+    noneMatchesSearch,
     filteredRegularOptions,
     otherMatchesSearch,
     hasNoResults,
@@ -122,7 +131,7 @@ export function DropdownSearchInput({
               e.stopPropagation();
             }
           }}
-          className="bg-input-bg text-input-text placeholder:text-input-placeholder font-input font-input-weight w-full rounded-sm py-1 pr-2 pl-7 text-sm outline-none"
+          className="bg-input-bg text-input-text placeholder:text-input-placeholder font-input font-input-weight w-full rounded-sm py-1 pr-2 pl-8 text-sm outline-none"
           aria-label={placeholder}
           autoComplete="off"
         />

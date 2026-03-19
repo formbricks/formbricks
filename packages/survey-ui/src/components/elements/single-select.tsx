@@ -120,6 +120,7 @@ function SingleSelect({
     lockedSide,
     contentRef,
     noneOption,
+    noneMatchesSearch,
     filteredRegularOptions,
     otherMatchesSearch,
     hasNoResults,
@@ -242,7 +243,7 @@ function SingleSelect({
                         </span>
                       </DropdownMenuRadioItem>
                     ) : null}
-                    {noneOption ? (
+                    {noneOption && noneMatchesSearch ? (
                       <DropdownMenuRadioItem
                         key={noneOption.id}
                         value={noneOption.id}
