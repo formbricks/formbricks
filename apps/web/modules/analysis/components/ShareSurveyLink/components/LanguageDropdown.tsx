@@ -1,5 +1,6 @@
 import { Languages } from "lucide-react";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getEnabledLanguages } from "@/lib/i18n/utils";
@@ -17,7 +18,12 @@ interface LanguageDropdownProps {
   locale: TUserLocale;
 }
 
-export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdownProps) => {
+export const LanguageDropdown = ({
+  survey,
+  setLanguage,
+  locale,
+}: LanguageDropdownProps) => {
+  const { t } = useTranslation();
   const enabledLanguages = getEnabledLanguages(survey.languages ?? []);
 
   if (enabledLanguages.length <= 1) {
@@ -27,7 +33,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="secondary" title="Select Language" aria-label="Select Language">
+        <Button variant="secondary" title={t("common.select_language")} aria-label={t("common.select_language")}>
           <Languages className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
