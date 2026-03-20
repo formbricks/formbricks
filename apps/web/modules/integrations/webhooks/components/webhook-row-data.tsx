@@ -4,7 +4,6 @@ import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 
@@ -55,16 +54,10 @@ const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   }
 };
 
-export const WebhookRowData = ({
-  webhook,
-  surveys,
-  locale,
-}: {
-  webhook: Webhook;
-  surveys: TSurvey[];
-  locale: TUserLocale;
-}) => {
-  const { t } = useTranslation();
+export const WebhookRowData = ({ webhook, surveys }: { webhook: Webhook; surveys: TSurvey[] }) => {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
       <div className="col-span-3 flex items-center truncate pl-6 text-sm">
@@ -91,7 +84,7 @@ export const WebhookRowData = ({
         {renderSelectedTriggersText(webhook, t)}
       </div>
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {timeSince(webhook.createdAt.toString(), locale)}
+        {timeSince(webhook.updatedAt.toString(), locale)}
       </div>
       <div className="text-center"></div>
     </div>
