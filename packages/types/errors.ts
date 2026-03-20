@@ -87,9 +87,11 @@ class AuthorizationError extends Error {
 
 class TooManyRequestsError extends Error {
   statusCode = 429;
-  constructor(message: string) {
+  retryAfter?: number;
+  constructor(message: string, retryAfter?: number) {
     super(message);
     this.name = "TooManyRequestsError";
+    this.retryAfter = retryAfter;
   }
 }
 
