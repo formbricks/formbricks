@@ -14,14 +14,8 @@ import {
 } from "@/app/api/v3/lib/response";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
-import type { TSurvey } from "@/modules/survey/list/types/surveys";
 import { parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
-
-/** V3 list payload omits unsupported fields and Prisma internals. */
-function toV3SurveyListItem(survey: TSurvey & { _count?: unknown }): Omit<TSurvey, "singleUse"> {
-  const { singleUse: _omit, _count: _omitCount, ...rest } = survey;
-  return rest;
-}
+import { serializeV3SurveyListItem } from "./serializers";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
@@ -63,7 +57,7 @@ export const GET = withV3ApiWrapper({
       ]);
 
       return successListResponse(
-        surveys.map(toV3SurveyListItem),
+        surveys.map(serializeV3SurveyListItem),
         {
           limit: parsed.limit,
           nextCursor,

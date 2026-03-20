@@ -97,6 +97,7 @@ describe("getSurveyListPage", () => {
     });
     expect(page.surveys).toHaveLength(1);
     expect(page.surveys[0].responseCount).toBe(3);
+    expect(page.surveys[0]).not.toHaveProperty("_count");
     expect(page.nextCursor).not.toBeNull();
     expect(decodeSurveyListPageCursor(page.nextCursor as string, "updatedAt")).toEqual({
       version: 1,

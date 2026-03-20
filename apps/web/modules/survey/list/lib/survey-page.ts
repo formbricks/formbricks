@@ -7,13 +7,11 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import type { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import type { TSurvey } from "../types/surveys";
-import { surveySelect } from "./survey";
+import { type TSurveyRow, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
 
 const SURVEY_LIST_CURSOR_VERSION = 1 as const;
 const IN_PROGRESS_BUCKET = "inProgress" as const;
 const OTHER_BUCKET = "other" as const;
-
-type TSurveyRow = Prisma.SurveyGetPayload<{ select: typeof surveySelect }>;
 
 const ZDateCursor = z.object({
   version: z.literal(SURVEY_LIST_CURSOR_VERSION),
@@ -88,13 +86,6 @@ export function decodeSurveyListPageCursor(
 
     throw new InvalidInputError("The cursor is invalid.");
   }
-}
-
-function mapSurveyRows(rows: TSurveyRow[]): TSurvey[] {
-  return rows.map((row) => ({
-    ...row,
-    responseCount: row._count.responses,
-  }));
 }
 
 function getSurveyOrderBy(sortBy: TStandardSurveyListSort): Prisma.SurveyOrderByWithRelationInput[] {
@@ -240,7 +231,7 @@ function getPageRows<T>(rows: T[], limit: number): { pageRows: T[]; hasMore: boo
 
 function buildSurveyListPage(rows: TSurveyRow[], cursor: TSurveyListPageCursor | null): TSurveyListPage {
   return {
-    surveys: mapSurveyRows(rows),
+    surveys: mapSurveyRowsToSurveys(rows),
     nextCursor: cursor ? encodeSurveyListPageCursor(cursor) : null,
   };
 }

@@ -299,7 +299,7 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(403);
   });
 
-  test("list items omit blocks, singleUse, and _count", async () => {
+  test("list items expose workspaceId instead of environmentId and omit internal fields", async () => {
     vi.mocked(getSurveyListPage).mockResolvedValue({
       surveys: [
         {
@@ -311,7 +311,6 @@ describe("GET /api/v3/surveys", () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           responseCount: 0,
-          _count: { responses: 0 },
           creator: { name: "Test" },
           singleUse: null,
         } as any,
@@ -324,7 +323,9 @@ describe("GET /api/v3/surveys", () => {
     expect(body.data[0]).not.toHaveProperty("blocks");
     expect(body.data[0]).not.toHaveProperty("singleUse");
     expect(body.data[0]).not.toHaveProperty("_count");
+    expect(body.data[0]).not.toHaveProperty("environmentId");
     expect(body.data[0].id).toBe("s1");
+    expect(body.data[0].workspaceId).toBe("env_1");
   });
 
   test("returns 403 when getSurveyListPage throws ResourceNotFoundError", async () => {
