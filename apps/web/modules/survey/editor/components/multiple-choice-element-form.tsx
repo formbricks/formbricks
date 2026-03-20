@@ -63,7 +63,7 @@ export const MultipleChoiceElementForm = ({
   const elementRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
-  const shuffleOptionsTypes = {
+  const shuffleOptionsTypes: Record<TShuffleOption, { id: TShuffleOption; label: string; show: boolean }> = {
     none: {
       id: "none",
       label: t("environments.surveys.edit.keep_current_order"),
@@ -177,10 +177,10 @@ export const MultipleChoiceElementForm = ({
     updateElement(elementIdx, {
       choices: newChoices,
       ...(element.shuffleOption === shuffleOptionsTypes.all.id && {
-        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+        shuffleOption: shuffleOptionsTypes.exceptLast.id,
       }),
       ...(element.shuffleOption === shuffleOptionsTypes.reverseOrder.id && {
-        shuffleOption: shuffleOptionsTypes.reverseOrderExceptLast.id as TShuffleOption,
+        shuffleOption: shuffleOptionsTypes.reverseOrderExceptLast.id,
       }),
     });
   };
@@ -212,11 +212,11 @@ export const MultipleChoiceElementForm = ({
       choices: newChoices,
       ...(!hasRemainingSpecialChoices &&
         element.shuffleOption === "reverseOrderExceptLast" && {
-          shuffleOption: "reverseOrder" as TShuffleOption,
+          shuffleOption: "reverseOrder",
         }),
       ...(!hasRemainingSpecialChoices &&
         element.shuffleOption === "exceptLast" && {
-          shuffleOption: "all" as TShuffleOption,
+          shuffleOption: "all",
         }),
     });
   };
