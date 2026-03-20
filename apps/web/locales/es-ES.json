@@ -1684,6 +1684,8 @@
         "response_limit_needs_to_exceed_number_of_received_responses": "El límite de respuestas debe superar el número de respuestas recibidas ({responseCount}).",
         "response_limits_redirections_and_more": "Límites de respuestas, redirecciones y más.",
         "response_options": "Opciones de respuesta",
+        "reverse_order_occasionally": "Invertir orden ocasionalmente",
+        "reverse_order_occasionally_except_last": "Invertir orden ocasionalmente excepto el último",
         "roundness": "Redondez",
         "roundness_description": "Controla qué tan redondeadas están las esquinas.",
         "row_used_in_logic_error": "Esta fila se utiliza en la lógica de la pregunta {questionIndex}. Por favor, elimínala de la lógica primero.",

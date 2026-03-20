@@ -1684,6 +1684,8 @@
         "response_limit_needs_to_exceed_number_of_received_responses": "Antwortlimit muss die Anzahl der erhaltenen Antworten ({responseCount}) überschreiten.",
         "response_limits_redirections_and_more": "Antwort Limits, Weiterleitungen und mehr.",
         "response_options": "Antwortoptionen",
+        "reverse_order_occasionally": "Reihenfolge gelegentlich umkehren",
+        "reverse_order_occasionally_except_last": "Reihenfolge gelegentlich umkehren, außer letzter",
         "roundness": "Rundheit",
         "roundness_description": "Steuert, wie abgerundet die Ecken sind.",
         "row_used_in_logic_error": "Diese Zeile wird in der Logik der Frage {questionIndex} verwendet. Bitte entferne sie zuerst aus der Logik.",

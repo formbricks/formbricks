@@ -1684,6 +1684,8 @@
         "response_limit_needs_to_exceed_number_of_received_responses": "Response limit needs to exceed number of received responses ({responseCount}).",
         "response_limits_redirections_and_more": "Response limits, redirections and more.",
         "response_options": "Response Options",
+        "reverse_order_occasionally": "Reverse order occasionally",
+        "reverse_order_occasionally_except_last": "Reverse order occasionally except last",
         "roundness": "Roundness",
         "roundness_description": "Controls how rounded corners are.",
         "row_used_in_logic_error": "This row is used in logic of question {questionIndex}. Please remove it from logic first.",

@@ -1684,6 +1684,8 @@
         "response_limit_needs_to_exceed_number_of_received_responses": "Svarsgränsen måste överstiga antalet mottagna svar ({responseCount}).",
         "response_limits_redirections_and_more": "Svarsgränser, omdirigeringar och mer.",
         "response_options": "Svarsalternativ",
+        "reverse_order_occasionally": "Vänd ordning ibland",
+        "reverse_order_occasionally_except_last": "Vänd ordning ibland utom sista",
         "roundness": "Rundhet",
         "roundness_description": "Styr hur rundade hörnen är.",
         "row_used_in_logic_error": "Denna rad används i logiken för fråga {questionIndex}. Vänligen ta bort den från logiken först.",
