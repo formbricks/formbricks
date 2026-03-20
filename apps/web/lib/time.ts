@@ -1,9 +1,28 @@
-import { formatDistance, intlFormat } from "date-fns";
+import { type Locale, formatDistance, intlFormat } from "date-fns";
 import { de, enUS, es, fr, hu, ja, nl, pt, ptBR, ro, ru, sv, zhCN, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "./utils/datetime";
 
-const DEFAULT_LOCALE = "en-US";
+const DEFAULT_LOCALE: TUserLocale = "en-US";
+const TIME_SINCE_LOCALES: Record<TUserLocale, Locale> = {
+  "de-DE": de,
+  "en-US": enUS,
+  "es-ES": es,
+  "fr-FR": fr,
+  "hu-HU": hu,
+  "ja-JP": ja,
+  "nl-NL": nl,
+  "pt-BR": ptBR,
+  "pt-PT": pt,
+  "ro-RO": ro,
+  "ru-RU": ru,
+  "sv-SE": sv,
+  "zh-Hans-CN": zhCN,
+  "zh-Hant-TW": zhTW,
+};
+
+const isUserLocale = (locale: string): locale is TUserLocale =>
+  Object.prototype.hasOwnProperty.call(TIME_SINCE_LOCALES, locale);
 
 export const convertDateString = (dateString: string | null, locale: string = DEFAULT_LOCALE) => {
   if (dateString === null) return null;
@@ -68,42 +87,10 @@ export const convertTimeString = (dateString: string, locale: string = DEFAULT_L
   );
 };
 
-const getLocaleForTimeSince = (locale: TUserLocale | string) => {
-  switch (locale) {
-    case "de-DE":
-      return de;
-    case "en-US":
-      return enUS;
-    case "es-ES":
-      return es;
-    case "fr-FR":
-      return fr;
-    case "hu-HU":
-      return hu;
-    case "ja-JP":
-      return ja;
-    case "nl-NL":
-      return nl;
-    case "pt-BR":
-      return ptBR;
-    case "pt-PT":
-      return pt;
-    case "ro-RO":
-      return ro;
-    case "ru-RU":
-      return ru;
-    case "sv-SE":
-      return sv;
-    case "zh-Hans-CN":
-      return zhCN;
-    case "zh-Hant-TW":
-      return zhTW;
-    default:
-      return enUS;
-  }
-};
+const getLocaleForTimeSince = (locale: string): Locale =>
+  isUserLocale(locale) ? TIME_SINCE_LOCALES[locale] : enUS;
 
-export const timeSince = (dateString: string, locale: TUserLocale | string = DEFAULT_LOCALE) => {
+export const timeSince = (dateString: string, locale: string = DEFAULT_LOCALE) => {
   const date = new Date(dateString);
   return formatDistance(date, new Date(), {
     addSuffix: true,
@@ -111,14 +98,14 @@ export const timeSince = (dateString: string, locale: TUserLocale | string = DEF
   });
 };
 
-export const timeSinceDate = (date: Date, locale: TUserLocale | string = DEFAULT_LOCALE) => {
+export const timeSinceDate = (date: Date, locale: string = DEFAULT_LOCALE) => {
   return formatDistance(date, new Date(), {
     addSuffix: true,
     locale: getLocaleForTimeSince(locale),
   });
 };
 
-export const formatDate = (date: Date, locale: TUserLocale | string = DEFAULT_LOCALE) => {
+export const formatDate = (date: Date, locale: string = DEFAULT_LOCALE) => {
   return formatDateForDisplay(date, locale, {
     year: "numeric",
     month: "long",

@@ -3,6 +3,8 @@ import { formatDateWithOrdinal } from "./datetime";
 
 export type TSurveyDateFormatMap = Partial<Record<string, TSurveyDateElement["format"]>>;
 
+const ISO_STORED_DATE_PATTERN = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+
 const buildDate = (year: number, month: number, day: number): Date | null => {
   if ([year, month, day].some((value) => Number.isNaN(value))) {
     return null;
@@ -41,7 +43,7 @@ const parseLegacyStoredDateValue = (value: string, format: TSurveyDateElement["f
 };
 
 export const parseStoredDateValue = (value: string, format?: TSurveyDateElement["format"]): Date | null => {
-  const isoMatch = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const isoMatch = ISO_STORED_DATE_PATTERN.exec(value);
 
   if (isoMatch) {
     return buildDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
