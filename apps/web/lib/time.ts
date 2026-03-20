@@ -21,8 +21,7 @@ const TIME_SINCE_LOCALES: Record<TUserLocale, Locale> = {
   "zh-Hant-TW": zhTW,
 };
 
-const isUserLocale = (locale: string): locale is TUserLocale =>
-  Object.prototype.hasOwnProperty.call(TIME_SINCE_LOCALES, locale);
+const isUserLocale = (locale: string): locale is TUserLocale => Object.hasOwn(TIME_SINCE_LOCALES, locale);
 
 export const convertDateString = (dateString: string | null, locale: string = DEFAULT_LOCALE) => {
   if (dateString === null) return null;
