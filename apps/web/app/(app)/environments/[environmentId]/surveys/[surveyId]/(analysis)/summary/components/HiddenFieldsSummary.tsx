@@ -13,12 +13,18 @@ import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface HiddenFieldsSummaryProps {
-  environment: TEnvironment;
+  environment: TEnvironment | null;
   elementSummary: TSurveyElementSummaryHiddenFields;
   locale: TUserLocale;
+  isPublic?: boolean;
 }
 
-export const HiddenFieldsSummary = ({ environment, elementSummary, locale }: HiddenFieldsSummaryProps) => {
+export const HiddenFieldsSummary = ({
+  environment,
+  elementSummary,
+  locale,
+  isPublic,
+}: HiddenFieldsSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
   const { t } = useTranslation();
   const handleLoadMore = () => {
@@ -61,10 +67,17 @@ export const HiddenFieldsSummary = ({ environment, elementSummary, locale }: Hid
               key={`${response.value}-${idx}`}
               className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
               <div className="pl-4 md:pl-6">
-                {response.contact ? (
+                {isPublic || !response.contact ? (
+                  <div className="group flex items-center">
+                    <div className="hidden md:flex">
+                      <PersonAvatar personId="anonymous" />
+                    </div>
+                    <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
+                  </div>
+                ) : (
                   <Link
                     className="ph-no-capture group flex items-center"
-                    href={`/environments/${environment.id}/contacts/${response.contact.id}`}>
+                    href={`/environments/${environment!.id}/contacts/${response.contact.id}`}>
                     <div className="hidden md:flex">
                       <PersonAvatar personId={response.contact.id} />
                     </div>
@@ -72,13 +85,6 @@ export const HiddenFieldsSummary = ({ environment, elementSummary, locale }: Hid
                       {getContactIdentifier(response.contact, response.contactAttributes)}
                     </p>
                   </Link>
-                ) : (
-                  <div className="group flex items-center">
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId="anonymous" />
-                    </div>
-                    <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
-                  </div>
                 )}
               </div>
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">

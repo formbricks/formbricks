@@ -411,6 +411,8 @@ model Survey {
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
 
+  resultShareLinks SurveyResultShareLink[]
+
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }
@@ -871,24 +873,25 @@ model User {
   emailVerified DateTime? @map(name: "email_verified")
 
   twoFactorSecret           String?
-  twoFactorEnabled          Boolean          @default(false)
+  twoFactorEnabled          Boolean                 @default(false)
   backupCodes               String?
   password                  String?
-  identityProvider          IdentityProvider @default(email)
+  identityProvider          IdentityProvider        @default(email)
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
   groupId                   String?
-  invitesCreated            Invite[]         @relation("inviteCreatedBy")
-  invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
+  invitesCreated            Invite[]                @relation("inviteCreatedBy")
+  invitesAccepted           Invite[]                @relation("inviteAcceptedBy")
   /// [UserNotificationSettings]
-  notificationSettings      Json             @default("{}")
+  notificationSettings      Json                    @default("{}")
   /// [Locale]
-  locale                    String           @default("en-US")
+  locale                    String                  @default("en-US")
   surveys                   Survey[]
+  resultShareLinks          SurveyResultShareLink[]
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
-  isActive                  Boolean          @default(true)
+  isActive                  Boolean                 @default(true)
 }
 
 /// Defines a segment of contacts based on attributes.
@@ -1022,4 +1025,31 @@ model ProjectTeam {
 
   @@id([projectId, teamId])
   @@index([teamId])
+}
+
+/// Stores shareable public links for viewing survey results.
+/// Supports multiple links per survey with independent expiration and revocation.
+///
+/// @property id - Unique identifier for the share link
+/// @property survey - The survey whose results are shared
+/// @property token - Cryptographically signed JWT token used in the public URL
+/// @property label - Optional user-provided label for the link
+/// @property expiresAt - When the link expires; null means never
+/// @property revokedAt - When the link was revoked; null means active
+/// @property createdBy - The user who created the link
+model SurveyResultShareLink {
+  id          String    @id @default(cuid())
+  survey      Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId    String
+  token       String    @unique
+  label       String?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+
+  @@index([surveyId])
+  @@index([token])
 }

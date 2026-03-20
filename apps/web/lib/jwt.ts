@@ -266,6 +266,37 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   return { id: userData.userId, email: userData.userEmail };
 };
 
+export const createResultShareToken = (linkId: string, surveyId: string): string => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  // No expiry in JWT — expiry is controlled at the DB level so revocation is instant
+  return jwt.sign({ linkId, surveyId, type: "resultShare" }, NEXTAUTH_SECRET);
+};
+
+export const verifyResultShareToken = (token: string): { linkId: string; surveyId: string } | null => {
+  if (!NEXTAUTH_SECRET) {
+    return null;
+  }
+
+  try {
+    const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+      linkId: string;
+      surveyId: string;
+      type: string;
+    };
+
+    if (payload.type !== "resultShare" || !payload.linkId || !payload.surveyId) {
+      return null;
+    }
+
+    return { linkId: payload.linkId, surveyId: payload.surveyId };
+  } catch {
+    return null;
+  }
+};
+
 export const verifyInviteToken = (token: string): { inviteId: string; email: string } => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");

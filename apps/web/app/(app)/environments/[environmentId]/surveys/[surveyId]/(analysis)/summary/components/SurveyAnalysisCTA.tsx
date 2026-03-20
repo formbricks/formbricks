@@ -14,6 +14,7 @@ import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys
 import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { ShareResultsModal } from "@/modules/survey-result-share-link/components/ShareResultsModal";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
@@ -38,6 +39,7 @@ interface SurveyAnalysisCTAProps {
 interface ModalState {
   start: boolean;
   share: boolean;
+  shareResults: boolean;
 }
 
 export const SurveyAnalysisCTA = ({
@@ -60,6 +62,7 @@ export const SurveyAnalysisCTA = ({
   const [modalState, setModalState] = useState<ModalState>({
     start: searchParams.get("share") === "true",
     share: false,
+    shareResults: false,
   });
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -188,6 +191,13 @@ export const SurveyAnalysisCTA = ({
 
       <IconBar actions={iconActions} />
       <Button
+        variant="secondary"
+        onClick={() => {
+          setModalState((prev) => ({ ...prev, shareResults: true }));
+        }}>
+        {t("environments.surveys.summary.share_results.button")}
+      </Button>
+      <Button
         onClick={() => {
           setModalState((prev) => ({ ...prev, share: true }));
         }}>
@@ -216,6 +226,12 @@ export const SurveyAnalysisCTA = ({
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />
+
+      <ShareResultsModal
+        surveyId={survey.id}
+        open={modalState.shareResults}
+        setOpen={(open) => setModalState((prev) => ({ ...prev, shareResults: open }))}
+      />
 
       {responseCount > 0 && (
         <EditPublicSurveyAlertDialog
