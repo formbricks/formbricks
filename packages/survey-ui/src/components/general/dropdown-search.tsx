@@ -111,14 +111,16 @@ export function DropdownSearchInput({
   dir,
 }: Readonly<DropdownSearchInputProps>): React.JSX.Element {
   return (
-    <div className="border-option-border border-b px-2 py-2" role="search">
+    <div className="border-option-border border-b pb-0.5" role="search">
       <div className="relative flex items-center">
-        <Search className="text-input-placeholder pointer-events-none absolute left-2 h-4 w-4 shrink-0" />
+        <Search className="text-input-text pointer-events-none absolute left-1.5 h-4 w-4 shrink-0" />
         <input
           ref={searchInputRef}
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+          }}
           placeholder={placeholder}
           dir={dir}
           onKeyDown={(e) => {
@@ -131,7 +133,7 @@ export function DropdownSearchInput({
               e.stopPropagation();
             }
           }}
-          className="bg-input-bg text-input-text placeholder:text-input-placeholder font-input font-input-weight w-full rounded-sm py-1 pr-2 pl-8 text-sm outline-none"
+          className="bg-input-bg text-input-text placeholder:text-input-placeholder font-input font-input-weight h-9 w-full rounded-sm pr-3 pl-8 text-sm outline-none"
           aria-label={placeholder}
           autoComplete="off"
         />

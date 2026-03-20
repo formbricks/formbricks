@@ -195,7 +195,7 @@ function DropdownVariant({
           ref={contentRef}
           side={lockedSide}
           avoidCollisions={lockedSide === undefined}
-          className="bg-option-bg w-[var(--radix-dropdown-menu-trigger-width)] overflow-hidden"
+          className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
           align="start">
           {showSearch ? (
             <DropdownSearchInput
