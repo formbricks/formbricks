@@ -85,6 +85,10 @@ describe("formatDateWithOrdinal", () => {
       day: "numeric",
     }).format(date);
 
+  test("formats a known en-US date with the expected output", () => {
+    expect(formatDateWithOrdinal(new Date(2024, 0, 1), "en-US")).toBe("Monday, January 1, 2024");
+  });
+
   test("formats survey dates with locale-native en-US output", () => {
     const date = new Date(2024, 0, 1);
 

@@ -4,12 +4,14 @@ import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { type TUserLocale } from "@formbricks/types/user";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
   webhook: Webhook;
   surveys: TSurvey[];
+  locale: TUserLocale;
 }
 
 const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): string[] => {
@@ -36,9 +38,8 @@ const convertTriggerIdToName = (triggerId: string, t: TFunction): string => {
   }
 };
 
-export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+export const WebhookOverviewTab = ({ webhook, surveys, locale }: ActivityTabProps) => {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">

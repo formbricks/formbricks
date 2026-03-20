@@ -145,17 +145,17 @@ export const ActionActivityTab = ({
           <p className="text-xs text-slate-700">{formatDateTimeForDisplay(actionClass.updatedAt, locale)}</p>
         </div>
         <div>
-          <Label className="block text-xs font-normal text-slate-500">Type</Label>
+          <Label className="block text-xs font-normal text-slate-500">{t("common.type")}</Label>
           <div className="mt-1 flex items-center">
             <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
             <p className="text-sm capitalize text-slate-700">{actionClass.type}</p>
           </div>
         </div>
         <div className="">
-          <Label className="text-xs font-normal text-slate-500">Environment</Label>
+          <Label className="text-xs font-normal text-slate-500">{t("common.environment")}</Label>
           <div className="items-center-center flex gap-2">
             <p className="text-xs text-slate-700">
-              {environment.type === "development" ? "Development" : "Production"}
+              {environment.type === "development" ? t("common.development") : t("common.production")}
             </p>
             <Button
               onClick={() => {
@@ -163,7 +163,10 @@ export const ActionActivityTab = ({
               }}
               className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4 focus:ring-0 focus:ring-offset-0"
               variant="ghost">
-              {environment.type === "development" ? "Copy to Production" : "Copy to Development"}
+              {t("common.copy_to_environment", {
+                environment:
+                  environment.type === "development" ? t("common.production") : t("common.development"),
+              })}
             </Button>
           </div>
         </div>

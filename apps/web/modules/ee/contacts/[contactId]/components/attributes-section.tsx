@@ -10,8 +10,8 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
   const t = await getTranslate();
-  const locale = await getLocale();
-  const [contact, attributesWithKeyInfo] = await Promise.all([
+  const [locale, contact, attributesWithKeyInfo] = await Promise.all([
+    getLocale(),
     getContact(contactId),
     getContactAttributesWithKeyInfo(contactId),
   ]);

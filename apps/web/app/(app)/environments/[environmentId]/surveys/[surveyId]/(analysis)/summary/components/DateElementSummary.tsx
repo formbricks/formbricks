@@ -34,7 +34,12 @@ export const DateElementSummary = ({ elementSummary, environmentId, survey, loca
   const renderResponseValue = (value: string) => {
     const formattedDate = formatStoredDateForDisplay(value, elementSummary.element.format, locale);
 
-    return formattedDate ?? `${t("common.invalid_date")}(${value})`;
+    return (
+      formattedDate ??
+      t("common.invalid_date_with_value", {
+        value,
+      })
+    );
   };
 
   return (

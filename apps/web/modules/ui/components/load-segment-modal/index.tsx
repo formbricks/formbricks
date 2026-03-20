@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { type TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { formatDate, timeSinceDate } from "@/lib/time";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
@@ -18,7 +19,7 @@ interface SegmentDetailProps {
   onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
   surveyId: string;
   currentSegment: TSegment;
-  locale: string;
+  locale: TUserLocale;
 }
 
 const SegmentDetail = ({
@@ -143,7 +144,7 @@ export const LoadSegmentModal = ({
     setOpen(false);
   };
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (

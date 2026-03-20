@@ -87,6 +87,7 @@ export const convertTimeString = (dateString: string, locale: string = DEFAULT_L
   );
 };
 
+/** Maps locale strings to date-fns locales and falls back to English for unsupported inputs. */
 const getLocaleForTimeSince = (locale: string): Locale =>
   isUserLocale(locale) ? TIME_SINCE_LOCALES[locale] : enUS;
 

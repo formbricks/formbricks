@@ -1,5 +1,4 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -86,19 +85,6 @@ export const parseRecallInformation = (
     );
   }
   if (
-    question.subheader &&
-    question.subheader[languageCode].includes("recall:") &&
-    modifiedQuestion.subheader
-  ) {
-    modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
-      getLocalizedValue(modifiedQuestion.subheader, languageCode),
-      responseData,
-      variables,
-      languageCode
-    );
-  }
-  if (
-    (question.type === TSurveyElementTypeEnum.CTA || question.type === TSurveyElementTypeEnum.Consent) &&
     question.subheader &&
     question.subheader[languageCode].includes("recall:") &&
     modifiedQuestion.subheader
