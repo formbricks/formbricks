@@ -129,8 +129,10 @@ export const EditWelcomeCard = ({
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 environmentId={environmentId}
                 onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
-                  if (url?.[0]) {
+                  if (url?.length) {
                     updateSurvey({ fileUrl: url[0] });
+                  } else {
+                    updateSurvey({ fileUrl: undefined });
                   }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
