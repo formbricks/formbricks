@@ -72,9 +72,7 @@ export const DataTableSettingsModal = <T,>({
                 if (columnId === "select" || columnId === "createdAt") return;
                 const column = tableColumns.find((column) => column.id === columnId);
                 if (!column) return null;
-                return (
-                  <DataTableSettingsModalItem column={column} table={table} key={column.id} survey={survey} />
-                );
+                return <DataTableSettingsModalItem column={column} table={table} key={column.id} />;
               })}
             </SortableContext>
           </DndContext>
