@@ -188,8 +188,8 @@ export const MatrixElementForm = ({
       label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
-    reverseOrder: {
-      id: "reverseOrder",
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
       label: t("environments.surveys.edit.reverse_order_occasionally"),
       show: true,
     },

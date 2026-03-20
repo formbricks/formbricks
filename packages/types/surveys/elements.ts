@@ -136,7 +136,13 @@ export const ZSurveyElementChoice = z.object({
 
 export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
 
-export const ZShuffleOption = z.enum(["none", "all", "exceptLast", "reverseOrder", "reverseOrderExceptLast"]);
+export const ZShuffleOption = z.enum([
+  "none",
+  "all",
+  "exceptLast",
+  "reverseOrderOccasionally",
+  "reverseOrderExceptLast",
+]);
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
 export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "dropdown"]);

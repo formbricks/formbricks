@@ -136,21 +136,21 @@ describe("getShuffledRowIndices", () => {
     expect(getShuffledRowIndices(1, "exceptLast")).toEqual([0]);
   });
 
-  test('should reverse all for "reverseOrder" when random < 0.5', () => {
+  test('should reverse all for "reverseOrderOccasionally" when random < 0.5', () => {
     // getSecureRandom returns < 0.5, so the array is reversed
     setNextRandomNormalizedValue(0.3);
-    expect(getShuffledRowIndices(4, "reverseOrder")).toEqual([3, 2, 1, 0]);
+    expect(getShuffledRowIndices(4, "reverseOrderOccasionally")).toEqual([3, 2, 1, 0]);
   });
 
-  test('should keep original order for "reverseOrder" when random >= 0.5', () => {
+  test('should keep original order for "reverseOrderOccasionally" when random >= 0.5', () => {
     // getSecureRandom returns >= 0.5, so the array is NOT reversed
     setNextRandomNormalizedValue(0.7);
-    expect(getShuffledRowIndices(4, "reverseOrder")).toEqual([0, 1, 2, 3]);
+    expect(getShuffledRowIndices(4, "reverseOrderOccasionally")).toEqual([0, 1, 2, 3]);
   });
 
-  test('should preserve all elements with "reverseOrder"', () => {
+  test('should preserve all elements with "reverseOrderOccasionally"', () => {
     setNextRandomNormalizedValue(0.3);
-    const result = getShuffledRowIndices(5, "reverseOrder");
+    const result = getShuffledRowIndices(5, "reverseOrderOccasionally");
     expect(result).toHaveLength(5);
     expect(result.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
   });
@@ -175,9 +175,9 @@ describe("getShuffledRowIndices", () => {
     expect(result.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
   });
 
-  test('should handle n=1 for "reverseOrder" and "reverseOrderExceptLast"', () => {
+  test('should handle n=1 for "reverseOrderOccasionally" and "reverseOrderExceptLast"', () => {
     setNextRandomNormalizedValue(0.3);
-    expect(getShuffledRowIndices(1, "reverseOrder")).toEqual([0]);
+    expect(getShuffledRowIndices(1, "reverseOrderOccasionally")).toEqual([0]);
     setNextRandomNormalizedValue(0.3);
     expect(getShuffledRowIndices(1, "reverseOrderExceptLast")).toEqual([0]);
   });
@@ -229,24 +229,29 @@ describe("getShuffledChoicesIds", () => {
     expect(getShuffledChoicesIds(singleChoice, "exceptLast")).toEqual(["s1"]);
   });
 
-  test('should reverse all for "reverseOrder" when random < 0.5', () => {
+  test('should reverse all for "reverseOrderOccasionally" when random < 0.5', () => {
     setNextRandomNormalizedValue(0.3);
-    expect(getShuffledChoicesIds(choicesBase, "reverseOrder")).toEqual(["c3", "c2", "c1"]);
+    expect(getShuffledChoicesIds(choicesBase, "reverseOrderOccasionally")).toEqual(["c3", "c2", "c1"]);
   });
 
-  test('should keep original order for "reverseOrder" when random >= 0.5', () => {
+  test('should keep original order for "reverseOrderOccasionally" when random >= 0.5', () => {
     setNextRandomNormalizedValue(0.7);
-    expect(getShuffledChoicesIds(choicesBase, "reverseOrder")).toEqual(["c1", "c2", "c3"]);
+    expect(getShuffledChoicesIds(choicesBase, "reverseOrderOccasionally")).toEqual(["c1", "c2", "c3"]);
   });
 
-  test('should preserve "other" at end with "reverseOrder" when reversed', () => {
+  test('should preserve "other" at end with "reverseOrderOccasionally" when reversed', () => {
     setNextRandomNormalizedValue(0.3);
-    expect(getShuffledChoicesIds(choicesWithOther, "reverseOrder")).toEqual(["c3", "c2", "c1", "other"]);
+    expect(getShuffledChoicesIds(choicesWithOther, "reverseOrderOccasionally")).toEqual([
+      "c3",
+      "c2",
+      "c1",
+      "other",
+    ]);
   });
 
-  test('should preserve all elements with "reverseOrder"', () => {
+  test('should preserve all elements with "reverseOrderOccasionally"', () => {
     setNextRandomNormalizedValue(0.3);
-    const result = getShuffledChoicesIds(choicesBase, "reverseOrder");
+    const result = getShuffledChoicesIds(choicesBase, "reverseOrderOccasionally");
     expect(result).toHaveLength(3);
     expect([...result].sort()).toEqual(["c1", "c2", "c3"]);
   });

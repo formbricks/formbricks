@@ -25,7 +25,7 @@ interface ShuffleOptionsTypes {
   none?: ShuffleOptionType;
   all?: ShuffleOptionType;
   exceptLast?: ShuffleOptionType;
-  reverseOrder?: ShuffleOptionType;
+  reverseOrderOccasionally?: ShuffleOptionType;
   reverseOrderExceptLast?: ShuffleOptionType;
 }
 

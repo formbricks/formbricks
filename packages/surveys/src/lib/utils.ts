@@ -40,7 +40,7 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
       shuffle(array);
       array.push(lastElement);
     }
-  } else if (shuffleOption === "reverseOrder") {
+  } else if (shuffleOption === "reverseOrderOccasionally") {
     // 50% chance to reverse the entire array
     if (getSecureRandom() < 0.5) {
       array.reverse();
@@ -81,7 +81,7 @@ export const getShuffledChoicesIds = (
       shuffledChoices.push(lastElement);
     }
   }
-  if (shuffleOption === "reverseOrder") {
+  if (shuffleOption === "reverseOrderOccasionally") {
     // 50% chance to reverse the entire list
     if (getSecureRandom() < 0.5) {
       shuffledChoices.reverse();
