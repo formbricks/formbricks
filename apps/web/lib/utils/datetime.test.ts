@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { diffInDays, formatDateWithOrdinal, getFormattedDateTimeString, isValidDateString } from "./datetime";
+import {
+  diffInDays,
+  formatDateForDisplay,
+  formatDateTimeForDisplay,
+  formatDateWithOrdinal,
+  getFormattedDateTimeString,
+  isValidDateString,
+} from "./datetime";
 
 describe("datetime utils", () => {
   test("diffInDays calculates the difference in days between two dates", () => {
@@ -8,13 +15,45 @@ describe("datetime utils", () => {
     expect(diffInDays(date1, date2)).toBe(5);
   });
 
-  test("formatDateWithOrdinal formats a date with ordinal suffix", () => {
+  test("formatDateWithOrdinal formats a date using the provided locale", () => {
     // Create a date that's fixed to May 6, 2025 at noon UTC
     // Using noon ensures the date won't change in most timezones
     const date = new Date(Date.UTC(2025, 4, 6, 12, 0, 0));
 
-    // Test the function
-    expect(formatDateWithOrdinal(date)).toBe("Tuesday, May 6th, 2025");
+    expect(formatDateWithOrdinal(date)).toBe(
+      new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(date)
+    );
+  });
+
+  test("formatDateForDisplay uses the provided locale", () => {
+    const date = new Date(Date.UTC(2025, 4, 6, 12, 0, 0));
+
+    expect(formatDateForDisplay(date, "de-DE")).toBe(
+      new Intl.DateTimeFormat("de-DE", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }).format(date)
+    );
+  });
+
+  test("formatDateTimeForDisplay uses the provided locale", () => {
+    const date = new Date(Date.UTC(2025, 4, 6, 12, 30, 0));
+
+    expect(formatDateTimeForDisplay(date, "fr-FR")).toBe(
+      new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(date)
+    );
   });
 
   test("isValidDateString validates correct date strings", () => {
