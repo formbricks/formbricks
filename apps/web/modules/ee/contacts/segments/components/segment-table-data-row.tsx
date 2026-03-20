@@ -6,9 +6,11 @@ import { useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { EditSegmentModal } from "./edit-segment-modal";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegmentWithSurveyNames;
+  activitySummary: TSegmentActivitySummary;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
@@ -17,6 +19,7 @@ type TSegmentTableDataRowProps = {
 
 export const SegmentTableDataRow = ({
   currentSegment,
+  activitySummary,
   contactAttributeKeys,
   segments,
   isContactsEnabled,
@@ -62,6 +65,7 @@ export const SegmentTableDataRow = ({
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
         currentSegment={currentSegment}
+        activitySummary={activitySummary}
         contactAttributeKeys={contactAttributeKeys}
         segments={segments}
         isContactsEnabled={isContactsEnabled}

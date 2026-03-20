@@ -15,23 +15,60 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { SegmentActivityTab } from "./segment-activity-tab";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface EditSegmentModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
   currentSegment: TSegmentWithSurveyNames;
+  activitySummary: TSegmentActivitySummary;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
   isReadOnly: boolean;
 }
 
+const SegmentSettingsTab = ({
+  contactAttributeKeys,
+  currentSegment,
+  environmentId,
+  isContactsEnabled,
+  isReadOnly,
+  segments,
+  setOpen,
+}: Pick<
+  EditSegmentModalProps,
+  | "contactAttributeKeys"
+  | "currentSegment"
+  | "environmentId"
+  | "isContactsEnabled"
+  | "isReadOnly"
+  | "segments"
+  | "setOpen"
+>) => {
+  if (!isContactsEnabled) {
+    return null;
+  }
+
+  return (
+    <SegmentSettings
+      contactAttributeKeys={contactAttributeKeys}
+      environmentId={environmentId}
+      initialSegment={currentSegment}
+      segments={segments}
+      setOpen={setOpen}
+      isReadOnly={isReadOnly}
+    />
+  );
+};
+
 export const EditSegmentModal = ({
   environmentId,
   open,
   setOpen,
   currentSegment,
+  activitySummary,
   contactAttributeKeys,
   segments,
   isContactsEnabled,
@@ -40,31 +77,24 @@ export const EditSegmentModal = ({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
 
-  const SettingsTab = () => {
-    if (isContactsEnabled) {
-      return (
-        <SegmentSettings
-          contactAttributeKeys={contactAttributeKeys}
-          environmentId={environmentId}
-          initialSegment={currentSegment}
-          segments={segments}
-          setOpen={setOpen}
-          isReadOnly={isReadOnly}
-        />
-      );
-    }
-
-    return null;
-  };
-
   const tabs = [
     {
       title: t("common.activity"),
-      children: <SegmentActivityTab currentSegment={currentSegment} />,
+      children: <SegmentActivityTab currentSegment={currentSegment} activitySummary={activitySummary} />,
     },
     {
       title: t("common.settings"),
-      children: <SettingsTab />,
+      children: (
+        <SegmentSettingsTab
+          contactAttributeKeys={contactAttributeKeys}
+          currentSegment={currentSegment}
+          environmentId={environmentId}
+          isContactsEnabled={isContactsEnabled}
+          isReadOnly={isReadOnly}
+          segments={segments}
+          setOpen={setOpen}
+        />
+      ),
     },
   ];
 
