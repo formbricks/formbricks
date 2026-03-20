@@ -13,7 +13,6 @@ import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   Dialog,
   DialogBody,
@@ -30,7 +29,6 @@ interface DataTableSettingsModalProps<T> {
   table: Table<T>;
   columnOrder: string[];
   handleDragEnd: (event: DragEndEvent) => void;
-  survey?: TSurvey;
 }
 
 export const DataTableSettingsModal = <T,>({
@@ -39,7 +37,6 @@ export const DataTableSettingsModal = <T,>({
   table,
   columnOrder,
   handleDragEnd,
-  survey,
 }: DataTableSettingsModalProps<T>) => {
   const { t } = useTranslation();
   const sensors = useSensors(
