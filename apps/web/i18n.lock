@@ -1342,7 +1342,6 @@ checksums:
     environments/surveys/edit/custom_hostname: bc2b1c8de3f9b8ef145b45aeba6ab429
     environments/surveys/edit/customize_survey_logo: 7f7e26026c88a727228f2d7a00d914e2
     environments/surveys/edit/darken_or_lighten_background_of_your_choice: 304a64a8050ebf501d195e948cd25b6f
-    environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
     environments/surveys/edit/days_before_showing_this_survey_again: 9ee757e5c3a07844b12ceb406dc65b04
     environments/surveys/edit/delete_anyways: cc8683ab625280eefc9776bd381dc2e8
     environments/surveys/edit/delete_block: c00617cb0724557e486304276063807a
