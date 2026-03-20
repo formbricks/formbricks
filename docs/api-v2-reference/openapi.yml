@@ -1386,7 +1386,8 @@ paths:
     put:
       operationId: uploadBulkContacts
       summary: Upload Bulk Contacts
-      description: Uploads contacts in bulk. This endpoint expects the bulk request
+      description: >-
+        Uploads contacts in bulk. This endpoint expects the bulk request
         shape: `contacts` must be an array, and each contact item must contain
         an `attributes` array of `{ attributeKey, value }` objects. Unlike `POST
         /management/contacts`, this endpoint does not accept a top-level `attributes`
@@ -1396,7 +1397,8 @@ paths:
         - Management API - Contacts
       requestBody:
         required: true
-        description: The contacts to upload. Use the full nested bulk body shown
+        description: >-
+          The contacts to upload. Use the full nested bulk body shown
           in the example or cURL snippet: `{ environmentId, contacts: [{ attributes:
           [{ attributeKey: { key, name }, value }] }] }`. Each contact must include
           an `email` attribute inside its `attributes` array.
