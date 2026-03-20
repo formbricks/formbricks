@@ -5,15 +5,16 @@ import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface SegmentActivityTabProps {
   currentSegment: TSegmentWithSurveyNames;
+  activitySummary: TSegmentActivitySummary;
 }
 
-export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
+export const SegmentActivityTab = ({ currentSegment, activitySummary }: SegmentActivityTabProps) => {
   const { t } = useTranslation();
-
-  const { activeSurveys, inactiveSurveys } = currentSegment;
+  const { activeSurveys, inactiveSurveys } = activitySummary;
 
   return (
     <div className="grid grid-cols-3 pb-2">
@@ -22,20 +23,20 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           <Label className="text-slate-500">{t("common.active_surveys")}</Label>
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {activeSurveys?.map((survey, index) => (
-            <p className="text-sm text-slate-900" key={index + survey}>
-              {survey}
-            </p>
+          {activeSurveys?.map((surveyName) => (
+            <div className="py-0.5" key={surveyName}>
+              <p className="text-sm text-slate-900">{surveyName}</p>
+            </div>
           ))}
         </div>
         <div>
           <Label className="text-slate-500">{t("common.inactive_surveys")}</Label>
           {!inactiveSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {inactiveSurveys?.map((survey, index) => (
-            <p className="text-sm text-slate-900" key={index + survey}>
-              {survey}
-            </p>
+          {inactiveSurveys?.map((surveyName) => (
+            <div className="py-0.5" key={surveyName}>
+              <p className="text-sm text-slate-900">{surveyName}</p>
+            </div>
           ))}
         </div>
       </div>

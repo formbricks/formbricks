@@ -7,10 +7,12 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { EditSegmentModal } from "./edit-segment-modal";
+import { buildSegmentActivitySummaryFromSegments } from "./segment-activity-utils";
 import { generateSegmentTableColumns } from "./segment-table-columns";
 
 interface SegmentTableUpdatedProps {
   segments: TSegmentWithSurveyNames[];
+  allSegments: TSegmentWithSurveyNames[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
   isReadOnly: boolean;
@@ -18,16 +20,17 @@ interface SegmentTableUpdatedProps {
 
 export function SegmentTable({
   segments,
+  allSegments,
   contactAttributeKeys,
   isContactsEnabled,
   isReadOnly,
-}: SegmentTableUpdatedProps) {
+}: Readonly<SegmentTableUpdatedProps>) {
   const { t } = useTranslation();
   const [editingSegment, setEditingSegment] = useState<TSegmentWithSurveyNames | null>(null);
 
   const columns = useMemo(() => {
     return generateSegmentTableColumns(t);
-  }, []);
+  }, [t]);
 
   const table = useReactTable({
     data: segments,
@@ -136,6 +139,7 @@ export function SegmentTable({
           open={!!editingSegment}
           setOpen={(open) => !open && setEditingSegment(null)}
           currentSegment={editingSegment}
+          activitySummary={buildSegmentActivitySummaryFromSegments(editingSegment, allSegments)}
           contactAttributeKeys={contactAttributeKeys}
           segments={segments}
           isContactsEnabled={isContactsEnabled}
