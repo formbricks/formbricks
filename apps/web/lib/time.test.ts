@@ -18,6 +18,18 @@ describe("Time Utilities", () => {
       expect(convertDateString("2024-03-20:12:30:00")).toBe("Mar 20, 2024");
     });
 
+    test("should format date string with the provided locale", () => {
+      const date = new Date("2024-03-20T12:30:00");
+
+      expect(convertDateString("2024-03-20T12:30:00", "de-DE")).toBe(
+        new Intl.DateTimeFormat("de-DE", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }).format(date)
+      );
+    });
+
     test("should return empty string for empty input", () => {
       expect(convertDateString("")).toBe("");
     });
@@ -44,6 +56,20 @@ describe("Time Utilities", () => {
   describe("convertDateTimeStringShort", () => {
     test("should format date and time string in short format", () => {
       expect(convertDateTimeStringShort("2024-03-20T15:30:00")).toBe("March 20, 2024 at 3:30 PM");
+    });
+
+    test("should format date and time string in the provided locale", () => {
+      const date = new Date("2024-03-20T15:30:00");
+
+      expect(convertDateTimeStringShort("2024-03-20T15:30:00", "fr-FR")).toBe(
+        new Intl.DateTimeFormat("fr-FR", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(date)
+      );
     });
 
     test("should return empty string for empty input", () => {
@@ -75,6 +101,18 @@ describe("Time Utilities", () => {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       expect(timeSince(oneHourAgo.toISOString(), "sv-SE")).toBe("ungefär en timme sedan");
     });
+
+    test("should format time since in Brazilian Portuguese", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSince(oneHourAgo.toISOString(), "pt-BR")).toBe("há cerca de 1 hora");
+    });
+
+    test("should format time since in European Portuguese", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSince(oneHourAgo.toISOString(), "pt-PT")).toBe("há aproximadamente 1 hora");
+    });
   });
 
   describe("timeSinceDate", () => {
@@ -83,12 +121,30 @@ describe("Time Utilities", () => {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       expect(timeSinceDate(oneHourAgo)).toBe("about 1 hour ago");
     });
+
+    test("should format time since from Date object in the provided locale", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSinceDate(oneHourAgo, "de-DE")).toBe("vor etwa 1 Stunde");
+    });
   });
 
   describe("formatDate", () => {
     test("should format date correctly", () => {
       const date = new Date(2024, 2, 20); // March is month 2 (0-based)
       expect(formatDate(date)).toBe("March 20, 2024");
+    });
+
+    test("should format date with the provided locale", () => {
+      const date = new Date(2024, 2, 20);
+
+      expect(formatDate(date, "de-DE")).toBe(
+        new Intl.DateTimeFormat("de-DE", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }).format(date)
+      );
     });
   });
 

@@ -4,7 +4,7 @@ import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
@@ -37,7 +37,8 @@ const convertTriggerIdToName = (triggerId: string, t: TFunction): string => {
 };
 
 export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
@@ -81,15 +82,11 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.created_at")}</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(webhook.createdAt?.toString())}
-          </p>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(webhook.createdAt, locale)}</p>
         </div>
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.updated_at")}</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(webhook.updatedAt?.toString())}
-          </p>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(webhook.updatedAt, locale)}</p>
         </div>
       </div>
     </div>

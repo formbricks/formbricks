@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getActiveInactiveSurveysAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
@@ -32,7 +32,8 @@ export const ActionActivityTab = ({
   environment,
   isReadOnly,
 }: ActivityTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -136,16 +137,12 @@ export const ActionActivityTab = ({
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
-          <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(actionClass.createdAt?.toString())}
-          </p>
+          <Label className="text-xs font-normal text-slate-500">{t("common.created_at")}</Label>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(actionClass.createdAt, locale)}</p>
         </div>{" "}
         <div>
-          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(actionClass.updatedAt?.toString())}
-          </p>
+          <Label className="text-xs font-normal text-slate-500">{t("common.updated_at")}</Label>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(actionClass.updatedAt, locale)}</p>
         </div>
         <div>
           <Label className="block text-xs font-normal text-slate-500">Type</Label>

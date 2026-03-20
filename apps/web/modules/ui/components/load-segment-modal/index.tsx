@@ -18,6 +18,7 @@ interface SegmentDetailProps {
   onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
   surveyId: string;
   currentSegment: TSegment;
+  locale: string;
 }
 
 const SegmentDetail = ({
@@ -28,6 +29,7 @@ const SegmentDetail = ({
   onSegmentLoad,
   surveyId,
   currentSegment,
+  locale,
 }: SegmentDetailProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const handleLoadNewSegment = async (segmentId: string) => {
@@ -106,11 +108,11 @@ const SegmentDetail = ({
       </div>
 
       <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-        <div className="ph-no-capture text-slate-900">{timeSinceDate(segment.updatedAt)}</div>
+        <div className="ph-no-capture text-slate-900">{timeSinceDate(segment.updatedAt, locale)}</div>
       </div>
 
       <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-        <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt)}</div>
+        <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt, locale)}</div>
       </div>
     </button>
   );
@@ -140,7 +142,8 @@ export const LoadSegmentModal = ({
   const handleResetState = () => {
     setOpen(false);
   };
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (
@@ -182,6 +185,7 @@ export const LoadSegmentModal = ({
                     onSegmentLoad={onSegmentLoad}
                     surveyId={surveyId}
                     currentSegment={currentSegment}
+                    locale={locale}
                   />
                 ))}
               </div>
