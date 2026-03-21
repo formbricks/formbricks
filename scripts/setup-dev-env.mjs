@@ -13,6 +13,38 @@ const envPath = path.join(repoRoot, ".env");
 
 const generatedSecretKeys = ["ENCRYPTION_KEY", "NEXTAUTH_SECRET", "CRON_SECRET"];
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const parseEnvValue = (rawValue) => {
+  const trimmedStartValue = rawValue.trimStart();
+  let normalizedValue = "";
+  let inSingleQuotes = false;
+  let inDoubleQuotes = false;
+
+  for (const char of trimmedStartValue) {
+    if (char === "'" && !inDoubleQuotes) {
+      inSingleQuotes = !inSingleQuotes;
+    } else if (char === '"' && !inSingleQuotes) {
+      inDoubleQuotes = !inDoubleQuotes;
+    } else if (char === "#" && !inSingleQuotes && !inDoubleQuotes) {
+      break;
+    }
+
+    normalizedValue += char;
+  }
+
+  const trimmedValue = normalizedValue.trim();
+
+  if (
+    (trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) ||
+    (trimmedValue.startsWith("'") && trimmedValue.endsWith("'"))
+  ) {
+    return trimmedValue.slice(1, -1);
+  }
+
+  return trimmedValue;
+};
+
 const parseEnv = (content) => {
   const entries = new Map();
 
@@ -28,8 +60,16 @@ const parseEnv = (content) => {
       continue;
     }
 
-    const key = line.slice(0, separatorIndex).trim();
-    const value = line.slice(separatorIndex + 1).trim();
+    const key = line
+      .slice(0, separatorIndex)
+      .trim()
+      .replace(/^export\s+/, "");
+    const value = parseEnvValue(line.slice(separatorIndex + 1));
+
+    if (!key) {
+      continue;
+    }
+
     entries.set(key, value);
   }
 
@@ -37,7 +77,7 @@ const parseEnv = (content) => {
 };
 
 const replaceOrAppendEnvValue = (content, key, value) => {
-  const linePattern = new RegExp(`^${key}=.*$`, "m");
+  const linePattern = new RegExp(`^(?:export\\s+)?${escapeRegExp(key)}\\s*=.*$`, "m");
   const nextLine = `${key}=${value}`;
 
   if (linePattern.test(content)) {
@@ -46,6 +86,20 @@ const replaceOrAppendEnvValue = (content, key, value) => {
 
   const normalizedContent = content.endsWith("\n") ? content : `${content}\n`;
   return `${normalizedContent}${nextLine}\n`;
+};
+
+const isValidEncryptionKey = (value) => value.length === 32 || /^[0-9a-fA-F]{64}$/.test(value);
+
+const isMissingSecretValue = (key, value) => {
+  if (!value) {
+    return true;
+  }
+
+  if (key === "ENCRYPTION_KEY" && !isValidEncryptionKey(value)) {
+    return true;
+  }
+
+  return false;
 };
 
 if (!existsSync(examplePath)) {
@@ -63,7 +117,7 @@ const changedKeys = [];
 for (const key of generatedSecretKeys) {
   const currentValue = parsedEnv.get(key);
 
-  if (!currentValue) {
+  if (isMissingSecretValue(key, currentValue)) {
     const generatedValue = randomBytes(32).toString("hex");
     envContent = replaceOrAppendEnvValue(envContent, key, generatedValue);
     parsedEnv.set(key, generatedValue);
@@ -84,9 +138,9 @@ if (!initialEnvExists) {
 }
 
 if (changedKeys.length > 0) {
-  console.log(`🔐 Generated missing secrets: ${changedKeys.join(", ")}.`);
+  console.log(`🔐 Updated ${relativeEnvPath}: ${changedKeys.join(", ")}.`);
 } else {
-  console.log("✅ All required generated secrets are already set.");
+  console.log(`✅ ${relativeEnvPath} already has all required generated secrets.`);
 }
 
 console.log("🚀 Development environment file is ready.");
