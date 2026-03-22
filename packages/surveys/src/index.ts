@@ -6,6 +6,32 @@ import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
+/**
+ * Ensures document.body is available before proceeding
+ * Returns a promise that resolves when document.body exists
+ */
+const ensureBodyExists = (): Promise<void> => {
+  return new Promise((resolve) => {
+    if (document.body) {
+      resolve();
+      return;
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => resolve(), { once: true });
+    } else {
+      const checkBody = () => {
+        if (document.body) {
+          resolve();
+        } else {
+          requestAnimationFrame(checkBody);
+        }
+      };
+      checkBody();
+    }
+  });
+};
+
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
     ...props,
@@ -15,7 +41,7 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
   renderSurvey(inlineProps);
 };
 
-export const renderSurvey = (props: SurveyContainerProps) => {
+export const renderSurvey = async (props: SurveyContainerProps) => {
   // render SurveyNew
   // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
 
@@ -66,6 +92,8 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       );
     }
   } else {
+    await ensureBodyExists();
+
     const modalContainer = document.createElement("div");
     modalContainer.id = "formbricks-modal-container";
     document.body.appendChild(modalContainer);
