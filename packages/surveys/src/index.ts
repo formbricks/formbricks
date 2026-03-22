@@ -3,34 +3,9 @@ import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
 import { FILE_PICK_EVENT } from "@/lib/constants";
+import { ensureBodyExists } from "@/lib/dom-utils";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
-
-/**
- * Ensures document.body is available before proceeding
- * Returns a promise that resolves when document.body exists
- */
-const ensureBodyExists = (): Promise<void> => {
-  return new Promise((resolve) => {
-    if (document.body) {
-      resolve();
-      return;
-    }
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => resolve(), { once: true });
-    } else {
-      const checkBody = () => {
-        if (document.body) {
-          resolve();
-        } else {
-          requestAnimationFrame(checkBody);
-        }
-      };
-      checkBody();
-    }
-  });
-};
 
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
