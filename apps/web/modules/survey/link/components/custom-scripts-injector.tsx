@@ -41,40 +41,65 @@ export const CustomScriptsInjector = ({
 
     if (!scriptsToInject.trim()) return;
 
+    /**
+     * Ensures document.body is available before executing the callback.
+     * This prevents errors when custom scripts try to access document.body during hydration.
+     */
+    const ensureBodyAvailable = (callback: () => void) => {
+      if (document.body) {
+        // Body is already available, execute immediately
+        callback();
+      } else if (document.readyState === "loading") {
+        // Document is still loading, wait for DOMContentLoaded
+        document.addEventListener("DOMContentLoaded", callback, { once: true });
+      } else {
+        // Document is interactive or complete but body is missing (rare edge case)
+        // Use a short timeout as a fallback
+        setTimeout(callback, 0);
+      }
+    };
+
     try {
-      // Create a temporary container to parse the HTML
-      const container = document.createElement("div");
-      container.innerHTML = scriptsToInject;
+      ensureBodyAvailable(() => {
+        try {
+          // Create a temporary container to parse the HTML
+          const container = document.createElement("div");
+          container.innerHTML = scriptsToInject;
 
-      // Process and inject script elements
-      const scripts = container.querySelectorAll("script");
-      scripts.forEach((script) => {
-        const newScript = document.createElement("script");
+          // Process and inject script elements
+          const scripts = container.querySelectorAll("script");
+          scripts.forEach((script) => {
+            const newScript = document.createElement("script");
 
-        // Copy all attributes (src, async, defer, type, etc.)
-        Array.from(script.attributes).forEach((attr) => {
-          newScript.setAttribute(attr.name, attr.value);
-        });
+            // Copy all attributes (src, async, defer, type, etc.)
+            Array.from(script.attributes).forEach((attr) => {
+              newScript.setAttribute(attr.name, attr.value);
+            });
 
-        // Copy inline script content
-        if (script.textContent) {
-          newScript.textContent = script.textContent;
+            // Copy inline script content
+            if (script.textContent) {
+              newScript.textContent = script.textContent;
+            }
+
+            document.head.appendChild(newScript);
+          });
+
+          // Process and inject non-script elements (noscript, meta, link, style, etc.)
+          const nonScripts = container.querySelectorAll(":not(script)");
+          nonScripts.forEach((el) => {
+            const clonedEl = el.cloneNode(true) as Element;
+            document.head.appendChild(clonedEl);
+          });
+
+          injectedRef.current = true;
+        } catch (error) {
+          // Log error but don't break the survey - self-hosted admins can check console
+          console.warn("[Formbricks] Error injecting custom scripts:", error);
         }
-
-        document.head.appendChild(newScript);
       });
-
-      // Process and inject non-script elements (noscript, meta, link, style, etc.)
-      const nonScripts = container.querySelectorAll(":not(script)");
-      nonScripts.forEach((el) => {
-        const clonedEl = el.cloneNode(true) as Element;
-        document.head.appendChild(clonedEl);
-      });
-
-      injectedRef.current = true;
     } catch (error) {
       // Log error but don't break the survey - self-hosted admins can check console
-      console.warn("[Formbricks] Error injecting custom scripts:", error);
+      console.warn("[Formbricks] Error setting up custom scripts injection:", error);
     }
   }, [projectScripts, surveyScripts, scriptsMode]);
 
