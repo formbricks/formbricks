@@ -3,6 +3,7 @@ import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
 import { FILE_PICK_EVENT } from "@/lib/constants";
+import { ensureBodyExists } from "@/lib/dom-utils";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
@@ -15,7 +16,7 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
   renderSurvey(inlineProps);
 };
 
-export const renderSurvey = (props: SurveyContainerProps) => {
+export const renderSurvey = async (props: SurveyContainerProps) => {
   // render SurveyNew
   // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
 
@@ -66,6 +67,8 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       );
     }
   } else {
+    await ensureBodyExists();
+
     const modalContainer = document.createElement("div");
     modalContainer.id = "formbricks-modal-container";
     document.body.appendChild(modalContainer);
