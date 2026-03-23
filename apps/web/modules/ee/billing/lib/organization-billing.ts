@@ -1323,7 +1323,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     // Use status "all" and filter by ACTIVE_SUBSCRIPTION_STATUSES to catch trialing/past_due/paused too.
     const freshSubscriptions = await client.subscriptions.list({
       customer: customerId,
-      status: "all",
+      status: "active",
       limit: 5,
     });
 
