@@ -1,13 +1,17 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { format, formatDistanceToNow } from "date-fns";
 import { TFunction } from "i18next";
 import { UsersIcon } from "lucide-react";
-import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import { timeSinceDate } from "@/lib/time";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 
-export const generateSegmentTableColumns = (t: TFunction): ColumnDef<TSegmentWithSurveyNames>[] => {
-  const titleColumn: ColumnDef<TSegmentWithSurveyNames> = {
+export const generateSegmentTableColumns = (
+  t: TFunction,
+  locale: string
+): ColumnDef<TSegmentWithSurveyRefs>[] => {
+  const titleColumn: ColumnDef<TSegmentWithSurveyRefs> = {
     id: "title",
     accessorKey: "title",
     header: t("common.title"),
@@ -28,26 +32,28 @@ export const generateSegmentTableColumns = (t: TFunction): ColumnDef<TSegmentWit
     },
   };
 
-  const updatedAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
+  const updatedAtColumn: ColumnDef<TSegmentWithSurveyRefs> = {
     id: "updatedAt",
     accessorKey: "updatedAt",
     header: t("common.updated_at"),
     cell: ({ row }) => {
-      return (
-        <span className="text-sm text-slate-900">
-          {formatDistanceToNow(row.original.updatedAt, { addSuffix: true }).replace("about ", "")}
-        </span>
-      );
+      return <span className="text-sm text-slate-900">{timeSinceDate(row.original.updatedAt, locale)}</span>;
     },
   };
 
-  const createdAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
+  const createdAtColumn: ColumnDef<TSegmentWithSurveyRefs> = {
     id: "createdAt",
     accessorKey: "createdAt",
     header: t("common.created_at"),
     cell: ({ row }) => {
       return (
-        <span className="text-sm text-slate-900">{format(row.original.createdAt, "do 'of' MMMM, yyyy")}</span>
+        <span className="text-sm text-slate-900">
+          {formatDateForDisplay(row.original.createdAt, locale, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </span>
       );
     },
   };

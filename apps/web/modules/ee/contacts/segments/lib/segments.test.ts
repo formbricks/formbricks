@@ -8,7 +8,7 @@ import {
   TEvaluateSegmentUserData,
   TSegmentCreateInput,
   TSegmentUpdateInput,
-  TSegmentWithSurveyNames,
+  TSegmentWithSurveyRefs,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -79,10 +79,10 @@ const mockSegmentPrisma = {
   surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
 };
 
-const mockSegment: TSegmentWithSurveyNames = {
+const mockSegment: TSegmentWithSurveyRefs = {
   ...mockSegmentPrisma,
   surveys: [surveyId],
-  activeSurveys: ["Test Survey"],
+  activeSurveys: [{ id: surveyId, name: "Test Survey" }],
   inactiveSurveys: [],
 };
 
@@ -287,7 +287,7 @@ describe("Segment Service Tests", () => {
       ...mockSegment,
       id: clonedSegmentId,
       title: "Copy of Test Segment (1)",
-      activeSurveys: ["Test Survey"],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
       inactiveSurveys: [],
     };
 
@@ -327,7 +327,7 @@ describe("Segment Service Tests", () => {
       const clonedSegment2 = {
         ...clonedSegment,
         title: "Copy of Test Segment (2)",
-        activeSurveys: ["Test Survey"],
+        activeSurveys: [{ id: surveyId, name: "Test Survey" }],
         inactiveSurveys: [],
       };
 
@@ -415,7 +415,7 @@ describe("Segment Service Tests", () => {
       title: surveyId,
       isPrivate: true,
       filters: [],
-      activeSurveys: ["Test Survey"],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
       inactiveSurveys: [],
     };
 
@@ -487,7 +487,7 @@ describe("Segment Service Tests", () => {
     const updatedSegment = {
       ...mockSegment,
       title: "Updated Segment",
-      activeSurveys: ["Test Survey"],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
       inactiveSurveys: [],
     };
     const updateData: TSegmentUpdateInput = { title: "Updated Segment" };
@@ -531,7 +531,7 @@ describe("Segment Service Tests", () => {
         ...updatedSegment,
         surveys: [newSurveyId],
         activeSurveys: [],
-        inactiveSurveys: ["New Survey"],
+        inactiveSurveys: [{ id: newSurveyId, name: "New Survey" }],
       };
 
       vi.mocked(prisma.segment.update).mockResolvedValue(updatedSegmentPrismaWithSurvey);

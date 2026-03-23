@@ -2,12 +2,12 @@ import { getServerSession } from "next-auth";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getDisplaysByContactId } from "@/lib/display/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -53,7 +53,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
   }
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
-  const locale = await findMatchingLocale();
+  const locale = user.locale ?? DEFAULT_LOCALE;
 
   return (
     <ActivityTimeline

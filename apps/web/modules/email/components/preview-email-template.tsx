@@ -75,6 +75,7 @@ export async function PreviewEmailTemplate({
   survey,
   surveyUrl,
   styling,
+  locale,
   t,
 }: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
   const url = `${surveyUrl}?preview=true`;
@@ -85,8 +86,20 @@ export async function PreviewEmailTemplate({
   const questions = getElementsFromBlocks(survey.blocks);
   const firstQuestion = questions[0];
 
-  const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
-  const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
+  const headline = parseRecallInfo(
+    getLocalizedValue(firstQuestion.headline, defaultLanguageCode),
+    undefined,
+    undefined,
+    false,
+    locale
+  );
+  const subheader = parseRecallInfo(
+    getLocalizedValue(firstQuestion.subheader, defaultLanguageCode),
+    undefined,
+    undefined,
+    false,
+    locale
+  );
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {

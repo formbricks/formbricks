@@ -149,14 +149,20 @@ export function WelcomeCard({
         ) : null}
 
         <Headline
-          headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData, variablesData)}
+          headline={replaceRecallInfo(
+            getLocalizedValue(headline, languageCode),
+            responseData,
+            variablesData,
+            languageCode
+          )}
           elementId="welcomeCard"
         />
         <Subheader
           subheader={replaceRecallInfo(
             getLocalizedValue(subheader, languageCode),
             responseData,
-            variablesData
+            variablesData,
+            languageCode
           )}
           elementId="welcomeCard"
         />

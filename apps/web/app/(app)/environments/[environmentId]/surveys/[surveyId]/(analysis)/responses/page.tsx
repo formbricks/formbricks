@@ -7,7 +7,6 @@ import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -23,13 +22,12 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
 
   const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
-  const [survey, user, tags, isContactsEnabled, responseCount, locale] = await Promise.all([
+  const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
     getSurvey(params.surveyId),
     getUser(session.user.id),
     getTagsByEnvironmentId(params.environmentId),
     getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
-    findMatchingLocale(),
   ]);
 
   if (!survey) {
@@ -86,7 +84,7 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
-        locale={locale}
+        locale={user.locale}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
