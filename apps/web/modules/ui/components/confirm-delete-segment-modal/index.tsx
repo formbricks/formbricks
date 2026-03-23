@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import { TSegmentActivitySummary } from "@/modules/ee/contacts/segments/components/segment-activity-utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -15,16 +15,16 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface ConfirmDeleteSegmentModalProps {
+  activitySummary: TSegmentActivitySummary;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  segment: TSegmentWithSurveyRefs;
   onDelete: () => Promise<void>;
 }
 
 export const ConfirmDeleteSegmentModal = ({
+  activitySummary,
   onDelete,
   open,
-  segment,
   setOpen,
 }: ConfirmDeleteSegmentModalProps) => {
   const { t } = useTranslation();
@@ -32,9 +32,9 @@ export const ConfirmDeleteSegmentModal = ({
     await onDelete();
   };
 
-  const segmentHasSurveys = useMemo(() => {
-    return segment.activeSurveys.length > 0 || segment.inactiveSurveys.length > 0;
-  }, [segment.activeSurveys.length, segment.inactiveSurveys.length]);
+  const allSurveys = useMemo(() => {
+    return [...activitySummary.activeSurveys, ...activitySummary.inactiveSurveys];
+  }, [activitySummary.activeSurveys, activitySummary.inactiveSurveys]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -46,16 +46,13 @@ export const ConfirmDeleteSegmentModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        {segmentHasSurveys && (
+        {allSurveys.length > 0 && (
           <DialogBody>
             <div className="space-y-2">
               <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
               <ol className="my-2 ml-4 list-decimal">
-                {segment.activeSurveys.map((survey) => (
-                  <li key={survey.id}>{survey.name}</li>
-                ))}
-                {segment.inactiveSurveys.map((survey) => (
-                  <li key={survey.id}>{survey.name}</li>
+                {allSurveys.map((surveyName) => (
+                  <li key={surveyName}>{surveyName}</li>
                 ))}
               </ol>
             </div>
@@ -69,7 +66,7 @@ export const ConfirmDeleteSegmentModal = ({
           <Button variant="secondary" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={segmentHasSurveys}>
+          <Button variant="destructive" onClick={handleDelete} disabled={allSurveys.length > 0}>
             {t("common.delete")}
           </Button>
         </DialogFooter>
