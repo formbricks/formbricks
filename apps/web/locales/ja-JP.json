@@ -1132,6 +1132,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricksの全機能をアンロック。30日間無料。"
       },
       "general": {
+        "ai_data_analysis_enabled": "データエンリッチメントと分析（AI）",
+        "ai_data_analysis_enabled_description": "AIを活用してデータから最大限の価値を引き出し、ダッシュボード、チャート、レポートなどを設定できます。エクスペリエンスデータに触れます。",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "この組織のAI機能を管理します。",
+        "ai_settings_updated_successfully": "AI設定が正常に更新されました",
+        "ai_smart_tools_enabled": "スマート機能（AI）",
+        "ai_smart_tools_enabled_description": "AIを活用して、より短時間でより多くのことを達成できます。Formbricksで収集されたデータには一切触れません。アンケートを他の言語に翻訳するなどの用途にのみ使用されます。",
         "bulk_invite_warning_description": "無料プランでは、すべての組織メンバーに常に「オーナー」ロールが割り当てられます。",
         "cannot_delete_only_organization": "これはあなたの唯一の組織です。削除できません。まず新しい組織を作成してください。",
         "cannot_leave_only_organization": "これはあなたの唯一の組織であるため、離れることはできません。まず新しい組織を作成してください。",

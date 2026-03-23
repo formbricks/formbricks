@@ -1132,6 +1132,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloqueie todo o poder do Formbricks. Grátis por 30 dias."
       },
       "general": {
+        "ai_data_analysis_enabled": "Enriquecimento e análise de dados (IA)",
+        "ai_data_analysis_enabled_description": "IA para tirar mais partido dos teus dados, configurar dashboards, gráficos, relatórios e muito mais. Acede aos dados da tua experiência.",
+        "ai_enabled": "IA da Formbricks",
+        "ai_enabled_description": "Gerir funcionalidades com IA para esta organização.",
+        "ai_settings_updated_successfully": "Definições de IA atualizadas com sucesso",
+        "ai_smart_tools_enabled": "Funcionalidade inteligente (IA)",
+        "ai_smart_tools_enabled_description": "IA para te ajudar a alcançar mais em menos tempo. Nunca acede aos dados recolhidos com o Formbricks. Apenas usado para, por exemplo, traduzir inquéritos para outros idiomas.",
         "bulk_invite_warning_description": "No plano gratuito, todos os membros da organização são sempre atribuídos ao papel de \"Proprietário\".",
         "cannot_delete_only_organization": "Esta é a sua única organização, não pode ser eliminada. Crie uma nova organização primeiro.",
         "cannot_leave_only_organization": "Não pode sair desta organização, pois é a sua única organização. Crie uma nova organização primeiro.",

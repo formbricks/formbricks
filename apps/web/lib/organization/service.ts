@@ -34,7 +34,8 @@ export const select = {
       stripe: true,
     },
   },
-  isAIEnabled: true,
+  isAISmartToolsEnabled: true,
+  isAIDataAnalysisEnabled: true,
   whitelabel: true,
 } satisfies Prisma.OrganizationSelect;
 
@@ -72,7 +73,8 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
   updatedAt: organization.updatedAt,
   name: organization.name,
   billing: mapOrganizationBilling(organization.billing),
-  isAIEnabled: organization.isAIEnabled,
+  isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
+  isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
   whitelabel: organization.whitelabel as TOrganization["whitelabel"],
 });
 
