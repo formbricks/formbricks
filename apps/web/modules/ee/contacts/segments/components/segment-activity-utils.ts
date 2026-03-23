@@ -1,4 +1,4 @@
-import { TBaseFilters, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 type TSurveySummary = Pick<TSurvey, "id" | "name" | "status">;
@@ -32,7 +32,10 @@ export const doesSegmentReferenceSegment = (filters: TBaseFilters, targetSegment
   return false;
 };
 
-export const getReferencingSegments = (segments: TSegment[], targetSegmentId: string): TSegment[] =>
+export const getReferencingSegments = (
+  segments: TSegmentWithSurveyRefs[],
+  targetSegmentId: string
+): TSegmentWithSurveyRefs[] =>
   segments.filter(
     (segment) =>
       segment.id !== targetSegmentId && doesSegmentReferenceSegment(segment.filters, targetSegmentId)
@@ -67,33 +70,30 @@ export const buildSegmentActivitySummary = (
 };
 
 export const buildSegmentActivitySummaryFromSegments = (
-  currentSegment: TSegmentWithSurveyNames,
-  segments: TSegmentWithSurveyNames[]
+  currentSegment: TSegmentWithSurveyRefs,
+  segments: TSegmentWithSurveyRefs[]
 ): TSegmentActivitySummary => {
-  const activeSurveys = new Set(currentSegment.activeSurveys);
-  const inactiveSurveys = new Set(currentSegment.inactiveSurveys);
-  const directSurveyNames = new Set([...activeSurveys, ...inactiveSurveys]);
+  const activeSurveyMap = new Map(currentSegment.activeSurveys.map((s) => [s.id, s.name]));
+  const inactiveSurveyMap = new Map(currentSegment.inactiveSurveys.map((s) => [s.id, s.name]));
+  const allDirectIds = new Set([...activeSurveyMap.keys(), ...inactiveSurveyMap.keys()]);
 
-  const referencingSegments = getReferencingSegments(
-    segments,
-    currentSegment.id
-  ) as TSegmentWithSurveyNames[];
+  const referencingSegments = getReferencingSegments(segments, currentSegment.id);
   for (const segment of referencingSegments) {
-    for (const surveyName of segment.activeSurveys) {
-      if (!directSurveyNames.has(surveyName)) {
-        activeSurveys.add(surveyName);
+    for (const survey of segment.activeSurveys) {
+      if (!allDirectIds.has(survey.id) && !activeSurveyMap.has(survey.id)) {
+        activeSurveyMap.set(survey.id, survey.name);
       }
     }
 
-    for (const surveyName of segment.inactiveSurveys) {
-      if (!directSurveyNames.has(surveyName)) {
-        inactiveSurveys.add(surveyName);
+    for (const survey of segment.inactiveSurveys) {
+      if (!allDirectIds.has(survey.id) && !inactiveSurveyMap.has(survey.id)) {
+        inactiveSurveyMap.set(survey.id, survey.name);
       }
     }
   }
 
   return {
-    activeSurveys: Array.from(activeSurveys),
-    inactiveSurveys: Array.from(inactiveSurveys),
+    activeSurveys: Array.from(activeSurveyMap.values()),
+    inactiveSurveys: Array.from(inactiveSurveyMap.values()),
   };
 };
