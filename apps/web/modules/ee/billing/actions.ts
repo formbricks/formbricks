@@ -216,7 +216,7 @@ export const startHobbyAction = authenticatedActionClient
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "start-hobby");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };
   });
@@ -248,7 +248,7 @@ export const startProTrialAction = authenticatedActionClient
     }
 
     await createProTrialSubscription(parsedInput.organizationId, customerId);
-    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
+    await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId, "pro-trial");
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     return { success: true };
   });
