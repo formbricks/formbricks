@@ -310,7 +310,11 @@ export const PreviewSurvey = ({
                       setIsFullScreenPreview(true);
                     }
                   }}
-                  aria-label={isFullScreenPreview ? t("environments.surveys.edit.shrink_preview") : t("environments.surveys.edit.expand_preview")}></button>
+                  aria-label={
+                    isFullScreenPreview
+                      ? t("environments.surveys.edit.shrink_preview")
+                      : t("environments.surveys.edit.expand_preview")
+                  }></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
