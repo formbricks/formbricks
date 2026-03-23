@@ -150,7 +150,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       await handleSetupCheckoutCompleted(event.data.object, stripe);
     }
 
-    await reconcileCloudStripeSubscriptionsForOrganization(organizationId, event.id);
+    await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
     await syncOrganizationBillingFromStripe(organizationId, {
       id: event.id,
       created: event.created,

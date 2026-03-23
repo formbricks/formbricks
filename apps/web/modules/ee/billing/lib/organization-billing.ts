@@ -455,11 +455,7 @@ const resolvePendingChangeEffectiveAt = (
   return currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 };
 
-const ensureHobbySubscription = async (
-  organizationId: string,
-  customerId: string,
-  idempotencySuffix: string
-): Promise<void> => {
+const ensureHobbySubscription = async (organizationId: string, customerId: string): Promise<void> => {
   if (!stripeClient) return;
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
@@ -469,7 +465,7 @@ const ensureHobbySubscription = async (
       items: hobbyItems,
       metadata: { organizationId },
     },
-    { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${idempotencySuffix}` }
+    { idempotencyKey: `ensure-hobby-subscription-${organizationId}` }
   );
 };
 
@@ -1264,8 +1260,7 @@ export const findOrganizationIdByStripeCustomerId = async (customerId: string): 
 };
 
 export const reconcileCloudStripeSubscriptionsForOrganization = async (
-  organizationId: string,
-  idempotencySuffix = "reconcile"
+  organizationId: string
 ): Promise<void> => {
   const client = stripeClient;
   if (!IS_FORMBRICKS_CLOUD || !client) return;
@@ -1325,14 +1320,19 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
   if (subscriptionsWithPlanLevel.length === 0) {
     // Re-check active subscriptions to guard against concurrent reconciliation calls
     // (e.g. webhook + bootstrap) both seeing 0 and creating duplicate hobbies.
+    // Use status "all" and filter by ACTIVE_SUBSCRIPTION_STATUSES to catch trialing/past_due/paused too.
     const freshSubscriptions = await client.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 1,
+      status: "all",
+      limit: 5,
     });
 
-    if (freshSubscriptions.data.length === 0) {
-      await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    const hasAnyActiveSubscription = freshSubscriptions.data.some((sub) =>
+      ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status)
+    );
+
+    if (!hasAnyActiveSubscription) {
+      await ensureHobbySubscription(organizationId, customerId);
     }
   }
 };
@@ -1340,6 +1340,6 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
 export const ensureCloudStripeSetupForOrganization = async (organizationId: string): Promise<void> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
   await ensureStripeCustomerForOrganization(organizationId);
-  await reconcileCloudStripeSubscriptionsForOrganization(organizationId, "bootstrap");
+  await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
   await syncOrganizationBillingFromStripe(organizationId);
 };
