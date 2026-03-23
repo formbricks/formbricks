@@ -3,6 +3,7 @@ import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/type
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/workspace/integrations/lib/surveys";
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/workspace/integrations/notion/components/NotionWrapper";
 import {
+  DEFAULT_LOCALE,
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
@@ -11,7 +12,7 @@ import {
 } from "@/lib/constants";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { getNotionDatabases } from "@/lib/notion/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -28,18 +29,18 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     NOTION_REDIRECT_URI
   );
 
-  const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
 
-  const [surveys, notionIntegration] = await Promise.all([
+  const [surveys, notionIntegration, locale] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "notion"),
+    getUserLocale(session.user.id),
   ]);
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = (await getNotionDatabases(environment.id)) ?? [];
   }
-  const locale = await findMatchingLocale();
 
   if (isReadOnly) {
     return redirect("./");
@@ -56,7 +57,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
-        locale={locale}
+        locale={locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>
   );

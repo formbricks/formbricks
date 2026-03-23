@@ -147,6 +147,7 @@ checksums:
     common/copy: 627c00d2c850b9b45f7341a6ac01b6bb
     common/copy_code: 704c13d9bc01caad29a1cf3179baa111
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
+    common/copy_to_environment: c482d26b8fd4962af6542bbf49e49a32
     common/count_attributes: 48805e836a9b50f9635ad00fed953058
     common/count_contacts: 9f71d503455264f1eec1ae58894cf143
     common/count_members: 31ce64ca63fdf95e02ab5543b6e2f717
@@ -228,7 +229,7 @@ checksums:
     common/inactive_surveys: 324b8e1844739cdc2a3bc71aef143a76
     common/integration: 40d02f65c4356003e0e90ffb944907d2
     common/integrations: 0ccce343287704cd90150c32e2fcad36
-    common/invalid_date: 4c18c82f7317d4a02f8d5fef611e82b7
+    common/invalid_date_with_value: f7f9dbe99f25f1724367ee57572b52bf
     common/invalid_file_name: 8243c91b898110fb15ebb24aa6a7d313
     common/invalid_file_type: f0c83e7d61dbad8250abb59869af4b9e
     common/invite: 181884cea804cbde665f160811ee7ad0
@@ -355,6 +356,7 @@ checksums:
     common/select: 5ac04c47a98deb85906bc02e0de91ab0
     common/select_all: eedc7cdb02de467c15dc418a066a77f2
     common/select_filter: c50082c3981f1161022f9787a19aed71
+    common/select_language: d75cf5fbce8a4c7a9055e2210af74480
     common/select_survey: bac52e59c7847417bef6fe7b7096b475
     common/select_teams: ae5d451929846ae6367562bc671a1af9
     common/selected: 9f09e059ba20c88ed34e2b4e8e032d56
@@ -1343,7 +1345,6 @@ checksums:
     environments/surveys/edit/custom_hostname: bc2b1c8de3f9b8ef145b45aeba6ab429
     environments/surveys/edit/customize_survey_logo: 7f7e26026c88a727228f2d7a00d914e2
     environments/surveys/edit/darken_or_lighten_background_of_your_choice: 304a64a8050ebf501d195e948cd25b6f
-    environments/surveys/edit/date_format: e95dfc41ac944874868487457ddc057a
     environments/surveys/edit/days_before_showing_this_survey_again: 9ee757e5c3a07844b12ceb406dc65b04
     environments/surveys/edit/delete_anyways: cc8683ab625280eefc9776bd381dc2e8
     environments/surveys/edit/delete_block: c00617cb0724557e486304276063807a

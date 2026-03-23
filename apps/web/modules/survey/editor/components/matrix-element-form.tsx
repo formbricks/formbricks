@@ -188,6 +188,16 @@ export const MatrixElementForm = ({
       label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
+      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      show: true,
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      show: true,
+    },
   };
   const [parent] = useAutoAnimate();
 

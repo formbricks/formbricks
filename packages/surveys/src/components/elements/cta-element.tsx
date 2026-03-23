@@ -65,6 +65,7 @@ export function CTAElement({
         onClick={handleClick}
         // CTA cannot be required
         required={false}
+        buttonVariant="custom"
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
       />

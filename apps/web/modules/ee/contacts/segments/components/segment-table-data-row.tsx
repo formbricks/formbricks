@@ -1,10 +1,12 @@
 "use client";
 
-import { format, formatDistanceToNow } from "date-fns";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { timeSinceDate } from "@/lib/time";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { EditSegmentModal } from "./edit-segment-modal";
 
 type TSegmentTableDataRowProps = {
@@ -24,6 +26,8 @@ export const SegmentTableDataRow = ({
 }: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   return (
     <>
@@ -46,14 +50,16 @@ export const SegmentTableDataRow = ({
           <div className="ph-no-capture text-slate-900">{surveys?.length}</div>
         </div>
         <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-          <div className="ph-no-capture text-slate-900">
-            {formatDistanceToNow(updatedAt, {
-              addSuffix: true,
-            }).replace("about", "")}
-          </div>
+          <div className="ph-no-capture text-slate-900">{timeSinceDate(updatedAt, locale)}</div>
         </div>
         <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
-          <div className="ph-no-capture text-slate-900">{format(createdAt, "do 'of' MMMM, yyyy")}</div>
+          <div className="ph-no-capture text-slate-900">
+            {formatDateForDisplay(createdAt, locale, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </div>
         </div>
       </button>
 

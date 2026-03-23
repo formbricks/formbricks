@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
@@ -11,7 +11,8 @@ interface SegmentActivityTabProps {
 }
 
 export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   const { activeSurveys, inactiveSurveys } = currentSegment;
 
@@ -43,13 +44,13 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.created_at")}</Label>
           <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(currentSegment.createdAt?.toString())}
+            {formatDateTimeForDisplay(currentSegment.createdAt, locale)}
           </p>
         </div>{" "}
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.updated_at")}</Label>
           <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(currentSegment.updatedAt?.toString())}
+            {formatDateTimeForDisplay(currentSegment.updatedAt, locale)}
           </p>
         </div>
         <div>
