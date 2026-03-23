@@ -82,7 +82,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       setHittingEndpoint(false);
       const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
-        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? `${t("common.error")}:  ${errMessage}` : t("environments.integrations.webhooks.please_check_console")}`,
+        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")}`,
         { className: errMessage.length < 250 ? "break-all" : "" }
       );
       console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
@@ -300,7 +300,9 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
             )}
 
             <Button variant="secondary" asChild>
-              <Link href="https://formbricks.com/docs/api/management/webhooks" target="_blank">
+              <Link
+                href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks"
+                target="_blank">
                 {t("common.read_docs")}
               </Link>
             </Button>

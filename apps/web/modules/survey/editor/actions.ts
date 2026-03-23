@@ -26,22 +26,27 @@ import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getProject } from "./lib/project";
 
 /**
- * Checks if survey follow-ups are enabled for the given organization.
- *
- * @param { string } organizationId  The ID of the organization to check.
- * @returns { Promise<void> }  A promise that resolves if the permission is granted.
- * @throws { ResourceNotFoundError }  If the organization is not found.
- * @throws { OperationNotAllowedError }  If survey follow-ups are not enabled for the organization.
+ * Checks if survey follow-ups can be added for the given organization.
+ * Grandfathers existing follow-ups (allows keeping them even if the org lost access).
+ * Only throws when new follow-ups are being added.
  */
-const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<void> => {
+const checkSurveyFollowUpsPermission = async (
+  organizationId: string,
+  newFollowUpIds: string[],
+  oldFollowUpIds: Set<string>
+): Promise<void> => {
   const organizationBilling = await getOrganizationBilling(organizationId);
   if (!organizationBilling) {
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
   const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organizationId);
-  if (!isSurveyFollowUpsEnabled) {
-    throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
+  if (isSurveyFollowUpsEnabled) return;
+
+  for (const id of newFollowUpIds) {
+    if (!oldFollowUpIds.has(id)) {
+      throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
+    }
   }
 };
 
@@ -71,13 +76,18 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
       await checkSpamProtectionPermission(organizationId);
     }
 
-    if (survey.followUps?.length) {
-      await checkSurveyFollowUpsPermission(organizationId);
-    }
-
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = survey.id;
     const oldObject = await getSurvey(survey.id);
+
+    if (survey.followUps.length) {
+      const oldFollowUpIds = new Set((oldObject?.followUps ?? []).map((f) => f.id));
+      await checkSurveyFollowUpsPermission(
+        organizationId,
+        survey.followUps.map((f) => f.id),
+        oldFollowUpIds
+      );
+    }
 
     await checkExternalUrlsPermission(organizationId, survey, oldObject);
 
@@ -116,13 +126,18 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       await checkSpamProtectionPermission(organizationId);
     }
 
-    if (parsedInput.followUps?.length) {
-      await checkSurveyFollowUpsPermission(organizationId);
-    }
-
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = parsedInput.id;
     const oldObject = await getSurvey(parsedInput.id);
+
+    if (parsedInput.followUps?.length) {
+      const oldFollowUpIds = new Set((oldObject?.followUps ?? []).map((f) => f.id));
+      await checkSurveyFollowUpsPermission(
+        organizationId,
+        parsedInput.followUps.map((f) => f.id),
+        oldFollowUpIds
+      );
+    }
 
     // Check external URLs permission (with grandfathering)
     await checkExternalUrlsPermission(organizationId, parsedInput, oldObject);

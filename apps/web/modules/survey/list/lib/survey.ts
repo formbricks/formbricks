@@ -17,25 +17,7 @@ import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
 import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
-
-export const surveySelect: Prisma.SurveySelect = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  name: true,
-  type: true,
-  creator: {
-    select: {
-      name: true,
-    },
-  },
-  status: true,
-  singleUse: true,
-  environmentId: true,
-  _count: {
-    select: { responses: true },
-  },
-};
+import { mapSurveyRowToSurvey, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
 
 export const getSurveys = reactCache(
   async (
@@ -62,12 +44,7 @@ export const getSurveys = reactCache(
         skip: offset,
       });
 
-      return surveysPrisma.map((survey) => {
-        return {
-          ...survey,
-          responseCount: survey._count.responses,
-        };
-      });
+      return mapSurveyRowsToSurveys(surveysPrisma);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         logger.error(error, "Error getting surveys");
@@ -112,12 +89,7 @@ export const getSurveysSortedByRelevance = reactCache(
               skip: offset,
             });
 
-      surveys = inProgressSurveys.map((survey) => {
-        return {
-          ...survey,
-          responseCount: survey._count.responses,
-        };
-      });
+      surveys = mapSurveyRowsToSurveys(inProgressSurveys);
 
       // Determine if additional surveys are needed
       if (offset !== undefined && limit && inProgressSurveys.length < limit) {
@@ -135,15 +107,7 @@ export const getSurveysSortedByRelevance = reactCache(
           skip: newOffset,
         });
 
-        surveys = [
-          ...surveys,
-          ...additionalSurveys.map((survey) => {
-            return {
-              ...survey,
-              responseCount: survey._count.responses,
-            };
-          }),
-        ];
+        surveys = [...surveys, ...mapSurveyRowsToSurveys(additionalSurveys)];
       }
 
       return surveys;
@@ -178,7 +142,7 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
     return null;
   }
 
-  return { ...surveyPrisma, responseCount: surveyPrisma?._count.responses };
+  return mapSurveyRowToSurvey(surveyPrisma);
 });
 
 export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
@@ -605,22 +569,26 @@ export const copySurveyToOtherEnvironment = async (
   }
 };
 
-export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, z.cuid2()]);
-  try {
-    const surveyCount = await prisma.survey.count({
-      where: {
-        environmentId: environmentId,
-      },
-    });
+/** Count surveys in an environment, optionally with the same filter as getSurveys (so total matches list). */
+export const getSurveyCount = reactCache(
+  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> => {
+    validateInputs([environmentId, z.cuid2()]);
+    try {
+      const surveyCount = await prisma.survey.count({
+        where: {
+          environmentId,
+          ...buildWhereClause(filterCriteria),
+        },
+      });
 
-    return surveyCount;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting survey count");
-      throw new DatabaseError(error.message);
+      return surveyCount;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error getting survey count");
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-});
+);

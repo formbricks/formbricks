@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import type { TSurveyLanguage } from "./types";
 import { getTextContent } from "./validation";

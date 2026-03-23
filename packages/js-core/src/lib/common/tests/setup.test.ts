@@ -70,6 +70,12 @@ vi.mock("@/lib/survey/no-code-action", () => ({
   checkPageUrl: vi.fn(),
 }));
 
+// 9) Mock survey widget
+vi.mock("@/lib/survey/widget", () => ({
+  closeSurvey: vi.fn(),
+  preloadSurveysScript: vi.fn(),
+}));
+
 describe("setup.ts", () => {
   let getInstanceConfigMock: MockInstance<() => Config>;
   let getInstanceLoggerMock: MockInstance<() => Logger>;

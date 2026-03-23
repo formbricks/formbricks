@@ -68,7 +68,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "client"]);
+      expect(apiConfigs).toEqual(["v1", "v2", "v3", "client"]);
     });
 
     test("should have all action configurations", () => {
@@ -127,7 +127,7 @@ describe("rateLimitConfigs", () => {
       mockEval.mockResolvedValue([1, 1]);
 
       const config = rateLimitConfigs.api.v1;
-      await expect(applyRateLimit(config, "api-key-123")).resolves.toBeUndefined();
+      await expect(applyRateLimit(config, "api-key-123")).resolves.toEqual({ allowed: true });
     });
 
     test("should enforce limits correctly for each config type", async () => {
@@ -136,6 +136,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.auth.signup, identifier: "user-signup" },
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
+        { config: rateLimitConfigs.api.v3, identifier: "api-v3-key" },
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },

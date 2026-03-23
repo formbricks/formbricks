@@ -9,21 +9,33 @@ import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 
 const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
+  let surveyNames: string[];
+
   if (webhook.surveyIds.length === 0) {
-    const allSurveyNames = allSurveys.map((survey) => survey.name);
-    return <p className="text-slate-400">{allSurveyNames.join(", ")}</p>;
+    surveyNames = allSurveys.map((survey) => survey.name);
   } else {
-    const selectedSurveyNames = webhook.surveyIds.map((surveyId) => {
-      const survey = allSurveys.find((survey) => survey.id === surveyId);
-      return survey ? survey.name : "";
-    });
-    return <p className="text-slate-400">{selectedSurveyNames.join(", ")}</p>;
+    surveyNames = webhook.surveyIds
+      .map((surveyId) => {
+        const survey = allSurveys.find((s) => s.id === surveyId);
+        return survey ? survey.name : "";
+      })
+      .filter(Boolean);
   }
+
+  if (surveyNames.length === 0) {
+    return <p className="text-slate-400">-</p>;
+  }
+
+  return (
+    <p className="truncate text-slate-400" title={surveyNames.join(", ")}>
+      {surveyNames.join(", ")}
+    </p>
+  );
 };
 
 const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   if (webhook.triggers.length === 0) {
-    return <p className="text-slate-400">No Triggers</p>;
+    return <p className="text-slate-400">{t("environments.integrations.webhooks.no_triggers")}</p>;
   } else {
     let cleanedTriggers = webhook.triggers.map((trigger) => {
       if (trigger === "responseCreated") {

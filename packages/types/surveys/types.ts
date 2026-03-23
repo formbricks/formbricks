@@ -488,7 +488,13 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
  */
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 
-export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
+export const ZShuffleOption = z.enum([
+  "none",
+  "all",
+  "exceptLast",
+  "reverseOrderOccasionally",
+  "reverseOrderExceptLast",
+]);
 
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
