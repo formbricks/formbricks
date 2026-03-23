@@ -16,9 +16,11 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
 import { AddFilterModal } from "./add-filter-modal";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
+  activitySummary: TSegmentActivitySummary;
   environmentId: string;
   setOpen: (open: boolean) => void;
   initialSegment: TSegmentWithSurveyRefs;
@@ -28,6 +30,7 @@ interface TSegmentSettingsTabProps {
 }
 
 export function SegmentSettings({
+  activitySummary,
   environmentId,
   initialSegment,
   setOpen,
@@ -257,6 +260,7 @@ export function SegmentSettings({
 
             {isDeleteSegmentModalOpen ? (
               <ConfirmDeleteSegmentModal
+                activitySummary={activitySummary}
                 onDelete={handleDeleteSegment}
                 open={isDeleteSegmentModalOpen}
                 segment={initialSegment}

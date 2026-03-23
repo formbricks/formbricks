@@ -30,6 +30,7 @@ interface EditSegmentModalProps {
 }
 
 const SegmentSettingsTab = ({
+  activitySummary,
   contactAttributeKeys,
   currentSegment,
   environmentId,
@@ -39,6 +40,7 @@ const SegmentSettingsTab = ({
   setOpen,
 }: Pick<
   EditSegmentModalProps,
+  | "activitySummary"
   | "contactAttributeKeys"
   | "currentSegment"
   | "environmentId"
@@ -53,6 +55,7 @@ const SegmentSettingsTab = ({
 
   return (
     <SegmentSettings
+      activitySummary={activitySummary}
       contactAttributeKeys={contactAttributeKeys}
       environmentId={environmentId}
       initialSegment={currentSegment}
@@ -86,6 +89,7 @@ export const EditSegmentModal = ({
       title: t("common.settings"),
       children: (
         <SegmentSettingsTab
+          activitySummary={activitySummary}
           contactAttributeKeys={contactAttributeKeys}
           currentSegment={currentSegment}
           environmentId={environmentId}
