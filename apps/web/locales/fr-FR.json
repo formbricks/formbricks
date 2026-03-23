@@ -260,6 +260,8 @@
     "invalid_file_type": "Type de fichier invalide",
     "invite": "Inviter",
     "invite_them": "Invitez-les",
+    "javascript_required": "JavaScript requis",
+    "javascript_required_description": "Formbricks nécessite JavaScript pour fonctionner correctement. Veuillez activer JavaScript dans les paramètres de votre navigateur pour continuer.",
     "key": "Clé",
     "label": "Étiquette",
     "language": "Langue",

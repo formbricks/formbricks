@@ -260,6 +260,8 @@
     "invalid_file_type": "Ongeldig bestandstype",
     "invite": "Uitnodiging",
     "invite_them": "Nodig ze uit",
+    "javascript_required": "JavaScript vereist",
+    "javascript_required_description": "Formbricks heeft JavaScript nodig om correct te functioneren. Schakel JavaScript in je browserinstellingen in om door te gaan.",
     "key": "Sleutel",
     "label": "Label",
     "language": "Taal",
