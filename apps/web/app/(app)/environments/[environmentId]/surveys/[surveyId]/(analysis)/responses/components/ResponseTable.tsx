@@ -96,8 +96,8 @@ export const ResponseTable = ({
   const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
   const columns = useMemo(
-    () => generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn),
-    [survey, isExpanded, isReadOnly, t, showQuotasColumn]
+    () => generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, locale, t, showQuotasColumn),
+    [survey, isExpanded, isReadOnly, locale, t, showQuotasColumn]
   );
 
   // Save settings to localStorage when they change

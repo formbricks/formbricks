@@ -25,7 +25,7 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
-  TSegmentWithSurveyNames,
+  TSegmentWithSurveyRefs,
   ZRelativeDateValue,
   ZSegmentCreateInput,
   ZSegmentFilters,
@@ -66,14 +66,14 @@ export const selectSegment = {
   },
 } satisfies Prisma.SegmentSelect;
 
-export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyNames => {
+export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyRefs => {
   const activeSurveys = segment.surveys
     .filter((survey) => survey.status === "inProgress")
-    .map((survey) => survey.name);
+    .map((survey) => ({ id: survey.id, name: survey.name }));
 
   const inactiveSurveys = segment.surveys
     .filter((survey) => survey.status !== "inProgress")
-    .map((survey) => survey.name);
+    .map((survey) => ({ id: survey.id, name: survey.name }));
 
   return {
     ...segment,
@@ -83,7 +83,7 @@ export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurv
   };
 };
 
-export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyNames> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyRefs> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
@@ -107,7 +107,7 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyNames[]> => {
+export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyRefs[]> => {
   validateInputs([environmentId, ZId]);
   try {
     const segments = await prisma.segment.findMany({

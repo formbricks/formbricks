@@ -38,6 +38,11 @@ export interface TWithV1ApiWrapperParams<TResult extends { response: Response },
   action?: TAuditAction;
   targetType?: TAuditTarget;
   customRateLimitConfig?: TRateLimitConfig;
+  /**
+   * When the route requires auth but the client is unauthenticated, the wrapper normally returns
+   * the legacy JSON 401. Use this to return a custom response (e.g. RFC 9457 problem+json for V3).
+   */
+  unauthenticatedResponse?: (req: NextRequest) => Response;
 }
 
 enum ApiV1RouteTypeEnum {
@@ -265,7 +270,7 @@ const getRouteType = (
 export const withV1ApiWrapper = <TResult extends { response: Response }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
-  const { handler, action, targetType, customRateLimitConfig } = params;
+  const { handler, action, targetType, customRateLimitConfig, unauthenticatedResponse } = params;
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     // === Audit Log Setup ===
     const saveAuditLog = action && targetType;
@@ -287,6 +292,11 @@ export const withV1ApiWrapper = <TResult extends { response: Response }, TProps 
     const authentication = await handleAuthentication(authenticationMethod, req);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
+      if (unauthenticatedResponse) {
+        const res = unauthenticatedResponse(req);
+        await processResponse(res, req, auditLog);
+        return res;
+      }
       return responses.notAuthenticatedResponse();
     }
 

@@ -63,7 +63,7 @@ export const MultipleChoiceElementForm = ({
   const elementRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
-  const shuffleOptionsTypes = {
+  const shuffleOptionsTypes: Record<TShuffleOption, { id: TShuffleOption; label: string; show: boolean }> = {
     none: {
       id: "none",
       label: t("environments.surveys.edit.keep_current_order"),
@@ -77,6 +77,16 @@ export const MultipleChoiceElementForm = ({
     exceptLast: {
       id: "exceptLast",
       label: t("environments.surveys.edit.randomize_all_except_last"),
+      show: true,
+    },
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
+      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
       show: true,
     },
   };
@@ -167,7 +177,10 @@ export const MultipleChoiceElementForm = ({
     updateElement(elementIdx, {
       choices: newChoices,
       ...(element.shuffleOption === shuffleOptionsTypes.all.id && {
-        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+        shuffleOption: shuffleOptionsTypes.exceptLast.id,
+      }),
+      ...(element.shuffleOption === shuffleOptionsTypes.reverseOrderOccasionally.id && {
+        shuffleOption: shuffleOptionsTypes.reverseOrderExceptLast.id,
       }),
     });
   };
@@ -193,8 +206,18 @@ export const MultipleChoiceElementForm = ({
       setisInvalidValue(null);
     }
 
+    const hasRemainingSpecialChoices = newChoices.some((c) => c.id === "other" || c.id === "none");
+
     updateElement(elementIdx, {
       choices: newChoices,
+      ...(!hasRemainingSpecialChoices &&
+        element.shuffleOption === "reverseOrderExceptLast" && {
+          shuffleOption: "reverseOrderOccasionally",
+        }),
+      ...(!hasRemainingSpecialChoices &&
+        element.shuffleOption === "exceptLast" && {
+          shuffleOption: "all",
+        }),
     });
   };
 

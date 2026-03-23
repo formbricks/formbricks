@@ -6,7 +6,7 @@ import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import type { TBaseFilter, TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -16,18 +16,21 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
 import { AddFilterModal } from "./add-filter-modal";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
+  activitySummary: TSegmentActivitySummary;
   environmentId: string;
   setOpen: (open: boolean) => void;
-  initialSegment: TSegmentWithSurveyNames;
+  initialSegment: TSegmentWithSurveyRefs;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isReadOnly: boolean;
 }
 
 export function SegmentSettings({
+  activitySummary,
   environmentId,
   initialSegment,
   setOpen,
@@ -38,7 +41,7 @@ export function SegmentSettings({
   const router = useRouter();
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [segment, setSegment] = useState<TSegmentWithSurveyNames>(initialSegment);
+  const [segment, setSegment] = useState<TSegmentWithSurveyRefs>(initialSegment);
 
   const [isUpdatingSegment, setIsUpdatingSegment] = useState(false);
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);
@@ -130,6 +133,10 @@ export function SegmentSettings({
     // check if title is empty
 
     if (!segment.title) {
+      return true;
+    }
+
+    if (segment.filters.length === 0) {
       return true;
     }
 
@@ -256,9 +263,9 @@ export function SegmentSettings({
 
             {isDeleteSegmentModalOpen ? (
               <ConfirmDeleteSegmentModal
+                activitySummary={activitySummary}
                 onDelete={handleDeleteSegment}
                 open={isDeleteSegmentModalOpen}
-                segment={initialSegment}
                 setOpen={setIsDeleteSegmentModalOpen}
               />
             ) : null}

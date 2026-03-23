@@ -3,13 +3,14 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-s
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/workspace/integrations/google-sheets/components/GoogleSheetWrapper";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/workspace/integrations/lib/surveys";
 import {
+  DEFAULT_LOCALE,
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -21,19 +22,17 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslate();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
 
-  const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
 
-  const [surveys, integrations] = await Promise.all([
+  const [surveys, integrations, locale] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
+    getUserLocale(session.user.id),
   ]);
 
   const googleSheetIntegration: TIntegrationGoogleSheets | undefined = integrations?.find(
     (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
   );
-
-  const locale = await findMatchingLocale();
-
   if (isReadOnly) {
     return redirect("./");
   }
@@ -49,7 +48,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           surveys={surveys}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
-          locale={locale}
+          locale={locale ?? DEFAULT_LOCALE}
         />
       </div>
     </PageContentWrapper>

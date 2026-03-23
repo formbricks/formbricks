@@ -11,8 +11,6 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 
 interface IDateElementFormProps {
   localSurvey: TSurvey;
@@ -26,21 +24,6 @@ interface IDateElementFormProps {
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
 }
-
-const dateOptions = [
-  {
-    value: "M-d-y",
-    label: "MM-DD-YYYY",
-  },
-  {
-    value: "d-M-y",
-    label: "DD-MM-YYYY",
-  },
-  {
-    value: "y-M-d",
-    label: "YYYY-MM-DD",
-  },
-];
 
 export const DateElementForm = ({
   element,
@@ -113,19 +96,6 @@ export const DateElementForm = ({
             {t("environments.surveys.edit.add_description")}
           </Button>
         )}
-      </div>
-
-      <div className="mt-3">
-        <Label htmlFor="elementType">{t("environments.surveys.edit.date_format")}</Label>
-        <div className="mt-2 flex items-center">
-          <OptionsSwitch
-            options={dateOptions}
-            currentOption={element.format}
-            handleOptionChange={(value: string) =>
-              updateElement(elementIdx, { format: value as "M-d-y" | "d-M-y" | "y-M-d" })
-            }
-          />
-        </div>
       </div>
 
       <ValidationRulesEditor

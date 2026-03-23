@@ -50,7 +50,11 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
             formbricks.track(&quot;{watch("key")}&quot;)
           </span>{" "}
           {t("environments.actions.in_your_code_read_more_in_our")}{" "}
-          <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
+          <a
+            href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
+            target="_blank"
+            rel="noreferrer"
+            className="underline">
             {t("common.docs")}
           </a>
           {"."}

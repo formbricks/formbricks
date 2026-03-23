@@ -4,26 +4,37 @@ import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 
 const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
+  let surveyNames: string[];
+
   if (webhook.surveyIds.length === 0) {
-    const allSurveyNames = allSurveys.map((survey) => survey.name);
-    return <p className="text-slate-400">{allSurveyNames.join(", ")}</p>;
+    surveyNames = allSurveys.map((survey) => survey.name);
   } else {
-    const selectedSurveyNames = webhook.surveyIds.map((surveyId) => {
-      const survey = allSurveys.find((survey) => survey.id === surveyId);
-      return survey ? survey.name : "";
-    });
-    return <p className="text-slate-400">{selectedSurveyNames.join(", ")}</p>;
+    surveyNames = webhook.surveyIds
+      .map((surveyId) => {
+        const survey = allSurveys.find((s) => s.id === surveyId);
+        return survey ? survey.name : "";
+      })
+      .filter(Boolean);
   }
+
+  if (surveyNames.length === 0) {
+    return <p className="text-slate-400">-</p>;
+  }
+
+  return (
+    <p className="truncate text-slate-400" title={surveyNames.join(", ")}>
+      {surveyNames.join(", ")}
+    </p>
+  );
 };
 
 const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   if (webhook.triggers.length === 0) {
-    return <p className="text-slate-400">No Triggers</p>;
+    return <p className="text-slate-400">{t("environments.integrations.webhooks.no_triggers")}</p>;
   } else {
     let cleanedTriggers = webhook.triggers.map((trigger) => {
       if (trigger === "responseCreated") {
@@ -55,16 +66,10 @@ const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   }
 };
 
-export const WebhookRowData = ({
-  webhook,
-  surveys,
-  locale,
-}: {
-  webhook: Webhook;
-  surveys: TSurvey[];
-  locale: TUserLocale;
-}) => {
-  const { t } = useTranslation();
+export const WebhookRowData = ({ webhook, surveys }: { webhook: Webhook; surveys: TSurvey[] }) => {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
       <div className="col-span-3 flex items-center truncate pl-6 text-sm">
@@ -91,7 +96,7 @@ export const WebhookRowData = ({
         {renderSelectedTriggersText(webhook, t)}
       </div>
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {timeSince(webhook.createdAt.toString(), locale)}
+        {timeSince(webhook.updatedAt.toString(), locale)}
       </div>
       <div className="text-center"></div>
     </div>

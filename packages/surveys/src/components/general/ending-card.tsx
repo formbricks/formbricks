@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+import { useCallback, useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
@@ -66,26 +66,29 @@ export function EndingCard({
     </div>
   );
 
-  const processAndRedirect = (urlString: string) => {
-    try {
-      const url = replaceRecallInfo(urlString, responseData, variablesData);
-      if (url && new URL(url)) {
-        if (onOpenExternalURL) {
-          onOpenExternalURL(url);
-        } else {
-          window.top?.location.replace(url);
+  const processAndRedirect = useCallback(
+    (urlString: string) => {
+      try {
+        const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode);
+        if (url && new URL(url)) {
+          if (onOpenExternalURL) {
+            onOpenExternalURL(url);
+          } else {
+            window.top?.location.replace(url);
+          }
         }
+      } catch (error) {
+        console.error("Invalid URL after recall processing:", error);
       }
-    } catch (error) {
-      console.error("Invalid URL after recall processing:", error);
-    }
-  };
+    },
+    [languageCode, onOpenExternalURL, responseData, variablesData]
+  );
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
       processAndRedirect(endingCard.buttonLink);
     }
-  };
+  }, [endingCard, isRedirectDisabled, processAndRedirect]);
 
   useEffect(() => {
     if (isCurrent) {
@@ -114,7 +117,15 @@ export function EndingCard({
     return () => {
       document.removeEventListener("keydown", handleEnter);
     };
-  }, [isCurrent, isResponseSendingFinished, isRedirectDisabled, endingCard, survey.type]);
+  }, [
+    endingCard,
+    handleSubmit,
+    isCurrent,
+    isRedirectDisabled,
+    isResponseSendingFinished,
+    processAndRedirect,
+    survey.type,
+  ]);
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
@@ -130,7 +141,8 @@ export function EndingCard({
                     headline={replaceRecallInfo(
                       getLocalizedValue(endingCard.headline, languageCode),
                       responseData,
-                      variablesData
+                      variablesData,
+                      languageCode
                     )}
                     elementId="EndingCard"
                   />
@@ -138,7 +150,8 @@ export function EndingCard({
                     subheader={replaceRecallInfo(
                       getLocalizedValue(endingCard.subheader, languageCode),
                       responseData,
-                      variablesData
+                      variablesData,
+                      languageCode
                     )}
                     elementId="EndingCard"
                   />
@@ -148,7 +161,8 @@ export function EndingCard({
                         buttonLabel={replaceRecallInfo(
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
                           responseData,
-                          variablesData
+                          variablesData,
+                          languageCode
                         )}
                         isLastQuestion={false}
                         focus={isCurrent ? autoFocusEnabled : false}

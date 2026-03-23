@@ -421,6 +421,38 @@ describe("withV1ApiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  test("uses unauthenticatedResponse when provided instead of default 401", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { getServerSession } = await import("next-auth");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.Session,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(getServerSession).mockResolvedValue(null);
+
+    const custom401 = new Response(JSON.stringify({ title: "Custom", status: 401 }), {
+      status: 401,
+      headers: { "Content-Type": "application/problem+json" },
+    });
+
+    const handler = vi.fn();
+    const req = createMockRequest({ url: "https://api.test/api/v3/surveys" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({
+      handler,
+      unauthenticatedResponse: () => custom401,
+    });
+    const res = await wrapped(req, undefined);
+
+    expect(res).toBe(custom401);
+    expect(handler).not.toHaveBeenCalled();
+    expect(mockContextualLoggerError).toHaveBeenCalled();
+  });
+
   test("handles rate limiting errors", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
