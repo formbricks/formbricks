@@ -256,7 +256,7 @@
     "inactive_surveys": "Pesquisas inativas",
     "integration": "integração",
     "integrations": "Integrações",
-    "invalid_date_with_value": "Data inválida ({{value}})",
+    "invalid_date_with_value": "Data inválida: {value}",
     "invalid_file_name": "Nome de arquivo inválido, por favor renomeie seu arquivo e tente novamente",
     "invalid_file_type": "Tipo de arquivo inválido",
     "invite": "convidar",

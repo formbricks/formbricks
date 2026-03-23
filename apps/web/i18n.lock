@@ -147,6 +147,7 @@ checksums:
     common/copy: 627c00d2c850b9b45f7341a6ac01b6bb
     common/copy_code: 704c13d9bc01caad29a1cf3179baa111
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
+    common/copy_to_environment: c482d26b8fd4962af6542bbf49e49a32
     common/count_attributes: 48805e836a9b50f9635ad00fed953058
     common/count_contacts: 9f71d503455264f1eec1ae58894cf143
     common/count_members: 31ce64ca63fdf95e02ab5543b6e2f717
@@ -228,6 +229,7 @@ checksums:
     common/inactive_surveys: 324b8e1844739cdc2a3bc71aef143a76
     common/integration: 40d02f65c4356003e0e90ffb944907d2
     common/integrations: 0ccce343287704cd90150c32e2fcad36
+    common/invalid_date_with_value: f7f9dbe99f25f1724367ee57572b52bf
     common/invalid_file_name: 8243c91b898110fb15ebb24aa6a7d313
     common/invalid_file_type: f0c83e7d61dbad8250abb59869af4b9e
     common/invite: 181884cea804cbde665f160811ee7ad0
@@ -1630,13 +1632,13 @@ checksums:
     environments/surveys/edit/show_survey_maximum_of: 721ed61b01a9fc8ce4becb72823bb72e
     environments/surveys/edit/show_survey_to_users: d5e90fd17babfea978fce826e9df89b0
     environments/surveys/edit/show_to_x_percentage_of_targeted_users: b745169011fa7e8ca475baa5500c5197
+    environments/surveys/edit/shrink_preview: 42567389520b226f211f94f052197ad8
     environments/surveys/edit/simple: 65575bd903091299bc4a94b7517a6288
     environments/surveys/edit/six_points: c6c09b3f07171dc388cb5a610ea79af7
     environments/surveys/edit/smiley: e68e3b28fc3c04255e236c6a0feb662b
     environments/surveys/edit/spam_protection_note: 94059310d07c30f6704e216297036d05
     environments/surveys/edit/spam_protection_threshold_description: ed8b8c9c583077a88bf5dd3ec8b59e60
     environments/surveys/edit/spam_protection_threshold_heading: 29f9a8b00c5bcbb43aedc48138a5cf9c
-    environments/surveys/edit/shrink_preview: 42567389520b226f211f94f052197ad8
     environments/surveys/edit/star: 0586c1c76e8a0367c0a7b93adf598cb7
     environments/surveys/edit/starts_with: f6673c17475708313c6a0f245b561781
     environments/surveys/edit/state: 118de561d4525b14f9bb29ac9e86161d

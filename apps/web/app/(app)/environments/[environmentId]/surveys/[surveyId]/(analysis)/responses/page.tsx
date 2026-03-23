@@ -1,12 +1,7 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import {
-  DEFAULT_LOCALE,
-  IS_FORMBRICKS_CLOUD,
-  IS_STORAGE_CONFIGURED,
-  RESPONSES_PER_PAGE,
-} from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED, RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -89,7 +84,7 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
-        locale={user.locale ?? DEFAULT_LOCALE}
+        locale={user.locale}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}

@@ -256,7 +256,7 @@
     "inactive_surveys": "Inactieve enquêtes",
     "integration": "integratie",
     "integrations": "Integraties",
-    "invalid_date_with_value": "Ongeldige datum ({{value}})",
+    "invalid_date_with_value": "Ongeldige datum: {value}",
     "invalid_file_name": "Ongeldige bestandsnaam. Hernoem uw bestand en probeer het opnieuw",
     "invalid_file_type": "Ongeldig bestandstype",
     "invite": "Uitnodiging",

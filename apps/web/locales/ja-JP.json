@@ -256,7 +256,7 @@
     "inactive_surveys": "非アクティブなフォーム",
     "integration": "連携",
     "integrations": "連携",
-    "invalid_date_with_value": "無効な日付です ({{value}})",
+    "invalid_date_with_value": "無効な日付です: {value}",
     "invalid_file_name": "ファイル名が無効です。ファイル名を変更して再試行してください",
     "invalid_file_type": "無効なファイルタイプです",
     "invite": "招待",

@@ -256,7 +256,7 @@
     "inactive_surveys": "Sondages inactifs",
     "integration": "intégration",
     "integrations": "Intégrations",
-    "invalid_date_with_value": "Date invalide ({{value}})",
+    "invalid_date_with_value": "Date invalide: {value}",
     "invalid_file_name": "Nom de fichier invalide, veuillez renommer votre fichier et réessayer",
     "invalid_file_type": "Type de fichier invalide",
     "invite": "Inviter",

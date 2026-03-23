@@ -256,7 +256,7 @@
     "inactive_surveys": "不 活跃 调查",
     "integration": "集成",
     "integrations": "集成",
-    "invalid_date_with_value": "无效 日期 ({{value}})",
+    "invalid_date_with_value": "无效 日期: {value}",
     "invalid_file_name": "文件名无效，请重命名文件后重试",
     "invalid_file_type": "无效 的 文件 类型",
     "invite": "邀请",

@@ -256,7 +256,7 @@
     "inactive_surveys": "Inaktív kérdőívek",
     "integration": "integráció",
     "integrations": "Integrációk",
-    "invalid_date_with_value": "Érvénytelen dátum ({{value}})",
+    "invalid_date_with_value": "Érvénytelen dátum: {value}",
     "invalid_file_name": "Érvénytelen fájlnév, nevezze át a fájlt, és próbálja újra",
     "invalid_file_type": "Érvénytelen fájltípus",
     "invite": "Meghívás",

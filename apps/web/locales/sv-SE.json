@@ -256,7 +256,7 @@
     "inactive_surveys": "Inaktiva enkäter",
     "integration": "integration",
     "integrations": "Integrationer",
-    "invalid_date_with_value": "Ogiltigt datum ({{value}})",
+    "invalid_date_with_value": "Ogiltigt datum: {value}",
     "invalid_file_name": "Ogiltigt filnamn, vänligen byt namn på din fil och försök igen",
     "invalid_file_type": "Ogiltig filtyp",
     "invite": "Bjud in",

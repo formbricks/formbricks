@@ -256,7 +256,7 @@
     "inactive_surveys": "Неактивные опросы",
     "integration": "интеграция",
     "integrations": "Интеграции",
-    "invalid_date_with_value": "Неверная дата ({{value}})",
+    "invalid_date_with_value": "Неверная дата: {value}",
     "invalid_file_name": "Недопустимое имя файла, переименуйте файл и попробуйте снова",
     "invalid_file_type": "Недопустимый тип файла",
     "invite": "Пригласить",
