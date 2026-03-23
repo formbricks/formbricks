@@ -361,7 +361,7 @@ const buildSegmentFilterWhereClause = async (
   environmentId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
-  const { root } = filter;
+  const { root, qualifier } = filter;
   const { segmentId } = root;
 
   if (segmentPath.has(segmentId)) {
@@ -382,7 +382,22 @@ const buildSegmentFilterWhereClause = async (
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 
-  return processFilters(segment.filters, newPath, environmentId, deviceType);
+  const nestedWhereClause = await processFilters(segment.filters, newPath, environmentId, deviceType);
+  const hasNestedConditions = Object.keys(nestedWhereClause).length > 0;
+
+  if (qualifier.operator === "userIsIn") {
+    return nestedWhereClause;
+  }
+
+  if (qualifier.operator === "userIsNotIn") {
+    if (!hasNestedConditions) {
+      return { id: "__SEGMENT_FILTER_NO_MATCH__" };
+    }
+
+    return { NOT: nestedWhereClause };
+  }
+
+  return {};
 };
 
 /**
