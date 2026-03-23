@@ -357,9 +357,13 @@ export const ZSegmentCreateInput = z.object({
 export type TSegmentCreateInput = z.infer<typeof ZSegmentCreateInput>;
 
 export type TSegment = z.infer<typeof ZSegment>;
-export type TSegmentWithSurveyNames = TSegment & {
-  activeSurveys: string[];
-  inactiveSurveys: string[];
+export interface TSegmentSurveyReference {
+  id: string;
+  name: string;
+}
+export type TSegmentWithSurveyRefs = TSegment & {
+  activeSurveys: TSegmentSurveyReference[];
+  inactiveSurveys: TSegmentSurveyReference[];
 };
 
 export const ZSegmentUpdateInput = z

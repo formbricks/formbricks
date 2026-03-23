@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -17,7 +17,7 @@ import {
 interface ConfirmDeleteSegmentModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  segment: TSegmentWithSurveyNames;
+  segment: TSegmentWithSurveyRefs;
   onDelete: () => Promise<void>;
 }
 
@@ -52,10 +52,10 @@ export const ConfirmDeleteSegmentModal = ({
               <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
               <ol className="my-2 ml-4 list-decimal">
                 {segment.activeSurveys.map((survey) => (
-                  <li key={survey}>{survey}</li>
+                  <li key={survey.id}>{survey.name}</li>
                 ))}
                 {segment.inactiveSurveys.map((survey) => (
-                  <li key={survey}>{survey}</li>
+                  <li key={survey.id}>{survey.name}</li>
                 ))}
               </ol>
             </div>

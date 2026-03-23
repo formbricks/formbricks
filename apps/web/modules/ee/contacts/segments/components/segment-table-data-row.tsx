@@ -4,12 +4,12 @@ import { format, formatDistanceToNow } from "date-fns";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { EditSegmentModal } from "./edit-segment-modal";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 type TSegmentTableDataRowProps = {
-  currentSegment: TSegmentWithSurveyNames;
+  currentSegment: TSegmentWithSurveyRefs;
   activitySummary: TSegmentActivitySummary;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];

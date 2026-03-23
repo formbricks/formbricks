@@ -1,14 +1,14 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface SegmentActivityTabProps {
-  currentSegment: TSegmentWithSurveyNames;
+  currentSegment: TSegmentWithSurveyRefs;
   activitySummary: TSegmentActivitySummary;
 }
 

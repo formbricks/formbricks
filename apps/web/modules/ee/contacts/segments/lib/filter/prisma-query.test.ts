@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TBaseFilters, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 
@@ -270,7 +270,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the getSegment function to return a segment with filters
-    const mockSegment: TSegmentWithSurveyNames = {
+    const mockSegment: TSegmentWithSurveyRefs = {
       id: nestedSegmentId,
       filters: nestedFilters,
       environmentId: mockEnvironmentId,
@@ -336,7 +336,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     // Mock getSegment to return null for the non-existent segment
     vi.mocked(getSegment).mockResolvedValueOnce(mockSegment);
-    vi.mocked(getSegment).mockResolvedValueOnce(null as unknown as TSegmentWithSurveyNames);
+    vi.mocked(getSegment).mockResolvedValueOnce(null as unknown as TSegmentWithSurveyRefs);
 
     const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockEnvironmentId);
 
@@ -426,7 +426,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the getSegment function to return a segment with filters
-    const mockSegment: TSegmentWithSurveyNames = {
+    const mockSegment: TSegmentWithSurveyRefs = {
       id: nestedSegmentId,
       filters: nestedFilters,
       environmentId: mockEnvironmentId,
@@ -490,7 +490,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
   test("handle circular references in segment filters", async () => {
     // Mock getSegment to simulate a circular reference
-    const circularSegment: TSegmentWithSurveyNames = {
+    const circularSegment: TSegmentWithSurveyRefs = {
       id: mockSegmentId, // Same ID creates the circular reference
       filters: [
         {
@@ -550,7 +550,7 @@ describe("segmentFilterToPrismaQuery", () => {
   test("handle missing segments in segment filters", async () => {
     const nestedSegmentId = "segment-missing-123";
 
-    vi.mocked(getSegment).mockResolvedValue(null as unknown as TSegmentWithSurveyNames);
+    vi.mocked(getSegment).mockResolvedValue(null as unknown as TSegmentWithSurveyRefs);
 
     const filters: TBaseFilters = [
       {
@@ -599,7 +599,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the nested segment
-    const mockNestedSegment: TSegmentWithSurveyNames = {
+    const mockNestedSegment: TSegmentWithSurveyRefs = {
       id: nestedSegmentId,
       filters: nestedFilters,
       environmentId: mockEnvironmentId,
@@ -890,7 +890,7 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Set up the mocks
-    const mockCircularSegment: TSegmentWithSurveyNames = {
+    const mockCircularSegment: TSegmentWithSurveyRefs = {
       id: circularSegmentId,
       filters: circularFilters,
       environmentId: mockEnvironmentId,
@@ -904,7 +904,7 @@ describe("segmentFilterToPrismaQuery", () => {
       inactiveSurveys: [],
     };
 
-    const mockSecondSegment: TSegmentWithSurveyNames = {
+    const mockSecondSegment: TSegmentWithSurveyRefs = {
       id: secondSegmentId,
       filters: secondFilters,
       environmentId: mockEnvironmentId,
@@ -922,7 +922,7 @@ describe("segmentFilterToPrismaQuery", () => {
     vi.mocked(getSegment)
       .mockResolvedValueOnce(mockCircularSegment) // First call for circularSegmentId
       .mockResolvedValueOnce(mockSecondSegment) // Third call for secondSegmentId
-      .mockResolvedValueOnce(null as unknown as TSegmentWithSurveyNames); // Fourth call for non-existent-segment
+      .mockResolvedValueOnce(null as unknown as TSegmentWithSurveyRefs); // Fourth call for non-existent-segment
 
     // Complex filters with mixed error conditions
     const filters: TBaseFilters = [

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { TBaseFilters, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TBaseFilters, TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   buildSegmentActivitySummary,
@@ -73,13 +73,13 @@ const createSegment = (overrides: Partial<TSegment>): TSegment =>
     ...overrides,
   }) as TSegment;
 
-const createSegmentWithSurveyNames = (overrides: Partial<TSegmentWithSurveyNames>): TSegmentWithSurveyNames =>
+const createSegmentWithSurveyNames = (overrides: Partial<TSegmentWithSurveyRefs>): TSegmentWithSurveyRefs =>
   ({
     ...createSegment(overrides),
     activeSurveys: [],
     inactiveSurveys: [],
     ...overrides,
-  }) as TSegmentWithSurveyNames;
+  }) as TSegmentWithSurveyRefs;
 
 describe("segment activity utils", () => {
   test("doesSegmentReferenceSegment returns true for nested segment filters", () => {
@@ -154,7 +154,7 @@ describe("segment activity utils", () => {
           },
         ],
       }),
-    ];
+    ] as TSegmentWithSurveyRefs[];
 
     expect(getReferencingSegments(segments, "segment_target").map((segment) => segment.id)).toEqual([
       "segment_ref",
@@ -265,16 +265,16 @@ describe("segment activity utils", () => {
   test("buildSegmentActivitySummaryFromSegments merges direct and indirect surveys from segment table data", () => {
     const currentSegment = createSegmentWithSurveyNames({
       id: "segment_target",
-      activeSurveys: ["Direct Survey"],
-      inactiveSurveys: ["Paused Survey"],
+      activeSurveys: [{ id: "survey_direct", name: "Direct Survey" }],
+      inactiveSurveys: [{ id: "survey_paused", name: "Paused Survey" }],
     });
     const segments = [
       currentSegment,
       createSegmentWithSurveyNames({
         id: "segment_ref",
         title: "Referenced Segment",
-        activeSurveys: ["Indirect Survey"],
-        inactiveSurveys: ["Paused Survey"],
+        activeSurveys: [{ id: "survey_indirect", name: "Indirect Survey" }],
+        inactiveSurveys: [{ id: "survey_paused", name: "Paused Survey" }],
         filters: [
           {
             id: "filter_1",
@@ -310,7 +310,7 @@ describe("segment activity utils", () => {
       id: "segment_private_ref",
       title: "Private Survey Segment",
       isPrivate: true,
-      activeSurveys: ["Indirect Private Survey"],
+      activeSurveys: [{ id: "survey_private", name: "Indirect Private Survey" }],
       filters: [
         {
           id: "filter_1",
