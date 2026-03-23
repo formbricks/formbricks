@@ -43,7 +43,7 @@
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
     "i18n:validate": "pnpm scan-translations",
-    "dev:setup": "node scripts/setup-dev-env.mjs"
+    "dev:setup": "bash scripts/setup-dev-env.sh"
   },
   "dependencies": {
     "react": "19.2.4",
