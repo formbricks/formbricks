@@ -4,9 +4,9 @@ import Link from "next/link";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getEnvironments } from "@/lib/environment/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
@@ -21,17 +21,15 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
   const t = await getTranslate();
   const { environmentId } = await params;
 
-  const { environment, isReadOnly } = await getEnvironmentAuth(environmentId);
+  const { environment, isReadOnly, session } = await getEnvironmentAuth(environmentId);
 
-  const [environments, actionClasses] = await Promise.all([
+  const [environments, actionClasses, locale] = await Promise.all([
     getEnvironments(environment.projectId),
     getActionClasses(environmentId),
+    getUserLocale(session.user.id),
   ]);
   const otherEnvironment = environments.filter((env) => env.id !== environmentId)[0];
-  const [otherEnvActionClasses, locale] = await Promise.all([
-    otherEnvironment ? getActionClasses(otherEnvironment.id) : Promise.resolve([]),
-    findMatchingLocale(),
-  ]);
+  const otherEnvActionClasses = otherEnvironment ? await getActionClasses(otherEnvironment.id) : [];
 
   return (
     <PageContentWrapper>
@@ -89,7 +87,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
           environmentId={environmentId}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}
-          locale={locale}
+          locale={locale ?? DEFAULT_LOCALE}
         />
       </div>
     </PageContentWrapper>

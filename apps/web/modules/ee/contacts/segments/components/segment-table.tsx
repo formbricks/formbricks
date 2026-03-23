@@ -22,12 +22,13 @@ export function SegmentTable({
   isContactsEnabled,
   isReadOnly,
 }: SegmentTableUpdatedProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [editingSegment, setEditingSegment] = useState<TSegmentWithSurveyNames | null>(null);
 
   const columns = useMemo(() => {
-    return generateSegmentTableColumns(t);
-  }, []);
+    return generateSegmentTableColumns(t, locale);
+  }, [locale, t]);
 
   const table = useReactTable({
     data: segments,

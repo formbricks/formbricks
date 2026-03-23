@@ -13,6 +13,7 @@ import {
 } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -76,14 +77,6 @@ const formatMoney = (currency: string, unitAmount: number | null, locale: string
     minimumFractionDigits: unitAmount % 100 === 0 ? 0 : 2,
   }).format(unitAmount / 100);
 };
-
-const formatDate = (date: Date, locale: string) =>
-  date.toLocaleDateString(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
 
 type TPlanCardData = {
   plan: TStandardPlan;
@@ -168,7 +161,17 @@ export const PricingTable = ({
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
   const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
-  const usageCycleLabel = `${formatDate(usageCycleStart, locale)} - ${formatDate(usageCycleEnd, locale)}`;
+  const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  })} - ${formatDateForDisplay(usageCycleEnd, locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  })}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
   const projectsUnlimitedCheck = organization.billing.limits.projects === null;
   const currentPlanLevel =
@@ -433,7 +436,15 @@ export const PricingTable = ({
             <AlertDescription>
               {t("environments.settings.billing.pending_plan_change_description")
                 .replace("{{plan}}", getCurrentCloudPlanLabel(pendingChange.targetPlan, t))
-                .replace("{{date}}", formatDate(new Date(pendingChange.effectiveAt), locale))}
+                .replace(
+                  "{{date}}",
+                  formatDateForDisplay(new Date(pendingChange.effectiveAt), locale, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    timeZone: "UTC",
+                  })
+                )}
             </AlertDescription>
             {hasBillingRights && (
               <AlertButton onClick={() => void undoPendingChange()} loading={isPlanActionPending === "undo"}>

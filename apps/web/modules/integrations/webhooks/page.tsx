@@ -1,5 +1,4 @@
 import { getSurveys } from "@/lib/survey/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
@@ -23,7 +22,6 @@ export const WebhooksPage = async (props: { params: Promise<{ environmentId: str
   ]);
 
   const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
-  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -32,7 +30,7 @@ export const WebhooksPage = async (props: { params: Promise<{ environmentId: str
       <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys} isReadOnly={isReadOnly}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
-          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} locale={locale} />
+          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
         ))}
       </WebhookTable>
     </PageContentWrapper>
