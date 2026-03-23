@@ -259,7 +259,6 @@ export function SegmentSettings({
               <ConfirmDeleteSegmentModal
                 onDelete={handleDeleteSegment}
                 open={isDeleteSegmentModalOpen}
-                segment={initialSegment}
                 setOpen={setIsDeleteSegmentModalOpen}
               />
             ) : null}
