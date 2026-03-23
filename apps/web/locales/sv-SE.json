@@ -261,6 +261,8 @@
     "invalid_file_type": "Ogiltig filtyp",
     "invite": "Bjud in",
     "invite_them": "Bjud in dem",
+    "javascript_required": "JavaScript krävs",
+    "javascript_required_description": "Formbricks kräver JavaScript för att fungera korrekt. Vänligen aktivera JavaScript i dina webbläsarinställningar för att fortsätta.",
     "key": "Nyckel",
     "label": "Etikett",
     "language": "Språk",

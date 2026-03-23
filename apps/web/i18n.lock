@@ -234,6 +234,8 @@ checksums:
     common/invalid_file_type: f0c83e7d61dbad8250abb59869af4b9e
     common/invite: 181884cea804cbde665f160811ee7ad0
     common/invite_them: d4b7aadbd3c924b04ad4fce419709f10
+    common/javascript_required: d7988e5934af4d0df54fda369c0e4fb6
+    common/javascript_required_description: 4b65f456db79af4898888a3dd034fe2f
     common/key: 3d1065ab98a1c2f1210507fd5c7bf515
     common/label: a5c71bf158481233f8215dbd38cc196b
     common/language: 277fd1a41cc237a437cd1d5e4a80463b

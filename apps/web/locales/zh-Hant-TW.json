@@ -261,6 +261,8 @@
     "invalid_file_type": "無效的檔案類型",
     "invite": "邀請",
     "invite_them": "邀請他們",
+    "javascript_required": "需要 JavaScript",
+    "javascript_required_description": "Formbricks 需要 JavaScript 才能正常運作。請在瀏覽器設定中啟用 JavaScript 以繼續使用。",
     "key": "金鑰",
     "label": "標籤",
     "language": "語言",

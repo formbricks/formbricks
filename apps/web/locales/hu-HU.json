@@ -261,6 +261,8 @@
     "invalid_file_type": "Érvénytelen fájltípus",
     "invite": "Meghívás",
     "invite_them": "Meghívó nekik",
+    "javascript_required": "JavaScript szükséges",
+    "javascript_required_description": "A Formbricks használatához JavaScript szükséges. Kérjük, engedélyezze a JavaScriptet a böngésző beállításaiban a folytatáshoz.",
     "key": "Kulcs",
     "label": "Címke",
     "language": "Nyelv",

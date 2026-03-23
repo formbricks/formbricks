@@ -261,6 +261,8 @@
     "invalid_file_type": "Недопустимый тип файла",
     "invite": "Пригласить",
     "invite_them": "Пригласить их",
+    "javascript_required": "Требуется JavaScript",
+    "javascript_required_description": "Для корректной работы Formbricks необходим JavaScript. Пожалуйста, включите JavaScript в настройках вашего браузера, чтобы продолжить.",
     "key": "Ключ",
     "label": "Метка",
     "language": "Язык",

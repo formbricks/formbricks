@@ -261,6 +261,8 @@
     "invalid_file_type": "无效 的 文件 类型",
     "invite": "邀请",
     "invite_them": "邀请 他们",
+    "javascript_required": "需要启用 JavaScript",
+    "javascript_required_description": "Formbricks 需要 JavaScript 才能正常运行。请在浏览器设置中启用 JavaScript 以继续。",
     "key": "键",
     "label": "标签",
     "language": "语言",

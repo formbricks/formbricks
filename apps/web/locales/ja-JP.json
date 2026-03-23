@@ -261,6 +261,8 @@
     "invalid_file_type": "無効なファイルタイプです",
     "invite": "招待",
     "invite_them": "招待する",
+    "javascript_required": "JavaScriptが必要です",
+    "javascript_required_description": "Formbricksを正常に動作させるには、JavaScriptが必要です。続行するには、ブラウザの設定でJavaScriptを有効にしてください。",
     "key": "キー",
     "label": "ラベル",
     "language": "言語",

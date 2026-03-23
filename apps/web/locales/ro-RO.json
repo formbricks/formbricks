@@ -261,6 +261,8 @@
     "invalid_file_type": "Tip de fișier nevalid",
     "invite": "Invită",
     "invite_them": "Invită-i",
+    "javascript_required": "JavaScript necesar",
+    "javascript_required_description": "Formbricks necesită JavaScript pentru a funcționa corect. Te rugăm să activezi JavaScript în setările browserului tău pentru a continua.",
     "key": "Cheie",
     "label": "Etichetă",
     "language": "Limba",
