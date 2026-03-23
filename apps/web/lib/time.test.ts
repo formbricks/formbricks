@@ -1,88 +1,13 @@
 import { describe, expect, test } from "vitest";
 import {
-  convertDateString,
-  convertDateTimeString,
-  convertDateTimeStringShort,
   convertDatesInObject,
-  convertTimeString,
   formatDate,
-  getTodaysDateFormatted,
   getTodaysDateTimeFormatted,
   timeSince,
   timeSinceDate,
 } from "./time";
 
 describe("Time Utilities", () => {
-  describe("convertDateString", () => {
-    test("should format date string correctly", () => {
-      expect(convertDateString("2024-03-20:12:30:00")).toBe("Mar 20, 2024");
-    });
-
-    test("should format date string with the provided locale", () => {
-      const date = new Date("2024-03-20T12:30:00");
-
-      expect(convertDateString("2024-03-20T12:30:00", "de-DE")).toBe(
-        new Intl.DateTimeFormat("de-DE", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }).format(date)
-      );
-    });
-
-    test("should return empty string for empty input", () => {
-      expect(convertDateString("")).toBe("");
-    });
-
-    test("should return null for null input", () => {
-      expect(convertDateString(null as any)).toBe(null);
-    });
-
-    test("should handle invalid date strings", () => {
-      expect(convertDateString("not-a-date")).toBe("Invalid Date");
-    });
-  });
-
-  describe("convertDateTimeString", () => {
-    test("should format date and time string correctly", () => {
-      expect(convertDateTimeString("2024-03-20T15:30:00")).toBe("Wednesday, March 20, 2024 at 3:30 PM");
-    });
-
-    test("should return empty string for empty input", () => {
-      expect(convertDateTimeString("")).toBe("");
-    });
-  });
-
-  describe("convertDateTimeStringShort", () => {
-    test("should format date and time string in short format", () => {
-      expect(convertDateTimeStringShort("2024-03-20T15:30:00")).toBe("March 20, 2024 at 3:30 PM");
-    });
-
-    test("should format date and time string in the provided locale", () => {
-      const date = new Date("2024-03-20T15:30:00");
-
-      expect(convertDateTimeStringShort("2024-03-20T15:30:00", "fr-FR")).toBe(
-        new Intl.DateTimeFormat("fr-FR", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(date)
-      );
-    });
-
-    test("should return empty string for empty input", () => {
-      expect(convertDateTimeStringShort("")).toBe("");
-    });
-  });
-
-  describe("convertTimeString", () => {
-    test("should format time string correctly", () => {
-      expect(convertTimeString("2024-03-20T15:30:45")).toBe("3:30:45 PM");
-    });
-  });
-
   describe("timeSince", () => {
     test("should format time since in English", () => {
       const now = new Date();
@@ -145,14 +70,6 @@ describe("Time Utilities", () => {
           day: "numeric",
         }).format(date)
       );
-    });
-  });
-
-  describe("getTodaysDateFormatted", () => {
-    test("should format today's date with specified separator", () => {
-      const today = new Date();
-      const expected = today.toISOString().split("T")[0].split("-").join(".");
-      expect(getTodaysDateFormatted(".")).toBe(expected);
     });
   });
 

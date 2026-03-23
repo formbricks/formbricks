@@ -1,52 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatDateWithOrdinal, getMonthName, getOrdinalDate, isValidDateString } from "./date-time";
-
-describe("getMonthName", () => {
-  test("should return correct month name for en-US", () => {
-    expect(getMonthName(0)).toBe("January");
-    expect(getMonthName(6)).toBe("July");
-    expect(getMonthName(11)).toBe("December");
-  });
-
-  test("should return correct month name for a different locale (es-ES)", () => {
-    expect(getMonthName(0, "es-ES")).toBe("enero");
-    expect(getMonthName(6, "es-ES")).toBe("julio");
-    expect(getMonthName(11, "es-ES")).toBe("diciembre");
-  });
-
-  test("should throw an error for invalid month index", () => {
-    expect(() => getMonthName(-1)).toThrow("Month index must be between 0 and 11");
-    expect(() => getMonthName(12)).toThrow("Month index must be between 0 and 11");
-  });
-});
-
-describe("getOrdinalDate", () => {
-  test('should return date with "st" for 1, 21, 31 (but not 11)', () => {
-    expect(getOrdinalDate(1)).toBe("1st");
-    expect(getOrdinalDate(21)).toBe("21st");
-    expect(getOrdinalDate(31)).toBe("31st");
-  });
-
-  test('should return date with "nd" for 2, 22 (but not 12)', () => {
-    expect(getOrdinalDate(2)).toBe("2nd");
-    expect(getOrdinalDate(22)).toBe("22nd");
-  });
-
-  test('should return date with "rd" for 3, 23 (but not 13)', () => {
-    expect(getOrdinalDate(3)).toBe("3rd");
-    expect(getOrdinalDate(23)).toBe("23rd");
-  });
-
-  test('should return date with "th" for 11, 12, 13 and others', () => {
-    expect(getOrdinalDate(4)).toBe("4th");
-    expect(getOrdinalDate(11)).toBe("11th");
-    expect(getOrdinalDate(12)).toBe("12th");
-    expect(getOrdinalDate(13)).toBe("13th");
-    expect(getOrdinalDate(15)).toBe("15th");
-    expect(getOrdinalDate(20)).toBe("20th");
-    expect(getOrdinalDate(24)).toBe("24th");
-  });
-});
+import { formatDateWithOrdinal, isValidDateString } from "./date-time";
 
 describe("isValidDateString", () => {
   test("should return true for valid YYYY-MM-DD format", () => {
