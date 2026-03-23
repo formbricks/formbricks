@@ -1,4 +1,5 @@
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 
 /**
  * Formats an attribute value for display based on its data type.
@@ -27,12 +28,11 @@ export const formatAttributeValue = (
         if (Number.isNaN(date.getTime())) {
           return String(value);
         }
-        // Use Intl.DateTimeFormat for locale-aware date formatting
-        return new Intl.DateTimeFormat(locale, {
+        return formatDateForDisplay(date, locale, {
           month: "short",
           day: "numeric",
           year: "numeric",
-        }).format(date);
+        });
       } catch {
         // If date parsing fails, return the raw value
         return String(value);

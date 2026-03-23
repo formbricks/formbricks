@@ -1,12 +1,12 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { TFunction } from "i18next";
 import { CalendarIcon, HashIcon, TagIcon } from "lucide-react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Badge } from "@/modules/ui/components/badge";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { HighlightedText } from "@/modules/ui/components/highlighted-text";
@@ -61,7 +61,15 @@ export const generateAttributeTableColumns = (
     header: t("common.created_at"),
     cell: ({ row }) => {
       const createdAt = row.original.createdAt;
-      return <span>{format(createdAt, "do 'of' MMMM, yyyy")}</span>;
+      return (
+        <span>
+          {formatDateForDisplay(createdAt, locale, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </span>
+      );
     },
   };
 

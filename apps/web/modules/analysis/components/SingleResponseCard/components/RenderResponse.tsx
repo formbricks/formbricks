@@ -3,11 +3,12 @@ import React from "react";
 import { TResponseDataValue } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
@@ -21,6 +22,7 @@ interface RenderResponseProps {
   element: TSurveyElement;
   survey: TSurvey;
   language: string | null;
+  locale: TUserLocale;
   isExpanded?: boolean;
   showId: boolean;
 }
@@ -30,6 +32,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   element,
   survey,
   language,
+  locale,
   isExpanded = true,
   showId,
 }) => {
@@ -63,9 +66,8 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyElementTypeEnum.Date:
       if (typeof responseData === "string") {
-        const parsedDate = new Date(responseData);
-
-        const formattedDate = isNaN(parsedDate.getTime()) ? responseData : formatDateWithOrdinal(parsedDate);
+        const formattedDate =
+          formatStoredDateForDisplay(responseData, element.format, locale) ?? responseData;
 
         return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDate}</p>;
       }
