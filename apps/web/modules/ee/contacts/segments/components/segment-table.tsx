@@ -4,13 +4,15 @@ import { Header, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { EditSegmentModal } from "./edit-segment-modal";
+import { buildSegmentActivitySummaryFromSegments } from "./segment-activity-utils";
 import { generateSegmentTableColumns } from "./segment-table-columns";
 
 interface SegmentTableUpdatedProps {
-  segments: TSegmentWithSurveyNames[];
+  segments: TSegmentWithSurveyRefs[];
+  allSegments: TSegmentWithSurveyRefs[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
   isReadOnly: boolean;
@@ -18,13 +20,14 @@ interface SegmentTableUpdatedProps {
 
 export function SegmentTable({
   segments,
+  allSegments,
   contactAttributeKeys,
   isContactsEnabled,
   isReadOnly,
 }: SegmentTableUpdatedProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  const [editingSegment, setEditingSegment] = useState<TSegmentWithSurveyNames | null>(null);
+  const [editingSegment, setEditingSegment] = useState<TSegmentWithSurveyRefs | null>(null);
 
   const columns = useMemo(() => {
     return generateSegmentTableColumns(t, locale);
@@ -36,7 +39,7 @@ export function SegmentTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const getHeader = (header: Header<TSegmentWithSurveyNames, unknown>) => {
+  const getHeader = (header: Header<TSegmentWithSurveyRefs, unknown>) => {
     if (header.isPlaceholder) {
       return null;
     }
@@ -137,6 +140,7 @@ export function SegmentTable({
           open={!!editingSegment}
           setOpen={(open) => !open && setEditingSegment(null)}
           currentSegment={editingSegment}
+          activitySummary={buildSegmentActivitySummaryFromSegments(editingSegment, allSegments)}
           contactAttributeKeys={contactAttributeKeys}
           segments={segments}
           isContactsEnabled={isContactsEnabled}

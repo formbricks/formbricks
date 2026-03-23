@@ -4,13 +4,15 @@ import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { timeSinceDate } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { EditSegmentModal } from "./edit-segment-modal";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 type TSegmentTableDataRowProps = {
-  currentSegment: TSegmentWithSurveyNames;
+  currentSegment: TSegmentWithSurveyRefs;
+  activitySummary: TSegmentActivitySummary;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
@@ -19,14 +21,15 @@ type TSegmentTableDataRowProps = {
 
 export const SegmentTableDataRow = ({
   currentSegment,
+  activitySummary,
   contactAttributeKeys,
   segments,
   isContactsEnabled,
   isReadOnly,
 }: TSegmentTableDataRowProps) => {
+  const { i18n } = useTranslation();
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
-  const { i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   return (
@@ -68,6 +71,7 @@ export const SegmentTableDataRow = ({
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
         currentSegment={currentSegment}
+        activitySummary={activitySummary}
         contactAttributeKeys={contactAttributeKeys}
         segments={segments}
         isContactsEnabled={isContactsEnabled}
