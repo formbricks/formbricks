@@ -29,7 +29,7 @@ export const replaceRecallInfo = (
   text: string,
   responseData: TResponseData,
   variables: TResponseVariables,
-  locale: string = "en-US"
+  languageCode: string = "en-US"
 ): string => {
   let modifiedText = text;
 
@@ -56,7 +56,7 @@ export const replaceRecallInfo = (
     // Additional value formatting if it exists
     if (value) {
       if (isValidDateString(value)) {
-        value = formatDateWithOrdinal(new Date(value), locale);
+        value = formatDateWithOrdinal(new Date(value), languageCode);
       } else if (Array.isArray(value)) {
         value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
       }
