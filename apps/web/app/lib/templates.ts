@@ -971,13 +971,13 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
-              headline: t("templates.improve_trial_conversion_question_2_headline"),
+              headline: t("templates.improve_trial_conversion_question_3_headline"),
               required: true,
               inputType: "text",
             }),
           ],
           logic: [createBlockJumpLogic(reusableElementIds[2], block6Id, "isSubmitted")],
-          buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
+          buttonLabel: t("templates.improve_trial_conversion_question_3_button_label"),
           t,
         }),
         buildBlock({
