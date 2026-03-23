@@ -266,7 +266,6 @@ export function SegmentSettings({
                 activitySummary={activitySummary}
                 onDelete={handleDeleteSegment}
                 open={isDeleteSegmentModalOpen}
-                segment={initialSegment}
                 setOpen={setIsDeleteSegmentModalOpen}
               />
             ) : null}
