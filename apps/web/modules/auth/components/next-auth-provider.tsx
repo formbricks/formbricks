@@ -9,7 +9,7 @@ interface NextAuthProviderProps {
 
 export const NextAuthProvider = ({ children, sessionMaxAge }: NextAuthProviderProps) => {
   // Refresh at 1/3 of session max age, capped at 5 minutes
-  const refetchInterval = Math.min(Math.floor(sessionMaxAge / 3), 300);
+  const refetchInterval = Math.min(Math.max(Math.floor(sessionMaxAge / 3), 60), 300);
 
   return <SessionProvider refetchInterval={refetchInterval}>{children}</SessionProvider>;
 };
