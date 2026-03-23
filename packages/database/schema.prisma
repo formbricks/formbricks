@@ -661,21 +661,23 @@ model Project {
 /// @property projects - Collection of projects owned by the organization
 /// @property billing - JSON field containing billing information
 /// @property whitelabel - Whitelabel configuration for the organization
-/// @property isAIEnabled - Controls access to AI-powered features
+/// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
+/// @property isAIDataAnalysisEnabled - Controls access to AI data analysis features that touch experience data
 model Organization {
-  id          String               @id @default(cuid())
-  createdAt   DateTime             @default(now()) @map(name: "created_at")
-  updatedAt   DateTime             @updatedAt @map(name: "updated_at")
-  name        String
-  memberships Membership[]
-  projects    Project[]
-  billing     OrganizationBilling?
+  id                      String               @id @default(cuid())
+  createdAt               DateTime             @default(now()) @map(name: "created_at")
+  updatedAt               DateTime             @updatedAt @map(name: "updated_at")
+  name                    String
+  memberships             Membership[]
+  projects                Project[]
+  billing                 OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel  Json                 @default("{}")
-  invites     Invite[]
-  isAIEnabled Boolean              @default(false)
-  teams       Team[]
-  apiKeys     ApiKey[]
+  whitelabel              Json                 @default("{}")
+  invites                 Invite[]
+  isAISmartToolsEnabled   Boolean              @default(false)
+  isAIDataAnalysisEnabled Boolean              @default(false)
+  teams                   Team[]
+  apiKeys                 ApiKey[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.

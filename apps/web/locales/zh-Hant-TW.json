@@ -1132,6 +1132,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "免費解鎖 Formbricks 的全部功能，為期 30 天。"
       },
       "general": {
+        "ai_data_analysis_enabled": "資料增強與分析（AI）",
+        "ai_data_analysis_enabled_description": "利用 AI 深入分析你的資料，建立儀表板、圖表、報告等。會處理你的體驗資料。",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "管理此組織的 AI 功能。",
+        "ai_settings_updated_successfully": "AI 設定已成功更新",
+        "ai_smart_tools_enabled": "智慧功能（AI）",
+        "ai_smart_tools_enabled_description": "AI 幫你更快完成更多事。絕不會接觸 Formbricks 收集的資料，只用於像是將問卷翻譯成其他語言等用途。",
         "bulk_invite_warning_description": "在免費方案中，所有組織成員始終會被指派「擁有者」角色。",
         "cannot_delete_only_organization": "這是您唯一的組織，無法刪除。請先建立新組織。",
         "cannot_leave_only_organization": "您無法離開此組織，因為它是您唯一的組織。請先建立新組織。",

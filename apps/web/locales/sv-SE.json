@@ -1132,6 +1132,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla kraft. Gratis i 30 dagar."
       },
       "general": {
+        "ai_data_analysis_enabled": "Dataförbättring & analys (AI)",
+        "ai_data_analysis_enabled_description": "AI för att få ut mer av din data, skapa dashboards, diagram, rapporter och mer. Använder din upplevelsedata.",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Hantera AI-drivna funktioner för den här organisationen.",
+        "ai_settings_updated_successfully": "AI-inställningarna har uppdaterats",
+        "ai_smart_tools_enabled": "Smarta funktioner (AI)",
+        "ai_smart_tools_enabled_description": "AI som hjälper dig att göra mer på kortare tid. Rör aldrig data som samlats in med Formbricks. Används bara till t.ex. att översätta enkäter till andra språk.",
         "bulk_invite_warning_description": "På gratisplanen tilldelas alla organisationsmedlemmar alltid rollen \"Ägare\".",
         "cannot_delete_only_organization": "Detta är din enda organisation, den kan inte tas bort. Skapa en ny organisation först.",
         "cannot_leave_only_organization": "Du kan inte lämna denna organisation eftersom det är din enda organisation. Skapa en ny organisation först.",

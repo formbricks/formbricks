@@ -1132,6 +1132,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Schalte die volle Power von Formbricks frei. 30 Tage kostenlos."
       },
       "general": {
+        "ai_data_analysis_enabled": "Datenanreicherung & Analyse (KI)",
+        "ai_data_analysis_enabled_description": "KI, um mehr aus deinen Daten herauszuholen, Dashboards, Diagramme, Berichte und mehr einzurichten. Greift auf deine Erfahrungsdaten zu.",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Verwalte KI-gestützte Funktionen für diese Organisation.",
+        "ai_settings_updated_successfully": "KI-Einstellungen erfolgreich aktualisiert",
+        "ai_smart_tools_enabled": "Intelligente Funktionen (KI)",
+        "ai_smart_tools_enabled_description": "KI, um dir zu helfen, in kürzerer Zeit mehr zu erreichen. Greift niemals auf mit Formbricks gesammelte Daten zu. Wird nur verwendet, um z. B. Umfragen in andere Sprachen zu übersetzen.",
         "bulk_invite_warning_description": "Bitte beachte, dass im Free-Plan alle Organisationsmitglieder automatisch die Rolle \"Owner\" zugewiesen bekommen, unabhängig von der im CSV-File angegebenen Rolle.",
         "cannot_delete_only_organization": "Das ist deine einzige Organisation, sie kann nicht gelöscht werden. Erstelle zuerst eine neue Organisation.",
         "cannot_leave_only_organization": "Du kannst diese Organisation nicht verlassen, da es deine einzige Organisation ist. Erstelle zuerst eine neue Organisation.",

@@ -1065,6 +1065,13 @@ checksums:
     environments/settings/enterprise/sso: 95e98e279bb89233d63549b202bd9112
     environments/settings/enterprise/teams: 21ab78abcba0f16c3029741563f789ea
     environments/settings/enterprise/unlock_the_full_power_of_formbricks_free_for_30_days: 104d07b63a42911c9673ceb08a4dbd43
+    environments/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
+    environments/settings/general/ai_data_analysis_enabled_description: 46d4f0bdf4ebf89e78f79cc961a2de83
+    environments/settings/general/ai_enabled: 3cb1fce89c525e754448d5bd143eb6b5
+    environments/settings/general/ai_enabled_description: e8c3e9f362588898a6cea85e18c013a1
+    environments/settings/general/ai_settings_updated_successfully: 2a6f534dc3a246ced46becd8a4a9543d
+    environments/settings/general/ai_smart_tools_enabled: 1dda984f5262c5f9120ee9a409236758
+    environments/settings/general/ai_smart_tools_enabled_description: 1ceca6707746d3ab4a530712a06d91da
     environments/settings/general/bulk_invite_warning_description: e8737a2fbd5ff353db5580d17b4b5a37
     environments/settings/general/cannot_delete_only_organization: 833cc6848b28f2694a4552b4de91a6ba
     environments/settings/general/cannot_leave_only_organization: dd8463262e4299fef7ad73512225c55b

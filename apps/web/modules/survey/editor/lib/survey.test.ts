@@ -149,7 +149,8 @@ describe("Survey Editor Library Tests", () => {
         features: {},
         usageCycleAnchor: new Date(),
       },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     };
 
     beforeEach(() => {
