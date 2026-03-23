@@ -1647,14 +1647,14 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: "What's your primary goal for using $[projectName]?",
+              headline: t("templates.identify_customer_goals_question_1_headline"),
               required: true,
               shuffleOption: "none",
               choices: [
-                "Understand my user base deeply",
-                "Identify upselling opportunities",
-                "Build the best possible product",
-                "Rule the world to make everyone breakfast brussels sprouts.",
+                t("templates.identify_customer_goals_question_1_choice_1"),
+                t("templates.identify_customer_goals_question_1_choice_2"),
+                t("templates.identify_customer_goals_question_1_choice_3"),
+                t("templates.identify_customer_goals_question_1_choice_4"),
               ],
             }),
           ],
