@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { cache as reactCache } from "react";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
@@ -24,7 +24,7 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
   ]);
 
   if (!session) {
-    throw new ResourceNotFoundError(t("common.session"), null);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!organization) {

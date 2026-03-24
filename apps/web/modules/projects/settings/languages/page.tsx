@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -17,7 +17,7 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
   const user = await getUser(session.user.id);
 
   if (!user) {
-    throw new ResourceNotFoundError(t("common.user"), session.user.id);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   return (

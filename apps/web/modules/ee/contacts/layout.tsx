@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -28,7 +28,7 @@ const ConfigLayout = async (props: {
   }
 
   if (!session) {
-    throw new ResourceNotFoundError(t("common.session"), null);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);

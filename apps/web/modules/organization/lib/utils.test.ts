@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -60,7 +60,7 @@ describe("getOrganizationAuth", () => {
   test("throws if session is missing", async () => {
     vi.mocked(getServerSession).mockResolvedValueOnce(null);
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
-    await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(getOrganizationAuth("org-1")).rejects.toThrow(AuthenticationError);
   });
 
   test("throws if organization is missing", async () => {

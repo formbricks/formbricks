@@ -237,7 +237,7 @@ export const sendResponseFinishedEmail = async (
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {
-    throw new ResourceNotFoundError(t("common.organization"), null);
+    throw new ResourceNotFoundError("Organization", null);
   }
 
   // Pre-process the element response mapping before passing to email

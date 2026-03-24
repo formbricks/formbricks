@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { TEnvironment } from "@formbricks/types/environment";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { DEFAULT_LOCALE } from "@/lib/constants";
@@ -36,12 +36,12 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
   const t = await getTranslate();
 
   if (!session) {
-    throw new ResourceNotFoundError(t("common.session"), null);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new ResourceNotFoundError(t("common.user"), session.user.id);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!responses) {

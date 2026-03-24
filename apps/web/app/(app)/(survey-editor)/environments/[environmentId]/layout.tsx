@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 
@@ -18,7 +18,7 @@ const SurveyEditorEnvironmentLayout = async (props: {
   }
 
   if (!user) {
-    throw new ResourceNotFoundError(t("common.user"), session.user.id);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const environment = await getEnvironment(params.environmentId);

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
@@ -39,7 +39,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const user = await getUser(session.user.id);
 
   if (!user) {
-    throw new ResourceNotFoundError(t("common.user"), session.user.id);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
   const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 

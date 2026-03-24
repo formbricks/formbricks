@@ -4,7 +4,12 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  DatabaseError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
@@ -51,7 +56,7 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
   }
 
   if (!session) {
-    throw new ResourceNotFoundError(t("common.session"), null);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!organization) {
@@ -274,18 +279,18 @@ export const getEnvironmentLayoutData = reactCache(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      throw new ResourceNotFoundError(t("common.session"), null);
+      throw new AuthenticationError(t("common.not_authenticated"));
     }
 
     // Verify userId matches session (safety check)
     if (session.user.id !== userId) {
-      throw new Error("User ID mismatch with session");
+      throw new AuthenticationError("User ID mismatch with session");
     }
 
     // Get user first (lightweight query needed for subsequent checks)
     const user = await getUser(userId); // 1 DB query
     if (!user) {
-      throw new ResourceNotFoundError(t("common.user"), userId);
+      throw new AuthenticationError(t("common.not_authenticated"));
     }
 
     // Authorization check before expensive data fetching

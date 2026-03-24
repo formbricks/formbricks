@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -29,7 +29,7 @@ const AccountSettingsLayout = async (props: {
   }
 
   if (!session) {
-    throw new ResourceNotFoundError(t("common.session"), null);
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   return <>{children}</>;
