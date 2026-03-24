@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributesInput } from "@formbricks/types/contact-attribute";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -164,7 +165,7 @@ export const updateContactAttributesAction = authenticatedActionClient
       // Get contact to access environmentId for revalidation
       const contact = await getContact(parsedInput.contactId);
       if (!contact) {
-        throw new Error("Contact not found");
+        throw new ResourceNotFoundError("Contact", parsedInput.contactId);
       }
 
       const result = await updateContactAttributes(parsedInput.contactId, parsedInput.attributes);

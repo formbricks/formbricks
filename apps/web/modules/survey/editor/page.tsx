@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
@@ -60,12 +61,12 @@ export const SurveyEditorPage = async (props: {
     ]);
 
   if (!projectWithTeamIds) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const organizationBilling = await getOrganizationBilling(projectWithTeamIds.organizationId);
   if (!organizationBilling) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), projectWithTeamIds.organizationId);
   }
 
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;

@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getDisplaysByContactId } from "@/lib/display/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getLocale } from "@/lingodotdev/language";
@@ -17,7 +18,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
   ]);
 
   if (!contact) {
-    throw new Error(t("environments.contacts.contact_not_found"));
+    throw new ResourceNotFoundError(t("common.contact"), contactId);
   }
 
   const [responses, displays] = await Promise.all([

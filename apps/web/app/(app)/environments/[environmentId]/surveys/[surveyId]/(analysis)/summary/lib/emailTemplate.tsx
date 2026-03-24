@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -9,11 +10,11 @@ export const getEmailTemplateHtml = async (surveyId: string, locale: string) => 
   const t = await getTranslate();
   const survey = await getSurvey(surveyId);
   if (!survey) {
-    throw new Error("Survey not found");
+    throw new ResourceNotFoundError(t("common.survey"), surveyId);
   }
   const project = await getProjectByEnvironmentId(survey.environmentId);
   if (!project) {
-    throw new Error("Workspace not found");
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const styling = getStyling(project, survey);

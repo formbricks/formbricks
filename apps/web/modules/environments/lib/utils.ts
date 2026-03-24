@@ -43,19 +43,19 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
   ]);
 
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (!environment) {
-    throw new Error(t("common.environment_not_found"));
+    throw new ResourceNotFoundError(t("common.environment"), environmentId);
   }
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new ResourceNotFoundError(t("common.session"), null);
   }
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -109,7 +109,7 @@ export const environmentIdLayoutChecks = async (environmentId: string) => {
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   return { t, session, user, organization };
@@ -274,7 +274,7 @@ export const getEnvironmentLayoutData = reactCache(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      throw new Error(t("common.session_not_found"));
+      throw new ResourceNotFoundError(t("common.session"), null);
     }
 
     // Verify userId matches session (safety check)
@@ -285,7 +285,7 @@ export const getEnvironmentLayoutData = reactCache(
     // Get user first (lightweight query needed for subsequent checks)
     const user = await getUser(userId); // 1 DB query
     if (!user) {
-      throw new Error(t("common.user_not_found"));
+      throw new ResourceNotFoundError(t("common.user"), userId);
     }
 
     // Authorization check before expensive data fetching
@@ -296,7 +296,7 @@ export const getEnvironmentLayoutData = reactCache(
 
     const relationData = await getEnvironmentWithRelations(environmentId, userId);
     if (!relationData) {
-      throw new Error(t("common.environment_not_found"));
+      throw new ResourceNotFoundError(t("common.environment"), environmentId);
     }
 
     const { environment, project, organization, environments, membership } = relationData;

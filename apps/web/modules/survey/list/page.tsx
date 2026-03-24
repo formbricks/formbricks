@@ -2,6 +2,7 @@ import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
@@ -33,7 +34,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const project = await getProjectWithTeamIdsByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
