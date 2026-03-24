@@ -241,7 +241,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
                   <CommandGroup
                     heading={
                       <p className="text-sm font-medium text-slate-600">
-                        {t(getOptionsTypeTranslationKey(data.header, t))}
+                        {getOptionsTypeTranslationKey(data.header, t)}
                       </p>
                     }>
                     {data?.option?.map((o) => (
