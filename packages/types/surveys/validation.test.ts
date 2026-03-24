@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { TI18nString } from "../i18n";
 import type { TSurveyLanguage } from "./types";
 import { findLanguageCodesForDuplicateLabels } from "./validation";
@@ -17,7 +17,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     },
   ];
 
-  it("should handle labels with undefined language properties without throwing", () => {
+  test("should handle labels with undefined language properties without throwing", () => {
     const labels: TI18nString[] = [
       { default: "Row 1", es: "Fila 1" },
       { default: "Row 2" }, // Missing 'es' property
@@ -31,7 +31,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toEqual([]);
   });
 
-  it("should detect duplicate labels when all translations are present", () => {
+  test("should detect duplicate labels when all translations are present", () => {
     const labels: TI18nString[] = [
       { default: "Option A", es: "Opción A" },
       { default: "Option B", es: "Opción B" },
@@ -43,7 +43,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).not.toContain("es");
   });
 
-  it("should detect duplicate labels in specific languages", () => {
+  test("should detect duplicate labels in specific languages", () => {
     const labels: TI18nString[] = [
       { default: "Option A", es: "Opción A" },
       { default: "Option B", es: "Opción A" }, // Duplicate in Spanish
@@ -55,7 +55,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).not.toContain("default");
   });
 
-  it("should ignore empty strings when checking duplicates", () => {
+  test("should ignore empty strings when checking duplicates", () => {
     const labels: TI18nString[] = [
       { default: "", es: "" },
       { default: "", es: "" },
@@ -66,7 +66,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toEqual([]);
   });
 
-  it("should handle labels with only whitespace", () => {
+  test("should handle labels with only whitespace", () => {
     const labels: TI18nString[] = [
       { default: "  ", es: "  " },
       { default: "   ", es: "   " },
@@ -77,7 +77,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toEqual([]);
   });
 
-  it("should trim labels before comparing for duplicates", () => {
+  test("should trim labels before comparing for duplicates", () => {
     const labels: TI18nString[] = [
       { default: "  Option A  ", es: "Opción A" },
       { default: "Option A", es: "  Opción A  " },
@@ -88,7 +88,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).toContain("es");
   });
 
-  it("should work with disabled languages", () => {
+  test("should work with disabled languages", () => {
     const languagesWithDisabled: TSurveyLanguage[] = [
       {
         default: true,
@@ -113,7 +113,7 @@ describe("findLanguageCodesForDuplicateLabels", () => {
     expect(result).not.toContain("es");
   });
 
-  it("should handle matrix row/column scenario from the bug report", () => {
+  test("should handle matrix row/column scenario from the bug report", () => {
     // Simulating the scenario where a user deletes a matrix row/column
     // and validation is triggered with some labels missing translations
     const matrixRowLabels: TI18nString[] = [
