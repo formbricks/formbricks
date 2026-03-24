@@ -363,7 +363,6 @@ checksums:
     common/selected: 9f09e059ba20c88ed34e2b4e8e032d56
     common/selected_questions: beffe92d5272d99a0022f004e6a6ad73
     common/send_test_email: 2fd3ea40199b9589132ac826a5b0f3f5
-    common/session: 4618fe0f57ca0c8db90e17eedc351bec
     common/session_not_found: e9622df3170dbfd9636403bb0c22295b
     common/settings: 8df6777277469c1fd88cc18dde2f1cc3
     common/share_feedback: f3c14bfa149fde4035b6965cb8d3e993
