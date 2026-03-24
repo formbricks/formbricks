@@ -540,7 +540,7 @@ function MultiSelect({
       />
 
       {/* Options */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         {variant === "dropdown" ? (
           <DropdownVariant
             inputId={inputId}

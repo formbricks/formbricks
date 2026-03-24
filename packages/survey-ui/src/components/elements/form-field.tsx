@@ -112,7 +112,7 @@ function FormField({
       />
 
       {/* Form Fields */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         <div className="space-y-3">
           {visibleFields.map((field) => {
