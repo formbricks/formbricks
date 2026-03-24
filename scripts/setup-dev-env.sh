@@ -60,6 +60,11 @@ read_env_value() {
     $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
       value = substr($0, index($0, "=") + 1)
       gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+
+      if ((value ~ /^".*"$/) || (value ~ /^'\''.*'\''$/)) {
+        value = substr(value, 2, length(value) - 2)
+      }
+
       print value
       exit
     }
