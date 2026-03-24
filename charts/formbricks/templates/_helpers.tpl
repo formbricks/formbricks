@@ -9,6 +9,15 @@ It also truncates the name to a maximum of 63 characters and removes trailing hy
 
 
 {{/*
+Hub resource name: base name truncated to 59 chars then "-hub" so the suffix is never lost (63 char limit).
+*/}}
+{{- define "formbricks.hubname" -}}
+{{- $base := include "formbricks.name" . | trunc 59 | trimSuffix "-" }}
+{{- printf "%s-hub" $base | trimSuffix "-" }}
+{{- end }}
+
+
+{{/*
 Define the application version to be used in labels.
 The version is taken from `.Values.deployment.image.tag` if provided, otherwise it defaults to `.Chart.Version`.
 It ensures the version only contains alphanumeric characters, underscores, dots, or hyphens, replacing any invalid characters with a hyphen.
