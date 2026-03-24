@@ -83,8 +83,8 @@ When running the stack with [Formbricks Hub](https://github.com/formbricks/hub) 
 
 | Variable         | Description                                                                                      | Required                   | Default                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------ | -------------------------- | ----------------------------------------------------- |
-| HUB_API_KEY      | API key used by the Formbricks Hub API (port 8080).                                              | required (when Hub runs)   | (e.g. `openssl rand -hex 32`)                         |
-| HUB_API_URL      | Base URL the Formbricks app uses to call Hub. Use `http://localhost:8080` locally.              | required (for app callers) | `http://localhost:8080` in local dev                  |
+| HUB_API_KEY      | API key used by the Formbricks Hub API (port 8080).                                              | required                   | (e.g. `openssl rand -hex 32`)                         |
+| HUB_API_URL      | Base URL the Formbricks app uses to call Hub. Use `http://localhost:8080` locally.              | required                   | `http://localhost:8080` in local dev                  |
 | HUB_DATABASE_URL | PostgreSQL connection URL for Hub. Omit to use the same database as Formbricks.                 | optional                   | Same as Formbricks `DATABASE_URL` (shared database)   |
 
 Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Github Discussions and we'll try our best to work out a solution with you.

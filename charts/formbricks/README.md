@@ -104,7 +104,7 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | externalSecret.secretStore.name | string | `"aws-secrets-manager"` |  |
 | formbricks.publicUrl | string | `""` |  |
 | formbricks.webappUrl | string | `""` |  |
-| hub.enabled | bool | `false` |  |
+| hub.enabled | bool | `true` |  |
 | hub.env | object | `{}` |  |
 | hub.existingSecret | string | `""` |  |
 | hub.image.pullPolicy | string | `"IfNotPresent"` |  |

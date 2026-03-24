@@ -1,4 +1,6 @@
-{{- if .Values.hub.enabled }}
+{{- if not .Values.hub.enabled }}
+{{- fail "hub.enabled=false is not supported in Formbricks 5; Hub is mandatory." }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -21,4 +23,3 @@ spec:
       port: 8080
       targetPort: 8080
       protocol: TCP
-{{- end }}

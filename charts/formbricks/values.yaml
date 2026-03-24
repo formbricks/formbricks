@@ -345,7 +345,8 @@ serviceMonitor:
 # Formbricks Hub image: ghcr.io/formbricks/hub
 ##########################################################
 hub:
-  enabled: false
+  # Hub is mandatory in Formbricks 5. Keep this enabled.
+  enabled: true
   replicas: 1
 
   image:
@@ -354,10 +355,11 @@ hub:
     tag: "1.0.0"
     pullPolicy: IfNotPresent
 
-  # Secret containing API_KEY and DATABASE_URL for Hub. Use the same app secret (or same DATABASE_URL) to share the Formbricks database.
+  # Optional override for the secret Hub reads from.
+  # Defaults to the generated app secret (<release>-app-secrets), which contains DATABASE_URL and HUB_API_KEY.
   existingSecret: ""
 
-  # Optional env vars (non-secret). Use existingSecret for API_KEY and DATABASE_URL.
+  # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
   env: {}
 
   # Migration job runs goose + river before Hub API starts (pre-install/pre-upgrade hook). Requires existingSecret with DATABASE_URL.
