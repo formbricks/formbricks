@@ -16,7 +16,7 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
   const teams = await getTeamsByProjectId(project.id);
 
   if (!teams) {
-    throw new ResourceNotFoundError(t("common.team"), null);
+    throw new ResourceNotFoundError(t("common.teams"), null);
   }
 
   return (

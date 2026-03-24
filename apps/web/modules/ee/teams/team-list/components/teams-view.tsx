@@ -33,7 +33,7 @@ export const TeamsView = async ({
   ]);
 
   if (!teams) {
-    throw new ResourceNotFoundError(t("common.team"), null);
+    throw new ResourceNotFoundError(t("common.teams"), null);
   }
 
   const buttons: [ModalButton, ModalButton] = [
