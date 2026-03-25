@@ -18,47 +18,48 @@ Formbricks currently has a 4-level hierarchy: **Organization → Project → Env
 ## Current State
 
 ```
-Organization → Project → Environment (prod/dev) → [Survey, Contact, ActionClass, Tag, Segment, Webhook, Integration, ContactAttributeKey]
+Organization
+  └── Project ("Workspace" in UI)
+        ├── Environment (production) ──→ surveys, contacts, webhooks, tags, ...
+        └── Environment (development) ──→ surveys, contacts, webhooks, tags, ...
 ```
 
+Every project always has exactly 2 environments. The only differences between them:
+- Separate data (contacts, responses, attributes, integrations, webhooks, segments, etc.)
+- Separate API keys (`ApiKeyEnvironment` grants per-environment permissions)
+- A red warning banner in the dev UI, plus an environment switcher breadcrumb
+
+Key metrics:
 - **564 files** in `apps/web` reference `environmentId`
 - **52 files** in `packages` reference `environmentId`
-- **16+ helper functions** in `apps/web/lib/utils/helper.ts` traverse Environment → Project → Org
-- **URL pattern**: `/environments/[environmentId]/...`
-- **SDK**: requires `environmentId` for init, all client APIs use `/api/v1/client/[environmentId]/...`
-- **API keys**: `ApiKeyEnvironment` grants per-environment permissions
-- **Storage**: files at `private/${environmentId}/${fileName}`
+- **68+ route directories** under `/environments/[environmentId]/`
+- **22 API endpoint directories** keyed by `[environmentId]`
+- **8 resource tables** FK to Environment: `Survey`, `Contact`, `ActionClass`, `ContactAttributeKey`, `Webhook`, `Tag`, `Segment`, `Integration`
+- **SDK** requires `environmentId` to initialize, all client APIs use `/api/v1/client/[environmentId]/...`
+- **Storage** paths: `private/${environmentId}/${fileName}`
 
 ---
 
-## Phase 1: Environment Resolution Abstraction (PR 1 — Small, Low Risk)
-
-Create a single indirection point so all environment lookups can later be swapped transparently.
-
-**Create**: `apps/web/lib/environment/resolver.ts`
-- `resolveToProjectId(environmentIdOrProjectId: string): Promise<string>` — tries Environment table first, falls back to Project table
-- `resolveEnvironmentToProject(environmentId: string): Promise<{ projectId: string; environmentId: string }>`
-
-**Modify**: `apps/web/lib/utils/helper.ts`
-- Update all 16+ helper functions to use the resolver instead of direct `getEnvironment()` calls
-
----
-
-## Phase 2: Add `projectId` Column to All Environment-Owned Models (PR 2 — Small, Low Risk)
+## Phase 1: Add `projectId` Column to All Environment-Owned Models (PR 1 — Small, Low Risk)
 
 Add an **optional** `projectId` column alongside the existing `environmentId` on every model that currently only references Environment.
 
+**Why**: Today, Survey has `environmentId` pointing to Environment, and you have to join through Environment to reach Project. We need Survey to point directly to Project. But we can't just switch the FK in one shot — that would break everything. So we add a new nullable `projectId` column alongside the existing `environmentId`. No code changes, no runtime impact. Just schema preparation.
+
 **Modify**: `packages/database/schema.prisma`
-- Add `projectId String?` + FK + index to: `Survey`, `Contact`, `ActionClass`, `ContactAttributeKey`, `Webhook`, `Tag`, `Segment`, `Integration`
+- Add `projectId String?` + FK to Project + index to: `Survey`, `Contact`, `ActionClass`, `ContactAttributeKey`, `Webhook`, `Tag`, `Segment`, `Integration`
+- Add reverse relations on the `Project` model
 - New Prisma migration file
 
 No code changes. No runtime behavior change. All new columns are NULL.
 
 ---
 
-## Phase 3: Backfill `projectId` (PR 3 — Small, Medium Risk)
+## Phase 2: Backfill `projectId` (PR 2 — Small, Medium Risk)
 
 Data migration to populate `projectId` on every existing row.
+
+**Why**: The new `projectId` columns are all NULL. We need to populate them by joining through the Environment table: `Survey.environmentId → Environment.id → Environment.projectId`. After this, every row has both `environmentId` (old) and `projectId` (new) filled in, but the app still only reads `environmentId`.
 
 ```sql
 UPDATE "Survey" s SET "projectId" = e."projectId"
@@ -66,35 +67,54 @@ FROM "Environment" e WHERE s."environmentId" = e."id" AND s."projectId" IS NULL;
 -- Repeat for all 8 tables
 ```
 
-**Create**: Migration script (batched for large DBs)
+**Create**: Migration script (idempotent — only updates rows where `projectId IS NULL`)
 
 App behavior unchanged. New columns now populated but not yet read.
 
 ---
 
-## Phase 4: Dual-Write (PR 4 — Large, Medium Risk)
+## Phase 3: Dual-Write (PR 3 — Large, Medium Risk)
 
 All create/update operations write both `environmentId` AND `projectId`.
 
+**Why**: New rows created after the backfill would still have `projectId = NULL` because the app code doesn't know about the new column yet. We update every `prisma.survey.create(...)`, `prisma.contact.create(...)`, etc. to write both `environmentId` and `projectId`. Now every new row gets both values. Old code still reads `environmentId` — nothing breaks.
+
 **Key files to modify**:
-- `apps/web/lib/survey/service.ts` — `createSurvey`, `updateSurvey`
-- `apps/web/lib/environment/service.ts` — `createEnvironment`
+- `apps/web/lib/survey/service.ts` — `createSurvey`
+- `apps/web/lib/environment/service.ts` — `createEnvironment` (creates default ContactAttributeKeys)
 - `apps/web/modules/projects/settings/lib/project.ts` — `createProject`
 - `apps/web/modules/survey/list/lib/survey.ts` — `copySurveyToOtherEnvironment`
-- All ActionClass, Contact, Webhook, Tag, Segment, Integration creation functions
-- All management API routes that create resources
+- `apps/web/modules/survey/components/template-list/lib/survey.ts` — `createSurvey`
+- `apps/web/lib/actionClass/service.ts` — `createActionClass`
+- `apps/web/modules/survey/editor/lib/action-class.ts` — `createActionClass`
+- `apps/web/modules/ee/contacts/lib/contacts.ts` — `processCsvRecord`, `createMissingAttributeKeys`
+- `apps/web/modules/ee/contacts/api/v2/management/contacts/lib/contact.ts` — `createContact`
+- `apps/web/app/api/v1/client/[environmentId]/displays/lib/display.ts` — `createDisplay` (creates contacts)
+- `apps/web/modules/ee/contacts/lib/contact-attribute-keys.ts` — `createContactAttributeKey`
+- `apps/web/modules/api/v2/management/contact-attribute-keys/lib/contact-attribute-key.ts` — `createContactAttributeKey`
+- `apps/web/modules/ee/contacts/api/v1/management/contact-attribute-keys/lib/contact-attribute-keys.ts` — `createContactAttributeKey`
+- `apps/web/modules/integrations/webhooks/lib/webhook.ts` — `createWebhook`
+- `apps/web/modules/api/v2/management/webhooks/lib/webhook.ts` — `createWebhook`
+- `apps/web/app/api/v1/webhooks/lib/webhook.ts` — `createWebhook`
+- `apps/web/lib/tag/service.ts` — `createTag`
+- `apps/web/modules/ee/contacts/segments/lib/segments.ts` — `createSegment`, `cloneSegment`, `resetSegmentInSurvey`
+- `apps/web/lib/integration/service.ts` — `createOrUpdateIntegration`
 
 Pattern:
 ```typescript
-const projectId = await resolveToProjectId(environmentId);
+// Resolve environmentId to projectId using existing getEnvironment()
+const environment = await getEnvironment(environmentId);
+const projectId = environment.projectId;
 await prisma.survey.create({ data: { environmentId, projectId, ...rest } });
 ```
 
 ---
 
-## Phase 5: Switch Internal Reads to `projectId` (PR 5 — Very Large, High Risk)
+## Phase 4: Switch Internal Reads to `projectId` (PR 4 — Very Large, High Risk)
 
 Change internal (non-API) queries from `WHERE environmentId = ?` to `WHERE projectId = ?`.
+
+**Why**: This is the actual migration. Every query that says `WHERE environmentId = X` changes to `WHERE projectId = X`. Functions like `getSurveys(environmentId)` become `getSurveys(projectId)`. The layout at `/environments/[environmentId]/layout.tsx` resolves the environmentId from the URL to a projectId early on and passes projectId downstream. After this phase, the app internally thinks in terms of projects, not environments, even though URLs still say `[environmentId]`.
 
 **Key files**:
 - `apps/web/modules/survey/list/lib/survey.ts` — `getSurveys(environmentId)` → `getSurveys(projectId)`
@@ -110,13 +130,22 @@ URL still has `[environmentId]`. Each page resolves `environmentId → projectId
 
 ---
 
-## Phase 6: Client API Backwards Compatibility (PR 6 — Medium, Medium Risk)
+## Phase 5: Client API Backwards Compatibility (PR 5 — Medium, Medium Risk)
 
 Make `/api/v1/client/[environmentId]/...` and `/api/v2/client/[environmentId]/...` accept either an `environmentId` or a `projectId`.
 
-**Add resolver at top of each route handler**:
+**Why**: The SDK sends requests to `/api/v1/client/[environmentId]/...`. Existing deployed SDKs will keep sending environmentIds. New SDKs will send projectIds. Each route handler needs to accept either and resolve to a projectId internally. This ensures old SDK versions don't break.
+
+**Add fallback resolution at top of each route handler**:
 ```typescript
-const projectId = await resolveToProjectId(params.environmentId);
+// Try Environment table first, fall back to Project table
+let projectId: string;
+const environment = await prisma.environment.findUnique({ where: { id: params.environmentId } });
+if (environment) {
+  projectId = environment.projectId;
+} else {
+  projectId = params.environmentId; // caller passed a projectId directly
+}
 ```
 
 **Files**:
@@ -127,11 +156,11 @@ const projectId = await resolveToProjectId(params.environmentId);
 - `apps/web/app/api/v1/client/[environmentId]/user/route.ts`
 - `apps/web/app/api/v2/client/[environmentId]/` — all routes
 
-**Cache keys**: Normalize to `projectId` as canonical key in `packages/cache/src/cache-keys.ts`.
-
 ---
 
-## Phase 7: Management API + API Key Migration (PR 7 — Medium, Medium Risk)
+## Phase 6: Management API + API Key Migration (PR 6 — Medium, Medium Risk)
+
+**Why**: The `ApiKeyEnvironment` model grants per-environment permissions. API keys used by integrations (Zapier, Make, etc.) reference environmentIds. These need to work at the project level. The management API endpoints that accept `environmentId` in request bodies need to also accept `projectId`.
 
 - Modify `ApiKeyEnvironment` to also support project-level permissions (or add `projectId` to the model)
 - Update `apps/web/app/api/v1/auth.ts` — `authenticateRequest` resolves environment permissions to project
@@ -140,7 +169,9 @@ const projectId = await resolveToProjectId(params.environmentId);
 
 ---
 
-## Phase 8: Storage Path Migration (PR 8 — Medium, Medium Risk)
+## Phase 7: Storage Path Migration (PR 7 — Medium, Medium Risk)
+
+**Why**: Uploaded files are stored at paths like `private/{environmentId}/{fileName}`. New uploads should use `{projectId}/...`, but old files still live at the old paths. Downloads need to check both locations for backward compatibility.
 
 - New uploads use `{projectId}/{accessType}/{fileName}`
 - Downloads check both `{projectId}/...` and `{environmentId}/...` paths for backwards compat
@@ -149,7 +180,9 @@ const projectId = await resolveToProjectId(params.environmentId);
 
 ---
 
-## Phase 9: Dev Environment Data Migration (PR 9 — Large, High Risk)
+## Phase 8: Dev Environment Data Migration (PR 8 — Large, High Risk)
+
+**Why**: Currently each project has a prod and dev environment. After the migration, there's no "environment" concept — just projects. Dev environments with no data can be discarded. Dev environments with data need to be promoted into new standalone projects so that data isn't lost.
 
 For each Project with a development Environment that has data:
 1. Create new Project named `{name} (Dev)` in the same Organization
@@ -163,7 +196,9 @@ For development environments with NO data: leave as-is (will be cleaned up later
 
 ---
 
-## Phase 10: New `/workspaces/[projectId]/` Routes + Redirects (PR 10 — Very Large, High Risk)
+## Phase 9: New `/workspaces/[projectId]/` Routes + Redirects (PR 9 — Very Large, High Risk)
+
+**Why**: The URL currently says `/environments/[environmentId]/surveys/...`. After the migration, it should say `/workspaces/[projectId]/surveys/...`. This phase creates the new route group mirroring the old structure, removes the environment switcher breadcrumb, and adds redirects so old bookmarked URLs still work.
 
 - Create `/apps/web/app/(app)/workspaces/[projectId]/` route group mirroring the environments structure
 - New layout resolves `projectId` directly
@@ -175,7 +210,9 @@ For development environments with NO data: leave as-is (will be cleaned up later
 
 ---
 
-## Phase 11: Make `projectId` NOT NULL (PR 11 — Small, Low Risk)
+## Phase 10: Make `projectId` NOT NULL (PR 10 — Small, Low Risk)
+
+**Why**: At this point, every row has `projectId` populated (backfill + dual-write), and all reads use `projectId`. Now we can safely make it required in the schema. This is a safety net — the DB will reject any row that somehow doesn't have a projectId.
 
 ```sql
 ALTER TABLE "Survey" ALTER COLUMN "projectId" SET NOT NULL;
@@ -186,7 +223,9 @@ Pre-check: verify no NULL values remain.
 
 ---
 
-## Phase 12: JS SDK Update (PR 12 — Medium, Low Risk)
+## Phase 11: JS SDK Update (PR 11 — Medium, Low Risk)
+
+**Why**: Add `workspaceId` as the new init parameter. `environmentId` keeps working as a deprecated alias. Existing integrations don't break.
 
 - `packages/js-core/src/types/config.ts` — add `workspaceId` to `TConfigInput`
 - `packages/js-core/src/lib/common/setup.ts` — accept `workspaceId`, fall back to `environmentId`
@@ -223,15 +262,14 @@ After full migration:
 
 | PR | Phase | Description | Size | Risk |
 |----|-------|-------------|------|------|
-| 1 | 1 | Environment resolution abstraction | S | Low |
-| 2 | 2 | Add nullable `projectId` columns | S | Low |
-| 3 | 3 | Backfill `projectId` data migration | S | Med |
-| 4 | 4 | Dual-write `projectId` on all creates | L | Med |
-| 5 | 5 | Switch reads to `projectId` | XL | High |
-| 6 | 6 | Client API backwards compat | M | Med |
-| 7 | 7 | Management API + API key migration | M | Med |
-| 8 | 8 | Storage path migration | M | Med |
-| 9 | 9 | Dev environment → workspace promotion | L | High |
-| 10 | 10 | New workspace routes + redirects | XL | High |
-| 11 | 11 | Make `projectId` NOT NULL | S | Low |
-| 12 | 12 | JS SDK `workspaceId` support | M | Low |
+| 1 | 1 | Add nullable `projectId` columns | S | Low |
+| 2 | 2 | Backfill `projectId` data migration | S | Med |
+| 3 | 3 | Dual-write `projectId` on all creates | L | Med |
+| 4 | 4 | Switch reads to `projectId` | XL | High |
+| 5 | 5 | Client API backwards compat | M | Med |
+| 6 | 6 | Management API + API key migration | M | Med |
+| 7 | 7 | Storage path migration | M | Med |
+| 8 | 8 | Dev environment → workspace promotion | L | High |
+| 9 | 9 | New workspace routes + redirects | XL | High |
+| 10 | 10 | Make `projectId` NOT NULL | S | Low |
+| 11 | 11 | JS SDK `workspaceId` support | M | Low |
