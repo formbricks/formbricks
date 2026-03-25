@@ -1,9 +1,9 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { resolveEnvironmentToProject } from "@/lib/environment/resolver";
 import {
   getActionClass,
   getApiKey,
   getContact,
-  getEnvironment,
   getIntegration,
   getInvite,
   getLanguage,
@@ -62,12 +62,8 @@ export const getOrganizationIdFromProjectId = async (projectId: string) => {
 };
 
 export const getOrganizationIdFromEnvironmentId = async (environmentId: string) => {
-  const environment = await getEnvironment(environmentId);
-  if (!environment) {
-    throw new ResourceNotFoundError("environment", environmentId);
-  }
-
-  return await getOrganizationIdFromProjectId(environment.projectId);
+  const { projectId } = await resolveEnvironmentToProject(environmentId);
+  return await getOrganizationIdFromProjectId(projectId);
 };
 
 export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
@@ -195,12 +191,8 @@ export const getOrganizationIdFromQuotaId = async (quotaId: string) => {
 
 // project id helpers
 export const getProjectIdFromEnvironmentId = async (environmentId: string) => {
-  const environment = await getEnvironment(environmentId);
-  if (!environment) {
-    throw new ResourceNotFoundError("environment", environmentId);
-  }
-
-  return environment.projectId;
+  const { projectId } = await resolveEnvironmentToProject(environmentId);
+  return projectId;
 };
 
 export const getProjectIdFromSurveyId = async (surveyId: string) => {
