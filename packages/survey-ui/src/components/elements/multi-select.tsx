@@ -145,7 +145,7 @@ function DropdownVariant({
   searchPlaceholder,
   searchNoResultsText,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
-  const handleOptionToggle = (optionId: string) => {
+  const handleOptionToggle = (optionId: string): void => {
     if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
     } else {
