@@ -1974,7 +1974,7 @@ describe("organization-billing", () => {
       ],
     });
 
-    await reconcileCloudStripeSubscriptionsForOrganization("org_1", "evt_123");
+    await reconcileCloudStripeSubscriptionsForOrganization("org_1");
 
     expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_hobby", { prorate: false });
     expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
