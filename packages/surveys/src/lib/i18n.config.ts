@@ -43,6 +43,8 @@ i18n
       "uz",
       "zh-Hans",
     ],
+    // Allow locale-specific codes (e.g., "fr-FR") to match base languages (e.g., "fr")
+    nonExplicitSupportedLngs: true,
 
     resources: {
       ar: { translation: arTranslations },
