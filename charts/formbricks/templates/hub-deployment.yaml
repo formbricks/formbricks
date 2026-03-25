@@ -30,6 +30,22 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
+      initContainers:
+        - name: hub-migrate
+          image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
+          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          command:
+            - sh
+            - -c
+            - |
+              /usr/local/bin/goose -dir /app/migrations postgres "$DATABASE_URL" up && \
+              /usr/local/bin/river migrate-up --database-url "$DATABASE_URL"
+          envFrom:
+            - secretRef:
+                name: {{ include "formbricks.hubSecretName" . }}
       containers:
         - name: hub
           image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
