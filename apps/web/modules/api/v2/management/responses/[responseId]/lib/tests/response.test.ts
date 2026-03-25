@@ -184,6 +184,7 @@ describe("Response Lib", () => {
                   updatedAt: true,
                   name: true,
                   environmentId: true,
+                  projectId: true,
                 },
               },
             },

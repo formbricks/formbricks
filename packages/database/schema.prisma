@@ -126,7 +126,7 @@ model ContactAttributeKey {
 
   @@unique([key, environmentId])
   @@index([environmentId, createdAt])
-  @@index([projectId])
+  @@index([projectId, createdAt])
 }
 
 /// Represents a person or user who can receive and respond to surveys.
@@ -427,7 +427,7 @@ model Survey {
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
-  @@index([projectId])
+  @@index([projectId, updatedAt])
 }
 
 /// Represents a quota configuration for a survey.
@@ -529,7 +529,7 @@ model ActionClass {
   @@unique([key, environmentId])
   @@unique([name, environmentId])
   @@index([environmentId, createdAt])
-  @@index([projectId])
+  @@index([projectId, createdAt])
 }
 
 enum EnvironmentType {

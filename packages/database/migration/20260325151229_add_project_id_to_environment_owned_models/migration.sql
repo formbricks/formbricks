@@ -23,13 +23,13 @@ ALTER TABLE "Tag" ADD COLUMN "projectId" TEXT;
 ALTER TABLE "Webhook" ADD COLUMN "projectId" TEXT;
 
 -- CreateIndex
-CREATE INDEX "ActionClass_projectId_idx" ON "ActionClass"("projectId");
+CREATE INDEX "ActionClass_projectId_createdAt_idx" ON "ActionClass"("projectId", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "Contact_projectId_idx" ON "Contact"("projectId");
 
 -- CreateIndex
-CREATE INDEX "ContactAttributeKey_projectId_idx" ON "ContactAttributeKey"("projectId");
+CREATE INDEX "ContactAttributeKey_projectId_createdAt_idx" ON "ContactAttributeKey"("projectId", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "Integration_projectId_idx" ON "Integration"("projectId");
@@ -38,7 +38,7 @@ CREATE INDEX "Integration_projectId_idx" ON "Integration"("projectId");
 CREATE INDEX "Segment_projectId_idx" ON "Segment"("projectId");
 
 -- CreateIndex
-CREATE INDEX "Survey_projectId_idx" ON "Survey"("projectId");
+CREATE INDEX "Survey_projectId_updatedAt_idx" ON "Survey"("projectId", "updatedAt");
 
 -- CreateIndex
 CREATE INDEX "Tag_projectId_idx" ON "Tag"("projectId");
