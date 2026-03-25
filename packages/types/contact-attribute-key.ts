@@ -19,6 +19,7 @@ export const ZContactAttributeKey = z.object({
   type: ZContactAttributeKeyType,
   dataType: ZContactAttributeDataType.prefault("string"),
   environmentId: z.string(),
+  projectId: z.string().nullable(),
 });
 
 export type TContactAttributeKey = z.infer<typeof ZContactAttributeKey>;

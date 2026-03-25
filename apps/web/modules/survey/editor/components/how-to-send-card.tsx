@@ -49,6 +49,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         isPrivate: true,
         title: localSurvey.id,
         environmentId: environment.id,
+        projectId: null,
         surveys: [localSurvey.id],
         filters: [],
         createdAt: new Date(),

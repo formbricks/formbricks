@@ -344,6 +344,7 @@ export const ZSegment = z.object({
   isPrivate: z.boolean().prefault(true),
   filters: ZSegmentFilters,
   environmentId: z.string(),
+  projectId: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   surveys: z.array(z.string()),
