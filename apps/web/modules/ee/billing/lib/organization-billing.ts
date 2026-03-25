@@ -1320,7 +1320,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
           });
         } catch (err) {
           if (err instanceof Stripe.errors.StripeInvalidRequestError && err.statusCode === 404) {
-            logger.info(
+            logger.warn(
               { subscriptionId: subscription.id, organizationId },
               "Subscription already deleted, skipping cancel"
             );
