@@ -1313,11 +1313,22 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     );
 
     await Promise.all(
-      hobbySubscriptions.map(({ subscription }) =>
-        client.subscriptions.cancel(subscription.id, {
-          prorate: false,
-        })
-      )
+      hobbySubscriptions.map(async ({ subscription }) => {
+        try {
+          await client.subscriptions.cancel(subscription.id, {
+            prorate: false,
+          });
+        } catch (err) {
+          if (err instanceof Stripe.errors.StripeInvalidRequestError && err.statusCode === 404) {
+            logger.info(
+              { subscriptionId: subscription.id, organizationId },
+              "Subscription already deleted, skipping cancel"
+            );
+            return;
+          }
+          throw err;
+        }
+      })
     );
     return;
   }
