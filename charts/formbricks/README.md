@@ -147,7 +147,7 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | postgresql.fullnameOverride | string | `"formbricks-postgresql"` |  |
 | postgresql.global.security.allowInsecureImages | bool | `true` |  |
 | postgresql.image.repository | string | `"pgvector/pgvector"` |  |
-| postgresql.image.tag | string | `"pg18"` |  |
+| postgresql.image.tag | string | `"pg17"` |  |
 | postgresql.primary.containerSecurityContext.enabled | bool | `true` |  |
 | postgresql.primary.containerSecurityContext.readOnlyRootFilesystem | bool | `false` |  |
 | postgresql.primary.containerSecurityContext.runAsUser | int | `1001` |  |
@@ -183,4 +183,3 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | serviceMonitor.endpoints[0].interval | string | `"5s"` |  |
 | serviceMonitor.endpoints[0].path | string | `"/metrics"` |  |
 | serviceMonitor.endpoints[0].port | string | `"metrics"` |  |
-
