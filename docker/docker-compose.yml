@@ -275,8 +275,6 @@ services:
         condition: service_completed_successfully
       postgres:
         condition: service_healthy
-    ports:
-      - "8080:8080"
     environment:
       API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
