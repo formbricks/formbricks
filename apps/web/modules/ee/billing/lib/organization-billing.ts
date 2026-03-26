@@ -455,11 +455,7 @@ const resolvePendingChangeEffectiveAt = (
   return currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 };
 
-const ensureHobbySubscription = async (
-  organizationId: string,
-  customerId: string,
-  idempotencySuffix: string
-): Promise<void> => {
+const ensureHobbySubscription = async (organizationId: string, customerId: string): Promise<void> => {
   if (!stripeClient) return;
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
@@ -469,7 +465,7 @@ const ensureHobbySubscription = async (
       items: hobbyItems,
       metadata: { organizationId },
     },
-    { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${idempotencySuffix}` }
+    { idempotencyKey: `ensure-hobby-subscription-${organizationId}` }
   );
 };
 
@@ -1264,8 +1260,7 @@ export const findOrganizationIdByStripeCustomerId = async (customerId: string): 
 };
 
 export const reconcileCloudStripeSubscriptionsForOrganization = async (
-  organizationId: string,
-  idempotencySuffix = "reconcile"
+  organizationId: string
 ): Promise<void> => {
   const client = stripeClient;
   if (!IS_FORMBRICKS_CLOUD || !client) return;
@@ -1332,7 +1327,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     });
 
     if (freshSubscriptions.data.length === 0) {
-      await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+      await ensureHobbySubscription(organizationId, customerId);
     }
   }
 };
@@ -1340,6 +1335,6 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
 export const ensureCloudStripeSetupForOrganization = async (organizationId: string): Promise<void> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
   await ensureStripeCustomerForOrganization(organizationId);
-  await reconcileCloudStripeSubscriptionsForOrganization(organizationId, "bootstrap");
+  await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
   await syncOrganizationBillingFromStripe(organizationId);
 };
