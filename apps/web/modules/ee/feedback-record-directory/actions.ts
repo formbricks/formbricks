@@ -91,7 +91,11 @@ export const updateFeedbackRecordDirectoryAction = authenticatedActionClient
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.feedbackRecordDirectoryId = parsedInput.directoryId;
       const oldObject = await getFeedbackRecordDirectoryDetails(parsedInput.directoryId);
-      const result = await updateFeedbackRecordDirectory(parsedInput.directoryId, parsedInput.data);
+      const result = await updateFeedbackRecordDirectory(
+        parsedInput.directoryId,
+        organizationId,
+        parsedInput.data
+      );
       ctx.auditLoggingCtx.oldObject = oldObject;
       ctx.auditLoggingCtx.newObject = await getFeedbackRecordDirectoryDetails(parsedInput.directoryId);
       return result;

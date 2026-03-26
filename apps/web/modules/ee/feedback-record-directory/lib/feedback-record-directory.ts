@@ -218,10 +218,11 @@ const buildProjectAssignmentPayload = async (
  * unassigned projects via `deleteMany` on the join table and upserts new/existing assignments.
  *
  * @param directoryId - The ID of the directory to update.
+ * @param organizationId - The organization that owns the directory (avoids an extra fetch).
  * @param data - The partial update payload. All fields are optional.
  * @returns `true` on successful update.
  * @throws {ValidationError} If the inputs fail validation.
- * @throws {ResourceNotFoundError} If the directory does not exist.
+ * @throws {ResourceNotFoundError} If the directory does not exist (Prisma P2025).
  * @throws {InvalidInputError} If any specified project does not belong to the directory's organization,
  *   or if the name conflicts with an existing directory in the same organization.
  * @throws {DatabaseError} If a Prisma database error occurs.
@@ -229,23 +230,13 @@ const buildProjectAssignmentPayload = async (
  */
 export const updateFeedbackRecordDirectory = async (
   directoryId: string,
+  organizationId: string,
   data: TFeedbackRecordDirectoryUpdateInput
 ): Promise<boolean> => {
-  validateInputs([directoryId, ZId], [data, ZFeedbackRecordDirectoryUpdateInput]);
+  validateInputs([directoryId, ZId], [organizationId, ZId], [data, ZFeedbackRecordDirectoryUpdateInput]);
 
   try {
     const { name, projectIds, isArchived } = data;
-
-    const directory = await prisma.feedbackRecordDirectory.findUnique({
-      where: { id: directoryId },
-      select: {
-        organizationId: true,
-      },
-    });
-
-    if (!directory) {
-      throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
-    }
 
     const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {};
 
@@ -265,7 +256,7 @@ export const updateFeedbackRecordDirectory = async (
         prisma,
         directoryId,
         projectIds,
-        directory.organizationId,
+        organizationId,
         currentProjectIds
       );
     }
@@ -280,6 +271,9 @@ export const updateFeedbackRecordDirectory = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
+      }
+      if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
+        throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
       }
       throw new DatabaseError(error.message);
     }
