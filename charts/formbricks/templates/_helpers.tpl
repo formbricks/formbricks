@@ -9,6 +9,15 @@ It also truncates the name to a maximum of 63 characters and removes trailing hy
 
 
 {{/*
+Hub resource name: base name truncated to 59 chars then "-hub" so the suffix is never lost (63 char limit).
+*/}}
+{{- define "formbricks.hubname" -}}
+{{- $base := include "formbricks.name" . | trunc 59 | trimSuffix "-" }}
+{{- printf "%s-hub" $base | trimSuffix "-" }}
+{{- end }}
+
+
+{{/*
 Define the application version to be used in labels.
 The version is taken from `.Values.deployment.image.tag` if provided, otherwise it defaults to `.Chart.Version`.
 It ensures the version only contains alphanumeric characters, underscores, dots, or hyphens, replacing any invalid characters with a hyphen.
@@ -85,9 +94,17 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- default .Release.Namespace .Values.namespaceOverride -}}
 {{- end -}}
 
+{{- define "formbricks.appSecretName" -}}
+{{- printf "%s-app-secrets" (include "formbricks.name" .) -}}
+{{- end }}
+
+{{- define "formbricks.hubSecretName" -}}
+{{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
+{{- end }}
+
 
 {{- define "formbricks.postgresAdminPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if and $secret (index $secret.data "POSTGRES_ADMIN_PASSWORD") }}
     {{- index $secret.data "POSTGRES_ADMIN_PASSWORD" | b64dec -}}
 {{- else }}
@@ -96,7 +113,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.postgresUserPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if and $secret (index $secret.data "POSTGRES_USER_PASSWORD") }}
     {{- index $secret.data "POSTGRES_USER_PASSWORD" | b64dec -}}
 {{- else }}
@@ -105,7 +122,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.redisPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if and $secret (index $secret.data "REDIS_PASSWORD") }}
     {{- index $secret.data "REDIS_PASSWORD" | b64dec -}}
 {{- else }}
@@ -114,7 +131,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.cronSecret" -}}	
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}	
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}	
 {{- if $secret }}	
     {{- index $secret.data "CRON_SECRET" | b64dec -}}	
 {{- else }}	
@@ -123,7 +140,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.encryptionKey" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if $secret }}
     {{- index $secret.data "ENCRYPTION_KEY" | b64dec -}}
 {{- else }}
@@ -132,9 +149,18 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.nextAuthSecret" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if $secret }}
     {{- index $secret.data "NEXTAUTH_SECRET" | b64dec -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.hubApiKey" -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
+{{- if and $secret (index $secret.data "HUB_API_KEY") }}
+    {{- index $secret.data "HUB_API_KEY" | b64dec -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}

@@ -341,6 +341,43 @@ serviceMonitor:
       port: metrics
 
 ##########################################################
+# Hub API Configuration
+# Formbricks Hub image: ghcr.io/formbricks/hub
+##########################################################
+hub:
+  # Hub is mandatory in Formbricks 5. Keep this enabled.
+  enabled: true
+  replicas: 1
+
+  image:
+    repository: "ghcr.io/formbricks/hub"
+    # Pin to a semver tag for reproducible deployments; update on each Hub release.
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  # Optional override for the secret Hub reads from.
+  # Defaults to the generated app secret (<release>-app-secrets), which contains DATABASE_URL and HUB_API_KEY.
+  # If you set this, the custom secret must provide DATABASE_URL and HUB_API_KEY.
+  existingSecret: ""
+
+  # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
+  env: {}
+
+  # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
+  # Fresh installs run the same migrations through the Hub deployment init container.
+  migration:
+    ttlSecondsAfterFinished: 300
+    backoffLimit: 3
+    activeDeadlineSeconds: 900
+
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+##########################################################
 # PostgreSQL Configuration
 ##########################################################
 postgresql:
@@ -352,7 +389,7 @@ postgresql:
   fullnameOverride: "formbricks-postgresql"
   image:
     repository: pgvector/pgvector
-    tag: 0.8.0-pg17
+    tag: pg17
   auth:
     username: formbricks
     database: formbricks
