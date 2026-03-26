@@ -21,6 +21,7 @@ import {
 } from "@formbricks/types/surveys/compound-fields";
 import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
@@ -131,7 +132,7 @@ export const RecallItemSelect = ({
         const compoundFields = getCompoundFields(element.type);
         if (compoundFields) {
           // For compound elements (contactInfo, address), show individual sub-fields
-          const headline = element.headline[selectedLanguageCode] || element.id;
+          const headline = getTextContent(element.headline[selectedLanguageCode] || element.id);
           compoundFields.forEach((fieldName) => {
             const subFieldId = `${element.id}.${fieldName}`;
             // Only include visible sub-fields that aren't already recalled

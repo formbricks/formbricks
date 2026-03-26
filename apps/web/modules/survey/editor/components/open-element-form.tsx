@@ -14,6 +14,7 @@ import {
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -81,7 +82,7 @@ export const OpenElementForm = ({
       const el = allElements[i];
       const compoundFields = getCompoundFields(el.type);
       if (compoundFields) {
-        const headline = el.headline[selectedLanguageCode] || el.id;
+        const headline = getTextContent(el.headline[selectedLanguageCode] || el.id);
         for (const fieldName of compoundFields) {
           const fieldConfig = (el as Record<string, any>)[fieldName];
           if (fieldConfig?.show) {
@@ -93,7 +94,7 @@ export const OpenElementForm = ({
         }
       }
       if (el.type === TSurveyElementTypeEnum.OpenText) {
-        const headline = el.headline[selectedLanguageCode] || el.id;
+        const headline = getTextContent(el.headline[selectedLanguageCode] || el.id);
         sources.push({ id: el.id, label: headline });
       }
     }

@@ -7,6 +7,7 @@ import {
   COMPOUND_FIELD_LABELS,
   getCompoundFields,
 } from "@formbricks/types/surveys/compound-fields";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import {
   TSurveyAddressElement,
   TSurveyContactInfoElement,
@@ -123,7 +124,8 @@ export const ElementToggleTable = ({
       const el = allElements[i];
       const compoundFields = getCompoundFields(el.type);
       if (compoundFields) {
-        const headline = el.headline[selectedLanguageCode] || el.id;
+        const rawHeadline = el.headline[selectedLanguageCode] || el.id;
+        const headline = getTextContent(rawHeadline);
         for (const fieldName of compoundFields) {
           const fieldConfig = (el as Record<string, any>)[fieldName];
           if (fieldConfig?.show) {
@@ -136,8 +138,8 @@ export const ElementToggleTable = ({
       }
       // Also allow piping from openText questions
       if (el.type === TSurveyElementTypeEnum.OpenText) {
-        const headline = el.headline[selectedLanguageCode] || el.id;
-        sources.push({ id: el.id, label: headline });
+        const rawHeadline = el.headline[selectedLanguageCode] || el.id;
+        sources.push({ id: el.id, label: getTextContent(rawHeadline) });
       }
     }
 
