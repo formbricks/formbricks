@@ -15,6 +15,7 @@ import {
   TFeedbackRecordDirectoryDetails,
   TFeedbackRecordDirectoryUpdateInput,
   ZFeedbackRecordDirectoryUpdateInput,
+  getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import { Button } from "@/modules/ui/components/button";
@@ -38,7 +39,7 @@ interface FeedbackRecordDirectorySettingsModalProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   directory: TFeedbackRecordDirectoryDetails;
   orgProjects: TOrganizationProject[];
-  membershipRole?: TOrganizationRole;
+  membershipRole: TOrganizationRole;
 }
 
 export const FeedbackRecordDirectorySettingsModal = ({
@@ -97,8 +98,8 @@ export const FeedbackRecordDirectorySettingsModal = ({
       closeSettingsModal();
       router.refresh();
     } else {
-      const errorMessage = getFormattedErrorMessage(response);
-      toast.error(errorMessage);
+      const errorCode = getFormattedErrorMessage(response);
+      toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
     }
   };
 

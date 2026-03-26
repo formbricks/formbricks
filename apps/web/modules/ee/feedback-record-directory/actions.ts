@@ -14,8 +14,8 @@ import {
 import { ZFeedbackRecordDirectoryUpdateInput } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 
 const ZCreateFeedbackRecordDirectoryAction = z.object({
-  organizationId: z.cuid(),
-  name: z.string().trim().min(1, "Directory name is required"),
+  organizationId: ZId,
+  name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED"),
 });
 
 export const createFeedbackRecordDirectoryAction = authenticatedActionClient

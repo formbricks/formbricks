@@ -7,7 +7,7 @@ import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/pr
 
 interface FeedbackRecordDirectoryViewProps {
   organizationId: string;
-  membershipRole?: TOrganizationRole;
+  membershipRole: TOrganizationRole;
 }
 
 export const FeedbackRecordDirectoryView = async ({

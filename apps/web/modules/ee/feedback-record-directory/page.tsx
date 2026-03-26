@@ -15,7 +15,7 @@ export const FeedbackRecordDirectoriesPage = async (props: {
 
   const { currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership.role);
 
   if (!isOwner && !isManager) {
     return (
@@ -24,7 +24,7 @@ export const FeedbackRecordDirectoriesPage = async (props: {
           <OrganizationSettingsNavbar
             environmentId={params.environmentId}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            membershipRole={currentUserMembership?.role}
+            membershipRole={currentUserMembership.role}
             activeId="feedback-record-directories"
           />
         </PageHeader>
@@ -41,13 +41,13 @@ export const FeedbackRecordDirectoriesPage = async (props: {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserMembership.role}
           activeId="feedback-record-directories"
         />
       </PageHeader>
       <FeedbackRecordDirectoryView
         organizationId={organization.id}
-        membershipRole={currentUserMembership?.role}
+        membershipRole={currentUserMembership.role}
       />
     </PageContentWrapper>
   );

@@ -135,10 +135,7 @@ export const createFeedbackRecordDirectory = async (
   organizationId: string,
   name: string
 ): Promise<string> => {
-  validateInputs(
-    [organizationId, ZId],
-    [name, z.string().trim().min(1, "Directory name must be at least 1 character long")]
-  );
+  validateInputs([organizationId, ZId], [name, z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED")]);
   try {
     const directory = await prisma.feedbackRecordDirectory.create({
       data: {
@@ -154,7 +151,7 @@ export const createFeedbackRecordDirectory = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A feedback record directory with this name already exists");
+        throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
       }
       throw new DatabaseError(error.message);
     }
@@ -171,15 +168,16 @@ export const createFeedbackRecordDirectory = async (
  * @param directoryId - The ID of the directory being updated.
  * @param projectIds - The desired project IDs to assign.
  * @param organizationId - The organization the directory belongs to.
+ * @param currentProjectIds - The currently assigned project IDs (avoids a redundant fetch).
  * @returns The Prisma nested write payload for the `projects` relation.
  * @throws {InvalidInputError} If any project does not belong to the organization.
- * @throws {ResourceNotFoundError} If the directory details cannot be fetched.
  */
 const buildProjectAssignmentPayload = async (
   prismaClient: PrismaClient,
   directoryId: string,
   projectIds: string[],
-  organizationId: string
+  organizationId: string,
+  currentProjectIds: string[]
 ): Promise<Prisma.FeedbackRecordDirectoryProjectUpdateManyWithoutFeedbackRecordDirectoryNestedInput> => {
   if (projectIds.length > 0) {
     const orgProjectsCount = await prismaClient.project.count({
@@ -189,16 +187,10 @@ const buildProjectAssignmentPayload = async (
       },
     });
     if (orgProjectsCount !== projectIds.length) {
-      throw new InvalidInputError("Some specified projects do not belong to the organization.");
+      throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
     }
   }
 
-  const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
-  if (!currentDetails) {
-    throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
-  }
-
-  const currentProjectIds = currentDetails.projects.map((p) => p.projectId);
   const deletedProjectIds = currentProjectIds.filter((id) => !projectIds.includes(id));
 
   return {
@@ -246,6 +238,9 @@ export const updateFeedbackRecordDirectory = async (
 
     const directory = await prisma.feedbackRecordDirectory.findUnique({
       where: { id: directoryId },
+      select: {
+        organizationId: true,
+      },
     });
 
     if (!directory) {
@@ -263,11 +258,15 @@ export const updateFeedbackRecordDirectory = async (
     }
 
     if (projectIds !== undefined) {
+      const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
+      const currentProjectIds = currentDetails?.projects.map((p) => p.projectId) ?? [];
+
       payload.projects = await buildProjectAssignmentPayload(
         prisma,
         directoryId,
         projectIds,
-        directory.organizationId
+        directory.organizationId,
+        currentProjectIds
       );
     }
 
@@ -280,7 +279,7 @@ export const updateFeedbackRecordDirectory = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A feedback record directory with this name already exists");
+        throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
       }
       throw new DatabaseError(error.message);
     }

@@ -25,14 +25,7 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
-  const {
-    options,
-    value,
-    onChange,
-    disabled = false,
-    placeholder = "Select options...",
-    containerClassName,
-  } = props;
+  const { options, value, onChange, disabled = false, placeholder, containerClassName } = props;
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 

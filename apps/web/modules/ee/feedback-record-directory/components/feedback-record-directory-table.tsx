@@ -16,17 +16,19 @@ import { FeedbackRecordDirectorySettingsModal } from "@/modules/ee/feedback-reco
 import {
   TFeedbackRecordDirectory,
   TFeedbackRecordDirectoryDetails,
+  getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { Switch } from "@/modules/ui/components/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
 interface FeedbackRecordDirectoryTableProps {
   directories: TFeedbackRecordDirectory[];
   organizationId: string;
   orgProjects: TOrganizationProject[];
-  membershipRole?: TOrganizationRole;
+  membershipRole: TOrganizationRole;
 }
 
 export const FeedbackRecordDirectoryTable = ({
@@ -40,31 +42,47 @@ export const FeedbackRecordDirectoryTable = ({
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [selectedDirectory, setSelectedDirectory] = useState<TFeedbackRecordDirectoryDetails>();
   const [showArchived, setShowArchived] = useState(false);
+  const [loadingDirectoryId, setLoadingDirectoryId] = useState<string | null>(null);
   const router = useRouter();
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
 
   const handleManageDirectory = async (directoryId: string) => {
-    const response = await getFeedbackRecordDirectoryDetailsAction({ directoryId });
+    setLoadingDirectoryId(directoryId);
+    try {
+      const response = await getFeedbackRecordDirectoryDetailsAction({ directoryId });
 
-    if (response?.data) {
-      setSelectedDirectory(response.data);
-      setOpenSettingsModal(true);
-    } else {
-      const errorMessage = getFormattedErrorMessage(response);
-      toast.error(errorMessage);
+      if (response?.data) {
+        setSelectedDirectory(response.data);
+        setOpenSettingsModal(true);
+      } else {
+        const errorCode = getFormattedErrorMessage(response);
+        toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+      }
+    } finally {
+      setLoadingDirectoryId(null);
     }
   };
 
   const handleUnarchiveDirectory = async (directoryId: string) => {
-    const response = await updateFeedbackRecordDirectoryAction({ directoryId, data: { isArchived: false } });
-    if (response?.data) {
-      toast.success(t("environments.settings.feedback_record_directories.directory_unarchived_successfully"));
-      router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(response);
-      toast.error(errorMessage);
+    setLoadingDirectoryId(directoryId);
+    try {
+      const response = await updateFeedbackRecordDirectoryAction({
+        directoryId,
+        data: { isArchived: false },
+      });
+      if (response?.data) {
+        toast.success(
+          t("environments.settings.feedback_record_directories.directory_unarchived_successfully")
+        );
+        router.refresh();
+      } else {
+        const errorCode = getFormattedErrorMessage(response);
+        toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+      }
+    } finally {
+      setLoadingDirectoryId(null);
     }
   };
 
@@ -74,15 +92,12 @@ export const FeedbackRecordDirectoryTable = ({
     <>
       {isOwnerOrManager && (
         <div className="mb-4 flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-slate-500">
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-              className="rounded border-slate-300"
-            />
-            {t("environments.settings.feedback_record_directories.show_archived")}
-          </label>
+          <div className="flex items-center gap-2">
+            <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+            <span className="text-sm text-slate-500">
+              {t("environments.settings.feedback_record_directories.show_archived")}
+            </span>
+          </div>
           <Button size="sm" onClick={() => setOpenCreateModal(true)}>
             {t("environments.settings.feedback_record_directories.create_feedback_directory")}
           </Button>
@@ -122,7 +137,12 @@ export const FeedbackRecordDirectoryTable = ({
                 </TableCell>
                 <TableCell className="flex justify-end gap-2">
                   {isOwnerOrManager && !directory.isArchived && (
-                    <Button size="sm" variant="secondary" onClick={() => handleManageDirectory(directory.id)}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      loading={loadingDirectoryId === directory.id}
+                      disabled={loadingDirectoryId !== null}
+                      onClick={() => handleManageDirectory(directory.id)}>
                       {t("common.manage")}
                     </Button>
                   )}
@@ -130,6 +150,8 @@ export const FeedbackRecordDirectoryTable = ({
                     <Button
                       size="sm"
                       variant="secondary"
+                      loading={loadingDirectoryId === directory.id}
+                      disabled={loadingDirectoryId !== null}
                       onClick={() => handleUnarchiveDirectory(directory.id)}>
                       {t("environments.settings.feedback_record_directories.unarchive")}
                     </Button>

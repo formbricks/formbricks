@@ -10,6 +10,7 @@ import { createFeedbackRecordDirectoryAction } from "@/modules/ee/feedback-recor
 import {
   TFeedbackRecordDirectoryCreateInput,
   ZFeedbackRecordDirectoryCreateInput,
+  getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -58,8 +59,8 @@ export const CreateFeedbackRecordDirectoryModal = ({
       setOpen(false);
       reset();
     } else {
-      const errorMessage = getFormattedErrorMessage(response);
-      toast.error(errorMessage);
+      const errorCode = getFormattedErrorMessage(response);
+      toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
     }
   };
 
