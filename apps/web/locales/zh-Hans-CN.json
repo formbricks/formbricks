@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "确定要归档此目录吗?工作区将无法再访问它。",
         "assign_workspaces_description": "控制哪些工作区可以访问此反馈记录目录。",
         "create_directory": "创建目录",
+        "create_feedback_directory": "创建反馈目录",
         "create_new_directory": "创建新的反馈记录目录",
         "description": "管理反馈记录目录及其工作区分配。",
         "directory": "目录",
@@ -1160,6 +1161,7 @@
         "nav_label": "反馈目录",
         "no_access": "你没有管理反馈记录目录的权限。",
         "please_fill_all_workspace_fields": "请先填写所有工作区字段。",
+        "select_workspaces_placeholder": "选择工作区...",
         "show_archived": "显示已归档",
         "title": "反馈记录目录",
         "unarchive": "取消归档"

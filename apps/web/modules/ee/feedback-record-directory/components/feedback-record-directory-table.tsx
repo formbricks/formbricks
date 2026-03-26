@@ -9,7 +9,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   getFeedbackRecordDirectoryDetailsAction,
-  unarchiveFeedbackRecordDirectoryAction,
+  updateFeedbackRecordDirectoryAction,
 } from "@/modules/ee/feedback-record-directory/actions";
 import { CreateFeedbackRecordDirectoryModal } from "@/modules/ee/feedback-record-directory/components/create-feedback-record-directory-modal";
 import { FeedbackRecordDirectorySettingsModal } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-settings/feedback-record-directory-settings-modal";
@@ -58,7 +58,7 @@ export const FeedbackRecordDirectoryTable = ({
   };
 
   const handleUnarchiveDirectory = async (directoryId: string) => {
-    const response = await unarchiveFeedbackRecordDirectoryAction({ directoryId });
+    const response = await updateFeedbackRecordDirectoryAction({ directoryId, data: { isArchived: false } });
     if (response?.data) {
       toast.success(t("environments.settings.feedback_record_directories.directory_unarchived_successfully"));
       router.refresh();
@@ -84,12 +84,12 @@ export const FeedbackRecordDirectoryTable = ({
             {t("environments.settings.feedback_record_directories.show_archived")}
           </label>
           <Button size="sm" onClick={() => setOpenCreateModal(true)}>
-            {t("environments.settings.feedback_record_directories.create_directory")}
+            {t("environments.settings.feedback_record_directories.create_feedback_directory")}
           </Button>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg" aria-label="Feedback record directories list">
+      <div className="overflow-hidden rounded-lg border" aria-label="Feedback record directories list">
         <Table>
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">

@@ -1,12 +1,16 @@
 "use client";
 
-import { FolderIcon } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createFeedbackRecordDirectoryAction } from "@/modules/ee/feedback-record-directory/actions";
+import {
+  TFeedbackRecordDirectoryCreateInput,
+  ZFeedbackRecordDirectoryCreateInput,
+} from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -16,8 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 
 interface CreateFeedbackRecordDirectoryModalProps {
   open: boolean;
@@ -30,72 +34,85 @@ export const CreateFeedbackRecordDirectoryModal = ({
   setOpen,
   organizationId,
 }: CreateFeedbackRecordDirectoryModalProps) => {
-  const [directoryName, setDirectoryName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
   const router = useRouter();
 
-  const handleCreation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const form = useForm<TFeedbackRecordDirectoryCreateInput>({
+    defaultValues: { name: "" },
+    mode: "onChange",
+    resolver: zodResolver(ZFeedbackRecordDirectoryCreateInput),
+  });
 
-    const name = directoryName.trim();
-    const response = await createFeedbackRecordDirectoryAction({ name, organizationId });
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = form;
+
+  const handleCreation: SubmitHandler<TFeedbackRecordDirectoryCreateInput> = async (data) => {
+    const response = await createFeedbackRecordDirectoryAction({ name: data.name, organizationId });
     if (response?.data) {
       toast.success(t("environments.settings.feedback_record_directories.directory_created_successfully"));
       router.refresh();
       setOpen(false);
-      setDirectoryName("");
+      reset();
     } else {
       const errorMessage = getFormattedErrorMessage(response);
       toast.error(errorMessage);
     }
-    setIsLoading(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <FolderIcon />
           <DialogTitle>
-            {t("environments.settings.feedback_record_directories.create_new_directory")}
+            {t("environments.settings.feedback_record_directories.create_feedback_directory")}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleCreation} className="gap-y-4 pt-4">
-          <DialogBody>
-            <div className="grid w-full gap-y-2 pb-4">
-              <Label htmlFor="directory-name">
-                {t("environments.settings.feedback_record_directories.directory_name")}
-              </Label>
-              <Input
-                id="directory-name"
-                name="directory-name"
-                value={directoryName}
-                onChange={(e) => {
-                  setDirectoryName(e.target.value);
-                }}
-                placeholder={t("environments.settings.feedback_record_directories.enter_directory_name")}
+        <FormProvider {...form}>
+          <form onSubmit={handleSubmit(handleCreation)} className="gap-y-4 pt-4">
+            <DialogBody>
+              <FormField
+                control={control}
+                name="name"
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem className="pb-4">
+                    <FormLabel>
+                      {t("environments.settings.feedback_record_directories.directory_name")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t(
+                          "environments.settings.feedback_record_directories.enter_directory_name"
+                        )}
+                        {...field}
+                      />
+                    </FormControl>
+                    {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                  </FormItem>
+                )}
               />
-            </div>
-          </DialogBody>
+            </DialogBody>
 
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setDirectoryName("");
-              }}>
-              {t("common.cancel")}
-            </Button>
-            <Button disabled={!directoryName || isLoading} loading={isLoading} type="submit">
-              {t("common.create")}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  reset();
+                }}>
+                {t("common.cancel")}
+              </Button>
+              <Button disabled={!form.formState.isValid || isSubmitting} loading={isSubmitting} type="submit">
+                {t("environments.settings.feedback_record_directories.create_feedback_directory")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   );

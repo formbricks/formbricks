@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "このディレクトリをアーカイブしてもよろしいですか?ワークスペースはアクセスできなくなります。",
         "assign_workspaces_description": "このフィードバック記録ディレクトリにアクセスできるワークスペースを管理します。",
         "create_directory": "ディレクトリを作成",
+        "create_feedback_directory": "フィードバックディレクトリを作成",
         "create_new_directory": "新しいフィードバック記録ディレクトリを作成",
         "description": "フィードバック記録ディレクトリとワークスペースの割り当てを管理します。",
         "directory": "ディレクトリ",
@@ -1160,6 +1161,7 @@
         "nav_label": "フィードバックディレクトリ",
         "no_access": "フィードバック記録ディレクトリを管理する権限がありません。",
         "please_fill_all_workspace_fields": "まず、すべてのワークスペースフィールドを入力してください。",
+        "select_workspaces_placeholder": "ワークスペースを選択...",
         "show_archived": "アーカイブ済みを表示",
         "title": "フィードバック記録ディレクトリ",
         "unarchive": "アーカイブ解除"

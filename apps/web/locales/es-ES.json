@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "¿Estás seguro de que quieres archivar este directorio? Los espacios de trabajo ya no tendrán acceso a él.",
         "assign_workspaces_description": "Controla qué espacios de trabajo pueden acceder a este directorio de registros de feedback.",
         "create_directory": "Crear Directorio",
+        "create_feedback_directory": "Crear directorio de comentarios",
         "create_new_directory": "Crear nuevo directorio de registros de feedback",
         "description": "Gestiona los directorios de registros de feedback y sus asignaciones de espacios de trabajo.",
         "directory": "directorio",
@@ -1160,6 +1161,7 @@
         "nav_label": "Directorios de Feedback",
         "no_access": "No tienes permiso para gestionar los directorios de registros de feedback.",
         "please_fill_all_workspace_fields": "Por favor, completa primero todos los campos del espacio de trabajo.",
+        "select_workspaces_placeholder": "Selecciona espacios de trabajo...",
         "show_archived": "Mostrar archivados",
         "title": "Directorios de Registros de Feedback",
         "unarchive": "Desarchivar"

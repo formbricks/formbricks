@@ -25,13 +25,16 @@ export const ZFeedbackRecordDirectoryDetails = z.object({
 
 export type TFeedbackRecordDirectoryDetails = z.infer<typeof ZFeedbackRecordDirectoryDetails>;
 
-export const ZFeedbackRecordDirectoryFormSchema = z.object({
+export const ZFeedbackRecordDirectoryCreateInput = z.object({
   name: z.string().trim().min(1, "Directory name is required"),
-  projects: z.array(
-    z.object({
-      projectId: z.string().trim().min(1, "Please select a workspace"),
-    })
-  ),
 });
 
-export type TFeedbackRecordDirectoryFormSchema = z.infer<typeof ZFeedbackRecordDirectoryFormSchema>;
+export type TFeedbackRecordDirectoryCreateInput = z.infer<typeof ZFeedbackRecordDirectoryCreateInput>;
+
+export const ZFeedbackRecordDirectoryUpdateInput = z.object({
+  name: z.string().trim().min(1, "Directory name must be at least 1 character long").optional(),
+  projectIds: z.array(ZId).optional(),
+  isArchived: z.boolean().optional(),
+});
+
+export type TFeedbackRecordDirectoryUpdateInput = z.infer<typeof ZFeedbackRecordDirectoryUpdateInput>;

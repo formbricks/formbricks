@@ -6,6 +6,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
+import { cn } from "@/modules/ui/lib/utils";
 
 interface TOption<T> {
   value: T;
@@ -18,12 +19,20 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   onChange?: (selected: K) => void;
   disabled?: boolean;
   placeholder?: string;
+  containerClassName?: string;
 }
 
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
-  const { options, value, onChange, disabled = false, placeholder = "Select options..." } = props;
+  const {
+    options,
+    value,
+    onChange,
+    disabled = false,
+    placeholder = "Select options...",
+    containerClassName,
+  } = props;
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -166,9 +175,11 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       className={`relative overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
         ref={containerRef}
-        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${
-          disabled ? "pointer-events-none" : "focus-within:ring-ring"
-        }`}>
+        className={cn(
+          `border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2`,
+          disabled ? "pointer-events-none" : "focus-within:ring-ring",
+          containerClassName ?? ""
+        )}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
             <Badge key={option.value} className="rounded-md">

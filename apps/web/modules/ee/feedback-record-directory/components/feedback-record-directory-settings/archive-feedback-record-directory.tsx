@@ -5,7 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { archiveFeedbackRecordDirectoryAction } from "@/modules/ee/feedback-record-directory/actions";
+import { updateFeedbackRecordDirectoryAction } from "@/modules/ee/feedback-record-directory/actions";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -29,7 +29,7 @@ export const ArchiveFeedbackRecordDirectory = ({
   const handleArchive = async () => {
     setIsArchiving(true);
 
-    const response = await archiveFeedbackRecordDirectoryAction({ directoryId });
+    const response = await updateFeedbackRecordDirectoryAction({ directoryId, data: { isArchived: true } });
     if (response?.serverError) {
       toast.error(getFormattedErrorMessage(response));
       setIsArchiveDialogOpen(false);

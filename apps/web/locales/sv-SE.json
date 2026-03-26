@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "Är du säker på att du vill arkivera den här katalogen? Arbetsytor kommer inte längre ha tillgång till den.",
         "assign_workspaces_description": "Styr vilka arbetsytor som kan komma åt den här katalogen för feedbackposter.",
         "create_directory": "Skapa katalog",
+        "create_feedback_directory": "Skapa feedbackkatalog",
         "create_new_directory": "Skapa ny katalog för feedbackposter",
         "description": "Hantera kataloger för feedbackposter och deras arbetsytstilldelningar.",
         "directory": "katalog",
@@ -1160,6 +1161,7 @@
         "nav_label": "Feedbackkataloger",
         "no_access": "Du har inte behörighet att hantera kataloger för feedbackposter.",
         "please_fill_all_workspace_fields": "Vänligen fyll i alla arbetsytefält först.",
+        "select_workspaces_placeholder": "Välj arbetsytor...",
         "show_archived": "Visa arkiverade",
         "title": "Feedbackkataloger",
         "unarchive": "Avarkivera"

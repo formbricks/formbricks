@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "確定要封存此目錄嗎?工作區將無法再存取它。",
         "assign_workspaces_description": "控制哪些工作區可以存取此意見回饋記錄目錄。",
         "create_directory": "建立目錄",
+        "create_feedback_directory": "建立意見回饋目錄",
         "create_new_directory": "建立新的意見回饋記錄目錄",
         "description": "管理意見回饋記錄目錄及其工作區配置。",
         "directory": "目錄",
@@ -1160,6 +1161,7 @@
         "nav_label": "意見回饋目錄",
         "no_access": "您沒有權限管理意見回饋記錄目錄。",
         "please_fill_all_workspace_fields": "請先填寫所有工作區欄位。",
+        "select_workspaces_placeholder": "選擇工作區...",
         "show_archived": "顯示已封存",
         "title": "意見回饋記錄目錄",
         "unarchive": "取消封存"

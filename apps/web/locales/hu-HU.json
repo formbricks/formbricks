@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "Biztosan archiválni kívánja ezt a könyvtárat? A munkaterületek többé nem férhetnek hozzá.",
         "assign_workspaces_description": "Szabályozza, mely munkaterületek férhetnek hozzá ehhez a visszajelzési nyilvántartási könyvtárhoz.",
         "create_directory": "Könyvtár létrehozása",
+        "create_feedback_directory": "Visszajelzési könyvtár létrehozása",
         "create_new_directory": "Új visszajelzési nyilvántartási könyvtár létrehozása",
         "description": "Visszajelzési nyilvántartási könyvtárak és munkaterület-hozzárendeléseik kezelése.",
         "directory": "könyvtár",
@@ -1160,6 +1161,7 @@
         "nav_label": "Visszajelzési könyvtárak",
         "no_access": "Nem rendelkezik jogosultsággal a visszajelzési nyilvántartási könyvtárak kezeléséhez.",
         "please_fill_all_workspace_fields": "Kérem, először töltse ki az összes munkaterület mezőt.",
+        "select_workspaces_placeholder": "Munkaterületek kiválasztása...",
         "show_archived": "Archivált elemek megjelenítése",
         "title": "Visszajelzési Nyilvántartási Könyvtárak",
         "unarchive": "Archiválás visszavonása"

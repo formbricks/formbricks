@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "Möchtest du dieses Verzeichnis wirklich archivieren? Workspaces haben dann keinen Zugriff mehr darauf.",
         "assign_workspaces_description": "Lege fest, welche Workspaces auf dieses Feedback-Verzeichnis zugreifen können.",
         "create_directory": "Verzeichnis erstellen",
+        "create_feedback_directory": "Feedback-Verzeichnis erstellen",
         "create_new_directory": "Neues Feedback-Verzeichnis erstellen",
         "description": "Verwalte Feedback-Verzeichnisse und ihre Workspace-Zuordnungen.",
         "directory": "Verzeichnis",
@@ -1160,6 +1161,7 @@
         "nav_label": "Feedback-Verzeichnisse",
         "no_access": "Du hast keine Berechtigung, Feedback-Verzeichnisse zu verwalten.",
         "please_fill_all_workspace_fields": "Bitte fülle zuerst alle Workspace-Felder aus.",
+        "select_workspaces_placeholder": "Arbeitsbereiche auswählen...",
         "show_archived": "Archivierte anzeigen",
         "title": "Feedback-Aufzeichnungsverzeichnisse",
         "unarchive": "Aus Archiv wiederherstellen"

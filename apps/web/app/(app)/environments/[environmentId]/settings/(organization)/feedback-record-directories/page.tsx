@@ -1,3 +1,1 @@
-import { FeedbackRecordDirectoriesPage } from "@/modules/ee/feedback-record-directory/page";
-
-export default FeedbackRecordDirectoriesPage;
+export { FeedbackRecordDirectoriesPage as default } from "@/modules/ee/feedback-record-directory/page";

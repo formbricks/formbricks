@@ -1083,6 +1083,7 @@ checksums:
     environments/settings/feedback_record_directories/are_you_sure_you_want_to_archive: d249e6e8bc0345835a13f70856eb1c30
     environments/settings/feedback_record_directories/assign_workspaces_description: 6c3f0bbf3bd7744bb313f4cd7886e184
     environments/settings/feedback_record_directories/create_directory: 9744e2395a5350bd555a7b3b5e1b763a
+    environments/settings/feedback_record_directories/create_feedback_directory: c178dd6dbd702398df3ac08a9fa43324
     environments/settings/feedback_record_directories/create_new_directory: 912bd70bb19e90512c9904bd6ff15932
     environments/settings/feedback_record_directories/description: 8f56b169cb38d8c7b2697bf3a3ed7a61
     environments/settings/feedback_record_directories/directory: 1568e9b2f954aae4edb9e3a2503943af
@@ -1099,6 +1100,7 @@ checksums:
     environments/settings/feedback_record_directories/nav_label: cf9a57b3cbac0f04b98e06fb693e986e
     environments/settings/feedback_record_directories/no_access: cc3385cd01a11e3949003a2cc6fb5b31
     environments/settings/feedback_record_directories/please_fill_all_workspace_fields: f5a9f4e4b011c29f96eb10230165a64b
+    environments/settings/feedback_record_directories/select_workspaces_placeholder: 7d8c8f5910b264525f73bd32107765db
     environments/settings/feedback_record_directories/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
     environments/settings/feedback_record_directories/title: e3d425c27f80162f29ce094e31a3fd8f
     environments/settings/feedback_record_directories/unarchive: 671fc7e9d7c8cb4d182a25a46551c168

@@ -1,18 +1,28 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TFeedbackRecordDirectory,
   TFeedbackRecordDirectoryDetails,
-  TFeedbackRecordDirectoryFormSchema,
-  ZFeedbackRecordDirectoryFormSchema,
+  TFeedbackRecordDirectoryUpdateInput,
+  ZFeedbackRecordDirectoryUpdateInput,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 
+/**
+ * Retrieves all feedback record directories for a given organization.
+ *
+ * @param organizationId - The ID of the organization to fetch directories for.
+ * @returns An array of feedback record directories with their id, name, archive status, and assigned project count.
+ * @throws {ValidationError} If the organizationId fails input validation.
+ * @throws {DatabaseError} If a Prisma database error occurs.
+ * @throws Re-throws any other unexpected errors.
+ */
 export const getFeedbackRecordDirectories = reactCache(
   async (organizationId: string): Promise<TFeedbackRecordDirectory[]> => {
     validateInputs([organizationId, ZId]);
@@ -51,6 +61,15 @@ export const getFeedbackRecordDirectories = reactCache(
   }
 );
 
+/**
+ * Retrieves the full details of a feedback record directory, including its assigned projects.
+ *
+ * @param directoryId - The ID of the directory to fetch.
+ * @returns The directory details with project assignments, or `null` if not found.
+ * @throws {ValidationError} If the directoryId fails input validation.
+ * @throws {DatabaseError} If a Prisma database error occurs.
+ * @throws Re-throws any other unexpected errors.
+ */
 export const getFeedbackRecordDirectoryDetails = reactCache(
   async (directoryId: string): Promise<TFeedbackRecordDirectoryDetails | null> => {
     validateInputs([directoryId, ZId]);
@@ -100,27 +119,27 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
   }
 );
 
+/**
+ * Creates a new feedback record directory within an organization.
+ *
+ * @param organizationId - The ID of the organization to create the directory in.
+ * @param name - The name for the new directory.
+ * @returns The ID of the newly created directory.
+ * @throws {ValidationError} If the inputs fail validation.
+ * @throws {InvalidInputError} If a directory with the same name already exists in the organization,
+ *   or if the name is empty.
+ * @throws {DatabaseError} If a Prisma database error occurs.
+ * @throws Re-throws any other unexpected errors.
+ */
 export const createFeedbackRecordDirectory = async (
   organizationId: string,
   name: string
 ): Promise<string> => {
-  validateInputs([organizationId, ZId], [name, z.string()]);
+  validateInputs(
+    [organizationId, ZId],
+    [name, z.string().trim().min(1, "Directory name must be at least 1 character long")]
+  );
   try {
-    const existingDirectory = await prisma.feedbackRecordDirectory.findFirst({
-      where: {
-        name,
-        organizationId,
-      },
-    });
-
-    if (existingDirectory) {
-      throw new InvalidInputError("A feedback record directory with this name already exists");
-    }
-
-    if (name.trim().length < 1) {
-      throw new InvalidInputError("Directory name must be at least 1 character long");
-    }
-
     const directory = await prisma.feedbackRecordDirectory.create({
       data: {
         name,
@@ -134,20 +153,96 @@ export const createFeedbackRecordDirectory = async (
     return directory.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new InvalidInputError("A feedback record directory with this name already exists");
+      }
       throw new DatabaseError(error.message);
     }
     throw error;
   }
 };
 
+/**
+ * Builds the Prisma nested write payload for updating project assignments on a directory.
+ * Validates that all specified projects belong to the directory's organization,
+ * diffs against current assignments, and returns deleteMany + upsert operations.
+ *
+ * @param prismaClient - The Prisma client instance used for database queries.
+ * @param directoryId - The ID of the directory being updated.
+ * @param projectIds - The desired project IDs to assign.
+ * @param organizationId - The organization the directory belongs to.
+ * @returns The Prisma nested write payload for the `projects` relation.
+ * @throws {InvalidInputError} If any project does not belong to the organization.
+ * @throws {ResourceNotFoundError} If the directory details cannot be fetched.
+ */
+const buildProjectAssignmentPayload = async (
+  prismaClient: PrismaClient,
+  directoryId: string,
+  projectIds: string[],
+  organizationId: string
+): Promise<Prisma.FeedbackRecordDirectoryProjectUpdateManyWithoutFeedbackRecordDirectoryNestedInput> => {
+  if (projectIds.length > 0) {
+    const orgProjectsCount = await prismaClient.project.count({
+      where: {
+        id: { in: projectIds },
+        organizationId,
+      },
+    });
+    if (orgProjectsCount !== projectIds.length) {
+      throw new InvalidInputError("Some specified projects do not belong to the organization.");
+    }
+  }
+
+  const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
+  if (!currentDetails) {
+    throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
+  }
+
+  const currentProjectIds = currentDetails.projects.map((p) => p.projectId);
+  const deletedProjectIds = currentProjectIds.filter((id) => !projectIds.includes(id));
+
+  return {
+    deleteMany: {
+      projectId: { in: deletedProjectIds },
+    },
+    upsert: projectIds.map((projectId) => ({
+      where: {
+        feedbackRecordDirectoryId_projectId: {
+          feedbackRecordDirectoryId: directoryId,
+          projectId,
+        },
+      },
+      update: {},
+      create: { projectId },
+    })),
+  };
+};
+
+/**
+ * Updates a feedback record directory. Supports partial updates for name, workspace
+ * assignments, and archive status.
+ *
+ * When `projectIds` is provided, performs a diff against current assignments: removes
+ * unassigned projects via `deleteMany` on the join table and upserts new/existing assignments.
+ *
+ * @param directoryId - The ID of the directory to update.
+ * @param data - The partial update payload. All fields are optional.
+ * @returns `true` on successful update.
+ * @throws {ValidationError} If the inputs fail validation.
+ * @throws {ResourceNotFoundError} If the directory does not exist.
+ * @throws {InvalidInputError} If any specified project does not belong to the directory's organization,
+ *   or if the name conflicts with an existing directory in the same organization.
+ * @throws {DatabaseError} If a Prisma database error occurs.
+ * @throws Re-throws any other unexpected errors.
+ */
 export const updateFeedbackRecordDirectory = async (
   directoryId: string,
-  data: TFeedbackRecordDirectoryFormSchema
+  data: TFeedbackRecordDirectoryUpdateInput
 ): Promise<boolean> => {
-  validateInputs([directoryId, ZId], [data, ZFeedbackRecordDirectoryFormSchema]);
+  validateInputs([directoryId, ZId], [data, ZFeedbackRecordDirectoryUpdateInput]);
 
   try {
-    const { name, projects } = data;
+    const { name, projectIds, isArchived } = data;
 
     const directory = await prisma.feedbackRecordDirectory.findUnique({
       where: { id: directoryId },
@@ -157,51 +252,24 @@ export const updateFeedbackRecordDirectory = async (
       throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
     }
 
-    const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
-    if (!currentDetails) {
-      throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
+    const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {};
+
+    if (name !== undefined) {
+      payload.name = name;
     }
 
-    // Validate that all specified projects belong to the same organization
-    const projectIds = projects.map((p) => p.projectId);
-    if (projectIds.length > 0) {
-      const orgProjectsCount = await prisma.project.count({
-        where: {
-          id: { in: projectIds },
-          organizationId: directory.organizationId,
-        },
-      });
-      if (orgProjectsCount !== projectIds.length) {
-        throw new InvalidInputError("Some specified projects do not belong to the organization.");
-      }
+    if (isArchived !== undefined) {
+      payload.isArchived = isArchived;
     }
 
-    // Determine deleted projects (in current but not in new)
-    const deletedProjects: string[] = [];
-    for (const cp of currentDetails.projects) {
-      if (!projects.some((p) => p.projectId === cp.projectId)) {
-        deletedProjects.push(cp.projectId);
-      }
+    if (projectIds !== undefined) {
+      payload.projects = await buildProjectAssignmentPayload(
+        prisma,
+        directoryId,
+        projectIds,
+        directory.organizationId
+      );
     }
-
-    const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {
-      name: currentDetails.name !== name ? name : undefined,
-      projects: {
-        deleteMany: {
-          projectId: { in: deletedProjects },
-        },
-        upsert: projects.map((p) => ({
-          where: {
-            feedbackRecordDirectoryId_projectId: {
-              feedbackRecordDirectoryId: directoryId,
-              projectId: p.projectId,
-            },
-          },
-          update: {},
-          create: { projectId: p.projectId },
-        })),
-      },
-    };
 
     await prisma.feedbackRecordDirectory.update({
       where: { id: directoryId },
@@ -211,46 +279,25 @@ export const updateFeedbackRecordDirectory = async (
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new InvalidInputError("A feedback record directory with this name already exists");
+      }
       throw new DatabaseError(error.message);
     }
     throw error;
   }
 };
 
-export const archiveFeedbackRecordDirectory = async (directoryId: string): Promise<boolean> => {
-  validateInputs([directoryId, ZId]);
-  try {
-    await prisma.feedbackRecordDirectory.update({
-      where: { id: directoryId },
-      data: { isArchived: true },
-    });
-
-    return true;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const unarchiveFeedbackRecordDirectory = async (directoryId: string): Promise<boolean> => {
-  validateInputs([directoryId, ZId]);
-  try {
-    await prisma.feedbackRecordDirectory.update({
-      where: { id: directoryId },
-      data: { isArchived: false },
-    });
-
-    return true;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
+/**
+ * Resolves the owning organization ID for a given directory.
+ *
+ * Used by server actions to determine the organization context for authorization checks.
+ *
+ * @param directoryId - The ID of the directory to look up.
+ * @returns The organization ID that owns the directory.
+ * @throws {ValidationError} If the directoryId fails input validation.
+ * @throws {ResourceNotFoundError} If the directory does not exist.
+ */
 export const getOrganizationIdFromDirectoryId = async (directoryId: string): Promise<string> => {
   validateInputs([directoryId, ZId]);
   const directory = await prisma.feedbackRecordDirectory.findUnique({

@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "Weet je zeker dat je deze map wilt archiveren? Workspaces hebben er dan geen toegang meer toe.",
         "assign_workspaces_description": "Bepaal welke workspaces toegang hebben tot deze feedbackregistratiemap.",
         "create_directory": "Map aanmaken",
+        "create_feedback_directory": "Feedbackmap maken",
         "create_new_directory": "Nieuwe feedbackregistratiemap aanmaken",
         "description": "Beheer feedbackregistratiemappen en hun workspace-toewijzingen.",
         "directory": "map",
@@ -1160,6 +1161,7 @@
         "nav_label": "Feedbackmappen",
         "no_access": "Je hebt geen toestemming om feedbackregistratiemappen te beheren.",
         "please_fill_all_workspace_fields": "Vul eerst alle werkruimte-velden in.",
+        "select_workspaces_placeholder": "Selecteer werkruimtes...",
         "show_archived": "Gearchiveerde weergeven",
         "title": "Feedbackregistratiemappen",
         "unarchive": "Dearchiveren"

@@ -1,10 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -14,8 +13,8 @@ import { updateFeedbackRecordDirectoryAction } from "@/modules/ee/feedback-recor
 import { ArchiveFeedbackRecordDirectory } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-settings/archive-feedback-record-directory";
 import {
   TFeedbackRecordDirectoryDetails,
-  TFeedbackRecordDirectoryFormSchema,
-  ZFeedbackRecordDirectoryFormSchema,
+  TFeedbackRecordDirectoryUpdateInput,
+  ZFeedbackRecordDirectoryUpdateInput,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import { Button } from "@/modules/ui/components/button";
@@ -31,8 +30,7 @@ import {
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
-import { InputCombobox } from "@/modules/ui/components/input-combo-box";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Muted } from "@/modules/ui/components/typography";
 
 interface FeedbackRecordDirectorySettingsModalProps {
@@ -55,24 +53,23 @@ export const FeedbackRecordDirectorySettingsModal = ({
   const isOwnerOrManager = isOwner || isManager;
   const router = useRouter();
 
-  const initialProjectIds = useMemo(() => {
-    return new Set(directory.projects.map((project) => project.projectId));
-  }, [directory.projects]);
+  const projectOptions = useMemo(
+    () =>
+      orgProjects
+        .map((p) => ({ value: p.id, label: p.name }))
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" })),
+    [orgProjects]
+  );
 
-  const initialProjects = useMemo(() => {
-    const projects = directory.projects.map((project) => ({
-      projectId: project.projectId,
-    }));
-    return projects.length ? projects : [{ projectId: "" }];
-  }, [directory.projects]);
+  const initialProjectIds = useMemo(() => directory.projects.map((p) => p.projectId), [directory.projects]);
 
-  const form = useForm<TFeedbackRecordDirectoryFormSchema>({
+  const form = useForm<TFeedbackRecordDirectoryUpdateInput>({
     defaultValues: {
       name: directory.name,
-      projects: initialProjects,
+      projectIds: initialProjectIds,
     },
     mode: "onChange",
-    resolver: zodResolver(ZFeedbackRecordDirectoryFormSchema),
+    resolver: zodResolver(ZFeedbackRecordDirectoryUpdateInput),
   });
 
   const {
@@ -86,14 +83,12 @@ export const FeedbackRecordDirectorySettingsModal = ({
     setOpen(false);
   };
 
-  const handleUpdate: SubmitHandler<TFeedbackRecordDirectoryFormSchema> = async (data) => {
-    const projects = data.projects.filter((p) => p.projectId);
-
+  const handleUpdate: SubmitHandler<TFeedbackRecordDirectoryUpdateInput> = async (data) => {
     const response = await updateFeedbackRecordDirectoryAction({
       directoryId: directory.id,
       data: {
         name: data.name,
-        projects,
+        projectIds: data.projectIds,
       },
     });
 
@@ -106,32 +101,6 @@ export const FeedbackRecordDirectorySettingsModal = ({
       toast.error(errorMessage);
     }
   };
-
-  const watchProjects = useWatch({ control, name: "projects" }) || [];
-
-  const handleAddProject = () => {
-    const newProjects = [...watchProjects, { projectId: "" }];
-    setValue("projects", newProjects);
-  };
-
-  const handleRemoveProject = (index: number) => {
-    setValue(
-      "projects",
-      watchProjects.filter((_, i) => i !== index)
-    );
-  };
-
-  const selectedProjectIds = watchProjects.map((p) => p.projectId);
-
-  const getProjectOptionsForIndex = (index: number) => {
-    const currentProjectId = watchProjects[index]?.projectId;
-    return orgProjects
-      .filter((op) => !selectedProjectIds.includes(op?.id) || op?.id === currentProjectId)
-      .map((op) => ({ label: op?.name ?? "", value: op?.id }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
-  };
-
-  const hasEmptyProject = watchProjects.some((p) => !p.projectId);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -176,100 +145,23 @@ export const FeedbackRecordDirectorySettingsModal = ({
                 variant="column"
               />
 
-              {/* Workspace Assignments Section */}
               <div className="space-y-2">
-                <div className="flex flex-col space-y-1">
-                  <FormLabel>{t("common.workspaces")}</FormLabel>
-                  <Muted className="block text-slate-500">
-                    {t("environments.settings.feedback_record_directories.assign_workspaces_description")}
-                  </Muted>
-                </div>
-                <FormField
-                  control={control}
-                  name="projects"
-                  render={({ fieldState: { error } }) => (
-                    <FormItem className="flex-1">
-                      <div className="space-y-2">
-                        {watchProjects.map((project, index) => {
-                          const isExistingProject =
-                            project.projectId && initialProjectIds.has(project.projectId);
-                          const isSelectDisabled = isExistingProject || !isOwnerOrManager;
-
-                          return (
-                            <div key={`project-${project.projectId}-${index}`} className="flex gap-2.5">
-                              <FormField
-                                control={control}
-                                name={`projects.${index}.projectId`}
-                                render={({ field, fieldState: { error: fieldError } }) => (
-                                  <FormItem className="flex-1">
-                                    <div
-                                      className={
-                                        isSelectDisabled ? "pointer-events-none opacity-50" : undefined
-                                      }>
-                                      <InputCombobox
-                                        id={`project-select-${index}`}
-                                        options={getProjectOptionsForIndex(index)}
-                                        value={field.value || null}
-                                        onChangeValue={(val) => {
-                                          const value = typeof val === "string" ? val : "";
-                                          field.onChange(value);
-                                        }}
-                                        showSearch
-                                        searchPlaceholder={t("common.search")}
-                                        comboboxClasses="flex-1 min-w-0 w-full"
-                                        emptyDropdownText={t("environments.surveys.edit.no_option_found")}
-                                      />
-                                    </div>
-                                    {fieldError?.message && (
-                                      <FormError className="text-left">{fieldError.message}</FormError>
-                                    )}
-                                  </FormItem>
-                                )}
-                              />
-                              {watchProjects.length > 1 && (
-                                <Button
-                                  size="icon"
-                                  type="button"
-                                  variant="secondary"
-                                  className="shrink-0"
-                                  disabled={!isOwnerOrManager}
-                                  onClick={() => handleRemoveProject(index)}>
-                                  <Trash2Icon className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {error?.root?.message && (
-                        <FormError className="text-left">{error.root.message}</FormError>
-                      )}
-                    </FormItem>
+                <FormLabel>{t("common.workspaces")}</FormLabel>
+                <Muted className="block text-slate-500">
+                  {t("environments.settings.feedback_record_directories.assign_workspaces_description")}
+                </Muted>
+                <MultiSelect
+                  options={projectOptions}
+                  value={form.watch("projectIds")}
+                  onChange={(selected) => {
+                    setValue("projectIds", selected, { shouldDirty: true });
+                  }}
+                  disabled={!isOwnerOrManager}
+                  placeholder={t(
+                    "environments.settings.feedback_record_directories.select_workspaces_placeholder"
                   )}
+                  containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
                 />
-
-                <TooltipRenderer
-                  shouldRender={selectedProjectIds.length === orgProjects.length || hasEmptyProject}
-                  triggerClass="inline-block"
-                  tooltipContent={
-                    hasEmptyProject
-                      ? t(
-                          "environments.settings.feedback_record_directories.please_fill_all_workspace_fields"
-                        )
-                      : t("environments.settings.feedback_record_directories.all_workspaces_added")
-                  }>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                    onClick={handleAddProject}
-                    disabled={
-                      !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
-                    }>
-                    <PlusIcon className="h-4 w-4" />
-                    {t("common.add_workspace")}
-                  </Button>
-                </TooltipRenderer>
               </div>
             </DialogBody>
             <DialogFooter>

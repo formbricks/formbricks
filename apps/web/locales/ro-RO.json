@@ -1144,6 +1144,7 @@
         "are_you_sure_you_want_to_archive": "Ești sigur că vrei să arhivezi acest director? Spațiile de lucru nu vor mai avea acces la el.",
         "assign_workspaces_description": "Controlează care spații de lucru pot accesa acest director de înregistrări de feedback.",
         "create_directory": "Creează director",
+        "create_feedback_directory": "Creează director de feedback",
         "create_new_directory": "Creează un nou director de înregistrări de feedback",
         "description": "Gestionează directoarele de înregistrări de feedback și atribuirile lor la spații de lucru.",
         "directory": "director",
@@ -1160,6 +1161,7 @@
         "nav_label": "Directoare de feedback",
         "no_access": "Nu ai permisiunea de a gestiona directoarele de înregistrări de feedback.",
         "please_fill_all_workspace_fields": "Te rugăm să completezi mai întâi toate câmpurile workspace-ului.",
+        "select_workspaces_placeholder": "Selectează spații de lucru...",
         "show_archived": "Afișează arhivate",
         "title": "Directoare de Înregistrări Feedback",
         "unarchive": "Dezarhivează"

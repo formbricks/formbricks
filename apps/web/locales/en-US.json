@@ -183,7 +183,6 @@
     "count_questions": "{count, plural, one {{count} question} other {{count} questions}}",
     "count_responses": "{count, plural, one {{count} response} other {{count} responses}}",
     "count_selections": "{count, plural, one {{count} selection} other {{count} selections}}",
-    "create": "Create",
     "create_new_organization": "Create new organization",
     "create_segment": "Create segment",
     "create_survey": "Create survey",
@@ -1137,14 +1136,12 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks. Free for 30 days."
       },
       "feedback_record_directories": {
-        "all_workspaces_added": "All workspaces added to this directory.",
         "archive": "Archive",
         "archive_directory": "Archive Directory",
         "archive_not_allowed": "You are not allowed to archive this directory.",
         "are_you_sure_you_want_to_archive": "Are you sure you want to archive this directory? Workspaces will no longer have access to it.",
         "assign_workspaces_description": "Control which workspaces can access this feedback record directory.",
-        "create_directory": "Create Directory",
-        "create_new_directory": "Create new feedback record directory",
+        "create_feedback_directory": "Create feedback directory",
         "description": "Manage feedback record directories and their workspace assignments.",
         "directory": "directory",
         "directory_archived_successfully": "Directory archived successfully",
@@ -1159,7 +1156,7 @@
         "enter_directory_name": "Enter directory name",
         "nav_label": "Feedback Directories",
         "no_access": "You do not have permission to manage feedback record directories.",
-        "please_fill_all_workspace_fields": "Please fill all workspace fields first.",
+        "select_workspaces_placeholder": "Select workspaces...",
         "show_archived": "Show archived",
         "title": "Feedback Record Directories",
         "unarchive": "Unarchive"
