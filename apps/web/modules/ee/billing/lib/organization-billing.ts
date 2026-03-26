@@ -1322,11 +1322,13 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     // (e.g. webhook + bootstrap) both seeing 0 and creating duplicate hobbies.
     const freshSubscriptions = await client.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 5,
+      status: "all",
+      limit: 20,
     });
 
-    if (freshSubscriptions.data.length === 0) {
+    const freshActive = freshSubscriptions.data.filter((sub) => ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status));
+
+    if (freshActive.length === 0) {
       await ensureHobbySubscription(organizationId, customerId);
     }
   }
