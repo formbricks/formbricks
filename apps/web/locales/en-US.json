@@ -148,6 +148,8 @@
     "bottom_right": "Bottom Right",
     "cancel": "Cancel",
     "centered_modal": "Centered Modal",
+    "change_organization": "Change organization",
+    "change_workspace": "Change workspace",
     "choices": "Choices",
     "choose_environment": "Choose environment",
     "choose_organization": "Choose organization",
