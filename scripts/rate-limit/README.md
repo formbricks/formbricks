@@ -2,6 +2,9 @@
 
 These scripts are for validating the Envoy Gateway staging POC without changing runtime behavior in the app.
 
+For a live demo flow, use [DEMO.md](/Users/bhagya/work/formbricks/formbricks/scripts/rate-limit/DEMO.md) and
+[demo.sh](/Users/bhagya/work/formbricks/formbricks/scripts/rate-limit/demo.sh).
+
 ## What the script reports
 
 For each request it prints:
