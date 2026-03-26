@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  COMPOUND_FIELD_LABELS,
+  getCompoundFields,
+} from "@formbricks/types/surveys/compound-fields";
 import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
@@ -116,16 +120,40 @@ export const RecallItemSelect = ({
     const idx = isEndingCard
       ? elements.length
       : elements.findIndex((recallElement) => recallElement.id === elementId);
-    const filteredElements = elements
+    const result: TSurveyRecallItem[] = [];
+
+    elements
       .filter((element, index) => {
         const notAllowed = isNotAllowedElementType(element);
-        return !recallItemIds.includes(element.id) && !notAllowed && element.id !== elementId && idx > index;
+        return !notAllowed && element.id !== elementId && idx > index;
       })
-      .map((element) => {
-        return { id: element.id, label: element.headline[selectedLanguageCode], type: "element" as const };
+      .forEach((element) => {
+        const compoundFields = getCompoundFields(element.type);
+        if (compoundFields) {
+          // For compound elements (contactInfo, address), show individual sub-fields
+          const headline = element.headline[selectedLanguageCode] || element.id;
+          compoundFields.forEach((fieldName) => {
+            const subFieldId = `${element.id}.${fieldName}`;
+            // Only include visible sub-fields that aren't already recalled
+            const fieldConfig = (element as Record<string, any>)[fieldName];
+            if (fieldConfig?.show && !recallItemIds.includes(subFieldId)) {
+              result.push({
+                id: subFieldId,
+                label: `${headline} > ${COMPOUND_FIELD_LABELS[fieldName] || fieldName}`,
+                type: "element" as const,
+              });
+            }
+          });
+        } else if (!recallItemIds.includes(element.id)) {
+          result.push({
+            id: element.id,
+            label: element.headline[selectedLanguageCode],
+            type: "element" as const,
+          });
+        }
       });
 
-    return filteredElements;
+    return result;
   }, [elementId, elements, recallItemIds, selectedLanguageCode]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
@@ -133,7 +161,7 @@ export const RecallItemSelect = ({
       (recallItems) => {
         if (searchValue.trim() === "") return true;
         else {
-          return recallItems.label.toLowerCase().startsWith(searchValue.toLowerCase());
+          return recallItems.label.toLowerCase().includes(searchValue.toLowerCase());
         }
       }
     );
@@ -142,7 +170,11 @@ export const RecallItemSelect = ({
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
       case "element": {
-        const element = elements.find((element) => element.id === recallItem.id);
+        // Handle sub-field IDs (e.g., "questionId.firstName")
+        const elementId = recallItem.id.includes(".")
+          ? recallItem.id.split(".", 2)[0]
+          : recallItem.id;
+        const element = elements.find((el) => el.id === elementId);
         if (element) {
           return elementIconMapping[element?.type as keyof typeof elementIconMapping];
         }

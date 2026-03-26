@@ -156,7 +156,7 @@ export const RecallPlugin = ({
   const convertTextToRecallNodes = useCallback(() => {
     const root = $getRoot();
     const allTextNodes = collectTextNodes(root);
-    const recallPattern = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
+    const recallPattern = /#recall:[A-Za-z0-9_.-]+\/fallback:[^#]*#/g;
 
     for (const node of allTextNodes) {
       const textContent = node.getTextContent();

@@ -26,6 +26,7 @@ import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-conta
 import { ApiClient } from "@/lib/api-client";
 import { callExternalAPI } from "@/lib/external-api-client";
 import { evaluateLogic, performActions } from "@/lib/logic";
+import { computeConfiguredPrefill } from "@/lib/compound-prefill";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
@@ -867,7 +868,12 @@ export function Survey({
               onFileUpload={onFileUpload}
               isFirstBlock={block.id === localSurvey.blocks[0]?.id}
               skipPrefilled={skipPrefilled}
-              prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
+              prefilledResponseData={(() => {
+                const configuredPrefill = computeConfiguredPrefill(block.elements, responseData);
+                const urlPrefill = offset === 0 ? prefillResponseData : undefined;
+                if (!Object.keys(configuredPrefill).length && !urlPrefill) return undefined;
+                return { ...configuredPrefill, ...urlPrefill };
+              })()}
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}

@@ -1,11 +1,12 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { ALL_COMPOUND_FIELD_INDICES } from "@formbricks/types/surveys/compound-fields";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 const extractId = (text: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)/;
+  const pattern = /#recall:([A-Za-z0-9_.-]+)/;
   const match = text.match(pattern);
   return match?.[1] ?? null;
 };
@@ -19,7 +20,7 @@ const extractFallbackValue = (text: string): string => {
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ?? "[A-Za-z0-9_-]+";
+  const idPattern = id ?? "[A-Za-z0-9_.-]+";
   const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
@@ -42,22 +43,31 @@ export const replaceRecallInfo = (
     const fallback = extractFallbackValue(recallInfo).replace(/nbsp/g, " ").trim();
     let value: string | null = null;
 
-    // Fetching value from variables based on recallItemId
-    if (variables[recallItemId] !== undefined) {
-      value = String(variables[recallItemId]) ?? fallback;
-    }
+    // Handle sub-field recall IDs (e.g., "questionId.firstName")
+    if (recallItemId.includes(".")) {
+      const [baseId, fieldName] = recallItemId.split(".", 2);
+      const arrayValue = responseData[baseId];
+      if (Array.isArray(arrayValue) && fieldName in ALL_COMPOUND_FIELD_INDICES) {
+        value = arrayValue[ALL_COMPOUND_FIELD_INDICES[fieldName]] || null;
+      }
+    } else {
+      // Fetching value from variables based on recallItemId
+      if (variables[recallItemId] !== undefined) {
+        value = String(variables[recallItemId]) ?? fallback;
+      }
 
-    // Fetching value from responseData or attributes based on recallItemId
-    if (responseData[recallItemId] !== undefined) {
-      value = (responseData[recallItemId] as string) ?? fallback;
-    }
+      // Fetching value from responseData or attributes based on recallItemId
+      if (responseData[recallItemId] !== undefined) {
+        value = (responseData[recallItemId] as string) ?? fallback;
+      }
 
-    // Additional value formatting if it exists
-    if (value) {
-      if (isValidDateString(value)) {
-        value = formatDateWithOrdinal(new Date(value));
-      } else if (Array.isArray(value)) {
-        value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+      // Additional value formatting if it exists
+      if (value) {
+        if (isValidDateString(value)) {
+          value = formatDateWithOrdinal(new Date(value));
+        } else if (Array.isArray(value)) {
+          value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+        }
       }
     }
 

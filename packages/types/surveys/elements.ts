@@ -73,6 +73,7 @@ export const ZSurveyOpenTextElement = ZSurveyElementBase.extend({
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextElementInputType.optional().default("text"),
   insightsEnabled: z.boolean().default(false).optional(),
+  prefillFrom: z.string().optional(), // recall-style source ID (e.g., "questionId.firstName" or hidden field ID)
   charLimit: z
     .object({
       enabled: z.boolean().default(false).optional(),
@@ -269,6 +270,7 @@ const ZToggleInputConfig = z.object({
   show: z.boolean(),
   required: z.boolean(),
   placeholder: ZI18nString,
+  prefillFrom: z.string().optional(), // recall-style source ID (e.g., "questionId.firstName" or hidden field ID)
 });
 
 export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;

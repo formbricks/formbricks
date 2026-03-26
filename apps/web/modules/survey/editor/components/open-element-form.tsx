@@ -2,13 +2,29 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
-import { JSX, useEffect, useState } from "react";
+import { JSX, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyOpenTextElement, TSurveyOpenTextElementInputType } from "@formbricks/types/surveys/elements";
+import {
+  COMPOUND_FIELD_LABELS,
+  getCompoundFields,
+} from "@formbricks/types/surveys/compound-fields";
+import {
+  TSurveyOpenTextElement,
+  TSurveyOpenTextElementInputType,
+  TSurveyElementTypeEnum,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -53,6 +69,43 @@ export const OpenElementForm = ({
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   const [showCharLimits, setShowCharLimits] = useState(element.inputType === "text");
+
+  const allElements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+
+  // Build available pre-fill sources from earlier questions and hidden fields
+  const prefillSources = useMemo(() => {
+    const sources: { id: string; label: string }[] = [];
+    const currentIdx = allElements.findIndex((e) => e.id === element.id);
+
+    for (let i = 0; i < currentIdx; i++) {
+      const el = allElements[i];
+      const compoundFields = getCompoundFields(el.type);
+      if (compoundFields) {
+        const headline = el.headline[selectedLanguageCode] || el.id;
+        for (const fieldName of compoundFields) {
+          const fieldConfig = (el as Record<string, any>)[fieldName];
+          if (fieldConfig?.show) {
+            sources.push({
+              id: `${el.id}.${fieldName}`,
+              label: `${headline} > ${COMPOUND_FIELD_LABELS[fieldName] || fieldName}`,
+            });
+          }
+        }
+      }
+      if (el.type === TSurveyElementTypeEnum.OpenText) {
+        const headline = el.headline[selectedLanguageCode] || el.id;
+        sources.push({ id: el.id, label: headline });
+      }
+    }
+
+    if (localSurvey.hiddenFields.fieldIds) {
+      for (const fieldId of localSurvey.hiddenFields.fieldIds) {
+        sources.push({ id: fieldId, label: `Hidden: ${fieldId}` });
+      }
+    }
+
+    return sources;
+  }, [allElements, element.id, localSurvey.hiddenFields, selectedLanguageCode]);
 
   const handleInputChange = (inputType: TSurveyOpenTextElementInputType) => {
     const updatedAttributes = {
@@ -155,6 +208,28 @@ export const OpenElementForm = ({
           isStorageConfigured={isStorageConfigured}
         />
       </div>
+
+      {/* Pre-fill from source */}
+      {prefillSources.length > 0 && (
+        <div className="mt-3">
+          <Label htmlFor="prefillFrom">Pre-fill from</Label>
+          <Select
+            value={element.prefillFrom || "none"}
+            onValueChange={(val) => updateElement(elementIdx, { prefillFrom: val === "none" ? undefined : val })}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="None" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {prefillSources.map((source) => (
+                <SelectItem key={source.id} value={source.id}>
+                  {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Add a dropdown to select the element type */}
       <div className="mt-3">

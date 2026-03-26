@@ -1,6 +1,7 @@
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { ALL_COMPOUND_FIELD_INDICES, COMPOUND_FIELD_LABELS } from "@formbricks/types/surveys/compound-fields";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -14,7 +15,7 @@ export interface fallbacks {
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 export const extractId = (text: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)/;
+  const pattern = /#recall:([A-Za-z0-9_.-]+)/;
   const match = text.match(pattern);
   if (match && match[1]) {
     return match[1];
@@ -27,7 +28,7 @@ const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
 export const extractIds = (text: string): string[] => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)/g;
+  const pattern = /#recall:([A-Za-z0-9_.-]+)/g;
   const matches = Array.from(text.matchAll(pattern));
   return matches.map((match) => match[1]).filter((id) => id !== null);
 };
@@ -41,7 +42,7 @@ export const extractFallbackValue = (text: string): string => {
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 export const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ? escapeRegExp(id) : "[A-Za-z0-9_-]+";
+  const idPattern = id ? escapeRegExp(id) : "[A-Za-z0-9_.-]+";
   const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
@@ -59,6 +60,20 @@ const getRecallItemLabel = <T extends TSurvey>(
   survey: T,
   languageCode: string
 ): string | undefined => {
+  // Handle sub-field recall IDs (e.g., "questionId.firstName")
+  if (recallItemId.includes(".")) {
+    const [baseId, fieldName] = recallItemId.split(".", 2);
+    const questions = getElementsFromBlocks(survey.blocks);
+    const surveyQuestion = questions.find((question) => question.id === baseId);
+    if (surveyQuestion) {
+      const headline = getLocalizedValue(surveyQuestion.headline, languageCode);
+      const questionLabel = headline ? getTextContent(headline) : baseId;
+      const fieldLabel = COMPOUND_FIELD_LABELS[fieldName] || fieldName;
+      return `${questionLabel} > ${fieldLabel}`;
+    }
+    return undefined;
+  }
+
   const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
   if (isHiddenField) return recallItemId;
 
@@ -161,10 +176,15 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
   const ids = extractIds(text);
   let recallItems: TSurveyRecallItem[] = [];
   ids.forEach((recallItemId) => {
-    const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
     const questions = getElementsFromBlocks(survey.blocks);
-    const isSurveyQuestion = questions.find((question) => question.id === recallItemId);
-    const isVariable = survey.variables.find((variable) => variable.id === recallItemId);
+
+    // Handle sub-field recall IDs (e.g., "questionId.firstName")
+    const isSubField = recallItemId.includes(".");
+    const baseId = isSubField ? recallItemId.split(".", 2)[0] : recallItemId;
+
+    const isHiddenField = survey.hiddenFields.fieldIds?.includes(baseId);
+    const isSurveyQuestion = questions.find((question) => question.id === baseId);
+    const isVariable = !isSubField && survey.variables.find((variable) => variable.id === recallItemId);
 
     const recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode);
 
@@ -193,7 +213,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
 export const getFallbackValues = (text: string): fallbacks => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
+  const pattern = /#recall:([A-Za-z0-9_.-]+)\/fallback:([^#]*)#/g;
   let match;
   const fallbacks: fallbacks = {};
 
@@ -245,8 +265,18 @@ export const parseRecallInfo = (
     const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
     let value: TResponseDataValue | undefined;
 
+    // Handle sub-field recall IDs (e.g., "questionId.firstName")
+    if (recallItemId.includes(".")) {
+      const [baseId, fieldName] = recallItemId.split(".", 2);
+      if (responseData && responseData[baseId] !== undefined) {
+        const arrayValue = responseData[baseId];
+        if (Array.isArray(arrayValue) && fieldName in ALL_COMPOUND_FIELD_INDICES) {
+          value = arrayValue[ALL_COMPOUND_FIELD_INDICES[fieldName]] || undefined;
+        }
+      }
+    }
     // First check if it matches a variable
-    if (variables && variableIds.includes(recallItemId)) {
+    else if (variables && variableIds.includes(recallItemId)) {
       value = variables[recallItemId];
     }
     // Then check if it matches response data

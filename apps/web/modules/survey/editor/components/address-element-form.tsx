@@ -44,31 +44,37 @@ export const AddressElementForm = ({
       id: "addressLine1",
       label: t("environments.surveys.edit.address_line_1"),
       ...element.addressLine1,
+      prefillFrom: element.addressLine1.prefillFrom,
     },
     {
       id: "addressLine2",
       label: t("environments.surveys.edit.address_line_2"),
       ...element.addressLine2,
+      prefillFrom: element.addressLine2.prefillFrom,
     },
     {
       id: "city",
       label: t("environments.surveys.edit.city"),
       ...element.city,
+      prefillFrom: element.city.prefillFrom,
     },
     {
       id: "state",
       label: t("environments.surveys.edit.state"),
       ...element.state,
+      prefillFrom: element.state.prefillFrom,
     },
     {
       id: "zip",
       label: t("environments.surveys.edit.zip"),
       ...element.zip,
+      prefillFrom: element.zip.prefillFrom,
     },
     {
       id: "country",
       label: t("environments.surveys.edit.country"),
       ...element.country,
+      prefillFrom: element.country.prefillFrom,
     },
   ];
 
