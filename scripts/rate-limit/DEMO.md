@@ -4,11 +4,12 @@ This runbook is for a live staging demo of the Envoy Gateway rate-limit POC.
 
 ## Demo Goal
 
-Show three things:
+Show four things:
 
 1. the selected staging routes now traverse the gateway path
 2. public client traffic is rate-limited at the gateway
 3. API-key-authenticated management traffic is rate-limited at the gateway
+4. excluded routes remain unthrottled by the gateway policy set
 
 ## Required Inputs
 
@@ -21,6 +22,15 @@ Show three things:
 
 Use [demo.sh](/Users/bhagya/work/formbricks/formbricks/scripts/rate-limit/demo.sh).
 
+Supported modes:
+
+- `preflight`
+- `public`
+- `management`
+- `negative`
+- `evidence`
+- `all`
+
 ### Full Demo
 
 ```bash
@@ -29,6 +39,12 @@ cd /Users/bhagya/work/formbricks/formbricks
 HOST=https://staging.app.formbricks.com \
 ENVIRONMENT_ID='<environment_id>' \
 API_KEY='<api_key>' \
+PUBLIC_COUNT=125 \
+PUBLIC_CONCURRENCY=20 \
+MANAGEMENT_COUNT=200 \
+MANAGEMENT_CONCURRENCY=40 \
+NEGATIVE_COUNT=25 \
+NEGATIVE_CONCURRENCY=10 \
 scripts/rate-limit/demo.sh all
 ```
 
@@ -64,10 +80,48 @@ cd /Users/bhagya/work/formbricks/formbricks
 
 HOST=https://staging.app.formbricks.com \
 API_KEY='<api_key>' \
-MANAGEMENT_COUNT=125 \
-MANAGEMENT_CONCURRENCY=20 \
+MANAGEMENT_COUNT=200 \
+MANAGEMENT_CONCURRENCY=40 \
 scripts/rate-limit/demo.sh management
 ```
+
+Excluded-route demo:
+
+```bash
+cd /Users/bhagya/work/formbricks/formbricks
+
+HOST=https://staging.app.formbricks.com \
+NEGATIVE_COUNT=25 \
+NEGATIVE_CONCURRENCY=10 \
+scripts/rate-limit/demo.sh negative
+```
+
+Recent Envoy log evidence:
+
+```bash
+cd /Users/bhagya/work/formbricks/formbricks
+
+LOG_WINDOW=5m \
+scripts/rate-limit/demo.sh evidence
+```
+
+## Recommended Live Sequence
+
+Use this order:
+
+1. `preflight`
+2. `public`
+3. `management`
+4. `negative`
+5. `evidence`
+
+This gives you a complete story:
+
+- the traffic path is on Envoy
+- public traffic is blocked at the gateway
+- API-key traffic is blocked at the gateway
+- excluded routes remain open
+- Envoy logs confirm the decisions server-side
 
 ## What To Say During The Demo
 
@@ -89,6 +143,7 @@ The public burst step targets:
 Success criteria:
 
 - the summary contains `status=429 source=gateway`
+- the summary prints `gateway_429s=<n>` with `n > 0`
 
 ### 3. API-Key Management Route Is Rate-Limited At The Gateway
 
@@ -99,6 +154,29 @@ The management burst step targets:
 Success criteria:
 
 - the summary contains `status=429 source=gateway`
+- the summary prints `gateway_429s=<n>` with `n > 0`
+
+### 4. Excluded Health Route Is Not Rate-Limited
+
+The excluded-route step targets:
+
+- `GET /api/v2/health`
+
+Success criteria:
+
+- the summary contains no `429` responses
+- `gateway_429s=0`
+- `app_429s=0`
+
+### 5. Live Envoy Evidence
+
+The evidence step prints matching Envoy log lines for:
+
+- `formbricks-stage-v1-client`
+- `formbricks-stage-v1-management`
+- `request_rate_limited`
+
+That gives you an infrastructure-side proof in addition to the client-side summary.
 
 ## Expected Caveat
 
@@ -133,6 +211,16 @@ HOST=https://staging.app.formbricks.com \
 API_KEY='<api_key>' \
 COUNT=1 \
 scripts/rate-limit/burst-test.sh management-api-key
+```
+
+Show the excluded route probe:
+
+```bash
+cd /Users/bhagya/work/formbricks/formbricks
+
+HOST=https://staging.app.formbricks.com \
+COUNT=1 \
+scripts/rate-limit/burst-test.sh v2-health
 ```
 
 Show recent Envoy route hits during the demo:

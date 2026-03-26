@@ -8,8 +8,11 @@ ENVIRONMENT_ID="${ENVIRONMENT_ID:-}"
 API_KEY="${API_KEY:-}"
 PUBLIC_COUNT="${PUBLIC_COUNT:-125}"
 PUBLIC_CONCURRENCY="${PUBLIC_CONCURRENCY:-20}"
-MANAGEMENT_COUNT="${MANAGEMENT_COUNT:-125}"
-MANAGEMENT_CONCURRENCY="${MANAGEMENT_CONCURRENCY:-20}"
+MANAGEMENT_COUNT="${MANAGEMENT_COUNT:-200}"
+MANAGEMENT_CONCURRENCY="${MANAGEMENT_CONCURRENCY:-40}"
+NEGATIVE_COUNT="${NEGATIVE_COUNT:-25}"
+NEGATIVE_CONCURRENCY="${NEGATIVE_CONCURRENCY:-10}"
+LOG_WINDOW="${LOG_WINDOW:-5m}"
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BURST_SCRIPT="$WORKDIR/burst-test.sh"
 TMP_DIR="$(mktemp -d)"
@@ -17,7 +20,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 usage() {
   cat <<'EOF'
-usage: scripts/rate-limit/demo.sh [preflight|public|management|all]
+usage: scripts/rate-limit/demo.sh [preflight|public|management|negative|evidence|all]
 
 Required environment variables:
   ENVIRONMENT_ID   Staging environment ID for public client route checks
@@ -27,8 +30,11 @@ Optional environment variables:
   HOST                    Defaults to https://staging.app.formbricks.com
   PUBLIC_COUNT            Defaults to 125
   PUBLIC_CONCURRENCY      Defaults to 20
-  MANAGEMENT_COUNT        Defaults to 125
-  MANAGEMENT_CONCURRENCY  Defaults to 20
+  MANAGEMENT_COUNT        Defaults to 200
+  MANAGEMENT_CONCURRENCY  Defaults to 40
+  NEGATIVE_COUNT          Defaults to 25
+  NEGATIVE_CONCURRENCY    Defaults to 10
+  LOG_WINDOW              Defaults to 5m
 EOF
 }
 
@@ -85,6 +91,33 @@ summarize_output() {
   ' "$output_file" | sort
 }
 
+print_summary_insights() {
+  local output_file="$1"
+  local gateway_429_count
+  local app_429_count
+  local unknown_429_count
+  local server_error_count
+
+  gateway_429_count="$(count_matches 'status=429 source=gateway' "$output_file")"
+  app_429_count="$(count_matches 'status=429 source=app' "$output_file")"
+  unknown_429_count="$(count_matches 'status=429 source=unknown' "$output_file")"
+  server_error_count="$(count_matches 'status=5[0-9][0-9] source=' "$output_file")"
+
+  echo "gateway_429s=$gateway_429_count"
+  echo "app_429s=$app_429_count"
+  echo "unknown_429s=$unknown_429_count"
+  echo "server_errors=$server_error_count"
+}
+
+count_matches() {
+  local pattern="$1"
+  local input_file="$2"
+  local count
+
+  count="$(rg -c "$pattern" "$input_file" 2>/dev/null || true)"
+  echo "${count:-0}"
+}
+
 assert_gateway_probe() {
   local output_file="$1"
   if ! rg -q 'source=gateway' "$output_file"; then
@@ -98,6 +131,31 @@ assert_gateway_rate_limit() {
   if ! rg -q 'status=429 source=gateway' "$output_file"; then
     echo "Expected at least one gateway 429 in burst output, but none was found." >&2
     exit 1
+  fi
+}
+
+assert_no_429() {
+  local output_file="$1"
+  if rg -q 'status=429 source=' "$output_file"; then
+    echo "Expected no 429s in excluded-route output, but at least one was found." >&2
+    exit 1
+  fi
+}
+
+show_envoy_log_evidence() {
+  local pattern="$1"
+
+  section "Recent Envoy Evidence"
+
+  if ! command -v kubectl >/dev/null 2>&1; then
+    echo "kubectl not available; skipping live Envoy log evidence."
+    return
+  fi
+
+  if ! kubectl logs -n formbricks-stage deploy/formbricks-stage-envoy -c envoy --since="$LOG_WINDOW" 2>/dev/null | \
+    rg "$pattern" | \
+    rg 'request_rate_limited|response_flags":"RL"'; then
+    echo "No matching Envoy log lines found in the last $LOG_WINDOW."
   fi
 }
 
@@ -150,7 +208,9 @@ run_public_demo() {
 
   section "Public IP Summary"
   summarize_output "$public_output"
+  print_summary_insights "$public_output"
   assert_gateway_rate_limit "$public_output"
+  show_envoy_log_evidence 'formbricks-stage-v1-client'
 }
 
 run_management_demo() {
@@ -167,7 +227,29 @@ run_management_demo() {
 
   section "API Key Summary"
   summarize_output "$management_output"
+  print_summary_insights "$management_output"
   assert_gateway_rate_limit "$management_output"
+  show_envoy_log_evidence 'formbricks-stage-v1-management'
+}
+
+run_negative_demo() {
+  section "Excluded Route Demo"
+  echo "Route: GET /api/v2/health"
+  echo "Expected: no 429 responses because this route is excluded from the gateway policy set"
+  negative_output="$TMP_DIR/negative-burst.txt"
+  run_and_capture \
+    "$negative_output" \
+    env HOST="$HOST" COUNT="$NEGATIVE_COUNT" CONCURRENCY="$NEGATIVE_CONCURRENCY" \
+      "$BURST_SCRIPT" v2-health
+
+  section "Excluded Route Summary"
+  summarize_output "$negative_output"
+  print_summary_insights "$negative_output"
+  assert_no_429 "$negative_output"
+}
+
+run_evidence_only() {
+  show_envoy_log_evidence 'formbricks-stage-v1-client|formbricks-stage-v1-management'
 }
 
 case "$MODE" in
@@ -180,10 +262,17 @@ case "$MODE" in
   management)
     run_management_demo
     ;;
+  negative)
+    run_negative_demo
+    ;;
+  evidence)
+    run_evidence_only
+    ;;
   all)
     run_preflight
     run_public_demo
     run_management_demo
+    run_negative_demo
     ;;
   -h|--help|help)
     usage

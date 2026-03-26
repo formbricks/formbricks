@@ -90,6 +90,9 @@ case "$SCENARIO" in
     BODY='{}'
     CONTENT_TYPE="application/json"
     ;;
+  v2-health)
+    URL="$HOST/api/v2/health"
+    ;;
   management-api-key)
     require_api_key
     URL="$HOST/api/v1/management/me"
