@@ -33,6 +33,82 @@ For the selected staging routes, the path is now:
 
 The old catch-all app ingress still serves the rest of the app directly. Only selected API prefixes are routed through Envoy for this POC.
 
+## Current Envoy-Covered Route Set
+
+There are two different scopes to keep separate:
+
+1. routes that currently traverse Envoy on staging
+2. routes that currently have an active Envoy rate-limit policy
+
+### Routes Currently Routed Through Envoy
+
+These prefixes are currently sent to Envoy first on staging:
+
+- `/api/auth/callback`
+- `/api/v1/client`
+- `/api/v2/client`
+- `/api/v1/management`
+- `/api/v1/webhooks`
+- `/storage`
+
+The ALB health check path `/health` is also wired through Envoy so the staging Envoy service can be health-checked cleanly.
+
+### Routes Currently Rate-Limited By Envoy
+
+The active `BackendTrafficPolicy` resources currently cover these route groups:
+
+- auth callbacks by client IP:
+  - `POST /api/auth/callback/credentials`
+    - `40 / hour` at the gateway
+    - this is an approximation of the stricter app-side `10 / 15 min` limit, because Envoy Gateway global rate limits only support whole-unit windows
+  - `POST /api/auth/callback/token`
+    - `10 / hour`
+- V1 client routes by client IP:
+  - `POST /api/v1/client/{environmentId}/storage`
+    - `5 / min`
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/client/{environmentId}/environment`
+    - `100 / min`
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/client/{environmentId}/responses`
+    - `100 / min`
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/client/{environmentId}/responses/{responseId}`
+    - `100 / min`
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/client/{environmentId}/displays`
+    - `100 / min`
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/client/{environmentId}/user`
+    - `100 / min`
+- V2 client routes by client IP:
+  - `POST|PUT /api/v2/client/{environmentId}/responses`
+    - `100 / min`
+  - `POST|PUT /api/v2/client/{environmentId}/responses/{responseId}`
+    - `100 / min`
+  - `POST /api/v2/client/{environmentId}/displays`
+    - `100 / min`
+  - `POST /api/v2/client/{environmentId}/storage`
+    - `5 / min`
+- V1 management routes by `x-api-key`:
+  - `POST /api/v1/management/storage`
+    - `5 / min`
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/management/*`
+    - `100 / min`
+- V1 webhooks routes by `x-api-key`:
+  - `GET|POST|PUT|PATCH|DELETE /api/v1/webhooks/*`
+    - `100 / min`
+- storage delete by `x-api-key`:
+  - `DELETE /storage/{environmentId}/{public|private}/...`
+    - `5 / min`
+
+### Explicitly Not Covered By Envoy Rate Limiting
+
+Important examples that are **not** currently rate-limited by Envoy:
+
+- `/api/v2/health`
+  - not routed through Envoy in the current POC
+  - this is the negative-control route used in the demo
+- `/api/v1/client/og`
+  - routed under the broader `/api/v1/client` prefix, but not matched by the active V1 client rate-limit regex
+- routes outside the listed prefixes above
+  - still go straight through the old staging app ingress
+
 ## Relevant PRs
 
 - Formbricks app support PR: [formbricks#7583](https://github.com/formbricks/formbricks/pull/7583)
