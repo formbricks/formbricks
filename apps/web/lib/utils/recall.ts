@@ -1,7 +1,7 @@
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { ALL_COMPOUND_FIELD_INDICES, COMPOUND_FIELD_LABELS } from "@formbricks/types/surveys/compound-fields";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
