@@ -455,17 +455,24 @@ const resolvePendingChangeEffectiveAt = (
   return currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 };
 
-const ensureHobbySubscription = async (organizationId: string, customerId: string): Promise<void> => {
+const ensureHobbySubscription = async (
+  organizationId: string,
+  customerId: string,
+  subscriptionCount: number
+): Promise<void> => {
   if (!stripeClient) return;
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
+  // Include subscriptionCount so the key is stable across concurrent calls (same
+  // count → same key → Stripe deduplicates) but changes after a cancellation
+  // (count increases → new key → allows legitimate re-creation).
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
       items: hobbyItems,
       metadata: { organizationId },
     },
-    { idempotencyKey: `ensure-hobby-subscription-${organizationId}` }
+    { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${subscriptionCount}` }
   );
 };
 
@@ -1329,7 +1336,7 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     const freshActive = freshSubscriptions.data.filter((sub) => ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status));
 
     if (freshActive.length === 0) {
-      await ensureHobbySubscription(organizationId, customerId);
+      await ensureHobbySubscription(organizationId, customerId, freshSubscriptions.data.length);
     }
   }
 };
