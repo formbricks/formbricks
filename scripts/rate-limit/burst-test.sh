@@ -7,6 +7,7 @@ HOST="${HOST:-https://staging.app.formbricks.com}"
 ENVIRONMENT_ID="${ENVIRONMENT_ID:-}"
 API_KEY="${API_KEY:-}"
 COUNT="${COUNT:-20}"
+CONCURRENCY="${CONCURRENCY:-1}"
 SLEEP_SECONDS="${SLEEP_SECONDS:-0}"
 RESPONSE_ID="${RESPONSE_ID:-envoy-poc-response}"
 WEBHOOK_ID="${WEBHOOK_ID:-envoy-poc-webhook}"
@@ -123,7 +124,14 @@ esac
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-for i in $(seq 1 "$COUNT"); do
+run_request() {
+  local i="$1"
+  local header_file
+  local body_file
+  local status_code
+  local source
+  local header_summary
+  local has_gateway_headers="false"
   header_file="$TMP_DIR/$i.headers"
   body_file="$TMP_DIR/$i.body"
 
@@ -138,9 +146,12 @@ for i in $(seq 1 "$COUNT"); do
     curl_args+=(-H "content-type: $CONTENT_TYPE")
   fi
 
-  for header in "${EXTRA_HEADERS[@]}"; do
-    curl_args+=(-H "$header")
-  done
+  # Bash 3.x + `set -u` treats empty arrays as unset during expansion, so guard the loop.
+  if [[ ${#EXTRA_HEADERS[@]:-0} -gt 0 ]]; then
+    for header in "${EXTRA_HEADERS[@]}"; do
+      curl_args+=(-H "$header")
+    done
+  fi
 
   if [[ -n "$BODY" ]]; then
     curl_args+=(--data "$BODY")
@@ -149,10 +160,18 @@ for i in $(seq 1 "$COUNT"); do
   status_code="$(curl "${curl_args[@]}" -w '%{http_code}' "$URL")"
 
   source="unknown"
-  if rg -qi '^x-envoy-ratelimited:' "$header_file"; then
-    source="gateway"
-  elif rg -q '"code":"too_many_requests"' "$body_file"; then
+  if rg -q '"code":"too_many_requests"' "$body_file"; then
     source="app"
+  else
+    if rg -qi '^(x-envoy-ratelimited|x-ratelimit-limit|x-ratelimit-remaining|x-ratelimit-reset):' "$header_file"; then
+      has_gateway_headers="true"
+    fi
+
+    if [[ "$has_gateway_headers" == "true" ]]; then
+      source="gateway"
+    elif [[ "$status_code" == "429" && ! -s "$body_file" ]]; then
+      source="gateway"
+    fi
   fi
 
   printf '%03d scenario=%s status=%s source=%s\n' "$i" "$SCENARIO" "$status_code" "$source"
@@ -161,7 +180,7 @@ for i in $(seq 1 "$COUNT"); do
     header_summary="$(
       {
         tr -d '\r' < "$header_file" |
-          rg -i '^(x-envoy-ratelimited|content-type|retry-after):' |
+          rg -i '^(x-envoy-ratelimited|x-ratelimit-limit|x-ratelimit-remaining|x-ratelimit-reset|content-type|retry-after):' |
           paste -sd '; ' -
       } || true
     )"
@@ -171,4 +190,26 @@ for i in $(seq 1 "$COUNT"); do
   if [[ "$SLEEP_SECONDS" != "0" ]]; then
     sleep "$SLEEP_SECONDS"
   fi
-done
+}
+
+if (( CONCURRENCY <= 1 )); then
+  for i in $(seq 1 "$COUNT"); do
+    run_request "$i"
+  done
+else
+  pids=()
+
+  for i in $(seq 1 "$COUNT"); do
+    run_request "$i" &
+    pids+=("$!")
+
+    if (( ${#pids[@]} >= CONCURRENCY )); then
+      wait "${pids[0]}"
+      pids=("${pids[@]:1}")
+    fi
+  done
+
+  for pid in "${pids[@]}"; do
+    wait "$pid"
+  done
+fi
