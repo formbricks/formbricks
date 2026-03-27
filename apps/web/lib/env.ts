@@ -3,6 +3,121 @@ import { z } from "zod";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
 
 const ZActiveAIProvider = z.enum(AI_PROVIDERS);
+const ZAIConfigurationEnv = z.object({
+  ACTIVE_AI_PROVIDER: ZActiveAIProvider.optional(),
+  ACTIVE_AI_MODEL: z.string().optional(),
+  GOOGLE_VERTEX_PROJECT: z.string().optional(),
+  GOOGLE_VERTEX_LOCATION: z.string().optional(),
+  GOOGLE_VERTEX_CREDENTIALS_JSON: z.string().optional(),
+  GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AZURE_API_KEY: z.string().optional(),
+  AZURE_BASE_URL: z.string().optional(),
+  AZURE_RESOURCE_NAME: z.string().optional(),
+});
+
+type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
+
+const addEnvIssue = (ctx: z.RefinementCtx, path: keyof TAIConfigurationEnv, message: string): void => {
+  ctx.addIssue({
+    code: "custom",
+    path: [path],
+    message,
+  });
+};
+
+const validateActiveAIModel = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (values.ACTIVE_AI_PROVIDER && !values.ACTIVE_AI_MODEL) {
+    addEnvIssue(ctx, "ACTIVE_AI_MODEL", "ACTIVE_AI_MODEL is required when ACTIVE_AI_PROVIDER is set");
+  }
+};
+
+const validateAwsAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AWS_REGION) {
+    addEnvIssue(ctx, "AWS_REGION", "AWS_REGION is required when ACTIVE_AI_PROVIDER=aws");
+  }
+
+  if (!values.AWS_ACCESS_KEY_ID) {
+    addEnvIssue(ctx, "AWS_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID is required when ACTIVE_AI_PROVIDER=aws");
+  }
+
+  if (!values.AWS_SECRET_ACCESS_KEY) {
+    addEnvIssue(
+      ctx,
+      "AWS_SECRET_ACCESS_KEY",
+      "AWS_SECRET_ACCESS_KEY is required when ACTIVE_AI_PROVIDER=aws"
+    );
+  }
+};
+
+const validateGcpAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.GOOGLE_VERTEX_PROJECT) {
+    addEnvIssue(
+      ctx,
+      "GOOGLE_VERTEX_PROJECT",
+      "GOOGLE_VERTEX_PROJECT is required when ACTIVE_AI_PROVIDER=gcp"
+    );
+  }
+
+  if (!values.GOOGLE_VERTEX_LOCATION) {
+    addEnvIssue(
+      ctx,
+      "GOOGLE_VERTEX_LOCATION",
+      "GOOGLE_VERTEX_LOCATION is required when ACTIVE_AI_PROVIDER=gcp"
+    );
+  }
+
+  if (!values.GOOGLE_VERTEX_CREDENTIALS_JSON && !values.GOOGLE_APPLICATION_CREDENTIALS) {
+    addEnvIssue(
+      ctx,
+      "GOOGLE_VERTEX_CREDENTIALS_JSON",
+      "GOOGLE_VERTEX_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS is required when ACTIVE_AI_PROVIDER=gcp"
+    );
+  }
+
+  if (values.GOOGLE_VERTEX_CREDENTIALS_JSON) {
+    try {
+      JSON.parse(values.GOOGLE_VERTEX_CREDENTIALS_JSON);
+    } catch {
+      addEnvIssue(ctx, "GOOGLE_VERTEX_CREDENTIALS_JSON", "GOOGLE_VERTEX_CREDENTIALS_JSON must be valid JSON");
+    }
+  }
+};
+
+const validateAzureAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AZURE_API_KEY) {
+    addEnvIssue(ctx, "AZURE_API_KEY", "AZURE_API_KEY is required when ACTIVE_AI_PROVIDER=azure");
+  }
+
+  if (!values.AZURE_BASE_URL && !values.AZURE_RESOURCE_NAME) {
+    addEnvIssue(
+      ctx,
+      "AZURE_BASE_URL",
+      "AZURE_BASE_URL or AZURE_RESOURCE_NAME is required when ACTIVE_AI_PROVIDER=azure"
+    );
+  }
+};
+
+const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  validateActiveAIModel(values, ctx);
+
+  if (!values.ACTIVE_AI_PROVIDER) {
+    return;
+  }
+
+  const providerValidators: Record<
+    z.infer<typeof ZActiveAIProvider>,
+    (values: TAIConfigurationEnv, ctx: z.RefinementCtx) => void
+  > = {
+    aws: validateAwsAIConfiguration,
+    gcp: validateGcpAIConfiguration,
+    azure: validateAzureAIConfiguration,
+  };
+
+  providerValidators[values.ACTIVE_AI_PROVIDER](values, ctx);
+};
 
 const parsedEnv = createEnv({
   /*
@@ -253,115 +368,6 @@ const parsedEnv = createEnv({
   },
 });
 
-z.object({
-  ACTIVE_AI_PROVIDER: ZActiveAIProvider.optional(),
-  ACTIVE_AI_MODEL: z.string().optional(),
-  GOOGLE_VERTEX_PROJECT: z.string().optional(),
-  GOOGLE_VERTEX_LOCATION: z.string().optional(),
-  GOOGLE_VERTEX_CREDENTIALS_JSON: z.string().optional(),
-  GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
-  AWS_REGION: z.string().optional(),
-  AWS_ACCESS_KEY_ID: z.string().optional(),
-  AWS_SECRET_ACCESS_KEY: z.string().optional(),
-  AZURE_API_KEY: z.string().optional(),
-  AZURE_BASE_URL: z.string().optional(),
-  AZURE_RESOURCE_NAME: z.string().optional(),
-})
-  .superRefine((values, ctx) => {
-    if (values.ACTIVE_AI_PROVIDER && !values.ACTIVE_AI_MODEL) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["ACTIVE_AI_MODEL"],
-        message: "ACTIVE_AI_MODEL is required when ACTIVE_AI_PROVIDER is set",
-      });
-    }
-
-    switch (values.ACTIVE_AI_PROVIDER) {
-      case "aws":
-        if (!values.AWS_REGION) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AWS_REGION"],
-            message: "AWS_REGION is required when ACTIVE_AI_PROVIDER=aws",
-          });
-        }
-
-        if (!values.AWS_ACCESS_KEY_ID) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AWS_ACCESS_KEY_ID"],
-            message: "AWS_ACCESS_KEY_ID is required when ACTIVE_AI_PROVIDER=aws",
-          });
-        }
-
-        if (!values.AWS_SECRET_ACCESS_KEY) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AWS_SECRET_ACCESS_KEY"],
-            message: "AWS_SECRET_ACCESS_KEY is required when ACTIVE_AI_PROVIDER=aws",
-          });
-        }
-
-        break;
-      case "gcp":
-        if (!values.GOOGLE_VERTEX_PROJECT) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["GOOGLE_VERTEX_PROJECT"],
-            message: "GOOGLE_VERTEX_PROJECT is required when ACTIVE_AI_PROVIDER=gcp",
-          });
-        }
-
-        if (!values.GOOGLE_VERTEX_LOCATION) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["GOOGLE_VERTEX_LOCATION"],
-            message: "GOOGLE_VERTEX_LOCATION is required when ACTIVE_AI_PROVIDER=gcp",
-          });
-        }
-
-        if (!values.GOOGLE_VERTEX_CREDENTIALS_JSON && !values.GOOGLE_APPLICATION_CREDENTIALS) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
-            message:
-              "GOOGLE_VERTEX_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS is required when ACTIVE_AI_PROVIDER=gcp",
-          });
-        }
-
-        if (values.GOOGLE_VERTEX_CREDENTIALS_JSON) {
-          try {
-            JSON.parse(values.GOOGLE_VERTEX_CREDENTIALS_JSON);
-          } catch {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
-              message: "GOOGLE_VERTEX_CREDENTIALS_JSON must be valid JSON",
-            });
-          }
-        }
-
-        break;
-      case "azure":
-        if (!values.AZURE_API_KEY) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AZURE_API_KEY"],
-            message: "AZURE_API_KEY is required when ACTIVE_AI_PROVIDER=azure",
-          });
-        }
-
-        if (!values.AZURE_BASE_URL && !values.AZURE_RESOURCE_NAME) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AZURE_BASE_URL"],
-            message: "AZURE_BASE_URL or AZURE_RESOURCE_NAME is required when ACTIVE_AI_PROVIDER=azure",
-          });
-        }
-
-        break;
-    }
-  })
-  .parse(parsedEnv);
+ZAIConfigurationEnv.superRefine(validateActiveAIProviderConfiguration).parse(parsedEnv);
 
 export const env = parsedEnv;

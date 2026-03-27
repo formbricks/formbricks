@@ -48,11 +48,11 @@ export const AISettingsToggle = ({
   });
 
   const getAIEnablementBlockedMessage = (): string => {
-    switch (aiEnablementState.blockReason) {
-      case "instanceNotConfigured":
-      default:
-        return t("environments.settings.general.ai_instance_not_configured");
+    if (aiEnablementState.blockReason === "instanceNotConfigured") {
+      return t("environments.settings.general.ai_instance_not_configured");
     }
+
+    return t("environments.settings.general.ai_instance_not_configured");
   };
 
   const handleToggle = async (
