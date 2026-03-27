@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -102,6 +102,12 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@formbricks/types/errors", () => ({
+  AuthenticationError: class AuthenticationError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "AuthenticationError";
+    }
+  },
   AuthorizationError: class AuthorizationError extends Error {},
   DatabaseError: class DatabaseError extends Error {},
   ResourceNotFoundError: class ResourceNotFoundError extends Error {
@@ -162,22 +168,22 @@ describe("utils.ts", () => {
 
     test("throws error if project not found", async () => {
       vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.workspace_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws error if environment not found", async () => {
       vi.mocked(getEnvironment).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.environment_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws error if session not found", async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.session_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.organization_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws AuthorizationError if membership not found", async () => {
@@ -219,7 +225,7 @@ describe("utils.ts", () => {
 
     test("throws error if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(environmentIdLayoutChecks("env123")).rejects.toThrow("common.organization_not_found");
+      await expect(environmentIdLayoutChecks("env123")).rejects.toThrow(ResourceNotFoundError);
     });
   });
 
@@ -454,7 +460,7 @@ describe("utils.ts", () => {
     test("throws error if session not found", async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow("common.session_not_found");
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if userId doesn't match session", async () => {
@@ -466,15 +472,13 @@ describe("utils.ts", () => {
     test("throws error if user not found", async () => {
       vi.mocked(getUser).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow("common.user_not_found");
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if environment data not found", async () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
-        "common.environment_not_found"
-      );
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws AuthorizationError if user has no environment access", async () => {

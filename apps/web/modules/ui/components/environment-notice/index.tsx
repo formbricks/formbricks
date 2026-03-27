@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -13,7 +14,7 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
   const [t, environment] = await Promise.all([getTranslate(), getEnvironment(environmentId)]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new ResourceNotFoundError(t("common.environment"), environmentId);
   }
 
   const environments = await getEnvironments(environment.projectId);
@@ -22,7 +23,7 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
   );
 
   if (!otherEnvironment) {
-    throw new Error("Other environment not found");
+    throw new ResourceNotFoundError(t("common.environment"), null);
   }
 
   const currentEnvironmentLabel = t(

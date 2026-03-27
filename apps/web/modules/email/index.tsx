@@ -15,7 +15,7 @@ import {
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
 import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -237,7 +237,7 @@ export const sendResponseFinishedEmail = async (
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", null);
   }
 
   // Pre-process the element response mapping before passing to email

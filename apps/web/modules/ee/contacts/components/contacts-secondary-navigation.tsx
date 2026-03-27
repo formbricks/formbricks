@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProject } from "@formbricks/types/project";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -20,7 +21,7 @@ export const ContactsSecondaryNavigation = async ({
     project = await getProjectByEnvironmentId(environmentId);
 
     if (!project) {
-      throw new Error(t("common.workspace_not_found"));
+      throw new ResourceNotFoundError(t("common.workspace"), null);
     }
   }
 

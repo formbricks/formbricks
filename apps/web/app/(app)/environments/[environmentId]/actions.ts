@@ -2,7 +2,11 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthorizationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { ZProjectUpdateInput } from "@formbricks/types/project";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
@@ -46,7 +50,7 @@ export const createProjectAction = authenticatedActionClient.inputSchema(ZCreate
     const organization = await getOrganization(organizationId);
 
     if (!organization) {
-      throw new Error("Organization not found");
+      throw new ResourceNotFoundError("Organization", organizationId);
     }
 
     const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.id);

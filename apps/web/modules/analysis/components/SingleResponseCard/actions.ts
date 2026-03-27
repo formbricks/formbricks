@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { createTag } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
@@ -68,7 +69,7 @@ export const createTagToResponseAction = authenticatedActionClient
       const tagEnvironment = await getTag(parsedInput.tagId);
 
       if (!responseEnvironmentId || !tagEnvironment) {
-        throw new Error("Environment not found");
+        throw new ResourceNotFoundError("Environment", null);
       }
 
       if (responseEnvironmentId !== tagEnvironment.environmentId) {
@@ -113,7 +114,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
       const tagEnvironment = await getTag(parsedInput.tagId);
       const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
       if (!responseEnvironmentId || !tagEnvironment) {
-        throw new Error("Environment not found");
+        throw new ResourceNotFoundError("Environment", null);
       }
 
       if (responseEnvironmentId !== tagEnvironment.environmentId) {

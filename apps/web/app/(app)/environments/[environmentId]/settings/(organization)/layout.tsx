@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -17,15 +18,15 @@ const Layout = async (props: { params: Promise<{ environmentId: string }>; child
   ]);
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   return <>{children}</>;
