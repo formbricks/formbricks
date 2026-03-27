@@ -22,6 +22,7 @@ export type AuditLoggingCtx = {
   quotaId?: string;
   teamId?: string;
   integrationId?: string;
+  feedbackRecordDirectoryId?: string;
 };
 
 export type ActionClientCtx = {

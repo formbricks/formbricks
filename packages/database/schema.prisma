@@ -625,28 +625,29 @@ enum SurveyOverlay {
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
 model Project {
-  id                  String          @id @default(cuid())
-  createdAt           DateTime        @default(now()) @map(name: "created_at")
-  updatedAt           DateTime        @updatedAt @map(name: "updated_at")
-  name                String
-  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId      String
-  environments        Environment[]
+  id                              String                           @id @default(cuid())
+  createdAt                       DateTime                         @default(now()) @map(name: "created_at")
+  updatedAt                       DateTime                         @updatedAt @map(name: "updated_at")
+  name                            String
+  organization                    Organization                     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId                  String
+  environments                    Environment[]
   /// [Styling]
-  styling             Json            @default("{\"allowStyleOverwrite\":true}")
+  styling                         Json                             @default("{\"allowStyleOverwrite\":true}")
   /// [ProjectConfig]
-  config              Json            @default("{}")
-  recontactDays       Int             @default(7)
-  linkSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement           WidgetPlacement @default(bottomRight)
-  clickOutsideClose   Boolean         @default(true)
-  overlay             SurveyOverlay   @default(none)
-  languages           Language[]
+  config                          Json                             @default("{}")
+  recontactDays                   Int                              @default(7)
+  linkSurveyBranding              Boolean                          @default(true) // Determines if the survey branding should be displayed in link surveys
+  inAppSurveyBranding             Boolean                          @default(true) // Determines if the survey branding should be displayed in in-app surveys
+  placement                       WidgetPlacement                  @default(bottomRight)
+  clickOutsideClose               Boolean                          @default(true)
+  overlay                         SurveyOverlay                    @default(none)
+  languages                       Language[]
   /// [Logo]
-  logo                Json?
-  projectTeams        ProjectTeam[]
-  customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
+  logo                            Json?
+  projectTeams                    ProjectTeam[]
+  customHeadScripts               String? // Custom HTML scripts for link surveys (self-hosted only)
+  feedbackRecordDirectoryProjects FeedbackRecordDirectoryProject[]
 
   @@unique([organizationId, name])
 }
@@ -663,19 +664,20 @@ model Project {
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAIEnabled - Controls access to AI-powered features
 model Organization {
-  id          String               @id @default(cuid())
-  createdAt   DateTime             @default(now()) @map(name: "created_at")
-  updatedAt   DateTime             @updatedAt @map(name: "updated_at")
-  name        String
-  memberships Membership[]
-  projects    Project[]
-  billing     OrganizationBilling?
+  id                        String                    @id @default(cuid())
+  createdAt                 DateTime                  @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                  @updatedAt @map(name: "updated_at")
+  name                      String
+  memberships               Membership[]
+  projects                  Project[]
+  billing                   OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel  Json                 @default("{}")
-  invites     Invite[]
-  isAIEnabled Boolean              @default(false)
-  teams       Team[]
-  apiKeys     ApiKey[]
+  whitelabel                Json                      @default("{}")
+  invites                   Invite[]
+  isAIEnabled               Boolean                   @default(false)
+  teams                     Team[]
+  apiKeys                   ApiKey[]
+  feedbackRecordDirectories FeedbackRecordDirectory[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -1022,4 +1024,42 @@ model ProjectTeam {
 
   @@id([projectId, teamId])
   @@index([teamId])
+}
+
+/// Represents a feedback record directory (Hub tenant) owned by an organization.
+/// Directories group feedback data and are assigned to workspaces for access control.
+///
+/// @property id - Unique identifier for the directory
+/// @property name - Display name of the directory
+/// @property isArchived - Soft delete flag
+/// @property organization - The parent organization
+/// @property projects - Workspaces assigned to this directory
+model FeedbackRecordDirectory {
+  id             String                           @id @default(cuid())
+  createdAt      DateTime                         @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                         @updatedAt @map(name: "updated_at")
+  name           String
+  isArchived     Boolean                          @default(false)
+  organizationId String
+  organization   Organization                     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects       FeedbackRecordDirectoryProject[]
+
+  @@unique([organizationId, name])
+}
+
+/// Links feedback record directories to projects (workspaces).
+/// Manages which workspaces can access a given directory.
+///
+/// @property feedbackRecordDirectory - The directory being accessed
+/// @property project - The workspace receiving access
+model FeedbackRecordDirectoryProject {
+  createdAt                 DateTime                @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                @updatedAt @map(name: "updated_at")
+  feedbackRecordDirectoryId String
+  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
+  projectId                 String
+  project                   Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([feedbackRecordDirectoryId, projectId])
+  @@index([projectId])
 }
