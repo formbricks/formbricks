@@ -22,6 +22,9 @@ ALTER TABLE "Tag" ADD COLUMN "projectId" TEXT;
 -- AlterTable
 ALTER TABLE "Webhook" ADD COLUMN "projectId" TEXT;
 
+-- AlterTable
+ALTER TABLE "ApiKeyEnvironment" ADD COLUMN "projectId" TEXT;
+
 -- CreateIndex
 CREATE INDEX "ActionClass_projectId_createdAt_idx" ON "ActionClass"("projectId", "created_at");
 
@@ -46,6 +49,9 @@ CREATE INDEX "Tag_projectId_idx" ON "Tag"("projectId");
 -- CreateIndex
 CREATE INDEX "Webhook_projectId_idx" ON "Webhook"("projectId");
 
+-- CreateIndex
+CREATE INDEX "ApiKeyEnvironment_projectId_idx" ON "ApiKeyEnvironment"("projectId");
+
 -- AddForeignKey
 ALTER TABLE "Webhook" ADD CONSTRAINT "Webhook_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -69,3 +75,6 @@ ALTER TABLE "Integration" ADD CONSTRAINT "Integration_projectId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "Segment" ADD CONSTRAINT "Segment_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ApiKeyEnvironment" ADD CONSTRAINT "ApiKeyEnvironment_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
