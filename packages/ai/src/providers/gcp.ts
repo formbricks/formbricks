@@ -62,19 +62,39 @@ export const gcpProviderAdapter: AIProviderAdapter = {
     const project = normalizeValue(environment.GOOGLE_VERTEX_PROJECT);
     const location = normalizeValue(environment.GOOGLE_VERTEX_LOCATION);
     const credentialsJson = normalizeValue(environment.GOOGLE_VERTEX_CREDENTIALS_JSON);
+    const applicationCredentials = normalizeValue(environment.GOOGLE_APPLICATION_CREDENTIALS);
 
-    if (!project || !location) {
+    if (!project || !location || (!credentialsJson && !applicationCredentials)) {
       throw new AIConfigurationError("providerNotConfigured", "GCP Vertex AI credentials are incomplete", {
         provider: "gcp",
-        missingFields: ["GOOGLE_VERTEX_PROJECT", "GOOGLE_VERTEX_LOCATION"],
+        missingFields: [
+          ...(!project ? ["GOOGLE_VERTEX_PROJECT"] : []),
+          ...(!location ? ["GOOGLE_VERTEX_LOCATION"] : []),
+          ...(!credentialsJson && !applicationCredentials
+            ? ["GOOGLE_VERTEX_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS"]
+            : []),
+        ],
       });
     }
 
-    const googleAuthOptions = credentialsJson
-      ? ({
+    let googleAuthOptions: VertexProviderSettings["googleAuthOptions"] | undefined;
+
+    if (credentialsJson) {
+      try {
+        googleAuthOptions = {
           credentials: parseVertexCredentialsJson(credentialsJson),
-        } as VertexProviderSettings["googleAuthOptions"])
-      : undefined;
+        } as VertexProviderSettings["googleAuthOptions"];
+      } catch {
+        throw new AIConfigurationError(
+          "providerNotConfigured",
+          "GOOGLE_VERTEX_CREDENTIALS_JSON must be valid JSON",
+          {
+            provider: "gcp",
+            invalidFields: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
+          }
+        );
+      }
+    }
 
     const vertex = createVertex({
       project,

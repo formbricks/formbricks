@@ -228,6 +228,7 @@ describe("AI organization service", () => {
         missingFields: [],
         invalidFields: [],
         errorCode: undefined,
+        err: modelError,
       },
       "Failed to resolve organization AI language model"
     );

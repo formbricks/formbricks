@@ -42,4 +42,13 @@ describe("getDisplayedOrganizationAISettingValue", () => {
       })
     ).toBe(true);
   });
+
+  test("renders false when the stored setting is false and instance AI is configured", () => {
+    expect(
+      getDisplayedOrganizationAISettingValue({
+        currentValue: false,
+        isInstanceConfigured: true,
+      })
+    ).toBe(false);
+  });
 });

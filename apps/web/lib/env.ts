@@ -14,7 +14,7 @@ const ZAIConfigurationEnv = z.object({
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AZURE_API_KEY: z.string().optional(),
-  AZURE_BASE_URL: z.string().optional(),
+  AZURE_BASE_URL: z.url().optional(),
   AZURE_RESOURCE_NAME: z.string().optional(),
 });
 
@@ -368,6 +368,6 @@ const parsedEnv = createEnv({
   },
 });
 
-ZAIConfigurationEnv.superRefine(validateActiveAIProviderConfiguration).parse(parsedEnv);
-
-export const env = parsedEnv;
+export const env = ZAIConfigurationEnv.superRefine(validateActiveAIProviderConfiguration)
+  .transform(() => parsedEnv)
+  .parse(parsedEnv);

@@ -34,10 +34,8 @@ export const AISettingsToggle = ({
     isInstanceConfigured: isInstanceAIConfigured,
   });
   const showInstanceConfigWarning = aiEnablementState.blockReason === "instanceNotConfigured";
-  const isSmartToolsToggleDisabled =
-    loadingField !== null || !canEdit || !aiEnablementState.canEnableFeatures;
-  const isDataAnalysisToggleDisabled =
-    loadingField !== null || !canEdit || !aiEnablementState.canEnableFeatures;
+  const isToggleDisabled = loadingField !== null || !canEdit || !aiEnablementState.canEnableFeatures;
+  const aiEnablementBlockedMessage = t("environments.settings.general.ai_instance_not_configured");
   const displayedSmartToolsValue = getDisplayedOrganizationAISettingValue({
     currentValue: organization.isAISmartToolsEnabled,
     isInstanceConfigured: isInstanceAIConfigured,
@@ -47,20 +45,12 @@ export const AISettingsToggle = ({
     isInstanceConfigured: isInstanceAIConfigured,
   });
 
-  const getAIEnablementBlockedMessage = (): string => {
-    if (aiEnablementState.blockReason === "instanceNotConfigured") {
-      return t("environments.settings.general.ai_instance_not_configured");
-    }
-
-    return t("environments.settings.general.ai_instance_not_configured");
-  };
-
   const handleToggle = async (
     field: "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled",
     checked: boolean
   ) => {
     if (checked && !aiEnablementState.canEnableFeatures) {
-      toast.error(getAIEnablementBlockedMessage());
+      toast.error(aiEnablementBlockedMessage);
       return;
     }
 
@@ -72,9 +62,7 @@ export const AISettingsToggle = ({
           : { isAIDataAnalysisEnabled: checked };
       const response = await updateOrganizationAISettingsAction({
         organizationId: organization.id,
-        data: {
-          ...data,
-        },
+        data,
       });
 
       if (response?.data) {
@@ -94,7 +82,7 @@ export const AISettingsToggle = ({
     <div className="space-y-4">
       {showInstanceConfigWarning && (
         <Alert variant="warning">
-          <AlertDescription>{getAIEnablementBlockedMessage()}</AlertDescription>
+          <AlertDescription>{aiEnablementBlockedMessage}</AlertDescription>
         </Alert>
       )}
 
@@ -104,7 +92,7 @@ export const AISettingsToggle = ({
         htmlId="ai-smart-tools-toggle"
         title={t("environments.settings.general.ai_smart_tools_enabled")}
         description={t("environments.settings.general.ai_smart_tools_enabled_description")}
-        disabled={isSmartToolsToggleDisabled}
+        disabled={isToggleDisabled}
         customContainerClass="px-0"
       />
 
@@ -114,7 +102,7 @@ export const AISettingsToggle = ({
         htmlId="ai-data-analysis-toggle"
         title={t("environments.settings.general.ai_data_analysis_enabled")}
         description={t("environments.settings.general.ai_data_analysis_enabled_description")}
-        disabled={isDataAnalysisToggleDisabled}
+        disabled={isToggleDisabled}
         customContainerClass="px-0"
       />
 

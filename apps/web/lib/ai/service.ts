@@ -113,11 +113,7 @@ export const assertOrganizationAIConfigured = async (
     );
   }
 
-  if (!aiConfig.isInstanceConfigured || !aiConfig.activeProvider) {
-    throw new OperationNotAllowedError(t("environments.settings.general.ai_instance_not_configured"));
-  }
-
-  if (!aiConfig.activeModel) {
+  if (!aiConfig.isInstanceConfigured) {
     throw new OperationNotAllowedError(t("environments.settings.general.ai_instance_not_configured"));
   }
 
@@ -142,6 +138,7 @@ export const getOrganizationAILanguageModel = async (
         missingFields: aiConfig.configStatus.missingFields,
         invalidFields: aiConfig.configStatus.invalidFields,
         errorCode: error instanceof AIConfigurationError ? error.code : undefined,
+        err: error,
       },
       "Failed to resolve organization AI language model"
     );

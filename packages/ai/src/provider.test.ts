@@ -232,22 +232,15 @@ describe("packages/ai provider helpers", () => {
   });
 
   test("throws a helpful error when the active model is missing", () => {
-    try {
+    const getModel = (): ReturnType<typeof getAiModel> =>
       getAiModel({
         ACTIVE_AI_PROVIDER: "gcp",
         GOOGLE_VERTEX_PROJECT: "test-project",
         GOOGLE_VERTEX_LOCATION: "us-central1",
         GOOGLE_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
       });
-      throw new Error("Expected getAiModel to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(AIConfigurationError);
 
-      if (!(error instanceof AIConfigurationError)) {
-        throw error;
-      }
-
-      expect(error.code).toBe("providerNotConfigured");
-    }
+    expect(getModel).toThrowError(AIConfigurationError);
+    expect(getModel).toThrowError(/ACTIVE_AI_MODEL/);
   });
 });

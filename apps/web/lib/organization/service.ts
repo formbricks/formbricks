@@ -381,10 +381,14 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
     return;
   }
 
-  const defaultSettings = { alert: {} };
+  const defaultSettings = { alert: {} as NonNullable<TUserNotificationSettings["alert"]> };
   const updatedNotificationSettings: TUserNotificationSettings = {
     ...defaultSettings,
     ...surveyCreator.notificationSettings,
+    alert: {
+      ...defaultSettings.alert,
+      ...(surveyCreator.notificationSettings?.alert ?? {}),
+    },
   };
 
   updatedNotificationSettings.alert[surveyId] = true;

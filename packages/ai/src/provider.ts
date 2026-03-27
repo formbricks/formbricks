@@ -11,6 +11,7 @@ import type {
 } from "./types";
 import { AI_PROVIDERS } from "./types";
 
+const MAX_LANGUAGE_MODEL_CACHE_ENTRIES = 50;
 const languageModelCache = new Map<string, LanguageModel>();
 
 export { AIConfigurationError };
@@ -20,10 +21,13 @@ const getProviderMissingAndInvalidFields = (
   environment: AIEnvironment
 ): { missingFields: string[]; invalidFields: string[]; model: string | null } => {
   const adapter = getAIProviderAdapter(provider);
-  const { missingFields, invalidFields } = adapter.validate(environment);
+  const { missingFields: adapterMissingFields, invalidFields: adapterInvalidFields } =
+    adapter.validate(environment);
+  const missingFields = [...adapterMissingFields];
+  const invalidFields = [...adapterInvalidFields];
   const model = normalizeValue(environment.ACTIVE_AI_MODEL) ?? null;
 
-  if (!model) {
+  if (!model && !missingFields.includes("ACTIVE_AI_MODEL")) {
     missingFields.push("ACTIVE_AI_MODEL");
   }
 
@@ -83,6 +87,33 @@ const getAIConfigurationErrorMessage = (status: AIConfigurationStatus): string =
     default:
       return "AI is not configured";
   }
+};
+
+const getCachedLanguageModel = (cacheKey: string): LanguageModel | undefined => {
+  const cachedLanguageModel = languageModelCache.get(cacheKey);
+
+  if (!cachedLanguageModel) {
+    return undefined;
+  }
+
+  languageModelCache.delete(cacheKey);
+  languageModelCache.set(cacheKey, cachedLanguageModel);
+
+  return cachedLanguageModel;
+};
+
+const setCachedLanguageModel = (cacheKey: string, languageModel: LanguageModel): void => {
+  if (languageModelCache.has(cacheKey)) {
+    languageModelCache.delete(cacheKey);
+  } else if (languageModelCache.size >= MAX_LANGUAGE_MODEL_CACHE_ENTRIES) {
+    const oldestCacheKey = languageModelCache.keys().next().value;
+
+    if (oldestCacheKey !== undefined) {
+      languageModelCache.delete(oldestCacheKey);
+    }
+  }
+
+  languageModelCache.set(cacheKey, languageModel);
 };
 
 export const getActiveAiProvider = (environment?: AIEnvironment): ActiveAIProvider | null => {
@@ -179,7 +210,7 @@ export const getAiModel = (environment?: AIEnvironment): AILanguageModel => {
 
   const providerAdapter = getAIProviderAdapter(configurationStatus.provider);
   const cacheKey = providerAdapter.buildCacheKey(normalizedModelName, resolvedEnvironment);
-  const cachedLanguageModel = languageModelCache.get(cacheKey);
+  const cachedLanguageModel = getCachedLanguageModel(cacheKey);
 
   if (cachedLanguageModel) {
     return cachedLanguageModel;
@@ -187,7 +218,7 @@ export const getAiModel = (environment?: AIEnvironment): AILanguageModel => {
 
   const languageModel = providerAdapter.createModel(normalizedModelName, resolvedEnvironment);
 
-  languageModelCache.set(cacheKey, languageModel);
+  setCachedLanguageModel(cacheKey, languageModel);
 
   return languageModel;
 };
