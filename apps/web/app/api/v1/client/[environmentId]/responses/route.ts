@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -13,6 +12,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -66,19 +66,16 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { environmentId } = params;
-    const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
-    const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
-
-    if (!environmentIdValidation.success) {
+    // Resolve: accepts either an environmentId (old SDK) or a projectId (new SDK)
+    const resolved = await resolveClientApiIds(params.environmentId);
+    if (!resolved) {
       return {
-        response: responses.badRequestResponse(
-          "Fields are missing or incorrectly formatted",
-          transformErrorToDetails(environmentIdValidation.error),
-          true
-        ),
+        response: responses.notFoundResponse("Environment", params.environmentId),
       };
     }
+    const { environmentId } = resolved;
+
+    const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
     if (!responseInputValidation.success) {
       return {

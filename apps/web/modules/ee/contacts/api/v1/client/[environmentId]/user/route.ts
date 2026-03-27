@@ -7,6 +7,7 @@ import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
 
@@ -45,15 +46,10 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const environmentId = params.environmentId.trim();
+      const idParam = params.environmentId.trim();
 
-      // Validate CUID v1 format using Zod (matches Prisma schema @default(cuid()))
-      // This catches all invalid formats including:
-      // - null/undefined passed as string "null" or "undefined"
-      // - HTML-encoded placeholders like <environmentId> or %3C...%3E
-      // - Empty or whitespace-only IDs
-      // - Any other invalid CUID v1 format
-      const cuidValidation = ZEnvironmentId.safeParse(environmentId);
+      // Validate CUID format
+      const cuidValidation = ZEnvironmentId.safeParse(idParam);
       if (!cuidValidation.success) {
         logger.warn(
           {
@@ -61,12 +57,21 @@ export const POST = withV1ApiWrapper({
             url: req.url,
             validationError: cuidValidation.error.issues[0]?.message,
           },
-          "Invalid CUID v1 format detected"
+          "Invalid CUID format detected"
         );
         return {
           response: responses.badRequestResponse("Invalid environment ID format", undefined, true),
         };
       }
+
+      // Resolve: accepts either an environmentId (old SDK) or a projectId (new SDK)
+      const resolved = await resolveClientApiIds(idParam);
+      if (!resolved) {
+        return {
+          response: responses.notFoundResponse("Environment", idParam),
+        };
+      }
+      const { environmentId } = resolved;
 
       const jsonInput = await req.json();
 
