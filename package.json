@@ -91,18 +91,26 @@
       "flatted": "3.4.2",
       "hono": "4.12.7",
       "@microsoft/api-extractor>minimatch": "10.2.4",
-      "node-forge": ">=1.3.2",
+      "minimatch@3.1.5": "file:vendor/minimatch-3.1.5",
+      "node-forge": "1.4.0",
+      "brace-expansion@5.0.4": "5.0.5",
+      "minimatch@3.1.5>brace-expansion": "5.0.5",
+      "minimatch@9.0.9": "10.2.4",
+      "lodash": "4.17.23",
+      "picomatch@2.3.1": "2.3.2",
+      "picomatch@4.0.3": "4.0.4",
       "qs": "6.14.2",
       "rollup": "4.59.0",
       "socket.io-parser": "4.2.6",
       "tar": ">=7.5.11",
       "typeorm": ">=0.3.26",
       "undici": "7.24.0",
+      "yaml": "2.8.3",
       "fast-xml-parser": "5.5.7",
       "diff": ">=8.0.3"
     },
     "comments": {
-      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: @hono/node-server/hono (Dependabot #313/#316/#317) - awaiting Prisma update | @tootallnate/once (Dependabot #305) - awaiting sqlite3/node-gyp chain update | schema-utils@3>ajv (Dependabot #287) - awaiting eslint/file-loader schema-utils update | axios (CVE-2025-58754, CVE-2026-25639) - awaiting @boxyhq/saml-jackson update | effect (Dependabot #339) - awaiting Prisma update | flatted (Dependabot #324/#338) - awaiting eslint/flat-cache update | minimatch (Dependabot #288/#294/#297) - awaiting react-email/glob update | node-forge (Dependabot #230) - awaiting @boxyhq/saml-jackson update | qs (Dependabot #277) - awaiting googleapis/googleapis-common update | rollup (Dependabot #291) - awaiting Vite patch adoption | socket.io-parser (Dependabot #334) - awaiting react-email/socket.io update | tar (CVE-2026-23745/23950/24842/26960) - awaiting @boxyhq/saml-jackson/sqlite3 dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update | undici (Dependabot #319/#322/#323) - awaiting jsdom/vitest/isomorphic-dompurify updates | fast-xml-parser (CVE-2026-25896/26278/33036/33349) - awaiting exact upstream pin updates | diff (Dependabot #269) - awaiting upstream patch range adoption"
+      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: @hono/node-server/hono (Dependabot #313/#316/#317) - awaiting Prisma update | @tootallnate/once (Dependabot #305) - awaiting sqlite3/node-gyp chain update | schema-utils@3>ajv (Dependabot #287) - awaiting eslint/file-loader schema-utils update | axios (CVE-2025-58754, CVE-2026-25639) - awaiting @boxyhq/saml-jackson update | effect (Dependabot #339) - awaiting Prisma update | flatted (Dependabot #324/#338) - awaiting eslint/flat-cache update | minimatch (Dependabot #288/#294/#297) - awaiting react-email/glob update | node-forge (Dependabot #347/#348/#349/#350) - awaiting @boxyhq/saml-jackson update | brace-expansion (Dependabot #346 / npm audit) - awaiting upstream adoption of safe minimatch/brace-expansion combos in transitive tooling and @boxyhq/saml-jackson | lodash (npm audit) - awaiting @boxyhq/saml-jackson update | picomatch (Dependabot #342/#343) - awaiting Vite/Vitest/lint-staged patch adoption | qs (Dependabot #277) - awaiting googleapis/googleapis-common update | rollup (Dependabot #291) - awaiting Vite patch adoption | socket.io-parser (Dependabot #334) - awaiting react-email/socket.io update | tar (CVE-2026-23745/23950/24842/26960) - awaiting @boxyhq/saml-jackson/sqlite3 dependency updates | typeorm (Dependabot #223) - awaiting @boxyhq/saml-jackson update | undici (Dependabot #319/#322/#323) - awaiting jsdom/vitest/isomorphic-dompurify updates | yaml (Dependabot #344) - awaiting Vite/lint-staged patch adoption | fast-xml-parser (CVE-2026-25896/26278/33036/33349) - awaiting exact upstream pin updates | diff (Dependabot #269) - awaiting upstream patch range adoption"
     },
     "patchedDependencies": {
       "next-auth@4.24.13": "patches/next-auth@4.24.13.patch"
