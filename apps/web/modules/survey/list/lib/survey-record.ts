@@ -15,6 +15,7 @@ export const surveySelect = {
   status: true,
   singleUse: true,
   environmentId: true,
+  projectId: true,
   _count: {
     select: { responses: true },
   },

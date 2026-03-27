@@ -54,6 +54,7 @@ export const ZContactAttributeKey = z.object({
     })
     .describe("The data type of the attribute (string, number, date)"),
   environmentId: z.cuid2().describe("The ID of the environment this attribute belongs to"),
+  projectId: z.string().nullable().describe("The ID of the project this attribute belongs to"),
 }) satisfies z.ZodType<ContactAttributeKey>;
 
 ZContactAttributeKey.meta({

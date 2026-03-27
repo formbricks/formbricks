@@ -17,6 +17,7 @@ export const ZWebhookUpdateSchema = ZWebhook.omit({
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  projectId: true,
   secret: true,
 }).meta({
   id: "webhookUpdate",

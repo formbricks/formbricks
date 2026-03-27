@@ -3,6 +3,7 @@ import { z } from "zod";
 export const ZIntegrationBase = z.object({
   id: z.string(),
   environmentId: z.string(),
+  projectId: z.string().nullable(),
 });
 
 export const ZIntegrationBaseSurveyData = z.object({

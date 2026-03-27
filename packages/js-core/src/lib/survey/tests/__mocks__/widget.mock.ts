@@ -62,6 +62,7 @@ export const mockSurvey: TEnvironmentStateSurvey = {
         createdAt: new Date("2025-01-01T10:00:00Z"),
         updatedAt: new Date("2025-01-01T10:00:00Z"),
         environmentId: mockEnvironmentId,
+        projectId: null,
         description: "Manual Trigger",
         noCodeConfig: {
           elementSelector: { cssSelector: ".btn", innerHtml: "Click me" },

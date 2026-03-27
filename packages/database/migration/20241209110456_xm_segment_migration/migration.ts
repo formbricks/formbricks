@@ -47,7 +47,9 @@ export const xmSegmentMigration: MigrationScript = {
   id: "s644oyyqccstfdeejc4fluye",
   name: "20241209110456_xm_segment_migration",
   run: async ({ tx }) => {
-    const allSegments = await tx.segment.findMany();
+    const allSegments = await tx.segment.findMany({
+      select: { id: true, filters: true },
+    });
     const updationPromises = [];
     for (const segment of allSegments) {
       updationPromises.push(
@@ -56,6 +58,7 @@ export const xmSegmentMigration: MigrationScript = {
           data: {
             filters: findAndReplace(segment.filters),
           },
+          select: { id: true },
         })
       );
     }

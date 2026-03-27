@@ -17,6 +17,7 @@ export const ZContact = z.object({
     })
     .describe("When the contact was last updated"),
   environmentId: z.string().describe("The environment this contact belongs to"),
+  projectId: z.string().nullable().describe("The project this contact belongs to"),
 }) satisfies z.ZodType<Contact>;
 
 ZContact.meta({
