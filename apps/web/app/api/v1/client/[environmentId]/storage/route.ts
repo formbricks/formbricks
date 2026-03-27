@@ -6,6 +6,7 @@ import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging
 import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
@@ -29,7 +30,16 @@ export const OPTIONS = async (): Promise<Response> => {
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
-    const { environmentId } = params;
+
+    // Resolve: accepts either an environmentId (old SDK) or a projectId (new SDK)
+    const resolved = await resolveClientApiIds(params.environmentId);
+    if (!resolved) {
+      return {
+        response: responses.notFoundResponse("Environment", params.environmentId),
+      };
+    }
+    const { environmentId } = resolved;
+
     let jsonInput: TUploadPrivateFileRequest;
 
     try {
