@@ -14,6 +14,7 @@ const TABLES_TO_BACKFILL = [
   "Tag",
   "Segment",
   "Integration",
+  "ApiKeyEnvironment",
 ] as const;
 
 const BATCH_SIZE = 10_000;
