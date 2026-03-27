@@ -1,6 +1,19 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
+    "@formbricks/ai#build": {
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/ai#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/ai#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/ai#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/cache#build": {
       "dependsOn": ["@formbricks/logger#build"],
       "outputs": ["dist/**"]
@@ -104,13 +117,32 @@
     "@formbricks/surveys#test:coverage": {
       "dependsOn": ["@formbricks/survey-ui#build"]
     },
+    "@formbricks/web#dev": {
+      "cache": false,
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/logger#build",
+        "@formbricks/storage#build"
+      ],
+      "persistent": true
+    },
     "@formbricks/web#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup"],
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/database#db:setup",
+        "@formbricks/logger#build",
+        "@formbricks/storage#build"
+      ],
       "persistent": true
     },
     "@formbricks/web#test": {
       "dependsOn": [
+        "@formbricks/ai#build",
         "@formbricks/logger#build",
         "@formbricks/database#build",
         "@formbricks/storage#build",
@@ -119,6 +151,7 @@
     },
     "@formbricks/web#test:coverage": {
       "dependsOn": [
+        "@formbricks/ai#build",
         "@formbricks/logger#build",
         "@formbricks/database#build",
         "@formbricks/storage#build",
@@ -130,11 +163,21 @@
       "env": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
+        "ACTIVE_AI_MODEL",
+        "ACTIVE_AI_PROVIDER",
         "AIRTABLE_CLIENT_ID",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_REGION",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
         "ASSET_PREFIX_URL",
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
+        "AZURE_API_KEY",
+        "AZURE_API_VERSION",
+        "AZURE_BASE_URL",
+        "AZURE_RESOURCE_NAME",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTH_SKIP_INVITE_FOR_SSO",
         "BASE_PATH",
@@ -153,9 +196,13 @@
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_APPLICATION_CREDENTIALS",
         "GOOGLE_SHEETS_CLIENT_ID",
         "GOOGLE_SHEETS_CLIENT_SECRET",
         "GOOGLE_SHEETS_REDIRECT_URL",
+        "GOOGLE_VERTEX_CREDENTIALS_JSON",
+        "GOOGLE_VERTEX_LOCATION",
+        "GOOGLE_VERTEX_PROJECT",
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",

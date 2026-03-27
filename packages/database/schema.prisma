@@ -663,6 +663,7 @@ model Project {
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
 /// @property isAIDataAnalysisEnabled - Controls access to AI data analysis features that touch experience data
+/// @property aiModel - Legacy field retained temporarily for branch migration compatibility
 model Organization {
   id                      String               @id @default(cuid())
   createdAt               DateTime             @default(now()) @map(name: "created_at")
@@ -676,6 +677,7 @@ model Organization {
   invites                 Invite[]
   isAISmartToolsEnabled   Boolean              @default(false)
   isAIDataAnalysisEnabled Boolean              @default(false)
+  aiModel                 String?
   teams                   Team[]
   apiKeys                 ApiKey[]
 }

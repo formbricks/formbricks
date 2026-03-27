@@ -1,4 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { getInstanceAIConfigStatus } from "@/lib/ai/service";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -28,6 +29,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.id);
+  const instanceAIConfigStatus = getInstanceAIConfigStatus();
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
@@ -64,7 +66,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       <SettingsCard
         title={t("environments.settings.general.ai_enabled")}
         description={t("environments.settings.general.ai_enabled_description")}>
-        <AISettingsToggle organization={organization} membershipRole={currentUserMembership?.role} />
+        <AISettingsToggle
+          organization={organization}
+          membershipRole={currentUserMembership?.role}
+          isInstanceAIConfigured={instanceAIConfigStatus.isConfigured}
+        />
       </SettingsCard>
       <EmailCustomizationSettings
         organization={organization}

@@ -1,12 +1,17 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { AI_PROVIDERS } from "@formbricks/types/ai";
 
-export const env = createEnv({
+const ZActiveAIProvider = z.enum(AI_PROVIDERS);
+
+const parsedEnv = createEnv({
   /*
    * Serverside Environment variables, not available on the client.
    * Will throw if you access these variables on the client.
    */
   server: {
+    ACTIVE_AI_PROVIDER: ZActiveAIProvider.optional(),
+    ACTIVE_AI_MODEL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
@@ -28,9 +33,21 @@ export const env = createEnv({
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_VERTEX_PROJECT: z.string().optional(),
+    GOOGLE_VERTEX_LOCATION: z.string().optional(),
+    GOOGLE_VERTEX_CREDENTIALS_JSON: z.string().optional(),
+    GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    AWS_REGION: z.string().optional(),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    AWS_SESSION_TOKEN: z.string().optional(),
+    AZURE_BASE_URL: z.url().optional(),
+    AZURE_API_KEY: z.string().optional(),
+    AZURE_API_VERSION: z.string().optional(),
+    AZURE_RESOURCE_NAME: z.string().optional(),
     HTTP_PROXY: z.url().optional(),
     HTTPS_PROXY: z.url().optional(),
     IMPRINT_URL: z
@@ -121,7 +138,7 @@ export const env = createEnv({
     AUDIT_LOG_GET_USER_IP: z.enum(["1", "0"]).optional(),
     SESSION_MAX_AGE: z
       .string()
-      .transform((val) => parseInt(val))
+      .transform((val) => Number.parseInt(val, 10))
       .optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
   },
@@ -133,6 +150,8 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    ACTIVE_AI_PROVIDER: process.env.ACTIVE_AI_PROVIDER,
+    ACTIVE_AI_MODEL: process.env.ACTIVE_AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
@@ -154,9 +173,21 @@ export const env = createEnv({
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_VERTEX_PROJECT: process.env.GOOGLE_VERTEX_PROJECT,
+    GOOGLE_VERTEX_LOCATION: process.env.GOOGLE_VERTEX_LOCATION,
+    GOOGLE_VERTEX_CREDENTIALS_JSON: process.env.GOOGLE_VERTEX_CREDENTIALS_JSON,
+    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+    AWS_SESSION_TOKEN: process.env.AWS_SESSION_TOKEN,
+    AZURE_BASE_URL: process.env.AZURE_BASE_URL,
+    AZURE_API_KEY: process.env.AZURE_API_KEY,
+    AZURE_API_VERSION: process.env.AZURE_API_VERSION,
+    AZURE_RESOURCE_NAME: process.env.AZURE_RESOURCE_NAME,
     HTTP_PROXY: process.env.HTTP_PROXY,
     HTTPS_PROXY: process.env.HTTPS_PROXY,
     IMPRINT_URL: process.env.IMPRINT_URL,
@@ -221,3 +252,116 @@ export const env = createEnv({
     SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
   },
 });
+
+z.object({
+  ACTIVE_AI_PROVIDER: ZActiveAIProvider.optional(),
+  ACTIVE_AI_MODEL: z.string().optional(),
+  GOOGLE_VERTEX_PROJECT: z.string().optional(),
+  GOOGLE_VERTEX_LOCATION: z.string().optional(),
+  GOOGLE_VERTEX_CREDENTIALS_JSON: z.string().optional(),
+  GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AZURE_API_KEY: z.string().optional(),
+  AZURE_BASE_URL: z.string().optional(),
+  AZURE_RESOURCE_NAME: z.string().optional(),
+})
+  .superRefine((values, ctx) => {
+    if (values.ACTIVE_AI_PROVIDER && !values.ACTIVE_AI_MODEL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ACTIVE_AI_MODEL"],
+        message: "ACTIVE_AI_MODEL is required when ACTIVE_AI_PROVIDER is set",
+      });
+    }
+
+    switch (values.ACTIVE_AI_PROVIDER) {
+      case "aws":
+        if (!values.AWS_REGION) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AWS_REGION"],
+            message: "AWS_REGION is required when ACTIVE_AI_PROVIDER=aws",
+          });
+        }
+
+        if (!values.AWS_ACCESS_KEY_ID) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AWS_ACCESS_KEY_ID"],
+            message: "AWS_ACCESS_KEY_ID is required when ACTIVE_AI_PROVIDER=aws",
+          });
+        }
+
+        if (!values.AWS_SECRET_ACCESS_KEY) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AWS_SECRET_ACCESS_KEY"],
+            message: "AWS_SECRET_ACCESS_KEY is required when ACTIVE_AI_PROVIDER=aws",
+          });
+        }
+
+        break;
+      case "gcp":
+        if (!values.GOOGLE_VERTEX_PROJECT) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["GOOGLE_VERTEX_PROJECT"],
+            message: "GOOGLE_VERTEX_PROJECT is required when ACTIVE_AI_PROVIDER=gcp",
+          });
+        }
+
+        if (!values.GOOGLE_VERTEX_LOCATION) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["GOOGLE_VERTEX_LOCATION"],
+            message: "GOOGLE_VERTEX_LOCATION is required when ACTIVE_AI_PROVIDER=gcp",
+          });
+        }
+
+        if (!values.GOOGLE_VERTEX_CREDENTIALS_JSON && !values.GOOGLE_APPLICATION_CREDENTIALS) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
+            message:
+              "GOOGLE_VERTEX_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS is required when ACTIVE_AI_PROVIDER=gcp",
+          });
+        }
+
+        if (values.GOOGLE_VERTEX_CREDENTIALS_JSON) {
+          try {
+            JSON.parse(values.GOOGLE_VERTEX_CREDENTIALS_JSON);
+          } catch {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
+              message: "GOOGLE_VERTEX_CREDENTIALS_JSON must be valid JSON",
+            });
+          }
+        }
+
+        break;
+      case "azure":
+        if (!values.AZURE_API_KEY) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AZURE_API_KEY"],
+            message: "AZURE_API_KEY is required when ACTIVE_AI_PROVIDER=azure",
+          });
+        }
+
+        if (!values.AZURE_BASE_URL && !values.AZURE_RESOURCE_NAME) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AZURE_BASE_URL"],
+            message: "AZURE_BASE_URL or AZURE_RESOURCE_NAME is required when ACTIVE_AI_PROVIDER=azure",
+          });
+        }
+
+        break;
+    }
+  })
+  .parse(parsedEnv);
+
+export const env = parsedEnv;
