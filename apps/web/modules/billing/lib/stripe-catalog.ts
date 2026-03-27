@@ -9,5 +9,6 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   RBAC: "rbac",
   SPAM_PROTECTION: "spam-protection",
   CONTACTS: "contacts",
-  AI: "ai",
+  AI_SMART_TOOLS: "ai-smart-tools",
+  AI_DATA_ANALYSIS: "ai-data-analysis",
 } as const;
