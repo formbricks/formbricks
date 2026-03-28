@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ActionNameDescriptionFields } from "@/modules/ui/components/action-name-description-fields";
 import { Button } from "@/modules/ui/components/button";
 import { CodeActionForm } from "@/modules/ui/components/code-action-form";
@@ -81,6 +82,11 @@ export const CreateNewActionTab = ({
     const createActionClassResposne = await createActionClassAction({
       action: updatedAction,
     });
+
+    if (createActionClassResposne?.serverError) {
+      toast.error(getFormattedErrorMessage(createActionClassResposne));
+      return;
+    }
 
     if (!createActionClassResposne?.data) return;
 

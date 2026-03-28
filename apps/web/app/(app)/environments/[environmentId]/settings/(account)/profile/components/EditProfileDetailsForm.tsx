@@ -116,10 +116,14 @@ export const EditProfileDetailsForm = ({
       setShowModal(true);
     } else {
       try {
-        await updateUserAction({
+        const result = await updateUserAction({
           ...data,
           name: data.name.trim(),
         });
+        if (result?.serverError) {
+          toast.error(getFormattedErrorMessage(result));
+          return;
+        }
         toast.success(t("environments.settings.profile.profile_updated_successfully"));
         window.location.reload();
         form.reset(data);
