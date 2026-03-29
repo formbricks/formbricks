@@ -11,7 +11,6 @@ import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -73,9 +72,6 @@ const editorConfig = {
     QuoteNode,
     CodeNode,
     CodeHighlightNode,
-    TableNode,
-    TableCellNode,
-    TableRowNode,
     AutoLinkNode,
     LinkNode,
     RecallNode,
