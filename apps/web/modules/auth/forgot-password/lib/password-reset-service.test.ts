@@ -10,7 +10,7 @@ import { hashPassword } from "@/lib/auth";
 import { hashString } from "@/lib/hash-string";
 import { sendPasswordResetLinkEmail, sendPasswordResetNotifyEmail } from "@/modules/email";
 import {
-  PASSWORD_RESET_LINK_EMAIL_ERROR_CODE,
+  ACCOUNT_RECOVERY_LINK_EMAIL_ERROR_CODE,
   completePasswordReset,
   getPasswordResetTokenLifetimeInMinutes,
   requestPasswordReset,
@@ -415,7 +415,9 @@ describe("password-reset-service", () => {
   test("surfaces profile reset request failures after revoking the token", async () => {
     vi.mocked(sendPasswordResetLinkEmail).mockResolvedValueOnce(false);
 
-    await expect(requestPasswordReset(user, "profile")).rejects.toThrow(PASSWORD_RESET_LINK_EMAIL_ERROR_CODE);
+    await expect(requestPasswordReset(user, "profile")).rejects.toThrow(
+      ACCOUNT_RECOVERY_LINK_EMAIL_ERROR_CODE
+    );
     expect(testState.tokenStore.size).toBe(0);
   });
 
