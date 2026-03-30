@@ -11,6 +11,7 @@ import {
   RocketIcon,
   UserCircleIcon,
   UserIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +28,7 @@ import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
@@ -46,6 +48,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
+  publicDomain: string;
 }
 
 export const MainNavigation = ({
@@ -56,6 +59,7 @@ export const MainNavigation = ({
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
+  publicDomain,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -107,16 +111,26 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/contacts`,
         name: t("common.contacts"),
         icon: UserIcon,
-        isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
+        isActive:
+          pathname?.includes("/contacts") ||
+          pathname?.includes("/segments") ||
+          pathname?.includes("/attributes"),
+      },
+      {
+        name: t("common.workflows"),
+        href: `/environments/${environment.id}/workflows`,
+        icon: WorkflowIcon,
+        isActive: pathname?.includes("/workflows"),
+        isHidden: !isFormbricksCloud,
       },
       {
         name: t("common.configuration"),
-        href: `/environments/${environment.id}/project/general`,
+        href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
-        isActive: pathname?.includes("/project"),
+        isActive: pathname?.includes("/workspace"),
       },
     ],
-    [t, environment.id, pathname]
+    [t, environment.id, pathname, isFormbricksCloud]
   );
 
   const dropdownNavigation = [
@@ -154,6 +168,20 @@ export const MainNavigation = ({
     if (isOwnerOrManager) loadReleases();
   }, [isOwnerOrManager]);
 
+  const trialDaysRemaining = useMemo(() => {
+    if (!isFormbricksCloud || organization.billing?.stripe?.subscriptionStatus !== "trialing") return null;
+    const trialEnd = organization.billing.stripe.trialEnd;
+    if (!trialEnd) return null;
+    const ts = new Date(trialEnd).getTime();
+    if (!Number.isFinite(ts)) return null;
+    const msPerDay = 86_400_000;
+    return Math.ceil((ts - Date.now()) / msPerDay);
+  }, [
+    isFormbricksCloud,
+    organization.billing?.stripe?.subscriptionStatus,
+    organization.billing?.stripe?.trialEnd,
+  ]);
+
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
   return (
@@ -162,7 +190,7 @@ export const MainNavigation = ({
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
-            !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
+            isCollapsed ? "w-sidebar-expanded" : "w-sidebar-collapsed"
           )}>
           <div>
             {/* Logo and Toggle */}
@@ -228,6 +256,13 @@ export const MainNavigation = ({
               </Link>
             )}
 
+            {/* Trial Days Remaining */}
+            {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
+              <Link href={`/environments/${environment.id}/settings/billing`} className="m-2 block">
+                <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
+              </Link>
+            )}
+
             {/* User Switch */}
             <div className="flex items-center">
               <DropdownMenu>
@@ -286,15 +321,16 @@ export const MainNavigation = ({
                   {/* Logout */}
                   <DropdownMenuItem
                     onClick={async () => {
+                      const loginUrl = `${publicDomain}/auth/login`;
                       const route = await signOutWithAudit({
                         reason: "user_initiated",
-                        redirectUrl: "/auth/login",
+                        redirectUrl: loginUrl,
                         organizationId: organization.id,
                         redirect: false,
-                        callbackUrl: "/auth/login",
+                        callbackUrl: loginUrl,
                         clearEnvironmentId: true,
                       });
-                      router.push(route?.url || "/auth/login"); // NOSONAR // We want to check for empty strings
+                      router.push(route?.url || loginUrl); // NOSONAR // We want to check for empty strings
                     }}
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}

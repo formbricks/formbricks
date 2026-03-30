@@ -17,6 +17,7 @@ import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@ta
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -43,6 +44,7 @@ interface ContactsTableProps {
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactsTable = ({
@@ -56,6 +58,7 @@ export const ContactsTable = ({
   setSearchValue,
   isReadOnly,
   isQuotasAllowed,
+  refreshContacts,
 }: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -63,14 +66,15 @@ export const ContactsTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
 
   const [parent] = useAutoAnimate();
 
   // Generate columns
   const columns = useMemo(() => {
-    return generateContactTableColumns(searchValue, data, isReadOnly);
-  }, [searchValue, data, isReadOnly]);
+    return generateContactTableColumns(searchValue, data, isReadOnly, locale, t);
+  }, [searchValue, data, isReadOnly, locale, t]);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -114,10 +118,10 @@ export const ContactsTable = ({
       const initialVisibility = table
         .getAllLeafColumns()
         .map((column) => column.id)
-        .reduce((acc, curr) => {
+        .reduce<Record<string, boolean>>((acc, curr) => {
           acc[curr] = false;
           return acc;
-        }, {}) as Record<string, true>;
+        }, {});
 
       const userIdVisibility = data.findIndex((contact) => contact.userId) !== -1;
 
@@ -221,11 +225,6 @@ export const ContactsTable = ({
 
   return (
     <div className="w-full">
-      <SearchBar
-        value={searchValue}
-        onChange={setSearchValue}
-        placeholder={t("environments.contacts.search_contact")}
-      />
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
@@ -240,6 +239,16 @@ export const ContactsTable = ({
           type="contact"
           deleteAction={deleteContact}
           isQuotasAllowed={isQuotasAllowed}
+          onRefresh={refreshContacts}
+          leftContent={
+            <div className="w-64">
+              <SearchBar
+                value={searchValue}
+                onChange={setSearchValue}
+                placeholder={t("environments.contacts.search_contact")}
+              />
+            </div>
+          }
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
@@ -252,6 +261,7 @@ export const ContactsTable = ({
                         key={header.id}
                         header={header}
                         setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+                        showColumnDividers={false}
                       />
                     ))}
                   </SortableContext>
@@ -275,11 +285,7 @@ export const ContactsTable = ({
                       style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                       className={cn(
                         "border-slate-200 bg-white px-4 py-2 shadow-none group-hover:bg-slate-100",
-                        row.getIsSelected() && "bg-slate-100",
-                        {
-                          "border-r": !cell.column.getIsLastColumn(),
-                          "border-l": !cell.column.getIsFirstColumn(),
-                        }
+                        row.getIsSelected() && "bg-slate-100"
                       )}>
                       <div
                         className={cn("flex flex-1 items-center truncate", isExpanded ? "h-10" : "h-full")}>
@@ -290,9 +296,9 @@ export const ContactsTable = ({
                 </TableRow>
               ))}
               {table.getRowModel().rows.length === 0 && (
-                <TableRow>
+                <TableRow className="hover:bg-white">
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {t("common.no_results")}
+                    <p className="text-slate-400">{t("common.no_results")}</p>
                   </TableCell>
                 </TableRow>
               )}

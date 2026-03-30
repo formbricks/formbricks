@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ZEnvironmentId = z.string().cuid();
+export const ZEnvironmentId = z.cuid();
 
 export type TEnvironmentId = z.infer<typeof ZEnvironmentId>;
 

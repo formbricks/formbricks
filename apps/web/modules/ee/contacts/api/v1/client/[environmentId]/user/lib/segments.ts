@@ -5,10 +5,10 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TBaseFilter } from "@formbricks/types/segment";
+import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 
 export const getSegments = reactCache(
   async (environmentId: string) =>
@@ -17,7 +17,6 @@ export const getSegments = reactCache(
         try {
           const segments = await prisma.segment.findMany({
             where: { environmentId },
-            // Include all necessary fields for evaluateSegment to work
             select: {
               id: true,
               filters: true,
@@ -42,7 +41,6 @@ export const getPersonSegmentIds = async (
   environmentId: string,
   contactId: string,
   contactUserId: string,
-  attributes: Record<string, string>,
   deviceType: "phone" | "desktop"
 ): Promise<string[]> => {
   try {
@@ -50,39 +48,58 @@ export const getPersonSegmentIds = async (
 
     const segments = await getSegments(environmentId);
 
-    // fast path; if there are no segments, return an empty array
-    if (!segments || !Array.isArray(segments)) {
+    if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return [];
     }
 
-    const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
+    // Phase 1: Build WHERE clauses sequentially to avoid connection pool contention.
+    // segmentFilterToPrismaQuery can itself hit the DB (e.g. unmigrated-row checks),
+    // so running all builds concurrently would saturate the pool.
+    const alwaysMatchIds: string[] = [];
+    const dbChecks: { segmentId: string; whereClause: Prisma.ContactWhereInput }[] = [];
 
     for (const segment of segments) {
-      const isIncluded = await evaluateSegment(
-        {
-          attributes,
-          deviceType,
-          environmentId,
-          contactId: contactId,
-          userId: contactUserId,
-        },
-        segment.filters
-      );
+      const filters = segment.filters as TBaseFilters;
 
-      if (isIncluded) {
-        personSegments.push(segment);
+      if (!filters?.length) {
+        alwaysMatchIds.push(segment.id);
+        continue;
       }
+
+      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, environmentId, deviceType);
+
+      if (!queryResult.ok) {
+        logger.warn(
+          { segmentId: segment.id, environmentId, error: queryResult.error },
+          "Failed to build Prisma query for segment, skipping"
+        );
+        continue;
+      }
+
+      dbChecks.push({ segmentId: segment.id, whereClause: queryResult.data.whereClause });
     }
 
-    return personSegments.map((segment) => segment.id);
+    if (dbChecks.length === 0) {
+      return alwaysMatchIds;
+    }
+
+    // Phase 2: Execute all membership checks in a single transaction.
+    // Uses one connection instead of N concurrent ones, eliminating pool contention.
+    const txResults = await prisma.$transaction(
+      dbChecks.map(({ whereClause }) =>
+        prisma.contact.findFirst({
+          where: { id: contactId, ...whereClause },
+          select: { id: true },
+        })
+      )
+    );
+
+    const matchedIds = dbChecks.filter((_, i) => txResults[i] !== null).map(({ segmentId }) => segmentId);
+
+    return [...alwaysMatchIds, ...matchedIds];
   } catch (error) {
-    // Log error for debugging but don't throw to prevent "segments is not iterable" error
     logger.warn(
-      {
-        environmentId,
-        contactId,
-        error,
-      },
+      { environmentId, contactId, error },
       "Failed to get person segment IDs, returning empty array"
     );
     return [];

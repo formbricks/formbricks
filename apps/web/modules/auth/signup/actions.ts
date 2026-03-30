@@ -1,10 +1,11 @@
 "use server";
 
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
-import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
@@ -17,7 +18,9 @@ import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 
 const ZCreatedUser = ZUser.pick({
@@ -44,6 +47,9 @@ const ZCreateUserAction = z.object({
       (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
       "CAPTCHA verification required"
     ),
+  isFormbricksCloud: z.boolean(),
+  subscribeToSecurityUpdates: z.boolean().optional(),
+  subscribeToProductUpdates: z.boolean().optional(),
 });
 
 async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
@@ -123,7 +129,12 @@ async function handleInviteAcceptance(
     },
   });
 
-  await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
+  await sendInviteAcceptedEmail(
+    invite.creator.name ?? "",
+    user.name,
+    invite.creator.email,
+    invite.creator.locale
+  );
   await deleteInvite(invite.id);
 }
 
@@ -138,6 +149,16 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     role: "owner",
     accepted: true,
   });
+
+  // Stripe setup must run AFTER membership is created so the owner email is available
+  if (IS_FORMBRICKS_CLOUD) {
+    ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
+      logger.error(
+        { error, organizationId: organization.id },
+        "Stripe setup failed after organization creation"
+      );
+    });
+  }
 
   await updateUser(user.id, {
     notificationSettings: {
@@ -164,43 +185,41 @@ async function handlePostUserCreation(
   }
 
   if (!emailVerificationDisabled) {
-    await sendVerificationEmail(user);
+    await sendVerificationEmail({ id: user.id, email: user.email, locale: user.locale });
   }
 }
 
-export const createUserAction = actionClient.schema(ZCreateUserAction).action(
-  withAuditLogging(
-    "created",
-    "user",
-    async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
-      await applyIPRateLimit(rateLimitConfigs.auth.signup);
-      await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
+export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
+  withAuditLogging("created", "user", async ({ ctx, parsedInput }) => {
+    await applyIPRateLimit(rateLimitConfigs.auth.signup);
+    await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
-      const hashedPassword = await hashPassword(parsedInput.password);
-      const { user, userAlreadyExisted } = await createUserSafely(
-        parsedInput.email,
-        parsedInput.name,
-        hashedPassword,
-        parsedInput.userLocale
-      );
+    const hashedPassword = await hashPassword(parsedInput.password);
+    const { user, userAlreadyExisted } = await createUserSafely(
+      parsedInput.email,
+      parsedInput.name,
+      hashedPassword,
+      parsedInput.userLocale
+    );
 
-      if (!userAlreadyExisted && user) {
-        await handlePostUserCreation(
-          ctx,
-          user,
-          parsedInput.inviteToken,
-          parsedInput.emailVerificationDisabled
-        );
-      }
+    if (!userAlreadyExisted && user) {
+      await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
 
-      if (user) {
-        ctx.auditLoggingCtx.userId = user.id;
-        ctx.auditLoggingCtx.newObject = user;
-      }
-
-      return {
-        success: true,
-      };
+      await subscribeUserToMailingList({
+        email: user.email,
+        isFormbricksCloud: parsedInput.isFormbricksCloud,
+        subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
+        subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
+      });
     }
-  )
+
+    if (user) {
+      ctx.auditLoggingCtx.userId = user.id;
+      ctx.auditLoggingCtx.newObject = user;
+    }
+
+    return {
+      success: true,
+    };
+  })
 );

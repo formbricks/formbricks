@@ -1,6 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
-import { ActionClientCtx, AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
@@ -185,18 +185,16 @@ export const queueAuditEvent = async ({
  * @param targetType - The type of target (e.g., "segment", "survey").
  * @param handler - The handler function to wrap. It can be used with both authenticated and unauthenticated actions.
  **/
-export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult = unknown>(
+export const withAuditLogging = <
+  TCtx extends ActionClientCtx = ActionClientCtx,
+  TParsedInput = Record<string, unknown>,
+  TResult = unknown,
+>(
   action: TAuditAction,
   targetType: TAuditTarget,
-  handler: (args: {
-    ctx: ActionClientCtx | AuthenticatedActionClientCtx;
-    parsedInput: TParsedInput;
-  }) => Promise<TResult>
+  handler: (args: { ctx: TCtx; parsedInput: TParsedInput }) => Promise<TResult>
 ) => {
-  return async function wrappedAction(args: {
-    ctx: ActionClientCtx | AuthenticatedActionClientCtx;
-    parsedInput: TParsedInput;
-  }): Promise<TResult> {
+  return async function wrappedAction(args: { ctx: TCtx; parsedInput: TParsedInput }): Promise<TResult> {
     const { ctx, parsedInput } = args;
     const { auditLoggingCtx } = ctx;
     let result!: TResult;

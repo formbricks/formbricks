@@ -10,25 +10,25 @@ export const GeneralSettingsLoading = () => {
   const { t } = useTranslation();
   const cards = [
     {
-      title: t("common.project_name"),
-      description: t("environments.project.general.project_name_settings_description"),
+      title: t("common.workspace_name"),
+      description: t("environments.workspace.general.workspace_name_settings_description"),
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: t("environments.project.general.recontact_waiting_time"),
-      description: t("environments.project.general.recontact_waiting_time_settings_description"),
+      title: t("environments.workspace.general.recontact_waiting_time"),
+      description: t("environments.workspace.general.recontact_waiting_time_settings_description"),
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: t("environments.project.general.delete_project"),
-      description: t("environments.project.general.delete_project_settings_description"),
+      title: t("environments.workspace.general.delete_workspace"),
+      description: t("environments.workspace.general.delete_workspace_settings_description"),
       skeletonLines: [{ classes: "h-4 w-96" }, { classes: "h-8 w-24" }],
     },
   ];
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (

@@ -2,7 +2,7 @@
 
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { TrashIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, ExternalLinkIcon, EyeIcon, EyeOff, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -26,9 +26,16 @@ interface WebhookSettingsTabProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
+  allowInternalUrls: boolean;
 }
 
-export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: WebhookSettingsTabProps) => {
+export const WebhookSettingsTab = ({
+  webhook,
+  surveys,
+  setOpen,
+  isReadOnly,
+  allowInternalUrls,
+}: WebhookSettingsTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -48,17 +55,29 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
   const [endpointAccessible, setEndpointAccessible] = useState<boolean>();
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(webhook.surveyIds.length === 0);
+  const [showSecret, setShowSecret] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const handleTestEndpoint = async (sendSuccessToast: boolean) => {
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success(t("common.copied_to_clipboard"));
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleTestEndpoint = async (sendSuccessToast: boolean): Promise<boolean> => {
     try {
-      const { valid, error } = validWebHookURL(testEndpointInput);
+      const { valid, error } = validWebHookURL(testEndpointInput, allowInternalUrls);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
-        return;
+        return false;
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
-      if (!testEndpointActionResult?.data) {
+      const testEndpointActionResult = await testEndpointAction({
+        url: testEndpointInput,
+        webhookId: webhook.id,
+      });
+      if (!testEndpointActionResult?.data?.success) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
       }
@@ -68,11 +87,12 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       return true;
     } catch (err) {
       setHittingEndpoint(false);
+      const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
-        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${err.message.length < 250 ? `${t("common.error")}:  ${err.message}` : t("environments.integrations.webhooks.please_check_console")}`,
-        { className: err.message.length < 250 ? "break-all" : "" }
+        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")}`,
+        { className: errMessage.length < 250 ? "break-all" : "" }
       );
-      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), err.message);
+      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
       setEndpointAccessible(false);
       return false;
     }
@@ -83,7 +103,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     setSelectedSurveys([]);
   };
 
-  const handleSelectedSurveyChange = (surveyId) => {
+  const handleSelectedSurveyChange = (surveyId: string) => {
     setSelectedSurveys((prevSelectedSurveys) => {
       if (prevSelectedSurveys.includes(surveyId)) {
         return prevSelectedSurveys.filter((id) => id !== surveyId);
@@ -93,7 +113,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     });
   };
 
-  const handleCheckboxChange = (selectedValue) => {
+  const handleCheckboxChange = (selectedValue: PipelineTriggers) => {
     setSelectedTriggers((prevValues) => {
       if (prevValues.includes(selectedValue)) {
         return prevValues.filter((value) => value !== selectedValue);
@@ -103,7 +123,12 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     });
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: {
+    name: string | null;
+    url: string;
+    triggers: PipelineTriggers[];
+    surveyIds: string[];
+  }) => {
     if (selectedTriggers.length === 0) {
       toast.error(t("common.please_select_at_least_one_trigger"));
       return;
@@ -113,15 +138,16 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       toast.error(t("common.please_select_at_least_one_survey"));
       return;
     }
+
     const endpointHitSuccessfully = await handleTestEndpoint(false);
     if (!endpointHitSuccessfully) {
       return;
     }
 
     const updatedData: TWebhookInput = {
-      name: data.name,
+      name: data.name ?? "",
       url: data.url as string,
-      source: data.source,
+      source: webhook.source as TWebhookInput["source"],
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
     };
@@ -196,6 +222,60 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
           </div>
         </div>
 
+        {webhook.secret && (
+          <div className="col-span-1">
+            <Label htmlFor="secret">{t("environments.integrations.webhooks.signing_secret")}</Label>
+            <div className="mt-1 flex">
+              <div className="relative flex-1">
+                <Input
+                  type={showSecret ? "text" : "password"}
+                  id="secret"
+                  readOnly
+                  value={webhook.secret}
+                  className="pr-10 font-mono text-sm"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+                  onClick={() => setShowSecret(!showSecret)}>
+                  {showSecret ? (
+                    <EyeOff className="h-5 w-5 text-slate-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-slate-400" />
+                  )}
+                </button>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="ml-2 whitespace-nowrap"
+                onClick={() => copyToClipboard(webhook.secret ?? "")}>
+                {copied ? (
+                  <>
+                    <CheckIcon className="h-4 w-4" />
+                    {t("common.copied")}
+                  </>
+                ) : (
+                  <>
+                    <CopyIcon className="h-4 w-4" />
+                    {t("common.copy")}
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {t("environments.integrations.webhooks.secret_description")}
+            </p>
+            <Link
+              href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhook-security-with-standard-webhooks"
+              target="_blank"
+              className="mt-1 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
+              {t("environments.integrations.webhooks.learn_to_verify")}
+              <ExternalLinkIcon className="h-3 w-3" />
+            </Link>
+          </div>
+        )}
+
         <div>
           <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
           <TriggerCheckboxGroup
@@ -227,7 +307,9 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
             )}
 
             <Button variant="secondary" asChild>
-              <Link href="https://formbricks.com/docs/api/management/webhooks" target="_blank">
+              <Link
+                href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks"
+                target="_blank">
                 {t("common.read_docs")}
               </Link>
             </Button>

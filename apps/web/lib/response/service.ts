@@ -22,6 +22,7 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -266,7 +267,7 @@ export const getResponses = reactCache(
       [limit, ZOptionalNumber],
       [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.string().cuid2().optional()]
+      [cursor, z.cuid2().optional()]
     );
 
     limit = limit ?? RESPONSES_PER_PAGE;
@@ -377,15 +378,15 @@ export const getResponseDownloadFile = async (
 
     const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
     if (!organizationId) {
-      throw new Error("Organization ID not found");
+      throw new ResourceNotFoundError("Organization", null);
     }
 
     const organizationBilling = await getOrganizationBilling(organizationId);
 
     if (!organizationBilling) {
-      throw new Error("Organization billing not found");
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
-    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
     const headers = [
       "No.",
@@ -396,7 +397,6 @@ export const getResponseDownloadFile = async (
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",
-      "Notes",
       "Tags",
       ...metaDataFields,
       ...elements.flat(),
@@ -408,9 +408,10 @@ export const getResponseDownloadFile = async (
     if (survey.isVerifyEmailEnabled) {
       headers.push("Verified Email");
     }
+    const resolvedResponses = responses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }));
     const jsonData = getResponsesJson(
       survey,
-      responses,
+      resolvedResponses,
       elements,
       userAttributes,
       hiddenFields,

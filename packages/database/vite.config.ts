@@ -42,6 +42,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
           "scripts/apply-migrations": resolve(__dirname, "src/scripts/apply-migrations.ts"),
           "scripts/create-saml-database": resolve(__dirname, "src/scripts/create-saml-database.ts"),
           "scripts/migration-runner": resolve(__dirname, "src/scripts/migration-runner.ts"),
+          "scripts/backfill-attribute-values": resolve(__dirname, "src/scripts/backfill-attribute-values.ts"),
           ...migrationEntries,
         },
         output: [
@@ -62,6 +63,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
           "zod",
           "zod-openapi",
           "@paralleldrive/cuid2",
+          "uuid",
         ],
       },
       emptyOutDir: true,

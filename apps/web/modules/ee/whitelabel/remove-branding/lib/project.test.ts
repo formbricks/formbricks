@@ -58,13 +58,13 @@ describe("updateProjectBranding", () => {
       },
       placement: "bottomRight" as const,
       clickOutsideClose: true,
-      darkOverlay: false,
+      overlay: "none",
       environments: [{ id: "test-env-id" }],
       languages: [],
       logo: null,
     };
 
-    vi.mocked(prisma.project.update).mockResolvedValue(mockProject);
+    vi.mocked(prisma.project.update).mockResolvedValue(mockProject as any);
     vi.mocked(validateInputs).mockReturnValue([
       "test-project-id",
       { linkSurveyBranding: false, inAppSurveyBranding: false },

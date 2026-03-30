@@ -92,7 +92,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
       if (match) toast.success(t("environments.actions.your_survey_would_be_shown_on_this_url"));
       if (!match) toast.error(t("environments.actions.your_survey_would_not_be_shown"));
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     }
   };
 

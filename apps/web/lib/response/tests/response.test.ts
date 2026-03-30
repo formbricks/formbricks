@@ -42,6 +42,13 @@ const expectedResponseWithoutPerson: TResponse = {
   tags: mockTags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 };
 
+const mockOrganizationBillingRecord = {
+  stripeCustomerId: mockOrganizationOutput.billing.stripeCustomerId,
+  limits: mockOrganizationOutput.billing.limits,
+  usageCycleAnchor: mockOrganizationOutput.billing.usageCycleAnchor,
+  stripe: null,
+};
+
 beforeEach(() => {
   // @ts-expect-error
   prisma.response.create.mockImplementation(async (args) => {
@@ -86,6 +93,7 @@ beforeEach(() => {
 
   prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
+  prisma.organizationBilling.findUnique.mockResolvedValue(mockOrganizationBillingRecord as unknown as any);
   prisma.project.findMany.mockResolvedValue([]);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
@@ -378,7 +386,7 @@ describe("Tests for deleteResponse service", () => {
         delete: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    (prisma.$transaction as unknown as ReturnType<typeof vi.fn>) = vi.fn(async (cb: any) => cb(mockTx));
   });
 
   describe("Happy Path", () => {

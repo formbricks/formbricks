@@ -10,6 +10,9 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -39,7 +42,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
   try {
     responseInput = await request.json();
   } catch (error) {
-    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+    return responses.badRequestResponse(
+      "Invalid JSON in request body",
+      { error: error instanceof Error ? error.message : "Unknown error occurred" },
+      true
+    );
   }
 
   const { environmentId } = params;
@@ -74,7 +81,8 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInputData = responseInputValidation.data;
 
   if (responseInputData.contactId) {
-    const isContactsEnabled = await getIsContactsEnabled();
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
@@ -105,6 +113,22 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
+  // Validate response data against validation rules
+  const validationErrors = validateResponseData(
+    survey.blocks,
+    responseInputData.data,
+    responseInputData.language ?? "en",
+    survey.questions
+  );
+
+  if (validationErrors) {
+    return responses.badRequestResponse(
+      "Validation failed",
+      formatValidationErrorsForV1Api(validationErrors),
+      true
+    );
+  }
+
   let response: TResponseWithQuotaFull;
   try {
     const meta: TResponseInputV2["meta"] = {
@@ -119,6 +143,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
       action: responseInputData?.meta?.action,
     };
 
+    // Capture IP address if the survey has IP capture enabled
+    // Server-derived IP always overwrites any client-provided value
+    if (survey.isCaptureIpEnabled) {
+      const ipAddress = await getClientIpFromHeaders();
+      meta.ipAddress = ipAddress;
+    }
+
     response = await createResponseWithQuotaEvaluation({
       ...responseInputData,
       meta,
@@ -128,7 +159,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
       return responses.badRequestResponse(error.message);
     }
     logger.error({ error, url: request.url }, "Error creating response");
-    return responses.internalServerErrorResponse(error.message);
+    return responses.internalServerErrorResponse(
+      error instanceof Error ? error.message : "Unknown error occurred"
+    );
   }
   const { quotaFull, ...responseData } = response;
 

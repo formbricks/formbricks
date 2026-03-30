@@ -25,6 +25,7 @@ const __dirname = dirname(__filename);
 
 // Configuration for Web App
 const WEB_APP_DIR = path.join(__dirname, "..", "..", "..", "apps", "web");
+const EMAIL_PKG_DIR = path.join(__dirname, "..", "..", "..", "packages", "email");
 const WEB_APP_LOCALES_DIR = path.join(WEB_APP_DIR, "locales");
 const WEB_APP_DEFAULT_LOCALE = "en-US";
 
@@ -139,27 +140,32 @@ export function extractKeysFromContent(content: string): string[] {
 /**
  * Scan source files for translation keys
  */
-async function scanSourceFiles(sourceDir: string, packageName: string): Promise<Set<string>> {
+async function scanSourceFiles(sourceDirs: string | string[], packageName: string): Promise<Set<string>> {
   console.log(`🔍 Scanning ${packageName} source files for translation keys...`);
 
   const usedKeys = new Set<string>();
+  const dirs = Array.isArray(sourceDirs) ? sourceDirs : [sourceDirs];
 
-  // Find all TypeScript and TypeScript React files
-  const files = await glob("**/*.{ts,tsx}", {
-    cwd: sourceDir,
-    ignore: EXCLUDE_DIRS,
-    absolute: true,
-  });
+  for (const dir of dirs) {
+    // Find all TypeScript and TypeScript React files
+    const files = await glob("**/*.{ts,tsx}", {
+      cwd: dir,
+      ignore: EXCLUDE_DIRS,
+      absolute: true,
+    });
 
-  console.log(`   Found ${files.length.toString()} files to scan`);
+    console.log(
+      `   Found ${files.length.toString()} files to scan in ${path.relative(path.join(__dirname, "..", "..", ".."), dir)}`
+    );
 
-  for (const file of files) {
-    try {
-      const content = await fs.promises.readFile(file, "utf-8");
-      const keys = extractKeysFromContent(content);
-      keys.forEach((key) => usedKeys.add(key));
-    } catch (error) {
-      console.error(`❌ Error: Could not read file ${file}:`, error);
+    for (const file of files) {
+      try {
+        const content = await fs.promises.readFile(file, "utf-8");
+        const keys = extractKeysFromContent(content);
+        keys.forEach((key) => usedKeys.add(key));
+      } catch (error) {
+        console.error(`❌ Error: Could not read file ${file}:`, error);
+      }
     }
   }
 
@@ -423,13 +429,13 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
  * Validate translations for a single package
  */
 async function validatePackage(
-  sourceDir: string,
+  sourceDirs: string | string[],
   localesDir: string,
   defaultLocale: string,
   packageName: string
 ): Promise<ScanResults> {
   // Scan source files for used keys
-  const usedKeys = await scanSourceFiles(sourceDir, packageName);
+  const usedKeys = await scanSourceFiles(sourceDirs, packageName);
 
   // Load translation keys from all locale files
   const translationsByLocale = await loadAllTranslationKeys(localesDir, defaultLocale, packageName);
@@ -461,7 +467,7 @@ async function main(): Promise<void> {
   try {
     // Validate Web App
     const webAppResults = await validatePackage(
-      WEB_APP_DIR,
+      [WEB_APP_DIR, EMAIL_PKG_DIR],
       WEB_APP_LOCALES_DIR,
       WEB_APP_DEFAULT_LOCALE,
       "Web App"

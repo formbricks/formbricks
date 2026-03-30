@@ -1,6 +1,7 @@
+// @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TResponseTtc } from "@formbricks/types/responses";
+import type { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtc, useTtc } from "./ttc";
 
 describe("getUpdatedTtc", () => {
@@ -26,21 +27,21 @@ describe("getUpdatedTtc", () => {
 });
 
 describe("useTtc", () => {
-  let mockSetTtc: ReturnType<typeof vi.fn>;
-  let mockSetStartTime: ReturnType<typeof vi.fn>;
+  let mockSetTtc: ReturnType<typeof vi.fn<(ttc: TResponseTtc) => void>>;
+  let mockSetStartTime: ReturnType<typeof vi.fn<(time: number) => void>>;
   let currentTime = 0;
   let initialProps: {
     questionId: string;
     ttc: TResponseTtc;
-    setTtc: ReturnType<typeof vi.fn>;
+    setTtc: ReturnType<typeof vi.fn<(ttc: TResponseTtc) => void>>;
     startTime: number;
-    setStartTime: ReturnType<typeof vi.fn>;
+    setStartTime: ReturnType<typeof vi.fn<(time: number) => void>>;
     isCurrentQuestion: boolean;
   };
 
   beforeEach(() => {
-    mockSetTtc = vi.fn();
-    mockSetStartTime = vi.fn();
+    mockSetTtc = vi.fn<(ttc: TResponseTtc) => void>();
+    mockSetStartTime = vi.fn<(time: number) => void>();
     currentTime = 1000; // Initial mock time
     vi.spyOn(performance, "now").mockImplementation(() => currentTime);
     vi.spyOn(document, "addEventListener");

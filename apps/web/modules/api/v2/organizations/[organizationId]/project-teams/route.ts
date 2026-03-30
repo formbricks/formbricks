@@ -24,7 +24,7 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
   return authenticatedApiClient({
     request,
     schemas: {
-      query: ZGetProjectTeamsFilter.sourceType(),
+      query: ZGetProjectTeamsFilter,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,

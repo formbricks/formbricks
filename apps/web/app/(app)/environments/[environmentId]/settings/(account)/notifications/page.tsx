@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
@@ -16,8 +17,8 @@ const setCompleteNotificationSettings = (
   notificationSettings: TUserNotificationSettings,
   memberships: Membership[]
 ): TUserNotificationSettings => {
-  const newNotificationSettings = {
-    alert: {},
+  const newNotificationSettings: TUserNotificationSettings = {
+    alert: {} as Record<string, boolean>,
     unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
@@ -26,7 +27,8 @@ const setCompleteNotificationSettings = (
       for (const environment of project.environments) {
         for (const survey of environment.surveys) {
           newNotificationSettings.alert[survey.id] =
-            notificationSettings[survey.id]?.responseFinished ||
+            (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
+              ?.responseFinished ||
             (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
             false; // check for legacy notification settings w/o "alerts" key
         }
@@ -136,24 +138,27 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   return memberships;
 };
 
-const Page = async (props) => {
+const Page = async (props: {
+  params: Promise<{ environmentId: string }>;
+  searchParams: Promise<Record<string, string>>;
+}) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
   const autoDisableNotificationType = searchParams["type"];
   const autoDisableNotificationElementId = searchParams["elementId"];
 
   const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!memberships) {
-    throw new Error(t("common.membership_not_found"));
+    throw new ResourceNotFoundError(t("common.membership"), null);
   }
 
   if (user?.notificationSettings) {

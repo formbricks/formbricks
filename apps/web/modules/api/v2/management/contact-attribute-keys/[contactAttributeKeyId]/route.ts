@@ -79,6 +79,17 @@ export const PUT = async (
         );
       }
 
+      if (res.data.type === "default") {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "contactAttributeKey", issue: "cannot update default contact attribute key" }],
+          },
+          auditLog
+        );
+      }
+
       if (res.data.isUnique) {
         return handleApiError(
           request,
@@ -136,6 +147,17 @@ export const DELETE = async (
           {
             type: "unauthorized",
             details: [{ field: "environment", issue: "unauthorized" }],
+          },
+          auditLog
+        );
+      }
+
+      if (res.data.type === "default") {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "contactAttributeKey", issue: "cannot delete default contact attribute key" }],
           },
           auditLog
         );

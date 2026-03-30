@@ -85,7 +85,6 @@ export const QuotasCard = ({
     setIsDeletingQuota(true);
     const deleteQuotaActionResult = await deleteQuotaAction({
       quotaId: quotaId,
-      surveyId: localSurvey.id,
     });
     if (deleteQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_deleted_successfull_toast"));
@@ -174,9 +173,7 @@ export const QuotasCard = ({
                 description={t("common.quotas_description")}
                 buttons={[
                   {
-                    text: isFormbricksCloud
-                      ? t("common.start_free_trial")
-                      : t("common.request_trial_license"),
+                    text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
                       ? `/environments/${environmentId}/settings/billing`
                       : "https://formbricks.com/upgrade-self-hosting-license",

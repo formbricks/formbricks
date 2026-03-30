@@ -45,9 +45,13 @@ export const SavedActionsTab = ({
       <Input
         type="text"
         onChange={(e) => {
+          const searchTerm = e.target.value.toLowerCase();
           setFilteredActionClasses(
-            availableActions.filter((actionClass) =>
-              actionClass.name.toLowerCase().includes(e.target.value.toLowerCase())
+            availableActions.filter(
+              (actionClass) =>
+                actionClass.name.toLowerCase().includes(searchTerm) ||
+                actionClass.description?.toLowerCase().includes(searchTerm) ||
+                actionClass.key?.toLowerCase().includes(searchTerm)
             )
           );
         }}

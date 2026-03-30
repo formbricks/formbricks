@@ -10,7 +10,6 @@ import {
   isClientSideApiRoute,
   isIntegrationRoute,
   isManagementApiRoute,
-  isSyncWithUserIdentificationEndpoint,
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -27,10 +26,10 @@ export type TSessionAuthentication = Session | null;
 
 // Interface for handler function parameters
 export interface THandlerParams<TProps = unknown> {
-  req?: NextRequest;
-  props?: TProps;
+  req: NextRequest;
+  props: TProps;
   auditLog?: TApiAuditLog;
-  authentication?: TApiKeyAuthentication | TSessionAuthentication;
+  authentication?: TApiV1Authentication;
 }
 
 // Interface for wrapper function parameters
@@ -39,6 +38,11 @@ export interface TWithV1ApiWrapperParams<TResult extends { response: Response },
   action?: TAuditAction;
   targetType?: TAuditTarget;
   customRateLimitConfig?: TRateLimitConfig;
+  /**
+   * When the route requires auth but the client is unauthenticated, the wrapper normally returns
+   * the legacy JSON 401. Use this to return a custom response (e.g. RFC 9457 problem+json for V3).
+   */
+  unauthenticatedResponse?: (req: NextRequest) => Response;
 }
 
 enum ApiV1RouteTypeEnum {
@@ -48,23 +52,16 @@ enum ApiV1RouteTypeEnum {
 }
 
 /**
- * Apply client-side API rate limiting (IP-based or sync-specific)
+ * Apply client-side API rate limiting (IP-based)
  */
-const applyClientRateLimit = async (url: string, customRateLimitConfig?: TRateLimitConfig): Promise<void> => {
-  const syncEndpoint = isSyncWithUserIdentificationEndpoint(url);
-  if (syncEndpoint) {
-    const syncRateLimitConfig = rateLimitConfigs.api.syncUserIdentification;
-    await applyRateLimit(syncRateLimitConfig, syncEndpoint.userId);
-  } else {
-    await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
-  }
+const applyClientRateLimit = async (customRateLimitConfig?: TRateLimitConfig): Promise<void> => {
+  await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
 };
 
 /**
  * Handle rate limiting based on authentication and API type
  */
 const handleRateLimiting = async (
-  url: string,
   authentication: TApiV1Authentication,
   routeType: ApiV1RouteTypeEnum,
   customRateLimitConfig?: TRateLimitConfig
@@ -84,10 +81,10 @@ const handleRateLimiting = async (
     }
 
     if (routeType === ApiV1RouteTypeEnum.Client) {
-      await applyClientRateLimit(url, customRateLimitConfig);
+      await applyClientRateLimit(customRateLimitConfig);
     }
   } catch (error) {
-    return responses.tooManyRequestsResponse(error.message);
+    return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
   }
 
   return null;
@@ -255,7 +252,6 @@ const getRouteType = (
  * Features:
  * - Performs authentication once and passes result to handler
  * - Applies API key-based rate limiting with differentiated limits for client vs management APIs
- * - Includes additional sync user identification rate limiting for client-side sync endpoints
  * - Sets userId and organizationId in audit log automatically when audit logging is enabled
  * - System and Sentry logs are always called for non-success responses
  * - Uses function overloads to provide type safety without requiring type guards
@@ -271,34 +267,10 @@ const getRouteType = (
  * @returns Wrapped handler function that returns the final HTTP response
  *
  */
-export const withV1ApiWrapper: {
-  <TResult extends { response: Response }, TProps = unknown>(
-    params: TWithV1ApiWrapperParams<TResult, TProps> & {
-      handler: (
-        params: THandlerParams<TProps> & { authentication?: TApiKeyAuthentication }
-      ) => Promise<TResult>;
-    }
-  ): (req: NextRequest, props: TProps) => Promise<Response>;
-
-  <TResult extends { response: Response }, TProps = unknown>(
-    params: TWithV1ApiWrapperParams<TResult, TProps> & {
-      handler: (
-        params: THandlerParams<TProps> & { authentication?: TSessionAuthentication }
-      ) => Promise<TResult>;
-    }
-  ): (req: NextRequest, props: TProps) => Promise<Response>;
-
-  <TResult extends { response: Response }, TProps = unknown>(
-    params: TWithV1ApiWrapperParams<TResult, TProps> & {
-      handler: (
-        params: THandlerParams<TProps> & { authentication?: TApiV1Authentication }
-      ) => Promise<TResult>;
-    }
-  ): (req: NextRequest, props: TProps) => Promise<Response>;
-} = <TResult extends { response: Response }, TProps = unknown>(
+export const withV1ApiWrapper = <TResult extends { response: Response }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
-  const { handler, action, targetType, customRateLimitConfig } = params;
+  const { handler, action, targetType, customRateLimitConfig, unauthenticatedResponse } = params;
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     // === Audit Log Setup ===
     const saveAuditLog = action && targetType;
@@ -320,6 +292,11 @@ export const withV1ApiWrapper: {
     const authentication = await handleAuthentication(authenticationMethod, req);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
+      if (unauthenticatedResponse) {
+        const res = unauthenticatedResponse(req);
+        await processResponse(res, req, auditLog);
+        return res;
+      }
       return responses.notAuthenticatedResponse();
     }
 
@@ -328,12 +305,7 @@ export const withV1ApiWrapper: {
 
     // === Rate Limiting ===
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(
-        req.nextUrl.pathname,
-        authentication,
-        routeType,
-        customRateLimitConfig
-      );
+      const rateLimitResponse = await handleRateLimiting(authentication, routeType, customRateLimitConfig);
       if (rateLimitResponse) return rateLimitResponse;
     }
 

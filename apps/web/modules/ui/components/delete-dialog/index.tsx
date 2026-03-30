@@ -48,9 +48,9 @@ export const DeleteDialog = ({
           <div className="flex items-center gap-2">
             <CircleAlert className="h-4 w-4" />
             <div>
-              <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
+              <DialogTitle>{t("common.delete_what", { deleteWhat })}</DialogTitle>
               <DialogDescription>
-                {t("environments.project.general.this_action_cannot_be_undone")}
+                {t("environments.workspace.general.this_action_cannot_be_undone")}
               </DialogDescription>
             </div>
           </div>

@@ -37,6 +37,8 @@ interface OrganizationActionsProps {
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
   isStorageConfigured: boolean;
+  isTeamAdmin: boolean;
+  userAdminTeamIds?: string[];
 }
 
 export const OrganizationActions = ({
@@ -52,27 +54,36 @@ export const OrganizationActions = ({
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
   isStorageConfigured,
+  isTeamAdmin,
+  userAdminTeamIds,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
-  const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
-  const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
+  const [isLeaveOrganizationModalOpen, setIsLeaveOrganizationModalOpen] = useState(false);
+  const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
 
+  const canInvite = isOwnerOrManager || (isAccessControlAllowed && isTeamAdmin);
+
   const handleLeaveOrganization = async () => {
     setLoading(true);
     try {
-      await leaveOrganizationAction({ organizationId: organization.id });
+      const result = await leaveOrganizationAction({ organizationId: organization.id });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        setLoading(false);
+        return;
+      }
       toast.success(t("environments.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
       setLoading(false);
     }
   };
@@ -95,24 +106,23 @@ export const OrganizationActions = ({
         toast.error(errorMessage);
       }
     } else {
-      const invitePromises = await Promise.all(
-        data.map(async ({ name, email, role, teamIds }) => {
-          const inviteUserActionResult = await inviteUserAction({
-            organizationId: organization.id,
-            email: email.toLowerCase(),
-            name,
-            role,
-            teamIds,
-          });
-          return {
-            email,
-            success: Boolean(inviteUserActionResult?.data),
-          };
-        })
-      );
-      let failedInvites: string[] = [];
-      let successInvites: string[] = [];
-      invitePromises.forEach((invite) => {
+      const inviteResults: { email: string; success: boolean }[] = [];
+      for (const { name, email, role, teamIds } of data) {
+        const inviteUserActionResult = await inviteUserAction({
+          organizationId: organization.id,
+          email: email.toLowerCase(),
+          name,
+          role,
+          teamIds,
+        });
+        inviteResults.push({
+          email,
+          success: Boolean(inviteUserActionResult?.data),
+        });
+      }
+      const failedInvites: string[] = [];
+      const successInvites: string[] = [];
+      inviteResults.forEach((invite) => {
         if (!invite.success) {
           failedInvites.push(invite.email);
         } else {
@@ -134,18 +144,18 @@ export const OrganizationActions = ({
     <>
       <div className="mb-4 flex justify-end space-x-2 text-right">
         {role !== "owner" && isMultiOrgEnabled && (
-          <Button variant="secondary" size="sm" onClick={() => setLeaveOrganizationModalOpen(true)}>
+          <Button variant="destructive" size="sm" onClick={() => setIsLeaveOrganizationModalOpen(true)}>
             {t("environments.settings.general.leave_organization")}
             <XIcon />
           </Button>
         )}
 
-        {!isInviteDisabled && isOwnerOrManager && !isUserManagementDisabledFromUi && (
+        {!isInviteDisabled && canInvite && !isUserManagementDisabledFromUi && (
           <Button
             size="sm"
-            variant="secondary"
+            variant="default"
             onClick={() => {
-              setInviteMemberModalOpen(true);
+              setIsInviteMemberModalOpen(true);
             }}>
             {t("environments.settings.teams.invite_member")}
           </Button>
@@ -153,7 +163,7 @@ export const OrganizationActions = ({
       </div>
       <InviteMemberModal
         open={isInviteMemberModalOpen}
-        setOpen={setInviteMemberModalOpen}
+        setOpen={setIsInviteMemberModalOpen}
         onSubmit={handleAddMembers}
         membershipRole={membershipRole}
         isAccessControlAllowed={isAccessControlAllowed}
@@ -161,9 +171,12 @@ export const OrganizationActions = ({
         environmentId={environmentId}
         teams={teams}
         isStorageConfigured={isStorageConfigured}
+        isOwnerOrManager={isOwnerOrManager}
+        isTeamAdmin={isTeamAdmin}
+        userAdminTeamIds={userAdminTeamIds}
       />
 
-      <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setLeaveOrganizationModalOpen}>
+      <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setIsLeaveOrganizationModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("environments.settings.general.leave_organization_title")}</DialogTitle>
@@ -177,7 +190,7 @@ export const OrganizationActions = ({
             </p>
           )}
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setLeaveOrganizationModalOpen(false)}>
+            <Button variant="secondary" onClick={() => setIsLeaveOrganizationModalOpen(false)}>
               {t("common.cancel")}
             </Button>
             <Button

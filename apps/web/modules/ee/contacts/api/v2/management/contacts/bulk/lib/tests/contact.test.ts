@@ -21,7 +21,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       createMany: vi.fn(),
     },
-    $transaction: vi.fn((callback) => callback(prisma)),
+    $transaction: vi.fn((callback: Function) => callback(prisma)),
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
   },
@@ -63,7 +63,7 @@ describe("upsertBulkContacts", () => {
       { id: "attr-key-userId", key: "userId", environmentId: mockEnvironmentId, name: "User ID" },
       { id: "attr-key-name", key: "name", environmentId: mockEnvironmentId, name: "Name" },
     ];
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys as any);
     // Mock: no existing contacts by email
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
@@ -151,7 +151,7 @@ describe("upsertBulkContacts", () => {
     const mockAttributeKeys = [
       { id: "attr-key-email", key: "email", environmentId: mockEnvironmentId, name: "Email" },
     ];
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys as any);
     // Mock: an existing contact with the same email
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([
       {
@@ -164,7 +164,7 @@ describe("upsertBulkContacts", () => {
             createdAt: new Date("2023-01-01"),
           },
         ],
-      },
+      } as any,
     ]);
 
     // Execute the function
@@ -214,7 +214,7 @@ describe("upsertBulkContacts", () => {
 
     // Mock existing user IDs - these will conflict with some of our contacts
     const mockExistingUserIds = [{ value: "existing-user-1" }, { value: "existing-user-2" }];
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce(mockExistingUserIds);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce(mockExistingUserIds as any);
 
     // Mock attribute keys
     const mockAttributeKeys = [
@@ -222,7 +222,7 @@ describe("upsertBulkContacts", () => {
       { id: "attr-key-userId", key: "userId", environmentId: mockEnvironmentId },
       { id: "attr-key-name", key: "name", environmentId: mockEnvironmentId },
     ];
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys as any);
 
     // Mock existing contacts (none for this test case)
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
@@ -317,7 +317,7 @@ describe("upsertBulkContacts", () => {
       { id: "attr-key-newKey2", key: "newKey2", environmentId: mockEnvironmentId, name: "New Key 2" },
     ];
 
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys as any);
 
     // Mock: no existing contacts for update
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
@@ -368,7 +368,7 @@ describe("upsertBulkContacts", () => {
       { id: "attr-key-email", key: "email", environmentId: mockEnvironmentId, name: "Email" },
       { id: "attr-key-name", key: "name", environmentId: mockEnvironmentId, name: "Name" }, // Original name
     ];
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys as any);
 
     // Mock: an existing contact
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([
@@ -388,7 +388,7 @@ describe("upsertBulkContacts", () => {
             createdAt: new Date("2023-01-01"),
           },
         ],
-      },
+      } as any,
     ]);
 
     // Mock the transaction

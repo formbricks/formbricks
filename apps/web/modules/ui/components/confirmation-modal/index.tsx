@@ -120,7 +120,7 @@ export const ConfirmationModal = ({
             <DialogTitle className="w-full truncate text-left">{title}</DialogTitle>
             <DialogDescription className="w-full text-left">
               <span className="mt-2 whitespace-pre-wrap">
-                {description ?? t("environments.project.general.this_action_cannot_be_undone")}
+                {description ?? t("environments.workspace.general.this_action_cannot_be_undone")}
               </span>
             </DialogDescription>
           </div>

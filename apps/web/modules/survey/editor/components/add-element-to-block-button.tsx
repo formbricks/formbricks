@@ -7,6 +7,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
@@ -90,7 +91,7 @@ export const AddElementToBlockButton = ({
       <DropdownMenuContent align="start">
         {Object.entries(availableElementTypes).map(([type, name]) => (
           <DropdownMenuItem key={type} className="min-h-8" onClick={() => handleAddElement(type)}>
-            {ELEMENTS_ICON_MAP[type]}
+            {ELEMENTS_ICON_MAP[type as TSurveyElementTypeEnum]}
             <span className="ml-2">{name}</span>
           </DropdownMenuItem>
         ))}

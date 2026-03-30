@@ -1,25 +1,21 @@
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
 
-extendZodWithOpenApi(z);
-
 export const ZResponseIdSchema = z
-  .string()
   .cuid2()
-  .openapi({
-    ref: "responseId",
-    description: "The ID of the response",
+  .meta({
+    id: "responseId",
     param: {
       name: "id",
       in: "path",
     },
-  });
+  })
+  .describe("The ID of the response");
 
 export const ZResponseUpdateSchema = ZResponse.omit({
   id: true,
   surveyId: true,
-}).openapi({
-  ref: "responseUpdate",
+}).meta({
+  id: "responseUpdate",
   description: "A response to update.",
 });

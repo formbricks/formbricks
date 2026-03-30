@@ -12,7 +12,7 @@ import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata, isSurveyResponsePresent } from "@/modules/survey/link/lib/data";
 
 export const sendLinkSurveyEmailAction = actionClient
-  .schema(ZLinkSurveyEmailData)
+  .inputSchema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.actions.sendLinkSurveyEmail);
 
@@ -30,12 +30,12 @@ export const sendLinkSurveyEmailAction = actionClient
   });
 
 const ZValidateSurveyPinAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   pin: z.string(),
 });
 
 export const validateSurveyPinAction = actionClient
-  .schema(ZValidateSurveyPinAction)
+  .inputSchema(ZValidateSurveyPinAction)
   .action(async ({ parsedInput }) => {
     // Get survey data which includes pin information
     const survey = await getSurveyWithMetadata(parsedInput.surveyId);
@@ -55,12 +55,12 @@ export const validateSurveyPinAction = actionClient
   });
 
 const ZIsSurveyResponsePresentAction = z.object({
-  surveyId: z.string().cuid2(),
-  email: z.string().email(),
+  surveyId: z.cuid2(),
+  email: z.email(),
 });
 
 export const isSurveyResponsePresentAction = actionClient
-  .schema(ZIsSurveyResponsePresentAction)
+  .inputSchema(ZIsSurveyResponsePresentAction)
   .action(async ({ parsedInput }) => {
     return await isSurveyResponsePresent(parsedInput.surveyId, parsedInput.email)();
   });

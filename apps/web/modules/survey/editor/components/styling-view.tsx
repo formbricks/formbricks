@@ -1,7 +1,7 @@
 "use client";
 
 import { Project } from "@prisma/client";
-import { RotateCcwIcon } from "lucide-react";
+import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
@@ -9,13 +9,19 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { defaultStyling } from "@/lib/styling/constants";
+import {
+  COLOR_DEFAULTS,
+  STYLE_DEFAULTS,
+  deriveNewFieldsFromLegacy,
+  getSuggestedColors,
+} from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
 import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
 import {
   FormControl,
   FormDescription,
@@ -57,8 +63,27 @@ export const StylingView = ({
 }: StylingViewProps) => {
   const { t } = useTranslation();
 
+  const savedProjectStyling = project.styling as Partial<TProjectStyling> | null;
+
+  // Strip null/undefined values so they don't override STYLE_DEFAULTS.
+  const cleanProject = savedProjectStyling
+    ? Object.fromEntries(Object.entries(savedProjectStyling).filter(([, v]) => v != null))
+    : {};
+  const cleanSurvey = localSurvey.styling
+    ? Object.fromEntries(Object.entries(localSurvey.styling).filter(([, v]) => v != null))
+    : {};
+
+  const projectLegacyFills = deriveNewFieldsFromLegacy(cleanProject);
+  const surveyLegacyFills = deriveNewFieldsFromLegacy(cleanSurvey);
+
   const form = useForm<TSurveyStyling>({
-    defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },
+    defaultValues: {
+      ...STYLE_DEFAULTS,
+      ...projectLegacyFills,
+      ...cleanProject,
+      ...surveyLegacyFills,
+      ...cleanSurvey,
+    },
   });
 
   const overwriteThemeStyling = form.watch("overwriteThemeStyling");
@@ -69,6 +94,20 @@ export const StylingView = ({
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
+  const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
+
+  const handleSuggestColors = () => {
+    const currentBrandColor =
+      form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+    const suggested = getSuggestedColors(currentBrandColor);
+
+    for (const [key, value] of Object.entries(suggested)) {
+      form.setValue(key as keyof TSurveyStyling, value, { shouldDirty: true });
+    }
+
+    toast.success(t("environments.workspace.look.suggested_colors_applied_please_save"));
+    setConfirmSuggestColorsOpen(false);
+  };
 
   const onResetThemeStyling = () => {
     const { allowStyleOverwrite, ...baseStyling } = project.styling ?? {};
@@ -97,12 +136,12 @@ export const StylingView = ({
   }, [overwriteThemeStyling]);
 
   useEffect(() => {
-    const subscription = form.watch((data: TSurveyStyling) => {
+    const subscription = form.watch((data) => {
       setLocalSurvey((prev) => ({
         ...prev,
         styling: {
           ...prev.styling,
-          ...data,
+          ...(data as TSurveyStyling),
         },
       }));
     });
@@ -189,6 +228,38 @@ export const StylingView = ({
             </div>
           )}
 
+          {overwriteThemeStyling && (
+            <div className="grid grid-cols-2 items-end gap-4 rounded-lg border border-slate-300 bg-white p-4">
+              <FormField
+                control={form.control}
+                name="brandColor.light"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
+                    <FormDescription>
+                      {t("environments.surveys.edit.brand_color_description")}
+                    </FormDescription>
+                    <FormControl>
+                      <ColorPicker
+                        color={field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
+                        onChange={(color) => field.onChange(color)}
+                        containerClass="w-full"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="default"
+                className="h-10 justify-center gap-1"
+                onClick={() => setConfirmSuggestColorsOpen(true)}>
+                <SparklesIcon className="mr-2 h-4 w-4" />
+                {t("environments.workspace.look.suggest_colors")}
+              </Button>
+            </div>
+          )}
+
           <FormStylingSettings
             open={formStylingOpen}
             setOpen={setFormStylingOpen}
@@ -245,7 +316,7 @@ export const StylingView = ({
               <p className="text-sm text-slate-500">
                 {t("environments.surveys.edit.adjust_the_theme_in_the")}{" "}
                 <Link
-                  href={`/environments/${environmentId}/project/look`}
+                  href={`/environments/${environmentId}/workspace/look`}
                   target="_blank"
                   className="font-semibold underline">
                   {t("common.look_and_feel")}
@@ -262,6 +333,17 @@ export const StylingView = ({
             confirmBtnLabel={t("common.confirm")}
             onDecline={() => setConfirmResetStylingModalOpen(false)}
             onConfirm={onResetThemeStyling}
+          />
+
+          <AlertDialog
+            open={confirmSuggestColorsOpen}
+            setOpen={setConfirmSuggestColorsOpen}
+            headerText={t("environments.workspace.look.generate_theme_header")}
+            mainText={t("environments.workspace.look.generate_theme_confirmation")}
+            confirmBtnLabel={t("environments.workspace.look.generate_theme_btn")}
+            declineBtnLabel={t("common.cancel")}
+            onConfirm={handleSuggestColors}
+            onDecline={() => setConfirmSuggestColorsOpen(false)}
           />
         </div>
       </form>

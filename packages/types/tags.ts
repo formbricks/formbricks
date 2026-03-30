@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZTag = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
@@ -11,7 +11,7 @@ export type TTag = z.infer<typeof ZTag>;
 
 export const ZTagsCount = z.array(
   z.object({
-    tagId: z.string().cuid2(),
+    tagId: z.cuid2(),
     count: z.number(),
   })
 );

@@ -30,13 +30,14 @@ You can create webhooks either through the **Formbricks App UI** or programmatic
 
 ![Step two](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094259/j4a92z2q43twgamogpny.webp)
 
-- Add your webhook listener endpoint & test it to make sure it can receive the test endpoint otherwise you will not be able to save it.
+- Add your webhook listener endpoint and test it to make sure the endpoint is reachable and accepts `POST`
+  requests.
 
 ![Step three](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094617/image_kubsnz.jpg)
 
 - Now add the triggers you want to listen to and the surveys!
 
-- That’s it! Your webhooks will not start receiving data as soon as it arrives!
+- That’s it! Your webhooks will now start receiving data as soon as it arrives!
 
 ![Step five](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094816/image_xvrel1.jpg)
 
@@ -44,7 +45,207 @@ You can create webhooks either through the **Formbricks App UI** or programmatic
 
 Use our documented methods on the **Creation**, **List**, and **Deletion** endpoints of the Webhook API mentioned in our [API v2 playground](https://formbricks.com/docs/api-v2-reference/management-api-%3E-webhooks/get-webhooks).
 
+## Testing Webhooks Locally
+
+If you want to test a webhook consumer running on your machine before deploying it, you can expose your local
+endpoint with [ngrok](https://ngrok.com/docs/universal-gateway/http).
+
+<Steps>
+  <Step title="Start your local webhook listener">
+    Run your local endpoint on a port like `3000`.
+  </Step>
+  <Step title="Expose it with ngrok">
+    Create a public HTTPS URL for your local service, for example with `ngrok http http://localhost:3000`.
+  </Step>
+
+  <Step title="Use the public URL in Formbricks">
+    Paste the ngrok URL into your webhook endpoint, click **Test Endpoint**, and then save the webhook once the
+    endpoint is reachable.
+  </Step>
+</Steps>
+
+<Note>
+  To avoid sending unwanted test responses to production workflows, copy the survey to your [Test
+  Environment](/xm-and-surveys/core-features/test-environment) and use that survey copy in your development
+  workflow while validating the webhook setup.
+</Note>
+
+### Allowing Internal URLs (Self-Hosted Only)
+
+By default, Formbricks blocks webhook URLs that point to private or internal IP addresses (e.g. `localhost`, `192.168.x.x`, `10.x.x.x`) to prevent [SSRF attacks](https://owasp.org/www-community/attacks/Server-Side_Request_Forgery). If you are self-hosting Formbricks and need to send webhooks to internal services, you can set the following environment variable:
+
+```sh
+DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1
+```
+
+<Warning>
+  Only enable this on trusted, self-hosted environments. Enabling this on a publicly accessible instance exposes your server to SSRF risks.
+</Warning>
+
 If you encounter any issues or need help setting up webhooks, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions). 😃
+
+---
+
+## Webhook Security with Standard Webhooks
+
+Formbricks implements the [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks) specification to ensure webhook requests can be verified as genuinely originating from Formbricks.
+
+### Webhook Headers
+
+Every webhook request includes the following headers:
+
+| Header              | Description                                          | Example                                |
+| ------------------- | ---------------------------------------------------- | -------------------------------------- |
+| `webhook-id`        | Unique message identifier                            | `019ba292-c1f6-7618-aaf2-ecf8e39d1cc7` |
+| `webhook-timestamp` | Unix timestamp (seconds) when the webhook was sent   | `1704547200`                           |
+| `webhook-signature` | HMAC-SHA256 signature (only if secret is configured) | `v1,K3Q2bXlzZWNyZXQ=`                  |
+
+### Signing Secret
+
+When you create a webhook (via the UI or API), Formbricks automatically generates a unique signing secret for that webhook. The secret follows the Standard Webhooks format: `whsec_` followed by a base64-encoded random value.
+
+**Via UI:** After creating a webhook, the signing secret is displayed immediately. Copy and store it securely—you can also view it later in the webhook settings.
+
+**Via API:** The signing secret is returned in the webhook creation response.
+
+This secret is used to generate the HMAC signature included in each webhook request, allowing you to verify the authenticity of incoming webhooks.
+
+### Signature Verification
+
+The signature is computed as follows:
+
+```
+signed_content = "{webhook-id}.{webhook-timestamp}.{body}"
+signature = base64(HMAC-SHA256(secret, signed_content))
+header_value = "v1,{signature}"
+```
+
+### Validating Webhooks
+
+To validate incoming webhook requests:
+
+1. Extract the `webhook-id`, `webhook-timestamp`, and `webhook-signature` headers
+2. Verify the timestamp is within an acceptable tolerance (e.g., 5 minutes) to prevent replay attacks
+3. Decode the secret by stripping the `whsec_` prefix and base64 decoding the rest
+4. Compute the expected signature using HMAC-SHA256 with the decoded secret
+5. Compare your computed signature with the received signature (after stripping the `v1,` prefix)
+
+### Node.js Verification Functions
+
+```javascript
+const crypto = require("crypto");
+
+const WEBHOOK_TOLERANCE_IN_SECONDS = 300; // 5 minutes
+
+/**
+ * Decodes a Formbricks webhook secret (whsec_...) to raw bytes
+ */
+function decodeSecret(secret) {
+  const base64 = secret.startsWith("whsec_") ? secret.slice(6) : secret;
+  return Buffer.from(base64, "base64");
+}
+
+/**
+ * Verifies the webhook timestamp is within tolerance
+ * @throws {Error} if timestamp is too old or too new
+ */
+function verifyTimestamp(timestampHeader) {
+  const now = Math.floor(Date.now() / 1000);
+  const timestamp = parseInt(timestampHeader, 10);
+
+  if (isNaN(timestamp)) {
+    throw new Error("Invalid timestamp");
+  }
+
+  if (Math.abs(now - timestamp) > WEBHOOK_TOLERANCE_IN_SECONDS) {
+    throw new Error("Timestamp outside tolerance window");
+  }
+
+  return timestamp;
+}
+
+/**
+ * Computes the expected signature for a webhook payload
+ */
+function computeSignature(webhookId, timestamp, body, secret) {
+  const signedContent = `${webhookId}.${timestamp}.${body}`;
+  const secretBytes = decodeSecret(secret);
+  return crypto.createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+}
+
+/**
+ * Verifies a Formbricks webhook request
+ * @param {string} body - Raw request body as string
+ * @param {object} headers - Object containing webhook-id, webhook-timestamp, webhook-signature
+ * @param {string} secret - Your webhook secret (whsec_...)
+ * @returns {boolean} true if valid
+ * @throws {Error} if verification fails
+ */
+function verifyWebhook(body, headers, secret) {
+  const webhookId = headers["webhook-id"];
+  const webhookTimestamp = headers["webhook-timestamp"];
+  const webhookSignature = headers["webhook-signature"];
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    throw new Error("Missing required webhook headers");
+  }
+
+  // Verify timestamp
+  const timestamp = verifyTimestamp(webhookTimestamp);
+
+  // Compute expected signature
+  const expectedSignature = computeSignature(webhookId, timestamp, body, secret);
+
+  // Extract signature from header (format: "v1,{signature}")
+  const receivedSignature = webhookSignature.split(",")[1];
+
+  if (!receivedSignature) {
+    throw new Error("Invalid signature format");
+  }
+
+  // Use constant-time comparison to prevent timing attacks
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+  const receivedBuffer = Buffer.from(receivedSignature, "utf8");
+
+  if (
+    expectedBuffer.length !== receivedBuffer.length ||
+    !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  ) {
+    throw new Error("Invalid signature");
+  }
+
+  return true;
+}
+
+module.exports = { verifyWebhook, decodeSecret, computeSignature, verifyTimestamp };
+```
+
+**Usage:**
+
+```javascript
+// In your webhook handler, use the raw body (not parsed JSON)
+try {
+  verifyWebhook(rawBody, req.headers, process.env.FORMBRICKS_WEBHOOK_SECRET);
+  const payload = JSON.parse(rawBody);
+  // Process verified webhook...
+} catch (error) {
+  // Verification failed - reject the request
+  console.error("Webhook verification failed:", error.message);
+}
+```
+
+<Note>
+  Always use the **raw request body** (as a string) for signature verification, not the parsed JSON object.
+  Parsing and re-stringifying can change the formatting and break signature validation.
+</Note>
+
+### Using Standard Webhooks Libraries
+
+You can also use the official [Standard Webhooks libraries](https://github.com/standard-webhooks/standard-webhooks#libraries) available for various languages:
+
+- **Node.js**: `npm install standardwebhooks`
+- **Python**: `pip install standardwebhooks`
+- **Go, Ruby, Java, Kotlin, PHP, Rust**: See the [Standard Webhooks GitHub](https://github.com/standard-webhooks/standard-webhooks)
 
 ---
 
@@ -57,49 +258,47 @@ We provide the following webhook payloads, `responseCreated`, `responseUpdated`,
 Example of Response Created webhook payload:
 
 ```json
-[
-  {
+{
+  "data": {
+    "contact": null,
+    "contactAttributes": null,
+    "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "contact": null,
-      "contactAttributes": null,
-      "createdAt": "2025-07-24T07:47:29.507Z",
-      "data": {
-        "q1": "clicked"
-      },
-      "displayId": "displayId",
-      "endingId": null,
-      "finished": false,
-      "id": "responseId",
-      "language": "en",
-      "meta": {
-        "country": "DE",
-        "url": "https://app.formbricks.com/s/surveyId",
-        "userAgent": {
-          "browser": "Chrome",
-          "device": "desktop",
-          "os": "macOS"
-        }
-      },
-      "singleUseId": null,
-      "survey": {
-        "title": "Customer Satisfaction Survey",
-        "type": "link",
-        "status": "inProgress",
-        "createdAt": "2025-07-20T10:30:00.000Z",
-        "updatedAt": "2025-07-24T07:45:00.000Z"
-      },
-      "surveyId": "surveyId",
-      "tags": [],
-      "ttc": {
-        "q1": 2154.700000047684
-      },
-      "updatedAt": "2025-07-24T07:47:29.507Z",
-      "variables": {}
+      "welcome_card_cta": "clicked"
     },
-    "event": "responseCreated",
-    "webhookId": "webhookId"
-  }
-]
+    "displayId": "displayId",
+    "endingId": null,
+    "finished": false,
+    "id": "responseId",
+    "language": "en",
+    "meta": {
+      "country": "DE",
+      "url": "https://app.formbricks.com/s/surveyId",
+      "userAgent": {
+        "browser": "Chrome",
+        "device": "desktop",
+        "os": "macOS"
+      }
+    },
+    "singleUseId": null,
+    "survey": {
+      "createdAt": "2025-07-20T10:30:00.000Z",
+      "status": "inProgress",
+      "title": "Customer Satisfaction Survey",
+      "type": "link",
+      "updatedAt": "2025-07-24T07:45:00.000Z"
+    },
+    "surveyId": "surveyId",
+    "tags": [],
+    "ttc": {
+      "welcome_card_cta": 2154.700000047684
+    },
+    "updatedAt": "2025-07-24T07:47:29.507Z",
+    "variables": {}
+  },
+  "event": "responseCreated",
+  "webhookId": "webhookId"
+}
 ```
 
 ### Response Updated
@@ -107,51 +306,49 @@ Example of Response Created webhook payload:
 Example of Response Updated webhook payload:
 
 ```json
-[
-  {
+{
+  "data": {
+    "contact": null,
+    "contactAttributes": null,
+    "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "contact": null,
-      "contactAttributes": null,
-      "createdAt": "2025-07-24T07:47:29.507Z",
-      "data": {
-        "q1": "clicked",
-        "q2": "Just browsing"
-      },
-      "displayId": "displayId",
-      "endingId": null,
-      "finished": false,
-      "id": "responseId",
-      "language": "en",
-      "meta": {
-        "country": "DE",
-        "url": "https://app.formbricks.com/s/surveyId",
-        "userAgent": {
-          "browser": "Chrome",
-          "device": "desktop",
-          "os": "macOS"
-        }
-      },
-      "singleUseId": null,
-      "survey": {
-        "title": "Customer Satisfaction Survey",
-        "type": "link",
-        "status": "inProgress",
-        "createdAt": "2025-07-20T10:30:00.000Z",
-        "updatedAt": "2025-07-24T07:45:00.000Z"
-      },
-      "surveyId": "surveyId",
-      "tags": [],
-      "ttc": {
-        "q1": 2154.700000047684,
-        "q2": 3855.799999952316
-      },
-      "updatedAt": "2025-07-24T07:47:33.696Z",
-      "variables": {}
+      "visit_reason": "Just browsing",
+      "welcome_card_cta": "clicked"
     },
-    "event": "responseUpdated",
-    "webhookId": "webhookId"
-  }
-]
+    "displayId": "displayId",
+    "endingId": null,
+    "finished": false,
+    "id": "responseId",
+    "language": "en",
+    "meta": {
+      "country": "DE",
+      "url": "https://app.formbricks.com/s/surveyId",
+      "userAgent": {
+        "browser": "Chrome",
+        "device": "desktop",
+        "os": "macOS"
+      }
+    },
+    "singleUseId": null,
+    "survey": {
+      "createdAt": "2025-07-20T10:30:00.000Z",
+      "status": "inProgress",
+      "title": "Customer Satisfaction Survey",
+      "type": "link",
+      "updatedAt": "2025-07-24T07:45:00.000Z"
+    },
+    "surveyId": "surveyId",
+    "tags": [],
+    "ttc": {
+      "visit_reason": 3855.799999952316,
+      "welcome_card_cta": 2154.700000047684
+    },
+    "updatedAt": "2025-07-24T07:47:33.696Z",
+    "variables": {}
+  },
+  "event": "responseUpdated",
+  "webhookId": "webhookId"
+}
 ```
 
 ### Response Finished
@@ -159,50 +356,48 @@ Example of Response Updated webhook payload:
 Example of Response Finished webhook payload:
 
 ```json
-[
-  {
+{
+  "data": {
+    "contact": null,
+    "contactAttributes": null,
+    "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "contact": null,
-      "contactAttributes": null,
-      "createdAt": "2025-07-24T07:47:29.507Z",
-      "data": {
-        "q1": "clicked",
-        "q2": "accepted"
-      },
-      "displayId": "displayId",
-      "endingId": "endingId",
-      "finished": true,
-      "id": "responseId",
-      "language": "en",
-      "meta": {
-        "country": "DE",
-        "url": "https://app.formbricks.com/s/surveyId",
-        "userAgent": {
-          "browser": "Chrome",
-          "device": "desktop",
-          "os": "macOS"
-        }
-      },
-      "singleUseId": null,
-      "survey": {
-        "title": "Customer Satisfaction Survey",
-        "type": "link",
-        "status": "inProgress",
-        "createdAt": "2025-07-20T10:30:00.000Z",
-        "updatedAt": "2025-07-24T07:45:00.000Z"
-      },
-      "surveyId": "surveyId",
-      "tags": [],
-      "ttc": {
-        "_total": 4947.899999035763,
-        "q1": 2154.700000047684,
-        "q2": 2793.199999988079
-      },
-      "updatedAt": "2025-07-24T07:47:56.116Z",
-      "variables": {}
+      "newsletter_consent": "accepted",
+      "welcome_card_cta": "clicked"
     },
-    "event": "responseFinished",
-    "webhookId": "webhookId"
-  }
-]
+    "displayId": "displayId",
+    "endingId": "endingId",
+    "finished": true,
+    "id": "responseId",
+    "language": "en",
+    "meta": {
+      "country": "DE",
+      "url": "https://app.formbricks.com/s/surveyId",
+      "userAgent": {
+        "browser": "Chrome",
+        "device": "desktop",
+        "os": "macOS"
+      }
+    },
+    "singleUseId": null,
+    "survey": {
+      "createdAt": "2025-07-20T10:30:00.000Z",
+      "status": "inProgress",
+      "title": "Customer Satisfaction Survey",
+      "type": "link",
+      "updatedAt": "2025-07-24T07:45:00.000Z"
+    },
+    "surveyId": "surveyId",
+    "tags": [],
+    "ttc": {
+      "_total": 4947.899999035763,
+      "newsletter_consent": 2793.199999988079,
+      "welcome_card_cta": 2154.700000047684
+    },
+    "updatedAt": "2025-07-24T07:47:56.116Z",
+    "variables": {}
+  },
+  "event": "responseFinished",
+  "webhookId": "webhookId"
+}
 ```

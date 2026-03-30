@@ -34,9 +34,9 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [organizationName, setOrganizationName] = useState("");
+  const { register, handleSubmit, watch } = useForm<FormValues>();
+  const organizationName = watch("name", "");
   const isOrganizationNameValid = organizationName.trim() !== "";
-  const { register, handleSubmit } = useForm<FormValues>();
 
   const submitOrganization = async (data: FormValues) => {
     data.name = data.name.trim();
@@ -75,8 +75,6 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
                 autoFocus
                 placeholder={t("environments.settings.general.organization_name_placeholder")}
                 {...register("name", { required: true })}
-                value={organizationName}
-                onChange={(e) => setOrganizationName(e.target.value)}
               />
             </div>
           </DialogBody>

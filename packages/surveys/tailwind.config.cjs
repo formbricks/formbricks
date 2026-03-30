@@ -1,11 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   important: "#fbjs",
-  prefix: "fb-",
   darkMode: "class",
-  corePlugins: {
-    preflight: false,
-  },
   content: ["./src/**/*.{tsx,ts,jsx,js}"],
   theme: {
     extend: {

@@ -6,7 +6,6 @@ import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { getProject } from "@/lib/project/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getEnvironmentIdFromSurveyId,
   getOrganizationIdFromEnvironmentId,
@@ -45,11 +44,11 @@ import {
 } from "@/modules/survey/list/lib/survey";
 
 const ZGetSurveyAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export const getSurveyAction = authenticatedActionClient
-  .schema(ZGetSurveyAction)
+  .inputSchema(ZGetSurveyAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -99,99 +98,89 @@ export const exportSurveyAction = authenticatedActionClient
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
-  surveyId: z.string().cuid2(),
-  targetEnvironmentId: z.string().cuid2(),
+  surveyId: z.cuid2(),
+  targetEnvironmentId: z.cuid2(),
 });
 
 export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
-  .schema(ZCopySurveyToOtherEnvironmentAction)
+  .inputSchema(ZCopySurveyToOtherEnvironmentAction)
   .action(
-    withAuditLogging(
-      "copiedToOtherEnvironment",
-      "survey",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZCopySurveyToOtherEnvironmentAction>;
-      }) => {
-        const sourceEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-        const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(sourceEnvironmentId);
-        const targetEnvironmentProjectId = await getProjectIdIfEnvironmentExists(
-          parsedInput.targetEnvironmentId
+    withAuditLogging("copiedToOtherEnvironment", "survey", async ({ ctx, parsedInput }) => {
+      const sourceEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+      const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(sourceEnvironmentId);
+      const targetEnvironmentProjectId = await getProjectIdIfEnvironmentExists(
+        parsedInput.targetEnvironmentId
+      );
+
+      if (!sourceEnvironmentProjectId || !targetEnvironmentProjectId) {
+        throw new ResourceNotFoundError(
+          "Environment",
+          sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : sourceEnvironmentId
         );
-
-        if (!sourceEnvironmentProjectId || !targetEnvironmentProjectId) {
-          throw new ResourceNotFoundError(
-            "Environment",
-            sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : sourceEnvironmentId
-          );
-        }
-
-        const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(sourceEnvironmentId);
-        const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
-          parsedInput.targetEnvironmentId
-        );
-
-        if (sourceEnvironmentOrganizationId !== targetEnvironmentOrganizationId) {
-          throw new OperationNotAllowedError(
-            "Source and target environments must be in the same organization"
-          );
-        }
-
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId: sourceEnvironmentOrganizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId: sourceEnvironmentProjectId,
-            },
-          ],
-        });
-
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId: targetEnvironmentOrganizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId: targetEnvironmentProjectId,
-            },
-          ],
-        });
-
-        ctx.auditLoggingCtx.organizationId = sourceEnvironmentOrganizationId;
-        ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-        const result = await copySurveyToOtherEnvironment(
-          sourceEnvironmentId,
-          parsedInput.surveyId,
-          parsedInput.targetEnvironmentId,
-          ctx.user.id
-        );
-        ctx.auditLoggingCtx.newObject = result;
-        return result;
       }
-    )
+
+      const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(sourceEnvironmentId);
+      const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
+        parsedInput.targetEnvironmentId
+      );
+
+      if (sourceEnvironmentOrganizationId !== targetEnvironmentOrganizationId) {
+        throw new OperationNotAllowedError("Source and target environments must be in the same organization");
+      }
+
+      // authorization check for source environment
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: sourceEnvironmentOrganizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: sourceEnvironmentProjectId,
+          },
+        ],
+      });
+
+      // authorization check for target environment
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: targetEnvironmentOrganizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: targetEnvironmentProjectId,
+          },
+        ],
+      });
+
+      ctx.auditLoggingCtx.organizationId = sourceEnvironmentOrganizationId;
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      const result = await copySurveyToOtherEnvironment(
+        sourceEnvironmentId,
+        parsedInput.surveyId,
+        parsedInput.targetEnvironmentId,
+        ctx.user.id
+      );
+      ctx.auditLoggingCtx.newObject = result;
+      return result;
+    })
   );
 
 const ZGetProjectsByEnvironmentIdAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
 });
 
 export const getProjectsByEnvironmentIdAction = authenticatedActionClient
-  .schema(ZGetProjectsByEnvironmentIdAction)
+  .inputSchema(ZGetProjectsByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
@@ -214,46 +203,42 @@ export const getProjectsByEnvironmentIdAction = authenticatedActionClient
   });
 
 const ZDeleteSurveyAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
-export const deleteSurveyAction = authenticatedActionClient.schema(ZDeleteSurveyAction).action(
-  withAuditLogging(
-    "deleted",
-    "survey",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-            minPermission: "readWrite",
-          },
-        ],
-      });
+export const deleteSurveyAction = authenticatedActionClient.inputSchema(ZDeleteSurveyAction).action(
+  withAuditLogging("deleted", "survey", async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      ctx.auditLoggingCtx.oldObject = await getSurvey(parsedInput.surveyId);
-      return await deleteSurvey(parsedInput.surveyId);
-    }
-  )
+    ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+    ctx.auditLoggingCtx.oldObject = await getSurvey(parsedInput.surveyId);
+    return await deleteSurvey(parsedInput.surveyId);
+  })
 );
 
 const ZGenerateSingleUseIdAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   isEncrypted: z.boolean(),
-  count: z.number().min(1).max(5000).default(1),
+  count: z.number().min(1).max(5000).prefault(1),
 });
 
 export const generateSingleUseIdsAction = authenticatedActionClient
-  .schema(ZGenerateSingleUseIdAction)
+  .inputSchema(ZGenerateSingleUseIdAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -275,14 +260,14 @@ export const generateSingleUseIdsAction = authenticatedActionClient
   });
 
 const ZGetSurveysAction = z.object({
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   limit: z.number().optional(),
   offset: z.number().optional(),
   filterCriteria: ZSurveyFilterCriteria.optional(),
 });
 
 export const getSurveysAction = authenticatedActionClient
-  .schema(ZGetSurveysAction)
+  .inputSchema(ZGetSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

@@ -169,6 +169,9 @@ export const mockSurvey: TSurvey = {
   segment: null,
   followUps: mockFollowUps,
   metadata: {},
+  blocks: [],
+  isCaptureIpEnabled: false,
+  slug: null,
 };
 
 export const mockContactQuestion: TSurveyContactInfoQuestion = {

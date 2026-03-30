@@ -22,6 +22,9 @@ export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; i
 export const isManagementApiRoute = (
   url: string
 ): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
+  // V3 surveys: session cookie or x-api-key (same pattern as management storage)
+  if (/^\/api\/v3\/surveys(?:\/|$)/.test(url))
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
   if (url.includes("/api/v1/management/storage"))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
   if (url.includes("/api/v1/webhooks"))
@@ -41,14 +44,6 @@ export const isAuthProtectedRoute = (url: string): boolean => {
   const protectedRoutes = ["/environments", "/setup/organization", "/organizations"];
 
   return protectedRoutes.some((route) => url.startsWith(route));
-};
-
-export const isSyncWithUserIdentificationEndpoint = (
-  url: string
-): { environmentId: string; userId: string } | false => {
-  const regex = /\/api\/v1\/client\/(?<environmentId>[^/]+)\/app\/sync\/(?<userId>[^/]+)/;
-  const match = url.match(regex);
-  return match ? { environmentId: match.groups!.environmentId, userId: match.groups!.userId } : false;
 };
 
 /**

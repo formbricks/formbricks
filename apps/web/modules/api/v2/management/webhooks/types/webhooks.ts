@@ -3,7 +3,7 @@ import { ZWebhook } from "@formbricks/database/zod/webhooks";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetWebhooksFilter = ZGetFilter.extend({
-  surveyIds: z.array(z.string().cuid2()).optional(),
+  surveyIds: z.array(z.cuid2()).optional(),
 }).refine(
   (data) => {
     if (data.startDate && data.endDate && data.startDate > data.endDate) {

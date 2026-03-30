@@ -1,9 +1,10 @@
-import type { Account, NextAuthOptions } from "next-auth";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { TUser } from "@formbricks/types/user";
+import type { TUser } from "@formbricks/types/user";
 import {
   CONTROL_HASH,
   EMAIL_VERIFICATION_DISABLED,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
-import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
+import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import {
   logAuthAttempt,
   logAuthEvent,
@@ -31,6 +32,7 @@ import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -310,33 +312,20 @@ export const authOptions: NextAuthOptions = {
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
+    strategy: "database",
     maxAge: SESSION_MAX_AGE,
   },
   callbacks: {
-    async jwt({ token }) {
-      const existingUser = await getUserByEmail(token?.email!);
-
-      if (!existingUser) {
-        return token;
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+        if ("isActive" in user && typeof user.isActive === "boolean") {
+          session.user.isActive = user.isActive;
+        }
       }
-
-      return {
-        ...token,
-        profile: { id: existingUser.id },
-        isActive: existingUser.isActive,
-      };
-    },
-    async session({ session, token }) {
-      // @ts-expect-error
-      session.user.id = token?.id;
-      // @ts-expect-error
-      session.user = token.profile;
-      // @ts-expect-error
-      session.user.isActive = token.isActive;
-
       return session;
     },
-    async signIn({ user, account }: { user: TUser; account: Account }) {
+    async signIn({ user, account }) {
       const cookieStore = await cookies();
 
       // get callback url from the cookie store,
@@ -345,24 +334,30 @@ export const authOptions: NextAuthOptions = {
         cookieStore.get("next-auth.callback-url")?.value ||
         "";
 
+      const userEmail = user.email ?? "";
+
       if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
-        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+        if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
-        await updateUserLastLoginAt(user.email);
+        await updateUserLastLoginAt(userEmail);
         return true;
       }
-      if (ENTERPRISE_LICENSE_KEY) {
-        const result = await handleSsoCallback({ user, account, callbackUrl });
+      if (ENTERPRISE_LICENSE_KEY && account) {
+        const result = await handleSsoCallback({
+          user: user as TUser,
+          account,
+          callbackUrl,
+        });
 
         if (result) {
-          await updateUserLastLoginAt(user.email);
+          await updateUserLastLoginAt(userEmail);
         }
         return result;
       }
-      await updateUserLastLoginAt(user.email);
+      await updateUserLastLoginAt(userEmail);
       return true;
     },
   },

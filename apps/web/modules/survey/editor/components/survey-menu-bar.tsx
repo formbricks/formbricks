@@ -19,12 +19,14 @@ import {
 } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { updateSurveyAction } from "../actions";
+import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
+import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -33,7 +35,7 @@ interface SurveyMenuBarProps {
   environmentId: string;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidElements: React.Dispatch<React.SetStateAction<string[]>>;
+  setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
   project: Project;
   responseCount: number;
   selectedLanguageCode: string;
@@ -67,7 +69,15 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
+  const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const isSuccessfullySavedRef = useRef(false);
+  const isAutoSavingRef = useRef(false);
+  const isSurveyPublishingRef = useRef(false);
+
+  // Refs for interval-based auto-save (to access current values without re-creating interval)
+  const localSurveyRef = useRef(localSurvey);
+  const surveyRef = useRef(survey);
+  const isSurveySavingRef = useRef(isSurveySaving);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -78,6 +88,19 @@ export const SurveyMenuBar = ({
   useEffect(() => {
     setIsLinkSurvey(localSurvey.type === "link");
   }, [localSurvey.type]);
+
+  // Keep refs updated for interval-based auto-save
+  useEffect(() => {
+    localSurveyRef.current = localSurvey;
+  }, [localSurvey]);
+
+  useEffect(() => {
+    surveyRef.current = survey;
+  }, [survey]);
+
+  useEffect(() => {
+    isSurveySavingRef.current = isSurveySaving;
+  }, [isSurveySaving]);
 
   // Reset the successfully saved flag when survey prop updates (page refresh complete)
   useEffect(() => {
@@ -169,50 +192,61 @@ export const SurveyMenuBar = ({
   const validateSurveyWithZod = (): boolean => {
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
-      const currentError = localSurveyValidation.error.errors[0];
+      const issues = localSurveyValidation.error.issues;
+      const newInvalidIds: string[] = [];
 
-      if (currentError.path[0] === "blocks") {
-        const blockIdx = currentError.path[1];
+      for (const issue of issues) {
+        if (issue.path[0] === "blocks") {
+          const blockIdx = issue.path[1] as number;
 
-        // Check if this is an element-level error (path includes "elements")
-        // Element errors: ["blocks", blockIdx, "elements", elementIdx, ...]
-        // Block errors: ["blocks", blockIdx, "buttonLabel"] or ["blocks", blockIdx, "logic"]
-        if (currentError.path[2] === "elements" && typeof currentError.path[3] === "number") {
-          const elementIdx = currentError.path[3];
-          const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
-          const element = block?.elements[elementIdx];
+          if (issue.path[2] === "elements" && typeof issue.path[3] === "number") {
+            const elementIdx = issue.path[3];
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+            const element = block?.elements[elementIdx];
 
-          if (element) {
-            setInvalidElements((prevInvalidElements) =>
-              prevInvalidElements ? [...prevInvalidElements, element.id] : [element.id]
-            );
+            if (element && !newInvalidIds.includes(element.id)) {
+              newInvalidIds.push(element.id);
+            }
+          }
+        } else if (issue.path[0] === "welcomeCard") {
+          if (!newInvalidIds.includes("start")) {
+            newInvalidIds.push("start");
+          }
+        } else if (issue.path[0] === "endings") {
+          const endingIdx = typeof issue.path[1] === "number" ? issue.path[1] : -1;
+          const endingId = localSurvey.endings[endingIdx]?.id;
+          if (endingId && !newInvalidIds.includes(endingId)) {
+            newInvalidIds.push(endingId);
           }
         }
-      } else if (currentError.path[0] === "welcomeCard") {
-        setInvalidElements((prevInvalidElements) =>
-          prevInvalidElements ? [...prevInvalidElements, "start"] : ["start"]
-        );
-      } else if (currentError.path[0] === "endings") {
-        const endingIdx = typeof currentError.path[1] === "number" ? currentError.path[1] : -1;
-        setInvalidElements((prevInvalidElements) =>
-          prevInvalidElements
-            ? [...prevInvalidElements, localSurvey.endings[endingIdx].id]
-            : [localSurvey.endings[endingIdx].id]
-        );
       }
 
-      if (currentError.code === "custom") {
-        const params = currentError.params ?? ({} as { invalidLanguageCodes: string[] });
+      if (newInvalidIds.length > 0) {
+        setInvalidElements((prev) => {
+          const existing = prev ?? [];
+          const merged = [...existing];
+          for (const id of newInvalidIds) {
+            if (!merged.includes(id)) {
+              merged.push(id);
+            }
+          }
+          return merged;
+        });
+      }
+
+      const firstError = issues[0];
+      if (firstError.code === "custom") {
+        const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
           const invalidLanguageLabels = params.invalidLanguageCodes.map(
             (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
           );
 
-          const messageSplit = currentError.message.split("-fLang-")[0];
+          const messageSplit = firstError.message.split("-fLang-")[0];
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
-          toast.error(currentError.message, {
+          toast.error(firstError.message, {
             className: "w-fit !max-w-md",
           });
         }
@@ -220,11 +254,98 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      toast.error(currentError.message);
+      toast.error(firstError.message);
       return false;
     }
 
     return true;
+  };
+
+  // Interval-based auto-save for draft surveys (every 10 seconds)
+  useEffect(() => {
+    // Only set up interval for draft surveys
+    if (localSurvey.status !== "draft") return;
+
+    const intervalId = setInterval(async () => {
+      // Skip if tab is not visible (no computation, no API calls for background tabs)
+      if (document.hidden) return;
+
+      // Skip if already saving, publishing, or auto-saving
+      if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
+
+      // Check for changes using refs (avoids re-creating interval on every change)
+      const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
+      const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
+
+      // Skip if no changes
+      if (isEqual(localSurveyRest, surveyRest)) return;
+
+      isAutoSavingRef.current = true;
+
+      try {
+        const currentSurvey = localSurveyRef.current;
+        const updatedSurveyResponse = await updateSurveyDraftAction({
+          ...currentSurvey,
+          segment: currentSurvey.segment?.id === "temp" ? null : currentSurvey.segment,
+        } as unknown as TSurveyDraft);
+
+        if (updatedSurveyResponse?.data) {
+          const savedData = updatedSurveyResponse.data;
+
+          // If the segment changed on the server (e.g., private segment was deleted when
+          // switching from app to link type), update localSurvey to prevent stale segment
+          // references when publishing
+          if (!isEqual(localSurveyRef.current.segment, savedData.segment)) {
+            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
+          }
+
+          // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
+          // This keeps the UI stable while still tracking that changes have been saved.
+          // The comparison uses refs, so this prevents unnecessary re-saves.
+          surveyRef.current = { ...savedData };
+          isSuccessfullySavedRef.current = true;
+          setLastAutoSaved(new Date());
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        isAutoSavingRef.current = false;
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [localSurvey.status]);
+
+  // Add new handler after handleSurveySave
+  const handleSurveySaveDraft = async (): Promise<boolean> => {
+    setIsSurveySaving(true);
+
+    try {
+      const segment = await handleSegmentUpdate();
+      clearSurveyLocalStorage();
+      const updatedSurveyResponse = await updateSurveyDraftAction({
+        ...localSurvey,
+        segment,
+      } as unknown as TSurveyDraft);
+
+      setIsSurveySaving(false);
+      if (updatedSurveyResponse?.data) {
+        setLocalSurvey(updatedSurveyResponse.data);
+        toast.success(t("environments.surveys.edit.changes_saved"));
+        isSuccessfullySavedRef.current = true;
+        router.refresh();
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
+        toast.error(errorMessage);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      setIsSurveySaving(false);
+      toast.error(t("environments.surveys.edit.error_saving_changes"));
+      return false;
+    }
   };
 
   const handleSurveySave = async (): Promise<boolean> => {
@@ -306,11 +427,13 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveyPublish = async () => {
+    isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
     if (!isSurveyValidatedWithZod) {
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       return;
     }
@@ -318,6 +441,7 @@ export const SurveyMenuBar = ({
     try {
       const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
@@ -325,11 +449,21 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      await updateSurveyAction({
+      const publishResult = await updateSurveyAction({
         ...localSurvey,
         status,
         segment,
       });
+
+      if (!publishResult?.data) {
+        const errorMessage = getFormattedErrorMessage(publishResult);
+        toast.error(errorMessage);
+        isSurveyPublishingRef.current = false;
+        setIsSurveyPublishing(false);
+        return;
+      }
+
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
@@ -337,6 +471,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       console.error(error);
       toast.error(t("environments.surveys.edit.error_publishing_survey"));
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
     }
   };
@@ -368,6 +503,7 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+        <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small">
@@ -394,16 +530,16 @@ export const SurveyMenuBar = ({
         )}
         {!isCxMode && (
           <Button
+            data-save-button
             disabled={disableSave}
             variant="secondary"
             size="sm"
             loading={isSurveySaving}
-            onClick={() => handleSurveySave()}
+            onClick={() => (localSurvey.status === "draft" ? handleSurveySaveDraft() : handleSurveySave())}
             type="submit">
-            {t("common.save")}
+            {localSurvey.status === "draft" ? t("common.save_as_draft") : t("common.save")}
           </Button>
         )}
-
         {localSurvey.status !== "draft" && (
           <Button
             disabled={disableSave}

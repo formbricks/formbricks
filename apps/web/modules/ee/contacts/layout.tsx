@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -9,7 +9,10 @@ import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
-const ConfigLayout = async (props) => {
+const ConfigLayout = async (props: {
+  params: Promise<{ environmentId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;
@@ -21,11 +24,11 @@ const ConfigLayout = async (props) => {
   ]);
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
@@ -42,7 +45,7 @@ const ConfigLayout = async (props) => {
 
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   return children;

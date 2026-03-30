@@ -80,7 +80,7 @@ describe("service.ts", () => {
         Key: "uploads/images/test-file.jpg",
         Fields: {
           "Content-Type": "image/jpeg",
-          // "Content-Encoding": "base64",
+          success_action_status: "201",
         },
         Conditions: [["content-length-range", 0, mockMaxSize]],
       });
@@ -175,7 +175,7 @@ describe("service.ts", () => {
         Key: "uploads/images/test-file.jpg",
         Fields: {
           "Content-Type": "image/jpeg",
-          // "Content-Encoding": "base64",
+          success_action_status: "201",
         },
         Conditions: [["content-length-range", 0, mockMaxSize]],
       });

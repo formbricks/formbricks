@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, MailIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -10,11 +10,13 @@ import { z } from "zod";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
+import { getWebAppLocale } from "@/modules/survey/link/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -26,11 +28,11 @@ interface VerifyEmailProps {
   singleUseId?: string;
   languageCode: string;
   styling: TProjectStyling;
-  locale: string;
+  locale: TUserLocale;
 }
 
 const ZVerifyEmailInput = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 type TVerifyEmailInput = z.infer<typeof ZVerifyEmailInput>;
 
@@ -42,7 +44,18 @@ export const VerifyEmail = ({
   styling,
   locale,
 }: VerifyEmailProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Set i18n language based on survey language
+  useEffect(() => {
+    const webAppLocale = getWebAppLocale(languageCode, survey);
+    if (i18n.language !== webAppLocale) {
+      i18n.changeLanguage(webAppLocale).catch(() => {
+        // If changeLanguage fails, fallback to default locale
+        i18n.changeLanguage("en-US");
+      });
+    }
+  }, [languageCode, survey, i18n]);
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",

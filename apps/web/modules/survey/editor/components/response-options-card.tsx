@@ -16,7 +16,7 @@ import { Slider } from "@/modules/ui/components/slider";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey | ((TSurvey) => TSurvey)) => void;
+  setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
   responseCount: number;
   isSpamProtectionAllowed: boolean;
 }
@@ -33,9 +33,10 @@ export const ResponseOptionsCard = ({
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);
-  const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailToggle] = useState(
+  const [singleResponsePerEmailToggle, setSingleResponsePerEmailToggle] = useState(
     localSurvey.isSingleResponsePerEmailEnabled
   );
+  const [captureIpToggle, setCaptureIpToggle] = useState(localSurvey.isCaptureIpEnabled);
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: t("environments.surveys.edit.survey_completed_heading"),
@@ -90,7 +91,7 @@ export const ResponseOptionsCard = ({
   };
 
   const handleSingleResponsePerEmailToggle = () => {
-    setIsSingleResponsePerEmailToggle(!isSingleResponsePerEmailEnabledToggle);
+    setSingleResponsePerEmailToggle(!singleResponsePerEmailToggle);
     setLocalSurvey({
       ...localSurvey,
       isSingleResponsePerEmailEnabled: !localSurvey.isSingleResponsePerEmailEnabled,
@@ -117,6 +118,11 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, isBackButtonHidden: !localSurvey.isBackButtonHidden });
   };
 
+  const handleCaptureIpToggle = () => {
+    setCaptureIpToggle(!captureIpToggle);
+    setLocalSurvey({ ...localSurvey, isCaptureIpEnabled: !localSurvey.isCaptureIpEnabled });
+  };
+
   useEffect(() => {
     if (!!localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
@@ -137,7 +143,7 @@ export const ResponseOptionsCard = ({
     }
   };
 
-  const handleInputResponse = (e) => {
+  const handleInputResponse = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseInt(e.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
@@ -147,7 +153,7 @@ export const ResponseOptionsCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleInputResponseBlur = (e) => {
+  const handleInputResponseBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (parseInt(e.target.value) === 0) {
       toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
@@ -183,10 +189,15 @@ export const ResponseOptionsCard = ({
 
   const handleThresholdChange = (value: number) => {
     setRecaptchaThreshold(value);
-    setLocalSurvey((prevSurvey) => ({
-      ...prevSurvey,
-      recaptcha: { ...prevSurvey.recaptcha, threshold: value },
-    }));
+    setLocalSurvey(
+      (prevSurvey: TSurvey): TSurvey => ({
+        ...prevSurvey,
+        recaptcha: {
+          enabled: prevSurvey.recaptcha?.enabled ?? false,
+          threshold: value,
+        },
+      })
+    );
   };
 
   return (
@@ -333,7 +344,7 @@ export const ResponseOptionsCard = ({
                 <div className="m-1">
                   <AdvancedOptionToggle
                     htmlId="preventDoubleSubmission"
-                    isChecked={isSingleResponsePerEmailEnabledToggle}
+                    isChecked={singleResponsePerEmailToggle}
                     onToggle={handleSingleResponsePerEmailToggle}
                     title={t("environments.surveys.edit.prevent_double_submission")}
                     description={t("environments.surveys.edit.prevent_double_submission_description")}
@@ -379,6 +390,13 @@ export const ResponseOptionsCard = ({
             onToggle={handleHideBackButtonToggle}
             title={t("environments.surveys.edit.hide_back_button")}
             description={t("environments.surveys.edit.hide_back_button_description")}
+          />
+          <AdvancedOptionToggle
+            htmlId="captureIp"
+            isChecked={captureIpToggle}
+            onToggle={handleCaptureIpToggle}
+            title={t("environments.surveys.edit.capture_ip_address")}
+            description={t("environments.surveys.edit.capture_ip_address_description")}
           />
         </div>
       </Collapsible.CollapsibleContent>

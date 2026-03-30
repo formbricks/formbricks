@@ -203,6 +203,14 @@ Here are a few options:
 
 </a>
 
+## Thanks
+
+Formbricks is supported by the following companies who provide us with their tools for free as part of their open-source support:
+
+<a href="https://www.chromatic.com/"><img src="https://user-images.githubusercontent.com/321738/84662277-e3db4f80-af1b-11ea-88f5-91d67a5e59f6.png" width="153" height="30" alt="Chromatic" /></a>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://sentry.io/"><img src="https://github.com/user-attachments/assets/d743ffd4-b575-4802-a29a-10136be9227e" width="150" height="30" alt="Sentry" /></a>
+
 <a id="contact-us"></a>
 
 ## 📆 Contact us

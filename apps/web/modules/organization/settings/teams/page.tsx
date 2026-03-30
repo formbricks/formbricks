@@ -3,23 +3,34 @@ import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constan
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
+import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const TeamsPage = async (props) => {
+export const TeamsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
   const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
-  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
-  const hasUserManagementAccess = getUserManagementAccess(
+  const isAccessControlAllowed = await getAccessControlPermission(organization.id);
+
+  // Check if user has standard user management access (owner/manager)
+  const hasStandardUserManagementAccess = getUserManagementAccess(
     currentUserMembership?.role,
     USER_MANAGEMENT_MINIMUM_ROLE
   );
+
+  // Also check if user is a team admin (they get limited user management for invites)
+  const userAdminTeamIds = await getTeamsWhereUserIsAdmin(session.user.id, organization.id);
+  const isTeamAdminUser = userAdminTeamIds.length > 0;
+
+  // Allow user management UI if they're owner/manager OR team admin (when access control is enabled)
+  const hasUserManagementAccess =
+    hasStandardUserManagementAccess || (isAccessControlAllowed && isTeamAdminUser);
 
   return (
     <PageContentWrapper>

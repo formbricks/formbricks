@@ -21,6 +21,7 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
+import { resolveStorageUrlAuto } from "@/modules/storage/utils";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
@@ -31,6 +32,7 @@ const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   if (metadata.userAgent?.device) result.push(`Device: ${metadata.userAgent.device}`);
   if (metadata.country) result.push(`Country: ${metadata.country}`);
   if (metadata.action) result.push(`Action: ${metadata.action}`);
+  if (metadata.ipAddress) result.push(`IP Address: ${metadata.ipAddress}`);
 
   // Join all the elements in the result array with a newline for formatting
   return result.join("\n");
@@ -154,7 +156,7 @@ const handleAirtableIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -195,7 +197,7 @@ const handleGoogleSheetsIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -237,7 +239,7 @@ const handleSlackIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -255,8 +257,14 @@ const processElementResponse = (
     const selectedChoiceIds = responseValue as string[];
     return element.choices
       .filter((choice) => selectedChoiceIds.includes(choice.id))
-      .map((choice) => choice.imageUrl)
+      .map((choice) => resolveStorageUrlAuto(choice.imageUrl))
       .join("\n");
+  }
+
+  if (element.type === TSurveyElementTypeEnum.FileUpload && Array.isArray(responseValue)) {
+    return responseValue
+      .map((url) => (typeof url === "string" ? resolveStorageUrlAuto(url) : url))
+      .join("; ");
   }
 
   return processResponseData(responseValue);
@@ -341,7 +349,7 @@ const handleNotionIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -366,8 +374,8 @@ const buildNotionPayloadProperties = (
       const pictureElement = surveyElements.find((el) => el.id === resp);
 
       responses[resp] = (pictureElement as any)?.choices
-        .filter((choice) => selectedChoiceIds.includes(choice.id))
-        .map((choice) => choice.imageUrl);
+        .filter((choice: { id: string; imageUrl: string }) => selectedChoiceIds.includes(choice.id))
+        .map((choice: { id: string; imageUrl: string }) => resolveStorageUrlAuto(choice.imageUrl));
     }
   });
 

@@ -12,7 +12,7 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSur
   if (surveyPrisma.segment) {
     segment = {
       ...surveyPrisma.segment,
-      surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+      surveys: surveyPrisma.segment.surveys.map((survey: { id: string }) => survey.id),
     };
   }
 
@@ -20,6 +20,7 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSur
     ...surveyPrisma,
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
+    customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
   } as T;
 
   return transformedSurvey;

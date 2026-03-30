@@ -23,7 +23,7 @@ const baseProject = {
   config: { channel: null, industry: null },
   placement: "bottomRight",
   clickOutsideClose: false,
-  darkOverlay: false,
+  overlay: "none",
   environments: [
     {
       id: "cmi2sra0j000004l73fvh7lhe",

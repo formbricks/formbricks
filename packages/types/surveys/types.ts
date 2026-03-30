@@ -1,7 +1,7 @@
-import { type ZodIssue, z } from "zod";
+import { z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
+import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
@@ -45,14 +45,13 @@ import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
-  getTextContent,
   isConditionGroup,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
 
 const ZSurveyEndingBase = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
 });
 
 export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
@@ -60,16 +59,16 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().optional(),
-  imageUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
+  buttonLink: ZEndingCardUrl.optional(),
+  imageUrl: ZStorageUrl.optional(),
+  videoUrl: ZStorageUrl.optional(),
 });
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string().optional(),
+  url: ZEndingCardUrl.optional(),
   label: z.string().optional(),
 });
 
@@ -113,21 +112,21 @@ export enum TSurveyQuestionTypeEnum {
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
   if (FORBIDDEN_IDS.includes(id)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: `Question id is not allowed`,
     });
   }
 
   if (id.includes(" ")) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Question id not allowed, avoid using spaces.",
     });
   }
 
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Question id not allowed, use only alphanumeric characters, hyphens, or underscores.",
     });
   }
@@ -143,14 +142,14 @@ export const ZSurveyWelcomeCard = z
     enabled: z.boolean(),
     headline: ZI18nString.optional(),
     subheader: ZI18nString.optional(),
-    fileUrl: z.string().optional(),
+    fileUrl: ZStorageUrl.optional(),
     buttonLabel: ZI18nString.optional(),
-    timeToFinish: z.boolean().default(true),
-    showResponseCount: z.boolean().default(false),
-    videoUrl: z.string().optional(),
+    timeToFinish: z.boolean().prefault(true),
+    showResponseCount: z.boolean().prefault(false),
+    videoUrl: ZStorageUrl.optional(),
   })
   .refine((schema) => !(schema.enabled && !schema.headline), {
-    message: "Welcome card must have a headline",
+    error: "Welcome card must have a headline",
   });
 
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
@@ -162,21 +161,21 @@ export const ZSurveyHiddenFields = z.object({
       z.string().superRefine((field, ctx) => {
         if (FORBIDDEN_IDS.includes(field)) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Hidden field id is not allowed`,
           });
         }
 
         if (field.includes(" ")) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: "Hidden field id not allowed, avoid using spaces.",
           });
         }
 
         if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message:
               "Hidden field id not allowed, use only alphanumeric characters, hyphens, or underscores.",
           });
@@ -191,23 +190,23 @@ export type TSurveyHiddenFields = z.infer<typeof ZSurveyHiddenFields>;
 export const ZSurveyVariable = z
   .discriminatedUnion("type", [
     z.object({
-      id: z.string().cuid2(),
+      id: z.cuid2(),
       name: z.string(),
       type: z.literal("number"),
-      value: z.number().default(0),
+      value: z.number().prefault(0),
     }),
     z.object({
-      id: z.string().cuid2(),
+      id: z.cuid2(),
       name: z.string(),
       type: z.literal("text"),
-      value: z.string().default(""),
+      value: z.string().prefault(""),
     }),
   ])
   .superRefine((data, ctx) => {
     // variable name can only contain lowercase letters, numbers, and underscores
     if (!/^[a-z0-9_]+$/.test(data.name)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Variable name can only contain lowercase letters, numbers, and underscores",
         path: ["variables"],
       });
@@ -218,12 +217,18 @@ export const ZSurveyVariables = z.array(ZSurveyVariable);
 export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
 export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
+export const ZSurveySlug = z
+  .string()
+  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens");
+
+export type TSurveySlug = z.infer<typeof ZSurveySlug>;
+
 export const ZSurveyProjectOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
-  darkOverlay: z.boolean().nullish(),
+  overlay: ZOverlay.nullish(),
 });
 
 export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
@@ -263,7 +268,7 @@ export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 export const ZSurveyRecaptcha = z
   .object({
     enabled: z.boolean(),
-    threshold: z.number().min(0.1).max(0.9).step(0.1),
+    threshold: z.number().min(0.1).max(0.9).multipleOf(0.1),
   })
   .nullable();
 
@@ -272,7 +277,7 @@ export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 export const ZSurveyMetadata = z.object({
   title: ZI18nString.optional(),
   description: ZI18nString.optional(),
-  ogImage: z.string().url().optional(),
+  ogImage: ZStorageUrl.optional(),
 });
 
 export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
@@ -284,7 +289,7 @@ export const ZSurveyQuestionChoice = z.object({
 
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
-  imageUrl: z.string(),
+  imageUrl: ZStorageUrl,
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
@@ -319,7 +324,9 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
     z.object({
       type: z.literal("static"),
       value: z
-        .string({ message: "Conditional Logic: Value must be a string for text variable" })
+        .string({
+          error: "Conditional Logic: Value must be a string for text variable",
+        })
         .min(1, "Conditional Logic: Please enter a value in logic field"),
     }),
     ZDynamicLogicFieldValueDeprecated, // Accept both "question" and "element" for backward compatibility
@@ -331,14 +338,16 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   value: z.union([
     z.object({
       type: z.literal("static"),
-      value: z.number({ message: "Conditional Logic: Value must be a number for number variable" }),
+      value: z.number({
+        error: "Conditional Logic: Value must be a number for number variable",
+      }),
     }),
     ZDynamicLogicFieldValueDeprecated, // Accept both "question" and "element" for backward compatibility
   ]),
 }).superRefine((val, ctx) => {
   if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Conditional Logic: Cannot divide by zero",
       path: ["value", "value"],
     });
@@ -400,8 +409,8 @@ export const ZSurveyQuestionBase = z.object({
   type: z.string(),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
-  imageUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
+  imageUrl: ZStorageUrl.optional(),
+  videoUrl: ZStorageUrl.optional(),
   required: z.boolean(),
   buttonLabel: ZI18nString.optional(),
   backButtonLabel: ZI18nString.optional(),
@@ -422,19 +431,19 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
-  inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
-  insightsEnabled: z.boolean().default(false).optional(),
+  inputType: ZSurveyOpenTextQuestionInputType.optional().prefault("text"),
+  insightsEnabled: z.boolean().prefault(false).optional(),
   charLimit: z
     .object({
-      enabled: z.boolean().default(false).optional(),
+      enabled: z.boolean().prefault(false).optional(),
       min: z.number().optional(),
       max: z.number().optional(),
     })
-    .default({ enabled: false }),
+    .prefault({ enabled: false }),
 }).superRefine((data, ctx) => {
   if (data.charLimit.enabled && data.charLimit.min === undefined && data.charLimit.max === undefined) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Enter the values for either minimum or maximum field",
     });
   }
@@ -444,7 +453,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
     (data.charLimit.max !== undefined && data.charLimit.max < 0)
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "The character limit values should be positive",
     });
   }
@@ -455,7 +464,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
     data.charLimit.min > data.charLimit.max
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Minimum value cannot be greater than the maximum value",
     });
   }
@@ -479,7 +488,13 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
  */
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 
-export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
+export const ZShuffleOption = z.enum([
+  "none",
+  "all",
+  "exceptLast",
+  "reverseOrderOccasionally",
+  "reverseOrderExceptLast",
+]);
 
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
@@ -491,9 +506,9 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceSingle),
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   ]),
-  choices: z
-    .array(ZSurveyQuestionChoice)
-    .min(2, { message: "Multiple Choice Question must have at least two choices" }),
+  choices: z.array(ZSurveyQuestionChoice).min(2, {
+    error: "Multiple Choice Question must have at least two choices",
+  }),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
 });
@@ -510,7 +525,7 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().default(false),
+  isColorCodingEnabled: z.boolean().optional().prefault(false),
 });
 
 /**
@@ -542,7 +557,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(6), z.literal(7), z.literal(10)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().default(false),
+  isColorCodingEnabled: z.boolean().optional().prefault(false),
 });
 
 /**
@@ -569,10 +584,10 @@ export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
  */
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
-  allowMulti: z.boolean().optional().default(false),
-  choices: z
-    .array(ZSurveyPictureChoice)
-    .min(2, { message: "Picture Selection question must have atleast 2 choices" }),
+  allowMulti: z.boolean().optional().prefault(false),
+  choices: z.array(ZSurveyPictureChoice).min(2, {
+    error: "Picture Selection question must have atleast 2 choices",
+  }),
 });
 
 /**
@@ -600,7 +615,9 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
  */
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
-  calUserName: z.string().min(1, { message: "Cal user name is required" }),
+  calUserName: z.string().min(1, {
+    error: "Cal user name is required",
+  }),
   calHost: z.string().optional(),
 });
 
@@ -623,7 +640,7 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixQuestionChoice),
   columns: z.array(ZSurveyMatrixQuestionChoice),
-  shuffleOption: ZShuffleOption.optional().default("none"),
+  shuffleOption: ZShuffleOption.optional().prefault("none"),
 });
 
 /**
@@ -681,8 +698,12 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
   choices: z
     .array(ZSurveyQuestionChoice)
-    .min(2, { message: "Ranking Question must have at least two options" })
-    .max(25, { message: "Ranking Question can have at most 25 options" }),
+    .min(2, {
+      error: "Ranking Question must have at least two options",
+    })
+    .max(25, {
+      error: "Ranking Question can have at most 25 options",
+    }),
   otherOptionPlaceholder: ZI18nString.optional(),
   shuffleOption: ZShuffleOption.optional(),
 });
@@ -798,255 +819,618 @@ export const ZSurveyInlineTriggers = z.object({
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
-export const ZSurvey = z
-  .object({
-    id: z.string().cuid2(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-    name: z.string(),
-    type: ZSurveyType,
-    environmentId: z.string(),
-    createdBy: z.string().nullable(),
-    status: ZSurveyStatus,
-    displayOption: ZSurveyDisplayOption,
-    autoClose: z.number().nullable(),
-    triggers: z.array(z.object({ actionClass: ZActionClass })),
-    recontactDays: z.number().nullable(),
-    displayLimit: z.number().nullable(),
-    welcomeCard: ZSurveyWelcomeCard,
-    // TODO: Remove this once blocks are the single source of truth
-    questions: ZSurveyQuestions.default([]).superRefine((questions, ctx) => {
-      const questionIds = questions.map((q) => q.id);
-      const uniqueQuestionIds = new Set(questionIds);
-      if (uniqueQuestionIds.size !== questionIds.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Question IDs must be unique",
-          path: [questionIds.findIndex((id, index) => questionIds.indexOf(id) !== index), "id"],
-        });
-      }
-    }),
-    blocks: ZSurveyBlocks.default([]).superRefine((blocks, ctx) => {
-      const blockIds = blocks.map((b) => b.id);
-      const uniqueBlockIds = new Set(blockIds);
-      if (uniqueBlockIds.size !== blockIds.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Block IDs must be unique",
-          path: [blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
-        });
-      }
-    }),
-    endings: ZSurveyEndings.superRefine((endings, ctx) => {
-      const endingIds = endings.map((q) => q.id);
-      const uniqueEndingIds = new Set(endingIds);
-      if (uniqueEndingIds.size !== endingIds.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Ending IDs must be unique",
-          path: [endingIds.findIndex((id, index) => endingIds.indexOf(id) !== index), "id"],
-        });
-      }
-    }),
-    hiddenFields: ZSurveyHiddenFields,
-    variables: ZSurveyVariables.superRefine((variables, ctx) => {
-      // variable ids must be unique
-      const variableIds = variables.map((v) => v.id);
-      const uniqueVariableIds = new Set(variableIds);
-      if (uniqueVariableIds.size !== variableIds.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Variable IDs must be unique",
-          path: ["variables"],
-        });
-      }
-
-      // variable names must be unique
-      const variableNames = variables.map((v) => v.name);
-      const uniqueVariableNames = new Set(variableNames);
-      if (uniqueVariableNames.size !== variableNames.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Variable names must be unique",
-          path: ["variables"],
-        });
-      }
-    }),
-    followUps: z.array(
-      ZSurveyFollowUp.extend({
-        deleted: z.boolean().optional(),
-      })
-    ),
-    delay: z.number(),
-    autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
-    projectOverwrites: ZSurveyProjectOverwrites.nullable(),
-    styling: ZSurveyStyling.nullable(),
-    showLanguageSwitch: z.boolean().nullable(),
-    surveyClosedMessage: ZSurveyClosedMessage.nullable(),
-    segment: ZSegment.nullable(),
-    singleUse: ZSurveySingleUse.nullable(),
-    isVerifyEmailEnabled: z.boolean(),
-    recaptcha: ZSurveyRecaptcha.nullable(),
-    isSingleResponsePerEmailEnabled: z.boolean(),
-    isBackButtonHidden: z.boolean(),
-    pin: z.string().length(4, { message: "PIN must be a four digit number" }).nullish(),
-    displayPercentage: z.number().min(0.01).max(100).nullable(),
-    languages: z.array(ZSurveyLanguage),
-    metadata: ZSurveyMetadata,
-  })
-  .superRefine((survey, ctx) => {
-    const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
-
-    // Validate: must have questions OR blocks with elements, not both
-    const hasQuestions = questions.length > 0;
-    const hasBlocks = blocks.length > 0 && blocks.some((b) => b.elements.length > 0);
-
-    if (!hasQuestions && !hasBlocks) {
+export const ZSurveyBase = z.object({
+  id: z.cuid2(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  name: z.string(),
+  type: ZSurveyType,
+  environmentId: z.string(),
+  createdBy: z.string().nullable(),
+  status: ZSurveyStatus,
+  displayOption: ZSurveyDisplayOption,
+  autoClose: z.number().nullable(),
+  triggers: z.array(z.object({ actionClass: ZActionClass })),
+  recontactDays: z.number().nullable(),
+  displayLimit: z.number().nullable(),
+  welcomeCard: ZSurveyWelcomeCard,
+  // TODO: Remove this once blocks are the single source of truth
+  questions: ZSurveyQuestions.prefault([]).superRefine((questions, ctx) => {
+    const questionIds = questions.map((q) => q.id);
+    const uniqueQuestionIds = new Set(questionIds);
+    if (uniqueQuestionIds.size !== questionIds.length) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Survey must have either questions or blocks with elements",
-        path: ["questions"],
+        code: "custom",
+        message: "Question IDs must be unique",
+        path: [questionIds.findIndex((id, index) => questionIds.indexOf(id) !== index), "id"],
+      });
+    }
+  }),
+  blocks: ZSurveyBlocks.prefault([]).superRefine((blocks, ctx) => {
+    const blockIds = blocks.map((b) => b.id);
+    const uniqueBlockIds = new Set(blockIds);
+    if (uniqueBlockIds.size !== blockIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Block IDs must be unique",
+        path: [blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
+      });
+    }
+  }),
+  endings: ZSurveyEndings.superRefine((endings, ctx) => {
+    const endingIds = endings.map((q) => q.id);
+    const uniqueEndingIds = new Set(endingIds);
+    if (uniqueEndingIds.size !== endingIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ending IDs must be unique",
+        path: [endingIds.findIndex((id, index) => endingIds.indexOf(id) !== index), "id"],
+      });
+    }
+  }),
+  hiddenFields: ZSurveyHiddenFields,
+  variables: ZSurveyVariables.superRefine((variables, ctx) => {
+    // variable ids must be unique
+    const variableIds = variables.map((v) => v.id);
+    const uniqueVariableIds = new Set(variableIds);
+    if (uniqueVariableIds.size !== variableIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Variable IDs must be unique",
+        path: ["variables"],
       });
     }
 
-    if (hasQuestions && hasBlocks) {
+    // variable names must be unique
+    const variableNames = variables.map((v) => v.name);
+    const uniqueVariableNames = new Set(variableNames);
+    if (uniqueVariableNames.size !== variableNames.length) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Survey cannot have both questions and blocks. Use one model.",
-        path: ["blocks"],
+        code: "custom",
+        message: "Variable names must be unique",
+        path: ["variables"],
       });
     }
+  }),
+  followUps: z.array(
+    ZSurveyFollowUp.extend({
+      deleted: z.boolean().optional(),
+    })
+  ),
+  delay: z.number(),
+  autoComplete: z
+    .number()
+    .min(1, {
+      error: "Response limit must be greater than 0",
+    })
+    .nullable(),
+  projectOverwrites: ZSurveyProjectOverwrites.nullable(),
+  styling: ZSurveyStyling.nullable(),
+  showLanguageSwitch: z.boolean().nullable(),
+  surveyClosedMessage: ZSurveyClosedMessage.nullable(),
+  segment: ZSegment.nullable(),
+  singleUse: ZSurveySingleUse.nullable(),
+  isVerifyEmailEnabled: z.boolean(),
+  recaptcha: ZSurveyRecaptcha.nullable(),
+  isSingleResponsePerEmailEnabled: z.boolean(),
+  isBackButtonHidden: z.boolean(),
+  isCaptureIpEnabled: z.boolean(),
+  pin: z
+    .string()
+    .length(4, {
+      error: "PIN must be a four digit number",
+    })
+    .nullish(),
+  displayPercentage: z.number().min(0.01).max(100).nullable(),
+  languages: z.array(ZSurveyLanguage),
+  metadata: ZSurveyMetadata,
+  slug: ZSurveySlug.nullable(),
+  customHeadScripts: z.string().nullish(),
+  customHeadScriptsMode: z.enum(["add", "replace"]).nullish(),
+});
 
-    let multiLangIssue: z.IssueData | null;
+export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.RefinementCtx): void => {
+  const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
 
-    // welcome card validations
-    if (welcomeCard.enabled) {
-      if (welcomeCard.headline) {
-        multiLangIssue = validateCardFieldsForAllLanguages(
-          "cardHeadline",
-          welcomeCard.headline,
-          languages,
-          "welcome"
-        );
+  // Validate: must have questions OR blocks with elements, not both
+  const hasQuestions = questions.length > 0;
+  const hasBlocks = blocks.length > 0 && blocks.some((b) => b.elements.length > 0);
 
-        if (multiLangIssue) {
-          ctx.addIssue(multiLangIssue);
-        }
-      }
+  if (!hasQuestions && !hasBlocks) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Survey must have either questions or blocks with elements",
+      path: ["questions"],
+    });
+  }
 
-      if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
-        multiLangIssue = validateCardFieldsForAllLanguages(
-          "welcomeCardSubheader",
-          welcomeCard.subheader,
-          languages,
-          "welcome"
-        );
-        if (multiLangIssue) {
-          ctx.addIssue(multiLangIssue);
-        }
-      }
+  if (hasQuestions && hasBlocks) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Survey cannot have both questions and blocks. Use one model.",
+      path: ["blocks"],
+    });
+  }
 
-      if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
-        multiLangIssue = validateCardFieldsForAllLanguages(
-          "buttonLabel",
-          welcomeCard.buttonLabel,
-          languages,
-          "welcome"
-        );
-        if (multiLangIssue) {
-          ctx.addIssue(multiLangIssue);
-        }
+  let multiLangIssue: z.core.$ZodRawIssue | null;
+
+  // welcome card validations
+  if (welcomeCard.enabled) {
+    if (welcomeCard.headline) {
+      multiLangIssue = validateCardFieldsForAllLanguages(
+        "cardHeadline",
+        welcomeCard.headline,
+        languages,
+        "welcome"
+      );
+
+      if (multiLangIssue) {
+        ctx.addIssue(multiLangIssue);
       }
     }
 
-    // Custom default validation for each question
-    if (hasQuestions) {
-      questions.forEach((question, questionIndex) => {
-        multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
+    if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
+      multiLangIssue = validateCardFieldsForAllLanguages(
+        "welcomeCardSubheader",
+        welcomeCard.subheader,
+        languages,
+        "welcome"
+      );
+      if (multiLangIssue) {
+        ctx.addIssue(multiLangIssue);
+      }
+    }
+
+    if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
+      multiLangIssue = validateCardFieldsForAllLanguages(
+        "buttonLabel",
+        welcomeCard.buttonLabel,
+        languages,
+        "welcome"
+      );
+      if (multiLangIssue) {
+        ctx.addIssue(multiLangIssue);
+      }
+    }
+  }
+
+  // Custom default validation for each question
+  if (hasQuestions) {
+    questions.forEach((question, questionIndex) => {
+      multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
+      if (multiLangIssue) {
+        ctx.addIssue(multiLangIssue);
+      }
+
+      if (question.subheader && question.subheader.default.trim() !== "") {
+        multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
         if (multiLangIssue) {
           ctx.addIssue(multiLangIssue);
         }
+      }
 
-        if (question.subheader && question.subheader.default.trim() !== "") {
-          multiLangIssue = validateQuestionLabels("subheader", question.subheader, languages, questionIndex);
+      const defaultLanguageCode = "default";
+      const initialFieldsToValidate = ["buttonLabel", "upperLabel", "lowerLabel", "label", "placeholder"];
+
+      let fieldsToValidate =
+        questionIndex === 0 || isBackButtonHidden
+          ? initialFieldsToValidate
+          : [...initialFieldsToValidate, "backButtonLabel"];
+
+      // Skip buttonLabel validation for required NPS and Rating questions
+      if (
+        (question.type === TSurveyQuestionTypeEnum.NPS || question.type === TSurveyQuestionTypeEnum.Rating) &&
+        question.required
+      ) {
+        fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
+      }
+
+      for (const field of fieldsToValidate) {
+        // Skip label validation for consent questions as its called checkbox label
+        if (field === "label" && question.type === TSurveyQuestionTypeEnum.Consent) {
+          continue;
+        }
+
+        const questionFieldValue = question[field as keyof typeof question] as TI18nString | null;
+        if (
+          typeof questionFieldValue?.[defaultLanguageCode] !== "undefined" &&
+          questionFieldValue[defaultLanguageCode].trim() !== ""
+        ) {
+          multiLangIssue = validateQuestionLabels(field, questionFieldValue, languages, questionIndex);
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        if (
+          question.placeholder &&
+          question.placeholder[defaultLanguageCode].trim() !== "" &&
+          languages.length > 1
+        ) {
+          multiLangIssue = validateQuestionLabels(
+            "placeholder",
+            question.placeholder,
+            languages,
+            questionIndex
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        }
+      }
+
+      if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.Ranking
+      ) {
+        question.choices.forEach((choice, choiceIndex) => {
+          multiLangIssue = validateQuestionLabels(
+            `Choice ${String(choiceIndex + 1)}`,
+            choice.label,
+            languages,
+            questionIndex,
+            true
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        });
+
+        const duplicateChoicesLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.choices.map((choice) => choice.label),
+          languages
+        );
+
+        if (duplicateChoicesLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: "custom",
+            message: `Question ${String(questionIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            path: ["questions", questionIndex, "choices"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Consent) {
+        multiLangIssue = validateQuestionLabels("consent.label", question.label, languages, questionIndex);
+
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.CTA) {
+        if (!question.required && question.dismissButtonLabel) {
+          multiLangIssue = validateQuestionLabels(
+            "dismissButtonLabel",
+            question.dismissButtonLabel,
+            languages,
+            questionIndex
+          );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
           }
         }
 
-        const defaultLanguageCode = "default";
-        const initialFieldsToValidate = ["buttonLabel", "upperLabel", "lowerLabel", "label", "placeholder"];
-
-        let fieldsToValidate =
-          questionIndex === 0 || isBackButtonHidden
-            ? initialFieldsToValidate
-            : [...initialFieldsToValidate, "backButtonLabel"];
-
-        // Skip buttonLabel validation for required NPS and Rating questions
-        if (
-          (question.type === TSurveyQuestionTypeEnum.NPS ||
-            question.type === TSurveyQuestionTypeEnum.Rating) &&
-          question.required
-        ) {
-          fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
-        }
-
-        for (const field of fieldsToValidate) {
-          // Skip label validation for consent questions as its called checkbox label
-          if (field === "label" && question.type === TSurveyQuestionTypeEnum.Consent) {
-            continue;
-          }
-
-          const questionFieldValue = question[field as keyof typeof question] as TI18nString | null;
-          if (
-            typeof questionFieldValue?.[defaultLanguageCode] !== "undefined" &&
-            questionFieldValue[defaultLanguageCode].trim() !== ""
-          ) {
-            multiLangIssue = validateQuestionLabels(field, questionFieldValue, languages, questionIndex);
-            if (multiLangIssue) {
-              ctx.addIssue(multiLangIssue);
+        if (question.buttonExternal) {
+          if (!question.buttonUrl || question.buttonUrl.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: `Question ${String(questionIndex + 1)}: Button URL is required when external button is enabled`,
+              path: ["questions", questionIndex, "buttonUrl"],
+            });
+          } else {
+            const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
+            if (!parsedButtonUrl.success) {
+              const errorMessage = parsedButtonUrl.error.issues[0].message;
+              ctx.addIssue({
+                code: "custom",
+                message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+                path: ["questions", questionIndex, "buttonUrl"],
+              });
             }
           }
         }
+      }
 
-        if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-          if (
-            question.placeholder &&
-            question.placeholder[defaultLanguageCode].trim() !== "" &&
-            languages.length > 1
-          ) {
-            multiLangIssue = validateQuestionLabels(
-              "placeholder",
-              question.placeholder,
-              languages,
-              questionIndex
-            );
-            if (multiLangIssue) {
-              ctx.addIssue(multiLangIssue);
-            }
+      if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        question.rows.forEach((row, rowIndex) => {
+          multiLangIssue = validateQuestionLabels(
+            `Row ${String(rowIndex + 1)}`,
+            row.label,
+            languages,
+            questionIndex,
+            true
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
           }
+        });
+
+        question.columns.forEach((column, columnIndex) => {
+          multiLangIssue = validateQuestionLabels(
+            `Column ${String(columnIndex + 1)}`,
+            column.label,
+            languages,
+            questionIndex,
+            true
+          );
+          if (multiLangIssue) {
+            ctx.addIssue(multiLangIssue);
+          }
+        });
+
+        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.rows.map((row) => row.label),
+          languages
+        );
+        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.columns.map((column) => column.label),
+          languages
+        );
+
+        if (duplicateRowsLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: "custom",
+            message: `Question ${String(questionIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            path: ["questions", questionIndex, "rows"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
         }
 
-        if (
-          question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-          question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-          question.type === TSurveyQuestionTypeEnum.Ranking
-        ) {
-          question.choices.forEach((choice, choiceIndex) => {
-            multiLangIssue = validateQuestionLabels(
-              `Choice ${String(choiceIndex + 1)}`,
-              choice.label,
+        if (duplicateColumnLanguageCodes.length > 0) {
+          const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
+            invalidLanguageCode === "default"
+              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
+              : invalidLanguageCode
+          );
+
+          const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+          ctx.addIssue({
+            code: "custom",
+            message: `Question ${String(questionIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            path: ["questions", questionIndex, "columns"],
+            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
+        // allowedFileExtensions must have atleast one element
+        if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Question ${String(questionIndex + 1)} must have atleast one allowed file extension`,
+            path: ["questions", questionIndex, "allowedFileExtensions"],
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Cal) {
+        if (question.calHost !== undefined) {
+          const hostnameRegex = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)){1,}$/i;
+          if (!hostnameRegex.test(question.calHost)) {
+            ctx.addIssue({
+              code: "custom",
+              message: `Question ${String(questionIndex + 1)} must have a valid host name`,
+              path: ["questions", questionIndex, "calHost"],
+            });
+          }
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        const { company, email, firstName, lastName, phone } = question;
+        const fields = [
+          { ...company, label: "Company" },
+          { ...email, label: "Email" },
+          { ...firstName, label: "First Name" },
+          { ...lastName, label: "Last Name" },
+          { ...phone, label: "Phone" },
+        ];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "At least one field must be shown in the Contact Info question",
+            path: ["questions", questionIndex],
+          });
+        }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Label for field ${field.label}`,
+              field.placeholder,
               languages,
               questionIndex,
               true
             );
-            if (multiLangIssue) {
-              ctx.addIssue(multiLangIssue);
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Address) {
+        const { addressLine1, addressLine2, city, state, zip, country } = question;
+        const fields = [
+          { ...addressLine1, label: "Address Line 1" },
+          { ...addressLine2, label: "Address Line 2" },
+          { ...city, label: "City" },
+          { ...state, label: "State" },
+          { ...zip, label: "Zip" },
+          { ...country, label: "Country" },
+        ];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "At least one field must be shown in the Address question",
+            path: ["questions", questionIndex],
+          });
+        }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Label for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
+      }
+
+      if (question.logic) {
+        const logicIssues = validateLogic(survey, questionIndex, question.logic);
+
+        logicIssues.forEach((issue) => {
+          ctx.addIssue(issue as z.IssueData);
+        });
+      }
+    });
+
+    const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);
+    if (questionsWithCyclicLogic.length > 0) {
+      questionsWithCyclicLogic.forEach((questionId) => {
+        const questionIndex = questions.findIndex((q) => q.id === questionId);
+        ctx.addIssue({
+          code: "custom",
+          message: `Conditional Logic: Cyclic logic detected 🔃 Please check the logic of question ${String(questionIndex + 1)}.`,
+          path: ["questions", questionIndex, "logic"],
+        });
+      });
+    }
+  }
+
+  // Blocks validation
+  if (hasBlocks) {
+    // 1. Validate block IDs are unique (CUIDs should be unique by design, but validate anyway)
+    const blockIds = blocks.map((b) => b.id);
+    const uniqueBlockIds = new Set(blockIds);
+    if (uniqueBlockIds.size !== blockIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Block IDs must be unique",
+        path: ["blocks", blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
+      });
+    }
+
+    // 2. Build map of all elements across all blocks
+    const allElements = new Map<string, { block: number; element: number; data: TSurveyElement }>();
+    blocks.forEach((block, blockIdx) => {
+      block.elements.forEach((element, elemIdx) => {
+        if (allElements.has(element.id)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Element ID "${element.id}" is used in multiple blocks. Element IDs must be unique across all blocks.`,
+            path: ["blocks", blockIdx, "elements", elemIdx, "id"],
+          });
+        }
+        allElements.set(element.id, { block: blockIdx, element: elemIdx, data: element });
+      });
+    });
+
+    // 4. Detailed validation for each block and its elements
+    blocks.forEach((block, blockIndex) => {
+      const defaultLanguageCode = "default";
+      // Validate each element in the block
+      block.elements.forEach((element, elementIndex) => {
+        // Validate headline (required for all elements)
+        let elementMultiLangIssue = validateElementLabels(
+          "headline",
+          element.headline,
+          languages,
+          blockIndex,
+          elementIndex
+        );
+        if (elementMultiLangIssue) {
+          ctx.addIssue(elementMultiLangIssue);
+        }
+
+        // Validate subheader if present
+        if (element.subheader && element.subheader[defaultLanguageCode].trim() !== "") {
+          elementMultiLangIssue = validateElementLabels(
+            "subheader",
+            element.subheader,
+            languages,
+            blockIndex,
+            elementIndex
+          );
+          if (elementMultiLangIssue) {
+            ctx.addIssue(elementMultiLangIssue);
+          }
+        }
+
+        // Type-specific validation
+        if (element.type === TSurveyElementTypeEnum.OpenText) {
+          if (
+            element.placeholder &&
+            element.placeholder[defaultLanguageCode].trim() !== "" &&
+            languages.length > 1
+          ) {
+            elementMultiLangIssue = validateElementLabels(
+              "placeholder",
+              element.placeholder,
+              languages,
+              blockIndex,
+              elementIndex
+            );
+            if (elementMultiLangIssue) {
+              ctx.addIssue(elementMultiLangIssue);
+            }
+          }
+        }
+
+        if (
+          element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+          element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+          element.type === TSurveyElementTypeEnum.Ranking
+        ) {
+          element.choices.forEach((choice, choiceIndex) => {
+            elementMultiLangIssue = validateElementLabels(
+              `Choice ${String(choiceIndex + 1)}`,
+              choice.label,
+              languages,
+              blockIndex,
+              elementIndex,
+              true
+            );
+            if (elementMultiLangIssue) {
+              ctx.addIssue({
+                ...elementMultiLangIssue,
+                path: ["blocks", blockIndex, "elements", elementIndex, "choices", choiceIndex],
+              });
             }
           });
 
           const duplicateChoicesLanguageCodes = findLanguageCodesForDuplicateLabels(
-            question.choices.map((choice) => choice.label),
+            element.choices.map((choice) => choice.label),
             languages
           );
 
@@ -1060,89 +1444,111 @@ export const ZSurvey = z
             const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-              path: ["questions", questionIndex, "choices"],
+              code: "custom",
+              message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+              path: ["blocks", blockIndex, "elements", elementIndex, "choices"],
               params: isDefaultOnly ? undefined : { invalidLanguageCodes },
             });
           }
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.Consent) {
-          multiLangIssue = validateQuestionLabels("consent.label", question.label, languages, questionIndex);
+        if (element.type === TSurveyElementTypeEnum.Consent) {
+          elementMultiLangIssue = validateElementLabels(
+            "consent.label",
+            element.label,
+            languages,
+            blockIndex,
+            elementIndex
+          );
 
-          if (multiLangIssue) {
-            ctx.addIssue(multiLangIssue);
+          if (elementMultiLangIssue) {
+            ctx.addIssue({
+              ...elementMultiLangIssue,
+              path: ["blocks", blockIndex, "elements", elementIndex, "label"],
+            });
           }
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.CTA) {
-          if (!question.required && question.dismissButtonLabel) {
-            multiLangIssue = validateQuestionLabels(
-              "dismissButtonLabel",
-              question.dismissButtonLabel,
+        if (element.type === TSurveyElementTypeEnum.CTA) {
+          // Only validate buttonExternal fields when buttonExternal is true
+          if (element.buttonExternal) {
+            // Validate ctaButtonLabel when buttonExternal is enabled
+            elementMultiLangIssue = validateElementLabels(
+              "ctaButtonLabel",
+              element.ctaButtonLabel ?? {},
               languages,
-              questionIndex
+              blockIndex,
+              elementIndex
             );
-            if (multiLangIssue) {
-              ctx.addIssue(multiLangIssue);
-            }
-          }
-
-          if (question.buttonExternal) {
-            if (!question.buttonUrl || question.buttonUrl.trim() === "") {
+            if (elementMultiLangIssue) {
               ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Question ${String(questionIndex + 1)}: Button URL is required when external button is enabled`,
-                path: ["questions", questionIndex, "buttonUrl"],
+                ...elementMultiLangIssue,
+                path: ["blocks", blockIndex, "elements", elementIndex, "ctaButtonLabel"],
+              });
+            }
+
+            // Validate buttonUrl when buttonExternal is enabled
+            if (!element.buttonUrl || element.buttonUrl.trim() === "") {
+              ctx.addIssue({
+                code: "custom",
+                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: Button URL is required when external button is enabled`,
+                path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
               });
             } else {
-              const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
+              const parsedButtonUrl = getZSafeUrl.safeParse(element.buttonUrl);
               if (!parsedButtonUrl.success) {
                 const errorMessage = parsedButtonUrl.error.issues[0].message;
                 ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
-                  path: ["questions", questionIndex, "buttonUrl"],
+                  code: "custom",
+                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: ${errorMessage}`,
+                  path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
                 });
               }
             }
           }
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.Matrix) {
-          question.rows.forEach((row, rowIndex) => {
-            multiLangIssue = validateQuestionLabels(
+        if (element.type === TSurveyElementTypeEnum.Matrix) {
+          element.rows.forEach((row, rowIndex) => {
+            elementMultiLangIssue = validateElementLabels(
               `Row ${String(rowIndex + 1)}`,
               row.label,
               languages,
-              questionIndex,
+              blockIndex,
+              elementIndex,
               true
             );
-            if (multiLangIssue) {
-              ctx.addIssue(multiLangIssue);
+            if (elementMultiLangIssue) {
+              ctx.addIssue({
+                ...elementMultiLangIssue,
+                path: ["blocks", blockIndex, "elements", elementIndex, "rows", rowIndex],
+              });
             }
           });
 
-          question.columns.forEach((column, columnIndex) => {
-            multiLangIssue = validateQuestionLabels(
+          element.columns.forEach((column, columnIndex) => {
+            elementMultiLangIssue = validateElementLabels(
               `Column ${String(columnIndex + 1)}`,
               column.label,
               languages,
-              questionIndex,
+              blockIndex,
+              elementIndex,
               true
             );
-            if (multiLangIssue) {
-              ctx.addIssue(multiLangIssue);
+            if (elementMultiLangIssue) {
+              ctx.addIssue({
+                ...elementMultiLangIssue,
+                path: ["blocks", blockIndex, "elements", elementIndex, "columns", columnIndex],
+              });
             }
           });
 
           const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(
-            question.rows.map((row) => row.label),
+            element.rows.map((row) => row.label),
             languages
           );
           const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(
-            question.columns.map((column) => column.label),
+            element.columns.map((column) => column.label),
             languages
           );
 
@@ -1156,9 +1562,9 @@ export const ZSurvey = z
             const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-              path: ["questions", questionIndex, "rows"],
+              code: "custom",
+              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+              path: ["blocks", blockIndex, "elements", elementIndex, "rows"],
               params: isDefaultOnly ? undefined : { invalidLanguageCodes },
             });
           }
@@ -1173,40 +1579,39 @@ export const ZSurvey = z
             const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-              path: ["questions", questionIndex, "columns"],
+              code: "custom",
+              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+              path: ["blocks", blockIndex, "elements", elementIndex, "columns"],
               params: isDefaultOnly ? undefined : { invalidLanguageCodes },
             });
           }
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
-          // allowedFileExtensions must have atleast one element
-          if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
+        if (element.type === TSurveyElementTypeEnum.FileUpload) {
+          if (element.allowedFileExtensions && element.allowedFileExtensions.length === 0) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)} must have atleast one allowed file extension`,
-              path: ["questions", questionIndex, "allowedFileExtensions"],
+              code: "custom",
+              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have atleast one allowed file extension`,
+              path: ["blocks", blockIndex, "elements", elementIndex, "allowedFileExtensions"],
             });
           }
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.Cal) {
-          if (question.calHost !== undefined) {
+        if (element.type === TSurveyElementTypeEnum.Cal) {
+          if (element.calHost !== undefined) {
             const hostnameRegex = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)){1,}$/i;
-            if (!hostnameRegex.test(question.calHost)) {
+            if (!hostnameRegex.test(element.calHost)) {
               ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Question ${String(questionIndex + 1)} must have a valid host name`,
-                path: ["questions", questionIndex, "calHost"],
+                code: "custom",
+                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have a valid host name`,
+                path: ["blocks", blockIndex, "elements", elementIndex, "calHost"],
               });
             }
           }
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
-          const { company, email, firstName, lastName, phone } = question;
+        if (element.type === TSurveyElementTypeEnum.ContactInfo) {
+          const { company, email, firstName, lastName, phone } = element;
           const fields = [
             { ...company, label: "Company" },
             { ...email, label: "Email" },
@@ -1217,29 +1622,39 @@ export const ZSurvey = z
 
           if (fields.every((field) => !field.show)) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "At least one field must be shown in the Contact Info question",
-              path: ["questions", questionIndex],
+              code: "custom",
+              message: `At least one field must be shown in the Contact Info question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "elements", elementIndex],
             });
           }
           fields.forEach((field) => {
             const multiLangIssueInPlaceholder =
               field.show &&
-              validateQuestionLabels(
+              validateElementLabels(
                 `Label for field ${field.label}`,
                 field.placeholder,
                 languages,
-                questionIndex,
+                blockIndex,
+                elementIndex,
                 true
               );
             if (multiLangIssueInPlaceholder) {
-              ctx.addIssue(multiLangIssueInPlaceholder);
+              ctx.addIssue({
+                ...multiLangIssueInPlaceholder,
+                path: [
+                  "blocks",
+                  blockIndex,
+                  "elements",
+                  elementIndex,
+                  field.label.toLowerCase().replace(" ", ""),
+                ],
+              });
             }
           });
         }
 
-        if (question.type === TSurveyQuestionTypeEnum.Address) {
-          const { addressLine1, addressLine2, city, state, zip, country } = question;
+        if (element.type === TSurveyElementTypeEnum.Address) {
+          const { addressLine1, addressLine2, city, state, zip, country } = element;
           const fields = [
             { ...addressLine1, label: "Address Line 1" },
             { ...addressLine2, label: "Address Line 2" },
@@ -1251,669 +1666,214 @@ export const ZSurvey = z
 
           if (fields.every((field) => !field.show)) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "At least one field must be shown in the Address question",
-              path: ["questions", questionIndex],
+              code: "custom",
+              message: `At least one field must be shown in the Address question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "elements", elementIndex],
             });
           }
           fields.forEach((field) => {
             const multiLangIssueInPlaceholder =
               field.show &&
-              validateQuestionLabels(
+              validateElementLabels(
                 `Label for field ${field.label}`,
                 field.placeholder,
                 languages,
-                questionIndex,
+                blockIndex,
+                elementIndex,
                 true
               );
             if (multiLangIssueInPlaceholder) {
-              ctx.addIssue(multiLangIssueInPlaceholder);
-            }
-          });
-        }
-
-        if (question.logic) {
-          const logicIssues = validateLogic(survey, questionIndex, question.logic);
-
-          logicIssues.forEach((issue) => {
-            ctx.addIssue(issue);
-          });
-        }
-      });
-
-      const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);
-      if (questionsWithCyclicLogic.length > 0) {
-        questionsWithCyclicLogic.forEach((questionId) => {
-          const questionIndex = questions.findIndex((q) => q.id === questionId);
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Conditional Logic: Cyclic logic detected 🔃 Please check the logic of question ${String(questionIndex + 1)}.`,
-            path: ["questions", questionIndex, "logic"],
-          });
-        });
-      }
-    }
-
-    // Blocks validation
-    if (hasBlocks) {
-      // 1. Validate block IDs are unique (CUIDs should be unique by design, but validate anyway)
-      const blockIds = blocks.map((b) => b.id);
-      const uniqueBlockIds = new Set(blockIds);
-      if (uniqueBlockIds.size !== blockIds.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Block IDs must be unique",
-          path: ["blocks", blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
-        });
-      }
-
-      // 2. Build map of all elements across all blocks
-      const allElements = new Map<string, { block: number; element: number; data: TSurveyElement }>();
-      blocks.forEach((block, blockIdx) => {
-        block.elements.forEach((element, elemIdx) => {
-          if (allElements.has(element.id)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Element ID "${element.id}" is used in multiple blocks. Element IDs must be unique across all blocks.`,
-              path: ["blocks", blockIdx, "elements", elemIdx, "id"],
-            });
-          }
-          allElements.set(element.id, { block: blockIdx, element: elemIdx, data: element });
-        });
-      });
-
-      // 4. Detailed validation for each block and its elements
-      blocks.forEach((block, blockIndex) => {
-        // Validate block button labels
-        const defaultLanguageCode = "default";
-
-        if (
-          block.buttonLabel?.[defaultLanguageCode] &&
-          block.buttonLabel[defaultLanguageCode].trim() !== ""
-        ) {
-          // Validate button label for all enabled languages
-          const enabledLanguages = languages.filter((lang) => lang.enabled);
-          const languageCodes = enabledLanguages.map((lang) =>
-            lang.default ? "default" : lang.language.code
-          );
-
-          for (const languageCode of languageCodes.length === 0 ? ["default"] : languageCodes) {
-            const labelValue = block.buttonLabel[languageCode];
-            if (!labelValue || getTextContent(labelValue).length === 0) {
-              const invalidLanguageCode =
-                languageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : languageCode;
-
               ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The buttonLabel in block ${String(blockIndex + 1)} is missing for the following languages: ${invalidLanguageCode}`,
-                path: ["blocks", blockIndex, "buttonLabel"],
-                params: { invalidLanguageCodes: [invalidLanguageCode] },
-              });
-            }
-          }
-        }
-
-        //only validate back button label for blocks other than the first one and if back button is not hidden
-        if (
-          !isBackButtonHidden &&
-          blockIndex > 0 &&
-          block.backButtonLabel?.[defaultLanguageCode] &&
-          block.backButtonLabel[defaultLanguageCode].trim() !== ""
-        ) {
-          // Validate back button label for all enabled languages
-          const enabledLanguages = languages.filter((lang) => lang.enabled);
-          const languageCodes = enabledLanguages.map((lang) =>
-            lang.default ? "default" : lang.language.code
-          );
-
-          for (const languageCode of languageCodes.length === 0 ? ["default"] : languageCodes) {
-            const labelValue = block.backButtonLabel[languageCode];
-            if (!labelValue || getTextContent(labelValue).length === 0) {
-              const invalidLanguageCode =
-                languageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : languageCode;
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `The backButtonLabel in block ${String(blockIndex + 1)} is missing for the following languages: ${invalidLanguageCode}`,
-                path: ["blocks", blockIndex, "backButtonLabel"],
-                params: { invalidLanguageCodes: [invalidLanguageCode] },
-              });
-            }
-          }
-        }
-
-        // Validate each element in the block
-        block.elements.forEach((element, elementIndex) => {
-          // Validate headline (required for all elements)
-          let elementMultiLangIssue = validateElementLabels(
-            "headline",
-            element.headline,
-            languages,
-            blockIndex,
-            elementIndex
-          );
-          if (elementMultiLangIssue) {
-            ctx.addIssue(elementMultiLangIssue);
-          }
-
-          // Validate subheader if present
-          if (element.subheader && element.subheader[defaultLanguageCode].trim() !== "") {
-            elementMultiLangIssue = validateElementLabels(
-              "subheader",
-              element.subheader,
-              languages,
-              blockIndex,
-              elementIndex
-            );
-            if (elementMultiLangIssue) {
-              ctx.addIssue(elementMultiLangIssue);
-            }
-          }
-
-          // Type-specific validation
-          if (element.type === TSurveyElementTypeEnum.OpenText) {
-            if (
-              element.placeholder &&
-              element.placeholder[defaultLanguageCode].trim() !== "" &&
-              languages.length > 1
-            ) {
-              elementMultiLangIssue = validateElementLabels(
-                "placeholder",
-                element.placeholder,
-                languages,
-                blockIndex,
-                elementIndex
-              );
-              if (elementMultiLangIssue) {
-                ctx.addIssue(elementMultiLangIssue);
-              }
-            }
-          }
-
-          if (
-            element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-            element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-            element.type === TSurveyElementTypeEnum.Ranking
-          ) {
-            element.choices.forEach((choice, choiceIndex) => {
-              elementMultiLangIssue = validateElementLabels(
-                `Choice ${String(choiceIndex + 1)}`,
-                choice.label,
-                languages,
-                blockIndex,
-                elementIndex,
-                true
-              );
-              if (elementMultiLangIssue) {
-                elementMultiLangIssue.path = [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  "choices",
-                  choiceIndex,
-                ];
-                ctx.addIssue(elementMultiLangIssue);
-              }
-            });
-
-            const duplicateChoicesLanguageCodes = findLanguageCodesForDuplicateLabels(
-              element.choices.map((choice) => choice.label),
-              languages
-            );
-
-            if (duplicateChoicesLanguageCodes.length > 0) {
-              const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
-                invalidLanguageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : invalidLanguageCode
-              );
-
-              const isDefaultOnly =
-                invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "choices"],
-                params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-              });
-            }
-          }
-
-          if (element.type === TSurveyElementTypeEnum.Consent) {
-            elementMultiLangIssue = validateElementLabels(
-              "consent.label",
-              element.label,
-              languages,
-              blockIndex,
-              elementIndex
-            );
-
-            if (elementMultiLangIssue) {
-              elementMultiLangIssue.path = ["blocks", blockIndex, "elements", elementIndex, "label"];
-              ctx.addIssue(elementMultiLangIssue);
-            }
-          }
-
-          if (element.type === TSurveyElementTypeEnum.CTA) {
-            // Only validate buttonExternal fields when buttonExternal is true
-            if (element.buttonExternal) {
-              // Validate ctaButtonLabel when buttonExternal is enabled
-              elementMultiLangIssue = validateElementLabels(
-                "ctaButtonLabel",
-                element.ctaButtonLabel ?? {},
-                languages,
-                blockIndex,
-                elementIndex
-              );
-              if (elementMultiLangIssue) {
-                elementMultiLangIssue.path = [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  "ctaButtonLabel",
-                ];
-                ctx.addIssue(elementMultiLangIssue);
-              }
-
-              // Validate buttonUrl when buttonExternal is enabled
-              if (!element.buttonUrl || element.buttonUrl.trim() === "") {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: Button URL is required when external button is enabled`,
-                  path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
-                });
-              } else {
-                const parsedButtonUrl = getZSafeUrl.safeParse(element.buttonUrl);
-                if (!parsedButtonUrl.success) {
-                  const errorMessage = parsedButtonUrl.error.issues[0].message;
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: ${errorMessage}`,
-                    path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
-                  });
-                }
-              }
-            }
-          }
-
-          if (element.type === TSurveyElementTypeEnum.Matrix) {
-            element.rows.forEach((row, rowIndex) => {
-              elementMultiLangIssue = validateElementLabels(
-                `Row ${String(rowIndex + 1)}`,
-                row.label,
-                languages,
-                blockIndex,
-                elementIndex,
-                true
-              );
-              if (elementMultiLangIssue) {
-                elementMultiLangIssue.path = [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  "rows",
-                  rowIndex,
-                ];
-                ctx.addIssue(elementMultiLangIssue);
-              }
-            });
-
-            element.columns.forEach((column, columnIndex) => {
-              elementMultiLangIssue = validateElementLabels(
-                `Column ${String(columnIndex + 1)}`,
-                column.label,
-                languages,
-                blockIndex,
-                elementIndex,
-                true
-              );
-              if (elementMultiLangIssue) {
-                elementMultiLangIssue.path = [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  "columns",
-                  columnIndex,
-                ];
-                ctx.addIssue(elementMultiLangIssue);
-              }
-            });
-
-            const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(
-              element.rows.map((row) => row.label),
-              languages
-            );
-            const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(
-              element.columns.map((column) => column.label),
-              languages
-            );
-
-            if (duplicateRowsLanguageCodes.length > 0) {
-              const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
-                invalidLanguageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : invalidLanguageCode
-              );
-
-              const isDefaultOnly =
-                invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "rows"],
-                params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-              });
-            }
-
-            if (duplicateColumnLanguageCodes.length > 0) {
-              const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
-                invalidLanguageCode === "default"
-                  ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                  : invalidLanguageCode
-              );
-
-              const isDefaultOnly =
-                invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "columns"],
-                params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-              });
-            }
-          }
-
-          if (element.type === TSurveyElementTypeEnum.FileUpload) {
-            if (element.allowedFileExtensions && element.allowedFileExtensions.length === 0) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have atleast one allowed file extension`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "allowedFileExtensions"],
-              });
-            }
-          }
-
-          if (element.type === TSurveyElementTypeEnum.Cal) {
-            if (element.calHost !== undefined) {
-              const hostnameRegex = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)){1,}$/i;
-              if (!hostnameRegex.test(element.calHost)) {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have a valid host name`,
-                  path: ["blocks", blockIndex, "elements", elementIndex, "calHost"],
-                });
-              }
-            }
-          }
-
-          if (element.type === TSurveyElementTypeEnum.ContactInfo) {
-            const { company, email, firstName, lastName, phone } = element;
-            const fields = [
-              { ...company, label: "Company" },
-              { ...email, label: "Email" },
-              { ...firstName, label: "First Name" },
-              { ...lastName, label: "Last Name" },
-              { ...phone, label: "Phone" },
-            ];
-
-            if (fields.every((field) => !field.show)) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `At least one field must be shown in the Contact Info question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "elements", elementIndex],
-              });
-            }
-            fields.forEach((field) => {
-              const multiLangIssueInPlaceholder =
-                field.show &&
-                validateElementLabels(
-                  `Label for field ${field.label}`,
-                  field.placeholder,
-                  languages,
-                  blockIndex,
-                  elementIndex,
-                  true
-                );
-              if (multiLangIssueInPlaceholder) {
-                multiLangIssueInPlaceholder.path = [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  field.label.toLowerCase().replace(" ", ""),
-                ];
-                ctx.addIssue(multiLangIssueInPlaceholder);
-              }
-            });
-          }
-
-          if (element.type === TSurveyElementTypeEnum.Address) {
-            const { addressLine1, addressLine2, city, state, zip, country } = element;
-            const fields = [
-              { ...addressLine1, label: "Address Line 1" },
-              { ...addressLine2, label: "Address Line 2" },
-              { ...city, label: "City" },
-              { ...state, label: "State" },
-              { ...zip, label: "Zip" },
-              { ...country, label: "Country" },
-            ];
-
-            if (fields.every((field) => !field.show)) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `At least one field must be shown in the Address question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "elements", elementIndex],
-              });
-            }
-            fields.forEach((field) => {
-              const multiLangIssueInPlaceholder =
-                field.show &&
-                validateElementLabels(
-                  `Label for field ${field.label}`,
-                  field.placeholder,
-                  languages,
-                  blockIndex,
-                  elementIndex,
-                  true
-                );
-              if (multiLangIssueInPlaceholder) {
-                multiLangIssueInPlaceholder.path = [
+                ...multiLangIssueInPlaceholder,
+                path: [
                   "blocks",
                   blockIndex,
                   "elements",
                   elementIndex,
                   field.label.toLowerCase().replace(/ /g, ""),
-                ];
-                ctx.addIssue(multiLangIssueInPlaceholder);
-              }
-            });
-          }
-        });
-
-        // Validate block logic (conditions, actions, fallback)
-        const logicIssues = validateBlockLogic(survey, blockIndex, block, allElements);
-        logicIssues.forEach((issue) => {
-          ctx.addIssue(issue);
-        });
+                ],
+              });
+            }
+          });
+        }
       });
 
-      // 5. Check for cyclic logic in blocks
-      const blocksWithCyclicLogic = findBlocksWithCyclicLogic(blocks);
-      if (blocksWithCyclicLogic.length > 0) {
-        blocksWithCyclicLogic.forEach((blockId) => {
-          const blockIndex = blocks.findIndex((b) => b.id === blockId);
-          if (blockIndex !== -1) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
-              path: ["blocks", blockIndex, "logic"],
-            });
-          }
-        });
-      }
-    }
+      // Validate block logic (conditions, actions, fallback)
+      const logicIssues = validateBlockLogic(survey, blockIndex, block, allElements);
+      logicIssues.forEach((issue) => {
+        ctx.addIssue(issue as z.IssueData);
+      });
+    });
 
-    endings.forEach((ending, index) => {
-      // thank you card validations
-      if (ending.type === "endScreen") {
-        const multiLangIssueInHeadline = validateCardFieldsForAllLanguages(
-          "cardHeadline",
-          ending.headline ?? {},
+    // 5. Check for cyclic logic in blocks
+    const blocksWithCyclicLogic = findBlocksWithCyclicLogic(blocks);
+    if (blocksWithCyclicLogic.length > 0) {
+      blocksWithCyclicLogic.forEach((blockId) => {
+        const blockIndex = blocks.findIndex((b) => b.id === blockId);
+        if (blockIndex !== -1) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
+            path: ["blocks", blockIndex, "logic"],
+          });
+        }
+      });
+    }
+  }
+
+  endings.forEach((ending, index) => {
+    // thank you card validations
+    if (ending.type === "endScreen") {
+      const multiLangIssueInHeadline = validateCardFieldsForAllLanguages(
+        "cardHeadline",
+        ending.headline ?? {},
+        languages,
+        "end",
+        index
+      );
+
+      if (multiLangIssueInHeadline) {
+        ctx.addIssue(multiLangIssueInHeadline);
+      }
+
+      if (ending.subheader) {
+        const multiLangIssueInSubheader = validateCardFieldsForAllLanguages(
+          "subheader",
+          ending.subheader,
           languages,
           "end",
           index
         );
 
-        if (multiLangIssueInHeadline) {
-          ctx.addIssue(multiLangIssueInHeadline);
+        if (multiLangIssueInSubheader) {
+          ctx.addIssue(multiLangIssueInSubheader);
         }
+      }
 
-        if (ending.subheader) {
-          const multiLangIssueInSubheader = validateCardFieldsForAllLanguages(
-            "subheader",
-            ending.subheader,
+      if (ending.buttonLabel !== undefined || ending.buttonLink !== undefined) {
+        if (!ending.buttonLabel) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
+            path: ["endings", index, "buttonLabel"],
+          });
+        } else {
+          const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
+            "endingCardButtonLabel",
+            ending.buttonLabel,
             languages,
             "end",
             index
           );
-
-          if (multiLangIssueInSubheader) {
-            ctx.addIssue(multiLangIssueInSubheader);
+          if (multiLangIssueInButtonLabel) {
+            ctx.addIssue(multiLangIssueInButtonLabel);
           }
         }
 
-        if (ending.buttonLabel !== undefined || ending.buttonLink !== undefined) {
-          if (!ending.buttonLabel) {
+        if (!ending.buttonLink || ending.buttonLink.trim() === "") {
+          ctx.addIssue({
+            code: "custom",
+            message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
+            path: ["endings", index, "buttonLink"],
+          });
+        } else {
+          const parsedButtonLink = ZEndingCardUrl.safeParse(ending.buttonLink);
+          if (!parsedButtonLink.success) {
+            const errorMessage = parsedButtonLink.error.issues[0].message;
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
-              path: ["endings", index, "buttonLabel"],
+              code: "custom",
+              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+              path: ["endings", index, "buttonLink"],
             });
-          } else {
-            const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
-              "endingCardButtonLabel",
-              ending.buttonLabel,
-              languages,
-              "end",
-              index
-            );
-            if (multiLangIssueInButtonLabel) {
-              ctx.addIssue(multiLangIssueInButtonLabel);
+          }
+        }
+      }
+    }
+    if (ending.type === "redirectToUrl") {
+      if (!ending.label || ending.label.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
+          path: ["endings", index, "label"],
+        });
+      }
+
+      // Validate redirect URL
+      if (!ending.url || ending.url.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
+          path: ["endings", index, "url"],
+        });
+      } else {
+        const parsedUrl = ZEndingCardUrl.safeParse(ending.url);
+        if (!parsedUrl.success) {
+          const errorMessage = parsedUrl.error.issues[0].message;
+          ctx.addIssue({
+            code: "custom",
+            message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+            path: ["endings", index, "url"],
+          });
+        }
+      }
+    }
+  });
+
+  if (survey.followUps.length) {
+    const questionsFromBlocks = survey.blocks.flatMap((block: TSurveyBlock) => block.elements);
+
+    survey.followUps
+      .filter((followUp) => !followUp.deleted)
+      .forEach((followUp, index) => {
+        if (followUp.action.properties.to) {
+          const validOptions = [
+            "verifiedEmail", // Allow verified email from email verification feature
+            ...questionsFromBlocks
+              .filter((q) => {
+                if (q.type === TSurveyElementTypeEnum.OpenText) {
+                  if (q.inputType === "email") {
+                    return true;
+                  }
+                }
+
+                if (q.type === TSurveyElementTypeEnum.ContactInfo) {
+                  return q.email.show;
+                }
+
+                return false;
+              })
+              .map((q) => q.id),
+            ...(survey.hiddenFields.fieldIds ?? []),
+          ];
+
+          if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
+            // not from a valid option within the survey, but it could be a correct email from the team member emails or the user's email:
+            const parsedEmailTo = z.email().safeParse(followUp.action.properties.to);
+            if (!parsedEmailTo.success) {
+              ctx.addIssue({
+                code: "custom",
+                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
+                path: ["followUps"],
+              });
             }
           }
 
-          if (!ending.buttonLink || ending.buttonLink.trim() === "") {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
-              path: ["endings", index, "buttonLink"],
-            });
-          } else {
-            const parsedButtonLink = getZSafeUrl.safeParse(ending.buttonLink);
-            if (!parsedButtonLink.success) {
-              const errorMessage = parsedButtonLink.error.issues[0].message;
+          if (followUp.trigger.type === "endings") {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
+            if (!followUp.trigger.properties?.endingIds?.length) {
               ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Ending card ${String(index + 1)}: ${errorMessage}`,
-                path: ["endings", index, "buttonLink"],
+                code: "custom",
+                message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
+                path: ["followUps"],
               });
             }
           }
         }
-      }
-      if (ending.type === "redirectToUrl") {
-        if (!ending.label || ending.label.trim() === "") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
-            path: ["endings", index, "label"],
-          });
-        }
+      });
+  }
+};
 
-        // Validate redirect URL
-        if (!ending.url || ending.url.trim() === "") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
-            path: ["endings", index, "url"],
-          });
-        } else {
-          const parsedUrl = getZSafeUrl.safeParse(ending.url);
-          if (!parsedUrl.success) {
-            const errorMessage = parsedUrl.error.issues[0].message;
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
-              path: ["endings", index, "url"],
-            });
-          }
-        }
-      }
-    });
-
-    if (survey.followUps.length) {
-      const questionsFromBlocks = survey.blocks.flatMap((block: TSurveyBlock) => block.elements);
-
-      survey.followUps
-        .filter((followUp) => !followUp.deleted)
-        .forEach((followUp, index) => {
-          if (followUp.action.properties.to) {
-            const validOptions = [
-              ...questionsFromBlocks
-                .filter((q) => {
-                  if (q.type === TSurveyElementTypeEnum.OpenText) {
-                    if (q.inputType === "email") {
-                      return true;
-                    }
-                  }
-
-                  if (q.type === TSurveyElementTypeEnum.ContactInfo) {
-                    return q.email.show;
-                  }
-
-                  return false;
-                })
-                .map((q) => q.id),
-              ...(survey.hiddenFields.fieldIds ?? []),
-            ];
-
-            if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
-              // not from a valid option within the survey, but it could be a correct email from the team member emails or the user's email:
-              const parsedEmailTo = z.string().email().safeParse(followUp.action.properties.to);
-              if (!parsedEmailTo.success) {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: `The action in follow up ${String(index + 1)} has an invalid email field`,
-                  path: ["followUps"],
-                });
-              }
-            }
-
-            if (followUp.trigger.type === "endings") {
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
-              if (!followUp.trigger.properties?.endingIds?.length) {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
-                  path: ["followUps"],
-                });
-              }
-            }
-          }
-        });
-    }
-  });
+export const ZSurvey = ZSurveyBase.superRefine(surveyRefinement);
 
 const isInvalidOperatorsForQuestionType = (
   question: TSurveyQuestion,
@@ -1942,6 +1902,19 @@ const isInvalidOperatorsForQuestionType = (
               "doesNotStartWith",
               "endsWith",
               "doesNotEndWith",
+              "isValidEmail",
+              "isValidUrl",
+              "isValidCountry",
+              "isValidCity",
+              "isLongerThan",
+              "isLongerThanOrEqual",
+              "isShorterThan",
+              "isShorterThanOrEqual",
+              "matchesRegex",
+              "isGreaterThan",
+              "isGreaterThanOrEqual",
+              "isLessThan",
+              "isLessThanOrEqual",
               "isSubmitted",
               "isSkipped",
             ].includes(operator)
@@ -1954,10 +1927,10 @@ const isInvalidOperatorsForQuestionType = (
             ![
               "equals",
               "doesNotEqual",
-              "isGreaterThan",
               "isLessThan",
-              "isGreaterThanOrEqual",
               "isLessThanOrEqual",
+              "isGreaterThan",
+              "isGreaterThanOrEqual",
               "isSubmitted",
               "isSkipped",
             ].includes(operator)
@@ -2130,8 +2103,8 @@ const validateConditions = (
   questionIndex: number,
   logicIndex: number,
   conditions: TConditionGroupDeprecated
-): z.ZodIssue[] => {
-  const issues: z.ZodIssue[] = [];
+): z.core.$ZodIssue[] => {
+  const issues: z.core.$ZodIssue[] = [];
 
   const validateSingleCondition = (condition: TSingleConditionDeprecated): void => {
     const { leftOperand, operator, rightOperand } = condition;
@@ -2144,14 +2117,14 @@ const validateConditions = (
 
       if (!question) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
         return;
       } else if (questionIndex < questionIdx) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Question ${String(questionIndex + 1)} cannot refer to a question ${String(questionIdx + 1)} that appears later in the survey`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
@@ -2162,7 +2135,7 @@ const validateConditions = (
       const isInvalidOperator = isInvalidOperatorsForQuestionType(question, operator);
       if (isInvalidOperator) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Invalid operator "${operator}" for question type "${question.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
@@ -2184,7 +2157,7 @@ const validateConditions = (
       ) {
         if (rightOperand !== undefined) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
@@ -2200,7 +2173,7 @@ const validateConditions = (
 
           if (!ques) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2225,7 +2198,7 @@ const validateConditions = (
 
             if (!validQuestionTypes.includes(ques.type)) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid question type "${ques.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2237,7 +2210,7 @@ const validateConditions = (
 
           if (!variable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2248,7 +2221,7 @@ const validateConditions = (
 
           if (!field) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2256,7 +2229,7 @@ const validateConditions = (
         } else if (rightOperand?.type === "static") {
           if (!rightOperand.value) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2265,14 +2238,14 @@ const validateConditions = (
       } else if (question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
         if (rightOperand?.type !== "static") {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2280,7 +2253,7 @@ const validateConditions = (
             const choice = question.choices.find((c) => c.id === rightOperand.value);
             if (!choice) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2289,7 +2262,7 @@ const validateConditions = (
         } else if (condition.operator === "equalsOneOf") {
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2297,7 +2270,7 @@ const validateConditions = (
             rightOperand.value.forEach((value) => {
               if (typeof value !== "string") {
                 issues.push({
-                  code: z.ZodIssueCode.custom,
+                  code: "custom",
                   message: `Conditional Logic: Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                   path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
                 });
@@ -2308,7 +2281,7 @@ const validateConditions = (
 
             if (rightOperand.value.some((value) => !choices.includes(value))) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2321,14 +2294,14 @@ const validateConditions = (
       ) {
         if (rightOperand?.type !== "static") {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should be amongst the choice values for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2336,7 +2309,7 @@ const validateConditions = (
             const choice = question.choices.find((c) => c.id === rightOperand.value);
             if (!choice) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2349,7 +2322,7 @@ const validateConditions = (
         ) {
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2357,7 +2330,7 @@ const validateConditions = (
             rightOperand.value.forEach((value) => {
               if (typeof value !== "string") {
                 issues.push({
-                  code: z.ZodIssueCode.custom,
+                  code: "custom",
                   message: `Conditional Logic: Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                   path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
                 });
@@ -2368,7 +2341,7 @@ const validateConditions = (
 
             if (rightOperand.value.some((value) => !choices.includes(value))) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2385,13 +2358,13 @@ const validateConditions = (
 
           if (!variable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "number") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2399,28 +2372,28 @@ const validateConditions = (
         } else if (rightOperand?.type === "static") {
           if (typeof rightOperand.value !== "number") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
             if (rightOperand.value < 0 || rightOperand.value > 10) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
           } else if (rightOperand.value < 1 || rightOperand.value > question.range) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Rating value should be between 1 and ${String(question.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
         } else {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
@@ -2432,7 +2405,7 @@ const validateConditions = (
 
           if (!ques) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2440,7 +2413,7 @@ const validateConditions = (
             const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.Date];
             if (!validQuestionTypes.includes(question.type)) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2452,13 +2425,13 @@ const validateConditions = (
 
           if (!variable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "text") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2469,7 +2442,7 @@ const validateConditions = (
 
           if (!doesFieldExists) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2479,13 +2452,13 @@ const validateConditions = (
 
           if (!date) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (isNaN(new Date(date).getTime())) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2496,14 +2469,14 @@ const validateConditions = (
         if (row === undefined) {
           if (rightOperand?.value !== undefined) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
           if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Operator "${operator}" is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2511,7 +2484,7 @@ const validateConditions = (
         } else {
           if (rightOperand === undefined) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand is required in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2519,7 +2492,7 @@ const validateConditions = (
           if (rightOperand) {
             if (rightOperand.type !== "static") {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Right operand should be a static value in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2527,7 +2500,7 @@ const validateConditions = (
             const rowIndex = Number(row);
             if (rowIndex < 0 || rowIndex >= question.rows.length) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid row index in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2540,7 +2513,7 @@ const validateConditions = (
       const variable = survey.variables.find((v) => v.id === variableId);
       if (!variable) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
@@ -2549,7 +2522,7 @@ const validateConditions = (
         const isInvalidOperator = isInvalidOperatorsForVariableType(variable.type, operator);
         if (isInvalidOperator) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Invalid operator "${operator}" for variable ${variable.name} of type "${variable.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
@@ -2562,7 +2535,7 @@ const validateConditions = (
 
           if (!question) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2574,7 +2547,7 @@ const validateConditions = (
               question.inputType !== "number"
             ) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2594,7 +2567,7 @@ const validateConditions = (
 
             if (!validQuestionTypes.includes(question.type)) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
@@ -2606,13 +2579,13 @@ const validateConditions = (
 
           if (!foundVariable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== foundVariable.type) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable type mismatch in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2623,7 +2596,7 @@ const validateConditions = (
 
           if (!field) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2636,7 +2609,7 @@ const validateConditions = (
 
       if (!hiddenField) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Hidden field ID ${hiddenFieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
@@ -2646,7 +2619,7 @@ const validateConditions = (
       const isInvalidOperator = isInvalidOperatorsForHiddenFieldType(operator);
       if (isInvalidOperator) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Invalid operator "${operator}" for hidden field in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
@@ -2659,7 +2632,7 @@ const validateConditions = (
 
         if (!question) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
@@ -2678,7 +2651,7 @@ const validateConditions = (
 
           if (!validQuestionTypes.includes(question.type)) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
@@ -2690,13 +2663,13 @@ const validateConditions = (
 
         if (!variable) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         } else if (variable.type !== "text") {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
@@ -2707,7 +2680,7 @@ const validateConditions = (
 
         if (!field) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
@@ -2737,18 +2710,18 @@ const validateActions = (
   questionIndex: number,
   logicIndex: number,
   actions: TSurveyLogicAction[]
-): z.ZodIssue[] => {
+): z.core.$ZodIssue[] => {
   const previousQuestions = survey.questions.filter((_, idx) => idx <= questionIndex);
   const nextQuestions = survey.questions.filter((_, idx) => idx >= questionIndex);
   const nextQuestionsIds = nextQuestions.map((q) => q.id);
 
-  const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
+  const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
       const variable = survey.variables.find((v) => v.id === action.variableId);
 
       if (!variable) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex],
         };
@@ -2757,9 +2730,9 @@ const validateActions = (
       if (action.value.type === "variable") {
         const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
 
-        if (!selectedVariable || selectedVariable.type !== variable.type) {
+        if (selectedVariable?.type !== variable.type) {
           return {
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex],
           };
@@ -2770,8 +2743,8 @@ const validateActions = (
         const textVariableParseData = ZActionCalculateText.safeParse(action);
         if (!textVariableParseData.success) {
           return {
-            code: z.ZodIssueCode.custom,
-            message: textVariableParseData.error.errors[0].message,
+            code: "custom",
+            message: textVariableParseData.error.issues[0].message,
             path: ["questions", questionIndex, "logic", logicIndex],
           };
         }
@@ -2789,7 +2762,7 @@ const validateActions = (
 
           if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
             return {
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Invalid question type for text variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex],
             };
@@ -2802,8 +2775,8 @@ const validateActions = (
       const numberVariableParseData = ZActionCalculateNumber.safeParse(action);
       if (!numberVariableParseData.success) {
         return {
-          code: z.ZodIssueCode.custom,
-          message: numberVariableParseData.error.errors[0].message,
+          code: "custom",
+          message: numberVariableParseData.error.issues[0].message,
           path: ["questions", questionIndex, "logic", logicIndex],
         };
       }
@@ -2820,7 +2793,7 @@ const validateActions = (
             selectedQuestion.inputType !== "number")
         ) {
           return {
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex],
           };
@@ -2834,7 +2807,7 @@ const validateActions = (
 
       if (!possibleQuestionIds.includes(action.target)) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Question ID ${action.target} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic"],
         };
@@ -2849,7 +2822,7 @@ const validateActions = (
           const quesIdx = survey.questions.findIndex((q) => q.id === action.target);
 
           return {
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Question ${String(quesIdx + 1)} is already required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex],
           };
@@ -2863,17 +2836,17 @@ const validateActions = (
   const jumpToQuestionActions = actions.filter((action) => action.objective === "jumpToQuestion");
   if (jumpToQuestionActions.length > 1) {
     actionIssues.push({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
       path: ["questions", questionIndex, "logic"],
     });
   }
 
-  const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue): issue is z.core.$ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
-const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue[] | undefined => {
+const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.core.$ZodIssue[] | undefined => {
   const question = survey.questions[questionIdx];
 
   if (!question.logicFallback) return;
@@ -2881,7 +2854,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
   if (!question.logic?.length && question.logicFallback) {
     return [
       {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Conditional Logic: Fallback logic is defined without any logic in question ${String(questionIdx + 1)}`,
         path: ["questions", questionIdx],
       },
@@ -2889,7 +2862,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
   } else if (question.id === question.logicFallback) {
     return [
       {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Conditional Logic: Fallback logic is defined with the same question in question ${String(questionIdx + 1)}`,
         path: ["questions", questionIdx],
       },
@@ -2904,14 +2877,14 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
   if (!possibleFallbackIds.includes(question.logicFallback)) {
     return [
       {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Conditional Logic: Fallback question ID ${question.logicFallback} does not exist in question ${String(questionIdx + 1)}`,
         path: ["questions", questionIdx],
       },
@@ -2923,7 +2896,7 @@ const validateLogic = (
   survey: TSurvey,
   questionIndex: number,
   logic: TSurveyLogicDeprecated[]
-): z.ZodIssue[] => {
+): z.core.$ZodIssue[] => {
   const logicFallbackIssue = validateLogicFallback(survey, questionIndex);
 
   const logicIssues = logic.map((logicItem, logicIndex) => {
@@ -3092,8 +3065,8 @@ const validateBlockConditions = (
   logicIndex: number,
   conditions: TConditionGroup,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
-): z.ZodIssue[] => {
-  const issues: z.ZodIssue[] = [];
+): z.core.$ZodIssue[] => {
+  const issues: z.core.$ZodIssue[] = [];
 
   const validateSingleCondition = (condition: TSingleCondition): void => {
     const { leftOperand, operator, rightOperand } = condition;
@@ -3105,14 +3078,14 @@ const validateBlockConditions = (
 
       if (!elementInfo) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Element Id ${elementId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
         return;
       } else if (blockIndex < elementInfo.block) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
@@ -3125,7 +3098,7 @@ const validateBlockConditions = (
       const isInvalidOperator = isInvalidOperatorsForElementType(element, operator);
       if (isInvalidOperator) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Invalid operator "${operator}" for element type "${element.type}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
@@ -3134,7 +3107,7 @@ const validateBlockConditions = (
       // Validate CTA elements: CTAs without external buttons cannot be used in logic
       if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
@@ -3158,7 +3131,7 @@ const validateBlockConditions = (
       ) {
         if (rightOperand !== undefined) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
@@ -3174,12 +3147,12 @@ const validateBlockConditions = (
 
           if (!elem) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validElementTypes = [TSurveyElementTypeEnum.OpenText];
+            const validElementTypes: TSurveyElementTypeEnum[] = [TSurveyElementTypeEnum.OpenText];
 
             if (element.inputType === "number") {
               validElementTypes.push(...[TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS]);
@@ -3199,7 +3172,7 @@ const validateBlockConditions = (
 
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3211,7 +3184,7 @@ const validateBlockConditions = (
 
           if (!variable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3222,7 +3195,7 @@ const validateBlockConditions = (
 
           if (!field) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3230,7 +3203,7 @@ const validateBlockConditions = (
         } else if (rightOperand?.type === "static") {
           if (!rightOperand.value) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3239,14 +3212,14 @@ const validateBlockConditions = (
       } else if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
         if (rightOperand?.type !== "static") {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3255,7 +3228,7 @@ const validateBlockConditions = (
             const choiceMatch = element.choices.find((c) => c.id === rightOperand.value);
             if (!choiceMatch) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3269,14 +3242,14 @@ const validateBlockConditions = (
       ) {
         if (rightOperand?.type !== "static") {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3285,7 +3258,7 @@ const validateBlockConditions = (
             const choiceMatch = element.choices.find((c) => c.id === rightOperand.value);
             if (!choiceMatch) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3298,7 +3271,7 @@ const validateBlockConditions = (
         ) {
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3306,7 +3279,7 @@ const validateBlockConditions = (
             rightOperand.value.forEach((value) => {
               if (typeof value !== "string") {
                 issues.push({
-                  code: z.ZodIssueCode.custom,
+                  code: "custom",
                   message: `Conditional Logic: Each value in the right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                   path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
                 });
@@ -3317,7 +3290,7 @@ const validateBlockConditions = (
             const choiceIds = element.choices.map((c) => c.id);
             if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: One or more choices selected in right operand do not exist in the element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3334,13 +3307,13 @@ const validateBlockConditions = (
 
           if (!variable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "number") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3348,28 +3321,28 @@ const validateBlockConditions = (
         } else if (rightOperand?.type === "static") {
           if (typeof rightOperand.value !== "number") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (element.type === TSurveyElementTypeEnum.NPS) {
             if (rightOperand.value < 0 || rightOperand.value > 10) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
           } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Rating value should be between 1 and ${String(element.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
         } else {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
@@ -3381,15 +3354,18 @@ const validateBlockConditions = (
 
           if (!elem) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validElementTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.Date];
+            const validElementTypes: TSurveyElementTypeEnum[] = [
+              TSurveyElementTypeEnum.OpenText,
+              TSurveyElementTypeEnum.Date,
+            ];
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3401,13 +3377,13 @@ const validateBlockConditions = (
 
           if (!variable) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "text") {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3418,7 +3394,7 @@ const validateBlockConditions = (
 
           if (!doesFieldExists) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3428,13 +3404,13 @@ const validateBlockConditions = (
 
           if (!date) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (isNaN(new Date(date).getTime())) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3445,14 +3421,14 @@ const validateBlockConditions = (
         if (row === undefined) {
           if (rightOperand?.value !== undefined) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
           if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Operator "${operator}" is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3460,7 +3436,7 @@ const validateBlockConditions = (
         } else {
           if (rightOperand === undefined) {
             issues.push({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Right operand is required in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
@@ -3468,7 +3444,7 @@ const validateBlockConditions = (
           if (rightOperand) {
             if (rightOperand.type !== "static") {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Right operand should be a static value in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3476,7 +3452,7 @@ const validateBlockConditions = (
             const rowIndex = Number(row);
             if (rowIndex < 0 || rowIndex >= element.rows.length) {
               issues.push({
-                code: z.ZodIssueCode.custom,
+                code: "custom",
                 message: `Conditional Logic: Invalid row index in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
@@ -3490,7 +3466,7 @@ const validateBlockConditions = (
 
       if (!variable) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
@@ -3503,7 +3479,7 @@ const validateBlockConditions = (
 
         if (!rightVariable) {
           issues.push({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Variable ID ${rightVariableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
@@ -3516,7 +3492,7 @@ const validateBlockConditions = (
 
       if (!field) {
         issues.push({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
@@ -3549,14 +3525,14 @@ const validateBlockActions = (
   actions: TSurveyBlockLogicAction[],
   currentBlock: TSurveyBlock,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
-): z.ZodIssue[] => {
-  const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
+): z.core.$ZodIssue[] => {
+  const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
       const variable = survey.variables.find((v) => v.id === action.variableId);
 
       if (!variable) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3565,9 +3541,9 @@ const validateBlockActions = (
       if (action.value.type === "variable") {
         const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
 
-        if (!selectedVariable || selectedVariable.type !== variable.type) {
+        if (selectedVariable?.type !== variable.type) {
           return {
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex],
           };
@@ -3576,7 +3552,7 @@ const validateBlockActions = (
 
       if (variable.type === "text") {
         if (action.value.type === "element") {
-          const allowedElements = [
+          const allowedElements: TSurveyElementTypeEnum[] = [
             TSurveyElementTypeEnum.OpenText,
             TSurveyElementTypeEnum.MultipleChoiceSingle,
             TSurveyElementTypeEnum.Rating,
@@ -3588,7 +3564,7 @@ const validateBlockActions = (
 
           if (!selectedElement || !allowedElements.includes(selectedElement.data.type)) {
             return {
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: `Conditional Logic: Invalid element type for text variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex],
             };
@@ -3599,7 +3575,10 @@ const validateBlockActions = (
       }
 
       if (action.value.type === "element") {
-        const allowedElements = [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS];
+        const allowedElements: TSurveyElementTypeEnum[] = [
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+        ];
 
         const selectedElement = allElements.get(action.value.value);
 
@@ -3610,7 +3589,7 @@ const validateBlockActions = (
             selectedElement.data.inputType !== "number")
         ) {
           return {
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             message: `Conditional Logic: Invalid element type for number variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
             path: ["blocks", blockIndex, "logic", logicIndex],
           };
@@ -3623,7 +3602,7 @@ const validateBlockActions = (
 
       if (!targetElementInfo) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Element ID ${targetElementId} does not exist for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3632,7 +3611,7 @@ const validateBlockActions = (
       // Check if element is in the current block (not allowed)
       if (targetElementInfo.block === blockIndex) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Element ${targetElementId} cannot be in the current block for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}. RequireAnswer must target elements in other blocks.`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3641,7 +3620,7 @@ const validateBlockActions = (
       // Check if element is in a previous block (should target future blocks)
       if (targetElementInfo.block < blockIndex) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Element ${targetElementId} is in a previous block (block ${String(targetElementInfo.block + 1)}). RequireAnswer should target elements in future blocks after block ${String(blockIndex + 1)}.`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3650,7 +3629,7 @@ const validateBlockActions = (
       // Check if element is optional (not required)
       if (targetElementInfo.data.required) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Element ${targetElementId} in block ${String(targetElementInfo.block + 1)} is already required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3664,7 +3643,7 @@ const validateBlockActions = (
 
       if (!possibleTargets.includes(targetBlockId)) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Block ID ${targetBlockId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3673,7 +3652,7 @@ const validateBlockActions = (
       // Cannot jump to the current block
       if (targetBlockId === currentBlock.id) {
         return {
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Conditional Logic: Cannot jump to the current block in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
@@ -3686,13 +3665,13 @@ const validateBlockActions = (
   const jumpToBlockActions = actions.filter((action) => action.objective === "jumpToBlock");
   if (jumpToBlockActions.length > 1) {
     actionIssues.push({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic"],
     });
   }
 
-  const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue): issue is z.core.$ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
@@ -3700,13 +3679,13 @@ const validateBlockLogicFallback = (
   survey: TSurvey,
   blockIndex: number,
   block: TSurveyBlock
-): z.ZodIssue[] | undefined => {
+): z.core.$ZodIssue[] | undefined => {
   if (!block.logicFallback) return;
 
   if (!block.logic?.length && block.logicFallback) {
     return [
       {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Conditional Logic: Fallback logic is defined without any logic in block ${String(blockIndex + 1)}`,
         path: ["blocks", blockIndex],
       },
@@ -3714,7 +3693,7 @@ const validateBlockLogicFallback = (
   } else if (block.id === block.logicFallback) {
     return [
       {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Conditional Logic: Fallback logic is defined with the same block in block ${String(blockIndex + 1)}`,
         path: ["blocks", blockIndex],
       },
@@ -3729,14 +3708,14 @@ const validateBlockLogicFallback = (
     }
   });
 
-  survey.endings.forEach((e) => {
+  survey.endings.forEach((e: TSurveyEnding) => {
     possibleFallbackIds.push(e.id);
   });
 
   if (!possibleFallbackIds.includes(block.logicFallback)) {
     return [
       {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Conditional Logic: Fallback block ID ${block.logicFallback} does not exist in block ${String(blockIndex + 1)}`,
         path: ["blocks", blockIndex],
       },
@@ -3749,7 +3728,7 @@ const validateBlockLogic = (
   blockIndex: number,
   block: TSurveyBlock,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
-): z.ZodIssue[] => {
+): z.core.$ZodIssue[] => {
   const logicFallbackIssue = validateBlockLogicFallback(survey, blockIndex, block);
 
   if (!block.logic || block.logic.length === 0) {
@@ -3766,9 +3745,8 @@ const validateBlockLogic = (
   return [...logicIssues.flat(), ...(logicFallbackIssue ?? [])];
 };
 
-// ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
-export const ZSurveyUpdateInput = ZSurvey.innerType()
-  .omit({ createdAt: true, updatedAt: true, followUps: true })
+// ZSurvey is refined, so update/create inputs start from ZSurveyBase and reapply the same refinement.
+export const ZSurveyUpdateInput = ZSurveyBase.omit({ createdAt: true, updatedAt: true, followUps: true })
   .extend({
     followUps: z
       .array(
@@ -3779,7 +3757,7 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
           })
         )
       )
-      .default([]),
+      .prefault([]),
   })
   .and(
     z.object({
@@ -3787,7 +3765,7 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
       updatedAt: z.coerce.date(),
     })
   )
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => undefined);
+  .superRefine(surveyRefinement);
 
 // Helper function to make all properties of a Zod object schema optional
 const makeSchemaOptional = <T extends z.ZodRawShape>(
@@ -3795,14 +3773,12 @@ const makeSchemaOptional = <T extends z.ZodRawShape>(
 ): z.ZodObject<{
   [K in keyof T]: z.ZodOptional<T[K]>;
 }> => {
-  return schema.extend(
-    Object.fromEntries(Object.entries(schema.shape).map(([key, value]) => [key, value.optional()])) as {
-      [K in keyof T]: z.ZodOptional<T[K]>;
-    }
-  );
+  return schema.partial() as z.ZodObject<{
+    [K in keyof T]: z.ZodOptional<T[K]>;
+  }>;
 };
 
-export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
+export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
   .omit({
     id: true,
     createdAt: true,
@@ -3813,24 +3789,26 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
   })
   .extend({
     name: z.string(), // Keep name required
-    questions: ZSurvey.innerType().shape.questions,
-    blocks: ZSurvey.innerType().shape.blocks,
-    languages: z.array(ZSurveyLanguage).default([]),
-    welcomeCard: ZSurveyWelcomeCard.default({
+    questions: ZSurveyBase.shape.questions,
+    blocks: ZSurveyBase.shape.blocks,
+    languages: z.array(ZSurveyLanguage).prefault([]),
+    welcomeCard: ZSurveyWelcomeCard.prefault({
       enabled: false,
     }),
-    endings: ZSurveyEndings.default([]),
-    type: ZSurveyType.default("link"),
-    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
+    endings: ZSurveyEndings.prefault([]),
+    type: ZSurveyType.prefault("link"),
+    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).prefault([]),
   })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null)
+  .superRefine((survey, ctx) => {
+    surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+  })
   .superRefine((data, ctx) => {
     const hasQuestions = data.questions.length > 0;
     const hasBlocks = data.blocks.length > 0;
 
     if (hasQuestions && hasBlocks) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Cannot provide both questions and blocks. Please provide only one of these fields.",
         path: ["questions"],
       });
@@ -3838,7 +3816,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
 
     if (!hasQuestions && !hasBlocks) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Must provide either questions or blocks. Both cannot be empty.",
         path: ["questions"],
       });
@@ -3847,7 +3825,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.innerType())
+export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBase)
   .omit({
     id: true,
     createdAt: true,
@@ -3859,24 +3837,26 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.in
   .extend({
     name: z.string(), // Keep name required
     environmentId: z.string(),
-    questions: ZSurvey.innerType().shape.questions,
-    blocks: ZSurvey.innerType().shape.blocks,
-    languages: z.array(ZSurveyLanguage).default([]),
-    welcomeCard: ZSurveyWelcomeCard.default({
+    questions: ZSurveyBase.shape.questions,
+    blocks: ZSurveyBase.shape.blocks,
+    languages: z.array(ZSurveyLanguage).prefault([]),
+    welcomeCard: ZSurveyWelcomeCard.prefault({
       enabled: false,
     }),
-    endings: ZSurveyEndings.default([]),
-    type: ZSurveyType.default("link"),
-    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
+    endings: ZSurveyEndings.prefault([]),
+    type: ZSurveyType.prefault("link"),
+    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).prefault([]),
   })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null)
+  .superRefine((survey, ctx) => {
+    surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+  })
   .superRefine((data, ctx) => {
     const hasQuestions = data.questions.length > 0;
     const hasBlocks = data.blocks.length > 0;
 
     if (hasQuestions && hasBlocks) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Cannot provide both questions and blocks. Please provide only one of these fields.",
         path: ["questions"],
       });
@@ -3884,7 +3864,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.in
 
     if (!hasQuestions && !hasBlocks) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Must provide either questions or blocks. Both cannot be empty.",
         path: ["questions"],
       });
@@ -3964,7 +3944,7 @@ export const ZSurveyElementSummaryPictureSelection = z.object({
   choices: z.array(
     z.object({
       id: z.string(),
-      imageUrl: z.string(),
+      imageUrl: ZStorageUrl,
       count: z.number(),
       percentage: z.number(),
     })
@@ -4267,8 +4247,8 @@ export const ZSurveySummary = z.object({
   }),
   dropOff: z.array(
     z.object({
-      elementId: z.string().cuid2(),
-      elementType: z.nativeEnum(TSurveyElementTypeEnum),
+      elementId: z.cuid2(),
+      elementType: z.enum(TSurveyElementTypeEnum),
       headline: z.string(),
       ttc: z.number(),
       impressions: z.number(),

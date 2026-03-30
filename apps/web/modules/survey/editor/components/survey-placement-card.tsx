@@ -6,7 +6,7 @@ import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TPlacement } from "@formbricks/types/common";
+import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
 import { Placement } from "@/modules/survey/editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
@@ -27,7 +27,7 @@ export const SurveyPlacementCard = ({
   const [open, setOpen] = useState(false);
 
   const { projectOverwrites } = localSurvey ?? {};
-  const { placement, clickOutsideClose, darkOverlay } = projectOverwrites ?? {};
+  const { placement, clickOutsideClose, overlay } = projectOverwrites ?? {};
 
   const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites | null) => {
     setLocalSurvey({ ...localSurvey, projectOverwrites: projectOverwrites });
@@ -41,7 +41,7 @@ export const SurveyPlacementCard = ({
         setProjectOverwrites({
           placement: "bottomRight",
           clickOutsideClose: false,
-          darkOverlay: false,
+          overlay: "none",
         });
       }
     }
@@ -56,13 +56,11 @@ export const SurveyPlacementCard = ({
     }
   };
 
-  const handleOverlay = (overlayType: string) => {
-    const darkOverlay = overlayType === "dark";
-
+  const handleOverlay = (overlayValue: TOverlay) => {
     if (setProjectOverwrites) {
       setProjectOverwrites({
         ...projectOverwrites,
-        darkOverlay,
+        overlay: overlayValue,
       });
     }
   };
@@ -132,7 +130,7 @@ export const SurveyPlacementCard = ({
                       currentPlacement={placement}
                       setCurrentPlacement={handlePlacementChange}
                       setOverlay={handleOverlay}
-                      overlay={darkOverlay ? "dark" : "light"}
+                      overlay={overlay ?? "none"}
                       setClickOutsideClose={handleClickOutsideClose}
                       clickOutsideClose={!!clickOutsideClose}
                     />
@@ -144,7 +142,7 @@ export const SurveyPlacementCard = ({
             <div>
               <p className="text-xs text-slate-500">
                 {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`/environments/${environmentId}/project/look`} target="_blank">
+                <Link href={`/environments/${environmentId}/workspace/look`} target="_blank">
                   <span className="underline">
                     {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>

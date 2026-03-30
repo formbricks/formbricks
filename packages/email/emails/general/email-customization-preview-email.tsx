@@ -1,0 +1,32 @@
+import { Container, Heading, Text } from "@react-email/components";
+import { EmailTemplate } from "../../src/components/email-template";
+import { exampleData } from "../../src/lib/example-data";
+import { t as mockT } from "../../src/lib/mock-translate";
+import { TEmailTemplateLegalProps } from "../../src/types/email";
+import { TFunction } from "../../src/types/translations";
+
+interface EmailCustomizationPreviewEmailProps extends TEmailTemplateLegalProps {
+  readonly userName: string;
+  readonly logoUrl?: string;
+  readonly t?: TFunction;
+}
+
+export function EmailCustomizationPreviewEmail({
+  userName,
+  logoUrl,
+  t = mockT,
+  ...legalProps
+}: EmailCustomizationPreviewEmailProps): React.JSX.Element {
+  return (
+    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
+      <Container>
+        <Heading>{t("emails.email_customization_preview_email_heading", { userName })}</Heading>
+        <Text className="text-sm">{t("emails.email_customization_preview_email_text")}</Text>
+      </Container>
+    </EmailTemplate>
+  );
+}
+
+export default function EmailCustomizationPreviewEmailPreview(): React.JSX.Element {
+  return <EmailCustomizationPreviewEmail {...exampleData.emailCustomizationPreviewEmail} />;
+}

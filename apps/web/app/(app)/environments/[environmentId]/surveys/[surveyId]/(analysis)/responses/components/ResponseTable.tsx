@@ -96,8 +96,8 @@ export const ResponseTable = ({
   const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
   const columns = useMemo(
-    () => generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn),
-    [survey, isExpanded, isReadOnly, t, showQuotasColumn]
+    () => generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, locale, t, showQuotasColumn),
+    [survey, isExpanded, isReadOnly, locale, t, showQuotasColumn]
   );
 
   // Save settings to localStorage when they change
@@ -205,11 +205,11 @@ export const ResponseTable = ({
   };
 
   // Handle downloading selected responses
-  const downloadSelectedRows = async (responseIds: string[], format: "csv" | "xlsx") => {
+  const downloadSelectedRows = async (responseIds: string[], format: "xlsx" | "csv") => {
     try {
       const downloadResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
-        format: format,
+        format,
         filterCriteria: { responseIds },
       });
 
@@ -300,7 +300,6 @@ export const ResponseTable = ({
         <DataTableSettingsModal
           open={isTableSettingsModalOpen}
           setOpen={setIsTableSettingsModalOpen}
-          survey={survey}
           table={table}
           columnOrder={columnOrder}
           handleDragEnd={handleDragEnd}

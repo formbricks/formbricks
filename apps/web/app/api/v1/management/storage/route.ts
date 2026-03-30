@@ -1,10 +1,9 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TUploadPublicFileRequest, ZUploadPublicFileRequest } from "@formbricks/types/storage";
 import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
@@ -15,7 +14,7 @@ import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 // use this to get a signed url for uploading a public file for a specific resource, e.g. a survey's background image
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiV1Authentication }) => {
+  handler: async ({ req, authentication }) => {
     let storageInput: TUploadPublicFileRequest;
 
     try {

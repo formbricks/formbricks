@@ -4,7 +4,12 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -22,6 +27,7 @@ interface EditWelcomeCardProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const EditWelcomeCard = ({
@@ -34,6 +40,7 @@ export const EditWelcomeCard = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslation();
 
@@ -42,7 +49,7 @@ export const EditWelcomeCard = ({
 
   let open = activeElementId == "start";
 
-  const setOpen = (e) => {
+  const setOpen = (e: boolean) => {
     if (e) {
       setActiveElementId("start");
     } else {
@@ -50,7 +57,9 @@ export const EditWelcomeCard = ({
     }
   };
 
-  const updateSurvey = (data: Partial<TSurveyWelcomeCard>) => {
+  const updateSurvey = (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => {
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -99,7 +108,11 @@ export const EditWelcomeCard = ({
                 checked={localSurvey?.welcomeCard?.enabled}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateSurvey({ enabled: !localSurvey.welcomeCard?.enabled });
+                  const newEnabledState = !localSurvey.welcomeCard?.enabled;
+                  updateSurvey({ enabled: newEnabledState });
+                  if (newEnabledState && !open) {
+                    setActiveElementId("start");
+                  }
                 }}
               />
             </div>
@@ -115,10 +128,21 @@ export const EditWelcomeCard = ({
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string[]) => {
-                  updateSurvey({ fileUrl: url[0] });
+                onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                  if (url?.length && url[0]) {
+                    const update =
+                      fileType === "video"
+                        ? { videoUrl: url[0], fileUrl: undefined }
+                        : { fileUrl: url[0], videoUrl: undefined };
+                    updateSurvey(update);
+                  } else {
+                    updateSurvey({ fileUrl: undefined, videoUrl: undefined });
+                  }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                videoUrl={localSurvey?.welcomeCard?.videoUrl}
+                isVideoAllowed={true}
+                maxSizeInMB={5}
                 isStorageConfigured={isStorageConfigured}
               />
             </div>
@@ -135,6 +159,7 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
             <div className="mt-3">
@@ -150,6 +175,7 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
 
@@ -170,6 +196,7 @@ export const EditWelcomeCard = ({
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    isExternalUrlsAllowed={isExternalUrlsAllowed}
                   />
                 </div>
               </div>

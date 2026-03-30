@@ -96,7 +96,7 @@ describe("Tests for getQuotasSummary service", () => {
         _count: {
           quotaLinks: 0,
         },
-      },
+      } as unknown as Awaited<ReturnType<typeof prisma.surveyQuota.findMany>>[number],
     ]);
 
     const result = await getQuotasSummary(surveyId);
@@ -120,7 +120,7 @@ describe("Tests for getQuotasSummary service", () => {
         _count: {
           quotaLinks: 0,
         },
-      },
+      } as unknown as Awaited<ReturnType<typeof prisma.surveyQuota.findMany>>[number],
     ]);
 
     const result = await getQuotasSummary(surveyId);

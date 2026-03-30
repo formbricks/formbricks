@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { getContact } from "./contact";
@@ -28,7 +28,9 @@ const expectedContactAttributes: TContactAttributes = {
 
 describe("getContact", () => {
   test("should return contact with formatted attributes when found", async () => {
-    vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
+    vi.mocked(prisma.contact.findUnique).mockResolvedValue(
+      mockContact as unknown as Awaited<ReturnType<typeof prisma.contact.findUnique>>
+    );
 
     const result = await getContact(contactId);
 

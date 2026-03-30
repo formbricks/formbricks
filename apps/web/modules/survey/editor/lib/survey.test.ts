@@ -4,10 +4,11 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { updateSurveyInternal } from "@/lib/survey/service";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { checkTriggersValidity, handleTriggerUpdates, updateSurvey } from "./survey";
+import { checkTriggersValidity, handleTriggerUpdates, updateSurvey, updateSurveyDraft } from "./survey";
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -24,6 +25,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/survey/utils", () => ({
   checkForInvalidImagesInQuestions: vi.fn(),
+}));
+
+vi.mock("@/lib/survey/service", () => ({
+  updateSurveyInternal: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/action-class", () => ({
@@ -141,10 +146,8 @@ describe("Survey Editor Library Tests", () => {
       ownerUserId: "user123",
       billing: {
         stripeCustomerId: "cust_123",
-        plan: "free" as const,
         features: {},
-        period: "monthly" as const,
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
       },
       isAIEnabled: false,
     };
@@ -163,7 +166,7 @@ describe("Survey Editor Library Tests", () => {
       vi.mocked(getOrganizationAIKeys).mockResolvedValue(mockOrganization as any);
     });
 
-    test("should handle languages update", async () => {
+    test("should handle languages update with multiple languages", async () => {
       const updatedSurvey: TSurvey = {
         ...mockSurvey,
         languages: [
@@ -212,6 +215,60 @@ describe("Survey Editor Library Tests", () => {
         }),
         select: expect.any(Object),
       });
+    });
+
+    test("should handle languages update with single default language", async () => {
+      // This tests the fix for the bug where languages.length === 1 would incorrectly
+      // set updatedLanguageIds to [] causing the default language to be removed
+      const updatedSurvey: TSurvey = {
+        ...mockSurvey,
+        languages: [
+          {
+            language: {
+              id: "en",
+              code: "en",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              alias: null,
+              projectId: "project1",
+            },
+            default: true,
+            enabled: true,
+          },
+        ],
+      };
+
+      await updateSurvey(updatedSurvey);
+
+      // Verify that prisma.survey.update was called
+      expect(prisma.survey.update).toHaveBeenCalled();
+
+      const updateCall = vi.mocked(prisma.survey.update).mock.calls[0][0];
+
+      // The key test: when languages.length === 1, we should still process language updates
+      // and NOT delete the language. Before the fix, languages.length > 1 would fail this case.
+      expect(updateCall).toBeDefined();
+      expect(updateCall.where).toEqual({ id: "survey123" });
+      expect(updateCall.data).toBeDefined();
+    });
+
+    test("should remove all languages when empty array is passed", async () => {
+      const updatedSurvey: TSurvey = {
+        ...mockSurvey,
+        languages: [],
+      };
+
+      await updateSurvey(updatedSurvey);
+
+      // Verify that prisma.survey.update was called
+      expect(prisma.survey.update).toHaveBeenCalled();
+
+      const updateCall = vi.mocked(prisma.survey.update).mock.calls[0][0];
+
+      // When languages is empty array, all existing languages should be removed
+      expect(updateCall).toBeDefined();
+      expect(updateCall.where).toEqual({ id: "survey123" });
+      expect(updateCall.data).toBeDefined();
     });
 
     test("should delete private segment for non-app type surveys", async () => {
@@ -690,6 +747,91 @@ describe("Survey Editor Library Tests", () => {
       expect(() =>
         handleTriggerUpdates(updatedTriggers as any, currentTriggers as any, mockActionClasses)
       ).toThrow(InvalidInputError);
+    });
+  });
+
+  describe("updateSurveyDraft", () => {
+    const mockSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Draft Survey",
+      type: "app",
+      environmentId: "env123",
+      createdBy: "user123",
+      status: "draft",
+      displayOption: "displayOnce",
+      questions: [
+        {
+          id: "q1",
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Question 1" },
+          required: false,
+          inputType: "text",
+          charLimit: { enabled: false },
+        },
+      ],
+      welcomeCard: {
+        enabled: false,
+        timeToFinish: true,
+        showResponseCount: false,
+      },
+      triggers: [],
+      endings: [],
+      hiddenFields: { enabled: false },
+      delay: 0,
+      autoComplete: null,
+      projectOverwrites: null,
+      styling: null,
+      showLanguageSwitch: false,
+      segment: null,
+      surveyClosedMessage: null,
+      singleUse: null,
+      isVerifyEmailEnabled: false,
+      recaptcha: null,
+      isSingleResponsePerEmailEnabled: false,
+      isBackButtonHidden: false,
+      pin: null,
+      displayPercentage: null,
+      languages: [],
+      variables: [],
+      followUps: [],
+    } as unknown as TSurvey;
+
+    beforeEach(() => {
+      vi.mocked(updateSurveyInternal).mockResolvedValue(mockSurvey);
+    });
+
+    test("should call updateSurveyInternal with skipValidation=true", async () => {
+      await updateSurveyDraft(mockSurvey);
+
+      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey, true);
+      expect(updateSurveyInternal).toHaveBeenCalledTimes(1);
+    });
+
+    test("should return the survey from updateSurveyInternal", async () => {
+      const result = await updateSurveyDraft(mockSurvey);
+
+      expect(result).toEqual(mockSurvey);
+    });
+
+    test("should propagate errors from updateSurveyInternal", async () => {
+      const error = new Error("Internal update failed");
+      vi.mocked(updateSurveyInternal).mockRejectedValueOnce(error);
+
+      await expect(updateSurveyDraft(mockSurvey)).rejects.toThrow("Internal update failed");
+    });
+
+    test("should propagate ResourceNotFoundError from updateSurveyInternal", async () => {
+      vi.mocked(updateSurveyInternal).mockRejectedValueOnce(new ResourceNotFoundError("Survey", "survey123"));
+
+      await expect(updateSurveyDraft(mockSurvey)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("should propagate DatabaseError from updateSurveyInternal", async () => {
+      vi.mocked(updateSurveyInternal).mockRejectedValueOnce(new DatabaseError("Database connection failed"));
+
+      await expect(updateSurveyDraft(mockSurvey)).rejects.toThrow(DatabaseError);
     });
   });
 });

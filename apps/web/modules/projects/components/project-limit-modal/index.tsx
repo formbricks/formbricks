@@ -18,8 +18,8 @@ export const ProjectLimitModal = ({ open, setOpen, projectLimit, buttons }: Proj
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <UpgradePrompt
-          title={t("common.unlock_more_projects_with_a_higher_plan")}
-          description={t("common.you_have_reached_your_limit_of_project_limit", { projectLimit })}
+          title={t("common.unlock_more_workspaces_with_a_higher_plan")}
+          description={t("common.you_have_reached_your_limit_of_workspace_limit", { projectLimit })}
           buttons={buttons}
         />
       </DialogContent>

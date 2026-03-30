@@ -105,7 +105,7 @@ export const finishOnboarding = async (
   page: Page,
   projectChannel: TProjectConfigChannel = "website"
 ): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
+  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
@@ -117,15 +117,15 @@ export const finishOnboarding = async (
 
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("e.g. Formbricks").click();
-  await page.getByPlaceholder("e.g. Formbricks").fill("My Project");
+  await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
   await page.locator("#form-next-button").click();
 
   if (projectChannel !== "link") {
-    await page.getByRole("button", { name: "I'll do it later" }).click();
+    await page.getByRole("button", { name: "I will do it later" }).click();
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page.getByText("My Project")).toBeVisible();
+  await expect(page.getByText("My Workspace")).toBeVisible();
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
@@ -220,7 +220,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await fillRichTextEditor(page, "Description", params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
-  await page.getByRole("button", { name: 'Add "Other"', exact: true }).click();
+  await page.getByRole("button", { name: "Add “Other”", exact: true }).click();
 
   // Multi Select Question
   await page
@@ -440,7 +440,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await fillRichTextEditor(page, "Description", params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
-  await page.getByRole("button", { name: 'Add "Other"', exact: true }).click();
+  await page.getByRole("button", { name: "Add “Other”", exact: true }).click();
 
   // Multi Select Question
   await page

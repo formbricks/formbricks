@@ -49,7 +49,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
     const deleteTagResponse = await deleteTagAction({ tagId });
     if (deleteTagResponse?.data) {
       if (deleteTagResponse.data.ok) {
-        toast.success(t("environments.project.tags.tag_deleted"));
+        toast.success(t("environments.workspace.tags.tag_deleted"));
         updateTagsCount();
         router.refresh();
       } else {
@@ -67,9 +67,9 @@ export const SingleTag: React.FC<SingleTagProps> = ({
     if (result?.data) {
       if (result.data.ok) {
         setUpdateTagError(false);
-        toast.success(t("environments.project.tags.tag_updated"));
+        toast.success(t("environments.workspace.tags.tag_updated"));
       } else if (result.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
-        toast.error(t("environments.project.tags.tag_already_exists"), {
+        toast.error(t("environments.workspace.tags.tag_already_exists"), {
           duration: 2000,
           icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
         });
@@ -92,7 +92,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
 
     if (mergeTagsResponse?.data) {
       if (mergeTagsResponse.data.ok) {
-        toast.success(t("environments.project.tags.tags_merged"));
+        toast.success(t("environments.workspace.tags.tags_merged"));
         updateTagsCount();
         router.refresh();
       } else {
@@ -160,7 +160,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
                 open={openDeleteTagDialog}
                 setOpen={setOpenDeleteTagDialog}
                 deleteWhat={tagName}
-                text={t("environments.project.tags.delete_tag_confirmation")}
+                text={t("environments.workspace.tags.delete_tag_confirmation")}
                 onDelete={confirmDeleteTag}
               />
             </div>

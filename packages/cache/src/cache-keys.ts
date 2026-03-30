@@ -32,6 +32,7 @@ export const createCacheKey = {
     status: (organizationId: string): CacheKey => makeCacheKey("license", organizationId, "status"),
     previous_result: (organizationId: string): CacheKey =>
       makeCacheKey("license", organizationId, "previous_result"),
+    fetch_lock: (organizationId: string): CacheKey => makeCacheKey("license", organizationId, "fetch_lock"),
   },
 
   // Rate limiting and security

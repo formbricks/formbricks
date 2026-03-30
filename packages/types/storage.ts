@@ -1,11 +1,14 @@
 import { z } from "zod";
+import { ZStorageUrl } from "./common";
 
-export const ZAllowedFileExtension = z.enum([
+// Single source of truth for allowed file extensions
+const ALLOWED_FILE_EXTENSIONS_TUPLE = [
   "heic",
   "png",
   "jpeg",
   "jpg",
   "webp",
+  "ico",
   "pdf",
   "eml",
   "doc",
@@ -21,11 +24,20 @@ export const ZAllowedFileExtension = z.enum([
   "avi",
   "mkv",
   "webm",
+  "mp3",
   "zip",
   "rar",
   "7z",
   "tar",
-]);
+] as const;
+
+// Derive zod enum from the tuple
+export const ZAllowedFileExtension = z.enum(ALLOWED_FILE_EXTENSIONS_TUPLE);
+
+export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
+
+// Export the array derived from the tuple
+export const ALLOWED_FILE_EXTENSIONS: TAllowedFileExtension[] = [...ALLOWED_FILE_EXTENSIONS_TUPLE];
 
 export const mimeTypes: Record<TAllowedFileExtension, string> = {
   heic: "image/heic",
@@ -33,6 +45,7 @@ export const mimeTypes: Record<TAllowedFileExtension, string> = {
   jpeg: "image/jpeg",
   jpg: "image/jpeg",
   webp: "image/webp",
+  ico: "image/x-icon",
   pdf: "application/pdf",
   eml: "message/rfc822",
   doc: "application/msword",
@@ -48,13 +61,12 @@ export const mimeTypes: Record<TAllowedFileExtension, string> = {
   avi: "video/x-msvideo",
   mkv: "video/x-matroska",
   webm: "video/webm",
+  mp3: "audio/mpeg",
   zip: "application/zip",
   rar: "application/vnd.rar",
   "7z": "application/x-7z-compressed",
   tar: "application/x-tar",
 };
-
-export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
 
 export const ZAccessType = z.enum(["public", "private"]);
 export type TAccessType = z.infer<typeof ZAccessType>;
@@ -74,10 +86,10 @@ export const ZDownloadFileRequest = z.object({
         return true;
       },
       {
-        message: "File name must have an extension",
+        error: "File name must have an extension",
       }
     ),
-  environmentId: z.string().cuid2(),
+  environmentId: z.cuid2(),
   accessType: ZAccessType,
 });
 
@@ -95,8 +107,8 @@ export const ZUploadPrivateFileRequest = z
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
     allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
-    surveyId: z.string().cuid2(),
-    environmentId: z.string().cuid2(),
+    surveyId: z.cuid2(),
+    environmentId: z.cuid2(),
   })
   .superRefine((data, ctx) => {
     refineFileUploadInput({
@@ -114,7 +126,7 @@ export type TUploadPrivateFileRequest = z.infer<typeof ZUploadPrivateFileRequest
 export const ZUploadFileResponse = z.object({
   data: z.object({
     signedUrl: z.string(),
-    fileUrl: z.string(),
+    fileUrl: ZStorageUrl,
     signingData: z
       .object({
         signature: z.string(),
@@ -122,7 +134,7 @@ export const ZUploadFileResponse = z.object({
         uuid: z.string(),
       })
       .nullable(),
-    presignedFields: z.record(z.string()).optional(),
+    presignedFields: z.record(z.string(), z.string()).optional(),
     updatedFileName: z.string(),
   }),
 });
@@ -133,7 +145,7 @@ export const ZUploadPublicFileRequest = z
   .object({
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
-    environmentId: z.string().cuid2(),
+    environmentId: z.cuid2(),
     allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
   })
   .superRefine((data, ctx) => {
@@ -164,7 +176,7 @@ const refineFileUploadInput = ({
 
   if (!fileExtension || fileExtension.toLowerCase() === data.fileName.toLowerCase()) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "File name must have an extension",
       path: ["fileName"],
     });
@@ -176,7 +188,7 @@ const refineFileUploadInput = ({
 
   if (!success) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "File extension is not allowed for security reasons",
       path: ["fileName"],
     });
@@ -187,7 +199,7 @@ const refineFileUploadInput = ({
   const normalizedFileType = data.fileType.toLowerCase().split(";")[0]; // removes parameters from fileType like "image/jpeg; charset=binary"
   if (normalizedFileType !== mimeTypes[fileExtension]) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "File type doesn't match the file extension",
       path: ["fileType"],
     });
@@ -198,7 +210,7 @@ const refineFileUploadInput = ({
   if (data.allowedFileExtensions?.length) {
     if (!data.allowedFileExtensions.includes(fileExtension)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `File extension is not allowed, allowed extensions are: ${data.allowedFileExtensions.join(", ")}`,
         path: ["fileName"],
       });

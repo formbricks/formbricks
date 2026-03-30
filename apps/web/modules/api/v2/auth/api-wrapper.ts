@@ -1,4 +1,5 @@
 import { ZodRawShape, z } from "zod";
+import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
@@ -67,7 +68,22 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
   if (schemas?.body) {
-    const bodyData = await request.json();
+    let bodyData;
+    try {
+      bodyData = await request.json();
+    } catch (error) {
+      logger.error({ error, url: request.url }, "Error parsing JSON input");
+      return handleApiError(request, {
+        type: "bad_request",
+        details: [
+          {
+            field: "error",
+            issue: "Malformed JSON input, please check your request body",
+          },
+        ],
+      });
+    }
+
     const bodyResult = schemas.body.safeParse(bodyData);
 
     if (!bodyResult.success) {
@@ -108,7 +124,12 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     try {
       await applyRateLimit(rateLimitConfigs.api.v2, authentication.data.apiKeyId);
     } catch (error) {
-      return handleApiError(request, { type: "too_many_requests", details: error.message });
+      return handleApiError(request, {
+        type: "too_many_requests",
+        details: [
+          { field: "rateLimit", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+        ],
+      });
     }
   }
 

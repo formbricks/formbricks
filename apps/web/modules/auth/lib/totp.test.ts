@@ -2,87 +2,50 @@ import { Authenticator } from "@otplib/core";
 import type { AuthenticatorOptions } from "@otplib/core/authenticator";
 import { createDigest, createRandomBytes } from "@otplib/plugin-crypto";
 import { keyDecoder, keyEncoder } from "@otplib/plugin-thirty-two";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { totpAuthenticatorCheck } from "./totp";
 
-vi.mock("@otplib/core");
-vi.mock("@otplib/plugin-crypto");
-vi.mock("@otplib/plugin-thirty-two");
+const createAuthenticator = (opts: Partial<AuthenticatorOptions> = {}) =>
+  new Authenticator({
+    createDigest,
+    createRandomBytes,
+    keyDecoder,
+    keyEncoder,
+    ...opts,
+  });
 
 describe("totpAuthenticatorCheck", () => {
-  const token = "123456";
   const secret = "JBSWY3DPEHPK3PXP";
-  const opts: Partial<AuthenticatorOptions> = { window: [1, 0] };
+  const fixedEpoch = 1_700_000_000_000;
 
   test("should check a TOTP token with a base32-encoded secret", () => {
-    const checkMock = vi.fn().mockReturnValue(true);
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: checkMock,
-    }));
-
-    const result = totpAuthenticatorCheck(token, secret, opts);
-
-    expect(Authenticator).toHaveBeenCalledWith({
-      createDigest,
-      createRandomBytes,
-      keyDecoder,
-      keyEncoder,
-      window: [1, 0],
-    });
-    expect(checkMock).toHaveBeenCalledWith(token, secret);
+    const token = createAuthenticator({ epoch: fixedEpoch }).generate(secret);
+    const result = totpAuthenticatorCheck(token, secret, { epoch: fixedEpoch, window: [1, 0] });
     expect(result).toBe(true);
   });
 
   test("should use default window if none is provided", () => {
-    const checkMock = vi.fn().mockReturnValue(true);
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: checkMock,
-    }));
-
-    const result = totpAuthenticatorCheck(token, secret);
-
-    expect(Authenticator).toHaveBeenCalledWith({
-      createDigest,
-      createRandomBytes,
-      keyDecoder,
-      keyEncoder,
-      window: [1, 0],
-    });
-    expect(checkMock).toHaveBeenCalledWith(token, secret);
+    // Generate a token for one time-step in the past and verify it at current epoch.
+    // Default window is [1, 0], so previous-step tokens are accepted.
+    const token = createAuthenticator({ epoch: fixedEpoch }).generate(secret);
+    const result = totpAuthenticatorCheck(token, secret, { epoch: fixedEpoch + 30_000 });
     expect(result).toBe(true);
   });
 
-  test("should throw an error for invalid token format", () => {
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: () => {
-        throw new Error("Invalid token format");
-      },
-    }));
-
-    expect(() => {
-      totpAuthenticatorCheck("invalidToken", secret);
-    }).toThrow("Invalid token format");
+  test("should return false for invalid token format", () => {
+    const result = totpAuthenticatorCheck("invalidToken", secret);
+    expect(result).toBe(false);
   });
 
-  test("should throw an error for invalid secret format", () => {
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: () => {
-        throw new Error("Invalid secret format");
-      },
-    }));
-
-    expect(() => {
-      totpAuthenticatorCheck(token, "invalidSecret");
-    }).toThrow("Invalid secret format");
+  test("should return false for invalid secret format", () => {
+    const token = createAuthenticator({ epoch: fixedEpoch }).generate(secret);
+    const result = totpAuthenticatorCheck(token, "invalidSecret", { epoch: fixedEpoch });
+    expect(result).toBe(false);
   });
 
   test("should return false if token verification fails", () => {
-    const checkMock = vi.fn().mockReturnValue(false);
-    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
-      check: checkMock,
-    }));
-
-    const result = totpAuthenticatorCheck(token, secret);
+    const token = createAuthenticator({ epoch: fixedEpoch }).generate(secret);
+    const result = totpAuthenticatorCheck(token, secret, { epoch: fixedEpoch + 60_000 });
     expect(result).toBe(false);
   });
 });

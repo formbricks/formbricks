@@ -1,40 +1,53 @@
 import { z } from "zod";
 
 export const ZUserLocale = z.enum([
-  "en-US",
   "de-DE",
-  "pt-BR",
+  "en-US",
+  "es-ES",
   "fr-FR",
+  "hu-HU",
+  "ja-JP",
   "nl-NL",
-  "zh-Hant-TW",
+  "pt-BR",
   "pt-PT",
   "ro-RO",
-  "ja-JP",
+  "ru-RU",
+  "sv-SE",
   "zh-Hans-CN",
-  "es-ES",
+  "zh-Hant-TW",
 ]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
 
 export const ZUserNotificationSettings = z.object({
-  alert: z.record(z.boolean()),
+  alert: z.record(z.string(), z.boolean()),
   unsubscribedOrganizationIds: z.array(z.string()).optional(),
 });
 
 export const ZUserName = z
   .string()
   .trim()
-  .min(1, { message: "Name should be at least 1 character long" })
+  .min(1, {
+    error: "Name should be at least 1 character long",
+  })
   .regex(/^[\p{L}\p{M}\s'\d-]+$/u, "Invalid name format");
 
-export const ZUserEmail = z.string().max(255).email({ message: "Invalid email" });
+export const ZUserEmail = z
+  .email({
+    error: "Invalid email",
+  })
+  .max(255);
 
 export type TUserEmail = z.infer<typeof ZUserEmail>;
 
 export const ZUserPassword = z
   .string()
-  .min(8, { message: "Password must be at least 8 characters long" })
-  .max(128, { message: "Password must be 128 characters or less" })
+  .min(8, {
+    error: "Password must be at least 8 characters long",
+  })
+  .max(128, {
+    error: "Password must be 128 characters or less",
+  })
   .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
 
 export type TUserPassword = z.infer<typeof ZUserPassword>;
@@ -55,7 +68,7 @@ export const ZUser = z.object({
   notificationSettings: ZUserNotificationSettings,
   locale: ZUserLocale,
   lastLoginAt: z.date().nullable(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean().prefault(true),
 });
 
 export type TUser = z.infer<typeof ZUser>;

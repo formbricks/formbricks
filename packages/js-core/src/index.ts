@@ -38,6 +38,13 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
 
   // wait for setup to complete
   await queue.wait();
+
+  // Schedule checkPageUrl to run in the next event loop iteration.
+  // This ensures that any user actions (like setUserId) called synchronously after setup()
+  // will be queued BEFORE the page view actions are processed.
+  setTimeout(() => {
+    void checkPageUrl();
+  }, 0);
 };
 
 const setUserId = async (userId: string): Promise<void> => {

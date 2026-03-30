@@ -84,9 +84,12 @@ describe("Helper Utilities", () => {
         validationErrors: {
           name: { _errors: ["Name is required"] },
           email: { _errors: ["Email is invalid"] },
+          password: { _errors: ["is too short"] },
         },
       };
-      expect(getFormattedErrorMessage(result)).toBe("nameName is required\nemailEmail is invalid");
+      expect(getFormattedErrorMessage(result)).toBe(
+        "Name is required\nEmail is invalid\npassword: is too short"
+      );
     });
 
     test("returns empty string for undefined errors", () => {

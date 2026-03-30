@@ -30,7 +30,9 @@ describe("fileUpload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock FileReader
-    global.FileReader = vi.fn(() => mockFileReader) as any;
+    global.FileReader = vi.fn(function FileReader() {
+      return mockFileReader;
+    }) as any;
     global.atob = (base64) => Buffer.from(base64, "base64").toString("binary");
   });
 
@@ -72,13 +74,13 @@ describe("fileUpload", () => {
   test("should handle successful file upload with presigned fields", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000);
 
-    // Mock successful API response
+    // Mock successful API response - now returns relative path
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         data: {
           signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
+          fileUrl: "/storage/test-env/public/file.jpg",
           presignedFields: {
             key: "value",
           },
@@ -98,18 +100,18 @@ describe("fileUpload", () => {
 
     const result = await fileUploadModule.handleFileUpload(file, "test-env");
     expect(result.error).toBeUndefined();
-    expect(result.url).toBe("https://s3.example.com/file.jpg");
+    expect(result.url).toBe("/storage/test-env/public/file.jpg");
   });
 
   test("should handle upload error with presigned fields", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000);
-    // Mock successful API response
+    // Mock successful API response - now returns relative path
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         data: {
           signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
+          fileUrl: "/storage/test-env/public/file.jpg",
           presignedFields: {
             key: "value",
           },
@@ -134,13 +136,13 @@ describe("fileUpload", () => {
   test("should handle upload error", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000);
 
-    // Mock successful API response
+    // Mock successful API response - now returns relative path
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         data: {
           signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
+          fileUrl: "/storage/test-env/public/file.jpg",
           presignedFields: {
             key: "value",
           },
@@ -191,12 +193,17 @@ describe("fileUploadModule.toBase64", () => {
       result: "data:text/plain;base64,aGVsbG8=",
     };
 
-    globalThis.FileReader = vi.fn(() => mockFileReaderInstance as unknown as FileReader) as any;
+    globalThis.FileReader = vi.fn(function FileReader() {
+      return mockFileReaderInstance as unknown as FileReader;
+    }) as any;
 
     const promise = fileUploadModule.toBase64(dummyFile);
 
     // Trigger the onload manually
-    mockFileReaderInstance.onload?.call(mockFileReaderInstance as unknown as FileReader, new Error("load"));
+    mockFileReaderInstance.onload?.call(
+      mockFileReaderInstance as unknown as FileReader,
+      new Event("load") as unknown as ProgressEvent<FileReader>
+    );
 
     const result = await promise;
     expect(result).toBe("data:text/plain;base64,aGVsbG8=");
@@ -213,12 +220,17 @@ describe("fileUploadModule.toBase64", () => {
       result: null,
     };
 
-    globalThis.FileReader = vi.fn(() => mockFileReaderInstance as unknown as FileReader) as any;
+    globalThis.FileReader = vi.fn(function FileReader() {
+      return mockFileReaderInstance as unknown as FileReader;
+    }) as any;
 
     const promise = fileUploadModule.toBase64(dummyFile);
 
     // Simulate error
-    mockFileReaderInstance.onerror?.call(mockFileReaderInstance as unknown as FileReader, new Error("error"));
+    mockFileReaderInstance.onerror?.call(
+      mockFileReaderInstance as unknown as FileReader,
+      new Event("error") as unknown as ProgressEvent<FileReader>
+    );
 
     await expect(promise).rejects.toThrow();
   });

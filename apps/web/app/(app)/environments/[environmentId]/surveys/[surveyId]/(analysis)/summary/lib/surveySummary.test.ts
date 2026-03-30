@@ -11,8 +11,7 @@ import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
-import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import {
   getElementSummary,
   getResponsesForSummary,
@@ -44,7 +43,7 @@ vi.mock("@/lib/survey/service", () => ({
 }));
 vi.mock("@/lib/surveyLogic/utils", () => ({
   evaluateLogic: vi.fn(),
-  performActions: vi.fn(() => ({ jumpTarget: undefined, requiredQuestionIds: [], calculations: {} })),
+  performActions: vi.fn(() => ({ jumpTarget: undefined, requiredElementIds: [], calculations: {} })),
 }));
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
@@ -229,12 +228,6 @@ describe("getSurveySummaryDropOff", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-    vi.mocked(evaluateLogic).mockReturnValue(false); // Default: no logic triggers
-    vi.mocked(performActions).mockReturnValue({
-      jumpTarget: undefined,
-      requiredElementIds: [],
-      calculations: {},
-    });
   });
 
   test("calculates dropOff correctly with welcome card disabled", () => {
@@ -246,7 +239,7 @@ describe("getSurveySummaryDropOff", () => {
         contact: null,
         contactAttributes: {},
         language: "en",
-        ttc: { q1: 10 },
+        ttc: { q1: 10, q2: 5 }, // Saw q2 but didn't answer it
         finished: false,
       }, // Dropped at q2
       {
@@ -269,22 +262,55 @@ describe("getSurveySummaryDropOff", () => {
     );
 
     expect(dropOff.length).toBe(2);
-    // Q1
+    // Q1: welcome card disabled so impressions = displayCount
     expect(dropOff[0].elementId).toBe("q1");
-    expect(dropOff[0].impressions).toBe(displayCount); // Welcome card disabled, so first question impressions = displayCount
+    expect(dropOff[0].impressions).toBe(displayCount);
     expect(dropOff[0].dropOffCount).toBe(displayCount - responses.length); // 5 displays - 2 started = 3 dropped before q1
     expect(dropOff[0].dropOffPercentage).toBe(60); // (3/5)*100
     expect(dropOff[0].ttc).toBe(10);
 
-    // Q2
+    // Q2: both responses saw q2 (r1 has ttc for q2, r2 answered q2)
     expect(dropOff[1].elementId).toBe("q2");
-    expect(dropOff[1].impressions).toBe(responses.length); // 2 responses reached q1, so 2 impressions for q2
-    expect(dropOff[1].dropOffCount).toBe(1); // 1 response dropped at q2
+    expect(dropOff[1].impressions).toBe(2);
+    expect(dropOff[1].dropOffCount).toBe(1); // r1 dropped at q2 (last seen element)
     expect(dropOff[1].dropOffPercentage).toBe(50); // (1/2)*100
-    expect(dropOff[1].ttc).toBe(10);
+    expect(dropOff[1].ttc).toBe(7.5); // avg of r1(5ms) and r2(10ms)
   });
 
-  test("handles logic jumps", () => {
+  test("drop-off attributed to last seen element when user doesn't reach next question", () => {
+    // Welcome card enabled so first element drop-off is NOT overridden by displayCount
+    const surveyWithWelcome: TSurvey = {
+      ...surveyWithBlocks,
+      welcomeCard: { enabled: true, headline: { default: "Welcome" } } as unknown as TSurvey["welcomeCard"],
+    };
+    const responses = [
+      {
+        id: "r1",
+        data: { q1: "a" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: { q1: 10 }, // Only saw q1, never reached q2
+        finished: false,
+      },
+    ] as any;
+    const displayCount = 1;
+    const dropOff = getSurveySummaryDropOff(
+      surveyWithWelcome,
+      getElementsFromBlocks(surveyWithWelcome.blocks),
+      responses,
+      displayCount
+    );
+
+    expect(dropOff[0].impressions).toBe(1); // Saw q1
+    expect(dropOff[0].dropOffCount).toBe(1); // Dropped at q1 (last seen element)
+    expect(dropOff[1].impressions).toBe(0); // Never saw q2
+    expect(dropOff[1].dropOffCount).toBe(0);
+  });
+
+  test("handles logic jumps — impressions based on actual ttc/data, not logic replay", () => {
+    // Survey with 4 questions across 4 blocks, logic on block2 jumps q2->q4 (skipping q3)
     const surveyWithLogic: TSurvey = {
       ...mockBaseSurvey,
       blocks: [
@@ -315,36 +341,6 @@ describe("getSurveySummaryDropOff", () => {
               charLimit: { enabled: false },
             },
           ] as TSurveyElement[],
-          logic: [
-            {
-              id: "logic1",
-              conditions: {
-                id: "condition1",
-                connector: "and" as const,
-                conditions: [
-                  {
-                    id: "c1",
-                    leftOperand: {
-                      type: "element" as const,
-                      value: "q2",
-                    },
-                    operator: "equals" as const,
-                    rightOperand: {
-                      type: "static" as const,
-                      value: "b",
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: "action1",
-                  objective: "jumpToBlock" as const,
-                  target: "q4",
-                },
-              ],
-            },
-          ],
         },
         {
           id: "block3",
@@ -377,28 +373,21 @@ describe("getSurveySummaryDropOff", () => {
       ],
       questions: [],
     };
+
+    // Response where user answered q1, q2, then logic jumped to q4 (skipping q3).
+    // The ttc/data reflects exactly what elements were shown — no logic replay needed.
     const responses = [
       {
         id: "r1",
-        data: { q1: "a", q2: "b" },
+        data: { q1: "a", q2: "b", q4: "d" },
         updatedAt: new Date(),
         contact: null,
         contactAttributes: {},
         language: "en",
-        ttc: { q1: 10, q2: 10 },
+        ttc: { q1: 10, q2: 10, q4: 10 }, // q3 has no ttc entry — was skipped by logic
         finished: false,
-      }, // Jumps from q2 to q4, drops at q4
+      },
     ];
-    vi.mocked(evaluateLogic).mockImplementation((_s, data, _v, _, _l) => {
-      // Simulate logic on q2 triggering
-      return data.q2 === "b";
-    });
-    vi.mocked(performActions).mockImplementation((_s, actions, _d, _v) => {
-      if (actions[0] && "objective" in actions[0] && actions[0].objective === "jumpToBlock") {
-        return { jumpTarget: actions[0].target, requiredElementIds: [], calculations: {} };
-      }
-      return { jumpTarget: undefined, requiredElementIds: [], calculations: {} };
-    });
 
     const dropOff = getSurveySummaryDropOff(
       surveyWithLogic,
@@ -407,11 +396,11 @@ describe("getSurveySummaryDropOff", () => {
       1
     );
 
-    expect(dropOff[0].impressions).toBe(1); // q1
-    expect(dropOff[1].impressions).toBe(1); // q2
-    expect(dropOff[2].impressions).toBe(0); // q3 (skipped)
-    expect(dropOff[3].impressions).toBe(1); // q4 (jumped to)
-    expect(dropOff[3].dropOffCount).toBe(1); // Dropped at q4
+    expect(dropOff[0].impressions).toBe(1); // q1: seen
+    expect(dropOff[1].impressions).toBe(1); // q2: seen
+    expect(dropOff[2].impressions).toBe(0); // q3: skipped by logic (no ttc, no data)
+    expect(dropOff[3].impressions).toBe(1); // q4: jumped to, seen
+    expect(dropOff[3].dropOffCount).toBe(1); // Dropped at q4 (last seen element, not finished)
   });
 });
 
@@ -662,17 +651,23 @@ describe("getQuestionSummary", () => {
       expect((summary[0] as any).choices).toHaveLength(3);
 
       // Item 1 is in position 1 once and position 2 once, so avg ranking should be (1+2)/2 = 1.5
-      const item1 = (summary[0] as any).choices.find((c) => c.value === "Item 1");
+      const item1 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 1"
+      );
       expect(item1.count).toBe(2);
       expect(item1.avgRanking).toBe(1.5);
 
       // Item 2 is in position 1 once and position 2 once, so avg ranking should be (1+2)/2 = 1.5
-      const item2 = (summary[0] as any).choices.find((c) => c.value === "Item 2");
+      const item2 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 2"
+      );
       expect(item2.count).toBe(2);
       expect(item2.avgRanking).toBe(1.5);
 
       // Item 3 is in position 3 twice, so avg ranking should be 3
-      const item3 = (summary[0] as any).choices.find((c) => c.value === "Item 3");
+      const item3 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 3"
+      );
       expect(item3.count).toBe(2);
       expect(item3.avgRanking).toBe(3);
     });
@@ -747,17 +742,23 @@ describe("getQuestionSummary", () => {
       expect(summary[0].responseCount).toBe(1);
 
       // Item 1 is in position 2, so avg ranking should be 2
-      const item1 = (summary[0] as any).choices.find((c) => c.value === "Item 1");
+      const item1 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 1"
+      );
       expect(item1.count).toBe(1);
       expect(item1.avgRanking).toBe(2);
 
       // Item 2 is in position 1, so avg ranking should be 1
-      const item2 = (summary[0] as any).choices.find((c) => c.value === "Item 2");
+      const item2 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 2"
+      );
       expect(item2.count).toBe(1);
       expect(item2.avgRanking).toBe(1);
 
       // Item 3 is in position 3, so avg ranking should be 3
-      const item3 = (summary[0] as any).choices.find((c) => c.value === "Item 3");
+      const item3 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 3"
+      );
       expect(item3.count).toBe(1);
       expect(item3.avgRanking).toBe(3);
     });
@@ -830,10 +831,12 @@ describe("getQuestionSummary", () => {
       expect((summary[0] as any).choices).toHaveLength(3);
 
       // All items should have count 0 and avgRanking 0
-      (summary[0] as any).choices.forEach((choice) => {
-        expect(choice.count).toBe(0);
-        expect(choice.avgRanking).toBe(0);
-      });
+      (summary[0] as any).choices.forEach(
+        (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
+          expect(choice.count).toBe(0);
+          expect(choice.avgRanking).toBe(0);
+        }
+      );
     });
 
     test("getQuestionSummary handles ranking question with non-array answers", async () => {
@@ -894,10 +897,12 @@ describe("getQuestionSummary", () => {
       expect((summary[0] as any).choices).toHaveLength(3);
 
       // All items should have count 0 and avgRanking 0 since we had no valid ranking data
-      (summary[0] as any).choices.forEach((choice) => {
-        expect(choice.count).toBe(0);
-        expect(choice.avgRanking).toBe(0);
-      });
+      (summary[0] as any).choices.forEach(
+        (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
+          expect(choice.count).toBe(0);
+          expect(choice.avgRanking).toBe(0);
+        }
+      );
     });
 
     test("getQuestionSummary handles ranking question with values not in choices", async () => {
@@ -958,17 +963,23 @@ describe("getQuestionSummary", () => {
       expect((summary[0] as any).choices).toHaveLength(3);
 
       // Item 1 is in position 1, so avg ranking should be 1
-      const item1 = (summary[0] as any).choices.find((c) => c.value === "Item 1");
+      const item1 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 1"
+      );
       expect(item1.count).toBe(1);
       expect(item1.avgRanking).toBe(1);
 
       // Item 2 was not ranked, so should have count 0 and avgRanking 0
-      const item2 = (summary[0] as any).choices.find((c) => c.value === "Item 2");
+      const item2 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 2"
+      );
       expect(item2.count).toBe(0);
       expect(item2.avgRanking).toBe(0);
 
       // Item 3 is in position 3, so avg ranking should be 3
-      const item3 = (summary[0] as any).choices.find((c) => c.value === "Item 3");
+      const item3 = (summary[0] as any).choices.find(
+        (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 3"
+      );
       expect(item3.count).toBe(1);
       expect(item3.avgRanking).toBe(3);
     });
@@ -986,7 +997,11 @@ describe("getSurveySummary", () => {
     // Since getSurveySummary calls getResponsesForSummary internally, we'll mock prisma.response.findMany
     // which is used by the actual implementation of getResponsesForSummary.
     vi.mocked(prisma.response.findMany).mockResolvedValue(
-      mockResponses.map((r) => ({ ...r, contactId: null, personAttributes: {} })) as any
+      mockResponses.map((r: Record<string, unknown>) => ({
+        ...r,
+        contactId: null,
+        personAttributes: {},
+      })) as any
     );
     vi.mocked(getDisplayCountBySurveyId).mockResolvedValue(10);
 
@@ -1020,8 +1035,8 @@ describe("getSurveySummary", () => {
   test("handles filterCriteria", async () => {
     const filterCriteria: TResponseFilterCriteria = { finished: true };
     const finishedResponses = mockResponses
-      .filter((r) => r.finished)
-      .map((r) => ({ ...r, contactId: null, personAttributes: {} }));
+      .filter((r: Record<string, unknown>) => r.finished)
+      .map((r: Record<string, unknown>) => ({ ...r, contactId: null, personAttributes: {} }));
     vi.mocked(prisma.response.findMany).mockResolvedValue(finishedResponses as any);
 
     await getSurveySummary(mockSurveyId, filterCriteria);
@@ -1043,7 +1058,11 @@ describe("getResponsesForSummary", () => {
     vi.resetAllMocks();
     vi.mocked(getSurvey).mockResolvedValue(mockBaseSurvey);
     vi.mocked(prisma.response.findMany).mockResolvedValue(
-      mockResponses.map((r) => ({ ...r, contactId: null, personAttributes: {} })) as any
+      mockResponses.map((r: Record<string, unknown>) => ({
+        ...r,
+        contactId: null,
+        personAttributes: {},
+      })) as any
     );
     // React cache is already mocked globally - no need to mock it again
   });
@@ -1842,23 +1861,63 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(2);
 
     // Verify Speed row
-    const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
+    const speedRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Speed"
+    );
     expect(speedRow.totalResponsesForRow).toBe(2);
     expect(speedRow.columnPercentages).toHaveLength(4); // 4 columns
-    expect(speedRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(50);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Average").percentage).toBe(50);
+    expect(
+      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        .percentage
+    ).toBe(50);
+    expect(
+      speedRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Average"
+      ).percentage
+    ).toBe(50);
 
     // Verify Quality row
-    const qualityRow = summary[0].data.find((row) => row.rowLabel === "Quality");
+    const qualityRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Quality"
+    );
     expect(qualityRow.totalResponsesForRow).toBe(2);
-    expect(qualityRow.columnPercentages.find((col) => col.column === "Excellent").percentage).toBe(50);
-    expect(qualityRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(50);
+    expect(
+      qualityRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Excellent"
+      ).percentage
+    ).toBe(50);
+    expect(
+      qualityRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Good"
+      ).percentage
+    ).toBe(50);
 
     // Verify Price row
-    const priceRow = summary[0].data.find((row) => row.rowLabel === "Price");
+    const priceRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Price"
+    );
     expect(priceRow.totalResponsesForRow).toBe(2);
-    expect(priceRow.columnPercentages.find((col) => col.column === "Poor").percentage).toBe(50);
-    expect(priceRow.columnPercentages.find((col) => col.column === "Average").percentage).toBe(50);
+    expect(
+      priceRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Poor")
+        .percentage
+    ).toBe(50);
+    expect(
+      priceRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Average"
+      ).percentage
+    ).toBe(50);
   });
 
   test("getQuestionSummary correctly processes Matrix question with non-default language responses", async () => {
@@ -1949,19 +2008,48 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(1);
 
     // Verify Speed row with localized values mapped to default language
-    const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
+    const speedRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Speed"
+    );
     expect(speedRow.totalResponsesForRow).toBe(1);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(100);
+    expect(
+      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        .percentage
+    ).toBe(100);
 
     // Verify Quality row
-    const qualityRow = summary[0].data.find((row) => row.rowLabel === "Quality");
+    const qualityRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Quality"
+    );
     expect(qualityRow.totalResponsesForRow).toBe(1);
-    expect(qualityRow.columnPercentages.find((col) => col.column === "Excellent").percentage).toBe(100);
+    expect(
+      qualityRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Excellent"
+      ).percentage
+    ).toBe(100);
 
     // Verify Price row
-    const priceRow = summary[0].data.find((row) => row.rowLabel === "Price");
+    const priceRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Price"
+    );
     expect(priceRow.totalResponsesForRow).toBe(1);
-    expect(priceRow.columnPercentages.find((col) => col.column === "Average").percentage).toBe(100);
+    expect(
+      priceRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Average"
+      ).percentage
+    ).toBe(100);
   });
 
   test("getQuestionSummary handles missing or invalid data for Matrix questions", async () => {
@@ -2055,12 +2143,18 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(3); // Count is 3 because responses 2, 3, and 4 have the "matrix-q1" property
 
     // All rows should have zero responses for all columns
-    summary[0].data.forEach((row) => {
-      expect(row.totalResponsesForRow).toBe(0);
-      row.columnPercentages.forEach((col) => {
-        expect(col.percentage).toBe(0);
-      });
-    });
+    summary[0].data.forEach(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => {
+        expect(row.totalResponsesForRow).toBe(0);
+        row.columnPercentages.forEach((col: { column: string; percentage: number }) => {
+          expect(col.percentage).toBe(0);
+        });
+      }
+    );
   });
 
   test("getQuestionSummary handles partial and incomplete matrix responses", async () => {
@@ -2147,22 +2241,59 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(2);
 
     // Verify Speed row - both responses provided data
-    const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
+    const speedRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Speed"
+    );
     expect(speedRow.totalResponsesForRow).toBe(2);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(50);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Average").percentage).toBe(50);
+    expect(
+      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        .percentage
+    ).toBe(50);
+    expect(
+      speedRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Average"
+      ).percentage
+    ).toBe(50);
 
     // Verify Quality row - only one response provided data
-    const qualityRow = summary[0].data.find((row) => row.rowLabel === "Quality");
+    const qualityRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Quality"
+    );
     expect(qualityRow.totalResponsesForRow).toBe(1);
-    expect(qualityRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(100);
+    expect(
+      qualityRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Good"
+      ).percentage
+    ).toBe(100);
 
     // Verify Price row - both responses provided data
-    const priceRow = summary[0].data.find((row) => row.rowLabel === "Price");
+    const priceRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Price"
+    );
     expect(priceRow.totalResponsesForRow).toBe(2);
 
     // ExtraRow should not appear in the summary
-    expect(summary[0].data.find((row) => row.rowLabel === "ExtraRow")).toBeUndefined();
+    expect(
+      summary[0].data.find(
+        (row: {
+          rowLabel: string;
+          totalResponsesForRow: number;
+          columnPercentages: { column: string; percentage: number }[];
+        }) => row.rowLabel === "ExtraRow"
+      )
+    ).toBeUndefined();
   });
 
   test("getQuestionSummary handles zero responses for Matrix question correctly", async () => {
@@ -2221,12 +2352,18 @@ describe("Matrix question type tests", () => {
     // All rows should have proper structure but zero counts
     expect(summary[0].data).toHaveLength(2); // 2 rows
 
-    summary[0].data.forEach((row) => {
-      expect(row.columnPercentages).toHaveLength(2); // 2 columns
-      expect(row.totalResponsesForRow).toBe(0);
-      expect(row.columnPercentages[0].percentage).toBe(0);
-      expect(row.columnPercentages[1].percentage).toBe(0);
-    });
+    summary[0].data.forEach(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => {
+        expect(row.columnPercentages).toHaveLength(2); // 2 columns
+        expect(row.totalResponsesForRow).toBe(0);
+        expect(row.columnPercentages[0].percentage).toBe(0);
+        expect(row.columnPercentages[1].percentage).toBe(0);
+      }
+    );
   });
 
   test("getQuestionSummary handles Matrix question with mixed valid and invalid column values", async () => {
@@ -2296,21 +2433,46 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(1);
 
     // Speed row should have a valid response
-    const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
+    const speedRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Speed"
+    );
     expect(speedRow.totalResponsesForRow).toBe(1);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(100);
+    expect(
+      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        .percentage
+    ).toBe(100);
 
     // Quality row should have no valid responses
-    const qualityRow = summary[0].data.find((row) => row.rowLabel === "Quality");
+    const qualityRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Quality"
+    );
     expect(qualityRow.totalResponsesForRow).toBe(0);
-    qualityRow.columnPercentages.forEach((col) => {
+    qualityRow.columnPercentages.forEach((col: { column: string; percentage: number }) => {
       expect(col.percentage).toBe(0);
     });
 
     // Price row should have a valid response
-    const priceRow = summary[0].data.find((row) => row.rowLabel === "Price");
+    const priceRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Price"
+    );
     expect(priceRow.totalResponsesForRow).toBe(1);
-    expect(priceRow.columnPercentages.find((col) => col.column === "Average").percentage).toBe(100);
+    expect(
+      priceRow.columnPercentages.find(
+        (col: { column: string; percentage: number }) => col.column === "Average"
+      ).percentage
+    ).toBe(100);
   });
 
   test("getQuestionSummary handles Matrix question with invalid row labels", async () => {
@@ -2381,17 +2543,48 @@ describe("Matrix question type tests", () => {
     expect(summary[0].data).toHaveLength(2); // 2 rows
 
     // Speed row should have a valid response
-    const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
+    const speedRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Speed"
+    );
     expect(speedRow.totalResponsesForRow).toBe(1);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(100);
+    expect(
+      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        .percentage
+    ).toBe(100);
 
     // Quality row should have no responses
-    const qualityRow = summary[0].data.find((row) => row.rowLabel === "Quality");
+    const qualityRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Quality"
+    );
     expect(qualityRow.totalResponsesForRow).toBe(0);
 
     // Invalid rows should not appear in the summary
-    expect(summary[0].data.find((row) => row.rowLabel === "InvalidRow")).toBeUndefined();
-    expect(summary[0].data.find((row) => row.rowLabel === "AnotherInvalidRow")).toBeUndefined();
+    expect(
+      summary[0].data.find(
+        (row: {
+          rowLabel: string;
+          totalResponsesForRow: number;
+          columnPercentages: { column: string; percentage: number }[];
+        }) => row.rowLabel === "InvalidRow"
+      )
+    ).toBeUndefined();
+    expect(
+      summary[0].data.find(
+        (row: {
+          rowLabel: string;
+          totalResponsesForRow: number;
+          columnPercentages: { column: string; percentage: number }[];
+        }) => row.rowLabel === "AnotherInvalidRow"
+      )
+    ).toBeUndefined();
   });
 
   test("getQuestionSummary handles Matrix question with mixed language responses", async () => {
@@ -2493,12 +2686,27 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(2);
 
     // Speed row should have both responses
-    const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
+    const speedRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Speed"
+    );
     expect(speedRow.totalResponsesForRow).toBe(2);
-    expect(speedRow.columnPercentages.find((col) => col.column === "Good").percentage).toBe(100);
+    expect(
+      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        .percentage
+    ).toBe(100);
 
     // Quality row should have no responses
-    const qualityRow = summary[0].data.find((row) => row.rowLabel === "Quality");
+    const qualityRow = summary[0].data.find(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => row.rowLabel === "Quality"
+    );
     expect(qualityRow.totalResponsesForRow).toBe(0);
   });
 
@@ -2557,12 +2765,18 @@ describe("Matrix question type tests", () => {
     expect(summary[0].responseCount).toBe(0); // Counts as response even with null data
 
     // Both rows should have zero responses
-    summary[0].data.forEach((row) => {
-      expect(row.totalResponsesForRow).toBe(0);
-      row.columnPercentages.forEach((col) => {
-        expect(col.percentage).toBe(0);
-      });
-    });
+    summary[0].data.forEach(
+      (row: {
+        rowLabel: string;
+        totalResponsesForRow: number;
+        columnPercentages: { column: string; percentage: number }[];
+      }) => {
+        expect(row.totalResponsesForRow).toBe(0);
+        row.columnPercentages.forEach((col: { column: string; percentage: number }) => {
+          expect(col.percentage).toBe(0);
+        });
+      }
+    );
   });
 });
 
@@ -2994,23 +3208,33 @@ describe("Rating question type tests", () => {
     expect(summary[0].average).toBe(4.25);
 
     // Verify each rating option count and percentage
-    const rating5 = summary[0].choices.find((c) => c.rating === 5);
+    const rating5 = summary[0].choices.find(
+      (c: { rating: number; count: number; percentage: number }) => c.rating === 5
+    );
     expect(rating5.count).toBe(2);
     expect(rating5.percentage).toBe(50); // 2/4 * 100
 
-    const rating4 = summary[0].choices.find((c) => c.rating === 4);
+    const rating4 = summary[0].choices.find(
+      (c: { rating: number; count: number; percentage: number }) => c.rating === 4
+    );
     expect(rating4.count).toBe(1);
     expect(rating4.percentage).toBe(25); // 1/4 * 100
 
-    const rating3 = summary[0].choices.find((c) => c.rating === 3);
+    const rating3 = summary[0].choices.find(
+      (c: { rating: number; count: number; percentage: number }) => c.rating === 3
+    );
     expect(rating3.count).toBe(1);
     expect(rating3.percentage).toBe(25); // 1/4 * 100
 
-    const rating2 = summary[0].choices.find((c) => c.rating === 2);
+    const rating2 = summary[0].choices.find(
+      (c: { rating: number; count: number; percentage: number }) => c.rating === 2
+    );
     expect(rating2.count).toBe(0);
     expect(rating2.percentage).toBe(0);
 
-    const rating1 = summary[0].choices.find((c) => c.rating === 1);
+    const rating1 = summary[0].choices.find(
+      (c: { rating: number; count: number; percentage: number }) => c.rating === 1
+    );
     expect(rating1.count).toBe(0);
     expect(rating1.percentage).toBe(0);
 
@@ -3154,10 +3378,12 @@ describe("Rating question type tests", () => {
     expect(summary[0].average).toBe(0);
 
     // Verify all ratings have 0 count and percentage
-    summary[0].choices.forEach((choice) => {
-      expect(choice.count).toBe(0);
-      expect(choice.percentage).toBe(0);
-    });
+    summary[0].choices.forEach(
+      (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
+        expect(choice.count).toBe(0);
+        expect(choice.percentage).toBe(0);
+      }
+    );
 
     // Verify dismissed is 0
     expect(summary[0].dismissed.count).toBe(0);
@@ -3232,15 +3458,21 @@ describe("PictureSelection question type tests", () => {
     expect(summary[0].selectionCount).toBe(3); // Total selections: img1, img2, img3
 
     // Check individual choice counts
-    const img1 = summary[0].choices.find((c) => c.id === "img1");
+    const img1 = summary[0].choices.find(
+      (c: { id: string; count: number; percentage: number }) => c.id === "img1"
+    );
     expect(img1.count).toBe(1);
     expect(img1.percentage).toBe(50);
 
-    const img2 = summary[0].choices.find((c) => c.id === "img2");
+    const img2 = summary[0].choices.find(
+      (c: { id: string; count: number; percentage: number }) => c.id === "img2"
+    );
     expect(img2.count).toBe(1);
     expect(img2.percentage).toBe(50);
 
-    const img3 = summary[0].choices.find((c) => c.id === "img3");
+    const img3 = summary[0].choices.find(
+      (c: { id: string; count: number; percentage: number }) => c.id === "img3"
+    );
     expect(img3.count).toBe(1);
     expect(img3.percentage).toBe(50);
   });
@@ -3311,10 +3543,12 @@ describe("PictureSelection question type tests", () => {
     expect(summary[0].selectionCount).toBe(0);
 
     // All choices should have zero count
-    summary[0].choices.forEach((choice) => {
-      expect(choice.count).toBe(0);
-      expect(choice.percentage).toBe(0);
-    });
+    summary[0].choices.forEach(
+      (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
+        expect(choice.count).toBe(0);
+        expect(choice.percentage).toBe(0);
+      }
+    );
   });
 
   test("getQuestionSummary handles PictureSelection with invalid choice ids", async () => {
@@ -3373,17 +3607,23 @@ describe("PictureSelection question type tests", () => {
     expect(summary[0].selectionCount).toBe(2); // Total selections including invalid one
 
     // img1 should be counted
-    const img1 = summary[0].choices.find((c) => c.id === "img1");
+    const img1 = summary[0].choices.find(
+      (c: { id: string; count: number; percentage: number }) => c.id === "img1"
+    );
     expect(img1.count).toBe(1);
     expect(img1.percentage).toBe(100);
 
     // img2 should not be counted
-    const img2 = summary[0].choices.find((c) => c.id === "img2");
+    const img2 = summary[0].choices.find(
+      (c: { id: string; count: number; percentage: number }) => c.id === "img2"
+    );
     expect(img2.count).toBe(0);
     expect(img2.percentage).toBe(0);
 
     // Invalid ID should not appear in choices
-    expect(summary[0].choices.find((c) => c.id === "invalid-id")).toBeUndefined();
+    expect(
+      summary[0].choices.find((c: { id: string; count: number; percentage: number }) => c.id === "invalid-id")
+    ).toBeUndefined();
   });
 });
 

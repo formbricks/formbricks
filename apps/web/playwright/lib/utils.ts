@@ -39,7 +39,7 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
 
   await page.locator(".copyApiKeyIcon").first().click();
 
-  const apiKey = await page.evaluate("navigator.clipboard.readText()");
+  const apiKey = (await page.evaluate("navigator.clipboard.readText()")) as string;
 
   return { environmentId, apiKey };
 }

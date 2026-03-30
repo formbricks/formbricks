@@ -168,7 +168,6 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     icon: MousePointerClickIcon,
     preset: {
       headline: createI18nString("", []),
-      subheader: createI18nString("", []),
       ctaButtonLabel: createI18nString(t("templates.book_interview"), []),
       buttonUrl: "",
       buttonExternal: true,
@@ -182,7 +181,6 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     icon: CheckIcon,
     preset: {
       headline: createI18nString("", []),
-      subheader: createI18nString("", []),
       label: createI18nString("", []),
     },
   },

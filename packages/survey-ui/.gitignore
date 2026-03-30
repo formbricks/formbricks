@@ -1,0 +1,8 @@
+node_modules
+dist
+.turbo
+coverage
+*.log
+src/**/*.d.ts
+src/**/*.d.ts.map
+

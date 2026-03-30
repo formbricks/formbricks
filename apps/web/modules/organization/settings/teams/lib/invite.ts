@@ -13,49 +13,36 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { type InviteWithCreator, type TInvite, type TInvitee } from "../types/invites";
 
-export const resendInvite = async (inviteId: string): Promise<Pick<Invite, "email" | "name">> => {
+export const refreshInviteExpiration = async (inviteId: string): Promise<Invite> => {
   try {
-    const invite = await prisma.invite.findUnique({
-      where: {
-        id: inviteId,
-      },
-      select: {
-        email: true,
-        name: true,
-        creator: true,
-      },
-    });
-
-    if (!invite) {
-      throw new ResourceNotFoundError("Invite", inviteId);
-    }
-
     const updatedInvite = await prisma.invite.update({
-      where: {
-        id: inviteId,
-      },
+      where: { id: inviteId },
       data: {
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        organizationId: true,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
       },
     });
 
-    return {
-      email: updatedInvite.email,
-      name: updatedInvite.name,
-    };
+    return updatedInvite;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        throw new ResourceNotFoundError("Invite", inviteId);
+      }
       throw new DatabaseError(error.message);
     }
 
     throw error;
   }
+};
+
+export const resendInvite = async (inviteId: string): Promise<Pick<Invite, "email" | "name">> => {
+  // Refresh expiration and return the updated invite (single query)
+  const updatedInvite = await refreshInviteExpiration(inviteId);
+
+  return {
+    email: updatedInvite.email,
+    name: updatedInvite.name,
+  };
 };
 
 export const getInvitesByOrganizationId = reactCache(

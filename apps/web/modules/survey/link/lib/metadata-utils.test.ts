@@ -7,6 +7,7 @@ import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import {
   getBasicSurveyMetadata,
   getBrandColorForURL,
+  getMetadataBrandColor,
   getNameForURL,
   getSurveyOpenGraphMetadata,
 } from "./metadata-utils";
@@ -110,7 +111,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ name: "Test Project" } as any);
@@ -135,7 +136,7 @@ describe("Metadata Utils", () => {
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
@@ -157,9 +158,8 @@ describe("Metadata Utils", () => {
       }));
 
       // Re-import the function to use the updated mock
-      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } = await import(
-        "./metadata-utils"
-      );
+      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } =
+        await import("./metadata-utils");
 
       const mockSurvey = {
         id: mockSurveyId,
@@ -169,7 +169,7 @@ describe("Metadata Utils", () => {
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
@@ -204,7 +204,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(getTextContent).mockReturnValue("Welcome Headline");
@@ -235,7 +235,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(recallToHeadline).mockReturnValue({
@@ -251,6 +251,35 @@ describe("Metadata Utils", () => {
         "default"
       );
       expect(result.title).toBe("Welcome @User");
+    });
+  });
+
+  describe("getMetadataBrandColor", () => {
+    test("returns survey brand color when project allows override and survey overrides theme", () => {
+      const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#0000ff");
+    });
+
+    test("returns project brand color when survey does not override theme", () => {
+      const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: false, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#ff0000");
+    });
+
+    test("returns project brand color when project disallows style overwrite", () => {
+      const projectStyling = { allowStyleOverwrite: false, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(projectStyling, surveyStyling as any)).toBe("#ff0000");
+    });
+
+    test("returns project brand color when survey styling is null", () => {
+      const projectStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+
+      expect(getMetadataBrandColor(projectStyling, null)).toBe("#ff0000");
     });
   });
 
@@ -288,7 +317,7 @@ describe("Metadata Utils", () => {
       const surveyName = "Test Survey With Spaces";
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
-      expect(result.openGraph?.images?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
+      expect((result.openGraph?.images as string[])?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
     });
   });
 });

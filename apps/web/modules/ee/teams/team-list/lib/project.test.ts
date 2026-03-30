@@ -23,7 +23,7 @@ describe("getProjectsByOrganizationId", () => {
   });
 
   test("returns mapped projects for valid organization", async () => {
-    vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects);
+    vi.mocked(prisma.project.findMany).mockResolvedValueOnce(mockProjects as any);
     const result = await getProjectsByOrganizationId("org1");
     expect(result).toEqual([
       { id: "p1", name: "Project 1" },

@@ -26,6 +26,7 @@ export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
 export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
+export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
@@ -63,7 +64,8 @@ export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
 export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
 export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
-export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize,groups:read`;
+export const SLACK_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/slack/callback`;
+export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize,groups:read&redirect_uri=${SLACK_REDIRECT_URI}`;
 
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
@@ -158,65 +160,34 @@ export const BREVO_LIST_ID = env.BREVO_LIST_ID;
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
-export const STRIPE_API_VERSION = "2024-06-20";
+export const STRIPE_API_VERSION = "2026-02-25.clover";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150;
 
 export const DEFAULT_LOCALE = "en-US";
 export const AVAILABLE_LOCALES: TUserLocale[] = [
-  "en-US",
   "de-DE",
-  "pt-BR",
+  "en-US",
+  "es-ES",
   "fr-FR",
+  "hu-HU",
+  "ja-JP",
   "nl-NL",
-  "zh-Hant-TW",
+  "pt-BR",
   "pt-PT",
   "ro-RO",
-  "ja-JP",
+  "ru-RU",
+  "sv-SE",
   "zh-Hans-CN",
-  "es-ES",
+  "zh-Hant-TW",
 ];
 
-// Billing constants
+export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
+export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";
+export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
 
-export enum PROJECT_FEATURE_KEYS {
-  FREE = "free",
-  STARTUP = "startup",
-  CUSTOM = "custom",
-}
-
-export enum STRIPE_PROJECT_NAMES {
-  STARTUP = "Formbricks Startup",
-  CUSTOM = "Formbricks Custom",
-}
-
-export enum STRIPE_PRICE_LOOKUP_KEYS {
-  STARTUP_MAY25_MONTHLY = "STARTUP_MAY25_MONTHLY",
-  STARTUP_MAY25_YEARLY = "STARTUP_MAY25_YEARLY",
-}
-
-export const BILLING_LIMITS = {
-  FREE: {
-    PROJECTS: 3,
-    RESPONSES: 1500,
-    MIU: 2000,
-  },
-  STARTUP: {
-    PROJECTS: 3,
-    RESPONSES: 5000,
-    MIU: 7500,
-  },
-  CUSTOM: {
-    PROJECTS: null,
-    RESPONSES: null,
-    MIU: null,
-  },
-} as const;
-
-export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
-export const INTERCOM_APP_ID = env.INTERCOM_APP_ID;
-export const IS_INTERCOM_CONFIGURED = Boolean(env.INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
+export const POSTHOG_KEY = env.POSTHOG_KEY;
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 export const TURNSTILE_SITE_KEY = env.TURNSTILE_SITE_KEY;

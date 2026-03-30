@@ -26,7 +26,7 @@ describe("getPublishedLinkSurveys", () => {
       { id: "survey3", name: "NPS Survey" },
     ];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
     const result = await getPublishedLinkSurveys(environmentId);
 
@@ -79,7 +79,7 @@ describe("getPublishedLinkSurveys", () => {
   test("filters surveys by status inProgress", async () => {
     const mockSurveys = [{ id: "survey1", name: "Active Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
     await getPublishedLinkSurveys(environmentId);
 
@@ -95,7 +95,7 @@ describe("getPublishedLinkSurveys", () => {
   test("filters surveys by type link", async () => {
     const mockSurveys = [{ id: "survey1", name: "Link Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
     await getPublishedLinkSurveys(environmentId);
 
@@ -111,7 +111,7 @@ describe("getPublishedLinkSurveys", () => {
   test("only selects id and name fields", async () => {
     const mockSurveys = [{ id: "survey1", name: "Test Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
     const result = await getPublishedLinkSurveys(environmentId);
 

@@ -49,6 +49,7 @@ describe("ZContactTableData", () => {
           key: "attr1",
           name: "Attribute 1",
           value: "value1",
+          dataType: "string",
         },
       ],
     };
@@ -68,6 +69,7 @@ describe("ZContactTableData", () => {
           key: "attr1",
           name: null,
           value: null,
+          dataType: "string",
         },
       ],
     };

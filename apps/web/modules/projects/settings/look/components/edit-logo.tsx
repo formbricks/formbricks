@@ -44,7 +44,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
       }
       setLogoUrl(uploadResult.url);
     } catch (error) {
-      toast.error(t("environments.project.look.logo_upload_failed"));
+      toast.error(t("environments.workspace.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -76,13 +76,13 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
         data: updatedProject,
       });
       if (updateProjectResponse?.data) {
-        toast.success(t("environments.project.look.logo_updated_successfully"));
+        toast.success(t("environments.workspace.look.logo_updated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updateProjectResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.project.look.failed_to_update_logo"));
+      toast.error(t("environments.workspace.look.failed_to_update_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -106,13 +106,13 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
         data: updatedProject,
       });
       if (updateProjectResponse?.data) {
-        toast.success(t("environments.project.look.logo_removed_successfully"));
+        toast.success(t("environments.workspace.look.logo_removed_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updateProjectResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.project.look.failed_to_remove_logo"));
+      toast.error(t("environments.workspace.look.failed_to_remove_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -146,9 +146,11 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
             id="logo-input"
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
             environmentId={environmentId}
-            onFileUpload={(files: string[]) => {
-              setLogoUrl(files[0]);
-              setIsEditing(true);
+            onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
+              if (files?.[0]) {
+                setLogoUrl(files[0]);
+                setIsEditing(true);
+              }
             }}
             disabled={isReadOnly}
             maxSizeInMB={5}
@@ -178,22 +180,22 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
                 }}
                 variant="secondary"
                 size="sm">
-                {t("environments.project.look.replace_logo")}
+                {t("environments.workspace.look.replace_logo")}
               </Button>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setConfirmRemoveLogoModalOpen(true)}
                 disabled={!isEditing}>
-                {t("environments.project.look.remove_logo")}
+                {t("environments.workspace.look.remove_logo")}
               </Button>
             </div>
             <AdvancedOptionToggle
               isChecked={isBgColorEnabled}
               onToggle={toggleBackgroundColor}
               htmlId="addBackgroundColor"
-              title={t("environments.project.look.add_background_color")}
-              description={t("environments.project.look.add_background_color_description")}
+              title={t("environments.workspace.look.add_background_color")}
+              description={t("environments.workspace.look.add_background_color_description")}
               childBorder
               customContainerClass="p-0"
               childrenContainerClass="overflow-visible"
@@ -219,7 +221,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
           open={confirmRemoveLogoModalOpen}
           setOpen={setConfirmRemoveLogoModalOpen}
           deleteWhat={t("common.logo")}
-          text={t("environments.project.look.remove_logo_confirmation")}
+          text={t("environments.workspace.look.remove_logo_confirmation")}
           onDelete={removeLogo}
         />
       </div>

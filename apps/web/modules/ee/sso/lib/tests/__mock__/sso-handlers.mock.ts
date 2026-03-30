@@ -1,5 +1,5 @@
-import { Organization } from "@prisma/client";
 import type { Account } from "next-auth";
+import type { TOrganization } from "@formbricks/types/organizations";
 import type { TUser } from "@formbricks/types/user";
 
 // Mock user data
@@ -42,19 +42,18 @@ export const mockSamlAccount: Account = {
 };
 
 // Mock organization data
-export const mockOrganization: Organization = {
+export const mockOrganization: TOrganization = {
   id: "org-123",
   name: "Test Organization",
   isAIEnabled: false,
   whitelabel: {
-    enabled: false,
+    logoUrl: null,
+    faviconUrl: null,
   },
   billing: {
     stripeCustomerId: null,
-    plan: "free",
-    period: "monthly",
-    limits: { monthly: { responses: null, miu: null }, projects: null },
-    periodStart: new Date(),
+    limits: { monthly: { responses: null }, projects: null },
+    usageCycleAnchor: new Date(),
   },
   createdAt: new Date(),
   updatedAt: new Date(),

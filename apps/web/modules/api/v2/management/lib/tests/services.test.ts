@@ -11,13 +11,16 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+type PrismaSurveyFindFirst = Awaited<ReturnType<typeof prisma.survey.findFirst>>;
+type PrismaSurveyFindMany = Awaited<ReturnType<typeof prisma.survey.findMany>>;
+
 describe("Services", () => {
   describe("getSurveyAndEnvironmentId", () => {
     test("should return surveyId and environmentId for responseId", async () => {
       vi.mocked(prisma.survey.findFirst).mockResolvedValue({
         environmentId: "env-id",
         responses: [{ surveyId: "survey-id" }],
-      });
+      } as unknown as PrismaSurveyFindFirst);
 
       const result = await fetchEnvironmentId("response-id", true);
       expect(result.ok).toBe(true);
@@ -30,7 +33,7 @@ describe("Services", () => {
       vi.mocked(prisma.survey.findFirst).mockResolvedValue({
         id: "survey-id",
         environmentId: "env-id",
-      });
+      } as unknown as PrismaSurveyFindFirst);
 
       const result = await fetchEnvironmentId("survey-id", false);
       expect(result.ok).toBe(true);
@@ -45,7 +48,7 @@ describe("Services", () => {
       const result = await fetchEnvironmentId("invalid-id", true);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("not_found");
+        expect((result.error as { type: string }).type).toBe("not_found");
       }
     });
 
@@ -55,7 +58,7 @@ describe("Services", () => {
       const result = await fetchEnvironmentId("invalid-id", false);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("not_found");
+        expect((result.error as { type: string }).type).toBe("not_found");
       }
     });
 
@@ -65,7 +68,7 @@ describe("Services", () => {
       const result = await fetchEnvironmentId("response-id", true);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
+        expect((result.error as { type: string }).type).toBe("internal_server_error");
       }
     });
 
@@ -75,7 +78,7 @@ describe("Services", () => {
       const result = await fetchEnvironmentId("survey-id", false);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
+        expect((result.error as { type: string }).type).toBe("internal_server_error");
       }
     });
   });
@@ -85,7 +88,7 @@ describe("Services", () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValue([
         { environmentId: "env-1" },
         { environmentId: "env-2" },
-      ]);
+      ] as unknown as PrismaSurveyFindMany);
       const result = await fetchEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -94,11 +97,13 @@ describe("Services", () => {
     });
 
     test("should return not_found error if any survey is missing", async () => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ environmentId: "env-1" }]);
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([
+        { environmentId: "env-1" },
+      ] as unknown as PrismaSurveyFindMany);
       const result = await fetchEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("not_found");
+        expect((result.error as { type: string }).type).toBe("not_found");
       }
     });
 
@@ -107,7 +112,7 @@ describe("Services", () => {
       const result = await fetchEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
+        expect((result.error as { type: string }).type).toBe("internal_server_error");
       }
     });
   });

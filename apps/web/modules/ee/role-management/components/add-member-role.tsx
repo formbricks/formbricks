@@ -60,7 +60,7 @@ export function AddMemberRole({
       name="role"
       render={({ field: { onChange, value } }) => (
         <div className="flex flex-col space-y-2">
-          <Label>{t("common.role_organization")}</Label>
+          <Label>{t("environments.settings.teams.organization_role")}</Label>
           <Select
             defaultValue={isAccessControlAllowed ? "member" : "owner"}
             disabled={!isAccessControlAllowed}
@@ -78,7 +78,9 @@ export function AddMemberRole({
                 {roles.map((role) => (
                   <SelectItem key={role} value={role}>
                     <P className="capitalize">{role}</P>
-                    <Muted className="text-slate-500">{rolesDescription[role]}</Muted>
+                    <Muted className="text-slate-500">
+                      {(rolesDescription as Record<string, string>)[role]}
+                    </Muted>
                   </SelectItem>
                 ))}
               </SelectGroup>

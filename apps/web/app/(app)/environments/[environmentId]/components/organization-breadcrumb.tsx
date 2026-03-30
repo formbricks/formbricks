@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import {
-  BuildingIcon,
+  Building2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
   Loader2,
@@ -81,7 +81,7 @@ export const OrganizationBreadcrumb = ({
       getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
         if (result?.data) {
           // Sort organizations by name
-          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
           setOrganizations(sorted);
         } else {
           // Handle server errors or validation errors
@@ -135,7 +135,7 @@ export const OrganizationBreadcrumb = ({
     },
     {
       id: "teams",
-      label: t("common.teams"),
+      label: t("common.members_and_teams"),
       href: `/environments/${currentEnvironmentId}/settings/teams`,
     },
     {
@@ -143,6 +143,12 @@ export const OrganizationBreadcrumb = ({
       label: t("common.api_keys"),
       href: `/environments/${currentEnvironmentId}/settings/api-keys`,
       hidden: !isOwnerOrManager,
+    },
+    {
+      id: "domain",
+      label: t("common.domain"),
+      href: `/environments/${currentEnvironmentId}/settings/domain`,
+      hidden: isFormbricksCloud,
     },
     {
       id: "billing",
@@ -166,7 +172,7 @@ export const OrganizationBreadcrumb = ({
           id="organizationDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
+            <Building2Icon className="h-3 w-3" strokeWidth={1.5} />
             <span>{organizationName}</span>
             {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
@@ -180,7 +186,7 @@ export const OrganizationBreadcrumb = ({
           {showOrganizationDropdown && (
             <>
               <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <BuildingIcon className="mr-2 inline h-4 w-4" />
+                <Building2Icon className="mr-2 inline h-4 w-4" />
                 {t("common.choose_organization")}
               </div>
               {isLoadingOrganizations && (
@@ -203,7 +209,7 @@ export const OrganizationBreadcrumb = ({
               )}
               {!isLoadingOrganizations && !loadError && (
                 <>
-                  <DropdownMenuGroup>
+                  <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
                     {organizations.map((org) => (
                       <DropdownMenuCheckboxItem
                         key={org.id}

@@ -10,7 +10,7 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 
-const Page = async (props) => {
+const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
@@ -50,8 +50,8 @@ const Page = async (props) => {
           </div>
           <div className="flex h-full flex-col items-center justify-center space-y-12">
             <Header
-              title={t("organizations.landing.no_projects_warning_title")}
-              subtitle={t("organizations.landing.no_projects_warning_subtitle")}
+              title={t("organizations.landing.no_workspaces_warning_title")}
+              subtitle={t("organizations.landing.no_workspaces_warning_subtitle")}
             />
           </div>
         </div>

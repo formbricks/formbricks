@@ -69,7 +69,7 @@ export const ConnectWithFormbricks = ({
           ) : (
             <div className="flex animate-pulse flex-col items-center space-y-4">
               <span className="relative flex h-10 w-10">
-                <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-slate-400 opacity-75"></span>
                 <span className="relative inline-flex h-10 w-10 rounded-full bg-slate-500"></span>
               </span>
               <p className="pt-4 text-sm font-medium text-slate-600">

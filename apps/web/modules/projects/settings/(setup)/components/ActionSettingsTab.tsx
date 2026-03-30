@@ -8,6 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   deleteActionClassAction,
   updateActionClassAction,
@@ -37,6 +38,7 @@ export const ActionSettingsTab = ({
   setOpen,
   isReadOnly,
 }: ActionSettingsTabProps) => {
+  const actionDocsHref = "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions";
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -92,15 +94,19 @@ export const ActionSettingsTab = ({
       validatePermissions(isReadOnly, t);
       const updatedAction = buildActionObject(data, actionClass.environmentId, t);
 
-      await updateActionClassAction({
+      const result = await updateActionClassAction({
         actionClassId: actionClass.id,
         updatedAction: updatedAction,
       });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       setOpen(false);
       router.refresh();
       toast.success(t("environments.actions.action_updated_successfully"));
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
       setIsUpdatingAction(false);
     }
@@ -109,7 +115,11 @@ export const ActionSettingsTab = ({
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      await deleteActionClassAction({ actionClassId: actionClass.id });
+      const result = await deleteActionClassAction({ actionClassId: actionClass.id });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       router.refresh();
       toast.success(t("environments.actions.action_deleted_successfully"));
       setOpen(false);
@@ -137,7 +147,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between gap-x-2 border-slate-200 pt-4">
             <div className="flex items-center gap-x-2">
-              {!isReadOnly ? (
+              {isReadOnly ? null : (
                 <Button
                   type="button"
                   variant="destructive"
@@ -146,22 +156,22 @@ export const ActionSettingsTab = ({
                   <TrashIcon />
                   {t("common.delete")}
                 </Button>
-              ) : null}
+              )}
 
               <Button variant="secondary" asChild>
-                <Link href="https://formbricks.com/docs/actions/no-code" target="_blank">
+                <Link href={actionDocsHref} target="_blank">
                   {t("common.read_docs")}
                 </Link>
               </Button>
             </div>
 
-            {!isReadOnly ? (
+            {isReadOnly ? null : (
               <div className="flex space-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}
                 </Button>
               </div>
-            ) : null}
+            )}
           </div>
         </form>
       </FormProvider>

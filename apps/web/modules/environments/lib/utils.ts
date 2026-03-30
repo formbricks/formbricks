@@ -4,14 +4,18 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, DatabaseError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  DatabaseError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
@@ -44,24 +48,24 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
   ]);
 
   if (!project) {
-    throw new Error(t("common.project_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (!environment) {
-    throw new Error(t("common.environment_not_found"));
+    throw new ResourceNotFoundError(t("common.environment"), environmentId);
   }
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   if (!currentUserMembership) {
-    throw new Error(t("common.membership_not_found"));
+    throw new AuthorizationError(t("common.membership_not_found"));
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership?.role);
@@ -110,7 +114,7 @@ export const environmentIdLayoutChecks = async (environmentId: string) => {
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   return { t, session, user, organization };
@@ -150,9 +154,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
             config: true,
             placement: true,
             clickOutsideClose: true,
-            darkOverlay: true,
+            overlay: true,
             styling: true,
             logo: true,
+            customHeadScripts: true,
             // All project environments
             environments: {
               select: {
@@ -171,7 +176,14 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                billing: true,
+                billing: {
+                  select: {
+                    stripeCustomerId: true,
+                    limits: true,
+                    usageCycleAnchor: true,
+                    stripe: true,
+                  },
+                },
                 isAIEnabled: true,
                 whitelabel: true,
                 // Current user's membership only (filtered at DB level)
@@ -196,6 +208,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
 
     if (!data) return null;
 
+    if (!data.project.organization.billing) {
+      throw new ResourceNotFoundError("OrganizationBilling", data.project.organization.id);
+    }
+
     // Extract and return properly typed data
     return {
       environment: {
@@ -219,9 +235,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         config: data.project.config,
         placement: data.project.placement,
         clickOutsideClose: data.project.clickOutsideClose,
-        darkOverlay: data.project.darkOverlay,
+        overlay: data.project.overlay,
         styling: data.project.styling,
         logo: data.project.logo,
+        customHeadScripts: data.project.customHeadScripts,
         environments: data.project.environments,
       },
       organization: {
@@ -262,18 +279,18 @@ export const getEnvironmentLayoutData = reactCache(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      throw new Error(t("common.session_not_found"));
+      throw new AuthenticationError(t("common.not_authenticated"));
     }
 
     // Verify userId matches session (safety check)
     if (session.user.id !== userId) {
-      throw new Error("User ID mismatch with session");
+      throw new AuthenticationError("User ID mismatch with session");
     }
 
     // Get user first (lightweight query needed for subsequent checks)
     const user = await getUser(userId); // 1 DB query
     if (!user) {
-      throw new Error(t("common.user_not_found"));
+      throw new AuthenticationError(t("common.not_authenticated"));
     }
 
     // Authorization check before expensive data fetching
@@ -284,31 +301,27 @@ export const getEnvironmentLayoutData = reactCache(
 
     const relationData = await getEnvironmentWithRelations(environmentId, userId);
     if (!relationData) {
-      throw new Error(t("common.environment_not_found"));
+      throw new ResourceNotFoundError(t("common.environment"), environmentId);
     }
 
     const { environment, project, organization, environments, membership } = relationData;
 
     // Validate user's membership was found
     if (!membership) {
-      throw new Error(t("common.membership_not_found"));
+      throw new AuthorizationError(t("common.membership_not_found"));
     }
 
     // Fetch remaining data in parallel
     const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
-      getAccessControlPermission(organization.billing.plan), // No DB query (logic only)
+      getAccessControlPermission(organization.id),
       getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);
 
     // Conditional queries for Formbricks Cloud
-    let peopleCount = 0;
     let responseCount = 0;
     if (IS_FORMBRICKS_CLOUD) {
-      [peopleCount, responseCount] = await Promise.all([
-        getMonthlyActiveOrganizationPeopleCount(organization.id),
-        getMonthlyOrganizationResponseCount(organization.id),
-      ]);
+      responseCount = await getMonthlyOrganizationResponseCount(organization.id);
     }
 
     return {
@@ -322,7 +335,6 @@ export const getEnvironmentLayoutData = reactCache(
       isAccessControlAllowed,
       projectPermission,
       license,
-      peopleCount,
       responseCount,
     };
   }

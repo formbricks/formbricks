@@ -8,7 +8,9 @@ import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
 
 vi.mock("@/lib/utils/validate", () => ({
-  validateInputs: vi.fn((inputs) => inputs.map((input) => input[0])), // Pass through validation for testing
+  validateInputs: vi.fn((inputs: [unknown, unknown][]) =>
+    inputs.map((input: [unknown, unknown]) => input[0])
+  ), // Pass through validation for testing
 }));
 
 vi.mock("@formbricks/database", () => ({

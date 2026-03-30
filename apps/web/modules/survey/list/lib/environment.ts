@@ -45,7 +45,7 @@ export const getProjectIdIfEnvironmentExists = reactCache(
 
 export const getEnvironment = reactCache(
   async (environmentId: string): Promise<Pick<Environment, "id" | "type"> | null> => {
-    validateInputs([environmentId, z.string().cuid2()]);
+    validateInputs([environmentId, z.cuid2()]);
 
     try {
       const environment = await prisma.environment.findUnique({

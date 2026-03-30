@@ -77,7 +77,12 @@ export const validateTeamIdAndProjectId = reactCache(
     } catch (error) {
       return err({
         type: "internal_server_error",
-        details: [{ field: "teamId/projectId", issue: error.message }],
+        details: [
+          {
+            field: "teamId/projectId",
+            issue: error instanceof Error ? error.message : "Unknown error occurred",
+          },
+        ],
       });
     }
   }

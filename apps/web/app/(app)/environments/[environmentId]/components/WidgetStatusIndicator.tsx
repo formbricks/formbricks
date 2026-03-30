@@ -17,13 +17,13 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: t("environments.project.app-connection.formbricks_sdk_not_connected"),
-      subtitle: t("environments.project.app-connection.formbricks_sdk_not_connected_description"),
+      title: t("environments.workspace.app-connection.formbricks_sdk_not_connected"),
+      subtitle: t("environments.workspace.app-connection.formbricks_sdk_not_connected_description"),
     },
     running: {
       icon: CheckIcon,
-      title: t("environments.project.app-connection.receiving_data"),
-      subtitle: t("environments.project.app-connection.formbricks_sdk_connected"),
+      title: t("environments.workspace.app-connection.receiving_data"),
+      subtitle: t("environments.workspace.app-connection.formbricks_sdk_connected"),
     },
   };
 
@@ -57,7 +57,7 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
       {status === "notImplemented" && (
         <Button variant="outline" size="sm" className="bg-white" onClick={() => router.refresh()}>
           <RotateCcwIcon />
-          {t("environments.project.app-connection.recheck")}
+          {t("environments.workspace.app-connection.recheck")}
         </Button>
       )}
     </div>

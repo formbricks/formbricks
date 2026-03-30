@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
@@ -37,7 +39,11 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     // Set loading flag immediately to prevent concurrent loads
     isLoadingScript = true;
     try {
-      const response = await fetch("/js/surveys.umd.cjs");
+      const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
+      const response = await fetch(
+        scriptUrl,
+        process.env.NODE_ENV === "development" ? { cache: "no-store" } : {}
+      );
 
       if (!response.ok) {
         throw new Error("Failed to load the surveys package");

@@ -61,6 +61,9 @@ describe("convertToEmbedUrl", () => {
     expect(convertToEmbedUrl("https://www.vimeo.com/123456789")).toBe(
       "https://player.vimeo.com/video/123456789"
     );
+    expect(convertToEmbedUrl("https://player.vimeo.com/video/123456789")).toBe(
+      "https://player.vimeo.com/video/123456789"
+    );
   });
 
   test("converts Loom URL to embed URL", () => {
@@ -68,6 +71,9 @@ describe("convertToEmbedUrl", () => {
       "https://www.loom.com/embed/abcdef123456"
     );
     expect(convertToEmbedUrl("https://loom.com/share/abcdef123456")).toBe(
+      "https://www.loom.com/embed/abcdef123456"
+    );
+    expect(convertToEmbedUrl("https://www.loom.com/embed/abcdef123456")).toBe(
       "https://www.loom.com/embed/abcdef123456"
     );
   });
@@ -109,6 +115,7 @@ describe("extractVimeoId", () => {
   test("extracts video ID from Vimeo URLs", () => {
     expect(extractVimeoId("https://vimeo.com/123456789")).toBe("123456789");
     expect(extractVimeoId("https://www.vimeo.com/123456789")).toBe("123456789");
+    expect(extractVimeoId("https://player.vimeo.com/video/123456789")).toBe("123456789");
   });
 
   test("returns null for invalid Vimeo URLs", () => {
@@ -121,6 +128,7 @@ describe("extractLoomId", () => {
   test("extracts video ID from Loom URLs", () => {
     expect(extractLoomId("https://loom.com/share/abcdef123456")).toBe("abcdef123456");
     expect(extractLoomId("https://www.loom.com/share/abcdef123456")).toBe("abcdef123456");
+    expect(extractLoomId("https://www.loom.com/embed/abcdef123456")).toBe("abcdef123456");
   });
 
   test("returns null for invalid Loom URLs", async () => {

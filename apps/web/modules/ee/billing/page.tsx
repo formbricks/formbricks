@@ -1,19 +1,17 @@
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
-import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
-} from "@/lib/organization/service";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
+import { getStripeBillingCatalogDisplay } from "@/modules/ee/billing/lib/stripe-billing-catalog";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { PricingTable } from "./components/pricing-table";
 
-export const PricingPage = async (props) => {
+export const PricingPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
@@ -23,8 +21,17 @@ export const PricingPage = async (props) => {
     notFound();
   }
 
-  const [peopleCount, responseCount, projectCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
+  const [cloudBillingDisplayContext, billingCatalog] = await Promise.all([
+    getCloudBillingDisplayContext(organization.id),
+    getStripeBillingCatalogDisplay(),
+  ]);
+
+  const organizationWithSyncedBilling = {
+    ...organization,
+    billing: cloudBillingDisplayContext.billing,
+  };
+
+  const [responseCount, projectCount] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
     getOrganizationProjectsCount(organization.id),
   ]);
@@ -43,14 +50,20 @@ export const PricingPage = async (props) => {
       </PageHeader>
 
       <PricingTable
-        organization={organization}
+        organization={organizationWithSyncedBilling}
         environmentId={params.environmentId}
-        peopleCount={peopleCount}
         responseCount={responseCount}
         projectCount={projectCount}
-        stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
-        projectFeatureKeys={PROJECT_FEATURE_KEYS}
         hasBillingRights={hasBillingRights}
+        currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
+        currentBillingInterval={cloudBillingDisplayContext.currentBillingInterval}
+        currentSubscriptionStatus={cloudBillingDisplayContext.currentSubscriptionStatus}
+        pendingChange={cloudBillingDisplayContext.pendingChange}
+        usageCycleStart={cloudBillingDisplayContext.usageCycleStart}
+        usageCycleEnd={cloudBillingDisplayContext.usageCycleEnd}
+        isStripeSetupIncomplete={!organizationWithSyncedBilling.billing.stripeCustomerId}
+        trialDaysRemaining={cloudBillingDisplayContext.trialDaysRemaining}
+        billingCatalog={billingCatalog}
       />
     </PageContentWrapper>
   );

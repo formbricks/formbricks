@@ -52,7 +52,7 @@ export const SurveyFilterDropdown = ({
             <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
               <Checkbox
                 checked={selectedOptions.includes(option.value)}
-                className={`bg-white ${selectedOptions.includes(option.value) ? "bg-brand-dark border-none" : ""}`}
+                className={`bg-white ${selectedOptions.includes(option.value) ? "border-none bg-brand-dark" : ""}`}
               />
               <p className="font-normal text-white">{option.label}</p>
             </div>

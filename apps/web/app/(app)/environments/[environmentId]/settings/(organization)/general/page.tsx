@@ -9,9 +9,11 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import packageJson from "@/package.json";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
+import { SecurityListTip } from "./components/SecurityListTip";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
@@ -24,7 +26,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.billing.plan);
+  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.id);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
@@ -48,6 +50,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           </Alert>
         </div>
       )}
+      {!IS_FORMBRICKS_CLOUD && <SecurityListTip />}
       <SettingsCard
         title={t("environments.settings.general.organization_name")}
         description={t("environments.settings.general.organization_name_description")}>
@@ -79,7 +82,10 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         </SettingsCard>
       )}
 
-      <IdBadge id={organization.id} label={t("common.organization_id")} variant="column" />
+      <div className="space-y-2">
+        <IdBadge id={organization.id} label={t("common.organization_id")} variant="column" />
+        <IdBadge id={packageJson.version} label={t("common.formbricks_version")} variant="column" />
+      </div>
     </PageContentWrapper>
   );
 };

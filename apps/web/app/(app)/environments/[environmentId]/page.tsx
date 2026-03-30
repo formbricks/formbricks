@@ -4,7 +4,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 
-const EnvironmentPage = async (props) => {
+const EnvironmentPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const { session, organization } = await getEnvironmentAuth(params.environmentId);
 

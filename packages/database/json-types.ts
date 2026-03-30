@@ -3,7 +3,11 @@
 import { type TActionClassNoCodeConfig } from "../types/action-classes";
 import type { TOrganizationAccess } from "../types/api-key";
 import { type TIntegrationConfig } from "../types/integration";
-import { type TOrganizationBilling } from "../types/organizations";
+import {
+  type TOrganizationBilling,
+  type TOrganizationBillingPlanLimits,
+  type TOrganizationStripeBilling,
+} from "../types/organizations";
 import { type TProjectConfig, type TProjectStyling } from "../types/project";
 import type { TSurveyQuotaLogic } from "../types/quota";
 import { type TResponseContactAttributes, type TResponseData, type TResponseMeta } from "../types/responses";
@@ -46,6 +50,8 @@ declare global {
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyRecaptcha = TSurveyRecaptcha;
     export type OrganizationBilling = TOrganizationBilling;
+    export type OrganizationBillingPlanLimits = TOrganizationBillingPlanLimits;
+    export type OrganizationStripeBilling = TOrganizationStripeBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type Styling = TProjectStyling;

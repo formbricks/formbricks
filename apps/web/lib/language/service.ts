@@ -53,7 +53,7 @@ export const createLanguage = async (
   try {
     validateInputs([projectId, ZId], [languageInput, ZLanguageInput]);
     const project = await getProject(projectId);
-    if (!project) throw new ResourceNotFoundError("Project not found", projectId);
+    if (!project) throw new ResourceNotFoundError("Workspace not found", projectId);
     if (!languageInput.code) {
       throw new ValidationError("Language code is required");
     }
@@ -110,7 +110,7 @@ export const deleteLanguage = async (languageId: string, projectId: string): Pro
   try {
     validateInputs([languageId, ZId], [projectId, ZId]);
     const project = await getProject(projectId);
-    if (!project) throw new ResourceNotFoundError("Project not found", projectId);
+    if (!project) throw new ResourceNotFoundError("Workspace not found", projectId);
     const prismaLanguage = await prisma.language.delete({
       where: { id: languageId },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
@@ -137,7 +137,7 @@ export const updateLanguage = async (
   try {
     validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate], [projectId, ZId]);
     const project = await getProject(projectId);
-    if (!project) throw new ResourceNotFoundError("Project not found", projectId);
+    if (!project) throw new ResourceNotFoundError("Workspace not found", projectId);
     const prismaLanguage = await prisma.language.update({
       where: { id: languageId },
       data: { ...languageInput, updatedAt: new Date() },

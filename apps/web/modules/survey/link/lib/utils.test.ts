@@ -1,296 +1,195 @@
-import "@testing-library/jest-dom/vitest";
 import { describe, expect, test } from "vitest";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
-import { getPrefillValue } from "./utils";
+import { getElementsFromSurveyBlocks, getWebAppLocale, isRTL, isRTLLanguage } from "./utils";
 
-describe("survey link utils", () => {
-  const mockSurvey = {
-    id: "survey1",
-    name: "Test Survey",
+const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
+  ({
+    id: "survey-1",
     createdAt: new Date(),
     updatedAt: new Date(),
-    environmentId: "env1",
-    blocks: [
-      {
-        id: "block1",
-        elements: [
-          {
-            id: "q1",
-            type: TSurveyElementTypeEnum.OpenText,
-            headline: { default: "Open Text Question" },
-            required: true,
-            inputType: "text",
-            charLimit: { enabled: false },
-          },
-          {
-            id: "q2",
-            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-            headline: { default: "Multiple Choice Question" },
-            required: false,
-            choices: [
-              { id: "c1", label: { default: "Option 1" } },
-              { id: "c2", label: { default: "Option 2" } },
-            ],
-            shuffleOption: "none",
-          },
-          {
-            id: "q3",
-            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-            headline: { default: "Multiple Choice with Other" },
-            required: false,
-            choices: [
-              { id: "c3", label: { default: "Option 3" } },
-              { id: "other", label: { default: "Other" } },
-            ],
-            shuffleOption: "none",
-          },
-          {
-            id: "q4",
-            type: TSurveyElementTypeEnum.MultipleChoiceMulti,
-            headline: { default: "Multiple Choice Multi" },
-            required: false,
-            choices: [
-              { id: "c4", label: { default: "Option 4" } },
-              { id: "c5", label: { default: "Option 5" } },
-            ],
-            shuffleOption: "none",
-          },
-          {
-            id: "q5",
-            type: TSurveyElementTypeEnum.MultipleChoiceMulti,
-            headline: { default: "Multiple Choice Multi with Other" },
-            required: false,
-            choices: [
-              { id: "c6", label: { default: "Option 6" } },
-              { id: "other", label: { default: "Other" } },
-            ],
-            shuffleOption: "none",
-          },
-          {
-            id: "q6",
-            type: TSurveyElementTypeEnum.NPS,
-            headline: { default: "NPS Question" },
-            required: false,
-            lowerLabel: { default: "Not likely" },
-            upperLabel: { default: "Very likely" },
-          },
-          {
-            id: "q7",
-            type: TSurveyElementTypeEnum.CTA,
-            headline: { default: "CTA Question" },
-            required: false,
-            buttonLabel: { default: "Click me" },
-            buttonExternal: false,
-            buttonUrl: "",
-          },
-          {
-            id: "q8",
-            type: TSurveyElementTypeEnum.Consent,
-            headline: { default: "Consent Question" },
-            required: true,
-            label: { default: "I agree" },
-          },
-          {
-            id: "q9",
-            type: TSurveyElementTypeEnum.Rating,
-            headline: { default: "Rating Question" },
-            required: false,
-            range: 5,
-            scale: "number",
-            lowerLabel: { default: "Not good" },
-            upperLabel: { default: "Very good" },
-          },
-          {
-            id: "q10",
-            type: TSurveyElementTypeEnum.PictureSelection,
-            headline: { default: "Picture Selection" },
-            required: false,
-            choices: [
-              { id: "p1", imageUrl: "image1.jpg" },
-              { id: "p2", imageUrl: "image2.jpg" },
-            ],
-            allowMulti: false,
-          },
-          {
-            id: "q11",
-            type: TSurveyElementTypeEnum.PictureSelection,
-            headline: { default: "Multi Picture Selection" },
-            required: false,
-            choices: [
-              { id: "p3", imageUrl: "image3.jpg" },
-              { id: "p4", imageUrl: "image4.jpg" },
-            ],
-            allowMulti: true,
-          },
-        ],
-      },
-    ],
-    welcomeCard: {
-      enabled: true,
-      headline: { default: "Welcome" },
-      subheader: { default: "" },
-      buttonLabel: { default: "Start" },
-    },
-    hiddenFields: {},
-    languages: {
-      default: "default",
-    },
+    name: "Test",
+    type: "link",
+    environmentId: "env-1",
+    createdBy: null,
     status: "draft",
-  } as unknown as TSurvey;
+    displayOption: "displayOnce",
+    autoClose: null,
+    triggers: [],
+    recontactDays: null,
+    displayLimit: null,
+    welcomeCard: {
+      enabled: false,
+      headline: { default: "Welcome" },
+      timeToFinish: false,
+      showResponseCount: false,
+    },
+    questions: [],
+    blocks: [],
+    endings: [],
+    hiddenFields: { enabled: false, fieldIds: [] },
+    variables: [],
+    styling: null,
+    segment: null,
+    languages,
+    displayPercentage: null,
+    isVerifyEmailEnabled: false,
+    isSingleResponsePerEmailEnabled: false,
+    singleUse: null,
+    pin: null,
+    projectOverwrites: null,
+    surveyClosedMessage: null,
+    followUps: [],
+    delay: 0,
+    autoComplete: null,
+    showLanguageSwitch: null,
+    recaptcha: null,
+    isBackButtonHidden: false,
+    isCaptureIpEnabled: false,
+    slug: null,
+    metadata: {},
+  }) as TSurvey;
 
-  test("returns undefined when no valid questions are matched", () => {
-    const searchParams = new URLSearchParams();
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
+describe("getWebAppLocale", () => {
+  test("maps language codes and handles defaults", () => {
+    expect(getWebAppLocale("en", createMockSurvey())).toBe("en-US");
+    expect(getWebAppLocale("de", createMockSurvey())).toBe("de-DE");
+    const surveyWithLang = createMockSurvey([
+      {
+        language: {
+          id: "l1",
+          code: "de",
+          alias: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          projectId: "p1",
+        },
+        default: true,
+        enabled: true,
+      },
+    ]);
+    expect(getWebAppLocale("default", surveyWithLang)).toBe("de-DE");
+    expect(getWebAppLocale("xx", createMockSurvey())).toBe("en-US");
   });
 
-  test("ignores forbidden IDs", () => {
-    const searchParams = new URLSearchParams();
-    FORBIDDEN_IDS.forEach((id) => {
-      searchParams.set(id, "value");
-    });
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
+  test("returns en-US when default requested but no default language", () => {
+    const surveyNoDefault = createMockSurvey([
+      {
+        language: {
+          id: "l1",
+          code: "de",
+          alias: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          projectId: "p1",
+        },
+        default: false,
+        enabled: true,
+      },
+    ]);
+    expect(getWebAppLocale("default", surveyNoDefault)).toBe("en-US");
   });
 
-  test("correctly handles OpenText questions", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q1", "Open text answer");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q1: "Open text answer" });
+  test("matches base language code for variants", () => {
+    expect(getWebAppLocale("pt-PT", createMockSurvey())).toBe("pt-PT");
+    expect(getWebAppLocale("es-MX", createMockSurvey())).toBe("es-ES");
+  });
+});
+
+describe("isRTL", () => {
+  test("detects RTL characters", () => {
+    expect(isRTL("مرحبا")).toBe(true);
+    expect(isRTL("שלום")).toBe(true);
+    expect(isRTL("Hello")).toBe(false);
+  });
+});
+
+describe("isRTLLanguage", () => {
+  const createJsSurvey = (
+    languages: TJsEnvironmentStateSurvey["languages"] = [],
+    blocks: TSurveyBlock[] = []
+  ): TJsEnvironmentStateSurvey =>
+    ({
+      id: "s1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test",
+      type: "link",
+      environmentId: "env-1",
+      welcomeCard: {
+        enabled: false,
+        headline: { default: "Welcome" },
+        timeToFinish: false,
+        showResponseCount: false,
+      },
+      blocks,
+      languages,
+    }) as unknown as TJsEnvironmentStateSurvey;
+
+  test("checks language codes when multi-language enabled", () => {
+    const survey = createJsSurvey([
+      {
+        language: {
+          id: "l1",
+          code: "ar",
+          alias: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          projectId: "p1",
+        },
+        default: true,
+        enabled: true,
+      },
+    ]);
+    expect(isRTLLanguage(survey, "ar")).toBe(true);
+    expect(isRTLLanguage(survey, "en")).toBe(false);
   });
 
-  test("validates MultipleChoiceSingle questions", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q2", "Option 1");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q2: "Option 1" });
+  test("checks content when no languages configured", () => {
+    const element = {
+      id: "q1",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "مرحبا" },
+      required: false,
+    } as unknown as TSurveyElement;
+    const block = { id: "b1", name: "Block", elements: [element] } as TSurveyBlock;
+    expect(isRTLLanguage(createJsSurvey([], [block]), "default")).toBe(true);
   });
 
-  test("invalidates MultipleChoiceSingle with non-existent option", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q2", "Non-existent option");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
+  test("checks welcomeCard headline when enabled and no languages", () => {
+    const survey = {
+      ...createJsSurvey([], []),
+      welcomeCard: { enabled: true, headline: { default: "مرحبا" } },
+    } as unknown as TJsEnvironmentStateSurvey;
+    expect(isRTLLanguage(survey, "default")).toBe(true);
   });
 
-  test("handles MultipleChoiceSingle with Other option", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q3", "Custom answer");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q3: "Custom answer" });
+  test("returns false when no languages and no headlines found", () => {
+    const element = { id: "q1", type: TSurveyElementTypeEnum.OpenText, headline: {}, required: false };
+    const block = { id: "b1", name: "Block", elements: [element] } as TSurveyBlock;
+    expect(isRTLLanguage(createJsSurvey([], [block]), "default")).toBe(false);
   });
+});
 
-  test("handles MultipleChoiceMulti questions", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q4", "Option 4,Option 5");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
-  });
-
-  test("handles MultipleChoiceMulti with Other", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q5", "Option 6,Custom answer");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q5: ["Option 6", "Custom answer"] });
-  });
-
-  test("validates NPS questions", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q6", "7");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q6: 7 });
-  });
-
-  test("invalidates NPS with out-of-range values", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q6", "11");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
-  });
-
-  test("handles CTA questions with clicked value", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q7", "clicked");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q7: "clicked" });
-  });
-
-  test("handles CTA questions with dismissed value", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q7", "dismissed");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q7: "" });
-  });
-
-  test("validates Consent questions", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q8", "accepted");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q8: "accepted" });
-  });
-
-  test("invalidates required Consent questions with dismissed value", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q8", "dismissed");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
-  });
-
-  test("validates Rating questions within range", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q9", "3");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q9: 3 });
-  });
-
-  test("invalidates Rating questions out of range", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q9", "6");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
-  });
-
-  test("handles single PictureSelection", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q10", "1");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q10: ["p1"] });
-  });
-
-  test("handles multi PictureSelection", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q11", "1,2");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({ q11: ["p3", "p4"] });
-  });
-
-  test("handles multiple valid questions", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q1", "Open text answer");
-    searchParams.set("q2", "Option 2");
-    searchParams.set("q6", "9");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toEqual({
-      q1: "Open text answer",
-      q2: "Option 2",
-      q6: 9,
-    });
-  });
-
-  test("handles questions with invalid JSON in NPS/Rating", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q6", "{invalid&json}");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
-  });
-
-  test("handles empty required fields", () => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("q1", "");
-    const result = getPrefillValue(mockSurvey, searchParams, "default");
-    expect(result).toBeUndefined();
+describe("getElementsFromSurveyBlocks", () => {
+  test("extracts elements from blocks", () => {
+    const el1 = {
+      id: "q1",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "Q1" },
+      required: false,
+    } as unknown as TSurveyElement;
+    const el2 = {
+      id: "q2",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "Q2" },
+      required: false,
+    } as unknown as TSurveyElement;
+    const block = { id: "b1", name: "Block", elements: [el1, el2] } as TSurveyBlock;
+    const result = getElementsFromSurveyBlocks([block]);
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("q1");
   });
 });

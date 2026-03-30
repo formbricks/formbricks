@@ -1,23 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import {
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  // Ensure ResourceNotFoundError is imported
-  ValidationError,
-} from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
   TBaseFilters,
   TEvaluateSegmentUserData,
-  TSegment,
   TSegmentCreateInput,
   TSegmentUpdateInput,
+  TSegmentWithSurveyRefs,
 } from "@formbricks/types/segment";
-import { TSegmentFilter } from "@formbricks/types/segment";
-import { getEnvironment } from "@/lib/environment/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -45,6 +37,7 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       delete: vi.fn(),
       update: vi.fn(),
+      upsert: vi.fn(),
       findFirst: vi.fn(),
     },
     survey: {
@@ -86,9 +79,11 @@ const mockSegmentPrisma = {
   surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
 };
 
-const mockSegment: TSegment = {
+const mockSegment: TSegmentWithSurveyRefs = {
   ...mockSegmentPrisma,
   surveys: [surveyId],
+  activeSurveys: [{ id: surveyId, name: "Test Survey" }],
+  inactiveSurveys: [],
 };
 
 const mockSegmentCreateInput = {
@@ -108,7 +103,7 @@ const mockSurvey = {
 describe("Segment Service Tests", () => {
   describe("transformPrismaSegment", () => {
     test("should transform Prisma segment to TSegment", () => {
-      const transformed = transformPrismaSegment(mockSegmentPrisma);
+      const transformed = transformPrismaSegment(mockSegmentPrisma as unknown as PrismaSegment);
       expect(transformed).toEqual(mockSegment);
     });
   });
@@ -212,6 +207,73 @@ describe("Segment Service Tests", () => {
       vi.mocked(prisma.segment.create).mockRejectedValue(new Error("DB error"));
       await expect(createSegment(mockSegmentCreateInput)).rejects.toThrow(Error);
     });
+
+    test("should upsert a private segment without surveyId", async () => {
+      const privateInput: TSegmentCreateInput = {
+        ...mockSegmentCreateInput,
+        isPrivate: true,
+      };
+      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
+      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
+      const segment = await createSegment(privateInput);
+      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
+      expect(prisma.segment.upsert).toHaveBeenCalledWith({
+        where: {
+          environmentId_title: {
+            environmentId,
+            title: privateInput.title,
+          },
+        },
+        create: {
+          environmentId,
+          title: privateInput.title,
+          description: undefined,
+          isPrivate: true,
+          filters: [],
+        },
+        update: {
+          description: undefined,
+          filters: [],
+        },
+        select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
+    });
+
+    test("should upsert a private segment with surveyId", async () => {
+      const privateInputWithSurvey: TSegmentCreateInput = {
+        ...mockSegmentCreateInput,
+        isPrivate: true,
+        surveyId,
+      };
+      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
+      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
+      const segment = await createSegment(privateInputWithSurvey);
+      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
+      expect(prisma.segment.upsert).toHaveBeenCalledWith({
+        where: {
+          environmentId_title: {
+            environmentId,
+            title: privateInputWithSurvey.title,
+          },
+        },
+        create: {
+          environmentId,
+          title: privateInputWithSurvey.title,
+          description: undefined,
+          isPrivate: true,
+          filters: [],
+          surveys: { connect: { id: surveyId } },
+        },
+        update: {
+          description: undefined,
+          filters: [],
+          surveys: { connect: { id: surveyId } },
+        },
+        select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("cloneSegment", () => {
@@ -221,7 +283,13 @@ describe("Segment Service Tests", () => {
       id: clonedSegmentId,
       title: "Copy of Test Segment (1)",
     };
-    const clonedSegment = { ...mockSegment, id: clonedSegmentId, title: "Copy of Test Segment (1)" };
+    const clonedSegment = {
+      ...mockSegment,
+      id: clonedSegmentId,
+      title: "Copy of Test Segment (1)",
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
+      inactiveSurveys: [],
+    };
 
     beforeEach(() => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
@@ -256,7 +324,12 @@ describe("Segment Service Tests", () => {
     test("should clone a segment successfully with incremented suffix", async () => {
       const existingCopyPrisma = { ...mockSegmentPrisma, id: "copy-1", title: "Copy of Test Segment (1)" };
       const clonedSegmentPrisma2 = { ...clonedSegmentPrisma, title: "Copy of Test Segment (2)" };
-      const clonedSegment2 = { ...clonedSegment, title: "Copy of Test Segment (2)" };
+      const clonedSegment2 = {
+        ...clonedSegment,
+        title: "Copy of Test Segment (2)",
+        activeSurveys: [{ id: surveyId, name: "Test Survey" }],
+        inactiveSurveys: [],
+      };
 
       vi.mocked(prisma.segment.findMany).mockResolvedValue([mockSegmentPrisma, existingCopyPrisma]);
       vi.mocked(prisma.segment.create).mockResolvedValue(clonedSegmentPrisma2);
@@ -289,7 +362,7 @@ describe("Segment Service Tests", () => {
 
   describe("deleteSegment", () => {
     const segmentToDeletePrisma = { ...mockSegmentPrisma, surveys: [] };
-    const segmentToDelete = { ...mockSegment, surveys: [] };
+    const segmentToDelete = { ...mockSegment, surveys: [], activeSurveys: [], inactiveSurveys: [] };
 
     beforeEach(() => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(segmentToDeletePrisma);
@@ -342,6 +415,8 @@ describe("Segment Service Tests", () => {
       title: surveyId,
       isPrivate: true,
       filters: [],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
+      inactiveSurveys: [],
     };
 
     beforeEach(() => {
@@ -409,7 +484,12 @@ describe("Segment Service Tests", () => {
 
   describe("updateSegment", () => {
     const updatedSegmentPrisma = { ...mockSegmentPrisma, title: "Updated Segment" };
-    const updatedSegment = { ...mockSegment, title: "Updated Segment" };
+    const updatedSegment = {
+      ...mockSegment,
+      title: "Updated Segment",
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
+      inactiveSurveys: [],
+    };
     const updateData: TSegmentUpdateInput = { title: "Updated Segment" };
 
     beforeEach(() => {
@@ -447,7 +527,12 @@ describe("Segment Service Tests", () => {
         ...updatedSegmentPrisma,
         surveys: [{ id: newSurveyId, name: "New Survey", status: "draft" }],
       };
-      const updatedSegmentWithSurvey = { ...updatedSegment, surveys: [newSurveyId] };
+      const updatedSegmentWithSurvey = {
+        ...updatedSegment,
+        surveys: [newSurveyId],
+        activeSurveys: [],
+        inactiveSurveys: [{ id: newSurveyId, name: "New Survey" }],
+      };
 
       vi.mocked(prisma.segment.update).mockResolvedValue(updatedSegmentPrismaWithSurvey);
 
@@ -807,7 +892,7 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
@@ -855,7 +940,7 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
@@ -886,7 +971,7 @@ describe("Segment Service Tests", () => {
       const nonExistentSegmentId = "non-existent-segment";
 
       // Mock findUnique to return null, which causes getSegment to throw
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === nonExistentSegmentId) {
           return null;
         }
@@ -1168,7 +1253,7 @@ describe("Segment Service Tests", () => {
       // compareValues will attempt ('30' as string).startsWith('3'), which should throw a TypeError
       // This TypeError should be caught by the try...catch in evaluateSegment
       await expect(evaluateSegment(userData, filters)).rejects.toThrow(TypeError); // Expect a TypeError specifically
-      expect(logger.error).toHaveBeenCalledWith("Error evaluating segment", expect.any(TypeError));
+      expect(logger.error).toHaveBeenCalledWith(expect.any(TypeError), "Error evaluating segment");
     });
   });
 });

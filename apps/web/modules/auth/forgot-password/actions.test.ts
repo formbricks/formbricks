@@ -33,7 +33,7 @@ vi.mock("@/modules/email", () => ({
 
 vi.mock("@/lib/utils/action-client", () => ({
   actionClient: {
-    schema: vi.fn().mockReturnThis(),
+    inputSchema: vi.fn().mockReturnThis(),
     action: vi.fn((fn) => fn),
   },
 }));
@@ -50,7 +50,7 @@ describe("forgotPasswordAction", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {

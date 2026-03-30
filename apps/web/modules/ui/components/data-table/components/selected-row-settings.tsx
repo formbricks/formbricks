@@ -20,9 +20,9 @@ import { cn } from "@/modules/ui/lib/utils";
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   updateRowList: (rowId: string[]) => void;
-  type: "response" | "contact";
+  type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
   isQuotasAllowed: boolean;
 }
 
@@ -66,10 +66,14 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response") {
-        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId, { decrementQuotas })));
-      } else {
-        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < rowsToBeDeleted.length; i += CHUNK_SIZE) {
+        const chunk = rowsToBeDeleted.slice(i, i + CHUNK_SIZE);
+        if (type === "response") {
+          await Promise.all(chunk.map((rowId) => deleteAction(rowId, { decrementQuotas })));
+        } else {
+          await Promise.all(chunk.map((rowId) => deleteAction(rowId)));
+        }
       }
 
       // Update the row list UI
@@ -94,7 +98,7 @@ export const SelectedRowSettings = <T,>({
   };
 
   // Handle download selected rows
-  const handleDownloadSelectedRows = async (format: string) => {
+  const handleDownloadSelectedRows = async (format: "xlsx" | "csv") => {
     setIsDownloading(true);
     const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
     if (downloadRowsAction && rowsToDownload.length > 0) {
@@ -112,15 +116,37 @@ export const SelectedRowSettings = <T,>({
       })
     : t("environments.contacts.delete_contact_confirmation");
 
-  const deleteDialogText =
-    type === "response" ? t("environments.surveys.responses.delete_response_confirmation") : quotasDialogText;
+  let deleteDialogText: string;
+  if (type === "response") {
+    deleteDialogText = t("environments.surveys.responses.delete_response_confirmation");
+  } else if (type === "attribute") {
+    deleteDialogText = t("environments.contacts.delete_attribute_confirmation", { value: selectedRowCount });
+  } else {
+    deleteDialogText = quotasDialogText;
+  }
+
+  let selectedTypeLabel: string;
+  if (type === "response") {
+    selectedTypeLabel = t("common.responses");
+  } else if (type === "contact") {
+    selectedTypeLabel = t("common.contacts");
+  } else {
+    selectedTypeLabel = t("common.attributes");
+  }
+
+  let deleteWhatText: string;
+  if (type === "response") {
+    deleteWhatText = t("common.count_responses", { count: selectedRowCount });
+  } else if (type === "contact") {
+    deleteWhatText = t("common.count_contacts", { count: selectedRowCount });
+  } else {
+    deleteWhatText = t("common.count_attributes", { count: selectedRowCount });
+  }
 
   return (
     <>
-      <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
-        <div className="lowercase">
-          {`${selectedRowCount} ${type === "response" ? t("common.responses") : t("common.contacts")} ${t("common.selected")}`}
-        </div>
+      <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
+        <div className="lowercase">{`${selectedRowCount} ${selectedTypeLabel} ${t("common.selected")}`}</div>
         <Separator />
         <Button
           variant="outline"
@@ -176,11 +202,7 @@ export const SelectedRowSettings = <T,>({
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat={
-          type === "response"
-            ? t("common.count_responses", { value: selectedRowCount })
-            : t("common.count_contacts", { value: selectedRowCount })
-        }
+        deleteWhat={deleteWhatText}
         onDelete={handleDelete}
         isDeleting={isDeleting}
         text={deleteDialogText}>

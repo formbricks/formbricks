@@ -47,6 +47,7 @@ const mockContactAttributeKey: TContactAttributeKey = {
   type: "custom" as TContactAttributeKeyType,
   description: "A test key",
   isUnique: false,
+  dataType: "string",
 };
 
 // Define a compatible type for test data, as TContactAttributeKeyUpdateInput might be complex

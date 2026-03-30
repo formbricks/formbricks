@@ -20,6 +20,11 @@ export const getContact = reactCache(async (contactId: string, environmentId: st
 
     return ok(contact);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "contact", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "contact", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 });

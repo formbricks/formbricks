@@ -1,19 +1,20 @@
-import { ProjectTeamPermission, TeamUserRole } from "@prisma/client";
+import { type TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { type TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
 
 export const TeamPermissionMapping = {
-  [ProjectTeamPermission.read]: "Read",
-  [ProjectTeamPermission.readWrite]: "Read & write",
-  [ProjectTeamPermission.manage]: "Manage",
+  [ZTeamPermission.enum.read]: "Read",
+  [ZTeamPermission.enum.readWrite]: "Read & write",
+  [ZTeamPermission.enum.manage]: "Manage",
 };
 
 export const TeamRoleMapping = {
-  [TeamUserRole.admin]: "Team Admin",
-  [TeamUserRole.contributor]: "Contributor",
+  [ZTeamRole.enum.admin]: "Team Admin",
+  [ZTeamRole.enum.contributor]: "Contributor",
 };
 
-export const getTeamAccessFlags = (role?: TeamUserRole | null) => {
-  const isAdmin = role === TeamUserRole.admin;
-  const isContributor = role === TeamUserRole.contributor;
+export const getTeamAccessFlags = (role?: TTeamRole | null) => {
+  const isAdmin = role === ZTeamRole.enum.admin;
+  const isContributor = role === ZTeamRole.enum.contributor;
 
   return {
     isAdmin,
@@ -21,10 +22,10 @@ export const getTeamAccessFlags = (role?: TeamUserRole | null) => {
   };
 };
 
-export const getTeamPermissionFlags = (permissionLevel?: ProjectTeamPermission | null) => {
-  const hasReadAccess = permissionLevel === ProjectTeamPermission.read;
-  const hasReadWriteAccess = permissionLevel === ProjectTeamPermission.readWrite;
-  const hasManageAccess = permissionLevel === ProjectTeamPermission.manage;
+export const getTeamPermissionFlags = (permissionLevel?: TTeamPermission | null) => {
+  const hasReadAccess = permissionLevel === ZTeamPermission.enum.read;
+  const hasReadWriteAccess = permissionLevel === ZTeamPermission.enum.readWrite;
+  const hasManageAccess = permissionLevel === ZTeamPermission.enum.manage;
 
   return {
     hasReadAccess,

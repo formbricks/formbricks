@@ -38,7 +38,7 @@ export const AddElementButton = ({ addElement, project, isCxMode }: AddElementBu
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
+          <div className="flex w-10 items-center justify-center rounded-l-lg bg-brand-dark group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
@@ -67,7 +67,7 @@ export const AddElementButton = ({ addElement, project, isCxMode }: AddElementBu
             onMouseEnter={() => setHoveredElementId(elementType.id)}
             onMouseLeave={() => setHoveredElementId(null)}>
             <div className="flex items-center">
-              <elementType.icon className="text-brand-dark -ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+              <elementType.icon className="-ml-0.5 mr-2 h-4 w-4 text-brand-dark" aria-hidden="true" />
               {elementType.label}
             </div>
             <div

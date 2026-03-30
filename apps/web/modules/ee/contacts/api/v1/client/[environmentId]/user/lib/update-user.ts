@@ -1,9 +1,10 @@
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
-import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
 /**
@@ -110,19 +111,18 @@ const buildUserStateFromContact = async (
   contactData: NonNullable<Awaited<ReturnType<typeof getContactWithFullData>>>,
   environmentId: string,
   userId: string,
-  device: "phone" | "desktop",
-  attributes: Record<string, string>
+  device: "phone" | "desktop"
 ) => {
   // Get segments (only remaining external call)
   // Ensure segments is always an array to prevent "segments is not iterable" error
   let segments: string[] = [];
   try {
-    segments = await getPersonSegmentIds(environmentId, contactData.id, userId, attributes, device);
+    segments = await getPersonSegmentIds(environmentId, contactData.id, userId, device);
     // Double-check that segments is actually an array
     if (!Array.isArray(segments)) {
       segments = [];
     }
-  } catch (error) {
+  } catch {
     // If segments fetching fails, use empty array as fallback
     segments = [];
   }
@@ -151,8 +151,8 @@ export const updateUser = async (
   environmentId: string,
   userId: string,
   device: "phone" | "desktop",
-  attributes?: Record<string, string>
-): Promise<{ state: TJsPersonState; messages?: string[] }> => {
+  attributes?: TContactAttributesInput
+): Promise<{ state: TJsPersonState; messages?: string[]; errors?: string[] }> => {
   // Cached environment validation (rarely changes)
   const environment = await getEnvironment(environmentId);
   if (!environment) {
@@ -177,6 +177,7 @@ export const updateUser = async (
   );
 
   let messages: string[] = [];
+  let errors: string[] = [];
   let language = contactAttributes.language;
 
   // Handle attribute updates efficiently
@@ -188,40 +189,21 @@ export const updateUser = async (
       const {
         success,
         messages: updateAttrMessages,
-        ignoreEmailAttribute,
+        errors: updateAttrErrors,
       } = await updateAttributes(contactData.id, userId, environmentId, attributes);
 
-      messages = updateAttrMessages ?? [];
+      messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
+      errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
 
-      // Update local attributes if successful
-      if (success) {
-        let attributesToUpdate = { ...attributes };
-
-        if (ignoreEmailAttribute) {
-          const { email, ...rest } = attributes;
-          attributesToUpdate = rest;
-        }
-
-        contactAttributes = {
-          ...contactAttributes,
-          ...attributesToUpdate,
-        };
-
-        if (attributes.language) {
-          language = attributes.language;
-        }
+      // Update language if provided (used in response state)
+      if (success && attributes.language) {
+        language = String(attributes.language);
       }
     }
   }
 
   // Build user state from already-fetched data (no additional query needed)
-  const userStateData = await buildUserStateFromContact(
-    contactData,
-    environmentId,
-    userId,
-    device,
-    contactAttributes
-  );
+  const userStateData = await buildUserStateFromContact(contactData, environmentId, userId, device);
 
   return {
     state: {
@@ -231,6 +213,7 @@ export const updateUser = async (
       },
       expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
     },
-    messages,
+    messages: messages.length > 0 ? messages : undefined,
+    errors: errors.length > 0 ? errors : undefined,
   };
 };

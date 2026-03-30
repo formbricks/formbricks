@@ -15,7 +15,7 @@ const ZGeneratePersonalSurveyLinkAction = z.object({
 });
 
 export const generatePersonalSurveyLinkAction = authenticatedActionClient
-  .schema(ZGeneratePersonalSurveyLinkAction)
+  .inputSchema(ZGeneratePersonalSurveyLinkAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
     const projectId = await getProjectIdFromContactId(parsedInput.contactId);

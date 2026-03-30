@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZActivityFeedItem = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   type: z.enum(["event", "attribute", "display"]),
   createdAt: z.date(),
   updatedAt: z.date().nullable(),

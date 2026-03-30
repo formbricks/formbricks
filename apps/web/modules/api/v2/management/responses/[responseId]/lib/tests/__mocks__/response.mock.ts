@@ -25,7 +25,7 @@ export const response: Response = {
   ...responseInput,
 };
 
-export const survey: Pick<Survey, "questions" | "environmentId"> = {
+export const survey: Pick<Survey, "questions" | "environmentId" | "blocks"> = {
   questions: [
     {
       id: "ggaw04zw7gx7uxodk5da7if8",
@@ -35,5 +35,6 @@ export const survey: Pick<Survey, "questions" | "environmentId"> = {
       allowMultipleFiles: true,
     },
   ],
+  blocks: [],
   environmentId: "z5t8e52wy6xvi61ubebs2e4i",
 };

@@ -82,6 +82,7 @@ const mockPipelineInput = {
       },
       country: "USA",
       action: "Action Name",
+      ipAddress: "203.0.113.7",
     } as TResponseMeta,
     personAttributes: {},
     singleUseId: null,
@@ -346,7 +347,7 @@ describe("handleIntegrations", () => {
       expect(airtableWriteData).toHaveBeenCalledTimes(1);
       // Adjust expectations for metadata and recalled question
       const expectedMetadataString =
-        "Source: web\nURL: http://example.com\nBrowser: Chrome\nOS: Mac OS\nDevice: Desktop\nCountry: USA\nAction: Action Name";
+        "Source: web\nURL: http://example.com\nBrowser: Chrome\nOS: Mac OS\nDevice: Desktop\nCountry: USA\nAction: Action Name\nIP Address: 203.0.113.7";
       expect(airtableWriteData).toHaveBeenCalledWith(
         mockAirtableIntegration.config.key,
         mockAirtableIntegration.config.data[0],

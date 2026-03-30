@@ -69,10 +69,13 @@ describe("invite", () => {
         creator: {
           name: "Test User",
           email: "test@example.com",
+          locale: "en-US",
         },
       };
 
-      vi.mocked(prisma.invite.findUnique).mockResolvedValue(mockInvite);
+      vi.mocked(prisma.invite.findUnique).mockResolvedValue(
+        mockInvite as unknown as Awaited<ReturnType<typeof prisma.invite.findUnique>>
+      );
 
       const result = await getInvite("test-id");
 
@@ -89,6 +92,7 @@ describe("invite", () => {
             select: {
               name: true,
               email: true,
+              locale: true,
             },
           },
         },

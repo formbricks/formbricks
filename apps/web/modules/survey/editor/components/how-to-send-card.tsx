@@ -149,14 +149,14 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                     option.comingSoon
                       ? "border-slate-200 bg-slate-50/50"
                       : option.id === localSurvey.type
-                        ? "border-brand-dark cursor-pointer bg-slate-50"
+                        ? "cursor-pointer border-brand-dark bg-slate-50"
                         : "cursor-pointer bg-slate-50"
                   )}
                   id={`howToSendCardOption-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
                     id={option.id}
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                     disabled={option.comingSoon}
                   />
                   <div className="inline-flex items-center">
@@ -193,7 +193,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                           <AlertButton
                             onClick={() =>
                               window.open(
-                                `/environments/${environment.id}/project/${option.id}-connection`,
+                                `/environments/${environment.id}/workspace/${option.id}-connection`,
                                 "_blank"
                               )
                             }>

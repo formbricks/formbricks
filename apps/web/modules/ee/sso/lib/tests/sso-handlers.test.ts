@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TUser } from "@formbricks/types/user";
+import { upsertAccount } from "@/lib/account/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -62,7 +63,7 @@ vi.mock("@/modules/ee/sso/lib/team", () => ({
 }));
 
 vi.mock("@/lib/account/service", () => ({
-  createAccount: vi.fn(),
+  upsertAccount: vi.fn(),
 }));
 
 vi.mock("@/lib/membership/service", () => ({
@@ -86,7 +87,7 @@ vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
     debug: vi.fn(),
-    withContext: (context: Record<string, any>) => {
+    withContext: (context: Record<string, unknown>) => {
       return {
         ...context,
         debug: vi.fn(),
@@ -179,7 +180,7 @@ describe("handleSsoCallback", () => {
         ...mockUser,
         email: mockUser.email,
         accounts: [{ provider: mockAccount.provider }],
-      });
+      } as any);
 
       const result = await handleSsoCallback({
         user: mockUser,
@@ -203,6 +204,36 @@ describe("handleSsoCallback", () => {
       });
     });
 
+    test("should not overwrite stored tokens when the provider omits them", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        ...mockUser,
+        email: mockUser.email,
+        accounts: [{ provider: mockAccount.provider }],
+      } as any);
+
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: {
+          ...mockAccount,
+          access_token: undefined,
+          refresh_token: undefined,
+          expires_at: undefined,
+          scope: undefined,
+          token_type: undefined,
+          id_token: undefined,
+        },
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith({
+        userId: mockUser.id,
+        type: mockAccount.type,
+        provider: mockAccount.provider,
+        providerAccountId: mockAccount.providerAccountId,
+      });
+    });
+
     test("should update user email if user with account exists but email changed", async () => {
       const existingUser = {
         ...mockUser,
@@ -211,7 +242,7 @@ describe("handleSsoCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser as any);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(updateUser).mockResolvedValue({ ...existingUser, email: mockUser.email });
 
@@ -233,11 +264,12 @@ describe("handleSsoCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser as any);
       vi.mocked(getUserByEmail).mockResolvedValue({
         id: "another-user-id",
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
+        identityProvider: "google",
         locale: mockUser.locale,
         isActive: true,
       });
@@ -259,6 +291,7 @@ describe("handleSsoCallback", () => {
         id: "existing-user-id",
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
+        identityProvider: "google",
         locale: mockUser.locale,
         isActive: true,
       });

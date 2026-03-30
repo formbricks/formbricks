@@ -4,12 +4,182 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v4.7
+
+Formbricks v4.7 introduces **typed contact attributes** with native `number` and `date` data types. This enables comparison-based segment filters (e.g. "signup date before 2025-01-01") that were previously not possible with string-only attribute values.
+
+### What Happens Automatically
+
+When Formbricks v4.7 starts for the first time, the data migration will:
+
+1. Analyze all existing contact attribute keys and infer their data types (`text`, `number`, or `date`) based on the stored values
+2. Update the `ContactAttributeKey` table with the detected `dataType` for each key
+3. **If your instance has fewer than 1,000,000 contact attribute rows**: backfill the new `valueNumber` and `valueDate` columns inline. No manual action is needed.
+4. **If your instance has 1,000,000 or more contact attribute rows**: the value backfill is skipped to avoid hitting the migration timeout. You will need to run a standalone backfill script after the upgrade.
+
+<Info>
+  Most self-hosted instances have far fewer than 1,000,000 contact attribute rows (a typical setup with 100K
+  contacts and 5-10 attributes each lands around 500K-1M rows). If you are below the threshold, the migration
+  handles everything automatically and you can skip the manual backfill step below.
+</Info>
+
+### Steps to Migrate
+
+**1. Backup your Database**
+
+<Tabs>
+  <Tab title="Docker">
+    Before running these steps, navigate to the `formbricks` directory where your `docker-compose.yml` file is located.
+
+    ```bash
+    docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v4.7_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    <Info>
+      If you run into "**No such container**", use `docker ps` to find your container name, e.g.
+      `formbricks_postgres_1`.
+    </Info>
+  </Tab>
+  <Tab title="Kubernetes">
+    If you are using the **in-cluster PostgreSQL** deployed by the Helm chart:
+
+    ```bash
+    kubectl exec -n formbricks formbricks-postgresql-0 -- pg_dump -Fc -U formbricks -d formbricks > formbricks_pre_v4.7_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    <Info>
+      If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
+    </Info>
+
+    If you are using a **managed PostgreSQL** service (e.g. AWS RDS, Cloud SQL), use your provider's backup/snapshot feature or run `pg_dump` directly against the external host.
+  </Tab>
+</Tabs>
+
+**2. Upgrade to Formbricks v4.7**
+
+<Tabs>
+  <Tab title="Docker">
+    ```bash
+    # Pull the latest version
+    docker compose pull
+
+    # Stop the current instance
+    docker compose down
+
+    # Start with Formbricks v4.7
+    docker compose up -d
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    ```bash
+    helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
+      -n formbricks \
+      --set deployment.image.tag=v4.7.0
+    ```
+
+    <Info>
+      The Helm chart includes a migration Job that automatically runs Prisma schema migrations as a
+      PreSync hook before the new pods start. No manual migration step is needed.
+    </Info>
+  </Tab>
+</Tabs>
+
+**3. Check the Migration Logs**
+
+After Formbricks starts, check the logs to see whether the value backfill was completed or skipped:
+
+<Tabs>
+  <Tab title="Docker">
+    ```bash
+    docker compose logs formbricks | grep -i "backfill"
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    ```bash
+    # Check the application pod logs
+    kubectl logs -n formbricks -l app.kubernetes.io/name=formbricks --tail=200 | grep -i "backfill"
+    ```
+
+    If the Helm migration Job ran, you can also inspect its logs:
+
+    ```bash
+    kubectl logs -n formbricks job/formbricks-migration
+    ```
+  </Tab>
+</Tabs>
+
+If you see a message like `Skipping value backfill (X rows >= 1000000 threshold)`, proceed to step 4. Otherwise, the migration is complete and no further action is needed.
+
+**4. Run the Backfill Script (large datasets only)**
+
+If the migration skipped the value backfill, run the standalone backfill script inside the running Formbricks container:
+
+<Tabs>
+  <Tab title="Docker">
+    ```bash
+    docker exec formbricks node packages/database/dist/scripts/backfill-attribute-values.js
+    ```
+
+    <Info>Replace `formbricks` with your actual container name if it differs. Use `docker ps` to find it.</Info>
+  </Tab>
+  <Tab title="Kubernetes">
+    ```bash
+    kubectl exec -n formbricks deploy/formbricks -- node packages/database/dist/scripts/backfill-attribute-values.js
+    ```
+
+    <Info>
+      If your Formbricks deployment has a different name, run `kubectl get deploy -n formbricks` to find it.
+    </Info>
+  </Tab>
+</Tabs>
+
+The script will output progress as it runs:
+
+```
+========================================
+Attribute Value Backfill Script
+========================================
+
+Fetching number-type attribute keys...
+Found 12 number-type keys. Backfilling valueNumber...
+  Number backfill progress: 10/12 keys (48230 rows updated)
+  Number backfill progress: 12/12 keys (52104 rows updated)
+
+Fetching date-type attribute keys...
+Found 5 date-type keys. Backfilling valueDate...
+  Date backfill progress: 5/5 keys (31200 rows updated)
+
+========================================
+Backfill Complete!
+========================================
+  valueNumber rows updated: 52104
+  valueDate rows updated:   31200
+  Duration: 42.3s
+========================================
+```
+
+Key characteristics of the backfill script:
+
+- **Safe to run while Formbricks is live** -- it does not lock the entire table or wrap work in a long transaction
+- **Idempotent** -- it only updates rows where the typed columns are still `NULL`, so you can safely run it multiple times
+- **Resumable** -- each batch commits independently, so if the process is interrupted you can re-run it and it picks up where it left off
+- **No timeout risk** -- unlike the migration, this script runs outside the migration transaction and has no time limit
+
+**5. Verify the Upgrade**
+
+- Access your Formbricks instance at the same URL as before
+- If you use contact segments with number or date filters, verify they return the expected results
+- Check that existing surveys and response data are intact
+
+---
+
 ## v4.0
 
 <Warning>
   **Important: Migration Required**
 
-  Formbricks 4 introduces additional requirements for self-hosting setups and makes a dedicated Redis cache as well as S3-compatible file storage mandatory.
+Formbricks 4 introduces additional requirements for self-hosting setups and makes a dedicated Redis cache as well as S3-compatible file storage mandatory.
+
 </Warning>
 
 Formbricks 4.0 is a **major milestone** that sets up the technical foundation for future iterations and feature improvements. This release focuses on modernizing core infrastructure components to improve reliability, scalability, and enable advanced features going forward.
@@ -17,9 +187,11 @@ Formbricks 4.0 is a **major milestone** that sets up the technical foundation fo
 ### What's New in Formbricks 4.0
 
 **🚀 New Enterprise Features:**
+
 - **Quotas Management**: Advanced quota controls for enterprise users
 
 **🏗️ Technical Foundation Improvements:**
+
 - **Enhanced File Storage**: Improved file handling with better performance and reliability
 - **Improved Caching**: New caching functionality improving speed, extensibility and reliability
 - **Database Optimization**: Removal of unused database tables and fields for better performance
@@ -39,7 +211,8 @@ These services are already included in the updated one-click setup for self-host
 We know this represents more moving parts in your infrastructure and might even introduce more complexity in hosting Formbricks, and we don't take this decision lightly. As Formbricks grows into a comprehensive Survey and Experience Management platform, we've reached a point where the simple, single-service approach was holding back our ability to deliver the reliable, feature-rich product our users demand and deserve.
 
 By moving to dedicated, professional-grade services for these critical functions, we're building the foundation needed to deliver:
-- **Enterprise-grade reliability** with proper redundancy and backup capabilities  
+
+- **Enterprise-grade reliability** with proper redundancy and backup capabilities
 - **Advanced features** that require sophisticated caching and file processing
 - **Better performance** through optimized, dedicated services
 - **Future scalability** to support larger deployments and more complex use cases without the need to maintain two different approaches
@@ -52,7 +225,7 @@ Additional migration steps are needed if you are using a self-hosted Formbricks 
 
 ### One-Click Setup
 
-For users using our official one-click setup, we provide an automated migration using a migration script: 
+For users using our official one-click setup, we provide an automated migration using a migration script:
 
 ```bash
 # Download the latest script
@@ -67,10 +240,10 @@ chmod +x migrate-to-v4.sh
 ```
 
 This script guides you through the steps for the infrastructure migration and does the following:
+
 - Adds a Redis service to your setup and configures it
 - Adds a MinIO service (open source S3-alternative) to your setup, configures it and migrates local files to it
 - Pulls the latest Formbricks image and updates your instance
-
 
 ### Manual Setup
 
@@ -87,6 +260,7 @@ You need to configure the `REDIS_URL` environment variable and point it to your 
 To use file storage (e.g., file upload questions, image choice questions, custom survey backgrounds, etc.), you need to have S3-compatible file storage set up and connected to Formbricks.
 
 Formbricks supports multiple storage providers (among many other S3-compatible storages):
+
 - AWS S3
 - Digital Ocean Spaces
 - Hetzner Object Storage
@@ -101,6 +275,7 @@ Please make sure to set up a storage bucket with one of these solutions and then
   S3_BUCKET_NAME: formbricks-uploads
   S3_ENDPOINT_URL: http://minio:9000 # not needed for AWS S3
 ```
+
 #### Upgrade Process
 
 **1. Backup your Database**
@@ -112,8 +287,8 @@ docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbr
 ```
 
 <Info>
-  If you run into "**No such container**", use `docker ps` to find your container name,
-  e.g. `formbricks_postgres_1`.
+  If you run into "**No such container**", use `docker ps` to find your container name, e.g.
+  `formbricks_postgres_1`.
 </Info>
 
 **2. Upgrade to Formbricks 4.0**
@@ -134,6 +309,7 @@ docker compose up -d
 **3. Automatic Database Migration**
 
 When you start Formbricks 4.0 for the first time, it will **automatically**:
+
 - Detect and apply required database schema updates
 - Remove unused database tables and fields
 - Optimize the database structure for better performance

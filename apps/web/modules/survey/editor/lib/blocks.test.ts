@@ -82,6 +82,8 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   recaptcha: null,
   isBackButtonHidden: false,
   metadata: {},
+  isCaptureIpEnabled: false,
+  slug: null,
 });
 
 describe("renumberBlocks", () => {

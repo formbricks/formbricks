@@ -1,14 +1,14 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import {
   createResponseWithQuotaEvaluation,
   getResponses,
@@ -16,13 +16,11 @@ import {
 } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const searchParams = req.nextUrl.searchParams;
     const surveyId = searchParams.get("surveyId");
     const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
@@ -53,7 +51,9 @@ export const GET = withV1ApiWrapper({
         allResponses.push(...environmentResponses);
       }
       return {
-        response: responses.successResponse(allResponses),
+        response: responses.successResponse(
+          allResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }))
+        ),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -110,15 +110,11 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({
-    req,
-    auditLog,
-    authentication,
-  }: {
-    req: NextRequest;
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ req, auditLog, authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const inputResult = await validateInput(req);
       if (inputResult.error) {
@@ -149,14 +145,34 @@ export const POST = withV1ApiWrapper({
         };
       }
 
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        surveyResult.survey.blocks,
+        responseInput.data,
+        responseInput.language ?? "en",
+        surveyResult.survey.questions
+      );
+
+      if (validationErrors) {
+        return {
+          response: responses.badRequestResponse(
+            "Validation failed",
+            formatValidationErrorsForV1Api(validationErrors),
+            true
+          ),
+        };
+      }
+
       if (responseInput.createdAt && !responseInput.updatedAt) {
         responseInput.updatedAt = responseInput.createdAt;
       }
 
       try {
         const response = await createResponseWithQuotaEvaluation(responseInput);
-        auditLog.targetId = response.id;
-        auditLog.newObject = response;
+        if (auditLog) {
+          auditLog.targetId = response.id;
+          auditLog.newObject = response;
+        }
 
         sendToPipeline({
           event: "responseCreated",
@@ -187,7 +203,9 @@ export const POST = withV1ApiWrapper({
         }
 
         return {
-          response: responses.internalServerErrorResponse(error.message),
+          response: responses.internalServerErrorResponse(
+            error instanceof Error ? error.message : "Unknown error occurred"
+          ),
         };
       }
     } catch (error) {

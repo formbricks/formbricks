@@ -181,7 +181,7 @@ export const EmailCustomizationSettings = ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+      text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
@@ -197,8 +197,8 @@ export const EmailCustomizationSettings = ({
   return (
     <SettingsCard
       className="overflow-hidden pb-0"
-      title={t("environments.project.look.email_customization")}
-      description={t("environments.project.look.email_customization_description")}
+      title={t("environments.workspace.look.email_customization")}
+      description={t("environments.workspace.look.email_customization_description")}
       noPadding>
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
@@ -276,7 +276,7 @@ export const EmailCustomizationSettings = ({
                 </Button>
               </div>
             </div>
-            <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10">
+            <div className="min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10 shadow-card-xl">
               <Image
                 data-testid="email-customization-preview-image"
                 src={logoUrl || fbLogoUrl}

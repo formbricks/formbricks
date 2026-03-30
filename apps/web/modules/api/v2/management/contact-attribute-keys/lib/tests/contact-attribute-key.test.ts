@@ -56,7 +56,7 @@ describe("getContactAttributeKeys", () => {
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
-      expect(result.error?.type).toEqual("internal_server_error");
+      expect((result.error as { type: string })?.type).toEqual("internal_server_error");
     }
   });
 });
@@ -77,6 +77,7 @@ describe("createContactAttributeKey", () => {
     description: inputContactAttributeKey.description,
     isUnique: false,
     type: "custom",
+    dataType: "string",
     createdAt: new Date(),
     updatedAt: new Date(),
   };

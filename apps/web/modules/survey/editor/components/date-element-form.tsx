@@ -4,20 +4,19 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyDateElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 
 interface IDateElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyDateElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyDateElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -25,21 +24,6 @@ interface IDateElementFormProps {
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
 }
-
-const dateOptions = [
-  {
-    value: "M-d-y",
-    label: "MM-DD-YYYY",
-  },
-  {
-    value: "d-M-y",
-    label: "DD-MM-YYYY",
-  },
-  {
-    value: "y-M-d",
-    label: "YYYY-MM-DD",
-  },
-];
 
 export const DateElementForm = ({
   element,
@@ -114,18 +98,15 @@ export const DateElementForm = ({
         )}
       </div>
 
-      <div className="mt-3">
-        <Label htmlFor="elementType">{t("environments.surveys.edit.date_format")}</Label>
-        <div className="mt-2 flex items-center">
-          <OptionsSwitch
-            options={dateOptions}
-            currentOption={element.format}
-            handleOptionChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>
-              updateElement(elementIdx, { format: value })
-            }
-          />
-        </div>
-      </div>
+      <ValidationRulesEditor
+        elementType={element.type}
+        validation={element.validation}
+        onUpdateValidation={(validation) => {
+          updateElement(elementIdx, {
+            validation,
+          });
+        }}
+      />
     </form>
   );
 };

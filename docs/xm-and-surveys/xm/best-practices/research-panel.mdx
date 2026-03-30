@@ -1,0 +1,198 @@
+---
+title: "Panel Management"
+description: "Build and manage your own research panel using Formbricks to collect profiling data, create targeted segments, and distribute personalized survey links to panel members."
+icon: "users-rectangle"
+---
+
+## Purpose
+
+A research panel is a pre-recruited group of participants who have agreed to take part in multiple surveys over time. Building your own panel enables you to:
+
+- Conduct research with a well-understood audience
+- Target specific demographics or user profiles
+- Distribute surveys quickly without recruiting new participants each time
+- Track participant engagement and responses over time
+
+## Formbricks Approach
+
+Formbricks provides all the tools you need to build and manage a research panel:
+
+- **Profiling surveys** to collect participant demographics and preferences
+- **Contact management** to store and organize panel member data
+- **Segments** to group participants by attributes for targeted research
+- **Personal links** to distribute unique survey links to specific panel members
+
+## Overview
+
+Building a research panel with Formbricks involves these key steps:
+
+1. Create a profiling survey to collect panel member information
+2. Export responses and prepare contact data
+3. Upload contacts into Formbricks
+4. Create segments to group panel members
+5. Create research surveys and distribute personal links
+
+## Step-by-step guide
+
+<Steps>
+  <Step title="Create a profiling survey">
+    Start by creating a survey to collect essential information about your panel members. This profiling survey should gather:
+    
+    - **Contact information**: Email, name, and any identifiers you need
+    - **Demographics**: Age, location, occupation, etc.
+    - **Preferences**: Product usage, interests, or other relevant attributes
+    
+    To create your profiling survey:
+    
+    1. Go to [app.formbricks.com](https://app.formbricks.com) and click **Create Survey**
+    2. Choose a blank survey or start from a template
+    3. Add questions to collect the data you need for segmentation
+    4. Include a **Contact Info** question type to capture email addresses
+    
+    ![Contact Info question type](/images/xm-and-surveys/core-features/question-type/contact-info.webp)
+    
+
+  </Step>
+
+  <Step title="Collect profiling responses">
+    Distribute your profiling survey and collect responses from potential panel members. You can share the survey via:
+    
+    - Direct link
+    - Email
+    - Social media
+    - Your website
+    
+    Wait until you have collected a sufficient number of responses to build your panel.
+  </Step>
+
+  <Step title="Download the responses CSV">
+    Once you have collected responses, export them for processing:
+    
+    1. Navigate to your profiling survey's **Summary** page
+    2. Click the **Download** button
+    3. Select **CSV** format
+    4. Save the file to your computer
+    
+    ![Download responses CSV](/images/xm-and-surveys/xm/best-practices/panel-management/download-responses.webp)
+    
+    This CSV contains all the profiling data from your respondents.
+  </Step>
+
+  <Step title="Download the example contact upload CSV">
+    To understand the required format for uploading contacts, download the example CSV:
+    
+    1. Go to the **Contacts** section in your project
+    2. Click **Upload Contacts**
+    3. Download the **Example CSV** to see the required column structure
+    
+    ![Download example contacts CSV](/images/xm-and-surveys/xm/best-practices/panel-management/download-example-contacts.webp)
+    
+    The example CSV shows you the format Formbricks expects for contact uploads, including required fields like email and optional attribute columns.
+  </Step>
+
+  <Step title="Map profiling responses to contact attributes">
+    Transform your profiling survey responses into the contact upload format:
+    
+    1. Open both CSV files (responses and example template)
+    2. Create a new spreadsheet matching the upload template structure
+    3. Map each profiling survey question to a contact attribute column:
+       - Email → `email` column
+       - Name → `firstName`, `lastName` columns
+       - Other answers → Custom attribute columns
+    
+    Example mapping:
+    
+    | Survey Question | Contact Attribute |
+    |----------------|-------------------|
+    | "What is your email?" | `email` |
+    | "What is your name?" | `firstName`, `lastName` |
+    | "What industry do you work in?" | `industry` |
+    | "How large is your company?" | `companySize` |
+    | "What is your job title?" | `jobTitle` |
+  </Step>
+
+  <Step title="Upload contacts to Formbricks">
+    Import your panel members into Formbricks:
+    
+    1. Go to the **Contacts** section
+    2. Click **Upload Contacts**
+    3. Select your prepared CSV file
+    4. Review the attribute mapping
+    5. Complete the upload
+    
+    Your panel members are now stored in Formbricks with their profiling attributes.
+  </Step>
+
+  <Step title="Create segments for targeting">
+    Group your panel members into segments based on their attributes:
+    
+    1. Go to the **Contacts** tab
+    2. Click **Create Segment**
+    
+    ![Create a new segment](/images/xm-and-surveys/surveys/website-app-surveys/targeting/contacts.webp)
+    
+    3. Define filter conditions based on the attributes you collected:
+       - Example: `industry` equals "Technology" AND `companySize` equals "50-200"
+    
+    ![Attribute filter](/images/xm-and-surveys/surveys/website-app-surveys/targeting/attribute-filter.webp)
+    
+    4. Name your segment descriptively (e.g., "Tech SMB Professionals")
+    5. Save the segment
+    
+    Create multiple segments for different research needs. Learn more about [Advanced Targeting](/xm-and-surveys/surveys/website-app-surveys/advanced-targeting) for detailed segmentation options.
+    
+  </Step>
+
+  <Step title="Create a research survey">
+    Now create the survey you want to distribute to your panel:
+    
+    1. Click **Create Survey**
+    2. Design your research survey with the questions you need
+    3. Configure survey settings as needed
+    4. Publish the survey
+  </Step>
+
+  <Step title="Generate personal links for your segment">
+    Distribute unique survey links to your panel segment:
+    
+    1. Navigate to your research survey's **Summary** page
+    2. Click **Share survey**
+    3. Select the **Personal Links** tab
+    4. Choose the segment you want to survey from the dropdown
+    5. Optionally set an expiry date for the links
+    6. Click **Generate & download links**
+    
+    ![Personal Links](/images/xm-and-surveys/xm/best-practices/panel-management/personal-links.webp)
+    
+    You'll receive a CSV file containing unique survey links for each panel member in the segment. Learn more about [Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links).
+  </Step>
+
+  <Step title="Distribute your survey">
+    Send the personal links to your panel members using your preferred method:
+    
+    - Email marketing platform
+    - Direct email
+    - SMS
+    - Any other communication channel
+    
+    Each panel member receives their unique link, and their responses will be automatically attributed to their contact record.
+  </Step>
+</Steps>
+
+## Benefits of this approach
+
+| Benefit | Description |
+|---------|-------------|
+| **Response attribution** | Know exactly who responded to each survey |
+| **Targeted research** | Survey specific segments without bothering others |
+| **Panel management** | Maintain a centralized database of research participants |
+| **Reusability** | Use the same panel for multiple research projects |
+| **Data enrichment** | Build up participant profiles over time with each survey |
+
+
+## Next steps
+
+- [Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links) - Learn more about generating and managing personal survey links
+- [Advanced Targeting](/xm-and-surveys/surveys/website-app-surveys/advanced-targeting) - Explore detailed segmentation options
+- [Hidden Fields](/xm-and-surveys/surveys/general-features/hidden-fields) - Pass additional data into surveys via URL parameters
+

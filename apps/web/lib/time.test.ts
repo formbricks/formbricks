@@ -1,62 +1,13 @@
 import { describe, expect, test } from "vitest";
 import {
-  convertDateString,
-  convertDateTimeString,
-  convertDateTimeStringShort,
   convertDatesInObject,
-  convertTimeString,
   formatDate,
-  getTodaysDateFormatted,
   getTodaysDateTimeFormatted,
   timeSince,
   timeSinceDate,
 } from "./time";
 
 describe("Time Utilities", () => {
-  describe("convertDateString", () => {
-    test("should format date string correctly", () => {
-      expect(convertDateString("2024-03-20:12:30:00")).toBe("Mar 20, 2024");
-    });
-
-    test("should return empty string for empty input", () => {
-      expect(convertDateString("")).toBe("");
-    });
-
-    test("should return null for null input", () => {
-      expect(convertDateString(null as any)).toBe(null);
-    });
-
-    test("should handle invalid date strings", () => {
-      expect(convertDateString("not-a-date")).toBe("Invalid Date");
-    });
-  });
-
-  describe("convertDateTimeString", () => {
-    test("should format date and time string correctly", () => {
-      expect(convertDateTimeString("2024-03-20T15:30:00")).toBe("Wednesday, March 20, 2024 at 3:30 PM");
-    });
-
-    test("should return empty string for empty input", () => {
-      expect(convertDateTimeString("")).toBe("");
-    });
-  });
-
-  describe("convertDateTimeStringShort", () => {
-    test("should format date and time string in short format", () => {
-      expect(convertDateTimeStringShort("2024-03-20T15:30:00")).toBe("March 20, 2024 at 3:30 PM");
-    });
-
-    test("should return empty string for empty input", () => {
-      expect(convertDateTimeStringShort("")).toBe("");
-    });
-  });
-
-  describe("convertTimeString", () => {
-    test("should format time string correctly", () => {
-      expect(convertTimeString("2024-03-20T15:30:45")).toBe("3:30:45 PM");
-    });
-  });
-
   describe("timeSince", () => {
     test("should format time since in English", () => {
       const now = new Date();
@@ -69,6 +20,24 @@ describe("Time Utilities", () => {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       expect(timeSince(oneHourAgo.toISOString(), "de-DE")).toBe("vor etwa 1 Stunde");
     });
+
+    test("should format time since in Swedish", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSince(oneHourAgo.toISOString(), "sv-SE")).toBe("ungefär en timme sedan");
+    });
+
+    test("should format time since in Brazilian Portuguese", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSince(oneHourAgo.toISOString(), "pt-BR")).toBe("há cerca de 1 hora");
+    });
+
+    test("should format time since in European Portuguese", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSince(oneHourAgo.toISOString(), "pt-PT")).toBe("há aproximadamente 1 hora");
+    });
   });
 
   describe("timeSinceDate", () => {
@@ -77,6 +46,12 @@ describe("Time Utilities", () => {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       expect(timeSinceDate(oneHourAgo)).toBe("about 1 hour ago");
     });
+
+    test("should format time since from Date object in the provided locale", () => {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(timeSinceDate(oneHourAgo, "de-DE")).toBe("vor etwa 1 Stunde");
+    });
   });
 
   describe("formatDate", () => {
@@ -84,13 +59,17 @@ describe("Time Utilities", () => {
       const date = new Date(2024, 2, 20); // March is month 2 (0-based)
       expect(formatDate(date)).toBe("March 20, 2024");
     });
-  });
 
-  describe("getTodaysDateFormatted", () => {
-    test("should format today's date with specified separator", () => {
-      const today = new Date();
-      const expected = today.toISOString().split("T")[0].split("-").join(".");
-      expect(getTodaysDateFormatted(".")).toBe(expected);
+    test("should format date with the provided locale", () => {
+      const date = new Date(2024, 2, 20);
+
+      expect(formatDate(date, "de-DE")).toBe(
+        new Intl.DateTimeFormat("de-DE", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }).format(date)
+      );
     });
   });
 
@@ -134,6 +113,69 @@ describe("Time Utilities", () => {
       expect(convertDatesInObject(null)).toBe(null);
       expect(convertDatesInObject("string")).toBe("string");
       expect(convertDatesInObject(123)).toBe(123);
+    });
+
+    test("should not convert dates in ignored keys when keysToIgnore is provided", () => {
+      const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
+      const input = {
+        createdAt: "2024-03-20T15:30:00",
+        contactAttributes: {
+          createdAt: "2024-03-20T16:30:00",
+          email: "test@example.com",
+        },
+      };
+
+      const result = convertDatesInObject(input, keysToIgnore);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.contactAttributes.createdAt).toBe("2024-03-20T16:30:00");
+      expect(result.contactAttributes.email).toBe("test@example.com");
+    });
+
+    test("should not convert dates in variables when keysToIgnore is provided", () => {
+      const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
+      const input = {
+        updatedAt: "2024-03-20T15:30:00",
+        variables: {
+          createdAt: "2024-03-20T16:30:00",
+          userId: "123",
+        },
+      };
+
+      const result = convertDatesInObject(input, keysToIgnore);
+      expect(result.updatedAt).toBeInstanceOf(Date);
+      expect(result.variables.createdAt).toBe("2024-03-20T16:30:00");
+      expect(result.variables.userId).toBe("123");
+    });
+
+    test("should not convert dates in data or meta when keysToIgnore is provided", () => {
+      const keysToIgnore = new Set(["contactAttributes", "variables", "data", "meta"]);
+      const input = {
+        createdAt: "2024-03-20T15:30:00",
+        data: {
+          createdAt: "2024-03-20T16:30:00",
+        },
+        meta: {
+          updatedAt: "2024-03-20T17:30:00",
+        },
+      };
+
+      const result = convertDatesInObject(input, keysToIgnore);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.data.createdAt).toBe("2024-03-20T16:30:00");
+      expect(result.meta.updatedAt).toBe("2024-03-20T17:30:00");
+    });
+
+    test("should recurse into all keys when keysToIgnore is not provided", () => {
+      const input = {
+        createdAt: "2024-03-20T15:30:00",
+        contactAttributes: {
+          createdAt: "2024-03-20T16:30:00",
+        },
+      };
+
+      const result = convertDatesInObject(input);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.contactAttributes.createdAt).toBeInstanceOf(Date);
     });
   });
 });

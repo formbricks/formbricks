@@ -35,7 +35,7 @@ export const TwoFactorBackup = ({ form }: TwoFactorBackupProps) => {
                 id="totpBackup"
                 required
                 placeholder="XXXXX-XXXXX"
-                className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                 value={field.value}
                 onChange={(e) => field.onChange(e.target.value)}
               />

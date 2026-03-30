@@ -1,7 +1,8 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
-import { getBillingPeriodStartDate } from "@/lib/utils/billing";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
+import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) => {
   try {
@@ -30,7 +31,9 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -42,19 +45,33 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
         id: organizationId,
       },
       select: {
-        billing: true,
+        billing: {
+          select: {
+            stripeCustomerId: true,
+            limits: true,
+            usageCycleAnchor: true,
+            stripe: true,
+          },
+        },
       },
     });
 
-    if (!organization) {
+    if (!organization?.billing) {
       return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
     }
 
-    return ok(organization.billing);
+    return ok({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      limits: organization.billing.limits as TOrganizationBilling["limits"],
+      usageCycleAnchor: organization.billing.usageCycleAnchor,
+      ...(organization.billing.stripe === null ? {} : { stripe: organization.billing.stripe }),
+    });
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -91,7 +108,9 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -103,8 +122,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
       return err(billing.error);
     }
 
-    // Determine the start date based on the plan type
-    const startDate = getBillingPeriodStartDate(billing.data);
+    const usageCycleWindow = getBillingUsageCycleWindow(billing.data);
 
     // Get all environment IDs for the organization
     const environmentIdsResult = await getAllEnvironmentsFromOrganizationId(organizationId);
@@ -120,7 +138,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
       where: {
         AND: [
           { survey: { environmentId: { in: environmentIdsResult.data } } },
-          { createdAt: { gte: startDate } },
+          { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
         ],
       },
     });
@@ -130,7 +148,9 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });

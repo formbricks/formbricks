@@ -274,6 +274,24 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
   });
 
+  test("should return true for endScreen card with http:// URL", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "http://example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return true for endScreen card with dynamic URL containing recall", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "https://#recall:test123/fallback:example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
   // RedirectURL Card tests
   test("should return true for a valid redirectUrl card", () => {
     expect(validation.isEndingCardValid(baseRedirectUrlCard, surveyLanguagesEnabled)).toBe(true);
@@ -284,14 +302,20 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
   });
 
+  test("should return true for redirectUrl card with http:// URL", () => {
+    const card = { ...baseRedirectUrlCard, url: "http://example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return true for redirectUrl card with dynamic URL containing recall", () => {
+    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
   test("should return false for redirectUrl card if label is empty", () => {
     const card = { ...baseRedirectUrlCard, label: "  " };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
   });
-  // test("should return false for redirectUrl card if label is undefined", () => {
-  //   const card = { ...baseRedirectUrlCard, label: undefined };
-  //   expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
-  // });
 });
 
 describe("validation.validateElement", () => {
@@ -998,6 +1022,66 @@ describe("validation.isSurveyValid", () => {
       autoComplete: null,
     };
     expect(validation.isSurveyValid(surveyWithNoLimit, "en", mockT, 5)).toBe(true);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  test("should return false and toast error if a link survey has an empty custom survey closed message heading", () => {
+    const surveyWithEmptyClosedMessageHeading = {
+      ...baseSurvey,
+      type: "link",
+      surveyClosedMessage: {
+        heading: "",
+        subheading: "Closed for now",
+      },
+    } as unknown as TSurvey;
+
+    expect(validation.isSurveyValid(surveyWithEmptyClosedMessageHeading, "en", mockT)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(
+      "environments.surveys.edit.survey_closed_message_heading_required"
+    );
+  });
+
+  test("should return false and toast error if a link survey has a whitespace-only custom survey closed message heading", () => {
+    const surveyWithWhitespaceClosedMessageHeading = {
+      ...baseSurvey,
+      type: "link",
+      surveyClosedMessage: {
+        heading: "   ",
+        subheading: "",
+      },
+    } as unknown as TSurvey;
+
+    expect(validation.isSurveyValid(surveyWithWhitespaceClosedMessageHeading, "en", mockT)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(
+      "environments.surveys.edit.survey_closed_message_heading_required"
+    );
+  });
+
+  test("should return true if a link survey has a custom survey closed message heading and no subheading", () => {
+    const surveyWithHeadingOnlyClosedMessage = {
+      ...baseSurvey,
+      type: "link",
+      surveyClosedMessage: {
+        heading: "Survey closed",
+        subheading: "",
+      },
+    } as unknown as TSurvey;
+
+    expect(validation.isSurveyValid(surveyWithHeadingOnlyClosedMessage, "en", mockT)).toBe(true);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  test("should return true if a link survey has a custom survey closed message heading and subheading", () => {
+    const surveyWithClosedMessageContent = {
+      ...baseSurvey,
+      type: "link",
+      surveyClosedMessage: {
+        heading: "Survey closed",
+        subheading: "Thanks for your interest",
+      },
+    } as unknown as TSurvey;
+
+    expect(validation.isSurveyValid(surveyWithClosedMessageContent, "en", mockT)).toBe(true);
     expect(toast.error).not.toHaveBeenCalled();
   });
 

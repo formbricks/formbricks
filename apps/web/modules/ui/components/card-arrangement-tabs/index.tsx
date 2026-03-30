@@ -47,9 +47,9 @@ export const CardArrangementTabs = ({
         }}
         options={[
           {
-            value: "casual",
-            label: t("environments.surveys.edit.casual"),
-            icon: getCardArrangementIcon("casual"),
+            value: "simple",
+            label: t("environments.surveys.edit.simple"),
+            icon: getCardArrangementIcon("simple"),
           },
           {
             value: "straight",
@@ -57,9 +57,9 @@ export const CardArrangementTabs = ({
             icon: getCardArrangementIcon("straight"),
           },
           {
-            value: "simple",
-            label: t("environments.surveys.edit.simple"),
-            icon: getCardArrangementIcon("simple"),
+            value: "casual",
+            label: t("environments.surveys.edit.casual"),
+            icon: getCardArrangementIcon("casual"),
           },
         ]}
         defaultSelected={activeCardArrangement}

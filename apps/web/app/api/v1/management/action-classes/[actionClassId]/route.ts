@@ -1,11 +1,10 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -32,10 +31,11 @@ export const GET = withV1ApiWrapper({
   handler: async ({
     props,
     authentication,
-  }: {
-    props: { params: Promise<{ actionClassId: string }> };
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ actionClassId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
 
     try {
@@ -62,12 +62,11 @@ export const PUT = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ actionClassId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ actionClassId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
 
     try {
@@ -77,7 +76,10 @@ export const PUT = withV1ApiWrapper({
           response: responses.notFoundResponse("Action Class", params.actionClassId),
         };
       }
-      auditLog.oldObject = actionClass;
+
+      if (auditLog) {
+        auditLog.oldObject = actionClass;
+      }
 
       let actionClassUpdate;
       try {
@@ -104,7 +106,10 @@ export const PUT = withV1ApiWrapper({
         inputValidation.data
       );
       if (updatedActionClass) {
-        auditLog.newObject = updatedActionClass;
+        if (auditLog) {
+          auditLog.newObject = updatedActionClass;
+        }
+
         return {
           response: responses.successResponse(updatedActionClass),
         };
@@ -127,14 +132,16 @@ export const DELETE = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    props: { params: Promise<{ actionClassId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ actionClassId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
 
-    auditLog.targetId = params.actionClassId;
+    if (auditLog) {
+      auditLog.targetId = params.actionClassId;
+    }
 
     try {
       const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "DELETE");
@@ -144,7 +151,9 @@ export const DELETE = withV1ApiWrapper({
         };
       }
 
-      auditLog.oldObject = actionClass;
+      if (auditLog) {
+        auditLog.oldObject = actionClass;
+      }
 
       const deletedActionClass = await deleteActionClass(params.actionClassId);
       return {

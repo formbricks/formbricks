@@ -3,7 +3,7 @@
 import { PlusIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
@@ -21,7 +21,9 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  updateSurvey: (input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }>) => void;
+  updateSurvey: (
+    input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
+  ) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -46,6 +48,9 @@ export const EndScreenForm = ({
 
   const questions = getElementsFromBlocks(localSurvey.blocks);
 
+  const defaultLanguageCode = localSurvey.languages.find((lang) => lang.default)?.language.code ?? "default";
+  const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
+
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -66,6 +71,7 @@ export const EndScreenForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
         {endingCard.subheader !== undefined && (
@@ -84,6 +90,7 @@ export const EndScreenForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -136,7 +143,7 @@ export const EndScreenForm = ({
           </Label>
         </div>
         {showEndingCardCTA && (
-          <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
+          <div className="mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
             <div className="space-y-2">
               <ElementFormInput
                 id="buttonLabel"
@@ -174,7 +181,7 @@ export const EndScreenForm = ({
                   }}
                   isRecallAllowed
                   localSurvey={localSurvey}
-                  usedLanguageCode={"default"}
+                  usedLanguageCode={usedLanguageCode}
                   render={({ value, onChange, highlightedJSX, children }) => {
                     return (
                       <div className="group relative">
@@ -194,12 +201,12 @@ export const EndScreenForm = ({
                           value={
                             recallToHeadline(
                               {
-                                [selectedLanguageCode]: value,
+                                [usedLanguageCode]: value,
                               },
                               localSurvey,
                               false,
-                              "default"
-                            )[selectedLanguageCode]
+                              usedLanguageCode
+                            )[usedLanguageCode]
                           }
                           onChange={(e) => isExternalUrlsAllowed && onChange(e.target.value)}
                           disabled={!isExternalUrlsAllowed}

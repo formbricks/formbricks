@@ -1,23 +1,23 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiV1Authentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 async function fetchAndAuthorizeResponse(
   responseId: string,
-  authentication: TApiKeyAuthentication,
+  authentication: TApiV1Authentication | undefined,
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
-  if (!authentication) {
+  if (!authentication || !("apiKeyId" in authentication)) {
     return { error: responses.notAuthenticatedResponse() };
   }
 
@@ -39,13 +39,7 @@ async function fetchAndAuthorizeResponse(
 }
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    props,
-    authentication,
-  }: {
-    props: { params: Promise<{ responseId: string }> };
-    authentication: TApiKeyAuthentication;
-  }) => {
+  handler: async ({ props, authentication }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
     const params = await props.params;
     try {
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "GET");
@@ -56,7 +50,10 @@ export const GET = withV1ApiWrapper({
       }
 
       return {
-        response: responses.successResponse(result.response),
+        response: responses.successResponse({
+          ...result.response,
+          data: resolveStorageUrlsInObject(result.response.data),
+        }),
       };
     } catch (error) {
       return {
@@ -71,13 +68,11 @@ export const DELETE = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    props: { params: Promise<{ responseId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
     const params = await props.params;
-    auditLog.targetId = params.responseId;
+    if (auditLog) {
+      auditLog.targetId = params.responseId;
+    }
     try {
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "DELETE");
       if (result.error) {
@@ -85,7 +80,9 @@ export const DELETE = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.response;
+      if (auditLog) {
+        auditLog.oldObject = result.response;
+      }
 
       const deletedResponse = await deleteResponse(params.responseId);
       return {
@@ -107,14 +104,11 @@ export const PUT = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ responseId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
     const params = await props.params;
-    auditLog.targetId = params.responseId;
+    if (auditLog) {
+      auditLog.targetId = params.responseId;
+    }
     try {
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "PUT");
       if (result.error) {
@@ -122,7 +116,9 @@ export const PUT = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.response;
+      if (auditLog) {
+        auditLog.oldObject = result.response;
+      }
 
       let responseUpdate;
       try {
@@ -140,6 +136,24 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        result.survey.blocks,
+        responseUpdate.data,
+        responseUpdate.language ?? "en",
+        result.survey.questions
+      );
+
+      if (validationErrors) {
+        return {
+          response: responses.badRequestResponse(
+            "Validation failed",
+            formatValidationErrorsForV1Api(validationErrors),
+            true
+          ),
+        };
+      }
+
       const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
       if (!inputValidation.success) {
         return {
@@ -151,7 +165,9 @@ export const PUT = withV1ApiWrapper({
       }
 
       const updated = await updateResponseWithQuotaEvaluation(params.responseId, inputValidation.data);
-      auditLog.newObject = updated;
+      if (auditLog) {
+        auditLog.newObject = updated;
+      }
 
       sendToPipeline({
         event: "responseUpdated",
@@ -170,7 +186,7 @@ export const PUT = withV1ApiWrapper({
       }
 
       return {
-        response: responses.successResponse(updated),
+        response: responses.successResponse({ ...updated, data: resolveStorageUrlsInObject(updated.data) }),
       };
     } catch (error) {
       return {

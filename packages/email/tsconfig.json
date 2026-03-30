@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "exclude": ["node_modules", "dist"],
+  "extends": "@formbricks/config-typescript/react-library.json",
+  "include": ["src/**/*", "emails/**/*"]
+}

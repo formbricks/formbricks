@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import { TFunction } from "i18next";
 import {
   AirplayIcon,
   ArrowUpFromDotIcon,
@@ -38,7 +39,7 @@ describe("utils", () => {
       "environments.surveys.responses.source": "Source",
     };
     return translations[key] || key;
-  });
+  }) as unknown as TFunction;
 
   describe("getAddressFieldLabel", () => {
     test("returns correct label for addressLine1", () => {

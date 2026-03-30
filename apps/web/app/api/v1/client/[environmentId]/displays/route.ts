@@ -1,18 +1,12 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
-
-interface Context {
-  params: Promise<{
-    environmentId: string;
-  }>;
-}
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -25,7 +19,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
     const jsonInput = await req.json();
     const inputValidation = ZDisplayCreateInput.safeParse({
@@ -44,7 +38,8 @@ export const POST = withV1ApiWrapper({
     }
 
     if (inputValidation.data.userId) {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const organizationId = await getOrganizationIdFromEnvironmentId(params.environmentId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(

@@ -154,7 +154,8 @@ describe("survey/action.ts", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("invalid_code");
-        expect(result.error.message).toContain("unknown_code action unknown");
+        expect(result.error.message).toContain("unknown_code");
+        expect(result.error.message).toContain("is unknown");
       }
     });
 

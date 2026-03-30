@@ -2,7 +2,7 @@
 
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
@@ -102,7 +102,7 @@ export function CreateSegmentModal({
         setIsCreatingSegment(false);
       }
     } catch (error_) {
-      logger.error("Error creating segment:", error_);
+      logger.error(error_ instanceof Error ? error_ : new Error(String(error_)), "Error creating segment");
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (parsedFilters.success) {
@@ -213,7 +213,7 @@ export function CreateSegmentModal({
                   group={segment.filters}
                   segment={segment}
                   segments={segments}
-                  setSegment={setSegment}
+                  setSegment={setSegment as Dispatch<SetStateAction<TSegment | null>>}
                 />
 
                 <Button

@@ -1,8 +1,10 @@
-import { Organization, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
 export const selectSurvey = {
@@ -29,6 +31,7 @@ export const selectSurvey = {
   autoComplete: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
+  isCaptureIpEnabled: true,
   redirectUrl: true,
   projectOverwrites: true,
   styling: true,
@@ -39,6 +42,9 @@ export const selectSurvey = {
   recaptcha: true,
   isBackButtonHidden: true,
   metadata: true,
+  slug: true,
+  customHeadScripts: true,
+  customHeadScriptsMode: true,
   languages: {
     select: {
       default: true,
@@ -93,29 +99,10 @@ export const selectSurvey = {
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(
-  async (organizationId: string): Promise<Organization["billing"] | null> => {
-    try {
-      const organization = await prisma.organization.findFirst({
-        where: {
-          id: organizationId,
-        },
-        select: {
-          billing: true,
-        },
-      });
-
-      if (!organization) {
-        throw new ResourceNotFoundError("Organization", null);
-      }
-
-      return organization.billing;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
+  async (organizationId: string): Promise<TOrganizationBilling> => {
+    const billing = await getOrganizationBillingWithReadThroughSync(organizationId);
+    if (!billing) throw new ResourceNotFoundError("Organization", organizationId);
+    return billing;
   }
 );
 

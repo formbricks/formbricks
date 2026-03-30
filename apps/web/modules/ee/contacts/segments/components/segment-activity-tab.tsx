@@ -1,23 +1,22 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TSegment } from "@formbricks/types/segment";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface SegmentActivityTabProps {
-  environmentId: string;
-  currentSegment: TSegment & {
-    activeSurveys: string[];
-    inactiveSurveys: string[];
-  };
+  currentSegment: TSegmentWithSurveyRefs;
+  activitySummary: TSegmentActivitySummary;
 }
 
-export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
-  const { t } = useTranslation();
-  const activeSurveys = currentSegment?.activeSurveys;
-  const inactiveSurveys = currentSegment?.inactiveSurveys;
+export const SegmentActivityTab = ({ currentSegment, activitySummary }: SegmentActivityTabProps) => {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+
+  const { activeSurveys, inactiveSurveys } = activitySummary;
 
   return (
     <div className="grid grid-cols-3 pb-2">
@@ -26,30 +25,34 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           <Label className="text-slate-500">{t("common.active_surveys")}</Label>
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {activeSurveys?.map((survey, index) => (
-            <p className="text-sm text-slate-900" key={index}>
-              {survey}
-            </p>
+          {activeSurveys?.map((surveyName) => (
+            <div className="py-0.5" key={surveyName}>
+              <p className="text-sm text-slate-900">{surveyName}</p>
+            </div>
           ))}
         </div>
         <div>
           <Label className="text-slate-500">{t("common.inactive_surveys")}</Label>
           {!inactiveSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {inactiveSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}
+          {inactiveSurveys?.map((surveyName) => (
+            <div className="py-0.5" key={surveyName}>
+              <p className="text-sm text-slate-900">{surveyName}</p>
+            </div>
+          ))}
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.created_at")}</Label>
           <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(currentSegment.createdAt?.toString())}
+            {formatDateTimeForDisplay(currentSegment.createdAt, locale)}
           </p>
         </div>{" "}
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.updated_at")}</Label>
           <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(currentSegment.updatedAt?.toString())}
+            {formatDateTimeForDisplay(currentSegment.updatedAt, locale)}
           </p>
         </div>
         <div>

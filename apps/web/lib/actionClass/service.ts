@@ -134,8 +134,9 @@ export const createActionClass = async (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
+      const targetField = (error.meta?.target as string[] | undefined)?.[0];
       throw new DatabaseError(
-        `Action with ${error.meta?.target?.[0]} ${actionClass[error.meta?.target?.[0]]} already exists`
+        `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
 
@@ -183,8 +184,9 @@ export const updateActionClass = async (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
+      const targetField = (error.meta?.target as string[] | undefined)?.[0];
       throw new DatabaseError(
-        `Action with ${error.meta?.target?.[0]} ${inputActionClass[error.meta?.target?.[0]]} already exists`
+        `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
 

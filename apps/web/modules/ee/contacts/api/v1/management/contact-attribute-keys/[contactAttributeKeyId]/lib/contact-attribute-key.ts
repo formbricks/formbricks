@@ -65,6 +65,7 @@ export const updateContactAttributeKey = async (
         description: data.description,
         name: data.name,
         key: data.key,
+        ...(data.dataType && { dataType: data.dataType }),
       },
     });
 

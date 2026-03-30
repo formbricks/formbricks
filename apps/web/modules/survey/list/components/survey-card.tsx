@@ -5,7 +5,8 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { convertDateString, timeSince } from "@/lib/time";
+import { timeSince } from "@/lib/time";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
@@ -82,7 +83,7 @@ export const SurveyCard = ({
           <SurveyTypeIndicator type={survey.type} />
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {convertDateString(survey.createdAt.toString())}
+          {formatDateForDisplay(survey.createdAt, locale)}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {timeSince(survey.updatedAt.toString(), locale)}

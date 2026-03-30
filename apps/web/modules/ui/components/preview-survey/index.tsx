@@ -25,6 +25,7 @@ interface PreviewSurveyProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
   isSpamProtectionAllowed: boolean;
+  publicDomain: string;
 }
 
 let surveyNameTemp: string;
@@ -38,6 +39,7 @@ export const PreviewSurvey = ({
   environment,
   languageCode,
   isSpamProtectionAllowed,
+  publicDomain,
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -49,11 +51,11 @@ export const PreviewSurvey = ({
   const { projectOverwrites } = survey || {};
 
   const { placement: surveyPlacement } = projectOverwrites || {};
-  const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
   const placement = surveyPlacement || project.placement;
-  const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
+  const overlay = surveyOverlay ?? project.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
@@ -224,7 +226,7 @@ export const PreviewSurvey = ({
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
-              Preview
+              {t("common.preview")}
             </p>
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetProgress} />
@@ -239,11 +241,12 @@ export const PreviewSurvey = ({
                   isOpen={isModalOpen}
                   placement={placement}
                   previewMode="mobile"
-                  darkOverlay={darkOverlay}
+                  overlay={overlay}
                   clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
+                    appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={survey}
                     isBrandingEnabled={project.inAppSurveyBranding}
@@ -256,6 +259,7 @@ export const PreviewSurvey = ({
                       setBlockId = f;
                     }}
                     onFinished={onFinished}
+                    placement={placement}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
                   />
                 </Modal>
@@ -273,6 +277,7 @@ export const PreviewSurvey = ({
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
                     <SurveyInline
+                      appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={project.linkSurveyBranding}
@@ -291,7 +296,7 @@ export const PreviewSurvey = ({
           </>
         )}
         {previewMode === "desktop" && (
-          <div className="flex h-full flex-1 flex-col">
+          <div className="flex h-full w-full flex-1 flex-col">
             <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
               <div className="ml-6 flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -305,7 +310,11 @@ export const PreviewSurvey = ({
                       setIsFullScreenPreview(true);
                     }
                   }}
-                  aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
+                  aria-label={
+                    isFullScreenPreview
+                      ? t("environments.surveys.edit.shrink_preview")
+                      : t("environments.surveys.edit.expand_preview")
+                  }></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
@@ -340,11 +349,12 @@ export const PreviewSurvey = ({
                 isOpen={isModalOpen}
                 placement={placement}
                 clickOutsideClose={clickOutsideClose}
-                darkOverlay={darkOverlay}
+                overlay={overlay}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
+                  appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={survey}
                   isBrandingEnabled={project.inAppSurveyBranding}
@@ -358,6 +368,7 @@ export const PreviewSurvey = ({
                   }}
                   onFinished={onFinished}
                   isSpamProtectionEnabled={isSpamProtectionEnabled}
+                  placement={placement}
                 />
               </Modal>
             ) : (
@@ -378,6 +389,7 @@ export const PreviewSurvey = ({
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
                   <SurveyInline
+                    appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={project.linkSurveyBranding}

@@ -84,11 +84,13 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 
 export const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
   if (!surveyLanguages?.length || !languageCode) return "default";
-  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+  const language = surveyLanguages.find(
+    (surveyLanguage) => surveyLanguage.language.code.toLowerCase() === languageCode.toLowerCase()
+  );
   return language?.default ? "default" : language?.language.code || "default";
 };
 
-export const iso639Identifiers = iso639Languages.map((language) => language.alpha2);
+export const iso639Identifiers = iso639Languages.map((language) => language.code);
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)
 // Iterates over the object recursively and adds empty strings for new language keys
@@ -107,12 +109,13 @@ export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[
     if (Array.isArray(obj)) {
       obj.forEach((item) => processObject(item));
     } else if (obj && typeof obj === "object") {
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          if (key === "default" && typeof obj[key] === "string") {
-            addLanguageKeys(obj as { default: string; [key: string]: string });
+      const record = obj as Record<string, unknown>;
+      for (const key in record) {
+        if (record.hasOwnProperty(key)) {
+          if (key === "default" && typeof record[key] === "string") {
+            addLanguageKeys(record as unknown as { default: string; [key: string]: string });
           } else {
-            processObject(obj[key]);
+            processObject(record[key]);
           }
         }
       }
@@ -127,180 +130,105 @@ export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[
 
 export const appLanguages = [
   {
-    code: "en-US",
-    label: {
-      "en-US": "English (US)",
-      "de-DE": "Englisch (US)",
-      "pt-BR": "Inglês (EUA)",
-      "fr-FR": "Anglais (États-Unis)",
-      "zh-Hant-TW": "英文 (美國)",
-      "pt-PT": "Inglês (EUA)",
-      "ro-RO": "Engleză (SUA)",
-      "ja-JP": "英語（米国）",
-      "zh-Hans-CN": "英语（美国）",
-      "nl-NL": "Engels (VS)",
-      "es-ES": "Inglés (EE.UU.)",
-    },
-  },
-  {
     code: "de-DE",
     label: {
       "en-US": "German",
-      "de-DE": "Deutsch",
-      "pt-BR": "Alemão",
-      "fr-FR": "Allemand",
-      "zh-Hant-TW": "德語",
-      "pt-PT": "Alemão",
-      "ro-RO": "Germană",
-      "ja-JP": "ドイツ語",
-      "zh-Hans-CN": "德语",
-      "nl-NL": "Duits",
-      "es-ES": "Alemán",
+      native: "Deutsch",
     },
   },
   {
-    code: "pt-BR",
+    code: "en-US",
     label: {
-      "en-US": "Portuguese (Brazil)",
-      "de-DE": "Portugiesisch (Brasilien)",
-      "pt-BR": "Português (Brasil)",
-      "fr-FR": "Portugais (Brésil)",
-      "zh-Hant-TW": "葡萄牙語 (巴西)",
-      "pt-PT": "Português (Brasil)",
-      "ro-RO": "Portugheză (Brazilia)",
-      "ja-JP": "ポルトガル語（ブラジル）",
-      "zh-Hans-CN": "葡萄牙语（巴西）",
-      "nl-NL": "Portugees (Brazilië)",
-      "es-ES": "Portugués (Brasil)",
-    },
-  },
-  {
-    code: "fr-FR",
-    label: {
-      "en-US": "French",
-      "de-DE": "Französisch",
-      "pt-BR": "Francês",
-      "fr-FR": "Français",
-      "zh-Hant-TW": "法語",
-      "pt-PT": "Francês",
-      "ro-RO": "Franceză",
-      "ja-JP": "フランス語",
-      "zh-Hans-CN": "法语",
-      "nl-NL": "Frans",
-      "es-ES": "Francés",
-    },
-  },
-  {
-    code: "zh-Hant-TW",
-    label: {
-      "en-US": "Chinese (Traditional)",
-      "de-DE": "Chinesisch (Traditionell)",
-      "pt-BR": "Chinês (Tradicional)",
-      "fr-FR": "Chinois (Traditionnel)",
-      "zh-Hant-TW": "繁體中文",
-      "pt-PT": "Chinês (Tradicional)",
-      "ro-RO": "Chineză (Tradicională)",
-      "ja-JP": "中国語（繁体字）",
-      "zh-Hans-CN": "繁体中文",
-      "nl-NL": "Chinees (Traditioneel)",
-      "es-ES": "Chino (Tradicional)",
-    },
-  },
-  {
-    code: "pt-PT",
-    label: {
-      "en-US": "Portuguese (Portugal)",
-      "de-DE": "Portugiesisch (Portugal)",
-      "pt-BR": "Português (Portugal)",
-      "fr-FR": "Portugais (Portugal)",
-      "zh-Hant-TW": "葡萄牙語 (葡萄牙)",
-      "pt-PT": "Português (Portugal)",
-      "ro-RO": "Portugheză (Portugalia)",
-      "ja-JP": "ポルトガル語（ポルトガル）",
-      "zh-Hans-CN": "葡萄牙语（葡萄牙）",
-      "nl-NL": "Portugees (Portugal)",
-      "es-ES": "Portugués (Portugal)",
-    },
-  },
-  {
-    code: "ro-RO",
-    label: {
-      "en-US": "Romanian",
-      "de-DE": "Rumänisch",
-      "pt-BR": "Romeno",
-      "fr-FR": "Roumain",
-      "zh-Hant-TW": "羅馬尼亞語",
-      "pt-PT": "Romeno",
-      "ro-RO": "Română",
-      "ja-JP": "ルーマニア語",
-      "zh-Hans-CN": "罗马尼亚语",
-      "nl-NL": "Roemeens",
-      "es-ES": "Rumano",
-    },
-  },
-  {
-    code: "ja-JP",
-    label: {
-      "en-US": "Japanese",
-      "de-DE": "Japanisch",
-      "pt-BR": "Japonês",
-      "fr-FR": "Japonais",
-      "zh-Hant-TW": "日語",
-      "pt-PT": "Japonês",
-      "ro-RO": "Japoneză",
-      "ja-JP": "日本語",
-      "zh-Hans-CN": "日语",
-      "nl-NL": "Japans",
-      "es-ES": "Japonés",
-    },
-  },
-  {
-    code: "zh-Hans-CN",
-    label: {
-      "en-US": "Chinese (Simplified)",
-      "de-DE": "Chinesisch (Vereinfacht)",
-      "pt-BR": "Chinês (Simplificado)",
-      "fr-FR": "Chinois (Simplifié)",
-      "zh-Hant-TW": "簡體中文",
-      "pt-PT": "Chinês (Simplificado)",
-      "ro-RO": "Chineză (Simplificată)",
-      "ja-JP": "中国語（簡体字）",
-      "zh-Hans-CN": "简体中文",
-      "nl-NL": "Chinees (Vereenvoudigd)",
-      "es-ES": "Chino (Simplificado)",
-    },
-  },
-  {
-    code: "nl-NL",
-    label: {
-      "en-US": "Dutch",
-      "de-DE": "Niederländisch",
-      "pt-BR": "Holandês",
-      "fr-FR": "Néerlandais",
-      "zh-Hant-TW": "荷蘭語",
-      "pt-PT": "Holandês",
-      "ro-RO": "Olandeză",
-      "ja-JP": "オランダ語",
-      "zh-Hans-CN": "荷兰语",
-      "nl-NL": "Nederlands",
-      "es-ES": "Neerlandés",
+      "en-US": "English (US)",
+      native: "English (US)",
     },
   },
   {
     code: "es-ES",
     label: {
       "en-US": "Spanish",
-      "de-DE": "Spanisch",
-      "pt-BR": "Espanhol",
-      "fr-FR": "Espagnol",
-      "zh-Hant-TW": "西班牙語",
-      "pt-PT": "Espanhol",
-      "ro-RO": "Spaniol",
-      "ja-JP": "スペイン語",
-      "zh-Hans-CN": "西班牙语",
-      "nl-NL": "Spaans",
-      "es-ES": "Español",
+      native: "Español",
+    },
+  },
+  {
+    code: "fr-FR",
+    label: {
+      "en-US": "French",
+      native: "Français",
+    },
+  },
+  {
+    code: "hu-HU",
+    label: {
+      "en-US": "Hungarian",
+      native: "Magyar",
+    },
+  },
+  {
+    code: "ja-JP",
+    label: {
+      "en-US": "Japanese",
+      native: "日本語",
+    },
+  },
+  {
+    code: "nl-NL",
+    label: {
+      "en-US": "Dutch",
+      native: "Nederlands",
+    },
+  },
+  {
+    code: "pt-BR",
+    label: {
+      "en-US": "Portuguese (Brazil)",
+      native: "Português (Brasil)",
+    },
+  },
+  {
+    code: "pt-PT",
+    label: {
+      "en-US": "Portuguese (Portugal)",
+      native: "Português (Portugal)",
+    },
+  },
+  {
+    code: "ro-RO",
+    label: {
+      "en-US": "Romanian",
+      native: "Română",
+    },
+  },
+  {
+    code: "ru-RU",
+    label: {
+      "en-US": "Russian",
+      native: "Русский",
+    },
+  },
+  {
+    code: "sv-SE",
+    label: {
+      "en-US": "Swedish",
+      native: "Svenska",
+    },
+  },
+  {
+    code: "zh-Hans-CN",
+    label: {
+      "en-US": "Chinese (Simplified)",
+      native: "简体中文",
+    },
+  },
+  {
+    code: "zh-Hant-TW",
+    label: {
+      "en-US": "Chinese (Traditional)",
+      native: "繁體中文",
     },
   },
 ];
-export { iso639Languages };
+
+export const sortedAppLanguages = [...appLanguages].sort((a, b) =>
+  a.label["en-US"].localeCompare(b.label["en-US"])
+);

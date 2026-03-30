@@ -10,7 +10,7 @@ export const TeamsLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation activeId="teams" loading />
       </PageHeader>
       <div className="p-4">

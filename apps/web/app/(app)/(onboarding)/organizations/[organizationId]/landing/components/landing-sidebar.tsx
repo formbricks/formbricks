@@ -42,7 +42,7 @@ export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
   return (
     <aside
       className={cn(
-        "w-sidebar-collapsed z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100"
+        "z-40 flex w-sidebar-collapsed flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100"
       )}>
       <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
 

@@ -1,0 +1,247 @@
+/* =============================================================================
+   Survey UI - Global Styles
+   
+   This file contains:
+   1. Tailwind CSS setup and configuration
+   2. Base design tokens (colors, radius)
+   3. Survey-specific theming tokens (--fb-* variables)
+   
+   All tokens are designed to be overridden by consumers for custom theming.
+   Components use Tailwind utilities backed by these CSS variables.
+   ============================================================================= */
+
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) important;
+
+/* NOSONAR: Tailwind CSS v4 directives - @config and @source are valid at-rules */
+@config "../../tailwind.config.ts";
+/* NOSONAR */
+@source "../../src/**/*.{ts,tsx,js,jsx}";
+/* NOSONAR */
+
+/* =============================================================================
+   Design Tokens
+   ============================================================================= */
+
+#fbjs {
+  /* ---------------------------------------------------------------------------
+     Base Primitives
+     These are the foundation tokens used throughout the design system.
+     --------------------------------------------------------------------------- */
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-muted: oklch(0.97 0.02 27.325);
+  --border: oklch(0.922 0 0);
+  --input: black;
+  --slate-50: rgb(248, 250, 252);
+  --slate-100: rgb(241 245 249);
+  --slate-200: rgb(226 232 240);
+  --slate-700: rgb(51 65 85);
+  --slate-900: rgb(15 23 42);
+
+  /* ---------------------------------------------------------------------------
+     Theming Tokens (--fb-*)
+
+     Color values MUST match the output of getSuggestedColors("#64748b") in
+     apps/web/lib/styling/constants.ts.  Non-color values MUST match
+     STYLE_DEFAULTS in the same file.
+
+     At runtime styles.ts always overrides these from the JS object, but the
+     CSS values below act as the initial / fallback state so the survey looks
+     correct before JS executes.
+
+     Derived colour palette for brand #64748b:
+       questionColor  = #414b5a   (brand mixed with black @ 0.35)
+       inputBg        = #f3f4f6   (brand mixed with white @ 0.92)
+       inputBorder    = #c1c7d1   (brand mixed with white @ 0.60)
+       cardBg         = #fafbfc   (brand mixed with white @ 0.97)
+       cardBorder     = #e0e3e8   (brand mixed with white @ 0.80)
+       progressTrack  = #d9dbde   (questionColor mixed with white @ 0.80)
+     --------------------------------------------------------------------------- */
+
+  /* ── Brand ─────────────────────────────────────────────────────────── */
+  --fb-survey-brand-color: #64748b;
+  --fb-accent-background-color: #e2e8f0;
+  --fb-accent-background-color-selected: #f1f5f9;
+
+  /* ── Headlines ─────────────────────────────────────────────────────── */
+  --fb-element-headline-font-family: inherit;
+  --fb-element-headline-font-weight: 600;
+  --fb-element-headline-font-size: 16px;
+  --fb-element-headline-color: #414b5a;
+  --fb-element-headline-opacity: 1;
+
+  /* ── Descriptions ──────────────────────────────────────────────────── */
+  --fb-element-description-font-family: inherit;
+  --fb-element-description-font-weight: 400;
+  --fb-element-description-font-size: 14px;
+  --fb-element-description-color: #414b5a;
+  --fb-element-description-opacity: 1;
+
+  /* ── Upper Labels ──────────────────────────────────────────────────── */
+  --fb-element-upper-label-font-family: inherit;
+  --fb-element-upper-label-font-weight: 400;
+  --fb-element-upper-label-font-size: 12px;
+  --fb-element-upper-label-color: #414b5a;
+  --fb-element-upper-label-opacity: 0.6;
+
+  /* ── Labels ────────────────────────────────────────────────────────── */
+  --fb-label-font-family: inherit;
+  --fb-label-font-weight: 400;
+  --fb-label-font-size: 14px;
+  --fb-label-color: #414b5a;
+  --fb-label-opacity: 1;
+
+  /* ── Buttons ───────────────────────────────────────────────────────── */
+  --fb-button-height: auto;
+  --fb-button-width: auto;
+  --fb-button-font-family: inherit;
+  --fb-button-font-size: 16px;
+  --fb-button-font-weight: 500;
+  --fb-button-border-radius: 8px;
+  --fb-button-bg-color: #414b5a;
+  --fb-button-text-color: #ffffff;
+  --fb-button-padding-x: 12px;
+  --fb-button-padding-y: 12px;
+
+  /* ── Inputs ────────────────────────────────────────────────────────── */
+  --fb-input-bg-color: #f3f4f6;
+  --fb-input-border-color: #c1c7d1;
+  --fb-input-border-radius: 8px;
+  --fb-input-font-family: inherit;
+  --fb-input-font-size: 14px;
+  --fb-input-font-weight: 400;
+  --fb-input-color: #414b5a;
+  --fb-input-placeholder-color: var(--fb-input-text-color, var(--fb-input-color));
+  --fb-input-placeholder-opacity: 0.5;
+  --fb-input-width: 100%;
+  --fb-input-height: 20px;
+  --fb-input-padding-x: 8px;
+  --fb-input-padding-y: 8px;
+  --fb-input-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  /* ── Progress Bar ──────────────────────────────────────────────────── */
+  --fb-progress-track-height: 8px;
+  --fb-progress-track-bg-color: #d9dbde;
+  --fb-progress-track-border-radius: 8px;
+  --fb-progress-indicator-bg-color: #414b5a;
+  --fb-progress-indicator-border-radius: 8px;
+
+  /* ── Options (radio / checkbox / multi-select) ─────────────────────── */
+  --fb-option-bg-color: #f3f4f6;
+  --fb-option-label-color: #414b5a;
+  --fb-option-border-radius: 8px;
+  --fb-option-padding-x: 16px;
+  --fb-option-padding-y: 16px;
+  --fb-option-font-family: inherit;
+  --fb-option-font-size: 14px;
+  --fb-option-font-weight: 400;
+}
+
+#fbjs .button-custom {
+  width: var(--fb-button-width);
+  height: var(--fb-button-height);
+  background-color: var(--fb-button-bg-color);
+  border-radius: var(--fb-button-border-radius);
+  font-family: var(--fb-button-font-family);
+  font-weight: var(--fb-button-font-weight);
+  padding-left: var(--fb-button-padding-x);
+  padding-right: var(--fb-button-padding-x);
+  padding-top: var(--fb-button-padding-y);
+  padding-bottom: var(--fb-button-padding-y);
+  color: var(--fb-button-text-color);
+  font-size: var(--fb-button-font-size);
+}
+
+#fbjs .label-headline,
+#fbjs .label-headline * {
+  font-family: var(--fb-element-headline-font-family);
+  font-weight: var(--fb-element-headline-font-weight);
+  font-size: var(--fb-element-headline-font-size);
+  color: var(--fb-element-headline-color);
+  opacity: var(--fb-element-headline-opacity);
+}
+
+#fbjs .label-description,
+#fbjs .label-description *,
+#fbjs .text-subheading,
+#fbjs .text-subheading * {
+  font-family: var(--fb-element-description-font-family);
+  font-weight: var(--fb-element-description-font-weight);
+  font-size: var(--fb-element-description-font-size);
+  color: var(--fb-element-description-color);
+  opacity: var(--fb-element-description-opacity);
+}
+
+#fbjs .label-default,
+#fbjs .label-default * {
+  font-family: var(--fb-label-font-family);
+  font-weight: var(--fb-label-font-weight);
+  font-size: var(--fb-label-font-size);
+  color: var(--fb-label-color);
+  opacity: var(--fb-label-opacity);
+}
+
+#fbjs .label-upper,
+#fbjs .label-upper * {
+  font-family: var(--fb-element-upper-label-font-family);
+  font-weight: var(--fb-element-upper-label-font-weight);
+  font-size: var(--fb-element-upper-label-font-size);
+  color: var(--fb-element-upper-label-color);
+  opacity: var(--fb-element-upper-label-opacity);
+}
+
+#fbjs .progress-track {
+  height: var(--fb-progress-track-height);
+  background-color: var(--fb-progress-track-bg-color);
+  border-radius: var(--fb-progress-track-border-radius);
+}
+
+#fbjs .progress-indicator {
+  background-color: var(--fb-progress-indicator-bg-color);
+  border-radius: var(--fb-progress-indicator-border-radius);
+}
+
+/* ---------------------------------------------------------------------------
+   Textarea Scrollbar Styling
+   Smaller, more subtle scrollbars for textarea elements.
+   --------------------------------------------------------------------------- */
+#fbjs textarea {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: hsl(215.4 16.3% 46.9% / 0.3) transparent;
+}
+
+/* Chrome, Edge, and Safari */
+#fbjs textarea::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+#fbjs textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#fbjs textarea::-webkit-scrollbar-thumb {
+  background-color: hsl(215.4 16.3% 46.9% / 0.3);
+  border-radius: 2px;
+}
+
+#fbjs textarea::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(215.4 16.3% 46.9% / 0.5);
+}

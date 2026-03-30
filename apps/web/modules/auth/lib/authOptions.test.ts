@@ -10,6 +10,25 @@ import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
+vi.mock("@next-auth/prisma-adapter", () => ({
+  PrismaAdapter: vi.fn(() => ({
+    createUser: vi.fn(),
+    getUser: vi.fn(),
+    getUserByEmail: vi.fn(),
+    getUserByAccount: vi.fn(),
+    updateUser: vi.fn(),
+    deleteUser: vi.fn(),
+    linkAccount: vi.fn(),
+    unlinkAccount: vi.fn(),
+    createSession: vi.fn(),
+    getSessionAndUser: vi.fn(),
+    updateSession: vi.fn(),
+    deleteSession: vi.fn(),
+    createVerificationToken: vi.fn(),
+    useVerificationToken: vi.fn(),
+  })),
+}));
+
 // Mock encryption utilities
 vi.mock("@/lib/encryption", () => ({
   symmetricEncrypt: vi.fn((value: string) => `encrypted_${value}`),
@@ -33,22 +52,26 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   },
 }));
 
-// Mock constants that this test needs
-vi.mock("@/lib/constants", () => ({
-  EMAIL_VERIFICATION_DISABLED: false,
-  SESSION_MAX_AGE: 86400,
-  NEXTAUTH_SECRET: "test-secret",
-  WEBAPP_URL: "http://localhost:3000",
-  ENCRYPTION_KEY: "12345678901234567890123456789012", // 32 bytes for AES-256
-  REDIS_URL: undefined,
-  AUDIT_LOG_ENABLED: false,
-  AUDIT_LOG_GET_USER_IP: false,
-  ENTERPRISE_LICENSE_KEY: undefined,
-  SENTRY_DSN: undefined,
-  BREVO_API_KEY: undefined,
-  RATE_LIMITING_DISABLED: false,
-  CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
-}));
+// Mock constants that this test needs while preserving untouched exports.
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    EMAIL_VERIFICATION_DISABLED: false,
+    SESSION_MAX_AGE: 86400,
+    NEXTAUTH_SECRET: "test-secret",
+    WEBAPP_URL: "http://localhost:3000",
+    ENCRYPTION_KEY: "12345678901234567890123456789012", // 32 bytes for AES-256
+    REDIS_URL: undefined,
+    AUDIT_LOG_ENABLED: false,
+    AUDIT_LOG_GET_USER_IP: false,
+    ENTERPRISE_LICENSE_KEY: undefined,
+    SENTRY_DSN: undefined,
+    BREVO_API_KEY: undefined,
+    RATE_LIMITING_DISABLED: false,
+    CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+  };
+});
 
 // Mock next/headers
 vi.mock("next/headers", () => ({
@@ -195,6 +218,7 @@ describe("authOptions", () => {
         vi.mocked(applyIPRateLimit).mockRejectedValue(
           new Error("Maximum number of requests reached. Please try again later.")
         );
+        const findUniqueSpy = vi.spyOn(prisma.user, "findUnique");
 
         const credentials = { email: mockUser.email, password: mockPassword };
 
@@ -202,7 +226,7 @@ describe("authOptions", () => {
           "Maximum number of requests reached. Please try again later."
         );
 
-        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(findUniqueSpy).not.toHaveBeenCalled();
       });
 
       test("should use correct rate limit configuration", async () => {
@@ -281,6 +305,7 @@ describe("authOptions", () => {
         vi.mocked(applyIPRateLimit).mockRejectedValue(
           new Error("Maximum number of requests reached. Please try again later.")
         );
+        const findUniqueSpy = vi.spyOn(prisma.user, "findUnique");
 
         const credentials = { token: "sometoken" };
 
@@ -288,57 +313,26 @@ describe("authOptions", () => {
           "Maximum number of requests reached. Please try again later."
         );
 
-        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(findUniqueSpy).not.toHaveBeenCalled();
       });
     });
   });
 
   describe("Callbacks", () => {
-    describe("jwt callback", () => {
-      test("should add profile information to token if user is found", async () => {
-        vi.spyOn(prisma.user, "findFirst").mockResolvedValue({
-          id: mockUser.id,
-          locale: mockUser.locale,
-          email: mockUser.email,
-          emailVerified: mockUser.emailVerified,
-        } as any);
-
-        const token = { email: mockUser.email };
-        if (!authOptions.callbacks?.jwt) {
-          throw new Error("jwt callback is not defined");
-        }
-        const result = await authOptions.callbacks.jwt({ token } as any);
-        expect(result).toEqual({
-          ...token,
-          profile: { id: mockUser.id },
-        });
-      });
-
-      test("should return token unchanged if no existing user is found", async () => {
-        vi.spyOn(prisma.user, "findFirst").mockResolvedValue(null);
-
-        const token = { email: "nonexistent@example.com" };
-        if (!authOptions.callbacks?.jwt) {
-          throw new Error("jwt callback is not defined");
-        }
-        const result = await authOptions.callbacks.jwt({ token } as any);
-        expect(result).toEqual(token);
-      });
-    });
-
     describe("session callback", () => {
-      test("should add user profile to session", async () => {
-        const token = {
-          id: "user6",
-          profile: { id: "user6", email: "user6@example.com" },
-        };
+      test("should add user id and isActive to session from database user", async () => {
+        const session = { user: { email: "user6@example.com" } };
+        const user = { id: "user6", isActive: false };
 
-        const session = { user: {} };
         if (!authOptions.callbacks?.session) {
           throw new Error("session callback is not defined");
         }
-        const result = await authOptions.callbacks.session({ session, token } as any);
-        expect(result.user).toEqual(token.profile);
+        const result = await authOptions.callbacks.session({ session, user } as any);
+        expect(result.user).toEqual({
+          email: "user6@example.com",
+          id: "user6",
+          isActive: false,
+        });
       });
     });
 

@@ -5,6 +5,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { EditMemberships } from "@/modules/organization/settings/teams/components/edit-memberships";
@@ -45,6 +46,10 @@ export const MembersView = async ({
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
+  // Fetch admin teams if they're a team admin
+  const userAdminTeamIds = await getTeamsWhereUserIsAdmin(currentUserId, organization.id);
+  const isTeamAdminUser = userAdminTeamIds.length > 0;
+
   let teams: TOrganizationTeam[] = [];
 
   if (isAccessControlAllowed) {
@@ -69,6 +74,8 @@ export const MembersView = async ({
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+          isTeamAdmin={isTeamAdminUser}
+          userAdminTeamIds={userAdminTeamIds}
         />
       )}
 

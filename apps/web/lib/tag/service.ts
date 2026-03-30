@@ -72,7 +72,7 @@ export const createTag = async (
     }
     return err({
       code: TagError.UNEXPECTED_ERROR,
-      message: error.message,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };

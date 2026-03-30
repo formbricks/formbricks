@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { canUserAccessOrganization } from "@/lib/organization/auth";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
@@ -8,7 +8,10 @@ import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
-const ProjectOnboardingLayout = async (props) => {
+const ProjectOnboardingLayout = async (props: {
+  params: Promise<{ organizationId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;
@@ -22,7 +25,7 @@ const ProjectOnboardingLayout = async (props) => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const isAuthorized = await canUserAccessOrganization(session.user.id, params.organizationId);
@@ -33,7 +36,7 @@ const ProjectOnboardingLayout = async (props) => {
 
   const organization = await getOrganization(params.organizationId);
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), params.organizationId);
   }
 
   return (

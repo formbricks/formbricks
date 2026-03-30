@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -14,7 +15,7 @@ import {
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -50,7 +51,10 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
-      return responses.successResponse(response);
+      return responses.successResponse({
+        ...response,
+        data: { ...response.data, data: resolveStorageUrlsInObject(response.data.data) },
+      });
     },
   });
 
@@ -192,6 +196,25 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         });
       }
 
+      // Validate response data against validation rules
+      const validationErrors = validateResponseData(
+        questionsResponse.data.blocks,
+        body.data,
+        body.language ?? "en",
+        questionsResponse.data.questions
+      );
+
+      if (validationErrors) {
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: formatValidationErrorsForV2Api(validationErrors),
+          },
+          auditLog
+        );
+      }
+
       const response = await updateResponseWithQuotaEvaluation(params.responseId, body);
 
       if (!response.ok) {
@@ -223,7 +246,10 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         auditLog.newObject = response.data;
       }
 
-      return responses.successResponse(response);
+      return responses.successResponse({
+        ...response,
+        data: { ...response.data, data: resolveStorageUrlsInObject(response.data.data) },
+      });
     },
     action: "updated",
     targetType: "response",

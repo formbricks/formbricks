@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TSurveyVariable } from "@formbricks/types/surveys/types";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
+import { type TSurveyVariable } from "@formbricks/types/surveys/types";
 import { evaluateLogic, isConditionGroup, performActions } from "./logic";
 
 // Mock the imported function

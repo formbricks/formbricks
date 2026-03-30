@@ -2,6 +2,7 @@ import { createInstance } from "i18next";
 import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { initReactI18next } from "react-i18next/initReactI18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getLocale } from "@/lingodotdev/language";
 
@@ -21,9 +22,9 @@ const initI18next = async (lng: string) => {
   return i18nInstance;
 };
 
-export async function getTranslate() {
-  const locale = await getLocale();
+export async function getTranslate(locale?: TUserLocale) {
+  const resolvedLocale = locale ?? (await getLocale());
 
-  const i18nextInstance = await initI18next(locale);
-  return i18nextInstance.getFixedT(locale);
+  const i18nextInstance = await initI18next(resolvedLocale);
+  return i18nextInstance.getFixedT(resolvedLocale);
 }

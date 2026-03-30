@@ -6,7 +6,7 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for ProjectTeams", () => {
   test("Create, Retrieve, Update, and Delete ProjectTeams via API", async ({ page, users, request }) => {
-    let apiKey;
+    let apiKey: string;
     try {
       ({ apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
@@ -14,7 +14,9 @@ test.describe("API Tests for ProjectTeams", () => {
       throw error;
     }
 
-    let organizationId, projectId, teamId: string;
+    let organizationId: string;
+    let projectId: string;
+    let teamId: string;
 
     // Get organization ID using the me endpoint
     await test.step("Get Organization ID", async () => {
@@ -24,7 +26,9 @@ test.describe("API Tests for ProjectTeams", () => {
         },
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as {
+        data: { organizationId: string; environmentPermissions: { projectId: string }[] };
+      };
 
       expect(responseBody.data).toBeTruthy();
       expect(responseBody.data.organizationId).toBeTruthy();
@@ -49,7 +53,7 @@ test.describe("API Tests for ProjectTeams", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { name: string; id: string } };
       expect(responseBody.data.name).toEqual("New Team from API");
       teamId = responseBody.data.id;
     });
@@ -80,11 +84,11 @@ test.describe("API Tests for ProjectTeams", () => {
         params: queryParams,
       });
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as {
+        data: { teamId: string; projectId: string }[];
+      };
       expect(Array.isArray(responseBody.data)).toBe(true);
-      expect(
-        responseBody.data.find((pt: any) => pt.teamId === teamId && pt.projectId === projectId)
-      ).toBeTruthy();
+      expect(responseBody.data.find((pt) => pt.teamId === teamId && pt.projectId === projectId)).toBeTruthy();
     });
 
     await test.step("Update ProjectTeam by ID via API", async () => {
@@ -102,7 +106,7 @@ test.describe("API Tests for ProjectTeams", () => {
       });
 
       expect(response.ok()).toBe(true);
-      const responseBody = await response.json();
+      const responseBody = (await response.json()) as { data: { permission: string } };
       expect(responseBody.data.permission).toBe("read");
     });
 

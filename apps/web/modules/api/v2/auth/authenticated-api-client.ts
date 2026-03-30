@@ -43,7 +43,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
 
     return response;
   } catch (err) {
-    if ("type" in err) {
+    if (err !== null && typeof err === "object" && "type" in err) {
       return handleApiError(request, err as ApiErrorResponseV2);
     }
 

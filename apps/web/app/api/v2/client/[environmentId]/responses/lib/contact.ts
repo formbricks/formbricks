@@ -20,10 +20,10 @@ export const getContact = reactCache(async (contactId: string) => {
     return null;
   }
 
-  const contactAttributes = contact.attributes.reduce((acc, attr) => {
+  const contactAttributes = contact.attributes.reduce<TContactAttributes>((acc, attr) => {
     acc[attr.attributeKey.key] = attr.value;
     return acc;
-  }, {}) as TContactAttributes;
+  }, {});
 
   return {
     id: contact.id,

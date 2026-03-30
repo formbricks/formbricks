@@ -87,9 +87,11 @@ class AuthorizationError extends Error {
 
 class TooManyRequestsError extends Error {
   statusCode = 429;
-  constructor(message: string) {
+  retryAfter?: number;
+  constructor(message: string, retryAfter?: number) {
     super(message);
     this.name = "TooManyRequestsError";
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -111,7 +113,7 @@ interface ForbiddenError {
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
 }
 
-export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
+export const ZErrorHandler = z.function({ input: [z.any()], output: z.void() });
 
 export {
   ResourceNotFoundError,
@@ -127,6 +129,26 @@ export {
   TooManyRequestsError,
 };
 export type { NetworkError, ForbiddenError };
+
+/**
+ * Error names that represent expected business-logic failures.
+ * These are handled gracefully in the UI and should NOT be reported to Sentry.
+ */
+export const EXPECTED_ERROR_NAMES = new Set([
+  "ResourceNotFoundError",
+  "AuthorizationError",
+  "InvalidInputError",
+  "ValidationError",
+  "AuthenticationError",
+  "OperationNotAllowedError",
+  "TooManyRequestsError",
+]);
+
+/**
+ * Check whether an error is an expected business-logic failure.
+ * Works with both error instances and serialised errors (where only `name` survives).
+ */
+export const isExpectedError = (error: Error): boolean => EXPECTED_ERROR_NAMES.has(error.name);
 
 export interface ApiErrorResponse {
   code:

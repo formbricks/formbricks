@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { getDisplaysBySurveyIdWithContact } from "@/lib/display/service";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -22,7 +23,7 @@ const ZGetResponsesAction = z.object({
 });
 
 export const getResponsesAction = authenticatedActionClient
-  .schema(ZGetResponsesAction)
+  .inputSchema(ZGetResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -56,7 +57,7 @@ const ZGetSurveySummaryAction = z.object({
 });
 
 export const getSurveySummaryAction = authenticatedActionClient
-  .schema(ZGetSurveySummaryAction)
+  .inputSchema(ZGetSurveySummaryAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -84,7 +85,7 @@ const ZGetResponseCountAction = z.object({
 });
 
 export const getResponseCountAction = authenticatedActionClient
-  .schema(ZGetResponseCountAction)
+  .inputSchema(ZGetResponseCountAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -105,4 +106,32 @@ export const getResponseCountAction = authenticatedActionClient
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
+  });
+
+const ZGetDisplaysWithContactAction = z.object({
+  surveyId: ZId,
+  limit: z.int().min(1).max(100),
+  offset: z.int().nonnegative(),
+});
+
+export const getDisplaysWithContactAction = authenticatedActionClient
+  .inputSchema(ZGetDisplaysWithContactAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
+    });
+
+    return getDisplaysBySurveyIdWithContact(parsedInput.surveyId, parsedInput.limit, parsedInput.offset);
   });

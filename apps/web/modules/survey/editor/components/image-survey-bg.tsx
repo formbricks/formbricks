@@ -20,8 +20,8 @@ export const UploadImageSurveyBg = ({
           id="survey-bg-file-input"
           allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
           environmentId={environmentId}
-          onFileUpload={(url: string[]) => {
-            if (url.length > 0) {
+          onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
+            if (url && url.length > 0) {
               handleBgChange(url[0], "upload");
             } else {
               handleBgChange("", "upload");

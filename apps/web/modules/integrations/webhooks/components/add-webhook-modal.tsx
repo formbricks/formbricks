@@ -1,8 +1,8 @@
 "use client";
 
-import { PipelineTriggers } from "@prisma/client";
+import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
-import { Webhook } from "lucide-react";
+import { Webhook as WebhookIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
+import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
 import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -33,16 +34,23 @@ interface AddWebhookModalProps {
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
+  allowInternalUrls: boolean;
 }
 
-export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) => {
+export const AddWebhookModal = ({
+  environmentId,
+  surveys,
+  open,
+  setOpen,
+  allowInternalUrls,
+}: AddWebhookModalProps) => {
   const router = useRouter();
   const {
     handleSubmit,
     reset,
     register,
     formState: { isSubmitting },
-  } = useForm();
+  } = useForm<TWebhookInput>();
   const { t } = useTranslation();
   const [testEndpointInput, setTestEndpointInput] = useState("");
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
@@ -51,16 +59,23 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
+  const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
+  const [webhookSecret, setWebhookSecret] = useState<string | undefined>();
 
-  const handleTestEndpoint = async (sendSuccessToast: boolean) => {
+  const handleTestEndpoint = async (
+    sendSuccessToast: boolean
+  ): Promise<{ success: boolean; secret?: string }> => {
     try {
-      const { valid, error } = validWebHookURL(testEndpointInput);
+      const { valid, error } = validWebHookURL(testEndpointInput, allowInternalUrls);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
-        return;
+        return { success: false };
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
+      const testEndpointActionResult = await testEndpointAction({
+        url: testEndpointInput,
+        secret: webhookSecret,
+      });
       if (!testEndpointActionResult?.data) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
@@ -68,20 +83,22 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
-      return true;
+      if (testEndpointActionResult.data.secret) {
+        setWebhookSecret(testEndpointActionResult.data.secret);
+      }
+      return testEndpointActionResult.data;
     } catch (err) {
       setHittingEndpoint(false);
+      const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
         `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${
-          err.message.length < 250
-            ? `${t("common.error")}:  ${err.message}`
-            : t("environments.integrations.webhooks.please_check_console")
+          errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")
         }`,
-        { className: err.message.length < 250 ? "break-all" : "" }
+        { className: errMessage.length < 250 ? "break-all" : "" }
       );
-      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), err.message);
+      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
       setEndpointAccessible(false);
-      return false;
+      return { success: false };
     }
   };
 
@@ -125,8 +142,8 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           throw new Error(t("environments.integrations.webhooks.discord_webhook_not_supported"));
         }
 
-        const endpointHitSuccessfully = await handleTestEndpoint(false);
-        if (!endpointHitSuccessfully) return;
+        const testResult = await handleTestEndpoint(false);
+        if (!testResult.success) return;
 
         const updatedData: TWebhookInput = {
           name: data.name,
@@ -139,38 +156,46 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         const createWebhookActionResult = await createWebhookAction({
           environmentId,
           webhookInput: updatedData,
+          webhookSecret: testResult.secret,
         });
         if (createWebhookActionResult?.data) {
           router.refresh();
-          setOpenWithStates(false);
+          setCreatedWebhook(createWebhookActionResult.data);
           toast.success(t("environments.integrations.webhooks.webhook_added_successfully"));
         } else {
           const errorMessage = getFormattedErrorMessage(createWebhookActionResult);
           toast.error(errorMessage);
         }
       } catch (e) {
-        toast.error(e.message);
+        toast.error(e instanceof Error ? e.message : "Unknown error occurred");
       } finally {
         setCreatingWebhook(false);
       }
     }
   };
 
-  const setOpenWithStates = (isOpen: boolean) => {
-    setOpen(isOpen);
+  const resetAndClose = () => {
+    setOpen(false);
     reset();
     setTestEndpointInput("");
     setEndpointAccessible(undefined);
     setSelectedSurveys([]);
     setSelectedTriggers([]);
     setSelectedAllSurveys(false);
+    setCreatedWebhook(null);
+    setWebhookSecret(undefined);
   };
 
+  // Show success dialog with secret after webhook creation
+  if (createdWebhook) {
+    return <WebhookCreatedModal open={open} webhook={createdWebhook} onClose={resetAndClose} />;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpenWithStates}>
+    <Dialog open={open} onOpenChange={resetAndClose}>
       <DialogContent>
         <DialogHeader>
-          <Webhook />
+          <WebhookIcon />
           <DialogTitle>{t("environments.integrations.webhooks.add_webhook")}</DialogTitle>
           <DialogDescription>
             {t("environments.integrations.webhooks.add_webhook_description")}
@@ -249,12 +274,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           </DialogBody>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setOpenWithStates(false);
-              }}>
+            <Button type="button" variant="secondary" onClick={resetAndClose}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" loading={creatingWebhook}>

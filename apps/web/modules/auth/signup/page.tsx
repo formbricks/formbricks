@@ -5,6 +5,7 @@ import {
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
+  IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
@@ -28,7 +29,11 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { SignupForm } from "./components/signup-form";
 
-export const SignupPage = async ({ searchParams: searchParamsProps }) => {
+export const SignupPage = async ({
+  searchParams: searchParamsProps,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
   const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
@@ -76,6 +81,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
           samlTenant={SAML_TENANT}
           samlProduct={SAML_PRODUCT}
           turnstileSiteKey={TURNSTILE_SITE_KEY}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         />
       </FormWrapper>
     </div>

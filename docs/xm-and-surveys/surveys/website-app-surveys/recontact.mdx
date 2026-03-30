@@ -14,7 +14,7 @@ Recontact options are the last layer of the logic that determines if a survey is
 
 3. **Recontact Options:** Should the survey be shown (again) to this user? That's dependent on:
 
-- Did the user see any survey recently (meaning, has Global Waiting Time passed)?
+- Did the user see any survey recently (meaning, has Survey Cooldown passed)?
 
 - Did the user see this specific survey already?
 
@@ -50,13 +50,13 @@ Available Recontact Options include:
 
 ![Choose Recontanct Options for the Survey](/images/xm-and-surveys/surveys/website-app-surveys/recontact/survey-recontact.webp)
 
-## Project-wide Global Waiting Time
+## Project-wide Survey Cooldown
 
-The Global Waiting Time is a universal blocker to make sure that no user sees too many surveys. This is particularly helpful when several teams of large organisations use Formbricks at the same time.
+The Survey Cooldown is a universal blocker to make sure that no user sees too many surveys. This is particularly helpful when several teams of large organisations use Formbricks at the same time.
 
-<Note>The default Global Waiting Time is set to 7 days.</Note>
+<Note>The default Survey Cooldown is set to 7 days.</Note>
 
-To adjust the Global Waiting Time:
+To adjust the Survey Cooldown:
 
 1. Visit Formbricks Settings
 
@@ -68,9 +68,9 @@ To adjust the Global Waiting Time:
 
 ![Formbricks Project-Wide Wait Time](/images/xm-and-surveys/surveys/website-app-surveys/recontact/global-wait-time.webp)
 
-## Overriding Global Waiting Time for a Specific Survey
+## Overriding Survey Cooldown for a Specific Survey
 
-For specific surveys, you may need to override the default waiting time. Below is how you can do that:
+For specific surveys, you may need to override the default cooldown. Below is how you can do that:
 
 1. In the Survey Editor, access the Settings Tab.
 
@@ -80,11 +80,11 @@ For specific surveys, you may need to override the default waiting time. Below i
 
 4. Set a custom recontact period:
 
-   - **Always Show Survey**: Displays the survey whenever triggered, ignoring the waiting time.
+   - **Always Show Survey**: Displays the survey whenever triggered, ignoring the cooldown.
 
    - **Wait `X` days before showing this survey again**: Sets a specific interval before the survey can be shown again.
 
-![Ignore Global Waiting Time for a Specific Survey](/images/xm-and-surveys/surveys/website-app-surveys/recontact/ignore-wait-time.webp)
+![Ignore Survey Cooldown for a Specific Survey](/images/xm-and-surveys/surveys/website-app-surveys/recontact/ignore-wait-time.webp)
 
 ---
 

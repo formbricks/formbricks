@@ -3,9 +3,12 @@
 import { CheckCircle2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getSurveyDateFormatMap } from "@/lib/utils/date-display";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -20,14 +23,17 @@ interface SingleResponseCardBodyProps {
   survey: TSurvey;
   response: TResponseWithQuotas;
   skippedQuestions: string[][];
+  locale: TUserLocale;
 }
 
 export const SingleResponseCardBody = ({
   survey,
   response,
   skippedQuestions,
+  locale,
 }: SingleResponseCardBodyProps) => {
   const elements = getElementsFromBlocks(survey.blocks);
+  const dateFormats = getSurveyDateFormatMap(elements);
   const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
@@ -60,6 +66,7 @@ export const SingleResponseCardBody = ({
           status={"welcomeCard"}
           isFirstElementAnswered={isFirstElementAnswered}
           responseData={response.data}
+          locale={locale}
         />
       )}
       <div className="space-y-6">
@@ -67,6 +74,16 @@ export const SingleResponseCardBody = ({
           <VerifiedEmail responseData={response.data} />
         )}
         {elements.map((question) => {
+          // Skip CTA elements without external buttons only if they have no response data
+          // This preserves historical data from when buttonExternal was true
+          if (
+            question.type === TSurveyElementTypeEnum.CTA &&
+            !question.buttonExternal &&
+            !response.data[question.id]
+          ) {
+            return null;
+          }
+
           const skipped = skippedQuestions.find((skippedQuestionElement) =>
             skippedQuestionElement.includes(question.id)
           );
@@ -87,7 +104,9 @@ export const SingleResponseCardBody = ({
                           getLocalizedValue(question.headline, "default"),
                           response.data,
                           response.variables,
-                          true
+                          true,
+                          locale,
+                          dateFormats
                         )
                       )
                     )}
@@ -98,6 +117,7 @@ export const SingleResponseCardBody = ({
                       survey={survey}
                       responseData={response.data[question.id]}
                       language={response.language}
+                      locale={locale}
                       showId={true}
                     />
                   </div>
@@ -107,6 +127,7 @@ export const SingleResponseCardBody = ({
                   skippedElements={skipped}
                   elements={elements}
                   responseData={response.data}
+                  locale={locale}
                   status={
                     response.finished ||
                     (skippedQuestions.length > 0 &&

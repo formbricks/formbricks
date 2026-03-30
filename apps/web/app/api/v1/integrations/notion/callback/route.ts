@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -10,10 +9,15 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req }: { req: NextRequest }) => {
+  handler: async ({ req, authentication }) => {
+    if (!authentication || !("user" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
     const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -23,6 +27,13 @@ export const GET = withV1ApiWrapper({
     if (!environmentId) {
       return {
         response: responses.badRequestResponse("Invalid environmentId"),
+      };
+    }
+
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
+    if (!canUserAccessEnvironment) {
+      return {
+        response: responses.unauthorizedResponse(),
       };
     }
 
@@ -87,14 +98,14 @@ export const GET = withV1ApiWrapper({
       if (result) {
         return {
           response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/project/integrations/notion`
+            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion`
           ),
         };
       }
     } else if (error) {
       return {
         response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/project/integrations/notion?error=${error}`
+          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion?error=${error}`
         ),
       };
     }

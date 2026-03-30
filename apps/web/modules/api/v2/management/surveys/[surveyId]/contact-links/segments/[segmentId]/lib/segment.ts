@@ -19,6 +19,11 @@ export const getSegment = reactCache(async (segmentId: string) => {
 
     return ok(segment);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "segment", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "segment", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 });

@@ -87,7 +87,7 @@ export const EditEndingCard = ({
 
   let open = activeElementId === endingCard.id;
 
-  const setOpen = (e) => {
+  const setOpen = (e: boolean) => {
     if (e) {
       setActiveElementId(endingCard.id);
     } else {

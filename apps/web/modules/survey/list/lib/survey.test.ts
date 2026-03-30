@@ -6,6 +6,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -21,8 +22,8 @@ import {
   getSurveyCount,
   getSurveys,
   getSurveysSortedByRelevance,
-  surveySelect,
 } from "./survey";
+import { surveySelect } from "./survey-record";
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -38,6 +39,10 @@ vi.mock("@/lib/survey/utils", () => ({
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
+}));
+
+vi.mock("@/lib/organization/service", () => ({
+  getOrganizationByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/utils", () => ({
@@ -59,6 +64,14 @@ vi.mock("@paralleldrive/cuid2", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsQuotasEnabled: vi.fn(),
+}));
+
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: async () => (key: string, params?: Record<string, unknown>) => {
+    if (key === "common.duplicate_copy") return "(copy)";
+    if (key === "common.duplicate_copy_number") return `(copy ${params?.copyNumber})`;
+    return key;
+  },
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -106,6 +119,7 @@ const resetMocks = () => {
   vi.mocked(buildWhereClause).mockClear();
   vi.mocked(doesEnvironmentExist).mockClear();
   vi.mocked(getProjectWithLanguagesByEnvironmentId).mockClear();
+  vi.mocked(getOrganizationByEnvironmentId).mockClear();
   vi.mocked(createId).mockClear();
   vi.mocked(prisma.survey.findMany).mockReset();
   vi.mocked(prisma.survey.findUnique).mockReset();
@@ -183,7 +197,19 @@ describe("getSurvey", () => {
 
     const survey = await getSurvey(surveyId);
 
-    expect(survey).toEqual({ ...prismaSurvey, responseCount: 5 });
+    expect(survey).toEqual({
+      id: prismaSurvey.id,
+      createdAt: prismaSurvey.createdAt,
+      updatedAt: prismaSurvey.updatedAt,
+      name: prismaSurvey.name,
+      type: prismaSurvey.type,
+      creator: prismaSurvey.creator,
+      status: prismaSurvey.status,
+      singleUse: prismaSurvey.singleUse,
+      environmentId: prismaSurvey.environmentId,
+      responseCount: 5,
+    });
+    expect(survey).not.toHaveProperty("_count");
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId },
       select: surveySelect,
@@ -220,7 +246,15 @@ describe("getSurveys", () => {
     { ...mockSurveyPrisma, id: "s2", name: "Survey 2", _count: { responses: 2 } },
   ];
   const expectedSurveys: TSurvey[] = mockPrismaSurveys.map((s) => ({
-    ...s,
+    id: s.id,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    name: s.name,
+    type: s.type,
+    creator: s.creator,
+    status: s.status,
+    singleUse: s.singleUse,
+    environmentId: s.environmentId,
     responseCount: s._count.responses,
   }));
 
@@ -229,6 +263,7 @@ describe("getSurveys", () => {
     const surveys = await getSurveys(environmentId);
 
     expect(surveys).toEqual(expectedSurveys);
+    expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: { environmentId, ...buildWhereClause() },
       select: surveySelect,
@@ -303,8 +338,30 @@ describe("getSurveysSortedByRelevance", () => {
     _count: { responses: 5 },
   };
 
-  const expectedInProgressSurvey: TSurvey = { ...mockInProgressPrisma, responseCount: 3 };
-  const expectedOtherSurvey: TSurvey = { ...mockOtherPrisma, responseCount: 5 };
+  const expectedInProgressSurvey: TSurvey = {
+    id: mockInProgressPrisma.id,
+    createdAt: mockInProgressPrisma.createdAt,
+    updatedAt: mockInProgressPrisma.updatedAt,
+    name: mockInProgressPrisma.name,
+    type: mockInProgressPrisma.type,
+    creator: mockInProgressPrisma.creator,
+    status: mockInProgressPrisma.status,
+    singleUse: mockInProgressPrisma.singleUse,
+    environmentId: mockInProgressPrisma.environmentId,
+    responseCount: 3,
+  };
+  const expectedOtherSurvey: TSurvey = {
+    id: mockOtherPrisma.id,
+    createdAt: mockOtherPrisma.createdAt,
+    updatedAt: mockOtherPrisma.updatedAt,
+    name: mockOtherPrisma.name,
+    type: mockOtherPrisma.type,
+    creator: mockOtherPrisma.creator,
+    status: mockOtherPrisma.status,
+    singleUse: mockOtherPrisma.singleUse,
+    environmentId: mockOtherPrisma.environmentId,
+    responseCount: 5,
+  };
 
   test("should fetch inProgress surveys first, then others if limit not met", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(1); // 1 inProgress survey
@@ -315,6 +372,7 @@ describe("getSurveysSortedByRelevance", () => {
     const surveys = await getSurveysSortedByRelevance(environmentId, 2, 0);
 
     expect(surveys).toEqual([expectedInProgressSurvey, expectedOtherSurvey]);
+    expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.count).toHaveBeenCalledWith({
       where: { environmentId, status: "inProgress", ...buildWhereClause() },
     });
@@ -502,10 +560,9 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
     vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-      billing: {
-        plan: "free",
-      },
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({
+      billing: {},
+      id: "org_123",
     } as any);
   });
 

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { type TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { formatDate, timeSinceDate } from "@/lib/time";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
@@ -18,6 +19,7 @@ interface SegmentDetailProps {
   onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
   surveyId: string;
   currentSegment: TSegment;
+  locale: TUserLocale;
 }
 
 const SegmentDetail = ({
@@ -28,6 +30,7 @@ const SegmentDetail = ({
   onSegmentLoad,
   surveyId,
   currentSegment,
+  locale,
 }: SegmentDetailProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const handleLoadNewSegment = async (segmentId: string) => {
@@ -106,11 +109,11 @@ const SegmentDetail = ({
       </div>
 
       <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-        <div className="ph-no-capture text-slate-900">{timeSinceDate(segment.updatedAt)}</div>
+        <div className="ph-no-capture text-slate-900">{timeSinceDate(segment.updatedAt, locale)}</div>
       </div>
 
       <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
-        <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt)}</div>
+        <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt, locale)}</div>
       </div>
     </button>
   );
@@ -140,7 +143,8 @@ export const LoadSegmentModal = ({
   const handleResetState = () => {
     setOpen(false);
   };
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (
@@ -182,6 +186,7 @@ export const LoadSegmentModal = ({
                     onSegmentLoad={onSegmentLoad}
                     surveyId={surveyId}
                     currentSegment={currentSegment}
+                    locale={locale}
                   />
                 ))}
               </div>

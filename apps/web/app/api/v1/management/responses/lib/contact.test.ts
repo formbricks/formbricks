@@ -18,6 +18,9 @@ const contactId = "test-contact-id";
 
 const mockContactDbData = {
   id: contactId,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  environmentId,
   attributes: [
     { attributeKey: { key: "userId" }, value: userId },
     { attributeKey: { key: "email" }, value: "test@example.com" },
@@ -33,7 +36,9 @@ const expectedContactAttributes: TContactAttributes = {
 
 describe("getContactByUserId", () => {
   test("should return contact with attributes when found", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactDbData);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(
+      mockContactDbData as Awaited<ReturnType<typeof prisma.contact.findFirst>>
+    );
 
     const contact = await getContactByUserId(environmentId, userId);
 

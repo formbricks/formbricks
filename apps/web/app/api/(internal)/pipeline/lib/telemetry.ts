@@ -1,14 +1,14 @@
 import { IntegrationType } from "@prisma/client";
-import { createHash } from "node:crypto";
-import { type CacheKey, getCacheService } from "@formbricks/cache";
+import { createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { env } from "@/lib/env";
+import { getInstanceInfo } from "@/lib/instance";
 import packageJson from "@/package.json";
 
 const TELEMETRY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const TELEMETRY_LOCK_KEY = "telemetry_lock" as CacheKey;
-const TELEMETRY_LAST_SENT_KEY = "telemetry_last_sent_ts" as CacheKey;
+const TELEMETRY_LOCK_KEY = createCacheKey.custom("analytics", "telemetry_lock");
+const TELEMETRY_LAST_SENT_KEY = createCacheKey.custom("analytics", "telemetry_last_sent_ts");
 
 /**
  * In-memory timestamp for the next telemetry check.
@@ -129,15 +129,12 @@ export const sendTelemetryEvents = async () => {
  * @param lastSent - Timestamp of last telemetry send (used to calculate incremental metrics)
  */
 const sendTelemetry = async (lastSent: number) => {
-  // Get the oldest organization to generate a stable, anonymized instance ID.
+  // Get the instance info (hashed oldest organization ID and creation date).
   // Using the oldest org ensures the ID doesn't change over time.
-  const oldestOrg = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true, createdAt: true },
-  });
+  const instanceInfo = await getInstanceInfo();
+  if (!instanceInfo) return; // No organization exists, nothing to report
 
-  if (!oldestOrg) return; // No organization exists, nothing to report
-  const instanceId = createHash("sha256").update(oldestOrg.id).digest("hex");
+  const { instanceId, createdAt: instanceCreatedAt } = instanceInfo;
 
   // Optimize database queries to reduce connection pool usage:
   // Instead of 15 parallel queries (which could exhaust the connection pool),
@@ -215,6 +212,7 @@ const sendTelemetry = async (lastSent: number) => {
     google: !!env.GOOGLE_CLIENT_ID || ssoProviders.some((p) => p.provider === "google"),
     azureAd: !!env.AZUREAD_CLIENT_ID || ssoProviders.some((p) => p.provider === "azuread"),
     oidc: !!env.OIDC_CLIENT_ID || ssoProviders.some((p) => p.provider === "openid"),
+    saml: !!env.SAML_DATABASE_URL || ssoProviders.some((p) => p.provider === "saml"),
   };
 
   // Construct telemetry payload with usage statistics and configuration.
@@ -248,7 +246,7 @@ const sendTelemetry = async (lastSent: number) => {
       version: packageJson.version, // Formbricks version for compatibility tracking
     },
     temporal: {
-      instanceCreatedAt: oldestOrg.createdAt.toISOString(), // When instance was first created
+      instanceCreatedAt: instanceCreatedAt.toISOString(), // When instance was first created
       newestResponseAt: newestResponse?.createdAt.toISOString() || null, // Most recent activity
     },
   };

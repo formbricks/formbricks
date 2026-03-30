@@ -3,8 +3,9 @@
 // Error components must be Client components
 import * as Sentry from "@sentry/nextjs";
 import { TFunction } from "i18next";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
+import { type ClientErrorType, getClientErrorData, isExpectedError } from "@formbricks/types/errors";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 
@@ -30,11 +31,13 @@ const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) =>
   const errorData = getClientErrorData(error);
   const { title, description } = getErrorMessages(errorData.type, t);
 
-  if (process.env.NODE_ENV === "development") {
-    console.error(error.message);
-  } else {
-    Sentry.captureException(error);
-  }
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.error(error.message);
+    } else if (!isExpectedError(error)) {
+      Sentry.captureException(error);
+    }
+  }, [error]);
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">

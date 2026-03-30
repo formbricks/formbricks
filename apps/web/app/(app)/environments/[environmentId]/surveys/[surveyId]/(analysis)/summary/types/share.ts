@@ -12,6 +12,8 @@ export enum ShareViaType {
 
 export enum ShareSettingsType {
   LINK_SETTINGS = "link-settings",
+  PRETTY_URL = "pretty-url",
+  CUSTOM_HTML = "custom-html",
 }
 
 export enum LinkTabsType {

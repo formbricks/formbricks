@@ -9,7 +9,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, ...p
     <input
       ref={ref} // Forward the ref to the input element
       className={cn(
-        "focus:fb-border-brand fb-bg-input-bg fb-flex fb-w-full fb-border fb-border-border fb-rounded-custom fb-px-3 fb-py-2 fb-text-sm fb-text-subheading placeholder:fb-text-placeholder focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300",
+        "focus:border-brand bg-input-bg border-border rounded-custom text-subheading placeholder:text-placeholder flex w-full border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300",
         className ?? ""
       )}
       dir="auto"

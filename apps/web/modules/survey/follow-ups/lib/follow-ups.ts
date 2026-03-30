@@ -30,7 +30,7 @@ const evaluateFollowUp = async (
     const logoUrl = organization.whitelabel?.logoUrl ?? "";
 
     // Check if 'to' is a direct email address (team member or user email)
-    const parsedEmailTo = z.string().email().safeParse(to);
+    const parsedEmailTo = z.email().safeParse(to);
     if (parsedEmailTo.success) {
       // 'to' is a valid email address, send email directly
       await sendFollowUpEmail({
@@ -40,6 +40,8 @@ const evaluateFollowUp = async (
         survey,
         response,
         attachResponseData: properties.attachResponseData,
+        includeVariables: properties.includeVariables,
+        includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
       });
 
@@ -60,7 +62,7 @@ const evaluateFollowUp = async (
 
     if (typeof toValueFromResponse === "string") {
       // parse this string to check for an email:
-      const parsedResult = z.string().email().safeParse(toValueFromResponse);
+      const parsedResult = z.email().safeParse(toValueFromResponse);
       if (parsedResult.success) {
         // send email to this email address
         await sendFollowUpEmail({
@@ -71,6 +73,8 @@ const evaluateFollowUp = async (
           survey,
           response,
           attachResponseData: properties.attachResponseData,
+          includeVariables: properties.includeVariables,
+          includeHiddenFields: properties.includeHiddenFields,
         });
 
         return {
@@ -94,7 +98,7 @@ const evaluateFollowUp = async (
         };
       }
 
-      const parsedResult = z.string().email().safeParse(emailAddress);
+      const parsedResult = z.email().safeParse(emailAddress);
       if (parsedResult.data) {
         await sendFollowUpEmail({
           followUp,
@@ -104,6 +108,8 @@ const evaluateFollowUp = async (
           survey,
           response,
           attachResponseData: properties.attachResponseData,
+          includeVariables: properties.includeVariables,
+          includeHiddenFields: properties.includeHiddenFields,
         });
 
         return {
@@ -176,7 +182,7 @@ export const sendFollowUpsForResponse = async (
     }
 
     // Check if follow-ups are allowed for this organization
-    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.billing.plan);
+    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.id);
     if (!surveyFollowUpsPermission) {
       return err({
         code: FollowUpSendError.FOLLOW_UP_NOT_ALLOWED,

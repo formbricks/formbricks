@@ -32,7 +32,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
   const { t } = useTranslation();
   const router = useRouter();
 
-  const handleTeamCreation = async (e) => {
+  const handleTeamCreation = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 

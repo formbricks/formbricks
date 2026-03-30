@@ -40,7 +40,10 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
         });
       } catch (error) {
         // Don't block signOut if audit logging fails
-        logger.error("Failed to log signOut event:", error);
+        logger.error(
+          error instanceof Error ? error : new Error(String(error)),
+          "Failed to log signOut event"
+        );
       }
     }
 

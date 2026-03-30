@@ -36,7 +36,7 @@ const fakeProject = {
 
 const testInputValidation = async (
   service: (projectId: string, ...functionArgs: any[]) => Promise<any>,
-  ...args: any[]
+  ...args: [string, ...any[]]
 ): Promise<void> => {
   test("throws ValidationError on bad input", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);

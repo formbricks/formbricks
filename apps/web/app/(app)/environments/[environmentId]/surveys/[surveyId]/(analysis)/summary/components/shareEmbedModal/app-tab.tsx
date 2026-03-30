@@ -47,6 +47,7 @@ const createNoCodeConfigType = (t: ReturnType<typeof useTranslation>["t"]) => ({
   pageView: t("environments.actions.page_view"),
   exitIntent: t("environments.actions.exit_intent"),
   fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
+  pageDwell: t("environments.actions.time_on_page"),
 });
 
 const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTranslation>["t"]) => {
@@ -163,7 +164,7 @@ export const AppTab = () => {
           </AlertDescription>
           {!environment.appSetupCompleted && (
             <AlertButton asChild>
-              <Link href={`/environments/${environment.id}/project/app-connection`}>
+              <Link href={`/environments/${environment.id}/workspace/app-connection`}>
                 {t("common.connect_formbricks")}
               </Link>
             </AlertButton>

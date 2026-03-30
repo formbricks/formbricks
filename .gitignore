@@ -13,6 +13,7 @@
 **/.next/
 **/out/
 **/build
+**/next-env.d.ts
 
 # node
 **/dist/
@@ -62,3 +63,6 @@ branch.json
 packages/ios/FormbricksSDK/FormbricksSDK.xcodeproj/project.xcworkspace/xcuserdata
 .cursorrules
 i18n.cache
+stats.html
+# next-agents-md
+.next-docs/

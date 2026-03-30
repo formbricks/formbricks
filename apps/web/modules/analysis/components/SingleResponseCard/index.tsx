@@ -137,7 +137,12 @@ export const SingleResponseCard = ({
           locale={locale}
         />
 
-        <SingleResponseCardBody survey={survey} response={response} skippedQuestions={skippedQuestions} />
+        <SingleResponseCardBody
+          survey={survey}
+          response={response}
+          skippedQuestions={skippedQuestions}
+          locale={locale}
+        />
 
         <ResponseTagsWrapper
           key={response.id}

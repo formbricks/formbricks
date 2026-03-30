@@ -33,6 +33,27 @@ if (uploadResult.ok) {
 
 ### File Download Flow
 
+There are two approaches for downloading files:
+
+#### Option 1: Streaming
+
+```typescript
+// Stream file content directly from S3
+const streamResult = await getFileStream("users/123/avatars/user-avatar.jpg");
+
+if (streamResult.ok) {
+  const { body, contentType, contentLength } = streamResult.data;
+  return new Response(body, {
+    headers: {
+      "Content-Type": contentType,
+      "Content-Length": String(contentLength),
+    },
+  });
+}
+```
+
+#### Option 2: Presigned URL (Redirect)
+
 ```typescript
 // Generate temporary download links for private files
 const downloadResult = await getSignedDownloadUrl("users/123/avatars/user-avatar.jpg");
@@ -42,6 +63,8 @@ if (downloadResult.ok) {
   return redirect(downloadResult.data);
 }
 ```
+
+**When to use:** External clients that need direct S3 access, or when you want to offload bandwidth to S3.
 
 ### Cleanup Operations
 
@@ -57,7 +80,7 @@ await deleteFilesByPrefix("surveys/456/responses/"); // Deletes all response fil
 
 ### Module Responsibilities
 
-- **`service.ts`**: Core business logic - the four main operations
+- **`service.ts`**: Core business logic - the five main operations (upload URL, download URL, streaming, delete, bulk delete)
 - **`client.ts`**: S3 client factory with environment validation
 - **`constants.ts`**: Environment variable exports (internal use only)
 - **`types/error.ts`**: Result type system and error definitions
@@ -267,7 +290,13 @@ const s3Client = new S3Client({
 
 **Purpose**: Generate temporary download URL for private files
 **Returns**: `Result<string, StorageError>` (temporary URL valid for 30 minutes)
-**Use Case**: Serving private files without making S3 bucket public
+**Use Case**: External clients that need direct S3 access, or offloading bandwidth to S3
+
+### `getFileStream(fileKey)`
+
+**Purpose**: Stream file content directly from S3
+**Returns**: `Result<{ body: ReadableStream<Uint8Array>; contentType: string; contentLength: number }, StorageError>`
+**Use Case**: Serving files through your server (required for Next.js Image component with relative URLs)
 
 ### `deleteFile(fileKey)`
 

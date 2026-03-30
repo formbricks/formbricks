@@ -5,7 +5,10 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getUserProjects } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
-const LandingLayout = async (props) => {
+const LandingLayout = async (props: {
+  params: Promise<{ organizationId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;

@@ -16,7 +16,12 @@ export const getContactAttributeKeys = reactCache(async (environmentId: string) 
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "contact attribute keys", issue: error.message }],
+      details: [
+        {
+          field: "contact attribute keys",
+          issue: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+      ],
     });
   }
 });

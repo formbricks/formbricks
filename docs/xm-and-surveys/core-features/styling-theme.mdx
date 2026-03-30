@@ -1,6 +1,6 @@
 ---
 title: "Styling Theme"
-description: "Keep the survey styling consistent over all surveys with a Styling Theme. Customize the colors, fonts, and other styling options to match your brand's aesthetic."
+description: "Keep the survey styling consistent over all surveys with a Styling Theme. Customize colors, fonts, buttons, inputs, and more to match your brand."
 icon: "palette"
 ---
 
@@ -10,48 +10,114 @@ icon: "palette"
   uploads](/self-hosting/configuration/file-uploads) before using these features.
 </Note>
 
-Keep the survey styling consistent over all surveys with a Styling Theme. Customize the colors, fonts, and other styling options to match your brand's aesthetic.
+Keep the survey styling consistent over all surveys with a Styling Theme. Customize colors, fonts, buttons, inputs, and other styling options to match your brand's aesthetic.
 
 ## Configuration
 
 In the left side bar, you find the `Configuration` page. On this page you find the `Look & Feel` section:
 
-![Look & Feel](/images/xm-and-surveys/core-features/styling-theme/look-and-feel.webp)
-/>
+![Look & Feel](/images/xm-and-surveys/core-features/styling-theme/form-css-styling.webp)
 
-## **Styling Options**
+## Survey styling
 
-1. **Form Styling:** Customize the survey card using the following settings
+The Survey styling section gives you granular control over every text and input element in your survey. Expand the **Survey styling** panel to find collapsible sub-sections for Headlines & Descriptions, Inputs, Buttons, and Options.
 
-![Form styling options UI](/images/xm-and-surveys/core-features/styling-theme/form-settings.webp)
+### Headlines & Descriptions
 
-- **Brand Color**: Sets the primary color tone of the survey.
-- **Text Color**: This is a single color scheme that will be used across to display all the text on your survey. Ensures all text is readable against the background.
-- **Input Color:** Alters the border color of input fields.
-- **Input Border Color**: This is the color of the border of the form input field.
+Fine-tune how question headlines, descriptions, and upper labels appear:
 
-2. **Card Styling:** Adjust the look of the survey card
+| Property | Description |
+|---|---|
+| **Headline Color** | Color of the question headline text |
+| **Description Color** | Color of the question description text |
+| **Headline Font Size** | Font size for headlines (in `px` or any CSS unit) |
+| **Description Font Size** | Font size for descriptions |
+| **Headline Font Weight** | Numeric font weight for headlines (e.g. `400`, `600`, `700`) |
+| **Description Font Weight** | Numeric font weight for descriptions |
+| **Upper Label Color** | Color of the small labels above input fields |
+| **Upper Label Font Size** | Font size for upper labels |
+| **Upper Label Font Weight** | Numeric font weight for upper labels |
 
-![Card styling options UI](/images/xm-and-surveys/core-features/styling-theme/card-settings.webp)
+### Inputs
 
-- **Roundness**: Adjusts the corner roundness of the survey card and its components (including input boxes, buttons).
-- **Card Background Color**: Sets the card's main background color.
-- **Card Border Color**: Changes the border color of the card
+Control the appearance of text inputs, textareas, and other form fields:
 
-- **Hide Progress Bar**: Optionally remove the progress bar to simplify the survey experience
-- **Add Highlight Border**: Adds a distinct border for emphasis.
+| Property | Description |
+|---|---|
+| **Input Color** | Background color of input fields |
+| **Input Border Color** | Border color of input fields |
+| **Input Text Color** | Color of text typed into inputs |
+| **Border Radius** | Corner roundness of input fields (in `px` or any CSS unit) |
+| **Height** | Height of input fields |
+| **Font Size** | Font size of text inside inputs |
+| **Padding X** | Horizontal padding inside inputs |
+| **Padding Y** | Vertical padding inside inputs |
+| **Placeholder Opacity** | Opacity of placeholder text (`0` to `1`) |
+| **Shadow** | CSS box-shadow value for inputs (e.g. `0 1px 2px rgba(0,0,0,0.1)`) |
 
-3. **Background Styling**: Customize the survey background with static colors, animations, or images (upload your own or get from Unsplash)
+### Buttons
 
-<Note>This is only available for Link Surveys</Note>
+Customize the submit and navigation buttons:
 
-![Background styling options UI](/images/xm-and-surveys/core-features/styling-theme/background-settings.webp)
+| Property | Description |
+|---|---|
+| **Button Background** | Background color of buttons |
+| **Button Text** | Text color of buttons |
+| **Border Radius** | Corner roundness of buttons |
+| **Height** | Height of buttons |
+| **Font Size** | Font size of button text |
+| **Font Weight** | Numeric font weight for button text |
+| **Padding X** | Horizontal padding inside buttons |
+| **Padding Y** | Vertical padding inside buttons |
 
-- **Color**: Pick any color for the background
-- **Animation**: Add dynamic animations to enhance user experience..
-- **Upload**: Use a custom uploaded image for a personalized touch. Images must be 5 MB or less.
-- Image: Choose from Unsplash's extensive gallery. Note that these images will have a link and mention of the author & Unsplash on the bottom right to give them the credit for their awesome work!
-- **Background Overlay**: Adjust the background's opacity
+### Options
+
+Style the select options in single-select, multi-select, and similar question types:
+
+| Property | Description |
+|---|---|
+| **Option Background** | Background color of option items |
+| **Option Label Color** | Text color of option labels |
+| **Border Radius** | Corner roundness of option items |
+| **Padding X** | Horizontal padding inside options |
+| **Padding Y** | Vertical padding inside options |
+| **Font Size** | Font size of option text |
+
+## Card Styling
+
+Adjust the look of the survey card container:
+
+| Property | Description |
+|---|---|
+| **Roundness** | Corner roundness of the survey card (in `px` or any CSS unit) |
+| **Card Background Color** | Background color of the survey card |
+| **Card Border Color** | Border color of the survey card |
+| **Add Highlight Border** | Adds a distinct colored border for emphasis (app surveys only) |
+| **Card Arrangement** | Layout mode for stacking cards: **Simple**, **Straight**, or **Casual** |
+
+### Progress Bar
+
+When the progress bar is visible (toggle **Hide Progress Bar** to control it), you can customize:
+
+| Property | Description |
+|---|---|
+| **Track Background** | Background color of the progress track |
+| **Indicator Background** | Fill color of the progress indicator |
+| **Track Height** | Height of the progress bar track |
+
+## Background Styling
+
+Customize the survey background with static colors, animations, or images (upload your own or pick from Unsplash).
+
+<Note>Background styling is only available for Link Surveys.</Note>
+
+| Property | Description |
+|---|---|
+| **Color** | Pick any color for the background |
+| **Animation** | Add dynamic animations to enhance user experience |
+| **Upload** | Use a custom uploaded image (5 MB max) |
+| **Image** | Choose from Unsplash's gallery (attribution shown automatically) |
+| **Background Overlay** | Adjust the background's opacity / brightness |
 
 ## Add Brand Logo
 
@@ -59,30 +125,44 @@ Customize your survey with your brand's logo.
 
 <Note>Brand logos are only visible on Link Survey pages.</Note>
 
-1. In the Look & Feel page itself in Project settings, scroll down to see the Logo Upload box.
+<Steps>
+  <Step title="Open Logo Settings">
+    In the **Look & Feel** page in Project settings, scroll down to the **Logo Upload** box.
 
-![Choose a link survey template](/images/xm-and-surveys/core-features/styling-theme/step-four.webp)
+    ![Logo upload box](/images/xm-and-surveys/core-features/styling-theme/step-four.webp)
+  </Step>
 
-2. Upload your logo. Logos must be 5 MB or less.
+  <Step title="Upload Your Logo">
+    Upload your logo. Logos must be 5 MB or less.
 
-![Choose a link survey template](/images/xm-and-surveys/core-features/styling-theme/step-five.webp)
+    ![Upload logo](/images/xm-and-surveys/core-features/styling-theme/step-five.webp)
+  </Step>
 
-3. Add a background color: If you’ve uploaded a transparent image and want to add background to it, enable this toggle and select the color of your choice.
+  <Step title="Add Background Color (Optional)">
+    If you've uploaded a transparent image and want to add a background to it, enable the toggle and select a color.
 
-![Choose a link survey template](/images/xm-and-surveys/core-features/styling-theme/step-six.webp)
+    ![Logo background color](/images/xm-and-surveys/core-features/styling-theme/step-six.webp)
+  </Step>
 
-4. Remember to save your changes!
+  <Step title="Save">
+    Remember to save your changes!
 
-![Choose a link survey template](/images/xm-and-surveys/core-features/styling-theme/step-seven.webp)
+    ![Save changes](/images/xm-and-surveys/core-features/styling-theme/step-seven.webp)
+  </Step>
+</Steps>
 
-<Note>The logo settings apply across all Link Surveys pages.</Note>
+<Note>The logo settings apply across all Link Survey pages.</Note>
 
 ## Overwrite Styling Theme
 
-You can allow to overwrite the styling theme for individual surveys to create unique styles for each survey:
+You can allow overwriting the styling theme for individual surveys to create unique styles per survey:
 
-![Choose a link survey template](/images/xm-and-surveys/core-features/styling-theme/allow-overwrite.webp)
+![Allow overwrite toggle](/images/xm-and-surveys/core-features/styling-theme/allow-overwrite.webp)
 
-In the survey editor, a tab called `Styling` will appear. Here you can overwrite the default styling theme.
+In the survey editor, a **Styling** tab will appear where you can overwrite the default styling theme. See the [Custom Styling](/xm-and-surveys/surveys/general-features/overwrite-styling) guide for details.
 
----
+## CSS Variables Reference
+
+Under the hood, every styling property maps to a CSS variable prefixed with `--fb-`. For App & Website Surveys, you can override these directly in your global CSS file (e.g., `globals.css`) by targeting the `#fbjs` selector.
+
+See the full [CSS Variables Reference](/xm-and-surveys/surveys/general-features/overwrite-styling#overwrite-css-styles-for-app--website-surveys) in the Custom Styling guide.

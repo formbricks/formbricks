@@ -123,7 +123,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
           <Input
             type="url"
             required
-            className="focus:border-brand-dark h-9 min-w-80 bg-white"
+            className="h-9 min-w-80 bg-white focus:border-brand-dark"
             ref={inputRef}
             value={linkUrl}
             placeholder="https://example.com"

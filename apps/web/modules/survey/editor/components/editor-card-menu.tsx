@@ -112,6 +112,7 @@ export const EditorCardMenu = ({
         choices: card.choices,
         type,
         logic: undefined,
+        validation: undefined,
       });
 
       return;
@@ -128,6 +129,7 @@ export const EditorCardMenu = ({
       buttonLabel,
       backButtonLabel,
       logic: undefined,
+      validation: undefined,
     });
   };
 

@@ -1,14 +1,27 @@
+import DOMPurify from "isomorphic-dompurify";
+
 /**
  * Strip inline style attributes from HTML string to avoid CSP violations
+ * Uses DOMPurify for secure, proper HTML parsing instead of regex
  * @param html - The HTML string to process
  * @returns HTML string with all style attributes removed
  * @note This is a security measure to prevent CSP violations during HTML parsing
  */
 export const stripInlineStyles = (html: string): string => {
-  // Remove style="..." or style='...' attributes
-  // Use separate patterns for each quote type to avoid ReDoS vulnerability
-  // The pattern [^"]* and [^']* are safe as they don't cause backtracking
-  return html.replace(/\s+style\s*=\s*["'][^"']*["']/gi, ""); //NOSONAR
+  if (!html) return html;
+
+  // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
+  // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
+  // `style-src` violations at parse time — before FORBID_ATTR can strip them.
+  // The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by
+  // fixed quote delimiters, so no backtracking can occur.
+  const preStripped = html.replaceAll(/ style="[^"]*"| style='[^']*'/gi, "");
+
+  return DOMPurify.sanitize(preStripped, {
+    FORBID_ATTR: ["style"],
+    ADD_ATTR: ["target"],
+    KEEP_CONTENT: true,
+  });
 };
 
 /**

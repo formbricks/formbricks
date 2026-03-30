@@ -38,6 +38,7 @@ describe("getContactAttributeKeys", () => {
         updatedAt: new Date(),
         description: null,
         isUnique: false,
+        dataType: "string" as const,
       },
       {
         id: "key2",
@@ -49,6 +50,7 @@ describe("getContactAttributeKeys", () => {
         updatedAt: new Date(),
         description: null,
         isUnique: false,
+        dataType: "string" as const,
       },
     ];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockAttributeKeys);
@@ -98,6 +100,7 @@ describe("createContactAttributeKey", () => {
     updatedAt: new Date(),
     isUnique: false,
     description: null,
+    dataType: "string" as const,
   };
 
   const createInput: TContactAttributeKeyCreateInput = {
@@ -177,7 +180,7 @@ describe("createContactAttributeKey", () => {
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
         key: inputWithoutName.key,
-        name: inputWithoutName.key, // Should fall back to key when name is not provided
+        name: "TestKey", // formatSnakeCaseToTitleCase("testKey") capitalizes first letter
         type: inputWithoutName.type,
         description: inputWithoutName.description || "",
         environment: { connect: { id: environmentId } },

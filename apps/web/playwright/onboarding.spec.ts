@@ -9,7 +9,7 @@ test.describe("Onboarding Flow Test", async () => {
     const user = await users.create({ withoutProject: true });
     await user.login();
 
-    await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
+    await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
     await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
     await page.getByRole("button", { name: "Link & email surveys" }).click();
@@ -26,7 +26,7 @@ test.describe("Onboarding Flow Test", async () => {
     const user = await users.create({ withoutProject: true });
     await user.login();
 
-    await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
+    await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
     await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
     await page.getByRole("button", { name: "In-product surveys" }).click();
@@ -35,7 +35,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByPlaceholder("e.g. Formbricks").fill(projectName);
     await page.locator("#form-next-button").click();
 
-    await page.getByRole("button", { name: "I'll do it later" }).click();
+    await page.getByRole("button", { name: "I will do it later" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(projectName)).toBeVisible();
@@ -47,7 +47,7 @@ test.describe("CX Onboarding", async () => {
     const user = await users.create({ withoutProject: true });
     await user.login();
 
-    await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
+    await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
     await page.getByRole("button", { name: "Formbricks CX Surveys and" }).click();
 
     await page.getByPlaceholder("e.g. Formbricks").click();

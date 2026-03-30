@@ -152,13 +152,13 @@ describe("tag lib", () => {
         .mockResolvedValueOnce(baseTag as any)
         .mockResolvedValueOnce(newTag as any);
       vi.mocked(prisma.response.findMany).mockResolvedValueOnce([{ id: "resp1" }] as any);
-      vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result).toEqual(ok(newTag));
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: baseTag.id } });
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({ where: { id: newTag.id } });
       expect(prisma.response.findMany).toHaveBeenCalled();
-      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
     test("merges tags with no responses with both tags", async () => {
       vi.mocked(prisma.tag.findUnique)
@@ -194,6 +194,20 @@ describe("tag lib", () => {
           message: "Tag not found",
         });
       }
+    });
+    test("returns error when merging a tag into itself", async () => {
+      const result = await mergeTags(baseTag.id, baseTag.id);
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error).toStrictEqual({
+          code: "merge_same_tag",
+          message: "Cannot merge a tag into itself",
+        });
+      }
+
+      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
     test("throws on prisma error", async () => {
       vi.mocked(prisma.tag.findUnique).mockRejectedValueOnce(new Error("fail"));

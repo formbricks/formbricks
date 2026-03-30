@@ -24,10 +24,11 @@ const selectProject = {
   config: true,
   placement: true,
   clickOutsideClose: true,
-  darkOverlay: true,
+  overlay: true,
   environments: true,
   styling: true,
   logo: true,
+  customHeadScripts: true,
 };
 
 export const updateProject = async (
@@ -63,7 +64,7 @@ export const updateProject = async (
     return project;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logger.error(error.errors, "Error updating project");
+      logger.error(error.issues, "Error updating project");
     }
     throw new ValidationError("Data validation of project failed");
   }
@@ -120,7 +121,7 @@ export const createProject = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A project with this name already exists in your organization");
+        throw new InvalidInputError("A workspace with this name already exists in your organization");
       }
       throw new DatabaseError(error.message);
     }

@@ -24,7 +24,7 @@ export const ZOtherTeam = z.object({
 export type TOtherTeam = z.infer<typeof ZOtherTeam>;
 
 export const ZOrganizationTeam = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   name: z.string(),
 });
 
@@ -69,7 +69,9 @@ export const ZTeamSettingsFormSchema = z.object({
         role: ZTeamRole,
       })
     )
-    .min(1, { message: "Please add at least one member" }),
+    .min(1, {
+      error: "Please add at least one member",
+    }),
   projects: z
     .array(
       z.object({
@@ -77,7 +79,9 @@ export const ZTeamSettingsFormSchema = z.object({
         permission: ZTeamPermission,
       })
     )
-    .min(1, { message: "Please add at least one project" }),
+    .min(1, {
+      error: "Please add at least one project",
+    }),
 });
 
 export type TTeamSettingsFormSchema = z.infer<typeof ZTeamSettingsFormSchema>;
@@ -94,9 +98,14 @@ export type TTeamMember = z.infer<typeof ZTeamMember>;
 
 export const ZTeam = z.object({
   id: z.string(),
-  name: z.string({ message: "Team name is required" }).trim().min(1, {
-    message: "Team name must be at least 1 character long",
-  }),
+  name: z
+    .string({
+      error: "Team name is required",
+    })
+    .trim()
+    .min(1, {
+      error: "Team name must be at least 1 character long",
+    }),
   teamUsers: z.array(ZTeamMember),
 });
 

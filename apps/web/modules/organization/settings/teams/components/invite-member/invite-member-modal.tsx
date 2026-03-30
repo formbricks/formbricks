@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import {
   Dialog,
   DialogBody,
@@ -19,13 +20,16 @@ import { IndividualInviteTab } from "./individual-invite-tab";
 interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
+  onSubmit: (data: TInvitee[]) => void;
   teams: TOrganizationTeam[];
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
   isStorageConfigured: boolean;
+  isOwnerOrManager: boolean;
+  isTeamAdmin: boolean;
+  userAdminTeamIds?: string[];
 }
 
 export const InviteMemberModal = ({
@@ -38,10 +42,20 @@ export const InviteMemberModal = ({
   environmentId,
   membershipRole,
   isStorageConfigured,
+  isOwnerOrManager,
+  isTeamAdmin,
+  userAdminTeamIds,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
   const { t } = useTranslation();
+
+  const showTeamAdminRestrictions = !isOwnerOrManager && isTeamAdmin;
+
+  const filteredTeams =
+    showTeamAdminRestrictions && userAdminTeamIds
+      ? teams.filter((t) => userAdminTeamIds.includes(t.id))
+      : teams;
 
   const tabs = {
     individual: (
@@ -51,8 +65,9 @@ export const InviteMemberModal = ({
         onSubmit={onSubmit}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
-        teams={teams}
+        teams={filteredTeams}
         membershipRole={membershipRole}
+        showTeamAdminRestrictions={showTeamAdminRestrictions}
       />
     ),
     bulk: (
@@ -74,17 +89,19 @@ export const InviteMemberModal = ({
           <DialogDescription>{t("environments.settings.teams.invite_member_description")}</DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="flex flex-col gap-6" unconstrained>
-          <TabToggle
-            id="type"
-            options={[
-              { value: "individual", label: t("environments.settings.teams.individual") },
-              { value: "bulk", label: t("environments.settings.teams.bulk_invite") },
-            ]}
-            onChange={(inviteType) => setType(inviteType)}
-            defaultSelected={type}
-          />
-          {tabs[type]}
+        <DialogBody className="flex min-h-0 flex-col gap-6 overflow-y-auto">
+          {!showTeamAdminRestrictions && (
+            <TabToggle
+              id="type"
+              options={[
+                { value: "individual", label: t("environments.settings.teams.individual") },
+                { value: "bulk", label: t("environments.settings.teams.bulk_invite") },
+              ]}
+              onChange={(inviteType) => setType(inviteType)}
+              defaultSelected={type}
+            />
+          )}
+          {showTeamAdminRestrictions ? tabs.individual : tabs[type]}
         </DialogBody>
       </DialogContent>
     </Dialog>

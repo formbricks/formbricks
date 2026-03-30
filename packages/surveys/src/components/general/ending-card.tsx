@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+import { useCallback, useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
@@ -48,48 +48,56 @@ export function EndingCard({
     ) : null;
 
   const checkmark = (
-    <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
+    <div className="text-brand flex flex-col items-center justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        className="fb-h-24 fb-w-24">
+        className="h-24 w-24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]" />
+      <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]" />
     </div>
   );
 
-  const processAndRedirect = (urlString: string) => {
-    try {
-      const url = replaceRecallInfo(urlString, responseData, variablesData);
-      if (url && new URL(url)) {
-        if (onOpenExternalURL) {
-          onOpenExternalURL(url);
-        } else {
-          window.top?.location.replace(url);
+  const processAndRedirect = useCallback(
+    (urlString: string) => {
+      try {
+        const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode);
+        if (url && new URL(url)) {
+          if (onOpenExternalURL) {
+            onOpenExternalURL(url);
+          } else {
+            window.top?.location.replace(url);
+          }
         }
+      } catch (error) {
+        console.error("Invalid URL after recall processing:", error);
       }
-    } catch (error) {
-      console.error("Invalid URL after recall processing:", error);
-    }
-  };
+    },
+    [languageCode, onOpenExternalURL, responseData, variablesData]
+  );
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
       processAndRedirect(endingCard.buttonLink);
     }
-  };
+  }, [endingCard, isRedirectDisabled, processAndRedirect]);
 
   useEffect(() => {
     if (isCurrent) {
-      if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
+      if (
+        !isRedirectDisabled &&
+        endingCard.type === "redirectToUrl" &&
+        endingCard.url &&
+        isResponseSendingFinished
+      ) {
         processAndRedirect(endingCard.url);
       }
     }
@@ -109,13 +117,19 @@ export function EndingCard({
     return () => {
       document.removeEventListener("keydown", handleEnter);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want to run this effect when isCurrent changes
-  }, [isCurrent]);
+  }, [
+    endingCard,
+    handleSubmit,
+    isCurrent,
+    isRedirectDisabled,
+    isResponseSendingFinished,
+    processAndRedirect,
+    survey.type,
+  ]);
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
-      <div className="fb-text-center">
+      <div className="text-center">
         {isResponseSendingFinished ? (
           <>
             {endingCard.type === "endScreen" && (
@@ -127,7 +141,8 @@ export function EndingCard({
                     headline={replaceRecallInfo(
                       getLocalizedValue(endingCard.headline, languageCode),
                       responseData,
-                      variablesData
+                      variablesData,
+                      languageCode
                     )}
                     elementId="EndingCard"
                   />
@@ -135,17 +150,19 @@ export function EndingCard({
                     subheader={replaceRecallInfo(
                       getLocalizedValue(endingCard.subheader, languageCode),
                       responseData,
-                      variablesData
+                      variablesData,
+                      languageCode
                     )}
                     elementId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
-                    <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+                    <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
                       <SubmitButton
                         buttonLabel={replaceRecallInfo(
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
                           responseData,
-                          variablesData
+                          variablesData,
+                          languageCode
                         )}
                         isLastQuestion={false}
                         focus={isCurrent ? autoFocusEnabled : false}
@@ -171,7 +188,7 @@ export function EndingCard({
                     />
                   </div>
                 ) : (
-                  <div className="fb-my-3">
+                  <div className="my-3">
                     <LoadingSpinner />
                   </div>
                 )}
@@ -180,10 +197,10 @@ export function EndingCard({
           </>
         ) : (
           <>
-            <div className="fb-my-3">
+            <div className="my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="fb-text-brand">{t("common.sending_responses")}</h1>
+            <h1 className="text-brand">{t("common.sending_responses")}</h1>
           </>
         )}
       </div>

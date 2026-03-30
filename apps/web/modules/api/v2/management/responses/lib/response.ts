@@ -39,7 +39,12 @@ export const getResponses = async (
       },
     });
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "responses", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "responses", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 
@@ -139,7 +144,12 @@ export const createResponse = async (
 
     return ok(response);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 

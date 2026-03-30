@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { TFunction } from "i18next";
 import {
   AirplayIcon,
   ArrowUpFromDotIcon,
@@ -21,6 +22,7 @@ import {
   ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
+  NetworkIcon,
   PieChartIcon,
   Rows3Icon,
   SmartphoneIcon,
@@ -52,6 +54,25 @@ export enum OptionsType {
   HIDDEN_FIELDS = "Hidden Fields",
   QUOTAS = "Quotas",
 }
+
+const getOptionsTypeTranslationKey = (type: OptionsType, t: TFunction): string => {
+  switch (type) {
+    case OptionsType.ELEMENTS:
+      return t("common.elements");
+    case OptionsType.TAGS:
+      return t("common.tags");
+    case OptionsType.ATTRIBUTES:
+      return t("common.attributes");
+    case OptionsType.OTHERS:
+      return t("common.other_filters");
+    case OptionsType.META:
+      return t("common.meta");
+    case OptionsType.HIDDEN_FIELDS:
+      return t("common.hidden_fields");
+    case OptionsType.QUOTAS:
+      return t("common.quotas");
+  }
+};
 
 export type ElementOption = {
   label: string;
@@ -99,6 +120,7 @@ const elementIcons = {
   action: MousePointerClickIcon,
   country: FlagIcon,
   url: LinkIcon,
+  ipAddress: NetworkIcon,
 
   // others
   Language: LanguagesIcon,
@@ -111,7 +133,9 @@ const elementIcons = {
 };
 
 const getIcon = (type: string) => {
-  const IconComponent = elementIcons[type];
+  const IconComponent = (elementIcons as Record<string, (typeof elementIcons)[keyof typeof elementIcons]>)[
+    type
+  ];
   return IconComponent ? <IconComponent className="h-5 w-5" strokeWidth={1.5} /> : null;
 };
 
@@ -214,7 +238,12 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             {options?.map((data) => (
               <Fragment key={data.header}>
                 {data?.option.length > 0 && (
-                  <CommandGroup heading={<p className="text-sm font-medium text-slate-600">{data.header}</p>}>
+                  <CommandGroup
+                    heading={
+                      <p className="text-sm font-medium text-slate-600">
+                        {getOptionsTypeTranslationKey(data.header, t)}
+                      </p>
+                    }>
                     {data?.option?.map((o) => (
                       <CommandItem
                         key={o.id}

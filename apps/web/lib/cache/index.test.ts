@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { CacheKey } from "@formbricks/cache";
+
+type CacheKey = string;
 
 // Create mocks
 const mockCacheService = {

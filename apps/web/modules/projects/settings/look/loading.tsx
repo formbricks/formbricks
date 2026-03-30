@@ -24,13 +24,13 @@ export const ProjectLookSettingsLoading = () => {
   ];
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
         <ProjectConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.project.look.theme")}
+        title={t("environments.workspace.look.theme")}
         className="max-w-7xl"
-        description={t("environments.project.look.theme_settings_description")}>
+        description={t("environments.workspace.look.theme_settings_description")}>
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
@@ -39,10 +39,10 @@ export const ProjectLookSettingsLoading = () => {
                   <Switch />
                   <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-slate-700">
-                      {t("environments.project.look.enable_custom_styling")}
+                      {t("environments.workspace.look.enable_custom_styling")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {t("environments.project.look.enable_custom_styling_description")}
+                      {t("environments.workspace.look.enable_custom_styling_description")}
                     </p>
                   </div>
                 </div>
@@ -52,7 +52,7 @@ export const ProjectLookSettingsLoading = () => {
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
                     <h2 className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.form_styling")}
+                      {t("environments.surveys.edit.survey_styling")}
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
                       {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
@@ -161,7 +161,7 @@ export const ProjectLookSettingsLoading = () => {
         <div className="w-full items-center">
           <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
             <Switch id="signature" checked={false} />
-            <Label htmlFor="signature">{t("environments.project.look.show_powered_by_formbricks")}</Label>
+            <Label htmlFor="signature">{t("environments.workspace.look.show_powered_by_formbricks")}</Label>
           </div>
         </div>
       </SettingsCard>

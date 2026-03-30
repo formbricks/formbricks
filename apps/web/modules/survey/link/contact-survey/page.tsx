@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
@@ -11,7 +10,11 @@ import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
-import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
+import {
+  getBasicSurveyMetadata,
+  getMetadataBrandColor,
+  getSurveyOpenGraphMetadata,
+} from "@/modules/survey/link/lib/metadata-utils";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 
 interface ContactSurveyPageProps {
@@ -39,8 +42,37 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
       };
     }
     const { surveyId } = result.data;
-    return getBasicSurveyMetadata(surveyId);
-  } catch (error) {
+    const { title, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
+
+    if (!survey) {
+      return { title, description };
+    }
+
+    // Fetch organization whitelabel data for custom favicon
+    const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+    const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
+
+    const brandColor = getMetadataBrandColor(environmentContext.project.styling, survey.styling);
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
+
+    // Override with the custom image URL
+    if (baseMetadata.openGraph) {
+      baseMetadata.openGraph.images = ogImage ?? baseMetadata.openGraph.images;
+      baseMetadata.openGraph.description = description;
+    }
+
+    if (baseMetadata.twitter) {
+      baseMetadata.twitter.images = ogImage ?? baseMetadata.twitter.images;
+      baseMetadata.twitter.description = description;
+    }
+
+    return {
+      title,
+      description,
+      ...baseMetadata,
+      ...(customFaviconUrl && { icons: customFaviconUrl }),
+    };
+  } catch {
     // If the token is invalid, we'll return generic metadata
     return {
       title: "Survey",
@@ -112,11 +144,6 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     getExistingContactResponse(survey.id, contactId)(),
   ]);
 
-  // Get multi-language permission
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(
-    environmentContext.organizationBilling.plan
-  );
-
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
     ? await getResponseCountBySurveyId(survey.id)
@@ -131,7 +158,6 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseResponse,
     environmentContext,
     locale,
-    isMultiLanguageAllowed,
     responseCount,
   });
 };

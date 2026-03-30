@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { OrganizationRole, Prisma, WidgetPlacement } from "@prisma/client";
+import { OrganizationRole, Prisma, Project, WidgetPlacement } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
@@ -48,7 +48,7 @@ describe("Project Service", () => {
       },
       placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
-      darkOverlay: false,
+      overlay: "none",
       environments: [],
       styling: {
         allowStyleOverwrite: true,
@@ -58,7 +58,7 @@ describe("Project Service", () => {
       highlightBorderColor: null,
     };
 
-    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject as unknown as Project);
 
     const result = await getProject(mockProject.id);
 
@@ -106,7 +106,7 @@ describe("Project Service", () => {
       },
       placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
-      darkOverlay: false,
+      overlay: "none",
       environments: [],
       styling: {
         allowStyleOverwrite: true,
@@ -116,7 +116,7 @@ describe("Project Service", () => {
       highlightBorderColor: null,
     };
 
-    vi.mocked(prisma.project.findFirst).mockResolvedValue(mockProject);
+    vi.mocked(prisma.project.findFirst).mockResolvedValue(mockProject as unknown as Project);
 
     const result = await getProjectByEnvironmentId(createId());
 
@@ -171,7 +171,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -196,7 +196,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -212,10 +212,9 @@ describe("Project Service", () => {
       organizationId,
       role: OrganizationRole.owner,
       accepted: true,
-      deprecatedRole: null,
     });
 
-    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as unknown as Project[]);
 
     const result = await getUserProjects(userId, organizationId);
 
@@ -250,7 +249,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -266,10 +265,9 @@ describe("Project Service", () => {
       organizationId,
       role: OrganizationRole.member,
       accepted: true,
-      deprecatedRole: null,
     });
 
-    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as unknown as Project[]);
 
     const result = await getUserProjects(userId, organizationId);
 
@@ -324,7 +322,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -340,10 +338,9 @@ describe("Project Service", () => {
       organizationId,
       role: OrganizationRole.owner,
       accepted: true,
-      deprecatedRole: null,
     });
 
-    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as unknown as Project[]);
 
     const page = 2;
     const result = await getUserProjects(userId, organizationId, page);
@@ -378,7 +375,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -403,7 +400,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -414,7 +411,7 @@ describe("Project Service", () => {
       },
     ];
 
-    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as unknown as Project[]);
 
     const result = await getProjects(organizationId);
 
@@ -448,7 +445,7 @@ describe("Project Service", () => {
         },
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         environments: [],
         styling: {
           allowStyleOverwrite: true,
@@ -459,7 +456,7 @@ describe("Project Service", () => {
       },
     ];
 
-    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects);
+    vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as unknown as Project[]);
 
     const page = 2;
     const result = await getProjects(organizationId, page);
@@ -505,14 +502,12 @@ describe("Project Service", () => {
         organizationId: organizationId1,
         role: "owner" as any,
         accepted: true,
-        deprecatedRole: null,
       },
       {
         userId,
         organizationId: organizationId2,
         role: "owner" as any,
         accepted: true,
-        deprecatedRole: null,
       },
     ]);
 
@@ -543,14 +538,12 @@ describe("Project Service", () => {
         organizationId: organizationId1,
         role: "owner" as any,
         accepted: true,
-        deprecatedRole: null,
       },
       {
         userId,
         organizationId: organizationId2,
         role: "owner" as any,
         accepted: true,
-        deprecatedRole: null,
       },
     ]);
 
@@ -585,7 +578,6 @@ describe("Project Service", () => {
         organizationId: organizationId1,
         role: "owner" as any,
         accepted: true,
-        deprecatedRole: null,
       },
     ]);
 
@@ -646,7 +638,6 @@ describe("Project Service", () => {
         organizationId: organizationId1,
         role: "member" as any,
         accepted: true,
-        deprecatedRole: null,
       },
     ]);
 

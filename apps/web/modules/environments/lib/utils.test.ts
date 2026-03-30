@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -14,7 +14,6 @@ import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
@@ -71,7 +70,6 @@ vi.mock("@/lib/membership/utils", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn(),
-  getMonthlyActiveOrganizationPeopleCount: vi.fn(),
   getMonthlyOrganizationResponseCount: vi.fn(),
 }));
 
@@ -104,8 +102,20 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@formbricks/types/errors", () => ({
+  AuthenticationError: class AuthenticationError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "AuthenticationError";
+    }
+  },
   AuthorizationError: class AuthorizationError extends Error {},
   DatabaseError: class DatabaseError extends Error {},
+  ResourceNotFoundError: class ResourceNotFoundError extends Error {
+    constructor(resource: string, id: string | null) {
+      super(`${resource} not found${id ? `: ${id}` : ""}`);
+      this.name = "ResourceNotFoundError";
+    }
+  },
 }));
 
 describe("utils.ts", () => {
@@ -143,7 +153,6 @@ describe("utils.ts", () => {
       fallbackLevel: "none",
     } as any);
     vi.mocked(getAccessControlPermission).mockResolvedValue(true);
-    vi.mocked(getMonthlyActiveOrganizationPeopleCount).mockResolvedValue(0);
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(0);
   });
 
@@ -159,27 +168,27 @@ describe("utils.ts", () => {
 
     test("throws error if project not found", async () => {
       vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.project_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws error if environment not found", async () => {
       vi.mocked(getEnvironment).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.environment_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws error if session not found", async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.session_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.organization_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("throws error if membership not found", async () => {
+    test("throws AuthorizationError if membership not found", async () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.membership_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(AuthorizationError);
     });
   });
 
@@ -216,7 +225,7 @@ describe("utils.ts", () => {
 
     test("throws error if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(environmentIdLayoutChecks("env123")).rejects.toThrow("common.organization_not_found");
+      await expect(environmentIdLayoutChecks("env123")).rejects.toThrow(ResourceNotFoundError);
     });
   });
 
@@ -241,7 +250,7 @@ describe("utils.ts", () => {
         config: {},
         placement: "bottomRight" as const,
         clickOutsideClose: true,
-        darkOverlay: false,
+        overlay: "none",
         styling: {},
         logo: null,
         environments: [
@@ -267,7 +276,7 @@ describe("utils.ts", () => {
           createdAt: new Date("2024-01-01"),
           updatedAt: new Date("2024-01-02"),
           name: "Test Organization",
-          billing: { plan: "free" },
+          billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
           isAIEnabled: false,
           whitelabel: false,
           memberships: [
@@ -389,7 +398,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [
@@ -407,7 +416,7 @@ describe("utils.ts", () => {
             createdAt: new Date("2024-01-01"),
             updatedAt: new Date("2024-01-02"),
             name: "Test Organization",
-            billing: { plan: "free", limits: {} },
+            billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
             isAIEnabled: false,
             whitelabel: false,
             memberships: [
@@ -437,7 +446,6 @@ describe("utils.ts", () => {
       expect(result.isAccessControlAllowed).toBeDefined();
       expect(result.projectPermission).toBeDefined();
       expect(result.license).toBeDefined();
-      expect(result.peopleCount).toBe(0);
       expect(result.responseCount).toBe(0);
     });
 
@@ -452,7 +460,7 @@ describe("utils.ts", () => {
     test("throws error if session not found", async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow("common.session_not_found");
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if userId doesn't match session", async () => {
@@ -464,15 +472,13 @@ describe("utils.ts", () => {
     test("throws error if user not found", async () => {
       vi.mocked(getUser).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow("common.user_not_found");
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if environment data not found", async () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
-        "common.environment_not_found"
-      );
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws AuthorizationError if user has no environment access", async () => {
@@ -481,7 +487,66 @@ describe("utils.ts", () => {
       await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthorizationError);
     });
 
-    test("throws error if membership not found", async () => {
+    test("throws ResourceNotFoundError if organization billing is missing", async () => {
+      vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce({
+        id: "env123",
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-02"),
+        type: "production",
+        projectId: "proj123",
+        appSetupCompleted: true,
+        project: {
+          id: "proj123",
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date("2024-01-02"),
+          name: "Test Project",
+          organizationId: "org123",
+          languages: ["en"],
+          recontactDays: 7,
+          linkSurveyBranding: true,
+          inAppSurveyBranding: true,
+          config: {},
+          placement: "bottomRight",
+          clickOutsideClose: true,
+          overlay: "none",
+          styling: {},
+          logo: null,
+          environments: [
+            {
+              id: "env123",
+              type: "production",
+              createdAt: new Date("2024-01-01"),
+              updatedAt: new Date("2024-01-02"),
+              projectId: "proj123",
+              appSetupCompleted: true,
+            },
+          ],
+          organization: {
+            id: "org123",
+            createdAt: new Date("2024-01-01"),
+            updatedAt: new Date("2024-01-02"),
+            name: "Test Organization",
+            billing: null,
+            isAIEnabled: false,
+            whitelabel: false,
+            memberships: [
+              {
+                userId: "user123",
+                organizationId: "org123",
+                accepted: true,
+                role: "owner",
+              },
+            ],
+          },
+        },
+      } as any);
+
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
+        new ResourceNotFoundError("OrganizationBilling", "org123")
+      );
+    });
+
+    test("throws AuthorizationError if membership not found", async () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce({
         id: "env123",
         createdAt: new Date(),
@@ -502,7 +567,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [],
@@ -511,7 +576,7 @@ describe("utils.ts", () => {
             name: "Test Organization",
             createdAt: new Date(),
             updatedAt: new Date(),
-            billing: { plan: "free", limits: {} },
+            billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
             isAIEnabled: false,
             whitelabel: false,
             memberships: [], // No membership
@@ -519,9 +584,7 @@ describe("utils.ts", () => {
         },
       } as any);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
-        "common.membership_not_found"
-      );
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthorizationError);
     });
 
     test("fetches user before auth check, then environment data after authorization", async () => {
@@ -552,7 +615,6 @@ describe("utils.ts", () => {
 
       await getEnvironmentLayoutData("env123", "user123");
 
-      expect(getMonthlyActiveOrganizationPeopleCount).toHaveBeenCalledWith("org123");
       expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith("org123");
     });
 
@@ -588,7 +650,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [],
@@ -597,7 +659,7 @@ describe("utils.ts", () => {
             name: "Org 1",
             createdAt: new Date(),
             updatedAt: new Date(),
-            billing: { plan: "free", limits: {} },
+            billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
             isAIEnabled: false,
             whitelabel: false,
             memberships: [{ userId: "user123", organizationId: "org123", role: "owner", accepted: true }],
@@ -627,7 +689,7 @@ describe("utils.ts", () => {
           config: {},
           placement: "bottomRight",
           clickOutsideClose: true,
-          darkOverlay: false,
+          overlay: "none",
           styling: {},
           logo: null,
           environments: [],
@@ -636,7 +698,7 @@ describe("utils.ts", () => {
             name: "Org 2",
             createdAt: new Date(),
             updatedAt: new Date(),
-            billing: { plan: "pro", limits: {} },
+            billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
             isAIEnabled: true,
             whitelabel: true,
             memberships: [{ userId: "user123", organizationId: "org456", role: "member", accepted: true }],

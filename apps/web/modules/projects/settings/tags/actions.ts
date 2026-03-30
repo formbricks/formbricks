@@ -5,7 +5,6 @@ import { ZId } from "@formbricks/types/common";
 import { getTag } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getEnvironmentIdFromTagId,
   getOrganizationIdFromEnvironmentId,
@@ -20,40 +19,36 @@ const ZDeleteTagAction = z.object({
   tagId: ZId,
 });
 
-export const deleteTagAction = authenticatedActionClient.schema(ZDeleteTagAction).action(
-  withAuditLogging(
-    "deleted",
-    "tag",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromTagId(parsedInput.tagId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromTagId(parsedInput.tagId),
-          },
-        ],
-      });
+export const deleteTagAction = authenticatedActionClient.inputSchema(ZDeleteTagAction).action(
+  withAuditLogging("deleted", "tag", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTagId(parsedInput.tagId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromTagId(parsedInput.tagId),
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.tagId = parsedInput.tagId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.tagId = parsedInput.tagId;
 
-      const result = await deleteTag(parsedInput.tagId);
-      if (result.ok) {
-        ctx.auditLoggingCtx.oldObject = result.data;
-      } else {
-        ctx.auditLoggingCtx.oldObject = null;
-      }
-      return result;
+    const result = await deleteTag(parsedInput.tagId);
+    if (result.ok) {
+      ctx.auditLoggingCtx.oldObject = result.data;
+    } else {
+      ctx.auditLoggingCtx.oldObject = null;
     }
-  )
+    return result;
+  })
 );
 
 const ZUpdateTagNameAction = z.object({
@@ -61,42 +56,38 @@ const ZUpdateTagNameAction = z.object({
   name: z.string(),
 });
 
-export const updateTagNameAction = authenticatedActionClient.schema(ZUpdateTagNameAction).action(
-  withAuditLogging(
-    "updated",
-    "tag",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromTagId(parsedInput.tagId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromTagId(parsedInput.tagId),
-          },
-        ],
-      });
+export const updateTagNameAction = authenticatedActionClient.inputSchema(ZUpdateTagNameAction).action(
+  withAuditLogging("updated", "tag", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTagId(parsedInput.tagId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromTagId(parsedInput.tagId),
+        },
+      ],
+    });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.tagId = parsedInput.tagId;
-      ctx.auditLoggingCtx.oldObject = await getTag(parsedInput.tagId);
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.tagId = parsedInput.tagId;
+    ctx.auditLoggingCtx.oldObject = await getTag(parsedInput.tagId);
 
-      const result = await updateTagName(parsedInput.tagId, parsedInput.name);
+    const result = await updateTagName(parsedInput.tagId, parsedInput.name);
 
-      if (result.ok) {
-        ctx.auditLoggingCtx.newObject = result.data;
-      } else {
-        ctx.auditLoggingCtx.newObject = null;
-      }
-      return result;
+    if (result.ok) {
+      ctx.auditLoggingCtx.newObject = result.data;
+    } else {
+      ctx.auditLoggingCtx.newObject = null;
     }
-  )
+    return result;
+  })
 );
 
 const ZMergeTagsAction = z.object({
@@ -104,46 +95,42 @@ const ZMergeTagsAction = z.object({
   newTagId: ZId,
 });
 
-export const mergeTagsAction = authenticatedActionClient.schema(ZMergeTagsAction).action(
-  withAuditLogging(
-    "merged",
-    "tag",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const originalTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.originalTagId);
-      const newTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.newTagId);
+export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsAction).action(
+  withAuditLogging("merged", "tag", async ({ ctx, parsedInput }) => {
+    const originalTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.originalTagId);
+    const newTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.newTagId);
 
-      if (originalTagEnvironmentId !== newTagEnvironmentId) {
-        throw new Error("Tags must be in the same environment");
-      }
-
-      const organizationId = await getOrganizationIdFromEnvironmentId(newTagEnvironmentId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "projectTeam",
-            minPermission: "readWrite",
-            projectId: await getProjectIdFromEnvironmentId(newTagEnvironmentId),
-          },
-        ],
-      });
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.tagId = `${parsedInput.originalTagId}-${parsedInput.newTagId}`;
-
-      const result = await mergeTags(parsedInput.originalTagId, parsedInput.newTagId);
-
-      if (result.ok) {
-        ctx.auditLoggingCtx.newObject = result.data;
-      } else {
-        ctx.auditLoggingCtx.newObject = null;
-      }
-      return result;
+    if (originalTagEnvironmentId !== newTagEnvironmentId) {
+      throw new Error("Tags must be in the same environment");
     }
-  )
+
+    const organizationId = await getOrganizationIdFromEnvironmentId(newTagEnvironmentId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromEnvironmentId(newTagEnvironmentId),
+        },
+      ],
+    });
+
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.tagId = `${parsedInput.originalTagId}-${parsedInput.newTagId}`;
+
+    const result = await mergeTags(parsedInput.originalTagId, parsedInput.newTagId);
+
+    if (result.ok) {
+      ctx.auditLoggingCtx.newObject = result.data;
+    } else {
+      ctx.auditLoggingCtx.newObject = null;
+    }
+    return result;
+  })
 );

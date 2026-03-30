@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import type { TSurveyLanguage } from "./types";
-import { getTextContent } from "./validation";
+import { findLanguageCodesForDuplicateLabels, getTextContent } from "./validation";
 
 const extractLanguageCodes = (surveyLanguages?: TSurveyLanguage[]): string[] => {
   if (!surveyLanguages) return [];
@@ -51,7 +51,7 @@ export const validateElementLabels = (
   blockIndex: number,
   elementIndex: number,
   skipArticle = false
-): z.IssueData | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   for (const language of languages) {
     if (
@@ -60,7 +60,8 @@ export const validateElementLabels = (
       fieldLabel[language.language.code] === undefined
     ) {
       return {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
+        input: fieldLabel,
         message: `The ${field} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)} is not present for the following languages: ${language.language.code}`,
         path: ["blocks", blockIndex, "elements", elementIndex, field],
       };
@@ -80,7 +81,8 @@ export const validateElementLabels = (
 
   if (invalidLanguageCodes.length) {
     return {
-      code: z.ZodIssueCode.custom,
+      code: "custom",
+      input: fieldLabel,
       message,
       path: ["blocks", blockIndex, "elements", elementIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
@@ -90,28 +92,5 @@ export const validateElementLabels = (
   return null;
 };
 
-export const findLanguageCodesForDuplicateLabels = (
-  labels: TI18nString[],
-  surveyLanguages: TSurveyLanguage[]
-): string[] => {
-  const enabledLanguages = surveyLanguages.filter((lang) => lang.enabled);
-  const languageCodes = extractLanguageCodes(enabledLanguages);
-
-  const languagesToCheck = languageCodes.length === 0 ? ["default"] : languageCodes;
-
-  const duplicateLabels = new Set<string>();
-
-  for (const language of languagesToCheck) {
-    const labelTexts = labels
-      .map((label) => label[language])
-      .filter((text): text is string => typeof text === "string" && text.trim().length > 0)
-      .map((text) => text.trim());
-    const uniqueLabels = new Set(labelTexts);
-
-    if (uniqueLabels.size !== labelTexts.length) {
-      duplicateLabels.add(language);
-    }
-  }
-
-  return Array.from(duplicateLabels);
-};
+// Re-export for backwards compatibility
+export { findLanguageCodesForDuplicateLabels };

@@ -46,7 +46,7 @@ export const getSSOProviders = () => [
       id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
     },
     checks: ["pkce" as const, "state" as const],
-    profile: (profile) => {
+    profile: (profile: { sub: string; name: string; email: string }) => {
       return {
         id: profile.sub,
         name: profile.name,
@@ -70,7 +70,7 @@ export const getSSOProviders = () => [
     },
     token: `${WEBAPP_URL}/api/auth/saml/token`,
     userinfo: `${WEBAPP_URL}/api/auth/saml/userinfo`,
-    profile(profile) {
+    profile(profile: { id: string; email: string; firstName: string; lastName: string }) {
       return {
         id: profile.id,
         email: profile.email,

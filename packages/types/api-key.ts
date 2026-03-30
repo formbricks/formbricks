@@ -24,7 +24,7 @@ const organizationAccessValues = Object.values(OrganizationAccess);
 export const ZOrganizationAccess = z.object(
   organizationAccessValues.reduce<Record<string, z.ZodObject<Record<string, z.ZodBoolean>>>>(
     (acc, access) => {
-      acc[access] = z.object(organizationAccessTypeShape).strict();
+      acc[access] = z.strictObject(organizationAccessTypeShape);
       return acc;
     },
     {}

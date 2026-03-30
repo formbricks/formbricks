@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-import { updateSurveyAction } from "../actions";
 
 interface SurveyStatusDropdownProps {
   environment: TEnvironment;
@@ -34,23 +34,27 @@ export const SurveyStatusDropdown = ({
     const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
 
     if (updateSurveyActionResponse?.data) {
-      toast.success(
-        status === "inProgress"
-          ? t("common.survey_live")
-          : status === "paused"
-            ? t("common.survey_paused")
-            : status === "completed"
-              ? t("common.survey_completed")
-              : ""
-      );
+      const resultingStatus = updateSurveyActionResponse.data.status;
+      const statusToToastMessage: Partial<Record<TSurvey["status"], string>> = {
+        inProgress: t("common.survey_live"),
+        paused: t("common.survey_paused"),
+        completed: t("common.survey_completed"),
+      };
+
+      const toastMessage = statusToToastMessage[resultingStatus];
+      if (toastMessage) {
+        toast.success(toastMessage);
+      }
+
+      if (updateLocalSurveyStatus) {
+        updateLocalSurveyStatus(resultingStatus);
+      }
 
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
       toast.error(errorMessage);
     }
-
-    if (updateLocalSurveyStatus) updateLocalSurveyStatus(status);
   };
 
   return (

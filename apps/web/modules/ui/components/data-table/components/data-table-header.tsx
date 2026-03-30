@@ -11,9 +11,14 @@ import { ColumnSettingsDropdown } from "./column-settings-dropdown";
 interface DataTableHeaderProps<T> {
   header: Header<T, unknown>;
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
+  showColumnDividers?: boolean;
 }
 
-export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: DataTableHeaderProps<T>) => {
+export const DataTableHeader = <T,>({
+  header,
+  setIsTableSettingsModalOpen,
+  showColumnDividers = true,
+}: DataTableHeaderProps<T>) => {
   const { attributes, isDragging, listeners, setNodeRef, transform } = useSortable({
     id: header.column.id,
   });
@@ -36,27 +41,25 @@ export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: Dat
       style={style}
       key={header.id}
       className={cn("group relative h-10 border-b border-slate-200 bg-white px-4 text-center", {
-        "border-r": !header.column.getIsLastColumn(),
-        "border-l": !header.column.getIsFirstColumn(),
+        "border-r": showColumnDividers && !header.column.getIsLastColumn(),
+        "border-l": showColumnDividers && !header.column.getIsFirstColumn(),
       })}>
-      <div className="flex items-center justify-between">
-        <div className="w-full truncate text-left font-semibold">
-          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-        </div>
-
+      <div className="flex items-center gap-1">
         {header.column.id !== "select" && header.column.id !== "createdAt" && (
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <ColumnSettingsDropdown
-                column={header.column}
-                setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-              />
-            </div>
+          <div className="flex flex-shrink-0">
+            <ColumnSettingsDropdown
+              column={header.column}
+              setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+            />
             <button {...attributes} {...listeners} className="cursor-move">
               <GripVerticalIcon className="h-4 w-4" />
             </button>
           </div>
         )}
+
+        <div className="w-full truncate text-left font-semibold">
+          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+        </div>
 
         {/* Resize handle */}
         <button

@@ -14,7 +14,8 @@ export const env = createEnv({
     CRON_SECRET: z.string().optional(),
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
+    DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     DEBUG: z.enum(["1", "0"]).optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
@@ -23,6 +24,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     ENCRYPTION_KEY: z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    ENVIRONMENT: z.enum(["production", "staging"]).prefault("production"),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
@@ -30,20 +32,21 @@ export const env = createEnv({
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
-    HTTP_PROXY: z.string().url().optional(),
-    HTTPS_PROXY: z.string().url().optional(),
+    HTTP_PROXY: z.url().optional(),
+    HTTPS_PROXY: z.url().optional(),
     IMPRINT_URL: z
-      .string()
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
-    INTERCOM_SECRET_KEY: z.string().optional(),
-    INTERCOM_APP_ID: z.string().optional(),
+    CHATWOOT_WEBSITE_TOKEN: z.string().optional(),
+    CHATWOOT_BASE_URL: z.url().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
+    POSTHOG_KEY: z.string().optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "fatal"]).optional(),
-    MAIL_FROM: z.string().email().optional(),
+    MAIL_FROM: z.email().optional(),
+    NEXTAUTH_URL: z.url().optional(),
     NEXTAUTH_SECRET: z.string().optional(),
     MAIL_FROM_NAME: z.string().optional(),
     NOTION_OAUTH_CLIENT_ID: z.string().optional(),
@@ -53,14 +56,12 @@ export const env = createEnv({
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
-    OPENTELEMETRY_LISTENER_URL: z.string().optional(),
     REDIS_URL:
       process.env.NODE_ENV === "test"
         ? z.string().optional()
-        : z.string().url("REDIS_URL is required for caching, rate limiting, and audit logging"),
+        : z.url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
-      .string()
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
@@ -84,8 +85,8 @@ export const env = createEnv({
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    STRIPE_PUBLISHABLE_KEY: z.string().optional(),
     PUBLIC_URL: z
-      .string()
       .url()
       .refine(
         (url) => {
@@ -97,12 +98,11 @@ export const env = createEnv({
           }
         },
         {
-          message: "PUBLIC_URL must be a valid URL with a proper host (e.g., https://example.com)",
+          error: "PUBLIC_URL must be a valid URL with a proper host (e.g., https://example.com)",
         }
       )
       .optional(),
     TERMS_URL: z
-      .string()
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
@@ -111,7 +111,7 @@ export const env = createEnv({
     RECAPTCHA_SITE_KEY: z.string().optional(),
     RECAPTCHA_SECRET_KEY: z.string().optional(),
     VERCEL_URL: z.string().optional(),
-    WEBAPP_URL: z.string().url().optional(),
+    WEBAPP_URL: z.url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
 
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
@@ -142,6 +142,7 @@ export const env = createEnv({
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
@@ -150,6 +151,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    ENVIRONMENT: process.env.ENVIRONMENT,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
@@ -162,15 +164,16 @@ export const env = createEnv({
     IMPRINT_URL: process.env.IMPRINT_URL,
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
-    INTERCOM_SECRET_KEY: process.env.INTERCOM_SECRET_KEY,
+    CHATWOOT_WEBSITE_TOKEN: process.env.CHATWOOT_WEBSITE_TOKEN,
+    CHATWOOT_BASE_URL: process.env.CHATWOOT_BASE_URL,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
+    POSTHOG_KEY: process.env.POSTHOG_KEY,
     LOG_LEVEL: process.env.LOG_LEVEL,
     MAIL_FROM: process.env.MAIL_FROM,
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     SENTRY_DSN: process.env.SENTRY_DSN,
-    OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
-    INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
     OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,
@@ -200,6 +203,7 @@ export const env = createEnv({
     SMTP_AUTHENTICATED: process.env.SMTP_AUTHENTICATED,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     PUBLIC_URL: process.env.PUBLIC_URL,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,

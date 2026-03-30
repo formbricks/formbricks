@@ -34,8 +34,8 @@ export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBra
     if (updateBrandingResponse?.data) {
       toast.success(
         newBrandingState
-          ? t("environments.project.look.formbricks_branding_shown")
-          : t("environments.project.look.formbricks_branding_hidden")
+          ? t("environments.workspace.look.formbricks_branding_shown")
+          : t("environments.workspace.look.formbricks_branding_hidden")
       );
     } else {
       const errorMessage = getFormattedErrorMessage(updateBrandingResponse);
@@ -53,7 +53,7 @@ export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBra
         disabled={updatingBranding || isReadOnly}
       />
       <Label htmlFor={`branding-${type}`}>
-        {t("environments.project.look.show_formbricks_branding_in", {
+        {t("environments.workspace.look.show_formbricks_branding_in", {
           type: type === "linkSurvey" ? t("common.link") : t("common.app"),
         })}
       </Label>

@@ -6,7 +6,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const deleteSurvey = async (surveyId: string) => {
-  validateInputs([surveyId, z.string().cuid2()]);
+  validateInputs([surveyId, z.cuid2()]);
 
   try {
     const deletedSurvey = await prisma.survey.delete({

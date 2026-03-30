@@ -73,7 +73,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     <div>
       <div className="mt-4 grid grid-cols-6 gap-4">
         {Object.keys(animationFiles).map((key, index) => {
-          const value = animationFiles[key];
+          const value = (animationFiles as Record<string, string>)[key];
           return (
             <button
               type="button"

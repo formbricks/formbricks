@@ -8,7 +8,9 @@ export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
   private updates: TUpdates | null = null;
   private debounceTimeout: NodeJS.Timeout | null = null;
+  private pendingFlush: Promise<void> | null = null;
   private readonly DEBOUNCE_DELAY = 500;
+  private readonly PENDING_WORK_TIMEOUT = 5000;
 
   private constructor() {}
 
@@ -63,17 +65,45 @@ export class UpdateQueue {
     return !this.updates;
   }
 
+  public hasPendingWork(): boolean {
+    return this.updates !== null || this.pendingFlush !== null;
+  }
+
+  public async waitForPendingWork(): Promise<boolean> {
+    if (!this.hasPendingWork()) return true;
+
+    const flush = this.pendingFlush ?? this.processUpdates();
+    try {
+      const succeeded = await Promise.race([
+        flush.then(() => true as const),
+        new Promise<false>((resolve) => {
+          setTimeout(() => {
+            resolve(false);
+          }, this.PENDING_WORK_TIMEOUT);
+        }),
+      ]);
+      return succeeded;
+    } catch {
+      return false;
+    }
+  }
+
   public async processUpdates(): Promise<void> {
     const logger = Logger.getInstance();
     if (!this.updates) {
       return;
     }
 
+    // If a flush is already in flight, reuse it instead of creating a new promise
+    if (this.pendingFlush) {
+      return this.pendingFlush;
+    }
+
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
     }
 
-    return new Promise((resolve, reject) => {
+    const flushPromise = new Promise<void>((resolve, reject) => {
       const handler = async (): Promise<void> => {
         try {
           let currentUpdates = { ...this.updates };
@@ -93,7 +123,7 @@ export class UpdateQueue {
                   ...config.get().user,
                   data: {
                     ...config.get().user.data,
-                    language: currentUpdates.attributes?.language,
+                    language: currentUpdates.attributes?.language as string | undefined,
                   },
                 },
               });
@@ -118,6 +148,10 @@ export class UpdateQueue {
 
             // Only send updates if we have a userId (either from updates or local storage)
             if (effectiveUserId) {
+              const previousUserId = config.get().user.data.userId;
+              const isNewUser = currentUpdates.userId && currentUpdates.userId !== previousUserId;
+              const hasAttributes = Object.keys(currentUpdates.attributes ?? {}).length > 0;
+
               const result = await sendUpdates({
                 updates: {
                   userId: effectiveUserId,
@@ -126,7 +160,14 @@ export class UpdateQueue {
               });
 
               if (result.ok) {
-                logger.debug("Updates sent successfully");
+                if (isNewUser) {
+                  logger.debug(`User successfully identified: ${effectiveUserId}`);
+                }
+                // Only log success message if there were no warnings (e.g., skipped attributes)
+                if (hasAttributes && !result.data.hasWarnings) {
+                  const attributeKeys = Object.keys(currentUpdates.attributes ?? {}).join(", ");
+                  logger.debug(`Attributes successfully set: ${attributeKeys}`);
+                }
               } else {
                 logger.error(
                   `Failed to send updates: ${result.error.responseMessage ?? result.error.message}`
@@ -136,8 +177,10 @@ export class UpdateQueue {
           }
 
           this.clearUpdates();
+          this.pendingFlush = null;
           resolve();
         } catch (error: unknown) {
+          this.pendingFlush = null;
           logger.error(
             `Failed to process updates: ${error instanceof Error ? error.message : "Unknown error"}`
           );
@@ -147,5 +190,8 @@ export class UpdateQueue {
 
       this.debounceTimeout = setTimeout(() => void handler(), this.DEBOUNCE_DELAY);
     });
+
+    this.pendingFlush = flushPromise;
+    return flushPromise;
   }
 }

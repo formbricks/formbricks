@@ -567,7 +567,7 @@ describe("shared-conditions-factory", () => {
         conditions: [
           {
             id: "condition1",
-            leftOperand: { value: "question1", type: "question" },
+            leftOperand: { value: "question1", type: "element" },
             operator: "equals",
           },
         ],

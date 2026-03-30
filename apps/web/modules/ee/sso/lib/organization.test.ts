@@ -28,13 +28,10 @@ describe("getFirstOrganization", () => {
       whitelabel: true,
       updatedAt: new Date(),
       billing: {
-        plan: "free",
-        period: "monthly",
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
         stripeCustomerId: "cus_123",
         limits: {
           monthly: {
-            miu: 100,
             responses: 1000,
           },
           projects: 3,

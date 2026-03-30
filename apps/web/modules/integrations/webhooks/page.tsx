@@ -1,5 +1,5 @@
+import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { getSurveys } from "@/lib/survey/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
@@ -11,7 +11,7 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const WebhooksPage = async (props) => {
+export const WebhooksPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
@@ -22,17 +22,27 @@ export const WebhooksPage = async (props) => {
     getSurveys(params.environmentId, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
   ]);
 
-  const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
-  const locale = await findMatchingLocale();
+  const renderAddWebhookButton = () => (
+    <AddWebhookButton
+      environment={environment}
+      surveys={surveys}
+      allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}
+    />
+  );
 
   return (
     <PageContentWrapper>
       <GoBackButton />
       <PageHeader pageTitle={t("common.webhooks")} cta={!isReadOnly ? renderAddWebhookButton() : <></>} />
-      <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys} isReadOnly={isReadOnly}>
+      <WebhookTable
+        environment={environment}
+        webhooks={webhooks}
+        surveys={surveys}
+        isReadOnly={isReadOnly}
+        allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
-          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} locale={locale} />
+          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
         ))}
       </WebhookTable>
     </PageContentWrapper>

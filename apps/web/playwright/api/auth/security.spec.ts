@@ -485,5 +485,55 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
       logger.info(`✅ Malformed request handled gracefully: status ${response.status()}`);
     });
+
+    test("should invalidate a copied session cookie after logout", async ({ page, browser, users }) => {
+      const user = await users.create();
+      await user.login();
+
+      const sessionCookie = (await page.context().cookies()).find((cookie) =>
+        cookie.name.includes("next-auth.session-token")
+      );
+
+      expect(sessionCookie).toBeDefined();
+
+      const preLogoutContext = await browser.newContext();
+      try {
+        await preLogoutContext.addCookies([sessionCookie!]);
+        const preLogoutPage = await preLogoutContext.newPage();
+        await preLogoutPage.goto("http://localhost:3000/environments");
+        await expect(preLogoutPage).not.toHaveURL(/\/auth\/login/);
+      } finally {
+        await preLogoutContext.close();
+      }
+
+      const signOutCsrfToken = await page
+        .context()
+        .request.get("/api/auth/csrf")
+        .then((response) => response.json())
+        .then((json) => json.csrfToken);
+
+      const signOutResponse = await page.context().request.post("/api/auth/signout", {
+        form: {
+          callbackUrl: "/auth/login",
+          csrfToken: signOutCsrfToken,
+          json: "true",
+        },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+
+      expect(signOutResponse.status()).not.toBe(500);
+
+      const replayContext = await browser.newContext();
+      try {
+        await replayContext.addCookies([sessionCookie!]);
+        const replayPage = await replayContext.newPage();
+        await replayPage.goto("http://localhost:3000/environments");
+        await expect(replayPage).toHaveURL(/\/auth\/login/);
+      } finally {
+        await replayContext.close();
+      }
+    });
   });
 });

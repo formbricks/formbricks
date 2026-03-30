@@ -1,4 +1,6 @@
 import { google } from "googleapis";
+import { getServerSession } from "next-auth";
+import { TIntegrationGoogleSheetsConfig } from "@formbricks/types/integration/google-sheet";
 import { responses } from "@/app/lib/api/response";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -6,16 +8,27 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
   WEBAPP_URL,
 } from "@/lib/constants";
-import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
-  const url = req.url;
-  const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-  const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
-  const code = queryParams.get("code");
+  const url = new URL(req.url);
+  const environmentId = url.searchParams.get("state");
+  const code = url.searchParams.get("code");
 
   if (!environmentId) {
     return responses.badRequestResponse("Invalid environmentId");
+  }
+
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return responses.notAuthenticatedResponse();
+  }
+
+  const canUserAccessEnvironment = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!canUserAccessEnvironment) {
+    return responses.unauthorizedResponse();
   }
 
   if (code && typeof code !== "string") {
@@ -30,33 +43,39 @@ export const GET = async (req: Request) => {
   if (!redirect_uri) return responses.internalServerErrorResponse("Google redirect url is missing");
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
 
-  let key;
-  let userEmail;
-
-  if (code) {
-    const token = await oAuth2Client.getToken(code);
-    key = token.res?.data;
-
-    // Set credentials using the provided token
-    oAuth2Client.setCredentials({
-      access_token: key.access_token,
-    });
-
-    // Fetch user's email
-    const oauth2 = google.oauth2({
-      auth: oAuth2Client,
-      version: "v2",
-    });
-    const userInfo = await oauth2.userinfo.get();
-    userEmail = userInfo.data.email;
+  if (!code) {
+    return Response.redirect(
+      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
+    );
   }
 
+  const token = await oAuth2Client.getToken(code);
+  const key = token.res?.data;
+  if (!key) {
+    return Response.redirect(
+      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
+    );
+  }
+
+  oAuth2Client.setCredentials({ access_token: key.access_token });
+  const oauth2 = google.oauth2({ auth: oAuth2Client, version: "v2" });
+  const userInfo = await oauth2.userinfo.get();
+  const userEmail = userInfo.data.email;
+
+  if (!userEmail) {
+    return responses.internalServerErrorResponse("Failed to get user email");
+  }
+
+  const integrationType = "googleSheets" as const;
+  const existingIntegration = await getIntegrationByType(environmentId, integrationType);
+  const existingConfig = existingIntegration?.config as TIntegrationGoogleSheetsConfig;
+
   const googleSheetIntegration = {
-    type: "googleSheets" as "googleSheets",
+    type: integrationType,
     environment: environmentId,
     config: {
       key,
-      data: [],
+      data: existingConfig?.data ?? [],
       email: userEmail,
     },
   };
@@ -64,7 +83,7 @@ export const GET = async (req: Request) => {
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
   if (result) {
     return Response.redirect(
-      `${WEBAPP_URL}/environments/${environmentId}/project/integrations/google-sheets`
+      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
     );
   }
 

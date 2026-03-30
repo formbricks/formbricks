@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TOrganizationBilling } from "@formbricks/types/organizations";
+import { TOrganizationBilling, TOrganizationWhitelabel } from "@formbricks/types/organizations";
 import { validateInputs } from "@/lib/utils/validate";
 
 /**
@@ -16,12 +16,16 @@ import { validateInputs } from "@/lib/utils/validate";
  * deduplication within the same render cycle.
  */
 
-type TProjectForLinkSurvey = Pick<Project, "id" | "name" | "styling" | "logo" | "linkSurveyBranding">;
+type TProjectForLinkSurvey = Pick<
+  Project,
+  "id" | "name" | "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts"
+>;
 
 export interface TEnvironmentContextForLinkSurvey {
   project: TProjectForLinkSurvey;
   organizationId: string;
   organizationBilling: TOrganizationBilling;
+  organizationWhitelabel: TOrganizationWhitelabel | null;
 }
 
 /**
@@ -60,11 +64,20 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
               styling: true,
               logo: true,
               linkSurveyBranding: true,
+              customHeadScripts: true,
               organizationId: true,
               organization: {
                 select: {
                   id: true,
-                  billing: true,
+                  billing: {
+                    select: {
+                      stripeCustomerId: true,
+                      limits: true,
+                      usageCycleAnchor: true,
+                      stripe: true,
+                    },
+                  },
+                  whitelabel: true,
                 },
               },
             },
@@ -81,6 +94,10 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
         throw new ResourceNotFoundError("Organization", null);
       }
 
+      if (!environment.project.organization.billing) {
+        throw new ResourceNotFoundError("OrganizationBilling", environment.project.organization.id);
+      }
+
       // Return structured, typed data
       return {
         project: {
@@ -89,9 +106,18 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
           styling: environment.project.styling,
           logo: environment.project.logo,
           linkSurveyBranding: environment.project.linkSurveyBranding,
+          customHeadScripts: environment.project.customHeadScripts,
         },
         organizationId: environment.project.organizationId,
-        organizationBilling: environment.project.organization.billing as TOrganizationBilling,
+        organizationBilling: {
+          stripeCustomerId: environment.project.organization.billing.stripeCustomerId,
+          limits: environment.project.organization.billing.limits as TOrganizationBilling["limits"],
+          usageCycleAnchor: environment.project.organization.billing.usageCycleAnchor,
+          ...(environment.project.organization.billing.stripe === null
+            ? {}
+            : { stripe: environment.project.organization.billing.stripe }),
+        },
+        organizationWhitelabel: environment.project.organization.whitelabel ?? null,
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -5,13 +5,14 @@ import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { TResponseTableData } from "@formbricks/types/responses";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
-import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -34,6 +35,7 @@ const getElementColumnsData = (
   element: TSurveyElement,
   survey: TSurvey,
   isExpanded: boolean,
+  locale: TUserLocale,
   t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
@@ -41,7 +43,7 @@ const getElementColumnsData = (
   const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
-  const createElementHeader = (elementType: string, headline: string, suffix?: string) => {
+  const createElementHeader = (elementType: TSurveyElementTypeEnum, headline: string, suffix?: string) => {
     const title = suffix ? `${headline} - ${suffix}` : headline;
     const ElementHeader = () => (
       <div className="flex items-center justify-between">
@@ -167,6 +169,7 @@ const getElementColumnsData = (
                 survey={survey}
                 responseData={responseValue}
                 language={language}
+                locale={locale}
                 isExpanded={isExpanded}
                 showId={false}
               />
@@ -218,6 +221,7 @@ const getElementColumnsData = (
                 survey={survey}
                 responseData={responseValue}
                 language={language}
+                locale={locale}
                 isExpanded={isExpanded}
                 showId={false}
               />
@@ -232,7 +236,7 @@ const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] =
   const metadataColumns: ColumnDef<TResponseTableData>[] = [];
 
   METADATA_FIELDS.forEach((label) => {
-    const IconComponent = COLUMNS_ICON_MAP[label];
+    const IconComponent = COLUMNS_ICON_MAP[label as keyof typeof COLUMNS_ICON_MAP];
 
     metadataColumns.push({
       accessorKey: "METADATA_" + label,
@@ -259,11 +263,14 @@ export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isReadOnly: boolean,
+  locale: TUserLocale,
   t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const elements = getElementsFromBlocks(survey.blocks);
-  const elementColumns = elements.flatMap((element) => getElementColumnsData(element, survey, isExpanded, t));
+  const elementColumns = elements.flatMap((element) =>
+    getElementColumnsData(element, survey, isExpanded, locale, t)
+  );
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
@@ -271,7 +278,7 @@ export const generateResponseTableColumns = (
     size: 200,
     cell: ({ row }) => {
       const date = new Date(row.original.createdAt);
-      return <p className="text-slate-900">{getFormattedDateTimeString(date)}</p>;
+      return <p className="text-slate-900">{formatDateTimeForDisplay(date, locale)}</p>;
     },
   };
 
@@ -313,6 +320,14 @@ export const generateResponseTableColumns = (
     header: () => <div className="gap-x-1.5">{t("environments.surveys.responses.single_use_id")}</div>,
     cell: ({ row }) => {
       return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
+    },
+  };
+
+  const responseIdColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "responseId",
+    header: () => <div className="gap-x-1.5">{t("common.response_id")}</div>,
+    cell: ({ row }) => {
+      return <IdBadge id={row.original.responseId} />;
     },
   };
 
@@ -414,6 +429,7 @@ export const generateResponseTableColumns = (
   const baseColumns = [
     personColumn,
     singleUseIdColumn,
+    responseIdColumn,
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,

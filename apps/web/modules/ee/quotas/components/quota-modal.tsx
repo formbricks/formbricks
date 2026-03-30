@@ -120,9 +120,9 @@ export const QuotaModal = ({
     defaultValues,
     resolver: zodResolver(
       quotaResponseCount > 0
-        ? ZSurveyQuotaInput.innerType().extend({
+        ? ZSurveyQuotaInput.safeExtend({
             limit: z.number().min(quotaResponseCount, {
-              message: t(
+              error: t(
                 "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses",
                 { value: quotaResponseCount }
               ),

@@ -9,6 +9,7 @@ on:
   merge_group:
 permissions:
   contents: read
+  pull-requests: read
 jobs:
   sonarqube:
     name: SonarQube
@@ -50,6 +51,9 @@ jobs:
           pnpm test:coverage
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf
+        with:
+          args: >
+            -Dsonar.verbose=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

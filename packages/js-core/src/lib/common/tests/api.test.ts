@@ -262,7 +262,7 @@ describe("api.ts", () => {
             id: "project123",
             recontactDays: 30,
             clickOutsideClose: true,
-            darkOverlay: false,
+            overlay: "none",
             placement: "bottomRight",
             inAppSurveyBranding: true,
             styling: {

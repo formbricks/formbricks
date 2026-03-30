@@ -6,7 +6,12 @@ import { logger } from "@formbricks/logger";
 import { sendTelemetryEvents } from "./telemetry";
 
 // Mock dependencies
-vi.mock("@formbricks/cache");
+vi.mock("@formbricks/cache", () => ({
+  getCacheService: vi.fn(),
+  createCacheKey: {
+    custom: vi.fn((_namespace: string, key: string) => key),
+  },
+}));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {
@@ -45,6 +50,7 @@ vi.mock("@/lib/env", () => ({
     RECAPTCHA_SITE_KEY: "site-key",
     RECAPTCHA_SECRET_KEY: "secret-key",
     GITHUB_ID: "github-id",
+    SAML_DATABASE_URL: "postgresql://saml.example.com/formbricks",
   },
 }));
 
@@ -133,6 +139,7 @@ describe("sendTelemetryEvents", () => {
     expect(payload.userCount).toBe(5);
     expect(payload.integrations.notion).toBe(true);
     expect(payload.sso.github).toBe(true);
+    expect(payload.sso.saml).toBe(true);
 
     // Check cache update (no TTL parameter)
     expect(mockCacheService.set).toHaveBeenCalledWith("telemetry_last_sent_ts", expect.any(String));

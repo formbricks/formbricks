@@ -9,10 +9,10 @@ export const ZAuthSession = z.object({
 
 export const ZAPIKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
-  environmentType: z.nativeEnum(EnvironmentType),
-  projectId: z.string().cuid2(),
+  environmentType: z.enum(EnvironmentType),
+  projectId: z.cuid2(),
   projectName: z.string(),
-  permission: z.nativeEnum(ApiKeyPermission),
+  permission: z.enum(ApiKeyPermission),
 });
 
 export type TAPIKeyEnvironmentPermission = z.infer<typeof ZAPIKeyEnvironmentPermission>;

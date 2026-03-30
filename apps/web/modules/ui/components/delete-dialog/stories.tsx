@@ -161,7 +161,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-type Story = StoryObj<typeof DeleteDialog> & { args: StoryOptions };
+type Story = StoryObj<StoryProps>;
 
 // Create a render function for interactive dialogs
 const RenderDeleteDialog = (args: StoryProps) => {

@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { getContactAttributeKeysQuery } from "@/modules/api/v2/management/contact-attribute-keys/lib/utils";
 import {
   TContactAttributeKeyInput,
@@ -28,7 +29,12 @@ export const getContactAttributeKeys = reactCache(
     } catch (error) {
       return err({
         type: "internal_server_error",
-        details: [{ field: "contactAttributeKeys", issue: error.message }],
+        details: [
+          {
+            field: "contactAttributeKeys",
+            issue: error instanceof Error ? error.message : "Unknown error occurred",
+          },
+        ],
       });
     }
   }
@@ -37,7 +43,7 @@ export const getContactAttributeKeys = reactCache(
 export const createContactAttributeKey = async (
   contactAttributeKey: TContactAttributeKeyInput
 ): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
-  const { environmentId, name, description, key } = contactAttributeKey;
+  const { environmentId, name, description, key, dataType } = contactAttributeKey;
 
   try {
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {
@@ -46,9 +52,10 @@ export const createContactAttributeKey = async (
           id: environmentId,
         },
       },
-      name,
+      name: name ?? formatSnakeCaseToTitleCase(key),
       description,
       key,
+      ...(dataType && { dataType }),
     };
 
     const createdContactAttributeKey = await prisma.contactAttributeKey.create({
@@ -81,7 +88,12 @@ export const createContactAttributeKey = async (
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "contactAttributeKey", issue: error.message }],
+      details: [
+        {
+          field: "contactAttributeKey",
+          issue: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+      ],
     });
   }
 };

@@ -44,7 +44,7 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err instanceof Error ? err.message : "Unknown error occurred");
     }
   };
 

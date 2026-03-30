@@ -102,7 +102,12 @@ export const InvitePage = async (props: InvitePageProps) => {
         );
       }
       await deleteInvite(inviteId);
-      await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);
+      await sendInviteAcceptedEmail(
+        invite.creator.name ?? "",
+        user?.name ?? "",
+        invite.creator.email,
+        invite.creator.locale
+      );
       await updateUser(session.user.id, {
         notificationSettings: {
           ...user.notificationSettings,

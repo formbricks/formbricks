@@ -7,13 +7,17 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
+import type {
+  TSurveyElement,
+  TSurveyElementChoice,
+  TSurveyRankingElement,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
+import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
@@ -22,7 +26,7 @@ interface RankingElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyRankingElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyRankingElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -50,7 +54,7 @@ export const RankingElementForm = ({
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
+  const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
     if (element.choices) {
       const newChoices = element.choices.map((choice, idx) => {
         if (idx !== choiceIdx) return choice;
@@ -110,6 +114,21 @@ export const RankingElementForm = ({
       id: "all",
       label: t("environments.surveys.edit.randomize_all"),
       show: element.choices.length > 0,
+    },
+    exceptLast: {
+      id: "exceptLast",
+      label: t("environments.surveys.edit.randomize_all_except_last"),
+      show: true,
+    },
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
+      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      show: true,
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      show: true,
     },
   };
 
@@ -179,7 +198,7 @@ export const RankingElementForm = ({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">{t("environments.surveys.edit.options")}*</Label>
+        <Label htmlFor="choices">{t("environments.surveys.edit.options")}</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="ranking-choices"
@@ -246,6 +265,17 @@ export const RankingElementForm = ({
           </div>
         </div>
       </div>
+
+      <ValidationRulesEditor
+        elementType={element.type}
+        validation={element.validation}
+        onUpdateValidation={(validation) => {
+          updateElement(elementIdx, {
+            validation,
+          });
+        }}
+        element={element}
+      />
     </form>
   );
 };

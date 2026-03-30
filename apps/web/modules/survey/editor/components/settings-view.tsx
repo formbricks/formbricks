@@ -1,4 +1,5 @@
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { type Dispatch, type SetStateAction } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -16,7 +17,7 @@ import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-
 interface SettingsViewProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];

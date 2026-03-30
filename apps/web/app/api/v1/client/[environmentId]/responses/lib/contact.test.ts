@@ -19,7 +19,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn) => fn), // Mock react's cache to just return the function
+    cache: vi.fn((fn: Function) => fn), // Mock react's cache to just return the function
   };
 });
 
@@ -34,7 +34,12 @@ describe("Contact API Lib", () => {
 
   describe("getContact", () => {
     test("should return contact if found", async () => {
-      const mockContactData = { id: mockContactId };
+      const mockContactData = {
+        id: mockContactId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        environmentId: mockEnvironmentId,
+      };
       vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData);
 
       const contact = await getContact(mockContactId);
@@ -77,12 +82,17 @@ describe("Contact API Lib", () => {
     test("should return contact with formatted attributes if found", async () => {
       const mockContactData = {
         id: mockContactId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        environmentId: mockEnvironmentId,
         attributes: [
           { attributeKey: { key: "userId" }, value: mockUserId },
           { attributeKey: { key: "email" }, value: "test@example.com" },
         ],
       };
-      vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData);
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(
+        mockContactData as Awaited<ReturnType<typeof prisma.contact.findFirst>>
+      );
 
       const contact = await getContactByUserId(mockEnvironmentId, mockUserId);
 

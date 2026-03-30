@@ -8,7 +8,6 @@ describe("transformErrorToDetails", () => {
       {
         code: ZodIssueCode.invalid_type,
         expected: "string",
-        received: "number",
         path: ["name"],
         message: "Expected string, received number",
       },
@@ -24,14 +23,13 @@ describe("transformErrorToDetails", () => {
       {
         code: ZodIssueCode.invalid_type,
         expected: "string",
-        received: "number",
         path: ["name"],
         message: "Expected string, received number",
       },
       {
         code: ZodIssueCode.too_small,
         minimum: 5,
-        type: "string",
+        origin: "string",
         inclusive: true,
         exact: false,
         message: "String must contain at least 5 character(s)",
@@ -70,7 +68,6 @@ describe("transformErrorToDetails", () => {
       {
         code: ZodIssueCode.invalid_type,
         expected: "string",
-        received: "undefined",
         path: ["user", "profile", "firstName"],
         message: "Required",
       },

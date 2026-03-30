@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ["es", "cjs"],
     },
     rollupOptions: {
-      external: ["pino", "pino-pretty", "zod"],
+      external: ["pino", "pino-pretty", "pino-opentelemetry-transport", "zod"],
       output: {
         exports: "named",
         globals: {

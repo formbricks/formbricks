@@ -161,7 +161,8 @@ export function ConditionsEditor({
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
-      if (parentConditionGroup.conditions.length === 1) return <div>When</div>;
+      if (parentConditionGroup.conditions.length === 1)
+        return <div>{t("environments.surveys.edit.when")}</div>;
       return <div />;
     };
 
@@ -178,8 +179,8 @@ export function ConditionsEditor({
                 showSearch
                 groupedOptions={leftOperandOptions}
                 value={config.formatLeftOperandValue(condition)}
-                onChangeValue={(val: string, option) => {
-                  handleLeftOperandChange(condition, val, option);
+                onChangeValue={(val: string | number | string[], option) => {
+                  handleLeftOperandChange(condition, String(val), option);
                 }}
               />
             </div>
@@ -190,8 +191,8 @@ export function ConditionsEditor({
                 showSearch={false}
                 options={operatorOptions}
                 value={condition.operator}
-                onChangeValue={(val: string) => {
-                  handleOperatorChange(condition, val);
+                onChangeValue={(val: string | number | string[]) => {
+                  handleOperatorChange(condition, String(val));
                 }}
               />
             </div>
@@ -259,7 +260,7 @@ export function ConditionsEditor({
           </DropdownMenu>
         </div>
         {quotaError && isSubmitted && (
-          <p className="text-error mt-2 w-full text-right text-sm">{quotaError}</p>
+          <p className="mt-2 w-full text-right text-sm text-error">{quotaError}</p>
         )}
       </div>
     );
@@ -270,7 +271,9 @@ export function ConditionsEditor({
       {/* Dropdown for changing the connector */}
       {conditions.conditions.length > 1 && (
         <div className="flex items-center gap-x-2 text-sm">
-          <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">When</p>
+          <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
+            {t("environments.surveys.edit.when")}
+          </p>
           <Select
             value={conditions.connector}
             onValueChange={() => {
@@ -280,8 +283,8 @@ export function ConditionsEditor({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="flex min-w-fit max-w-fit items-center justify-between">
-              <SelectItem value="and">all are true</SelectItem>
-              <SelectItem value="or">any is true</SelectItem>
+              <SelectItem value="and">{t("environments.surveys.edit.all_are_true")}</SelectItem>
+              <SelectItem value="or">{t("environments.surveys.edit.any_is_true")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

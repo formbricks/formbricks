@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
+import type { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
-import { TProject } from "@formbricks/types/project";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TTemplate } from "@formbricks/types/templates";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -53,7 +53,7 @@ describe("Template utils", () => {
   });
 
   test("getChannelMapping returns correct channel mappings", () => {
-    const mockT = vi.fn((key) => key);
+    const mockT = vi.fn((key: string) => key) as unknown as TFunction;
 
     const result = getChannelMapping(mockT);
 
@@ -68,7 +68,7 @@ describe("Template utils", () => {
   });
 
   test("getIndustryMapping returns correct industry mappings", () => {
-    const mockT = vi.fn((key) => key);
+    const mockT = vi.fn((key: string) => key) as unknown as TFunction;
 
     const result = getIndustryMapping(mockT);
 
@@ -83,7 +83,7 @@ describe("Template utils", () => {
   });
 
   test("getRoleMapping returns correct role mappings", () => {
-    const mockT = vi.fn((key) => key);
+    const mockT = vi.fn((key: string) => key) as unknown as TFunction;
 
     const result = getRoleMapping(mockT);
 

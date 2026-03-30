@@ -1,13 +1,15 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TResponse, TResponseUpdateInput, ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
@@ -31,14 +33,37 @@ const handleDatabaseError = (error: Error, url: string, endpoint: string, respon
   return responses.internalServerErrorResponse("Unknown error occurred", true);
 };
 
+const validateResponse = (
+  response: TResponse,
+  survey: TSurvey,
+  responseUpdateInput: TResponseUpdateInput
+) => {
+  // Validate response data against validation rules
+  const mergedData = {
+    ...response.data,
+    ...responseUpdateInput.data,
+  };
+
+  const validationErrors = validateResponseData(
+    survey.blocks,
+    mergedData,
+    responseUpdateInput.language ?? response.language ?? "en",
+    survey.questions
+  );
+
+  if (validationErrors) {
+    return {
+      response: responses.badRequestResponse(
+        "Validation failed",
+        formatValidationErrorsForV1Api(validationErrors),
+        true
+      ),
+    };
+  }
+};
+
 export const PUT = withV1ApiWrapper({
-  handler: async ({
-    req,
-    props,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ responseId: string }> };
-  }) => {
+  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
     const params = await props.params;
     const { responseId } = params;
 
@@ -67,7 +92,18 @@ export const PUT = withV1ApiWrapper({
     } catch (error) {
       const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
       return {
-        response: handleDatabaseError(error, req.url, endpoint, responseId),
+        response: handleDatabaseError(
+          error instanceof Error ? error : new Error(String(error)),
+          req.url,
+          endpoint,
+          responseId
+        ),
+      };
+    }
+
+    if (!response) {
+      return {
+        response: responses.notFoundResponse("Response", responseId, true),
       };
     }
 
@@ -84,7 +120,18 @@ export const PUT = withV1ApiWrapper({
     } catch (error) {
       const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
       return {
-        response: handleDatabaseError(error, req.url, endpoint, responseId),
+        response: handleDatabaseError(
+          error instanceof Error ? error : new Error(String(error)),
+          req.url,
+          endpoint,
+          responseId
+        ),
+      };
+    }
+
+    if (!survey) {
+      return {
+        response: responses.notFoundResponse("Survey", response.surveyId, true),
       };
     }
 
@@ -97,7 +144,7 @@ export const PUT = withV1ApiWrapper({
     // Validate response data for "other" options exceeding character limit
     const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
       responseData: inputValidation.data.data,
-      surveyQuestions: survey.questions,
+      surveyQuestions: survey.questions as unknown as TSurveyElement[],
       responseLanguage: inputValidation.data.language,
     });
 
@@ -111,6 +158,11 @@ export const PUT = withV1ApiWrapper({
           true
         ),
       };
+    }
+
+    const validationResult = validateResponse(response, survey, inputValidation.data);
+    if (validationResult) {
+      return validationResult;
     }
 
     // update response with quota evaluation
@@ -137,6 +189,14 @@ export const PUT = withV1ApiWrapper({
           response: responses.internalServerErrorResponse(error.message),
         };
       }
+
+      logger.error(
+        { error, url: req.url },
+        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      );
+      return {
+        response: responses.internalServerErrorResponse("Something went wrong"),
+      };
     }
 
     const { quotaFull, ...responseData } = updatedResponse;

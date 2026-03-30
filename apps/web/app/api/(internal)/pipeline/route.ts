@@ -1,5 +1,6 @@
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
+import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,14 +9,18 @@ import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { CRON_SECRET } from "@/lib/constants";
+import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { sendResponseFinishedEmail } from "@/modules/email";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { handleIntegrations } from "./lib/handleIntegrations";
@@ -28,7 +33,10 @@ export const POST = async (request: Request) => {
   }
 
   const jsonInput = await request.json();
-  const convertedJsonInput = convertDatesInObject(jsonInput);
+  const convertedJsonInput = convertDatesInObject(
+    jsonInput,
+    new Set(["contactAttributes", "variables", "data", "meta"])
+  );
 
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
@@ -90,28 +98,57 @@ export const POST = async (request: Request) => {
     ]);
   };
 
-  const webhookPromises = webhooks.map((webhook) =>
-    fetchWithTimeout(webhook.url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        webhookId: webhook.id,
-        event,
-        data: {
-          ...response,
-          survey: {
-            title: survey.name,
-            type: survey.type,
-            status: survey.status,
-            createdAt: survey.createdAt,
-            updatedAt: survey.updatedAt,
-          },
+  const resolvedResponseData = resolveStorageUrlsInObject(response.data);
+
+  const webhookPromises = webhooks.map((webhook) => {
+    const body = JSON.stringify({
+      webhookId: webhook.id,
+      event,
+      data: {
+        ...response,
+        data: resolvedResponseData,
+        survey: {
+          title: survey.name,
+          type: survey.type,
+          status: survey.status,
+          createdAt: survey.createdAt,
+          updatedAt: survey.updatedAt,
         },
-      }),
-    }).catch((error) => {
-      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
-    })
-  );
+      },
+    });
+
+    // Generate Standard Webhooks headers
+    const webhookMessageId = uuidv7();
+    const webhookTimestamp = Math.floor(Date.now() / 1000);
+
+    const requestHeaders: Record<string, string> = {
+      "content-type": "application/json",
+      "webhook-id": webhookMessageId,
+      "webhook-timestamp": webhookTimestamp.toString(),
+    };
+
+    // Add signature if webhook has a secret configured
+    if (webhook.secret) {
+      requestHeaders["webhook-signature"] = generateStandardWebhookSignature(
+        webhookMessageId,
+        webhookTimestamp,
+        body,
+        webhook.secret
+      );
+    }
+
+    return validateWebhookUrl(webhook.url)
+      .then(() =>
+        fetchWithTimeout(webhook.url, {
+          method: "POST",
+          headers: requestHeaders,
+          body,
+        })
+      )
+      .catch((error) => {
+        logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
+      });
+  });
 
   if (event === "responseFinished") {
     // Fetch integrations and responseCount in parallel
@@ -191,7 +228,14 @@ export const POST = async (request: Request) => {
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
+      sendResponseFinishedEmail(
+        user.email,
+        user.locale,
+        environmentId,
+        survey,
+        response,
+        responseCount
+      ).catch((error) => {
         logger.error(
           { error, url: request.url, userEmail: user.email },
           `Failed to send email to ${user.email}`
@@ -247,6 +291,14 @@ export const POST = async (request: Request) => {
     });
   }
   if (event === "responseCreated") {
+    recordResponseCreatedMeterEvent({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      responseId: response.id,
+      createdAt: response.createdAt,
+    }).catch((error) => {
+      logger.error({ error, responseId: response.id }, "Failed to record response meter event");
+    });
+
     // Send telemetry events
     await sendTelemetryEvents();
   }

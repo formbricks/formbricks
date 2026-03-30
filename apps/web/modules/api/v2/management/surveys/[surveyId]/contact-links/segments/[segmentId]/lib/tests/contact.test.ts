@@ -98,10 +98,15 @@ describe("getContactsInSegment", () => {
       data: mockSegment,
     });
 
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([{ key: "email" }, { key: "name" }]);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+      { key: "email" },
+      { key: "name" },
+    ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
 
     vi.mocked(prisma.contact.count).mockResolvedValue(2);
-    vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
+    vi.mocked(prisma.contact.findMany).mockResolvedValue(
+      mockContacts as unknown as Awaited<ReturnType<typeof prisma.contact.findMany>>
+    );
   });
 
   afterEach(() => {

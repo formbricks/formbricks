@@ -24,7 +24,7 @@ import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
+import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
@@ -95,8 +95,8 @@ export const formatTextWithSlashes = (
   });
 };
 
-const getElementIconMapping = (t: TFunction) =>
-  getElementTypes(t).reduce(
+const getElementIconMapping = (t: TFunction): Record<string, TElement["icon"]> =>
+  getElementTypes(t).reduce<Record<string, TElement["icon"]>>(
     (prev, curr) => ({
       ...prev,
       [curr.id]: curr.icon,
@@ -1300,6 +1300,14 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
       return true;
     }
 
+    if (
+      action.objective === "calculate" &&
+      action.value.type === "element" &&
+      action.value.value === elementId
+    ) {
+      return true;
+    }
+
     return action.objective === "jumpToBlock" && action.target === block.id;
   };
 
@@ -1320,6 +1328,45 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
       block.logicFallback === elementId || (element.id !== elementId && block.logic?.some(isUsedInLogicRule))
     );
   });
+};
+
+export const findBlockUsedInLogic = (survey: TSurvey, blockId: string): number => {
+  const targetBlock = survey.blocks.find((b) => b.id === blockId);
+  if (!targetBlock) return -1;
+
+  const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
+    return action.objective === "jumpToBlock" && action.target === blockId;
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyBlockLogic): boolean => {
+    return logicRule.actions.some(isUsedInAction);
+  };
+
+  const elements = getElementsFromBlocks(survey.blocks);
+
+  const blockUsageIndex = elements.findIndex((element) => {
+    const { block } = findElementLocation(survey, element.id);
+
+    if (!block) {
+      return false;
+    }
+
+    return block.id !== blockId && (block.logic?.some(isUsedInLogicRule) || block.logicFallback === blockId);
+  });
+
+  if (blockUsageIndex !== -1) {
+    return blockUsageIndex;
+  }
+
+  // Check if any element in the block is used in logic
+  for (const element of targetBlock.elements) {
+    const elementUsedIndex = findElementUsedInLogic(survey, element.id);
+    if (elementUsedIndex !== -1) {
+      return elementUsedIndex;
+    }
+  }
+
+  return -1;
 };
 
 export const isUsedInQuota = (
