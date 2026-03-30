@@ -41,11 +41,11 @@ ALTER TABLE "FeedbackRecordDirectoryWorkspace" RENAME CONSTRAINT "FeedbackRecord
 ALTER TABLE "FeedbackRecordDirectoryWorkspace" RENAME CONSTRAINT "FeedbackRecordDirectoryProject_projectId_fkey" TO "FeedbackRecordDirectoryWorkspace_workspaceId_fkey";
 ALTER INDEX "FeedbackRecordDirectoryProject_projectId_idx" RENAME TO "FeedbackRecordDirectoryWorkspace_workspaceId_idx";
 
--- Rename JSON key "projects" to "workspaces" inside Organization.billing.limits
-UPDATE "Organization"
-SET billing = jsonb_set(
-  billing::jsonb #- '{limits,projects}',
-  '{limits,workspaces}',
-  billing::jsonb->'limits'->'projects'
+-- Rename JSON key "projects" to "workspaces" inside OrganizationBilling.limits
+UPDATE "OrganizationBilling"
+SET limits = jsonb_set(
+  limits::jsonb - 'projects',
+  '{workspaces}',
+  limits::jsonb->'projects'
 )
-WHERE billing::jsonb->'limits'->'projects' IS NOT NULL;
+WHERE limits::jsonb->'projects' IS NOT NULL;
