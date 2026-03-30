@@ -23,8 +23,9 @@ import {
   upsertActiveToken,
 } from "./password-reset-token-repository";
 
-export const PASSWORD_RESET_LINK_EMAIL_ERROR_CODE = "ERR_PASSWORD_RESET_LINK_EMAIL_FAILED";
-export const PASSWORD_RESET_NOTIFICATION_EMAIL_ERROR_CODE = "ERR_PASSWORD_RESET_NOTIFICATION_EMAIL_FAILED";
+export const ACCOUNT_RECOVERY_LINK_EMAIL_ERROR_CODE = "ERR_ACCOUNT_RECOVERY_LINK_EMAIL_FAILED";
+export const ACCOUNT_RECOVERY_NOTIFICATION_EMAIL_ERROR_CODE =
+  "ERR_ACCOUNT_RECOVERY_NOTIFICATION_EMAIL_FAILED";
 
 const ZPasswordResetSource = z.enum(["public", "profile"]);
 
@@ -48,19 +49,19 @@ type TPasswordResetAuditUser = Prisma.UserGetPayload<{
 }>;
 
 class PasswordResetLinkEmailError extends Error {
-  code = PASSWORD_RESET_LINK_EMAIL_ERROR_CODE;
+  code = ACCOUNT_RECOVERY_LINK_EMAIL_ERROR_CODE;
 
   constructor() {
-    super(PASSWORD_RESET_LINK_EMAIL_ERROR_CODE);
+    super(ACCOUNT_RECOVERY_LINK_EMAIL_ERROR_CODE);
     this.name = "PasswordResetLinkEmailError";
   }
 }
 
 class PasswordResetNotificationEmailError extends Error {
-  code = PASSWORD_RESET_NOTIFICATION_EMAIL_ERROR_CODE;
+  code = ACCOUNT_RECOVERY_NOTIFICATION_EMAIL_ERROR_CODE;
 
   constructor() {
-    super(PASSWORD_RESET_NOTIFICATION_EMAIL_ERROR_CODE);
+    super(ACCOUNT_RECOVERY_NOTIFICATION_EMAIL_ERROR_CODE);
     this.name = "PasswordResetNotificationEmailError";
   }
 }
