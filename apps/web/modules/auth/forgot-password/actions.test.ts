@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { requestPasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
@@ -29,6 +30,12 @@ vi.mock("@/modules/auth/lib/user", () => ({
 
 vi.mock("@/modules/auth/forgot-password/lib/password-reset-service", () => ({
   requestPasswordReset: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -183,12 +190,19 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
       vi.mocked(requestPasswordReset).mockRejectedValue(new Error("Password reset request failed"));
 
-      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
-        "Password reset request failed"
-      );
+      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).resolves.toEqual({
+        success: true,
+      });
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stage: "dispatch",
+          userId: mockUser.id,
+        }),
+        "Password reset request failed"
+      );
     });
   });
 

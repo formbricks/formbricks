@@ -5,22 +5,26 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { InvalidPasswordResetTokenError } from "@formbricks/types/errors";
+import {
+  INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
+  InvalidPasswordResetTokenError,
+} from "@formbricks/types/errors";
 import type { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import { ZUserEmail, ZUserLocale, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
-import { PASSWORD_RESET_TOKEN_LIFETIME_MINUTES, WEBAPP_URL } from "@/lib/constants";
+import { DEBUG_SHOW_RESET_LINK, PASSWORD_RESET_TOKEN_LIFETIME_MINUTES, WEBAPP_URL } from "@/lib/constants";
 import { hashString } from "@/lib/hash-string";
 import { validateInputs } from "@/lib/utils/validate";
 import { sendPasswordResetLinkEmail, sendPasswordResetNotifyEmail } from "@/modules/email";
 import {
   consumeActiveToken,
-  deleteByUserId,
+  deleteByTokenHash,
   findByTokenHash,
   upsertActiveToken,
 } from "./password-reset-token-repository";
 
-export const INVALID_PASSWORD_RESET_TOKEN_MESSAGE = "Invalid or expired password reset link.";
+export const PASSWORD_RESET_LINK_EMAIL_ERROR_CODE = "ERR_PASSWORD_RESET_LINK_EMAIL_FAILED";
+export const PASSWORD_RESET_NOTIFICATION_EMAIL_ERROR_CODE = "ERR_PASSWORD_RESET_NOTIFICATION_EMAIL_FAILED";
 
 const ZPasswordResetSource = z.enum(["public", "profile"]);
 
@@ -44,15 +48,19 @@ type TPasswordResetAuditUser = Prisma.UserGetPayload<{
 }>;
 
 class PasswordResetLinkEmailError extends Error {
+  code = PASSWORD_RESET_LINK_EMAIL_ERROR_CODE;
+
   constructor() {
-    super("Password reset email was not sent");
+    super(PASSWORD_RESET_LINK_EMAIL_ERROR_CODE);
     this.name = "PasswordResetLinkEmailError";
   }
 }
 
 class PasswordResetNotificationEmailError extends Error {
+  code = PASSWORD_RESET_NOTIFICATION_EMAIL_ERROR_CODE;
+
   constructor() {
-    super("Password reset notification email was not sent");
+    super(PASSWORD_RESET_NOTIFICATION_EMAIL_ERROR_CODE);
     this.name = "PasswordResetNotificationEmailError";
   }
 }
@@ -93,7 +101,7 @@ const createInvalidPasswordResetTokenError = (
   reason: string,
   userId?: string
 ): InvalidPasswordResetTokenError =>
-  new InvalidPasswordResetTokenError(INVALID_PASSWORD_RESET_TOKEN_MESSAGE, reason, userId);
+  new InvalidPasswordResetTokenError(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE, reason, userId);
 
 const getPasswordResetExpiry = (): Date =>
   new Date(Date.now() + getPasswordResetTokenLifetimeInMinutes() * 60 * 1000);
@@ -106,10 +114,11 @@ const assertEmailWasSent = (didSendEmail: boolean, error: Error): void => {
 
 const revokeIssuedPasswordResetToken = async (
   userId: string,
+  tokenHash: string,
   source: TPasswordResetRequestSource
 ): Promise<void> => {
   try {
-    await deleteByUserId(userId);
+    await deleteByTokenHash(tokenHash);
   } catch (error) {
     logPasswordResetRequestFailure({
       error,
@@ -121,6 +130,11 @@ const revokeIssuedPasswordResetToken = async (
 };
 
 const sendPasswordResetLink = async (user: TPasswordResetRecipient, verifyLink: string): Promise<void> => {
+  if (DEBUG_SHOW_RESET_LINK) {
+    logger.info({ verifyLink }, "DEBUG_SHOW_RESET_LINK is enabled; password reset email delivery skipped");
+    return;
+  }
+
   const didSendEmail = await sendPasswordResetLinkEmail({
     email: user.email,
     locale: user.locale,
@@ -185,6 +199,18 @@ const updatePasswordWithActiveResetToken = async (
     };
   });
 
+const assertResetTokenCanStillBeUsed = async (tokenHash: string, now: Date): Promise<void> => {
+  const tokenRecord = await findByTokenHash(tokenHash);
+
+  if (!tokenRecord) {
+    throw createInvalidPasswordResetTokenError("invalid_or_superseded");
+  }
+
+  if (tokenRecord.expiresAt <= now) {
+    throw createInvalidPasswordResetTokenError("expired", tokenRecord.userId);
+  }
+};
+
 const sendPasswordResetNotification = async ({
   userId,
   email,
@@ -194,6 +220,11 @@ const sendPasswordResetNotification = async ({
   email: string;
   locale: TUserLocale;
 }): Promise<void> => {
+  if (DEBUG_SHOW_RESET_LINK) {
+    logger.info({ userId }, "DEBUG_SHOW_RESET_LINK is enabled; password reset notification delivery skipped");
+    return;
+  }
+
   try {
     const didSendNotificationEmail = await sendPasswordResetNotifyEmail({
       email,
@@ -243,7 +274,7 @@ export const requestPasswordReset = async (
     });
 
     if (tokenIssued) {
-      await revokeIssuedPasswordResetToken(user.id, source);
+      await revokeIssuedPasswordResetToken(user.id, tokenHash, source);
     }
 
     if (source === "profile") {
@@ -269,10 +300,11 @@ export const completePasswordReset = async (
   }
 
   const tokenHash = hashString(rawToken);
-  const hashedPassword = await hashPassword(password);
   const now = new Date();
 
   try {
+    await assertResetTokenCanStillBeUsed(tokenHash, now);
+    const hashedPassword = await hashPassword(password);
     const result = await updatePasswordWithActiveResetToken(tokenHash, hashedPassword, now);
     await sendPasswordResetNotification({
       userId: result.userId,

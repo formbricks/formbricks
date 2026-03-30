@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { InvalidPasswordResetTokenError } from "@formbricks/types/errors";
+import {
+  INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
+  InvalidPasswordResetTokenError,
+} from "@formbricks/types/errors";
 import { completePasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { resetPasswordAction } from "./actions";
 
 vi.mock("@/modules/auth/forgot-password/lib/password-reset-service", () => ({
@@ -41,10 +43,6 @@ describe("resetPasswordAction", () => {
     vi.restoreAllMocks();
   });
 
-  test("is wrapped with audit logging", () => {
-    expect(withAuditLogging).toBeDefined();
-  });
-
   test("delegates to completePasswordReset and populates audit context on success", async () => {
     const oldUser = {
       id: "user_123",
@@ -71,13 +69,13 @@ describe("resetPasswordAction", () => {
     expect(result).toEqual({ success: true });
     expect(completePasswordReset).toHaveBeenCalledWith(parsedInput.token, parsedInput.password);
     expect(mockCtx.auditLoggingCtx.userId).toBe("user_123");
-    expect(mockCtx.auditLoggingCtx.oldObject).toEqual(oldUser);
-    expect(mockCtx.auditLoggingCtx.newObject).toEqual(updatedUser);
+    expect(mockCtx.auditLoggingCtx.oldObject).toEqual({ ...oldUser, passwordResetMarker: false });
+    expect(mockCtx.auditLoggingCtx.newObject).toEqual({ ...updatedUser, passwordResetMarker: true });
   });
 
   test("propagates generic invalid password reset failures", async () => {
     vi.mocked(completePasswordReset).mockRejectedValue(
-      new InvalidPasswordResetTokenError("Invalid or expired password reset link.", "expired")
+      new InvalidPasswordResetTokenError(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE, "expired")
     );
 
     await expect(
@@ -85,6 +83,6 @@ describe("resetPasswordAction", () => {
         ctx: mockCtx,
         parsedInput,
       } as any)
-    ).rejects.toThrow("Invalid or expired password reset link.");
+    ).rejects.toThrow(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
   });
 });

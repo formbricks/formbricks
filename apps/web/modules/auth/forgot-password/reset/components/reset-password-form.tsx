@@ -6,6 +6,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
@@ -57,7 +58,11 @@ export const ResetPasswordForm = () => {
       router.push("/auth/forgot-password/reset/success");
     } else {
       const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
-      toast.error(errorMessage);
+      toast.error(
+        errorMessage === INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE
+          ? t("c.link_expired_description")
+          : errorMessage
+      );
     }
   };
 

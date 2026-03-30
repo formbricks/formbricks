@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RESET_TOKEN";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;
@@ -97,11 +99,13 @@ class TooManyRequestsError extends Error {
 
 class InvalidPasswordResetTokenError extends Error {
   statusCode = 400;
+  code: string;
   reason?: string;
   userId?: string;
-  constructor(message: string, reason?: string, userId?: string) {
-    super(message);
+  constructor(code = INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE, reason?: string, userId?: string) {
+    super(code);
     this.name = "InvalidPasswordResetTokenError";
+    this.code = code;
     this.reason = reason;
     this.userId = userId;
   }

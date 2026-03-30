@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
@@ -26,7 +27,11 @@ export const forgotPasswordAction = actionClient
     const user = await getUserByEmail(parsedInput.email);
 
     if (user && user.identityProvider === "email") {
-      await requestPasswordReset(user, "public");
+      try {
+        await requestPasswordReset(user, "public");
+      } catch (error) {
+        logger.error({ error, stage: "dispatch", userId: user.id }, "Password reset request failed");
+      }
     }
 
     return { success: true };

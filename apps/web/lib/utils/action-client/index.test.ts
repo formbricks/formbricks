@@ -6,6 +6,7 @@ import {
   AuthenticationError,
   AuthorizationError,
   EXPECTED_ERROR_NAMES,
+  INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidInputError,
   InvalidPasswordResetTokenError,
   OperationNotAllowedError,
@@ -89,7 +90,7 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: InvalidInputError, args: ["Invalid input"] },
     { ErrorClass: ValidationError, args: ["Invalid data"] },
     { ErrorClass: OperationNotAllowedError, args: ["Not allowed"] },
-    { ErrorClass: InvalidPasswordResetTokenError, args: ["Invalid or expired password reset link."] },
+    { ErrorClass: InvalidPasswordResetTokenError, args: [INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
     const error = new (ErrorClass as any)(...args);
     expect(isExpectedError(error)).toBe(true);
@@ -180,9 +181,9 @@ describe("actionClient handleServerError", () => {
 
     test("InvalidPasswordResetTokenError returns its message and is not sent to Sentry", async () => {
       const result = await executeThrowingAction(
-        new InvalidPasswordResetTokenError("Invalid or expired password reset link.")
+        new InvalidPasswordResetTokenError(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE)
       );
-      expect(result?.serverError).toBe("Invalid or expired password reset link.");
+      expect(result?.serverError).toBe(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });

@@ -56,4 +56,22 @@ describe("env", () => {
 
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
+
+  test("allows enabling DEBUG_SHOW_RESET_LINK", async () => {
+    setTestEnv({
+      DEBUG_SHOW_RESET_LINK: "1",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
+  });
+
+  test("fails to load when DEBUG_SHOW_RESET_LINK is invalid", async () => {
+    setTestEnv({
+      DEBUG_SHOW_RESET_LINK: "true",
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
 });

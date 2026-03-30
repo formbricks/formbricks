@@ -1,22 +1,46 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { InvalidPasswordResetTokenError } from "@formbricks/types/errors";
+import {
+  INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
+  InvalidPasswordResetTokenError,
+} from "@formbricks/types/errors";
+import type { TUser } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import { hashString } from "@/lib/hash-string";
 import { sendPasswordResetLinkEmail, sendPasswordResetNotifyEmail } from "@/modules/email";
 import {
-  INVALID_PASSWORD_RESET_TOKEN_MESSAGE,
+  PASSWORD_RESET_LINK_EMAIL_ERROR_CODE,
   completePasswordReset,
   getPasswordResetTokenLifetimeInMinutes,
   requestPasswordReset,
 } from "./password-reset-service";
+import type { TPasswordResetTokenRecord } from "./password-reset-token-repository";
+
+type TPasswordResetTestUser = Pick<TUser, "id" | "email" | "locale" | "emailVerified"> & {
+  password: string;
+};
+
+type TPasswordResetAuditUserFixture = Pick<
+  TPasswordResetTestUser,
+  "id" | "email" | "locale" | "emailVerified"
+>;
+
+type TPasswordResetTransactionStub = {
+  user: {
+    findUnique: (args: { where: { id: string } }) => Promise<TPasswordResetAuditUserFixture | null>;
+    update: (args: {
+      where: { id: string };
+      data: { password: string };
+    }) => Promise<TPasswordResetAuditUserFixture>;
+  };
+};
 
 const testState = vi.hoisted(() => {
-  const tokenStore = new Map<string, any>();
-  const users = new Map<string, any>();
+  const tokenStore = new Map<string, TPasswordResetTokenRecord>();
+  const users = new Map<string, TPasswordResetTestUser>();
 
-  const selectAuditUser = (user: any) => ({
+  const selectAuditUser = (user: TPasswordResetTestUser): TPasswordResetAuditUserFixture => ({
     id: user.id,
     email: user.email,
     locale: user.locale,
@@ -43,9 +67,15 @@ const testState = vi.hoisted(() => {
     return [...tokenStore.values()].find((record) => record.tokenHash === tokenHash) ?? null;
   });
 
-  const mockDeleteByUserId = vi.fn(async (userId: string) => {
-    const didDelete = tokenStore.delete(userId);
-    return didDelete ? 1 : 0;
+  const mockDeleteByTokenHash = vi.fn(async (tokenHash: string) => {
+    const existingRecord = [...tokenStore.values()].find((record) => record.tokenHash === tokenHash);
+
+    if (!existingRecord) {
+      return 0;
+    }
+
+    tokenStore.delete(existingRecord.userId);
+    return 1;
   });
 
   const mockConsumeActiveToken = vi.fn(async (tokenHash: string, now: Date) => {
@@ -61,14 +91,14 @@ const testState = vi.hoisted(() => {
     return 1;
   });
 
-  const mockTransaction = vi.fn(async (callback: (tx: any) => Promise<unknown>) => {
-    const tx = {
+  const mockTransaction = vi.fn(async <T>(callback: (tx: TPasswordResetTransactionStub) => Promise<T>) => {
+    const tx: TPasswordResetTransactionStub = {
       user: {
-        findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
+        findUnique: vi.fn(async ({ where }) => {
           const user = users.get(where.id);
           return user ? selectAuditUser(user) : null;
         }),
-        update: vi.fn(async ({ where, data }: { where: { id: string }; data: { password: string } }) => {
+        update: vi.fn(async ({ where, data }) => {
           const user = users.get(where.id);
 
           if (!user) {
@@ -94,14 +124,26 @@ const testState = vi.hoisted(() => {
     users,
     mockUpsertActiveToken,
     mockFindByTokenHash,
-    mockDeleteByUserId,
+    mockDeleteByTokenHash,
     mockConsumeActiveToken,
     mockTransaction,
   };
 });
 
+const constantsState = vi.hoisted(() => ({
+  debugShowResetLink: false,
+}));
+
 vi.mock("@/lib/hash-string", () => ({
   hashString: vi.fn((value: string) => `hash:${value}`),
+}));
+
+vi.mock("@/lib/constants", () => ({
+  PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: 30,
+  WEBAPP_URL: "http://localhost:3000",
+  get DEBUG_SHOW_RESET_LINK() {
+    return constantsState.debugShowResetLink;
+  },
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -116,6 +158,7 @@ vi.mock("@/modules/email", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    info: vi.fn(),
     warn: vi.fn(),
   },
 }));
@@ -129,8 +172,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("./password-reset-token-repository", () => ({
   upsertActiveToken: testState.mockUpsertActiveToken,
   findByTokenHash: testState.mockFindByTokenHash,
-  deleteByUserId: testState.mockDeleteByUserId,
-  deleteByTokenHash: vi.fn(),
+  deleteByTokenHash: testState.mockDeleteByTokenHash,
   consumeActiveToken: testState.mockConsumeActiveToken,
 }));
 
@@ -159,7 +201,48 @@ describe("password-reset-service", () => {
     return token;
   };
 
+  const parseTokenFromDebugLog = (): string => {
+    const verifyLink = vi
+      .mocked(logger.info)
+      .mock.calls.map(([payload]) => payload?.verifyLink)
+      .find((loggedVerifyLink): loggedVerifyLink is string => typeof loggedVerifyLink === "string");
+
+    if (!verifyLink) {
+      throw new Error("No debug verify link found");
+    }
+
+    const url = new URL(verifyLink);
+    const token = url.searchParams.get("token");
+
+    if (!token) {
+      throw new Error("No token found in debug verify link");
+    }
+
+    return token;
+  };
+
+  const getStoredToken = (userId: string): TPasswordResetTokenRecord => {
+    const storedToken = testState.tokenStore.get(userId);
+
+    if (!storedToken) {
+      throw new Error("No stored token found");
+    }
+
+    return storedToken;
+  };
+
+  const getStoredUser = (userId: string): TPasswordResetTestUser => {
+    const storedUser = testState.users.get(userId);
+
+    if (!storedUser) {
+      throw new Error("No stored user found");
+    }
+
+    return storedUser;
+  };
+
   beforeEach(() => {
+    constantsState.debugShowResetLink = false;
     testState.tokenStore.clear();
     testState.users.clear();
     testState.users.set(user.id, {
@@ -181,7 +264,7 @@ describe("password-reset-service", () => {
     await requestPasswordReset(user, "public");
 
     const rawToken = parseTokenFromResetLink();
-    const storedToken = testState.tokenStore.get(user.id);
+    const storedToken = getStoredToken(user.id);
 
     expect(getPasswordResetTokenLifetimeInMinutes()).toBe(30);
     expect(storedToken.tokenHash).toBe(`hash:${rawToken}`);
@@ -205,13 +288,13 @@ describe("password-reset-service", () => {
 
     await expect(completePasswordReset(firstToken, "Password123")).rejects.toMatchObject({
       name: "InvalidPasswordResetTokenError",
-      message: INVALID_PASSWORD_RESET_TOKEN_MESSAGE,
+      message: INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
     });
 
     const result = await completePasswordReset(secondToken, "Password123");
 
     expect(result.userId).toBe(user.id);
-    expect(testState.users.get(user.id).password).toBe("hashed:Password123");
+    expect(getStoredUser(user.id).password).toBe("hashed:Password123");
   });
 
   test("rejects expired reset tokens", async () => {
@@ -219,14 +302,14 @@ describe("password-reset-service", () => {
     const token = parseTokenFromResetLink();
 
     testState.tokenStore.set(user.id, {
-      ...testState.tokenStore.get(user.id),
+      ...getStoredToken(user.id),
       expiresAt: new Date(Date.now() - 60 * 1000),
     });
 
     await expect(completePasswordReset(token, "Password123")).rejects.toMatchObject({
       name: "InvalidPasswordResetTokenError",
       reason: "expired",
-      message: INVALID_PASSWORD_RESET_TOKEN_MESSAGE,
+      message: INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
     });
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -244,7 +327,7 @@ describe("password-reset-service", () => {
     );
     await expect(completePasswordReset("legacy.jwt.token", "Password123")).rejects.toMatchObject({
       reason: "legacy_jwt",
-      message: INVALID_PASSWORD_RESET_TOKEN_MESSAGE,
+      message: INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
     });
   });
 
@@ -284,7 +367,10 @@ describe("password-reset-service", () => {
 
     await expect(requestPasswordReset(user, "public")).resolves.toBeUndefined();
 
+    const revokedToken = parseTokenFromResetLink();
+
     expect(testState.tokenStore.size).toBe(0);
+    expect(testState.mockDeleteByTokenHash).toHaveBeenCalledWith(`hash:${revokedToken}`);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         source: "public",
@@ -295,13 +381,27 @@ describe("password-reset-service", () => {
     );
   });
 
+  test("logs the reset link instead of sending an email when DEBUG_SHOW_RESET_LINK is enabled", async () => {
+    constantsState.debugShowResetLink = true;
+
+    await requestPasswordReset(user, "public");
+
+    expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        verifyLink: expect.stringMatching(/^http:\/\/localhost:3000\/auth\/forgot-password\/reset\?token=/),
+      }),
+      "DEBUG_SHOW_RESET_LINK is enabled; password reset email delivery skipped"
+    );
+  });
+
   test("logs and suppresses token issuance failures for public requests", async () => {
     testState.mockUpsertActiveToken.mockRejectedValueOnce(new Error("Database unavailable"));
 
     await expect(requestPasswordReset(user, "public")).resolves.toBeUndefined();
 
     expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
-    expect(testState.mockDeleteByUserId).not.toHaveBeenCalled();
+    expect(testState.mockDeleteByTokenHash).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         source: "public",
@@ -315,7 +415,7 @@ describe("password-reset-service", () => {
   test("surfaces profile reset request failures after revoking the token", async () => {
     vi.mocked(sendPasswordResetLinkEmail).mockResolvedValueOnce(false);
 
-    await expect(requestPasswordReset(user, "profile")).rejects.toThrow("Password reset email was not sent");
+    await expect(requestPasswordReset(user, "profile")).rejects.toThrow(PASSWORD_RESET_LINK_EMAIL_ERROR_CODE);
     expect(testState.tokenStore.size).toBe(0);
   });
 
@@ -327,7 +427,7 @@ describe("password-reset-service", () => {
     const result = await completePasswordReset(token, "Password123");
 
     expect(result.userId).toBe(user.id);
-    expect(testState.users.get(user.id).password).toBe("hashed:Password123");
+    expect(getStoredUser(user.id).password).toBe("hashed:Password123");
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         stage: "notify_email",
@@ -337,13 +437,39 @@ describe("password-reset-service", () => {
     );
   });
 
-  test("hashes the new password before opening the transaction", async () => {
+  test("skips notification email delivery when DEBUG_SHOW_RESET_LINK is enabled", async () => {
+    constantsState.debugShowResetLink = true;
+
+    await requestPasswordReset(user, "public");
+    const token = parseTokenFromDebugLog();
+
+    await completePasswordReset(token, "Password123");
+
+    expect(sendPasswordResetNotifyEmail).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: user.id,
+      }),
+      "DEBUG_SHOW_RESET_LINK is enabled; password reset notification delivery skipped"
+    );
+  });
+
+  test("validates the reset token before hashing the new password", async () => {
     await requestPasswordReset(user, "public");
     const token = parseTokenFromResetLink();
 
     await completePasswordReset(token, "Password123");
 
-    expect(hashPassword).toHaveBeenCalledBefore(prisma.$transaction as any);
+    expect(testState.mockFindByTokenHash).toHaveBeenCalledBefore(vi.mocked(hashPassword));
+    expect(vi.mocked(hashPassword)).toHaveBeenCalledBefore(vi.mocked(prisma.$transaction));
     expect(hashString).toHaveBeenCalledWith(token);
+  });
+
+  test("rejects invalid reset tokens before hashing the new password", async () => {
+    await expect(completePasswordReset("unknown-token", "Password123")).rejects.toBeInstanceOf(
+      InvalidPasswordResetTokenError
+    );
+
+    expect(hashPassword).not.toHaveBeenCalled();
   });
 });

@@ -16,8 +16,8 @@ export const resetPasswordAction = actionClient.inputSchema(ZResetPasswordAction
     const result = await completePasswordReset(parsedInput.token, parsedInput.password);
 
     ctx.auditLoggingCtx.userId = result.userId;
-    ctx.auditLoggingCtx.oldObject = result.oldUser;
-    ctx.auditLoggingCtx.newObject = result.updatedUser;
+    ctx.auditLoggingCtx.oldObject = { ...result.oldUser, passwordResetMarker: false };
+    ctx.auditLoggingCtx.newObject = { ...result.updatedUser, passwordResetMarker: true };
 
     return { success: true };
   })
