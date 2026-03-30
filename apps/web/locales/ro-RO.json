@@ -2417,8 +2417,8 @@
           "create_new_team": "Creează echipă nouă",
           "team_description": "Cine poate accesa acest spațiu de lucru?",
           "workspace_creation_failed": "Crearea spațiului de lucru a eșuat",
-          "workspace_name": "Numele produsului",
-          "workspace_name_description": "Cum se numește produsul tău?",
+          "workspace_name": "Numele workspace-ului",
+          "workspace_name_description": "Cum se numește workspace-ul tău?",
           "workspace_settings_subtitle": "Când oamenii recunosc brandul tău, sunt mult mai predispuși să înceapă și să finalizeze răspunsurile.",
           "workspace_settings_title": "Anunță respondenții că ești tu"
         }

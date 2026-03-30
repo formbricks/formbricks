@@ -2279,8 +2279,8 @@ checksums:
     organizations/workspaces/new/settings/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
     organizations/workspaces/new/settings/team_description: 534ba98e256646074a03949daf85665d
     organizations/workspaces/new/settings/workspace_creation_failed: 5c6a0e087d481255a1b201c0287d0221
-    organizations/workspaces/new/settings/workspace_name: 7002a32bc4ce3343ede2076b30649ff7
-    organizations/workspaces/new/settings/workspace_name_description: 0885c4cd8cc8836e74b6ccdb5d25b43d
+    organizations/workspaces/new/settings/workspace_name: 855614bbf862fd6a9f6a3e76943f92d4
+    organizations/workspaces/new/settings/workspace_name_description: 3dc82d99f2ac9789c5c92b64a4addc0a
     organizations/workspaces/new/settings/workspace_settings_subtitle: 83a72b3e9c08f2936524fcd11b29421b
     organizations/workspaces/new/settings/workspace_settings_title: a4ec3549507071e1f7d3c834b019fcce
     s/check_inbox_or_spam: c48ac1f7b76052881bb3b6d10615152d

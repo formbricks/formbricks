@@ -2417,8 +2417,8 @@
           "create_new_team": "建立新團隊",
           "team_description": "誰可以存取這個工作區？",
           "workspace_creation_failed": "工作區建立失敗",
-          "workspace_name": "產品名稱",
-          "workspace_name_description": "您的產品名稱是什麼？",
+          "workspace_name": "工作區名稱",
+          "workspace_name_description": "你的工作區叫什麼名字?",
           "workspace_settings_subtitle": "當人們認出您的品牌時，他們更有可能開始並完成回覆。",
           "workspace_settings_title": "讓填答者知道這是您的品牌"
         }

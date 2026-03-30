@@ -2417,8 +2417,8 @@
           "create_new_team": "Skapa nytt team",
           "team_description": "Vem kan komma åt denna arbetsyta?",
           "workspace_creation_failed": "Det gick inte att skapa arbetsytan",
-          "workspace_name": "Produktnamn",
-          "workspace_name_description": "Vad heter din produkt?",
+          "workspace_name": "Namn på arbetsyta",
+          "workspace_name_description": "Vad heter din arbetsyta?",
           "workspace_settings_subtitle": "När folk känner igen ditt varumärke är det mycket mer sannolikt att de påbörjar och slutför sina svar.",
           "workspace_settings_title": "Låt respondenterna veta att det är du"
         }

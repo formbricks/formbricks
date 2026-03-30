@@ -2417,8 +2417,8 @@
           "create_new_team": "创建新团队",
           "team_description": "谁可以访问此工作区？",
           "workspace_creation_failed": "工作区创建失败",
-          "workspace_name": "产品名称",
-          "workspace_name_description": "你的产品叫什么名字？",
+          "workspace_name": "工作区名称",
+          "workspace_name_description": "您的工作区叫什么名字?",
           "workspace_settings_subtitle": "当人们认出你的品牌时，更有可能开始并完成问卷。",
           "workspace_settings_title": "让答卷者知道是你"
         }

@@ -2417,8 +2417,8 @@
           "create_new_team": "新しいチームを作成",
           "team_description": "このワークスペースにアクセスできるのは誰ですか？",
           "workspace_creation_failed": "ワークスペースの作成に失敗しました",
-          "workspace_name": "プロダクト名",
-          "workspace_name_description": "プロダクトの名前は何ですか？",
+          "workspace_name": "ワークスペース名",
+          "workspace_name_description": "ワークスペースの名前を入力してください",
           "workspace_settings_subtitle": "回答者があなたのブランドを認識すると、回答を開始して完了する可能性が大幅に高まります。",
           "workspace_settings_title": "回答者にあなたであることを知らせましょう"
         }

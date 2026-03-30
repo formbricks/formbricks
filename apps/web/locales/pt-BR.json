@@ -2417,8 +2417,8 @@
           "create_new_team": "Criar nova equipe",
           "team_description": "Quem pode acessar este espaço de trabalho?",
           "workspace_creation_failed": "Falha ao criar espaço de trabalho",
-          "workspace_name": "Nome do produto",
-          "workspace_name_description": "Como seu produto se chama?",
+          "workspace_name": "Nome do workspace",
+          "workspace_name_description": "Como seu workspace se chama?",
           "workspace_settings_subtitle": "Quando as pessoas reconhecem sua marca, elas têm muito mais probabilidade de iniciar e concluir respostas.",
           "workspace_settings_title": "Deixe os respondentes saberem que é você"
         }

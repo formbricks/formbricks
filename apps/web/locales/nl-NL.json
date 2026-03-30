@@ -2417,8 +2417,8 @@
           "create_new_team": "Nieuw team aanmaken",
           "team_description": "Wie heeft allemaal toegang tot deze workspace?",
           "workspace_creation_failed": "Aanmaken workspace mislukt",
-          "workspace_name": "Productnaam",
-          "workspace_name_description": "Hoe heet je product?",
+          "workspace_name": "Werkruimtenaam",
+          "workspace_name_description": "Hoe heet je werkruimte?",
           "workspace_settings_subtitle": "Wanneer mensen je merk herkennen, zijn ze veel eerder geneigd om te beginnen en antwoorden te voltooien.",
           "workspace_settings_title": "Laat respondenten weten dat jij het bent"
         }

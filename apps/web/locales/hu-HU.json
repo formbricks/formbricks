@@ -2417,8 +2417,8 @@
           "create_new_team": "Új csapat létrehozása",
           "team_description": "Kik férhetnek hozzá ehhez a munkaterülethez?",
           "workspace_creation_failed": "A munkaterület létrehozása nem sikerült",
-          "workspace_name": "Termék neve",
-          "workspace_name_description": "Hogy hívják a termékét?",
+          "workspace_name": "Munkaterület neve",
+          "workspace_name_description": "Hogy hívják a munkaterületet?",
           "workspace_settings_subtitle": "Ha a személyek felismerik a márkáját, akkor sokkal inkább hajlandóak lesznek elkezdeni és befejezni a válaszokat.",
           "workspace_settings_title": "Tudassa a válaszadókkal, hogy Ön az"
         }
