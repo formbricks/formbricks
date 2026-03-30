@@ -383,7 +383,7 @@ model Survey {
   segmentId           String?
   segment             Segment?                @relation(fields: [segmentId], references: [id])
 
-  /// [SurveyProjectOverwrites]
+  /// [SurveyWorkspaceOverwrites]
   workspaceOverwrites Json?
 
   /// [SurveyStyling]
@@ -617,11 +617,11 @@ enum SurveyOverlay {
 /// Each organization can have multiple workspaces to separate different applications or products.
 ///
 /// @property id - Unique identifier for the project
-/// @property name - Display name of the project
+/// @property name - Display name of the workspace
 /// @property organization - Reference to parent organization
 /// @property environments - Development and production environments
-/// @property styling - Project-wide styling configuration
-/// @property config - Project-specific configuration
+/// @property styling - Workspace-wide styling configuration
+/// @property config - Workspace-specific configuration
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
 model Workspace {
@@ -634,7 +634,7 @@ model Workspace {
   environments                      Environment[]
   /// [Styling]
   styling                           Json                               @default("{\"allowStyleOverwrite\":true}")
-  /// [ProjectConfig]
+  /// [WorkspaceConfig]
   config                            Json                               @default("{}")
   recontactDays                     Int                                @default(7)
   linkSurveyBranding                Boolean                            @default(true) // Determines if the survey branding should be displayed in link surveys
