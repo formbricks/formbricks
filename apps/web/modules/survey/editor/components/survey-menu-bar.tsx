@@ -289,10 +289,19 @@ export const SurveyMenuBar = ({
         } as unknown as TSurveyDraft);
 
         if (updatedSurveyResponse?.data) {
+          const savedData = updatedSurveyResponse.data;
+
+          // If the segment changed on the server (e.g., private segment was deleted when
+          // switching from app to link type), update localSurvey to prevent stale segment
+          // references when publishing
+          if (!isEqual(localSurveyRef.current.segment, savedData.segment)) {
+            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
+          }
+
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.
           // The comparison uses refs, so this prevents unnecessary re-saves.
-          surveyRef.current = { ...updatedSurveyResponse.data };
+          surveyRef.current = { ...savedData };
           isSuccessfullySavedRef.current = true;
           setLastAutoSaved(new Date());
         }
