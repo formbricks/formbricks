@@ -5,7 +5,7 @@ export const ZFeedbackRecordDirectory = z.object({
   id: ZId,
   name: z.string(),
   isArchived: z.boolean(),
-  projectCount: z.number(),
+  workspaceCount: z.number(),
 });
 
 export type TFeedbackRecordDirectory = z.infer<typeof ZFeedbackRecordDirectory>;
@@ -15,10 +15,10 @@ export const ZFeedbackRecordDirectoryDetails = z.object({
   name: z.string(),
   isArchived: z.boolean(),
   organizationId: ZId,
-  projects: z.array(
+  workspaces: z.array(
     z.object({
-      projectId: ZId,
-      projectName: z.string(),
+      workspaceId: ZId,
+      workspaceName: z.string(),
     })
   ),
 });
@@ -33,7 +33,7 @@ export type TFeedbackRecordDirectoryCreateInput = z.infer<typeof ZFeedbackRecord
 
 export const ZFeedbackRecordDirectoryUpdateInput = z.object({
   name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED").optional(),
-  projectIds: z.array(ZId).optional(),
+  workspaceIds: z.array(ZId).optional(),
   isArchived: z.boolean().optional(),
 });
 
@@ -53,7 +53,7 @@ export const getTranslatedFeedbackRecordDirectoryError = (
     case "DIRECTORY_NAME_DUPLICATE":
       return t("environments.settings.feedback_record_directories.error_directory_name_duplicate");
     case "DIRECTORY_PROJECTS_INVALID_ORG":
-      return t("environments.settings.feedback_record_directories.error_directory_projects_invalid_org");
+      return t("environments.settings.feedback_record_directories.error_directory_workspaces_invalid_org");
     default:
       return errorCode;
   }

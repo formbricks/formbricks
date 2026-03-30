@@ -3,29 +3,29 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZProjectUpdateInput } from "@formbricks/types/project";
+import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
-import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   getAccessControlPermission,
-  getOrganizationProjectsLimit,
+  getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
-import { createProject } from "@/modules/projects/settings/lib/project";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { getOrganizationsByUserId } from "./lib/organization";
-import { getProjectsByUserId } from "./lib/project";
+import { getWorkspacesByUserId } from "./lib/workspace";
 
-const ZCreateProjectAction = z.object({
+const ZCreateWorkspaceAction = z.object({
   organizationId: ZId,
-  data: ZProjectUpdateInput,
+  data: ZWorkspaceUpdateInput,
 });
 
-export const createProjectAction = authenticatedActionClient.inputSchema(ZCreateProjectAction).action(
-  withAuditLogging("created", "project", async ({ ctx, parsedInput }) => {
+export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCreateWorkspaceAction).action(
+  withAuditLogging("created", "workspace", async ({ ctx, parsedInput }) => {
     const { user } = ctx;
 
     const organizationId = parsedInput.organizationId;
@@ -36,7 +36,7 @@ export const createProjectAction = authenticatedActionClient.inputSchema(ZCreate
       access: [
         {
           data: parsedInput.data,
-          schema: ZProjectUpdateInput,
+          schema: ZWorkspaceUpdateInput,
           type: "organization",
           roles: ["owner", "manager"],
         },
@@ -49,10 +49,10 @@ export const createProjectAction = authenticatedActionClient.inputSchema(ZCreate
       throw new Error("Organization not found");
     }
 
-    const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.id);
-    const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
+    const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
+    const organizationWorkspacesCount = await getOrganizationWorkspacesCount(organization.id);
 
-    if (organizationProjectsCount >= organizationProjectsLimit) {
+    if (organizationWorkspacesCount >= organizationWorkspacesLimit) {
       throw new OperationNotAllowedError("Organization workspace limit reached");
     }
 
@@ -64,7 +64,7 @@ export const createProjectAction = authenticatedActionClient.inputSchema(ZCreate
       }
     }
 
-    const project = await createProject(parsedInput.organizationId, parsedInput.data);
+    const workspace = await createWorkspace(parsedInput.organizationId, parsedInput.data);
     const updatedNotificationSettings = {
       ...user.notificationSettings,
       alert: {
@@ -77,9 +77,9 @@ export const createProjectAction = authenticatedActionClient.inputSchema(ZCreate
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.projectId = project.id;
-    ctx.auditLoggingCtx.newObject = project;
-    return project;
+    ctx.auditLoggingCtx.workspaceId = workspace.id;
+    ctx.auditLoggingCtx.newObject = workspace;
+    return workspace;
   })
 );
 
@@ -108,16 +108,16 @@ export const getOrganizationsForSwitcherAction = authenticatedActionClient
     return await getOrganizationsByUserId(ctx.user.id);
   });
 
-const ZGetProjectsForSwitcherAction = z.object({
+const ZGetWorkspacesForSwitcherAction = z.object({
   organizationId: ZId, // Changed from environmentId to avoid extra query
 });
 
 /**
  * Fetches projects list for switcher dropdown.
- * Called on-demand when user opens the project switcher.
+ * Called on-demand when user opens the workspace switcher.
  */
-export const getProjectsForSwitcherAction = authenticatedActionClient
-  .inputSchema(ZGetProjectsForSwitcherAction)
+export const getWorkspacesForSwitcherAction = authenticatedActionClient
+  .inputSchema(ZGetWorkspacesForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -130,11 +130,11 @@ export const getProjectsForSwitcherAction = authenticatedActionClient
       ],
     });
 
-    // Need membership for getProjectsByUserId (1 DB query)
+    // Need membership for getWorkspacesByUserId (1 DB query)
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
     if (!membership) {
       throw new AuthorizationError("Membership not found");
     }
 
-    return await getProjectsByUserId(ctx.user.id, membership);
+    return await getWorkspacesByUserId(ctx.user.id, membership);
   });

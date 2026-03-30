@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsEnvironmentState, TJsEnvironmentStateProject } from "@formbricks/types/js";
+import { TJsEnvironmentState, TJsEnvironmentStateWorkspace } from "@formbricks/types/js";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
@@ -49,8 +49,8 @@ vi.mock("@formbricks/cache", () => ({
 
 const environmentId = "test-environment-id";
 
-const mockProject: TJsEnvironmentStateProject = {
-  id: "test-project-id",
+const mockWorkspace: TJsEnvironmentStateWorkspace = {
+  id: "test-workspace-id",
   recontactDays: 30,
   inAppSurveyBranding: true,
   placement: "bottomRight",
@@ -69,7 +69,7 @@ const mockOrganization: TOrganization = {
   billing: {
     stripeCustomerId: null,
     limits: {
-      projects: 1,
+      workspaces: 1,
       monthly: {
         responses: 100,
       },
@@ -94,7 +94,7 @@ const mockSurveys: TSurvey[] = [
     isBackButtonHidden: false,
     isSingleResponsePerEmailEnabled: false,
     isVerifyEmailEnabled: false,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     showLanguageSwitch: false,
     questions: [],
     displayOption: "displayOnce",
@@ -137,7 +137,7 @@ const mockEnvironmentStateData: EnvironmentStateData = {
     id: environmentId,
     type: "production",
     appSetupCompleted: true,
-    project: mockProject,
+    workspace: mockWorkspace,
   },
   organization: {
     id: mockOrganization.id,
@@ -169,7 +169,7 @@ describe("getEnvironmentState", () => {
       recaptchaSiteKey: "mock_recaptcha_site_key",
       surveys: mockSurveys,
       actionClasses: mockActionClasses,
-      project: mockProject,
+      workspace: mockWorkspace,
     };
 
     expect(result.data).toEqual(expectedData);
@@ -189,8 +189,8 @@ describe("getEnvironmentState", () => {
     await expect(getEnvironmentState(environmentId)).rejects.toThrow(ResourceNotFoundError);
   });
 
-  test("should throw ResourceNotFoundError if project not found", async () => {
-    vi.mocked(getEnvironmentStateData).mockRejectedValue(new ResourceNotFoundError("project", null));
+  test("should throw ResourceNotFoundError if workspace not found", async () => {
+    vi.mocked(getEnvironmentStateData).mockRejectedValue(new ResourceNotFoundError("workspace", null));
     await expect(getEnvironmentState(environmentId)).rejects.toThrow(ResourceNotFoundError);
   });
 

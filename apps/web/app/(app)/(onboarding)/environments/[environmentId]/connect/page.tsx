@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { getEnvironment } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
@@ -23,12 +23,12 @@ const Page = async (props: ConnectPageProps) => {
     throw new Error(t("common.environment_not_found"));
   }
 
-  const project = await getProjectByEnvironmentId(environment.id);
-  if (!project) {
+  const workspace = await getWorkspaceByEnvironmentId(environment.id);
+  if (!workspace) {
     throw new Error(t("common.workspace_not_found"));
   }
 
-  const channel = project.config.channel || null;
+  const channel = workspace.config.channel || null;
 
   const publicDomain = getPublicDomain();
 

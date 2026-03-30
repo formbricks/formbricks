@@ -18,7 +18,7 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-    project: {
+    workspace: {
       count: vi.fn(),
     },
   },
@@ -26,14 +26,14 @@ vi.mock("@formbricks/database", () => ({
 
 const mockDirectoryId = "clj28r6va000409j3ep7h8xzk";
 const mockOrganizationId = "clj28r6va000409j3ep7h8xyz";
-const mockProjectId1 = "clj28r6va000409j3ep7h8ab1";
-const mockProjectId2 = "clj28r6va000409j3ep7h8ab2";
+const mockWorkspaceId1 = "clj28r6va000409j3ep7h8ab1";
+const mockWorkspaceId2 = "clj28r6va000409j3ep7h8ab2";
 
 const mockDirectoryDbRow = {
   id: mockDirectoryId,
   name: "Test Directory",
   isArchived: false,
-  _count: { projects: 2 },
+  _count: { workspaces: 2 },
 };
 
 const mockDirectoryDetailsDbRow = {
@@ -41,9 +41,9 @@ const mockDirectoryDetailsDbRow = {
   name: "Test Directory",
   isArchived: false,
   organizationId: mockOrganizationId,
-  projects: [
-    { projectId: mockProjectId1, project: { name: "Project A" } },
-    { projectId: mockProjectId2, project: { name: "Project B" } },
+  workspaces: [
+    { workspaceId: mockWorkspaceId1, workspace: { name: "Workspace A" } },
+    { workspaceId: mockWorkspaceId2, workspace: { name: "Workspace B" } },
   ],
 };
 
@@ -53,7 +53,7 @@ describe("FeedbackRecordDirectory Service", () => {
   });
 
   describe("getFeedbackRecordDirectories", () => {
-    test("returns directories with project counts", async () => {
+    test("returns directories with workspace counts", async () => {
       vi.mocked(prisma.feedbackRecordDirectory.findMany).mockResolvedValueOnce([mockDirectoryDbRow] as any);
 
       const result = await getFeedbackRecordDirectories(mockOrganizationId);
@@ -63,7 +63,7 @@ describe("FeedbackRecordDirectory Service", () => {
           id: mockDirectoryId,
           name: "Test Directory",
           isArchived: false,
-          projectCount: 2,
+          workspaceCount: 2,
         },
       ]);
       expect(prisma.feedbackRecordDirectory.findMany).toHaveBeenCalledWith({
@@ -72,7 +72,7 @@ describe("FeedbackRecordDirectory Service", () => {
           id: true,
           name: true,
           isArchived: true,
-          _count: { select: { projects: true } },
+          _count: { select: { workspaces: true } },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -105,7 +105,7 @@ describe("FeedbackRecordDirectory Service", () => {
   });
 
   describe("getFeedbackRecordDirectoryDetails", () => {
-    test("returns directory details with project assignments", async () => {
+    test("returns directory details with workspace assignments", async () => {
       vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
         mockDirectoryDetailsDbRow as any
       );
@@ -117,9 +117,9 @@ describe("FeedbackRecordDirectory Service", () => {
         name: "Test Directory",
         isArchived: false,
         organizationId: mockOrganizationId,
-        projects: [
-          { projectId: mockProjectId1, projectName: "Project A" },
-          { projectId: mockProjectId2, projectName: "Project B" },
+        workspaces: [
+          { workspaceId: mockWorkspaceId1, workspaceName: "Workspace A" },
+          { workspaceId: mockWorkspaceId2, workspaceName: "Workspace B" },
         ],
       });
     });
@@ -217,24 +217,24 @@ describe("FeedbackRecordDirectory Service", () => {
       });
     });
 
-    test("updates project assignments with diff", async () => {
+    test("updates workspace assignments with diff", async () => {
       // getFeedbackRecordDirectoryDetails call
       vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
         mockDirectoryDetailsDbRow as any
       );
 
-      vi.mocked(prisma.project.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
 
-      // Keep project1, remove project2 (by not including it)
+      // Keep workspace1, remove workspace2 (by not including it)
       const result = await updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
-        projectIds: [mockProjectId1],
+        workspaceIds: [mockWorkspaceId1],
       });
 
       expect(result).toBe(true);
-      expect(prisma.project.count).toHaveBeenCalledWith({
+      expect(prisma.workspace.count).toHaveBeenCalledWith({
         where: {
-          id: { in: [mockProjectId1] },
+          id: { in: [mockWorkspaceId1] },
           organizationId: mockOrganizationId,
         },
       });
@@ -252,18 +252,18 @@ describe("FeedbackRecordDirectory Service", () => {
       ).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("throws InvalidInputError when projects belong to different org", async () => {
+    test("throws InvalidInputError when workspaces belong to different org", async () => {
       // getFeedbackRecordDirectoryDetails call
       vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
         mockDirectoryDetailsDbRow as any
       );
 
-      // count returns 0 — none of the projects belong to this org
-      vi.mocked(prisma.project.count).mockResolvedValueOnce(0);
+      // count returns 0 — none of the workspaces belong to this org
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(0);
 
       await expect(
         updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
-          projectIds: [mockProjectId1],
+          workspaceIds: [mockWorkspaceId1],
         })
       ).rejects.toThrow(new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG"));
     });

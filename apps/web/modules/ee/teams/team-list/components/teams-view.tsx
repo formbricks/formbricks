@@ -3,8 +3,8 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
-import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
+import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 import { getMembersByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
@@ -25,10 +25,10 @@ export const TeamsView = async ({
 }: TeamsViewProps) => {
   const t = await getTranslate();
 
-  const [teams, orgMembers, orgProjects] = await Promise.all([
+  const [teams, orgMembers, orgWorkspaces] = await Promise.all([
     getTeams(currentUserId, organizationId),
     getMembersByOrganizationId(organizationId),
-    getProjectsByOrganizationId(organizationId),
+    getWorkspacesByOrganizationId(organizationId),
   ]);
 
   if (!teams) {
@@ -58,7 +58,7 @@ export const TeamsView = async ({
           membershipRole={membershipRole}
           organizationId={organizationId}
           orgMembers={orgMembers}
-          orgProjects={orgProjects}
+          orgWorkspaces={orgWorkspaces}
           currentUserId={currentUserId}
         />
       ) : (

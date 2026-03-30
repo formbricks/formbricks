@@ -8,7 +8,7 @@ export const getOrganizationIdFromEnvironmentId = reactCache(
   async (environmentId: string): Promise<string> => {
     const organization = await prisma.organization.findFirst({
       where: {
-        projects: {
+        workspaces: {
           some: {
             environments: {
               some: { id: environmentId },

@@ -6,17 +6,17 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
+import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
-export const getProjectPermissionByUserId = reactCache(
-  async (userId: string, projectId: string): Promise<TTeamPermission | null> => {
-    validateInputs([userId, ZString], [projectId, ZString]);
+export const getWorkspacePermissionByUserId = reactCache(
+  async (userId: string, workspaceId: string): Promise<TTeamPermission | null> => {
+    validateInputs([userId, ZString], [workspaceId, ZString]);
 
     try {
-      const projectMemberships = await prisma.projectTeam.findMany({
+      const workspaceMemberships = await prisma.workspaceTeam.findMany({
         where: {
-          projectId,
+          workspaceId,
           team: {
             teamUsers: {
               some: {
@@ -27,10 +27,10 @@ export const getProjectPermissionByUserId = reactCache(
         },
       });
 
-      if (!projectMemberships) return null;
+      if (!workspaceMemberships) return null;
       let highestPermission: TTeamPermission | null = null;
 
-      for (const membership of projectMemberships) {
+      for (const membership of workspaceMemberships) {
         if (membership.permission === "manage") {
           highestPermission = "manage";
         } else if (membership.permission === "readWrite" && highestPermission !== "manage") {
@@ -47,7 +47,7 @@ export const getProjectPermissionByUserId = reactCache(
       return highestPermission;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error fetching project permission by user id");
+        logger.error(error, "Error fetching workspace permission by user id");
         throw new DatabaseError(error.message);
       }
 

@@ -44,8 +44,8 @@ export type UsersFixture = {
     name?: string;
     email?: string;
     organizationName?: string;
-    projectName?: string;
-    withoutProject?: boolean;
+    workspaceName?: string;
+    withoutWorkspace?: boolean;
   }) => Promise<UserFixture>;
   get: () => UserFixture[];
 };
@@ -60,8 +60,8 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       name?: string;
       email?: string;
       organizationName?: string;
-      projectName?: string;
-      withoutProject?: boolean;
+      workspaceName?: string;
+      withoutWorkspace?: boolean;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
@@ -81,15 +81,15 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                   name: params?.organizationName ?? "My Organization",
                   billing: {
                     create: {
-                      limits: { projects: 3, monthly: { responses: 1500 } },
+                      limits: { workspaces: 3, monthly: { responses: 1500 } },
                       stripeCustomerId: null,
                       usageCycleAnchor: new Date(),
                     },
                   },
-                  ...(!params?.withoutProject && {
-                    projects: {
+                  ...(!params?.withoutWorkspace && {
+                    workspaces: {
                       create: {
-                        name: params?.projectName ?? "My Workspace",
+                        name: params?.workspaceName ?? "My Workspace",
                         environments: {
                           create: [
                             {

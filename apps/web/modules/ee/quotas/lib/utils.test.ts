@@ -105,7 +105,7 @@ describe("Quota Utils", () => {
     delay: 0,
     displayPercentage: null,
     isBackButtonHidden: false,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     styling: null,
     showLanguageSwitch: null,
     languages: [],

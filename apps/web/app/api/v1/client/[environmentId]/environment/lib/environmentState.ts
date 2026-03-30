@@ -13,7 +13,7 @@ import { getEnvironmentStateData } from "./data";
  *
  * @param environmentId - The environment ID to fetch state for
  * @returns The environment state
- * @throws ResourceNotFoundError if environment, organization, or project not found
+ * @throws ResourceNotFoundError if environment, organization, or workspace not found
  */
 export const getEnvironmentState = async (
   environmentId: string
@@ -36,7 +36,7 @@ export const getEnvironmentState = async (
       const data: TJsEnvironmentState["data"] = {
         surveys,
         actionClasses,
-        project: environment.project,
+        workspace: environment.workspace,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       };
 

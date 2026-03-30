@@ -1,7 +1,7 @@
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getStyling } from "@/lib/utils/styling";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 
@@ -11,12 +11,12 @@ export const getEmailTemplateHtml = async (surveyId: string, locale: string) => 
   if (!survey) {
     throw new Error("Survey not found");
   }
-  const project = await getProjectByEnvironmentId(survey.environmentId);
-  if (!project) {
+  const workspace = await getWorkspaceByEnvironmentId(survey.environmentId);
+  if (!workspace) {
     throw new Error("Workspace not found");
   }
 
-  const styling = getStyling(project, survey);
+  const styling = getStyling(workspace, survey);
   const surveyUrl = getPublicDomain() + "/s/" + survey.id;
   const html = await getPreviewEmailTemplateHtml(survey, surveyUrl, styling, locale, t);
   const doctype =

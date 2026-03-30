@@ -18,7 +18,7 @@ import {
  * Retrieves all feedback record directories for a given organization.
  *
  * @param organizationId - The ID of the organization to fetch directories for.
- * @returns An array of feedback record directories with their id, name, archive status, and assigned project count.
+ * @returns An array of feedback record directories with their id, name, archive status, and assigned workspace count.
  * @throws {ValidationError} If the organizationId fails input validation.
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
@@ -37,7 +37,7 @@ export const getFeedbackRecordDirectories = reactCache(
           isArchived: true,
           _count: {
             select: {
-              projects: true,
+              workspaces: true,
             },
           },
         },
@@ -50,7 +50,7 @@ export const getFeedbackRecordDirectories = reactCache(
         id: dir.id,
         name: dir.name,
         isArchived: dir.isArchived,
-        projectCount: dir._count.projects,
+        workspaceCount: dir._count.workspaces,
       }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -62,10 +62,10 @@ export const getFeedbackRecordDirectories = reactCache(
 );
 
 /**
- * Retrieves the full details of a feedback record directory, including its assigned projects.
+ * Retrieves the full details of a feedback record directory, including its assigned workspaces.
  *
  * @param directoryId - The ID of the directory to fetch.
- * @returns The directory details with project assignments, or `null` if not found.
+ * @returns The directory details with workspace assignments, or `null` if not found.
  * @throws {ValidationError} If the directoryId fails input validation.
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
@@ -83,10 +83,10 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
           name: true,
           isArchived: true,
           organizationId: true,
-          projects: {
+          workspaces: {
             select: {
-              projectId: true,
-              project: {
+              workspaceId: true,
+              workspace: {
                 select: {
                   name: true,
                 },
@@ -105,9 +105,9 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
         name: directory.name,
         isArchived: directory.isArchived,
         organizationId: directory.organizationId,
-        projects: directory.projects.map((dp) => ({
-          projectId: dp.projectId,
-          projectName: dp.project.name,
+        workspaces: directory.workspaces.map((dp) => ({
+          workspaceId: dp.workspaceId,
+          workspaceName: dp.workspace.name,
         })),
       };
     } catch (error) {
@@ -160,52 +160,52 @@ export const createFeedbackRecordDirectory = async (
 };
 
 /**
- * Builds the Prisma nested write payload for updating project assignments on a directory.
- * Validates that all specified projects belong to the directory's organization,
+ * Builds the Prisma nested write payload for updating workspace assignments on a directory.
+ * Validates that all specified workspaces belong to the directory's organization,
  * diffs against current assignments, and returns deleteMany + upsert operations.
  *
  * @param prismaClient - The Prisma client instance used for database queries.
  * @param directoryId - The ID of the directory being updated.
- * @param projectIds - The desired project IDs to assign.
+ * @param workspaceIds - The desired workspace IDs to assign.
  * @param organizationId - The organization the directory belongs to.
- * @param currentProjectIds - The currently assigned project IDs (avoids a redundant fetch).
- * @returns The Prisma nested write payload for the `projects` relation.
- * @throws {InvalidInputError} If any project does not belong to the organization.
+ * @param currentWorkspaceIds - The currently assigned workspace IDs (avoids a redundant fetch).
+ * @returns The Prisma nested write payload for the `workspaces` relation.
+ * @throws {InvalidInputError} If any workspace does not belong to the organization.
  */
-const buildProjectAssignmentPayload = async (
+const buildWorkspaceAssignmentPayload = async (
   prismaClient: PrismaClient,
   directoryId: string,
-  projectIds: string[],
+  workspaceIds: string[],
   organizationId: string,
-  currentProjectIds: string[]
-): Promise<Prisma.FeedbackRecordDirectoryProjectUpdateManyWithoutFeedbackRecordDirectoryNestedInput> => {
-  if (projectIds.length > 0) {
-    const orgProjectsCount = await prismaClient.project.count({
+  currentWorkspaceIds: string[]
+): Promise<Prisma.FeedbackRecordDirectoryWorkspaceUpdateManyWithoutFeedbackRecordDirectoryNestedInput> => {
+  if (workspaceIds.length > 0) {
+    const orgWorkspacesCount = await prismaClient.workspace.count({
       where: {
-        id: { in: projectIds },
+        id: { in: workspaceIds },
         organizationId,
       },
     });
-    if (orgProjectsCount !== projectIds.length) {
+    if (orgWorkspacesCount !== workspaceIds.length) {
       throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
     }
   }
 
-  const deletedProjectIds = currentProjectIds.filter((id) => !projectIds.includes(id));
+  const deletedWorkspaceIds = currentWorkspaceIds.filter((id) => !workspaceIds.includes(id));
 
   return {
     deleteMany: {
-      projectId: { in: deletedProjectIds },
+      workspaceId: { in: deletedWorkspaceIds },
     },
-    upsert: projectIds.map((projectId) => ({
+    upsert: workspaceIds.map((workspaceId) => ({
       where: {
-        feedbackRecordDirectoryId_projectId: {
+        feedbackRecordDirectoryId_workspaceId: {
           feedbackRecordDirectoryId: directoryId,
-          projectId,
+          workspaceId,
         },
       },
       update: {},
-      create: { projectId },
+      create: { workspaceId },
     })),
   };
 };
@@ -214,8 +214,8 @@ const buildProjectAssignmentPayload = async (
  * Updates a feedback record directory. Supports partial updates for name, workspace
  * assignments, and archive status.
  *
- * When `projectIds` is provided, performs a diff against current assignments: removes
- * unassigned projects via `deleteMany` on the join table and upserts new/existing assignments.
+ * When `workspaceIds` is provided, performs a diff against current assignments: removes
+ * unassigned workspaces via `deleteMany` on the join table and upserts new/existing assignments.
  *
  * @param directoryId - The ID of the directory to update.
  * @param organizationId - The organization that owns the directory (avoids an extra fetch).
@@ -223,7 +223,7 @@ const buildProjectAssignmentPayload = async (
  * @returns `true` on successful update.
  * @throws {ValidationError} If the inputs fail validation.
  * @throws {ResourceNotFoundError} If the directory does not exist (Prisma P2025).
- * @throws {InvalidInputError} If any specified project does not belong to the directory's organization,
+ * @throws {InvalidInputError} If any specified workspace does not belong to the directory's organization,
  *   or if the name conflicts with an existing directory in the same organization.
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
@@ -236,7 +236,7 @@ export const updateFeedbackRecordDirectory = async (
   validateInputs([directoryId, ZId], [organizationId, ZId], [data, ZFeedbackRecordDirectoryUpdateInput]);
 
   try {
-    const { name, projectIds, isArchived } = data;
+    const { name, workspaceIds, isArchived } = data;
 
     const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {};
 
@@ -248,16 +248,16 @@ export const updateFeedbackRecordDirectory = async (
       payload.isArchived = isArchived;
     }
 
-    if (projectIds !== undefined) {
+    if (workspaceIds !== undefined) {
       const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
-      const currentProjectIds = currentDetails?.projects.map((p) => p.projectId) ?? [];
+      const currentWorkspaceIds = currentDetails?.workspaces.map((p) => p.workspaceId) ?? [];
 
-      payload.projects = await buildProjectAssignmentPayload(
+      payload.workspaces = await buildWorkspaceAssignmentPayload(
         prisma,
         directoryId,
-        projectIds,
+        workspaceIds,
         organizationId,
-        currentProjectIds
+        currentWorkspaceIds
       );
     }
 

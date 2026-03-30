@@ -76,7 +76,7 @@ describe("Follow-ups", () => {
     billing: {
       limits: {
         monthly: { responses: 1000 },
-        projects: 3,
+        workspaces: 3,
       },
       usageCycleAnchor: new Date(),
       stripeCustomerId: "cus123",

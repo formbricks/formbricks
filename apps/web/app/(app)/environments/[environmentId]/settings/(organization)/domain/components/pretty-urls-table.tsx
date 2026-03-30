@@ -14,7 +14,7 @@ interface SurveyWithSlug {
   environment: {
     id: string;
     type: "production" | "development";
-    project: {
+    workspace: {
       id: string;
       name: string;
     };
@@ -40,7 +40,7 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
     },
     {
       label: t("environments.settings.domain.workspace"),
-      key: "project",
+      key: "workspace",
     },
     {
       label: t("environments.settings.domain.pretty_url"),
@@ -81,7 +81,7 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
                   {survey.name}
                 </Link>
               </TableCell>
-              <TableCell>{survey.environment.project.name}</TableCell>
+              <TableCell>{survey.environment.workspace.name}</TableCell>
               <TableCell>
                 <IdBadge id={survey.slug ?? ""} />
               </TableCell>

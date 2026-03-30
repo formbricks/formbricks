@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
@@ -14,7 +14,7 @@ interface ConnectWithFormbricksProps {
   environment: TEnvironment;
   publicDomain: string;
   appSetupCompleted: boolean;
-  channel: TProjectConfigChannel;
+  channel: TWorkspaceConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({

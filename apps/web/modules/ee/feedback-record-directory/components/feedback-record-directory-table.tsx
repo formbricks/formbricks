@@ -18,7 +18,7 @@ import {
   TFeedbackRecordDirectoryDetails,
   getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
-import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
+import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Switch } from "@/modules/ui/components/switch";
@@ -27,14 +27,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface FeedbackRecordDirectoryTableProps {
   directories: TFeedbackRecordDirectory[];
   organizationId: string;
-  orgProjects: TOrganizationProject[];
+  orgWorkspaces: TOrganizationWorkspace[];
   membershipRole: TOrganizationRole;
 }
 
 export const FeedbackRecordDirectoryTable = ({
   directories,
   organizationId,
-  orgProjects,
+  orgWorkspaces,
   membershipRole,
 }: FeedbackRecordDirectoryTableProps) => {
   const { t } = useTranslation();
@@ -127,7 +127,7 @@ export const FeedbackRecordDirectoryTable = ({
             {filteredDirectories.map((directory) => (
               <TableRow key={directory.id} className="hover:bg-transparent">
                 <TableCell>{directory.name}</TableCell>
-                <TableCell>{directory.projectCount}</TableCell>
+                <TableCell>{directory.workspaceCount}</TableCell>
                 <TableCell>
                   {directory.isArchived ? (
                     <Badge type="gray" size="tiny" text={t("common.archived")} />
@@ -174,7 +174,7 @@ export const FeedbackRecordDirectoryTable = ({
           open={openSettingsModal}
           setOpen={setOpenSettingsModal}
           directory={selectedDirectory}
-          orgProjects={orgProjects}
+          orgWorkspaces={orgWorkspaces}
           membershipRole={membershipRole}
         />
       )}

@@ -22,7 +22,7 @@ describe("getOrganizationBillingByEnvironmentId", () => {
   const mockBillingData: TOrganizationBilling = {
     limits: {
       monthly: { responses: 0 },
-      projects: 3,
+      workspaces: 3,
     },
     usageCycleAnchor: new Date(),
     stripeCustomerId: "mock-stripe-customer-id",
@@ -34,7 +34,7 @@ describe("getOrganizationBillingByEnvironmentId", () => {
     expect(result).toEqual(mockBillingData);
     expect(prisma.organization.findFirst).toHaveBeenCalledWith({
       where: {
-        projects: {
+        workspaces: {
           some: {
             environments: {
               some: {

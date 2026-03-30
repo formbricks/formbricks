@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { type Project } from "@prisma/client";
+import { type Workspace } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -31,7 +31,7 @@ interface AddElementToBlockButtonProps {
   block: TSurveyBlock;
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveElementId: (elementId: string) => void;
-  project: Project;
+  workspace: Workspace;
   isCxMode: boolean;
 }
 
@@ -40,7 +40,7 @@ export const AddElementToBlockButton = ({
   block,
   setLocalSurvey,
   setActiveElementId,
-  project,
+  workspace,
   isCxMode,
 }: AddElementToBlockButtonProps) => {
   const { t } = useTranslation();
@@ -52,7 +52,7 @@ export const AddElementToBlockButton = ({
     // Get language symbols and add multi-language support
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
 
-    const elementDefaults = getElementDefaults(elementType, project, t);
+    const elementDefaults = getElementDefaults(elementType, workspace, t);
     const elementWithLabels = addMultiLanguageLabels(
       {
         ...universalElementPresets,

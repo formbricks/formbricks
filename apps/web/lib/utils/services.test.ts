@@ -7,13 +7,13 @@ import {
   Invite,
   Language,
   Prisma,
-  Project,
   Response,
   Segment,
   Survey,
   Tag,
   Team,
   Webhook,
+  Workspace,
 } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -29,7 +29,6 @@ import {
   getIntegration,
   getInvite,
   getLanguage,
-  getProject,
   getQuota,
   getResponse,
   getSegment,
@@ -37,8 +36,9 @@ import {
   getTag,
   getTeam,
   getWebhook,
-  isProjectPartOfOrganization,
+  getWorkspace,
   isTeamPartOfOrganization,
+  isWorkspacePartOfOrganization,
 } from "./services";
 
 // Mock all dependencies
@@ -66,7 +66,7 @@ vi.mock("@formbricks/database", () => ({
     language: {
       findFirst: vi.fn(),
     },
-    project: {
+    workspace: {
       findUnique: vi.fn(),
     },
     response: {
@@ -172,14 +172,14 @@ describe("Service Functions", () => {
     const environmentId = "env123";
 
     test("returns the environment when found", async () => {
-      const mockEnvironment = { projectId: "proj123" } as unknown as Environment;
+      const mockEnvironment = { workspaceId: "proj123" } as unknown as Environment;
       vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironment);
 
       const result = await getEnvironment(environmentId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.environment.findUnique).toHaveBeenCalledWith({
         where: { id: environmentId },
-        select: { projectId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockEnvironment);
     });
@@ -255,14 +255,14 @@ describe("Service Functions", () => {
     const languageId = "lang123";
 
     test("returns the language when found", async () => {
-      const mockLanguage = { projectId: "proj123" } as unknown as Language;
+      const mockLanguage = { workspaceId: "proj123" } as unknown as Language;
       vi.mocked(prisma.language.findFirst).mockResolvedValue(mockLanguage);
 
       const result = await getLanguage(languageId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.language.findFirst).toHaveBeenCalledWith({
         where: { id: languageId },
-        select: { projectId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockLanguage);
     });
@@ -285,30 +285,30 @@ describe("Service Functions", () => {
     });
   });
 
-  describe("getProject", () => {
-    const projectId = "proj123";
+  describe("getWorkspace", () => {
+    const workspaceId = "proj123";
 
-    test("returns the project when found", async () => {
-      const mockProject = { organizationId: "org123" } as unknown as Project;
-      vi.mocked(prisma.project.findUnique).mockResolvedValue(mockProject);
+    test("returns the workspace when found", async () => {
+      const mockWorkspace = { organizationId: "org123" } as unknown as Workspace;
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspace);
 
-      const result = await getProject(projectId);
-      expect(prisma.project.findUnique).toHaveBeenCalledWith({
-        where: { id: projectId },
+      const result = await getWorkspace(workspaceId);
+      expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+        where: { id: workspaceId },
         select: { organizationId: true },
       });
-      expect(result).toEqual(mockProject);
+      expect(result).toEqual(mockWorkspace);
     });
 
     test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.project.findUnique).mockRejectedValue(
+      vi.mocked(prisma.workspace.findUnique).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Error", {
           code: "P2002",
           clientVersion: "4.7.0",
         })
       );
 
-      await expect(getProject(projectId)).rejects.toThrow(DatabaseError);
+      await expect(getWorkspace(workspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -465,30 +465,30 @@ describe("Service Functions", () => {
     });
   });
 
-  describe("isProjectPartOfOrganization", () => {
-    const projectId = "proj123";
+  describe("isWorkspacePartOfOrganization", () => {
+    const workspaceId = "proj123";
     const organizationId = "org123";
 
-    test("returns true when project belongs to organization", async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue({ organizationId } as unknown as Project);
+    test("returns true when workspace belongs to organization", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ organizationId } as unknown as Workspace);
 
-      const result = await isProjectPartOfOrganization(organizationId, projectId);
+      const result = await isWorkspacePartOfOrganization(organizationId, workspaceId);
       expect(result).toBe(true);
     });
 
-    test("returns false when project belongs to different organization", async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue({
+    test("returns false when workspace belongs to different organization", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
         organizationId: "otherOrg",
-      } as unknown as Project);
+      } as unknown as Workspace);
 
-      const result = await isProjectPartOfOrganization(organizationId, projectId);
+      const result = await isWorkspacePartOfOrganization(organizationId, workspaceId);
       expect(result).toBe(false);
     });
 
-    test("throws ResourceNotFoundError when project not found", async () => {
-      vi.mocked(prisma.project.findUnique).mockResolvedValue(null);
+    test("throws ResourceNotFoundError when workspace not found", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-      await expect(isProjectPartOfOrganization(organizationId, projectId)).rejects.toThrow(
+      await expect(isWorkspacePartOfOrganization(organizationId, workspaceId)).rejects.toThrow(
         ResourceNotFoundError
       );
     });

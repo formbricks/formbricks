@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
@@ -13,9 +13,9 @@ const AccountSettingsLayout = async (props: {
   const { children } = props;
 
   const t = await getTranslate();
-  const [organization, project, session] = await Promise.all([
+  const [organization, workspace, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
-    getProjectByEnvironmentId(params.environmentId),
+    getWorkspaceByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
 
@@ -23,7 +23,7 @@ const AccountSettingsLayout = async (props: {
     throw new Error(t("common.organization_not_found"));
   }
 
-  if (!project) {
+  if (!workspace) {
     throw new Error(t("common.workspace_not_found"));
   }
 

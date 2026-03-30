@@ -30,7 +30,7 @@ describe("auth", () => {
           billing: {
             stripeCustomerId: null,
             limits: {
-              projects: 3,
+              workspaces: 3,
               monthly: {
                 responses: 1500,
               },
