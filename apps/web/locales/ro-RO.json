@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Gestionează funcționalitățile bazate pe AI pentru această organizație.",
         "ai_features_not_enabled_for_organization": "Funcționalitățile AI nu sunt activate pentru această organizație.",
-        "ai_instance_not_configured": "AI este configurată la nivel de instanță prin variabile de mediu. Cere administratorului să configureze ACTIVE_AI_PROVIDER, credențialele acelui furnizor și lista de modele corespunzătoare înainte de a activa funcționalitățile AI.",
+        "ai_instance_not_configured": "AI este configurată la nivel de instanță prin variabile de mediu. Cere administratorului să configureze AI_PROVIDER, credențialele acelui furnizor și lista de modele corespunzătoare înainte de a activa funcționalitățile AI.",
         "ai_settings_updated_successfully": "Setările AI au fost actualizate cu succes",
         "ai_smart_tools_disabled_for_organization": "Instrumentele inteligente AI sunt dezactivate pentru această organizație.",
         "ai_smart_tools_enabled": "Funcționalitate inteligentă (AI)",

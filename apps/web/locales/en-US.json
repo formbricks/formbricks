@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Manage AI-powered features for this organization.",
         "ai_features_not_enabled_for_organization": "AI features are not enabled for this organization.",
-        "ai_instance_not_configured": "AI is configured at the instance level via environment variables. Ask your administrator to set ACTIVE_AI_PROVIDER, ACTIVE_AI_MODEL, and the matching provider credentials before enabling AI features.",
+        "ai_instance_not_configured": "AI is configured at the instance level via environment variables. Ask your administrator to set AI_PROVIDER, AI_MODEL, and the matching provider credentials before enabling AI features.",
         "ai_settings_updated_successfully": "AI settings updated successfully",
         "ai_smart_tools_disabled_for_organization": "AI smart tools are disabled for this organization.",
         "ai_smart_tools_enabled": "Smart functionality (AI)",

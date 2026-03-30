@@ -45,7 +45,7 @@ describe("packages/ai provider helpers", () => {
   test("resolves the active provider from the environment", () => {
     expect(
       getActiveAiProvider({
-        ACTIVE_AI_PROVIDER: " gcp ",
+        AI_PROVIDER: " gcp ",
       })
     ).toBe("gcp");
   });
@@ -53,7 +53,7 @@ describe("packages/ai provider helpers", () => {
   test("resolves the active model from the environment", () => {
     expect(
       getActiveAiModel({
-        ACTIVE_AI_MODEL: " gemini-2.5-flash ",
+        AI_MODEL: " gemini-2.5-flash ",
       })
     ).toBe("gemini-2.5-flash");
   });
@@ -61,11 +61,11 @@ describe("packages/ai provider helpers", () => {
   test("reports a fully configured GCP instance when the active provider credentials and model are valid", () => {
     expect(
       getAiConfigurationStatus({
-        ACTIVE_AI_PROVIDER: "gcp",
-        ACTIVE_AI_MODEL: "gemini-2.5-flash",
-        GOOGLE_VERTEX_PROJECT: "test-project",
-        GOOGLE_VERTEX_LOCATION: "us-central1",
-        GOOGLE_VERTEX_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
+        AI_PROVIDER: "gcp",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GCP_PROJECT: "test-project",
+        AI_GCP_LOCATION: "us-central1",
+        AI_GCP_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
       })
     ).toEqual({
       provider: "gcp",
@@ -83,27 +83,27 @@ describe("packages/ai provider helpers", () => {
     });
   });
 
-  test("treats the instance as not configured when ACTIVE_AI_PROVIDER is missing", () => {
+  test("treats the instance as not configured when AI_PROVIDER is missing", () => {
     expect(
       isAiConfigured({
-        ACTIVE_AI_MODEL: "gemini-2.5-flash",
-        GOOGLE_VERTEX_PROJECT: "test-project",
-        GOOGLE_VERTEX_LOCATION: "us-central1",
-        GOOGLE_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GCP_PROJECT: "test-project",
+        AI_GCP_LOCATION: "us-central1",
+        AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
       })
     ).toBe(false);
   });
 
-  test("treats the instance as not configured when ACTIVE_AI_PROVIDER is unsupported", () => {
+  test("treats the instance as not configured when AI_PROVIDER is unsupported", () => {
     expect(
       getAiConfigurationStatus({
-        ACTIVE_AI_PROVIDER: "openai",
+        AI_PROVIDER: "openai",
       })
     ).toMatchObject({
       provider: null,
       model: null,
       isConfigured: false,
-      invalidFields: ["ACTIVE_AI_PROVIDER"],
+      invalidFields: ["AI_PROVIDER"],
       errorCode: "invalidProvider",
     });
   });
@@ -111,16 +111,16 @@ describe("packages/ai provider helpers", () => {
   test("treats the instance as not configured when the active model is missing", () => {
     expect(
       getAiConfigurationStatus({
-        ACTIVE_AI_PROVIDER: "aws",
-        AWS_REGION: "us-east-1",
-        AWS_ACCESS_KEY_ID: "aws-access-key-id",
-        AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
+        AI_PROVIDER: "aws",
+        AI_AWS_REGION: "us-east-1",
+        AI_AWS_ACCESS_KEY_ID: "aws-access-key-id",
+        AI_AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
       })
     ).toMatchObject({
       provider: "aws",
       model: null,
       isConfigured: false,
-      missingFields: ["ACTIVE_AI_MODEL"],
+      missingFields: ["AI_MODEL"],
       errorCode: "providerNotConfigured",
     });
   });
@@ -128,15 +128,15 @@ describe("packages/ai provider helpers", () => {
   test("treats the instance as not configured when the selected provider is missing credentials", () => {
     expect(
       getAiConfigurationStatus({
-        ACTIVE_AI_PROVIDER: "azure",
-        ACTIVE_AI_MODEL: "gpt-4.1",
-        AZURE_RESOURCE_NAME: "test-resource",
+        AI_PROVIDER: "azure",
+        AI_MODEL: "gpt-4.1",
+        AI_AZURE_RESOURCE_NAME: "test-resource",
       })
     ).toMatchObject({
       provider: "azure",
       model: "gpt-4.1",
       isConfigured: false,
-      missingFields: ["AZURE_API_KEY"],
+      missingFields: ["AI_AZURE_API_KEY"],
       errorCode: "providerNotConfigured",
     });
   });
@@ -144,17 +144,17 @@ describe("packages/ai provider helpers", () => {
   test("treats the instance as not configured when GCP credentials JSON is invalid", () => {
     expect(
       getAiConfigurationStatus({
-        ACTIVE_AI_PROVIDER: "gcp",
-        ACTIVE_AI_MODEL: "gemini-2.5-flash",
-        GOOGLE_VERTEX_PROJECT: "test-project",
-        GOOGLE_VERTEX_LOCATION: "us-central1",
-        GOOGLE_VERTEX_CREDENTIALS_JSON: "{not-json}",
+        AI_PROVIDER: "gcp",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GCP_PROJECT: "test-project",
+        AI_GCP_LOCATION: "us-central1",
+        AI_GCP_CREDENTIALS_JSON: "{not-json}",
       })
     ).toMatchObject({
       provider: "gcp",
       model: "gemini-2.5-flash",
       isConfigured: false,
-      invalidFields: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
+      invalidFields: ["AI_GCP_CREDENTIALS_JSON"],
       errorCode: "providerNotConfigured",
     });
   });
@@ -164,11 +164,11 @@ describe("packages/ai provider helpers", () => {
     mocks.createVertex.mockReturnValue(vertexProvider);
 
     const environment: AIEnvironment = {
-      ACTIVE_AI_PROVIDER: "gcp",
-      ACTIVE_AI_MODEL: "gemini-2.5-flash",
-      GOOGLE_VERTEX_PROJECT: "test-project",
-      GOOGLE_VERTEX_LOCATION: "us-central1",
-      GOOGLE_VERTEX_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
+      AI_PROVIDER: "gcp",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GCP_PROJECT: "test-project",
+      AI_GCP_LOCATION: "us-central1",
+      AI_GCP_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
     };
 
     const firstModel = getAiModel(environment);
@@ -194,12 +194,12 @@ describe("packages/ai provider helpers", () => {
     mocks.createAmazonBedrock.mockReturnValue(bedrockProvider);
 
     const model = getAiModel({
-      ACTIVE_AI_PROVIDER: "aws",
-      ACTIVE_AI_MODEL: "amazon.nova-lite-v1:0",
-      AWS_REGION: "us-east-1",
-      AWS_ACCESS_KEY_ID: "aws-access-key-id",
-      AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
-      AWS_SESSION_TOKEN: "aws-session-token",
+      AI_PROVIDER: "aws",
+      AI_MODEL: "amazon.nova-lite-v1:0",
+      AI_AWS_REGION: "us-east-1",
+      AI_AWS_ACCESS_KEY_ID: "aws-access-key-id",
+      AI_AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
+      AI_AWS_SESSION_TOKEN: "aws-session-token",
     });
 
     expect(model).toEqual({ providerName: "aws", modelName: "amazon.nova-lite-v1:0" });
@@ -216,11 +216,11 @@ describe("packages/ai provider helpers", () => {
     mocks.createAzure.mockReturnValue(azureProvider);
 
     const model = getAiModel({
-      ACTIVE_AI_PROVIDER: "azure",
-      ACTIVE_AI_MODEL: "gpt-4.1",
-      AZURE_RESOURCE_NAME: "test-resource",
-      AZURE_API_KEY: "azure-api-key",
-      AZURE_API_VERSION: "v1",
+      AI_PROVIDER: "azure",
+      AI_MODEL: "gpt-4.1",
+      AI_AZURE_RESOURCE_NAME: "test-resource",
+      AI_AZURE_API_KEY: "azure-api-key",
+      AI_AZURE_API_VERSION: "v1",
     });
 
     expect(model).toEqual({ providerName: "azure", modelName: "gpt-4.1" });
@@ -234,13 +234,13 @@ describe("packages/ai provider helpers", () => {
   test("throws a helpful error when the active model is missing", () => {
     const getModel = (): ReturnType<typeof getAiModel> =>
       getAiModel({
-        ACTIVE_AI_PROVIDER: "gcp",
-        GOOGLE_VERTEX_PROJECT: "test-project",
-        GOOGLE_VERTEX_LOCATION: "us-central1",
-        GOOGLE_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+        AI_PROVIDER: "gcp",
+        AI_GCP_PROJECT: "test-project",
+        AI_GCP_LOCATION: "us-central1",
+        AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
       });
 
     expect(getModel).toThrowError(AIConfigurationError);
-    expect(getModel).toThrowError(/ACTIVE_AI_MODEL/);
+    expect(getModel).toThrowError(/AI_MODEL/);
   });
 });

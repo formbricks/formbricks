@@ -21,26 +21,26 @@ export const gcpProviderAdapter: AIProviderAdapter = {
     const missingFields: string[] = [];
     const invalidFields: string[] = [];
 
-    if (!normalizeValue(environment.GOOGLE_VERTEX_PROJECT)) {
-      missingFields.push("GOOGLE_VERTEX_PROJECT");
+    if (!normalizeValue(environment.AI_GCP_PROJECT)) {
+      missingFields.push("AI_GCP_PROJECT");
     }
 
-    if (!normalizeValue(environment.GOOGLE_VERTEX_LOCATION)) {
-      missingFields.push("GOOGLE_VERTEX_LOCATION");
+    if (!normalizeValue(environment.AI_GCP_LOCATION)) {
+      missingFields.push("AI_GCP_LOCATION");
     }
 
-    const credentialsJson = normalizeValue(environment.GOOGLE_VERTEX_CREDENTIALS_JSON);
-    const applicationCredentials = normalizeValue(environment.GOOGLE_APPLICATION_CREDENTIALS);
+    const credentialsJson = normalizeValue(environment.AI_GCP_CREDENTIALS_JSON);
+    const applicationCredentials = normalizeValue(environment.AI_GCP_APPLICATION_CREDENTIALS);
 
     if (!credentialsJson && !applicationCredentials) {
-      missingFields.push("GOOGLE_VERTEX_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS");
+      missingFields.push("AI_GCP_CREDENTIALS_JSON or AI_GCP_APPLICATION_CREDENTIALS");
     }
 
     if (credentialsJson) {
       try {
         parseVertexCredentialsJson(credentialsJson);
       } catch {
-        invalidFields.push("GOOGLE_VERTEX_CREDENTIALS_JSON");
+        invalidFields.push("AI_GCP_CREDENTIALS_JSON");
       }
     }
 
@@ -53,25 +53,25 @@ export const gcpProviderAdapter: AIProviderAdapter = {
     JSON.stringify({
       provider: "gcp",
       model,
-      project: normalizeValue(environment.GOOGLE_VERTEX_PROJECT),
-      location: normalizeValue(environment.GOOGLE_VERTEX_LOCATION),
-      hasCredentialsJson: Boolean(normalizeValue(environment.GOOGLE_VERTEX_CREDENTIALS_JSON)),
-      hasApplicationCredentials: Boolean(normalizeValue(environment.GOOGLE_APPLICATION_CREDENTIALS)),
+      project: normalizeValue(environment.AI_GCP_PROJECT),
+      location: normalizeValue(environment.AI_GCP_LOCATION),
+      hasCredentialsJson: Boolean(normalizeValue(environment.AI_GCP_CREDENTIALS_JSON)),
+      hasApplicationCredentials: Boolean(normalizeValue(environment.AI_GCP_APPLICATION_CREDENTIALS)),
     }),
   createModel: (model: string, environment: AIEnvironment) => {
-    const project = normalizeValue(environment.GOOGLE_VERTEX_PROJECT);
-    const location = normalizeValue(environment.GOOGLE_VERTEX_LOCATION);
-    const credentialsJson = normalizeValue(environment.GOOGLE_VERTEX_CREDENTIALS_JSON);
-    const applicationCredentials = normalizeValue(environment.GOOGLE_APPLICATION_CREDENTIALS);
+    const project = normalizeValue(environment.AI_GCP_PROJECT);
+    const location = normalizeValue(environment.AI_GCP_LOCATION);
+    const credentialsJson = normalizeValue(environment.AI_GCP_CREDENTIALS_JSON);
+    const applicationCredentials = normalizeValue(environment.AI_GCP_APPLICATION_CREDENTIALS);
 
     if (!project || !location || (!credentialsJson && !applicationCredentials)) {
       throw new AIConfigurationError("providerNotConfigured", "GCP Vertex AI credentials are incomplete", {
         provider: "gcp",
         missingFields: [
-          ...(!project ? ["GOOGLE_VERTEX_PROJECT"] : []),
-          ...(!location ? ["GOOGLE_VERTEX_LOCATION"] : []),
+          ...(!project ? ["AI_GCP_PROJECT"] : []),
+          ...(!location ? ["AI_GCP_LOCATION"] : []),
           ...(!credentialsJson && !applicationCredentials
-            ? ["GOOGLE_VERTEX_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS"]
+            ? ["AI_GCP_CREDENTIALS_JSON or AI_GCP_APPLICATION_CREDENTIALS"]
             : []),
         ],
       });
@@ -87,13 +87,17 @@ export const gcpProviderAdapter: AIProviderAdapter = {
       } catch {
         throw new AIConfigurationError(
           "providerNotConfigured",
-          "GOOGLE_VERTEX_CREDENTIALS_JSON must be valid JSON",
+          "AI_GCP_CREDENTIALS_JSON must be valid JSON",
           {
             provider: "gcp",
-            invalidFields: ["GOOGLE_VERTEX_CREDENTIALS_JSON"],
+            invalidFields: ["AI_GCP_CREDENTIALS_JSON"],
           }
         );
       }
+    } else if (applicationCredentials) {
+      googleAuthOptions = {
+        keyFilename: applicationCredentials,
+      } as VertexProviderSettings["googleAuthOptions"];
     }
 
     const vertex = createVertex({

@@ -50,20 +50,20 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/env", () => ({
   env: {
-    ACTIVE_AI_PROVIDER: "gcp",
-    ACTIVE_AI_MODEL: "gemini-2.5-flash",
-    GOOGLE_VERTEX_PROJECT: "vertex-project",
-    GOOGLE_VERTEX_LOCATION: "us-central1",
-    GOOGLE_VERTEX_CREDENTIALS_JSON: undefined,
-    GOOGLE_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
-    AWS_REGION: "us-east-1",
-    AWS_ACCESS_KEY_ID: "aws-access-key-id",
-    AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
-    AWS_SESSION_TOKEN: undefined,
-    AZURE_BASE_URL: "https://example-resource.openai.azure.com/openai",
-    AZURE_RESOURCE_NAME: undefined,
-    AZURE_API_KEY: "azure-api-key",
-    AZURE_API_VERSION: "v1",
+    AI_PROVIDER: "gcp",
+    AI_MODEL: "gemini-2.5-flash",
+    AI_GCP_PROJECT: "vertex-project",
+    AI_GCP_LOCATION: "us-central1",
+    AI_GCP_CREDENTIALS_JSON: undefined,
+    AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+    AI_AWS_REGION: "us-east-1",
+    AI_AWS_ACCESS_KEY_ID: "aws-access-key-id",
+    AI_AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
+    AI_AWS_SESSION_TOKEN: undefined,
+    AI_AZURE_BASE_URL: "https://example-resource.openai.azure.com/openai",
+    AI_AZURE_RESOURCE_NAME: undefined,
+    AI_AZURE_API_KEY: "azure-api-key",
+    AI_AZURE_API_VERSION: "v1",
   },
 }));
 
@@ -177,14 +177,14 @@ describe("AI organization service", () => {
       provider: "gcp",
       model: null,
       isConfigured: false,
-      missingFields: ["ACTIVE_AI_MODEL"],
+      missingFields: ["AI_MODEL"],
       invalidFields: [],
       errorCode: "providerNotConfigured",
       providerStatus: {
         provider: "gcp",
         model: null,
         isConfigured: false,
-        missingFields: ["ACTIVE_AI_MODEL"],
+        missingFields: ["AI_MODEL"],
         invalidFields: [],
         errorCode: "missingModel",
       },
@@ -205,9 +205,9 @@ describe("AI organization service", () => {
     expect(result).toBe(mockModel);
     expect(mocks.getAiModel).toHaveBeenCalledWith(
       expect.objectContaining({
-        ACTIVE_AI_PROVIDER: "gcp",
-        ACTIVE_AI_MODEL: "gemini-2.5-flash",
-        GOOGLE_VERTEX_PROJECT: "vertex-project",
+        AI_PROVIDER: "gcp",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GCP_PROJECT: "vertex-project",
       })
     );
   });

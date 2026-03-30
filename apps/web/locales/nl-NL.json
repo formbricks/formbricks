@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Beheer AI-functies voor deze organisatie.",
         "ai_features_not_enabled_for_organization": "AI-functies zijn niet ingeschakeld voor deze organisatie.",
-        "ai_instance_not_configured": "AI wordt op instantieniveau geconfigureerd via omgevingsvariabelen. Vraag je beheerder om ACTIVE_AI_PROVIDER, de inloggegevens voor die provider en de bijbehorende modellenlijst in te stellen voordat AI-functies worden ingeschakeld.",
+        "ai_instance_not_configured": "AI wordt op instantieniveau geconfigureerd via omgevingsvariabelen. Vraag je beheerder om AI_PROVIDER, de inloggegevens voor die provider en de bijbehorende modellenlijst in te stellen voordat AI-functies worden ingeschakeld.",
         "ai_settings_updated_successfully": "AI-instellingen succesvol bijgewerkt",
         "ai_smart_tools_disabled_for_organization": "AI-slimme functies zijn uitgeschakeld voor deze organisatie.",
         "ai_smart_tools_enabled": "Slimme functionaliteit (AI)",

@@ -25,10 +25,10 @@ const getProviderMissingAndInvalidFields = (
     adapter.validate(environment);
   const missingFields = [...adapterMissingFields];
   const invalidFields = [...adapterInvalidFields];
-  const model = normalizeValue(environment.ACTIVE_AI_MODEL) ?? null;
+  const model = normalizeValue(environment.AI_MODEL) ?? null;
 
-  if (!model && !missingFields.includes("ACTIVE_AI_MODEL")) {
-    missingFields.push("ACTIVE_AI_MODEL");
+  if (!model && !missingFields.includes("AI_MODEL")) {
+    missingFields.push("AI_MODEL");
   }
 
   return {
@@ -49,7 +49,7 @@ const getProviderStatus = (provider: ActiveAIProvider, environment?: AIEnvironme
 
   if (invalidFields.length > 0) {
     errorCode = "invalidCredentials";
-  } else if (missingFields.includes("ACTIVE_AI_MODEL")) {
+  } else if (missingFields.includes("AI_MODEL")) {
     errorCode = "missingModel";
   } else if (missingFields.length > 0) {
     errorCode = "missingCredentials";
@@ -68,9 +68,9 @@ const getProviderStatus = (provider: ActiveAIProvider, environment?: AIEnvironme
 const getAIConfigurationErrorMessage = (status: AIConfigurationStatus): string => {
   switch (status.errorCode) {
     case "providerMissing":
-      return "ACTIVE_AI_PROVIDER is required";
+      return "AI_PROVIDER is required";
     case "invalidProvider":
-      return `ACTIVE_AI_PROVIDER must be one of: ${AI_PROVIDERS.join(", ")}`;
+      return `AI_PROVIDER must be one of: ${AI_PROVIDERS.join(", ")}`;
     case "providerNotConfigured": {
       const parts = ["Active AI provider is not configured correctly."];
 
@@ -117,15 +117,15 @@ const setCachedLanguageModel = (cacheKey: string, languageModel: LanguageModel):
 };
 
 export const getActiveAiProvider = (environment?: AIEnvironment): ActiveAIProvider | null => {
-  return resolveActiveAIProvider(getAIEnvironment(environment).ACTIVE_AI_PROVIDER);
+  return resolveActiveAIProvider(getAIEnvironment(environment).AI_PROVIDER);
 };
 
 export const getActiveAiModel = (environment?: AIEnvironment): string | null =>
-  normalizeValue(getAIEnvironment(environment).ACTIVE_AI_MODEL) ?? null;
+  normalizeValue(getAIEnvironment(environment).AI_MODEL) ?? null;
 
 export const getAiConfigurationStatus = (environment?: AIEnvironment): AIConfigurationStatus => {
   const resolvedEnvironment = getAIEnvironment(environment);
-  const rawProvider = normalizeValue(resolvedEnvironment.ACTIVE_AI_PROVIDER);
+  const rawProvider = normalizeValue(resolvedEnvironment.AI_PROVIDER);
   const model = getActiveAiModel(resolvedEnvironment);
 
   if (!rawProvider) {
@@ -133,7 +133,7 @@ export const getAiConfigurationStatus = (environment?: AIEnvironment): AIConfigu
       provider: null,
       model,
       isConfigured: false,
-      missingFields: ["ACTIVE_AI_PROVIDER"],
+      missingFields: ["AI_PROVIDER"],
       invalidFields: [],
       errorCode: "providerMissing",
     };
@@ -145,7 +145,7 @@ export const getAiConfigurationStatus = (environment?: AIEnvironment): AIConfigu
       model,
       isConfigured: false,
       missingFields: [],
-      invalidFields: ["ACTIVE_AI_PROVIDER"],
+      invalidFields: ["AI_PROVIDER"],
       errorCode: "invalidProvider",
     };
   }

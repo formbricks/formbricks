@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Verwalte KI-gestützte Funktionen für diese Organisation.",
         "ai_features_not_enabled_for_organization": "KI-Funktionen sind für diese Organisation nicht aktiviert.",
-        "ai_instance_not_configured": "KI wird auf Instanzebene über Umgebungsvariablen konfiguriert. Bitte den Administrator, ACTIVE_AI_PROVIDER, die Anmeldedaten für diesen Anbieter und die passende Modellliste zu konfigurieren, bevor du KI-Funktionen aktivierst.",
+        "ai_instance_not_configured": "KI wird auf Instanzebene über Umgebungsvariablen konfiguriert. Bitte den Administrator, AI_PROVIDER, die Anmeldedaten für diesen Anbieter und die passende Modellliste zu konfigurieren, bevor du KI-Funktionen aktivierst.",
         "ai_settings_updated_successfully": "KI-Einstellungen erfolgreich aktualisiert",
         "ai_smart_tools_disabled_for_organization": "KI-Smart-Tools sind für diese Organisation deaktiviert.",
         "ai_smart_tools_enabled": "Intelligente Funktionen (KI)",

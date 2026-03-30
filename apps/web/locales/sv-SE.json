@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Hantera AI-drivna funktioner för den här organisationen.",
         "ai_features_not_enabled_for_organization": "AI-funktioner är inte aktiverade för den här organisationen.",
-        "ai_instance_not_configured": "AI konfigureras på instansnivå via miljövariabler. Be din administratör att ange ACTIVE_AI_PROVIDER, autentiseringsuppgifterna för den leverantören och den tillhörande modellistan innan AI-funktioner aktiveras.",
+        "ai_instance_not_configured": "AI konfigureras på instansnivå via miljövariabler. Be din administratör att ange AI_PROVIDER, autentiseringsuppgifterna för den leverantören och den tillhörande modellistan innan AI-funktioner aktiveras.",
         "ai_settings_updated_successfully": "AI-inställningarna har uppdaterats",
         "ai_smart_tools_disabled_for_organization": "AI-smartverktyg är inaktiverade för den här organisationen.",
         "ai_smart_tools_enabled": "Smarta funktioner (AI)",

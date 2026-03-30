@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "AI-alapú funkciók kezelése ehhez a szervezethez.",
         "ai_features_not_enabled_for_organization": "Az MI-funkciók nincsenek engedélyezve ennél a szervezetnél.",
-        "ai_instance_not_configured": "Az MI példányszinten, környezeti változókkal van konfigurálva. Kérd meg a rendszergazdát, hogy állítsa be az ACTIVE_AI_PROVIDER értékét, a szolgáltató hitelesítő adatait és a megfelelő modelllistát, mielőtt engedélyezné az MI-funkciókat.",
+        "ai_instance_not_configured": "Az MI példányszinten, környezeti változókkal van konfigurálva. Kérd meg a rendszergazdát, hogy állítsa be az AI_PROVIDER értékét, a szolgáltató hitelesítő adatait és a megfelelő modelllistát, mielőtt engedélyezné az MI-funkciókat.",
         "ai_settings_updated_successfully": "AI beállítások sikeresen frissítve",
         "ai_smart_tools_disabled_for_organization": "Az MI intelligens funkciói ki vannak kapcsolva ennél a szervezetnél.",
         "ai_smart_tools_enabled": "Intelligens funkciók (AI)",

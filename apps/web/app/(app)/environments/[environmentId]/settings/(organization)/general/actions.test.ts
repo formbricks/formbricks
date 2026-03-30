@@ -168,7 +168,7 @@ describe("organization AI settings actions", () => {
       provider: "gcp",
       model: null,
       isConfigured: false,
-      missingFields: ["ACTIVE_AI_MODEL"],
+      missingFields: ["AI_MODEL"],
       invalidFields: [],
       errorCode: "providerNotConfigured",
     });
@@ -220,7 +220,7 @@ describe("organization AI settings actions", () => {
       provider: "gcp",
       model: null,
       isConfigured: false,
-      missingFields: ["GOOGLE_VERTEX_PROJECT"],
+      missingFields: ["AI_GCP_PROJECT"],
       invalidFields: [],
       errorCode: "providerNotConfigured",
     });

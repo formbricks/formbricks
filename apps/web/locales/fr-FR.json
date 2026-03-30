@@ -1138,7 +1138,7 @@
         "ai_enabled": "IA Formbricks",
         "ai_enabled_description": "Gérer les fonctionnalités alimentées par l'IA pour cette organisation.",
         "ai_features_not_enabled_for_organization": "Les fonctionnalités d'IA ne sont pas activées pour cette organisation.",
-        "ai_instance_not_configured": "L'IA est configurée au niveau de l'instance via des variables d'environnement. Demandez à votre administrateur de définir ACTIVE_AI_PROVIDER, les identifiants du fournisseur et la liste de modèles correspondante avant d'activer les fonctionnalités d'IA.",
+        "ai_instance_not_configured": "L'IA est configurée au niveau de l'instance via des variables d'environnement. Demandez à votre administrateur de définir AI_PROVIDER, les identifiants du fournisseur et la liste de modèles correspondante avant d'activer les fonctionnalités d'IA.",
         "ai_settings_updated_successfully": "Paramètres IA mis à jour avec succès",
         "ai_smart_tools_disabled_for_organization": "Les outils intelligents d'IA sont désactivés pour cette organisation.",
         "ai_smart_tools_enabled": "Fonctionnalités intelligentes (IA)",

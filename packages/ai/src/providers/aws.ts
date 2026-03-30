@@ -8,16 +8,16 @@ export const awsProviderAdapter: AIProviderAdapter = {
   validate: (environment: AIEnvironment) => {
     const missingFields: string[] = [];
 
-    if (!normalizeValue(environment.AWS_REGION)) {
-      missingFields.push("AWS_REGION");
+    if (!normalizeValue(environment.AI_AWS_REGION)) {
+      missingFields.push("AI_AWS_REGION");
     }
 
-    if (!normalizeValue(environment.AWS_ACCESS_KEY_ID)) {
-      missingFields.push("AWS_ACCESS_KEY_ID");
+    if (!normalizeValue(environment.AI_AWS_ACCESS_KEY_ID)) {
+      missingFields.push("AI_AWS_ACCESS_KEY_ID");
     }
 
-    if (!normalizeValue(environment.AWS_SECRET_ACCESS_KEY)) {
-      missingFields.push("AWS_SECRET_ACCESS_KEY");
+    if (!normalizeValue(environment.AI_AWS_SECRET_ACCESS_KEY)) {
+      missingFields.push("AI_AWS_SECRET_ACCESS_KEY");
     }
 
     return {
@@ -29,22 +29,22 @@ export const awsProviderAdapter: AIProviderAdapter = {
     JSON.stringify({
       provider: "aws",
       model,
-      region: normalizeValue(environment.AWS_REGION),
+      region: normalizeValue(environment.AI_AWS_REGION),
     }),
   createModel: (model: string, environment: AIEnvironment) => {
-    const region = normalizeValue(environment.AWS_REGION);
-    const accessKeyId = normalizeValue(environment.AWS_ACCESS_KEY_ID);
-    const secretAccessKey = normalizeValue(environment.AWS_SECRET_ACCESS_KEY);
-    const sessionToken = normalizeValue(environment.AWS_SESSION_TOKEN);
+    const region = normalizeValue(environment.AI_AWS_REGION);
+    const accessKeyId = normalizeValue(environment.AI_AWS_ACCESS_KEY_ID);
+    const secretAccessKey = normalizeValue(environment.AI_AWS_SECRET_ACCESS_KEY);
+    const sessionToken = normalizeValue(environment.AI_AWS_SESSION_TOKEN);
 
     if (!region || !accessKeyId || !secretAccessKey) {
       throw new AIConfigurationError("providerNotConfigured", "AWS Bedrock credentials are incomplete", {
         provider: "aws",
-        missingFields: ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"].filter(
+        missingFields: ["AI_AWS_REGION", "AI_AWS_ACCESS_KEY_ID", "AI_AWS_SECRET_ACCESS_KEY"].filter(
           (field) =>
-            (field === "AWS_REGION" && !region) ||
-            (field === "AWS_ACCESS_KEY_ID" && !accessKeyId) ||
-            (field === "AWS_SECRET_ACCESS_KEY" && !secretAccessKey)
+            (field === "AI_AWS_REGION" && !region) ||
+            (field === "AI_AWS_ACCESS_KEY_ID" && !accessKeyId) ||
+            (field === "AI_AWS_SECRET_ACCESS_KEY" && !secretAccessKey)
         ),
       });
     }

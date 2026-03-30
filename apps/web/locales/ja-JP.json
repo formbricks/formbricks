@@ -1138,7 +1138,7 @@
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "この組織のAI機能を管理します。",
         "ai_features_not_enabled_for_organization": "この組織では AI 機能が有効になっていません。",
-        "ai_instance_not_configured": "AI は環境変数を使ってインスタンスレベルで設定されます。AI 機能を有効にする前に、管理者に ACTIVE_AI_PROVIDER、このプロバイダーの認証情報、および対応するモデル一覧を設定してもらってください。",
+        "ai_instance_not_configured": "AI は環境変数を使ってインスタンスレベルで設定されます。AI 機能を有効にする前に、管理者に AI_PROVIDER、このプロバイダーの認証情報、および対応するモデル一覧を設定してもらってください。",
         "ai_settings_updated_successfully": "AI設定が正常に更新されました",
         "ai_smart_tools_disabled_for_organization": "この組織では AI スマートツールが無効になっています。",
         "ai_smart_tools_enabled": "スマート機能（AI）",
