@@ -1,4 +1,6 @@
 import { expect } from "@playwright/test";
+import { createHash, randomBytes } from "node:crypto";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { test } from "../../lib/fixtures";
 
@@ -533,6 +535,106 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         await expect(replayPage).toHaveURL(/\/auth\/login/);
       } finally {
         await replayContext.close();
+      }
+    });
+
+    test("should revoke all active sessions after a password reset", async ({ page, browser, users }) => {
+      const uniqueId = `${Date.now()}-${Math.random()}`;
+      const userName = `Session Reset User ${uniqueId}`;
+      const userEmail = `session-reset-${uniqueId}@example.com`;
+      const newPassword = "Password123";
+      const user = await users.create({
+        name: userName,
+        email: userEmail,
+      });
+      await user.login();
+
+      await page.goto("http://localhost:3000/environments");
+      await expect(page).not.toHaveURL(/\/auth\/login/);
+
+      const sessionCookie = (await page.context().cookies()).find((cookie) =>
+        cookie.name.includes("next-auth.session-token")
+      );
+
+      expect(sessionCookie).toBeDefined();
+
+      if (!sessionCookie) {
+        throw new Error("Expected a NextAuth session cookie after login");
+      }
+
+      const copiedSessionContext = await browser.newContext();
+      try {
+        await copiedSessionContext.addCookies([sessionCookie]);
+        const copiedSessionPage = await copiedSessionContext.newPage();
+        await copiedSessionPage.goto("http://localhost:3000/environments");
+        await expect(copiedSessionPage).not.toHaveURL(/\/auth\/login/);
+
+        const databaseUser = await prisma.user.findUnique({
+          where: {
+            email: userEmail,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        expect(databaseUser?.id).toBeDefined();
+
+        if (!databaseUser) {
+          throw new Error("Expected the reset test user to exist");
+        }
+
+        const rawResetToken = randomBytes(32).toString("base64url");
+        const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
+
+        await prisma.passwordResetToken.upsert({
+          where: {
+            userId: databaseUser.id,
+          },
+          create: {
+            userId: databaseUser.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          },
+          update: {
+            tokenHash,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          },
+        });
+
+        const resetContext = await browser.newContext();
+        try {
+          const resetPage = await resetContext.newPage();
+          await resetPage.goto(
+            `http://localhost:3000/auth/forgot-password/reset?token=${encodeURIComponent(rawResetToken)}`
+          );
+          await resetPage.locator("#password").fill(newPassword);
+          await resetPage.locator("#confirmPassword").fill(newPassword);
+          await resetPage.getByRole("button", { name: "Reset password" }).click();
+          await expect(resetPage).toHaveURL(/\/auth\/forgot-password\/reset\/success/);
+          await expect(resetPage.getByText("Password reset successfully")).toBeVisible();
+
+          await page.goto("http://localhost:3000/environments");
+          await expect(page).toHaveURL(/\/auth\/login/);
+
+          await copiedSessionPage.goto("http://localhost:3000/environments");
+          await expect(copiedSessionPage).toHaveURL(/\/auth\/login/);
+
+          await resetPage.goto("http://localhost:3000/auth/login");
+          const emailInput = resetPage.locator("#email");
+          if (!(await emailInput.isVisible())) {
+            await resetPage.getByRole("button", { name: "Login with Email" }).click();
+            await expect(emailInput).toBeVisible();
+          }
+          await emailInput.fill(userEmail);
+          await resetPage.locator("#password").fill(newPassword);
+          await resetPage.getByRole("button", { name: "Login with Email" }).click();
+          await expect(resetPage).not.toHaveURL(/\/auth\/login/);
+        } finally {
+          await resetContext.close();
+        }
+      } finally {
+        await copiedSessionContext.close();
       }
     });
   });

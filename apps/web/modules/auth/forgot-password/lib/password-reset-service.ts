@@ -15,6 +15,7 @@ import { hashPassword } from "@/lib/auth";
 import { DEBUG_SHOW_RESET_LINK, PASSWORD_RESET_TOKEN_LIFETIME_MINUTES, WEBAPP_URL } from "@/lib/constants";
 import { hashString } from "@/lib/hash-string";
 import { validateInputs } from "@/lib/utils/validate";
+import { deleteSessionsByUserId } from "@/modules/auth/lib/auth-session-repository";
 import { sendPasswordResetLinkEmail, sendPasswordResetNotifyEmail } from "@/modules/email";
 import {
   consumeActiveToken,
@@ -63,6 +64,18 @@ class PasswordResetNotificationEmailError extends Error {
   constructor() {
     super(ACCOUNT_RECOVERY_NOTIFICATION_EMAIL_ERROR_CODE);
     this.name = "PasswordResetNotificationEmailError";
+  }
+}
+
+class PasswordResetSessionRevocationError extends Error {
+  userId: string;
+  cause: unknown;
+
+  constructor(userId: string, cause: unknown) {
+    super("ERR_ACCOUNT_RECOVERY_SESSION_REVOKE_FAILED");
+    this.name = "PasswordResetSessionRevocationError";
+    this.userId = userId;
+    this.cause = cause;
   }
 }
 
@@ -193,6 +206,12 @@ const updatePasswordWithActiveResetToken = async (
       select: passwordResetAuditSelection,
     });
 
+    try {
+      await deleteSessionsByUserId(tokenRecord.userId, tx);
+    } catch (error) {
+      throw new PasswordResetSessionRevocationError(tokenRecord.userId, error);
+    }
+
     return {
       userId: tokenRecord.userId,
       oldUser,
@@ -318,6 +337,18 @@ export const completePasswordReset = async (
     if (error instanceof InvalidPasswordResetTokenError) {
       logPasswordResetTokenRejection(error);
       throw error;
+    }
+
+    if (error instanceof PasswordResetSessionRevocationError) {
+      logger.error(
+        {
+          error: error.cause instanceof Error ? error.cause : error,
+          stage: "session_revoke",
+          userId: error.userId,
+        },
+        "Password reset completion failed"
+      );
+      throw error.cause instanceof Error ? error.cause : error;
     }
 
     logger.error({ error, stage: "password_update" }, "Password reset completion failed");
