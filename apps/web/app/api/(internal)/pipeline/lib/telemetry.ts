@@ -27,6 +27,10 @@ let nextTelemetryCheck = 0;
  * 2. Redis check (shared across instances, persists across restarts)
  * 3. Distributed lock (prevents concurrent execution in multi-instance deployments)
  */
+// Hashed license key for log context — allows correlating log entries to a specific license
+// without exposing the raw key. Computed once at module load.
+const hashedLicenseKey = env.ENTERPRISE_LICENSE_KEY ? hashString(env.ENTERPRISE_LICENSE_KEY) : null;
+
 export const sendTelemetryEvents = async () => {
   try {
     // ============================================================
@@ -125,7 +129,7 @@ export const sendTelemetryEvents = async () => {
       // Log as warning since telemetry is non-essential
       const errorMessage = e instanceof Error ? e.message : String(e);
       logger.warn(
-        { error: e, message: errorMessage, lastSent, now },
+        { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
         "Failed to send telemetry - applying 1h cooldown"
       );
 
@@ -143,7 +147,7 @@ export const sendTelemetryEvents = async () => {
     // Log as warning since telemetry is non-essential functionality
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.warn(
-      { error, message: errorMessage, timestamp: Date.now() },
+      { error, message: errorMessage, timestamp: Date.now(), hashedLicenseKey },
       "Unexpected error in sendTelemetryEvents wrapper - telemetry check skipped"
     );
   }
@@ -273,9 +277,6 @@ const sendTelemetry = async (lastSent: number) => {
     temporal: {
       instanceCreatedAt: instanceCreatedAt.toISOString(), // When instance was first created
       newestResponseAt: newestResponse?.createdAt.toISOString() || null, // Most recent activity
-    },
-    license: {
-      hashedKey: env.ENTERPRISE_LICENSE_KEY ? hashString(env.ENTERPRISE_LICENSE_KEY) : null,
     },
   };
 
