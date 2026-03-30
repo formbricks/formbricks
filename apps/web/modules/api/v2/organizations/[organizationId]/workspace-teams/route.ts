@@ -6,6 +6,11 @@ import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { hasOrganizationIdAndAccess } from "@/modules/api/v2/organizations/[organizationId]/lib/utils";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import {
+  addLegacyProjectId,
+  addLegacyProjectIdToList,
+  normaliseProjectIdToWorkspaceId,
+} from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/backwards-compat";
 import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/utils";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
@@ -36,13 +41,17 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
         });
       }
 
-      const result = await getWorkspaceTeams(authentication.organizationId, query!);
+      const normalisedQuery = normaliseProjectIdToWorkspaceId(query!);
+      const result = await getWorkspaceTeams(authentication.organizationId, normalisedQuery);
 
       if (!result.ok) {
         return handleApiError(request, result.error);
       }
 
-      return responses.successResponse(result.data);
+      return responses.successResponse({
+        ...result.data,
+        data: addLegacyProjectIdToList(result.data.data),
+      });
     },
   });
 }
@@ -56,7 +65,15 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
-      const { teamId, workspaceId } = body!;
+      const normalisedBody = normaliseProjectIdToWorkspaceId(body!);
+      const { teamId, workspaceId } = normalisedBody;
+
+      if (!workspaceId) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "workspaceId", issue: "Either workspaceId or projectId must be provided" }],
+        });
+      }
 
       if (auditLog) {
         auditLog.targetId = `${workspaceId}-${teamId}`;
@@ -103,7 +120,11 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
           auditLog
         );
       }
-      const result = await createWorkspaceTeam(body!);
+      const result = await createWorkspaceTeam({
+        teamId,
+        workspaceId,
+        permission: normalisedBody.permission,
+      });
       if (!result.ok) {
         return handleApiError(request, result.error, auditLog);
       }
@@ -112,7 +133,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
         auditLog.newObject = result.data;
       }
 
-      return responses.successResponse({ data: result.data });
+      return responses.successResponse({ data: addLegacyProjectId(result.data) });
     },
     action: "created",
     targetType: "workspaceTeam",
@@ -128,7 +149,15 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
-      const { teamId, workspaceId } = body!;
+      const normalisedBody = normaliseProjectIdToWorkspaceId(body!);
+      const { teamId, workspaceId } = normalisedBody;
+
+      if (!workspaceId) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "workspaceId", issue: "Either workspaceId or projectId must be provided" }],
+        });
+      }
 
       if (auditLog) {
         auditLog.targetId = `${workspaceId}-${teamId}`;
@@ -172,7 +201,11 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
         logger.error(error, `Failed to fetch old workspace team data for audit log`);
       }
 
-      const result = await updateWorkspaceTeam(teamId, workspaceId, body!);
+      const result = await updateWorkspaceTeam(teamId, workspaceId, {
+        teamId,
+        workspaceId,
+        permission: normalisedBody.permission,
+      });
       if (!result.ok) {
         return handleApiError(request, result.error, auditLog);
       }
@@ -182,7 +215,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
         auditLog.newObject = result.data;
       }
 
-      return responses.successResponse({ data: result.data });
+      return responses.successResponse({ data: addLegacyProjectId(result.data) });
     },
     action: "updated",
     targetType: "workspaceTeam",
@@ -198,7 +231,15 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { query, params }, authentication, auditLog }) => {
-      const { teamId, workspaceId } = query!;
+      const normalisedQuery = normaliseProjectIdToWorkspaceId(query!);
+      const { teamId, workspaceId } = normalisedQuery;
+
+      if (!workspaceId) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "workspaceId", issue: "Either workspaceId or projectId must be provided" }],
+        });
+      }
 
       if (auditLog) {
         auditLog.targetId = `${workspaceId}-${teamId}`;
@@ -251,7 +292,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
         auditLog.oldObject = oldWorkspaceTeamData;
       }
 
-      return responses.successResponse({ data: result.data });
+      return responses.successResponse({ data: addLegacyProjectId(result.data) });
     },
     action: "deleted",
     targetType: "workspaceTeam",

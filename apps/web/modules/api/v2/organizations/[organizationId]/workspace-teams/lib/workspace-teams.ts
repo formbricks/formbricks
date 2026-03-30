@@ -46,7 +46,7 @@ export const getWorkspaceTeams = async (
 };
 
 export const createWorkspaceTeam = async (
-  teamInput: TWorkspaceTeamInput
+  teamInput: TWorkspaceTeamInput & { workspaceId: string }
 ): Promise<Result<WorkspaceTeam, ApiErrorResponseV2>> => {
   const { teamId, workspaceId, permission } = teamInput;
 
