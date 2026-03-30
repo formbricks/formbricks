@@ -234,6 +234,7 @@
         "TURNSTILE_SITE_KEY",
         "RECAPTCHA_SITE_KEY",
         "RECAPTCHA_SECRET_KEY",
+        "TELEMETRY_DISABLED",
         "TERMS_URL",
         "VERCEL",
         "VERCEL_URL",

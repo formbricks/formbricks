@@ -51,7 +51,18 @@ vi.mock("@/lib/env", () => ({
     RECAPTCHA_SECRET_KEY: "secret-key",
     GITHUB_ID: "github-id",
     SAML_DATABASE_URL: "postgresql://saml.example.com/formbricks",
+    ENTERPRISE_LICENSE_KEY: "test-license-key",
   },
+}));
+vi.mock("@/lib/constants", () => ({
+  E2E_TESTING: false,
+  TELEMETRY_DISABLED: false,
+}));
+vi.mock("@/lib/hash-string", () => ({
+  hashString: vi.fn((s: string) => `hashed-${s}`),
+}));
+vi.mock("@/modules/ee/license-check/lib/license", () => ({
+  getEnterpriseLicense: vi.fn(),
 }));
 
 // Mock fetch
@@ -141,6 +152,9 @@ describe("sendTelemetryEvents", () => {
     expect(payload.sso.github).toBe(true);
     expect(payload.sso.saml).toBe(true);
 
+    // Check hashed license key
+    expect(payload.license.hashedKey).toBe("hashed-test-license-key");
+
     // Check cache update (no TTL parameter)
     expect(mockCacheService.set).toHaveBeenCalledWith("telemetry_last_sent_ts", expect.any(String));
 
@@ -199,6 +213,10 @@ describe("sendTelemetryEvents", () => {
   test("should handle telemetry send failure and apply cooldown", async () => {
     // Reset module to clear nextTelemetryCheck state from previous tests
     vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
+    }));
     const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
 
     // Ensure we can acquire lock by setting last sent time far in the past
@@ -242,6 +260,10 @@ describe("sendTelemetryEvents", () => {
   test("should skip if no organization exists", async () => {
     // Reset module to clear nextTelemetryCheck state from previous tests
     vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
+    }));
     const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
 
     // Ensure we can acquire lock by setting last sent time far in the past
@@ -275,5 +297,149 @@ describe("sendTelemetryEvents", () => {
     // Note: The current implementation calls cache.set even when no org exists
     // This might be a bug, but we test the actual behavior
     expect(mockCacheService.set).toHaveBeenCalled();
+  });
+
+  test("should skip telemetry when TELEMETRY_DISABLED is true and no active EE license", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: true }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+
+    await freshSendTelemetryEvents();
+
+    // Should return early without touching cache or sending telemetry
+    expect(getCacheService).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("should send telemetry when TELEMETRY_DISABLED is true but EE license is active", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: true }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+
+    // Re-setup mocks after resetModules
+    vi.mocked(getCacheService).mockResolvedValue({
+      ok: true,
+      data: mockCacheService as any,
+    });
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
+    mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
+    mockCacheService.get.mockResolvedValue({ ok: true, data: null });
+    mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
+
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      id: "org-123",
+      createdAt: new Date("2023-01-01"),
+    } as any);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      {
+        organizationCount: BigInt(1),
+        userCount: BigInt(5),
+        teamCount: BigInt(2),
+        projectCount: BigInt(3),
+        surveyCount: BigInt(10),
+        inProgressSurveyCount: BigInt(4),
+        completedSurveyCount: BigInt(6),
+        responseCountAllTime: BigInt(100),
+        responseCountSinceLastUpdate: BigInt(10),
+        displayCount: BigInt(50),
+        contactCount: BigInt(20),
+        segmentCount: BigInt(4),
+        newestResponseAt: new Date("2024-01-01T00:00:00.000Z"),
+      },
+    ] as any);
+    vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as any);
+    vi.mocked(prisma.account.findMany).mockResolvedValue([{ provider: "github" }] as any);
+    fetchMock.mockResolvedValue({ ok: true });
+
+    await freshSendTelemetryEvents();
+
+    // EE license active — telemetry should bypass TELEMETRY_DISABLED and send
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("should include null hashed license key when no ENTERPRISE_LICENSE_KEY is set", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
+    }));
+    vi.doMock("@/lib/hash-string", () => ({
+      hashString: vi.fn((s: string) => `hashed-${s}`),
+    }));
+    vi.doMock("@/lib/env", () => ({
+      env: {
+        SMTP_HOST: "smtp.example.com",
+        S3_BUCKET_NAME: "my-bucket",
+        PROMETHEUS_ENABLED: true,
+        RECAPTCHA_SITE_KEY: "site-key",
+        RECAPTCHA_SECRET_KEY: "secret-key",
+        GITHUB_ID: "github-id",
+        SAML_DATABASE_URL: "postgresql://saml.example.com/formbricks",
+        ENTERPRISE_LICENSE_KEY: undefined,
+      },
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+
+    // Re-setup mocks after resetModules
+    vi.mocked(getCacheService).mockResolvedValue({
+      ok: true,
+      data: mockCacheService as any,
+    });
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
+    mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
+    mockCacheService.get.mockResolvedValue({ ok: true, data: null });
+    mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
+
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      id: "org-123",
+      createdAt: new Date("2023-01-01"),
+    } as any);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      {
+        organizationCount: BigInt(1),
+        userCount: BigInt(5),
+        teamCount: BigInt(2),
+        projectCount: BigInt(3),
+        surveyCount: BigInt(10),
+        inProgressSurveyCount: BigInt(4),
+        completedSurveyCount: BigInt(6),
+        responseCountAllTime: BigInt(100),
+        responseCountSinceLastUpdate: BigInt(10),
+        displayCount: BigInt(50),
+        contactCount: BigInt(20),
+        segmentCount: BigInt(4),
+        newestResponseAt: new Date("2024-01-01T00:00:00.000Z"),
+      },
+    ] as any);
+    vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as any);
+    vi.mocked(prisma.account.findMany).mockResolvedValue([{ provider: "github" }] as any);
+    fetchMock.mockResolvedValue({ ok: true });
+
+    await freshSendTelemetryEvents();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload.license.hashedKey).toBeNull();
+  });
+
+  test("should unconditionally skip when E2E_TESTING is true even with active EE license", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: true, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+
+    await freshSendTelemetryEvents();
+
+    // E2E_TESTING is a hard skip — no EE bypass, no cache, no fetch
+    expect(getCacheService).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

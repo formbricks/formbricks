@@ -2,8 +2,11 @@ import { IntegrationType } from "@prisma/client";
 import { createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { E2E_TESTING, TELEMETRY_DISABLED } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { hashString } from "@/lib/hash-string";
 import { getInstanceInfo } from "@/lib/instance";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import packageJson from "@/package.json";
 
 const TELEMETRY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -26,6 +29,28 @@ let nextTelemetryCheck = 0;
  */
 export const sendTelemetryEvents = async () => {
   try {
+    // ============================================================
+    // CHECK 0a: E2E Testing Hard Skip
+    // ============================================================
+    // Purpose: Unconditionally skip telemetry in test/CI environments.
+    // No EE bypass — E2E_TESTING is an internal flag, not customer-facing.
+    if (E2E_TESTING) {
+      return;
+    }
+
+    // ============================================================
+    // CHECK 0b: Telemetry Disabled Check
+    // ============================================================
+    // Purpose: Allow CE self-hosters to opt out of telemetry via env var.
+    // EE bypass: If an active Enterprise License is detected, telemetry is always sent
+    // regardless of the TELEMETRY_DISABLED setting to enforce license compliance.
+    if (TELEMETRY_DISABLED) {
+      const license = await getEnterpriseLicense();
+      if (!license.active) {
+        return;
+      }
+    }
+
     const now = Date.now();
 
     // ============================================================
@@ -248,6 +273,9 @@ const sendTelemetry = async (lastSent: number) => {
     temporal: {
       instanceCreatedAt: instanceCreatedAt.toISOString(), // When instance was first created
       newestResponseAt: newestResponse?.createdAt.toISOString() || null, // Most recent activity
+    },
+    license: {
+      hashedKey: env.ENTERPRISE_LICENSE_KEY ? hashString(env.ENTERPRISE_LICENSE_KEY) : null,
     },
   };
 
