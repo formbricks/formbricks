@@ -102,10 +102,6 @@ export const SurveyMenuBar = ({
     isSurveySavingRef.current = isSurveySaving;
   }, [isSurveySaving]);
 
-  useEffect(() => {
-    isSurveyPublishingRef.current = isSurveyPublishing;
-  }, [isSurveyPublishing]);
-
   // Reset the successfully saved flag when survey prop updates (page refresh complete)
   useEffect(() => {
     if (isSuccessfullySavedRef.current) {
@@ -422,11 +418,13 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveyPublish = async () => {
+    isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
     if (!isSurveyValidatedWithZod) {
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       return;
     }
@@ -434,6 +432,7 @@ export const SurveyMenuBar = ({
     try {
       const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
@@ -450,10 +449,12 @@ export const SurveyMenuBar = ({
       if (!publishResult?.data) {
         const errorMessage = getFormattedErrorMessage(publishResult);
         toast.error(errorMessage);
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
 
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
@@ -461,6 +462,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       console.error(error);
       toast.error(t("environments.surveys.edit.error_publishing_survey"));
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
     }
   };
