@@ -72,6 +72,7 @@ export const SurveyMenuBar = ({
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
+  const isSurveyPublishingRef = useRef(false);
 
   // Refs for interval-based auto-save (to access current values without re-creating interval)
   const localSurveyRef = useRef(localSurvey);
@@ -100,6 +101,10 @@ export const SurveyMenuBar = ({
   useEffect(() => {
     isSurveySavingRef.current = isSurveySaving;
   }, [isSurveySaving]);
+
+  useEffect(() => {
+    isSurveyPublishingRef.current = isSurveyPublishing;
+  }, [isSurveyPublishing]);
 
   // Reset the successfully saved flag when survey prop updates (page refresh complete)
   useEffect(() => {
@@ -269,8 +274,8 @@ export const SurveyMenuBar = ({
       // Skip if tab is not visible (no computation, no API calls for background tabs)
       if (document.hidden) return;
 
-      // Skip if already saving (manual or auto)
-      if (isAutoSavingRef.current || isSurveySavingRef.current) return;
+      // Skip if already saving, publishing, or auto-saving
+      if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
       // Check for changes using refs (avoids re-creating interval on every change)
       const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
