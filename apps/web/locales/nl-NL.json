@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Wachtwoord wijzigen",
     "forgot_password_email_did_not_request": "Als u dit niet heeft aangevraagd, kunt u deze e-mail negeren.",
     "forgot_password_email_heading": "Wachtwoord wijzigen",
-    "forgot_password_email_link_valid_for_24_hours": "De link is 24 uur geldig.",
+    "forgot_password_email_link_valid_for_24_hours": "De link is {minutes} minuten geldig.",
     "forgot_password_email_subject": "Reset uw Formbricks-wachtwoord",
     "forgot_password_email_text": "U heeft een link aangevraagd om uw wachtwoord te wijzigen. Dit kunt u doen door op onderstaande link te klikken:",
     "hidden_field": "Verborgen veld",

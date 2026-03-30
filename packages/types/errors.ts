@@ -95,6 +95,18 @@ class TooManyRequestsError extends Error {
   }
 }
 
+class InvalidPasswordResetTokenError extends Error {
+  statusCode = 400;
+  reason?: string;
+  userId?: string;
+  constructor(message: string, reason?: string, userId?: string) {
+    super(message);
+    this.name = "InvalidPasswordResetTokenError";
+    this.reason = reason;
+    this.userId = userId;
+  }
+}
+
 interface NetworkError {
   code: "network_error";
   message: string;
@@ -127,6 +139,7 @@ export {
   AuthenticationError,
   AuthorizationError,
   TooManyRequestsError,
+  InvalidPasswordResetTokenError,
 };
 export type { NetworkError, ForbiddenError };
 
@@ -142,6 +155,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",
+  "InvalidPasswordResetTokenError",
 ]);
 
 /**

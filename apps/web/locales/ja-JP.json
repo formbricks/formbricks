@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "パスワードを変更",
     "forgot_password_email_did_not_request": "このリクエストに心当たりのない場合は、このメールを無視してください。",
     "forgot_password_email_heading": "パスワードを変更",
-    "forgot_password_email_link_valid_for_24_hours": "このリンクは24時間有効です。",
+    "forgot_password_email_link_valid_for_24_hours": "このリンクは{minutes}分間有効です。",
     "forgot_password_email_subject": "Formbricksのパスワードをリセットしてください",
     "forgot_password_email_text": "パスワード変更のリンクがリクエストされました。以下のリンクをクリックして変更できます。",
     "hidden_field": "非表示フィールド",

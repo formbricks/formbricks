@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Schimbați parola",
     "forgot_password_email_did_not_request": "Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest email.",
     "forgot_password_email_heading": "Schimbați parola",
-    "forgot_password_email_link_valid_for_24_hours": "Linkul este valabil timp de 24 de ore.",
+    "forgot_password_email_link_valid_for_24_hours": "Linkul este valabil timp de {minutes} minute.",
     "forgot_password_email_subject": "Resetați parola dumneavoastră Formbricks",
     "forgot_password_email_text": "Ați solicitat un link pentru a vă schimba parola. Puteți face acest lucru făcând clic pe linkul de mai jos:",
     "hidden_field": "Câmp ascuns",

@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Jelszó megváltoztatása",
     "forgot_password_email_did_not_request": "Ha Ön nem kérte ezt, akkor hagyja figyelmen kívül ezt a levelet.",
     "forgot_password_email_heading": "Jelszó megváltoztatása",
-    "forgot_password_email_link_valid_for_24_hours": "A hivatkozás 24 órán keresztül érvényes.",
+    "forgot_password_email_link_valid_for_24_hours": "A hivatkozás {minutes} percig érvényes.",
     "forgot_password_email_subject": "A Formbricks-jelszó visszaállítása",
     "forgot_password_email_text": "Hivatkozást kért a jelszava megváltoztatásához. Ezt a lenti hivatkozásra kattintva teheti meg:",
     "hidden_field": "Rejtett mező",

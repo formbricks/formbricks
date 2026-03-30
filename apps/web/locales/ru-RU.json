@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Сменить пароль",
     "forgot_password_email_did_not_request": "Если вы не запрашивали это, просто проигнорируйте это письмо.",
     "forgot_password_email_heading": "Сменить пароль",
-    "forgot_password_email_link_valid_for_24_hours": "Ссылка действительна в течение 24 часов.",
+    "forgot_password_email_link_valid_for_24_hours": "Ссылка действительна в течение {minutes} минут.",
     "forgot_password_email_subject": "Сбросьте свой пароль Formbricks",
     "forgot_password_email_text": "Вы запросили ссылку для смены пароля. Вы можете сделать это, перейдя по ссылке ниже:",
     "hidden_field": "Скрытое поле",

@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Ändra lösenord",
     "forgot_password_email_did_not_request": "Om du inte begärde detta, vänligen ignorera detta e-postmeddelande.",
     "forgot_password_email_heading": "Ändra lösenord",
-    "forgot_password_email_link_valid_for_24_hours": "Länken är giltig i 24 timmar.",
+    "forgot_password_email_link_valid_for_24_hours": "Länken är giltig i {minutes} minuter.",
     "forgot_password_email_subject": "Återställ ditt Formbricks-lösenord",
     "forgot_password_email_text": "Du har begärt en länk för att ändra ditt lösenord. Du kan göra detta genom att klicka på länken nedan:",
     "hidden_field": "Dolt fält",

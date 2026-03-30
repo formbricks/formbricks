@@ -200,7 +200,7 @@ vi.mock("@/lib/constants", () => ({
   OIDC_ISSUER: "test-oidc-issuer",
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
-  WEBAPP_URL: "test-webapp-url",
+  WEBAPP_URL: "https://test-webapp-url.com",
   STRIPE_API_VERSION: "2026-01-28.clover",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
@@ -240,5 +240,6 @@ vi.mock("@/lib/constants", () => ({
   MAIL_FROM: "mock@mail.com",
   MAIL_FROM_NAME: "Mock Mail",
   RATE_LIMITING_DISABLED: false,
+  PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: 30,
   CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
 }));

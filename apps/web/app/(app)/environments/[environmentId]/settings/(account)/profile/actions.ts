@@ -14,11 +14,12 @@ import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
 import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { requestPasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
+import { sendVerificationNewEmail } from "@/modules/email";
 
 function buildUserUpdatePayload(parsedInput: TUserPersonalInfoUpdateInput): TUserUpdateInput {
   return {
@@ -89,7 +90,7 @@ export const resetPasswordAction = authenticatedActionClient.action(
       throw new OperationNotAllowedError("Password reset is not allowed for this user.");
     }
 
-    await sendForgotPasswordEmail(ctx.user);
+    await requestPasswordReset(ctx.user, "profile");
 
     ctx.auditLoggingCtx.userId = ctx.user.id;
 

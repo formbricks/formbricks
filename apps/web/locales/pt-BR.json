@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Mudar senha",
     "forgot_password_email_did_not_request": "Se você não solicitou isso, por favor ignore este e-mail.",
     "forgot_password_email_heading": "Mudar senha",
-    "forgot_password_email_link_valid_for_24_hours": "O link é válido por 24 horas.",
+    "forgot_password_email_link_valid_for_24_hours": "O link é válido por {minutes} minutos.",
     "forgot_password_email_subject": "Redefinir sua senha Formbricks",
     "forgot_password_email_text": "Você pediu um link pra trocar sua senha. Você pode fazer isso clicando no link abaixo:",
     "hidden_field": "Campo oculto",

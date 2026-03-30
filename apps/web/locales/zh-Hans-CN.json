@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "更改 密码",
     "forgot_password_email_did_not_request": "如果您 未 请求此 项 ，请 忽略 此邮件 。",
     "forgot_password_email_heading": "更改 密码",
-    "forgot_password_email_link_valid_for_24_hours": "链接在 24 小时 内有效。",
+    "forgot_password_email_link_valid_for_24_hours": "链接在{minutes}分钟内有效。",
     "forgot_password_email_subject": "重置您的 Formbricks 密码",
     "forgot_password_email_text": "您 已 请求 一个 链接 来 更改 您的 密码。 您 可以 点击 下方 链接 完成 这个 操作：",
     "hidden_field": "隐藏字段",

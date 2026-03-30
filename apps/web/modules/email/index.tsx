@@ -157,17 +157,19 @@ export const sendVerificationEmail = async ({
   }
 };
 
-export const sendForgotPasswordEmail = async (user: {
-  id: string;
+export const sendPasswordResetLinkEmail = async (user: {
   email: TUserEmail;
   locale: TUserLocale;
+  verifyLink: string;
+  linkValidityInMinutes: number;
 }): Promise<boolean> => {
   const t = await getTranslate(user.locale);
-  const token = createToken(user.id, {
-    expiresIn: "1d",
+  const html = await renderForgotPasswordEmail({
+    verifyLink: user.verifyLink,
+    linkValidityInMinutes: user.linkValidityInMinutes,
+    t,
+    ...legalProps,
   });
-  const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await renderForgotPasswordEmail({ verifyLink, t, ...legalProps });
   return await sendEmail({
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),

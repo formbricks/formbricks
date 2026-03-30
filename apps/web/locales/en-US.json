@@ -507,7 +507,7 @@
     "forgot_password_email_change_password": "Change password",
     "forgot_password_email_did_not_request": "If you did not request this, please ignore this email.",
     "forgot_password_email_heading": "Change password",
-    "forgot_password_email_link_valid_for_24_hours": "The link is valid for 24 hours.",
+    "forgot_password_email_link_valid_for_24_hours": "The link is valid for {minutes} minutes.",
     "forgot_password_email_subject": "Reset your Formbricks password",
     "forgot_password_email_text": "You have requested a link to change your password. You can do this by clicking the link below:",
     "hidden_field": "Hidden field",

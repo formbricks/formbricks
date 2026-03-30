@@ -12,6 +12,7 @@ export const exampleData = {
 
   forgotPasswordEmail: {
     verifyLink: "https://app.formbricks.com/auth/forgot-password/reset?token=example-reset-token",
+    linkValidityInMinutes: 30,
   },
 
   newEmailVerification: {
