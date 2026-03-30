@@ -9,7 +9,7 @@ ALTER TABLE "FeedbackRecordDirectoryProject" RENAME TO "FeedbackRecordDirectoryW
 -- Rename "Workspace" (was "Project") constraints and indexes
 ALTER TABLE "Workspace" RENAME CONSTRAINT "Project_pkey" TO "Workspace_pkey";
 ALTER TABLE "Workspace" RENAME CONSTRAINT "Project_organizationId_fkey" TO "Workspace_organizationId_fkey";
-ALTER INDEX "Project_organizationId_idx" RENAME TO "Workspace_organizationId_idx";
+-- Note: Project_organizationId_idx was already dropped by 20260113160531_remove_unused_indexes
 ALTER INDEX "Project_organizationId_name_key" RENAME TO "Workspace_organizationId_name_key";
 
 -- Rename "Environment" column and constraints
