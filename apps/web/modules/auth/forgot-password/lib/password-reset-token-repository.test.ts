@@ -5,7 +5,6 @@ import { DatabaseError } from "@formbricks/types/errors";
 import {
   consumeActiveToken,
   deleteByTokenHash,
-  deleteByUserId,
   findByTokenHash,
   upsertActiveToken,
 } from "./password-reset-token-repository";
@@ -65,17 +64,6 @@ describe("password-reset-token-repository", () => {
     expect(prisma.passwordResetToken.findUnique).toHaveBeenCalledWith({
       where: { tokenHash: "hashed-token" },
       select: expect.any(Object),
-    });
-  });
-
-  test("deletes by user id", async () => {
-    vi.mocked(prisma.passwordResetToken.deleteMany).mockResolvedValue({ count: 1 } as any);
-
-    const result = await deleteByUserId(userId);
-
-    expect(result).toBe(1);
-    expect(prisma.passwordResetToken.deleteMany).toHaveBeenCalledWith({
-      where: { userId },
     });
   });
 

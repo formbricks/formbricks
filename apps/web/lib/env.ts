@@ -1,9 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-const PASSWORD_RESET_TOKEN_LIFETIME_ERROR =
-  "PASSWORD_RESET_TOKEN_LIFETIME_MINUTES must be an integer between 5 and 120.";
-
 export const env = createEnv({
   /*
    * Serverside Environment variables, not available on the client.
@@ -65,32 +62,7 @@ export const env = createEnv({
         ? z.string().optional()
         : z.url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
-    PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z
-      .string()
-      .optional()
-      .transform((value, ctx) => {
-        const rawValue = value ?? "30";
-
-        if (!/^\d+$/.test(rawValue)) {
-          ctx.addIssue({
-            code: "custom",
-            message: PASSWORD_RESET_TOKEN_LIFETIME_ERROR,
-          });
-          return z.NEVER;
-        }
-
-        const parsedValue = Number.parseInt(rawValue, 10);
-
-        if (parsedValue < 5 || parsedValue > 120) {
-          ctx.addIssue({
-            code: "custom",
-            message: PASSWORD_RESET_TOKEN_LIFETIME_ERROR,
-          });
-          return z.NEVER;
-        }
-
-        return parsedValue;
-      }),
+    PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
     PRIVACY_URL: z
       .url()
       .optional()

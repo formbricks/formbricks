@@ -10,7 +10,7 @@ import {
   getIsEmailUnique,
   verifyUserPassword,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/lib/user";
-import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -86,6 +86,10 @@ export const updateUserAction = authenticatedActionClient.inputSchema(ZUserPerso
 
 export const resetPasswordAction = authenticatedActionClient.action(
   withAuditLogging("passwordReset", "user", async ({ ctx }) => {
+    if (PASSWORD_RESET_DISABLED) {
+      throw new OperationNotAllowedError("Password reset is disabled");
+    }
+
     if (ctx.user.identityProvider !== "email") {
       throw new OperationNotAllowedError("Password reset is not allowed for this user.");
     }
