@@ -4,6 +4,11 @@ import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/t
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import {
+  addLegacyProjectOverwrites,
+  addLegacyProjectOverwritesToList,
+  normaliseProjectOverwritesToWorkspace,
+} from "@/app/lib/api/survey-backwards-compat";
+import {
   transformBlocksToQuestions,
   transformQuestionsToBlocks,
   validateSurveyInput,
@@ -53,7 +58,9 @@ export const GET = withV1ApiWrapper({
       });
 
       return {
-        response: responses.successResponse(resolveStorageUrlsInObject(surveysWithQuestions)),
+        response: responses.successResponse(
+          addLegacyProjectOverwritesToList(resolveStorageUrlsInObject(surveysWithQuestions))
+        ),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -82,6 +89,9 @@ export const POST = withV1ApiWrapper({
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
+
+      // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
+      surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);
 
       const inputValidation = ZSurveyCreateInputWithEnvironmentId.safeParse(surveyInput);
 
@@ -147,12 +157,12 @@ export const POST = withV1ApiWrapper({
         };
 
         return {
-          response: responses.successResponse(surveyWithQuestions),
+          response: responses.successResponse(addLegacyProjectOverwrites(surveyWithQuestions)),
         };
       }
 
       return {
-        response: responses.successResponse(survey),
+        response: responses.successResponse(addLegacyProjectOverwrites(survey)),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {

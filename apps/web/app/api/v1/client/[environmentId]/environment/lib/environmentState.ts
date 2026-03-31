@@ -2,6 +2,10 @@ import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { TJsEnvironmentState } from "@formbricks/types/js";
+import {
+  addLegacyProjectOverwritesToList,
+  addLegacyProjectToEnvironmentState,
+} from "@/app/lib/api/survey-backwards-compat";
 import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getEnvironmentStateData } from "./data";
@@ -33,12 +37,14 @@ export const getEnvironmentState = async (
       }
 
       // Build the response data
-      const data: TJsEnvironmentState["data"] = {
-        surveys,
+      // Backwards compat: include `project` alongside `workspace`, and
+      // `projectOverwrites` alongside `workspaceOverwrites` in each survey
+      const data = addLegacyProjectToEnvironmentState({
+        surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
         workspace: environment.workspace,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
-      };
+      } as TJsEnvironmentState["data"]);
 
       return { data };
     },
