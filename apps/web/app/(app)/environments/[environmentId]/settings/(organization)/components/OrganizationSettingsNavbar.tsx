@@ -22,7 +22,8 @@ export const OrganizationSettingsNavbar = ({
   loading,
 }: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isMember, isOwner } = getAccessFlags(membershipRole);
+  const { isMember, isOwner, isManager } = getAccessFlags(membershipRole);
+  const isOwnerOrManager = isOwner || isManager;
   const isPricingDisabled = isMember;
   const { t } = useTranslation();
 
@@ -45,7 +46,7 @@ export const OrganizationSettingsNavbar = ({
       label: t("common.api_keys"),
       href: `/environments/${environmentId}/settings/api-keys`,
       current: pathname?.includes("/api-keys"),
-      hidden: !isOwner,
+      hidden: !isOwnerOrManager,
     },
     {
       id: "domain",
