@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { cache as reactCache } from "react";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
@@ -23,16 +24,16 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
   ]);
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), organizationId);
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   if (!currentUserMembership) {
-    throw new Error(t("common.membership_not_found"));
+    throw new ResourceNotFoundError(t("common.membership"), null);
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership?.role);

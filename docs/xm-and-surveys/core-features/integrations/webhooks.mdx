@@ -70,6 +70,18 @@ endpoint with [ngrok](https://ngrok.com/docs/universal-gateway/http).
   workflow while validating the webhook setup.
 </Note>
 
+### Allowing Internal URLs (Self-Hosted Only)
+
+By default, Formbricks blocks webhook URLs that point to private or internal IP addresses (e.g. `localhost`, `192.168.x.x`, `10.x.x.x`) to prevent [SSRF attacks](https://owasp.org/www-community/attacks/Server-Side_Request_Forgery). If you are self-hosting Formbricks and need to send webhooks to internal services, you can set the following environment variable:
+
+```sh
+DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1
+```
+
+<Warning>
+  Only enable this on trusted, self-hosted environments. Enabling this on a publicly accessible instance exposes your server to SSRF risks.
+</Warning>
+
 If you encounter any issues or need help setting up webhooks, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions). 😃
 
 ---

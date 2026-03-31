@@ -42,6 +42,7 @@
     "@lexical/react": "0.41.0",
     "@lexical/rich-text": "0.41.0",
     "@lexical/table": "0.41.0",
+    "@next-auth/prisma-adapter": "1.0.7",
     "@opentelemetry/auto-instrumentations-node": "0.71.0",
     "@opentelemetry/exporter-metrics-otlp-http": "0.213.0",
     "@opentelemetry/exporter-prometheus": "0.213.0",

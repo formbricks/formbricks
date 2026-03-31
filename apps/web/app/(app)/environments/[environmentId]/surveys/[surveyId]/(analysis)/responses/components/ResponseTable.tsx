@@ -300,7 +300,6 @@ export const ResponseTable = ({
         <DataTableSettingsModal
           open={isTableSettingsModalOpen}
           setOpen={setIsTableSettingsModalOpen}
-          survey={survey}
           table={table}
           columnOrder={columnOrder}
           handleDragEnd={handleDragEnd}

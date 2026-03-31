@@ -6,9 +6,25 @@ import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions as baseAuthOptions } from "@/modules/auth/lib/authOptions";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
-import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
 export const fetchCache = "force-no-store";
+
+const getAuthMethod = (account: Account | null) => {
+  if (account?.provider === "credentials") {
+    return "password";
+  }
+
+  if (account?.provider === "token") {
+    return "email_verification";
+  }
+
+  if (account?.provider) {
+    return "sso";
+  }
+
+  return "unknown";
+};
 
 const handler = async (req: Request, ctx: any) => {
   const eventId = req.headers.get("x-request-id") ?? undefined;
@@ -17,44 +33,6 @@ const handler = async (req: Request, ctx: any) => {
     ...baseAuthOptions,
     callbacks: {
       ...baseAuthOptions.callbacks,
-      async jwt(params: any) {
-        let result: any = params.token;
-        let error: any = undefined;
-
-        try {
-          if (baseAuthOptions.callbacks?.jwt) {
-            result = await baseAuthOptions.callbacks.jwt(params);
-          }
-        } catch (err) {
-          error = err;
-          logger.withContext({ eventId, err }).error("JWT callback failed");
-
-          if (SENTRY_DSN && IS_PRODUCTION) {
-            Sentry.captureException(err);
-          }
-        }
-
-        // Audit JWT operations (token refresh, updates)
-        if (params.trigger && params.token?.profile?.id) {
-          const status: TAuditStatus = error ? "failure" : "success";
-          const auditLog = {
-            action: "jwtTokenCreated" as const,
-            targetType: "user" as const,
-            userId: params.token.profile.id,
-            targetId: params.token.profile.id,
-            organizationId: UNKNOWN_DATA,
-            status,
-            userType: "user" as const,
-            newObject: { trigger: params.trigger, tokenType: "jwt" },
-            ...(error ? { eventId } : {}),
-          };
-
-          queueAuditEventBackground(auditLog);
-        }
-
-        if (error) throw error;
-        return result;
-      },
       async session(params: any) {
         let result: any = params.session;
         let error: any = undefined;
@@ -90,7 +68,7 @@ const handler = async (req: Request, ctx: any) => {
       }) {
         let result: boolean | string = true;
         let error: any = undefined;
-        let authMethod = "unknown";
+        const authMethod = getAuthMethod(account);
 
         try {
           if (baseAuthOptions.callbacks?.signIn) {
@@ -101,15 +79,6 @@ const handler = async (req: Request, ctx: any) => {
               email,
               credentials,
             });
-          }
-
-          // Determine authentication method for more detailed logging
-          if (account?.provider === "credentials") {
-            authMethod = "password";
-          } else if (account?.provider === "token") {
-            authMethod = "email_verification";
-          } else if (account?.provider && account.provider !== "credentials") {
-            authMethod = "sso";
           }
         } catch (err) {
           error = err;
@@ -122,28 +91,58 @@ const handler = async (req: Request, ctx: any) => {
           }
         }
 
-        const status: TAuditStatus = result === false ? "failure" : "success";
-        const auditLog = {
-          action: "signedIn" as const,
-          targetType: "user" as const,
-          userId: user?.id ?? UNKNOWN_DATA,
-          targetId: user?.id ?? UNKNOWN_DATA,
-          organizationId: UNKNOWN_DATA,
-          status,
-          userType: "user" as const,
-          newObject: {
-            ...user,
-            authMethod,
-            provider: account?.provider,
-            ...(error ? { errorMessage: error.message } : {}),
-          },
-          ...(status === "failure" ? { eventId } : {}),
-        };
-
-        queueAuditEventBackground(auditLog);
+        if (result === false) {
+          queueAuditEventBackground({
+            action: "signedIn",
+            targetType: "user",
+            userId: user?.id ?? UNKNOWN_DATA,
+            targetId: user?.id ?? UNKNOWN_DATA,
+            organizationId: UNKNOWN_DATA,
+            status: "failure",
+            userType: "user",
+            newObject: {
+              ...user,
+              authMethod,
+              provider: account?.provider,
+              ...(error instanceof Error ? { errorMessage: error.message } : {}),
+            },
+            eventId,
+          });
+        }
 
         if (error) throw error;
         return result;
+      },
+    },
+    events: {
+      ...baseAuthOptions.events,
+      async signIn({ user, account, isNewUser }: any) {
+        try {
+          await baseAuthOptions.events?.signIn?.({ user, account, isNewUser });
+        } catch (err) {
+          logger.withContext({ eventId, err }).error("Sign-in event callback failed");
+
+          if (SENTRY_DSN && IS_PRODUCTION) {
+            Sentry.captureException(err);
+          }
+        }
+
+        queueAuditEventBackground({
+          action: "signedIn",
+          targetType: "user",
+          userId: user?.id ?? UNKNOWN_DATA,
+          targetId: user?.id ?? UNKNOWN_DATA,
+          organizationId: UNKNOWN_DATA,
+          status: "success",
+          userType: "user",
+          newObject: {
+            ...user,
+            authMethod: getAuthMethod(account),
+            provider: account?.provider,
+            sessionStrategy: "database",
+            isNewUser: isNewUser ?? false,
+          },
+        });
       },
     },
   };
