@@ -47,9 +47,14 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
       return handleApiError(request, err as ApiErrorResponseV2);
     }
 
-    return handleApiError(request, {
-      type: "internal_server_error",
-      details: [{ field: "error", issue: "An error occurred while processing your request." }],
-    });
+    return handleApiError(
+      request,
+      {
+        type: "internal_server_error",
+        details: [{ field: "error", issue: "An error occurred while processing your request." }],
+      },
+      undefined,
+      err
+    );
   }
 };

@@ -19,18 +19,41 @@ export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
 };
 
-const handleDatabaseError = (error: Error, url: string, endpoint: string, responseId: string): Response => {
+type TRouteResult = {
+  response: Response;
+  error?: unknown;
+};
+
+type TExistingResponseResult = { existingResponse: TResponse } | TRouteResult;
+type TSurveyResult = { survey: TSurvey } | TRouteResult;
+type TValidatedUpdateInputResult = { responseUpdateInput: TResponseUpdateInput } | TRouteResult;
+type TUpdatedResponseResult =
+  | { updatedResponse: Awaited<ReturnType<typeof updateResponseWithQuotaEvaluation>> }
+  | TRouteResult;
+
+const handleDatabaseError = (
+  error: Error,
+  url: string,
+  endpoint: string,
+  responseId: string
+): TRouteResult => {
   if (error instanceof ResourceNotFoundError) {
-    return responses.notFoundResponse("Response", responseId, true);
+    return { response: responses.notFoundResponse("Response", responseId, true) };
   }
   if (error instanceof InvalidInputError) {
-    return responses.badRequestResponse(error.message, undefined, true);
+    return { response: responses.badRequestResponse(error.message, undefined, true) };
   }
   if (error instanceof DatabaseError) {
     logger.error({ error, url }, `Error in ${endpoint}`);
-    return responses.internalServerErrorResponse(error.message, true);
+    return {
+      response: responses.internalServerErrorResponse(error.message, true),
+      error,
+    };
   }
-  return responses.internalServerErrorResponse("Unknown error occurred", true);
+  return {
+    response: responses.internalServerErrorResponse("Unknown error occurred", true),
+    error,
+  };
 };
 
 const validateResponse = (
@@ -62,6 +85,140 @@ const validateResponse = (
   }
 };
 
+const getValidatedUpdateInput = async (req: Request): Promise<TValidatedUpdateInputResult> => {
+  const responseUpdate = await req.json();
+  const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
+
+  if (!inputValidation.success) {
+    return {
+      response: responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(inputValidation.error),
+        true
+      ),
+    };
+  }
+
+  return { responseUpdateInput: inputValidation.data };
+};
+
+const getExistingResponse = async (req: Request, responseId: string): Promise<TExistingResponseResult> => {
+  try {
+    const existingResponse = await getResponse(responseId);
+
+    return existingResponse
+      ? { existingResponse }
+      : { response: responses.notFoundResponse("Response", responseId, true) };
+  } catch (error) {
+    return handleDatabaseError(
+      error instanceof Error ? error : new Error(String(error)),
+      req.url,
+      "PUT /api/v1/client/[environmentId]/responses/[responseId]",
+      responseId
+    );
+  }
+};
+
+const getSurveyForResponse = async (
+  req: Request,
+  responseId: string,
+  surveyId: string
+): Promise<TSurveyResult> => {
+  try {
+    const survey = await getSurvey(surveyId);
+
+    return survey ? { survey } : { response: responses.notFoundResponse("Survey", surveyId, true) };
+  } catch (error) {
+    return handleDatabaseError(
+      error instanceof Error ? error : new Error(String(error)),
+      req.url,
+      "PUT /api/v1/client/[environmentId]/responses/[responseId]",
+      responseId
+    );
+  }
+};
+
+const validateUpdateRequest = (
+  existingResponse: TResponse,
+  survey: TSurvey,
+  responseUpdateInput: TResponseUpdateInput
+): TRouteResult | undefined => {
+  if (existingResponse.finished) {
+    return {
+      response: responses.badRequestResponse("Response is already finished", undefined, true),
+    };
+  }
+
+  if (!validateFileUploads(responseUpdateInput.data, survey.questions)) {
+    return {
+      response: responses.badRequestResponse("Invalid file upload response", undefined, true),
+    };
+  }
+
+  const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
+    responseData: responseUpdateInput.data,
+    surveyQuestions: survey.questions as unknown as TSurveyElement[],
+    responseLanguage: responseUpdateInput.language,
+  });
+
+  if (otherResponseInvalidQuestionId) {
+    return {
+      response: responses.badRequestResponse(
+        `Response exceeds character limit`,
+        {
+          questionId: otherResponseInvalidQuestionId,
+        },
+        true
+      ),
+    };
+  }
+
+  return validateResponse(existingResponse, survey, responseUpdateInput);
+};
+
+const getUpdatedResponse = async (
+  req: Request,
+  responseId: string,
+  responseUpdateInput: TResponseUpdateInput
+): Promise<TUpdatedResponseResult> => {
+  try {
+    const updatedResponse = await updateResponseWithQuotaEvaluation(responseId, responseUpdateInput);
+    return { updatedResponse };
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      return {
+        response: responses.notFoundResponse("Response", responseId, true),
+      };
+    }
+    if (error instanceof InvalidInputError) {
+      return {
+        response: responses.badRequestResponse(error.message),
+      };
+    }
+    if (error instanceof DatabaseError) {
+      logger.error(
+        { error, url: req.url },
+        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      );
+      return {
+        response: responses.internalServerErrorResponse(error.message),
+        error,
+      };
+    }
+
+    const unexpectedError = error instanceof Error ? error : new Error(String(error));
+
+    logger.error(
+      { error: unexpectedError, url: req.url },
+      "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+    );
+    return {
+      response: responses.internalServerErrorResponse("Something went wrong"),
+      error: unexpectedError,
+    };
+  }
+};
+
 export const PUT = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
     const params = await props.params;
@@ -73,131 +230,34 @@ export const PUT = withV1ApiWrapper({
       };
     }
 
-    const responseUpdate = await req.json();
-    const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
-
-    if (!inputValidation.success) {
-      return {
-        response: responses.badRequestResponse(
-          "Fields are missing or incorrectly formatted",
-          transformErrorToDetails(inputValidation.error),
-          true
-        ),
-      };
+    const validatedUpdateInput = await getValidatedUpdateInput(req);
+    if ("response" in validatedUpdateInput) {
+      return validatedUpdateInput;
     }
+    const { responseUpdateInput } = validatedUpdateInput;
 
-    let response;
-    try {
-      response = await getResponse(responseId);
-    } catch (error) {
-      const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
-      return {
-        response: handleDatabaseError(
-          error instanceof Error ? error : new Error(String(error)),
-          req.url,
-          endpoint,
-          responseId
-        ),
-      };
+    const existingResponseResult = await getExistingResponse(req, responseId);
+    if ("response" in existingResponseResult) {
+      return existingResponseResult;
     }
+    const { existingResponse } = existingResponseResult;
 
-    if (!response) {
-      return {
-        response: responses.notFoundResponse("Response", responseId, true),
-      };
+    const surveyResult = await getSurveyForResponse(req, responseId, existingResponse.surveyId);
+    if ("response" in surveyResult) {
+      return surveyResult;
     }
+    const { survey } = surveyResult;
 
-    if (response.finished) {
-      return {
-        response: responses.badRequestResponse("Response is already finished", undefined, true),
-      };
-    }
-
-    // get survey to get environmentId
-    let survey;
-    try {
-      survey = await getSurvey(response.surveyId);
-    } catch (error) {
-      const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
-      return {
-        response: handleDatabaseError(
-          error instanceof Error ? error : new Error(String(error)),
-          req.url,
-          endpoint,
-          responseId
-        ),
-      };
-    }
-
-    if (!survey) {
-      return {
-        response: responses.notFoundResponse("Survey", response.surveyId, true),
-      };
-    }
-
-    if (!validateFileUploads(inputValidation.data.data, survey.questions)) {
-      return {
-        response: responses.badRequestResponse("Invalid file upload response", undefined, true),
-      };
-    }
-
-    // Validate response data for "other" options exceeding character limit
-    const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
-      responseData: inputValidation.data.data,
-      surveyQuestions: survey.questions as unknown as TSurveyElement[],
-      responseLanguage: inputValidation.data.language,
-    });
-
-    if (otherResponseInvalidQuestionId) {
-      return {
-        response: responses.badRequestResponse(
-          `Response exceeds character limit`,
-          {
-            questionId: otherResponseInvalidQuestionId,
-          },
-          true
-        ),
-      };
-    }
-
-    const validationResult = validateResponse(response, survey, inputValidation.data);
+    const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput);
     if (validationResult) {
       return validationResult;
     }
 
-    // update response with quota evaluation
-    let updatedResponse;
-    try {
-      updatedResponse = await updateResponseWithQuotaEvaluation(responseId, inputValidation.data);
-    } catch (error) {
-      if (error instanceof ResourceNotFoundError) {
-        return {
-          response: responses.notFoundResponse("Response", responseId, true),
-        };
-      }
-      if (error instanceof InvalidInputError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      if (error instanceof DatabaseError) {
-        logger.error(
-          { error, url: req.url },
-          "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
-        );
-        return {
-          response: responses.internalServerErrorResponse(error.message),
-        };
-      }
-
-      logger.error(
-        { error, url: req.url },
-        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
-      );
-      return {
-        response: responses.internalServerErrorResponse("Something went wrong"),
-      };
+    const updatedResponseResult = await getUpdatedResponse(req, responseId, responseUpdateInput);
+    if ("response" in updatedResponseResult) {
+      return updatedResponseResult;
     }
+    const { updatedResponse } = updatedResponseResult;
 
     const { quotaFull, ...responseData } = updatedResponse;
 

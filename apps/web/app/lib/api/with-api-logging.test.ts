@@ -155,7 +155,7 @@ describe("withV1ApiWrapper", () => {
     });
 
     const req = createMockRequest({
-      url: "https://api.test/v1/management/surveys",
+      url: "https://api.test/api/v1/management/surveys",
       headers: new Map([["x-request-id", "abc-123"]]),
     });
     const { withV1ApiWrapper } = await import("./with-api-logging");
@@ -178,7 +178,21 @@ describe("withV1ApiWrapper", () => {
       })
     );
     expect(Sentry.withScope).toHaveBeenCalled();
-    expect(mockSentryScope.setExtra).toHaveBeenCalledWith("originalError", undefined);
+    expect(mockSentryScope.setTag).toHaveBeenCalledWith("apiVersion", "v1");
+    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
+      "error",
+      expect.objectContaining({
+        name: "Error",
+        message: "API V1 error, id: abc-123",
+      })
+    );
+    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
+      "originalError",
+      expect.objectContaining({
+        name: "Error",
+        message: "API V1 error, id: abc-123",
+      })
+    );
     expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error));
   });
 
@@ -206,7 +220,7 @@ describe("withV1ApiWrapper", () => {
       };
     });
 
-    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
@@ -251,7 +265,7 @@ describe("withV1ApiWrapper", () => {
     });
 
     const req = createMockRequest({
-      url: "https://api.test/v1/management/surveys",
+      url: "https://api.test/api/v1/management/surveys",
       headers: new Map([["x-request-id", "err-1"]]),
     });
     const { withV1ApiWrapper } = await import("./with-api-logging");
@@ -281,7 +295,80 @@ describe("withV1ApiWrapper", () => {
       })
     );
     expect(Sentry.withScope).toHaveBeenCalled();
+    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
+      "error",
+      expect.objectContaining({
+        name: "Error",
+        message: "fail!",
+      })
+    );
     expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  test("treats public v2 client routes as v2 and captures passed errors", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthenticationMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+
+    const underlyingError = new Error("v2 boom");
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.internalServerErrorResponse("fail"),
+      error: underlyingError,
+    });
+
+    const req = createMockRequest({
+      url: "https://api.test/api/v2/client/displays",
+      headers: new Map([["x-request-id", "v2-123"]]),
+    });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(500);
+    expect(mockSentryScope.setTag).toHaveBeenCalledWith("apiVersion", "v2");
+    expect(mockSentryScope.setTag).toHaveBeenCalledWith("method", "GET");
+    expect(mockSentryScope.setTag).toHaveBeenCalledWith("routeScope", "client");
+    expect(mockSentryScope.setContext).toHaveBeenCalledWith(
+      "apiRequest",
+      expect.objectContaining({
+        apiVersion: "v2",
+        correlationId: "v2-123",
+        method: "GET",
+        path: "/api/v2/client/displays",
+        routeScope: "client",
+        status: 500,
+      })
+    );
+    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
+      "error",
+      expect.objectContaining({
+        name: "Error",
+        message: "v2 boom",
+      })
+    );
+    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
+      "originalError",
+      expect.objectContaining({
+        name: "Error",
+        message: "v2 boom",
+      })
+    );
+    expect(Sentry.captureException).toHaveBeenCalledWith(underlyingError);
+    expect(logger.withContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiVersion: "v2",
+        path: "/api/v2/client/displays",
+        status: 500,
+      })
+    );
   });
 
   test("does not log on success response but still audits", async () => {
@@ -308,7 +395,7 @@ describe("withV1ApiWrapper", () => {
       };
     });
 
-    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
@@ -358,7 +445,7 @@ describe("withV1ApiWrapper", () => {
       response: responses.internalServerErrorResponse("fail"),
     });
 
-    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
 
@@ -378,7 +465,7 @@ describe("withV1ApiWrapper", () => {
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.successResponse({ data: "test" }),
@@ -412,7 +499,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(authenticateRequest).mockResolvedValue(null);
 
     const handler = vi.fn();
-    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
@@ -471,7 +558,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
 
     const handler = vi.fn();
-    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
@@ -499,7 +586,7 @@ describe("withV1ApiWrapper", () => {
       response: responses.successResponse({ data: "test" }),
     });
 
-    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     await wrapped(req, undefined);

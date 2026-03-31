@@ -86,19 +86,19 @@ export const GET = withV1ApiWrapper({
         };
       }
 
+      const error = err instanceof Error ? err : new Error(String(err));
+
       logger.error(
         {
-          error: err,
+          error,
           url: req.url,
           environmentId: params.environmentId,
         },
         "Error in GET /api/v1/client/[environmentId]/environment"
       );
       return {
-        response: responses.internalServerErrorResponse(
-          err instanceof Error ? err.message : "Unknown error occurred",
-          true
-        ),
+        response: responses.internalServerErrorResponse(error.message, true),
+        error,
       };
     }
   },

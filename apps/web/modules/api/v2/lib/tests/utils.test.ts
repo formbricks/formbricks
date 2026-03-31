@@ -239,12 +239,16 @@ describe("utils", () => {
       logApiError(mockRequest, error);
 
       // Verify withContext was called with the expected context including method and path
-      expect(withContextMock).toHaveBeenCalledWith({
-        correlationId: "123",
-        method: "POST",
-        path: "/api/v2/management/surveys",
-        error,
-      });
+      expect(withContextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "123",
+          method: "POST",
+          path: "/api/v2/management/surveys",
+          status: 500,
+          error,
+        })
+      );
 
       // Verify error was called on the child logger
       expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
@@ -264,7 +268,7 @@ describe("utils", () => {
       const originalWithContext = logger.withContext;
       logger.withContext = withContextMock;
 
-      const mockRequest = new Request("http://localhost/api/test");
+      const mockRequest = new Request("http://localhost/api/v2/test");
       mockRequest.headers.delete("x-request-id");
 
       const error: ApiErrorResponseV2 = {
@@ -275,12 +279,16 @@ describe("utils", () => {
       logApiError(mockRequest, error);
 
       // Verify withContext was called with the expected context
-      expect(withContextMock).toHaveBeenCalledWith({
-        correlationId: "",
-        method: "GET",
-        path: "/api/test",
-        error,
-      });
+      expect(withContextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "",
+          method: "GET",
+          path: "/api/v2/test",
+          status: 500,
+          error,
+        })
+      );
 
       // Verify error was called on the child logger
       expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
@@ -289,7 +297,7 @@ describe("utils", () => {
       logger.withContext = originalWithContext;
     });
 
-    test("log API error details with SENTRY_DSN set includes method and path tags", () => {
+    test("log API error details with SENTRY_DSN set includes low-cardinality tags and request context", () => {
       // Mock the withContext method and its returned error method
       const errorMock = vi.fn();
       const withContextMock = vi.fn().mockReturnValue({
@@ -301,15 +309,20 @@ describe("utils", () => {
 
       // Capture the scope mock for tag verification
       const scopeSetTagMock = vi.fn();
-      vi.mocked(Sentry.withScope).mockImplementation((callback: (scope: any) => void) => {
+      const scopeSetContextMock = vi.fn();
+      const scopeSetExtraMock = vi.fn();
+      vi.mocked(Sentry.withScope).mockImplementation(((
+        ...args: [(scope: any) => unknown] | [unknown, (scope: any) => unknown]
+      ) => {
+        const callback = args.length === 1 ? args[0] : args[1];
         const mockScope = {
           setTag: scopeSetTagMock,
-          setContext: vi.fn(),
+          setContext: scopeSetContextMock,
           setLevel: vi.fn(),
-          setExtra: vi.fn(),
+          setExtra: scopeSetExtraMock,
         };
-        callback(mockScope);
-      });
+        return callback(mockScope);
+      }) as typeof Sentry.withScope);
 
       // Replace the original withContext with our mock
       const originalWithContext = logger.withContext;
@@ -326,20 +339,37 @@ describe("utils", () => {
       logApiError(mockRequest, error);
 
       // Verify withContext was called with the expected context including method and path
-      expect(withContextMock).toHaveBeenCalledWith({
-        correlationId: "123",
-        method: "DELETE",
-        path: "/api/v2/management/surveys",
-        error,
-      });
+      expect(withContextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "123",
+          method: "DELETE",
+          path: "/api/v2/management/surveys",
+          status: 500,
+          error,
+        })
+      );
 
       // Verify error was called on the child logger
       expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
-      // Verify Sentry scope tags include method and path
-      expect(scopeSetTagMock).toHaveBeenCalledWith("correlationId", "123");
+      // Verify Sentry scope tags stay low-cardinality
+      expect(scopeSetTagMock).toHaveBeenCalledWith("apiVersion", "v2");
       expect(scopeSetTagMock).toHaveBeenCalledWith("method", "DELETE");
-      expect(scopeSetTagMock).toHaveBeenCalledWith("path", "/api/v2/management/surveys");
+      expect(scopeSetTagMock).toHaveBeenCalledWith("routeScope", "management");
+      expect(scopeSetExtraMock).toHaveBeenCalledWith("error", error);
+      expect(scopeSetExtraMock).toHaveBeenCalledWith("originalError", error);
+      expect(scopeSetContextMock).toHaveBeenCalledWith(
+        "apiRequest",
+        expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "123",
+          method: "DELETE",
+          path: "/api/v2/management/surveys",
+          routeScope: "management",
+          status: 500,
+        })
+      );
 
       // Verify Sentry.captureException was called
       expect(Sentry.captureException).toHaveBeenCalled();

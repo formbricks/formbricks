@@ -1,6 +1,9 @@
-import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZDisplayCreateInputV2 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
+import {
+  TDisplayCreateInputV2,
+  ZDisplayCreateInputV2,
+} from "@/app/api/v2/client/[environmentId]/displays/types/display";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -12,6 +15,44 @@ interface Context {
     environmentId: string;
   }>;
 }
+
+type TValidatedDisplayInputResult = { displayInputData: TDisplayCreateInputV2 } | { response: Response };
+
+const parseAndValidateDisplayInput = async (
+  request: Request,
+  environmentId: string
+): Promise<TValidatedDisplayInputResult> => {
+  let jsonInput;
+
+  try {
+    jsonInput = await request.json();
+  } catch (error) {
+    return {
+      response: responses.badRequestResponse(
+        "Invalid JSON in request body",
+        { error: error instanceof Error ? error.message : "Unknown error occurred" },
+        true
+      ),
+    };
+  }
+
+  const inputValidation = ZDisplayCreateInputV2.safeParse({
+    ...jsonInput,
+    environmentId,
+  });
+
+  if (!inputValidation.success) {
+    return {
+      response: responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(inputValidation.error),
+        true
+      ),
+    };
+  }
+
+  return { displayInputData: inputValidation.data };
+};
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -25,21 +66,15 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-  const jsonInput = await request.json();
-  const inputValidation = ZDisplayCreateInputV2.safeParse({
-    ...jsonInput,
-    environmentId: params.environmentId,
-  });
+  const validatedInput = await parseAndValidateDisplayInput(request, params.environmentId);
 
-  if (!inputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(inputValidation.error),
-      true
-    );
+  if ("response" in validatedInput) {
+    return validatedInput.response;
   }
 
-  if (inputValidation.data.contactId) {
+  const { displayInputData } = validatedInput;
+
+  if (displayInputData.contactId) {
     const organizationId = await getOrganizationIdFromEnvironmentId(params.environmentId);
     const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
@@ -48,15 +83,20 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   try {
-    const response = await createDisplay(inputValidation.data);
+    const response = await createDisplay(displayInputData);
 
     return responses.successResponse(response, true);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
-      return responses.notFoundResponse("Survey", inputValidation.data.surveyId);
-    } else {
-      logger.error({ error, url: request.url }, "Error creating display");
-      return responses.internalServerErrorResponse("Something went wrong. Please try again.");
+      return responses.notFoundResponse("Survey", displayInputData.surveyId);
     }
+
+    const response = responses.internalServerErrorResponse("Something went wrong. Please try again.");
+    reportApiError({
+      request,
+      status: response.status,
+      error,
+    });
+    return response;
   }
 };

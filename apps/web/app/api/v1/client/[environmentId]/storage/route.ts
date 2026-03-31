@@ -105,9 +105,14 @@ export const POST = withV1ApiWrapper({
     if (!signedUrlResponse.ok) {
       logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");
       const errorResponse = getErrorResponseFromStorageError(signedUrlResponse.error, { fileName });
-      return {
-        response: errorResponse,
-      };
+      return errorResponse.status >= 500
+        ? {
+            response: errorResponse,
+            error: signedUrlResponse.error,
+          }
+        : {
+            response: errorResponse,
+          };
     }
 
     return {
