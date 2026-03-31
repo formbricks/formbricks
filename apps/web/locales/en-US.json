@@ -400,7 +400,6 @@
     "show_response_count": "Show response count",
     "shown": "Shown",
     "size": "Size",
-    "skip": "Skip",
     "skipped": "Skipped",
     "skips": "Skips",
     "some_files_failed_to_upload": "Some files failed to upload",
@@ -471,7 +470,6 @@
     "website_survey": "Website Survey",
     "weeks": "weeks",
     "welcome_card": "Welcome card",
-    "workflows": "Workflows",
     "workspace": "Workspace",
     "workspace_configuration": "Workspace Configuration",
     "workspace_created_successfully": "Workspace created successfully",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks. Free for 30 days."
       },
       "general": {
+        "ai_data_analysis_enabled": "Data enrichment & analysis (AI)",
+        "ai_data_analysis_enabled_description": "AI to get more out of your data, setup dashboards, charts, reports and more. Touches your experience data.",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Manage AI-powered features for this organization.",
+        "ai_settings_updated_successfully": "AI settings updated successfully",
+        "ai_smart_tools_enabled": "Smart functionality (AI)",
+        "ai_smart_tools_enabled_description": "AI to help you achieve more in less time. Never touches data collected with Formbricks. Only used to e.g. translate surveys to other languages.",
         "bulk_invite_warning_description": "On the free plan, all organization members are always assigned the “Owner” role.",
         "cannot_delete_only_organization": "This is your only organization, it cannot be deleted. Create a new organization first.",
         "cannot_leave_only_organization": "You cannot leave this organization as it is your only organization. Create a new organization first.",
@@ -3435,18 +3440,5 @@
     "usability_question_9_headline": "I felt confident while using the system.",
     "usability_rating_description": "Measure perceived usability by asking users to rate their experience with your product using a standardized 10-question survey.",
     "usability_score_name": "System Usability Score (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Thank you for sharing your workflow idea with us! We are currently designing this feature and your feedback will help us build exactly what you need.",
-    "coming_soon_title": "We are almost there!",
-    "follow_up_label": "Is there anything else you would like to add?",
-    "follow_up_placeholder": "What specific tasks would you like to automate? Any tools or integrations you would want included?",
-    "generate_button": "Generate workflow",
-    "heading": "What workflow do you want to create?",
-    "placeholder": "Describe the workflow you want to generate…",
-    "subheading": "Generate your workflow in seconds.",
-    "submit_button": "Add details",
-    "thank_you_description": "Your input helps us build the Workflows feature you actually need. We will keep you posted on our progress.",
-    "thank_you_title": "Thank you for your feedback!"
   }
 }
