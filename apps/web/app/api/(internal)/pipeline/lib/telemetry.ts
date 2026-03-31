@@ -31,6 +31,16 @@ let nextTelemetryCheck = 0;
 // without exposing the raw key. Computed once at module load.
 const hashedLicenseKey = env.ENTERPRISE_LICENSE_KEY ? hashString(env.ENTERPRISE_LICENSE_KEY) : null;
 
+/**
+ * Returns true if telemetry is disabled via env var AND there is no active EE license.
+ * EE customers cannot opt out — telemetry is always enforced for license compliance.
+ */
+const isTelemetryDisabledForCE = async (): Promise<boolean> => {
+  if (!TELEMETRY_DISABLED) return false;
+  const license = await getEnterpriseLicense();
+  return !license.active;
+};
+
 export const sendTelemetryEvents = async () => {
   try {
     // ============================================================
@@ -61,11 +71,8 @@ export const sendTelemetryEvents = async () => {
     // EE bypass: If an active Enterprise License is detected, telemetry is always sent
     // regardless of the TELEMETRY_DISABLED setting to enforce license compliance.
     // Placed after in-memory check to avoid calling getEnterpriseLicense() on every invocation.
-    if (TELEMETRY_DISABLED) {
-      const license = await getEnterpriseLicense();
-      if (!license.active) {
-        return;
-      }
+    if (await isTelemetryDisabledForCE()) {
+      return;
     }
 
     // ============================================================
