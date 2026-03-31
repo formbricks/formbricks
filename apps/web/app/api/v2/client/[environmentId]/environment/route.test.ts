@@ -6,12 +6,6 @@ const mocks = vi.hoisted(() => ({
   applyIPRateLimit: vi.fn(),
   getEnvironmentState: vi.fn(),
   contextualLoggerError: vi.fn(),
-  sentryScope: {
-    setTag: vi.fn(),
-    setExtra: vi.fn(),
-    setLevel: vi.fn(),
-    setContext: vi.fn(),
-  },
 }));
 
 vi.mock("@/app/api/v1/client/[environmentId]/environment/lib/environmentState", () => ({
@@ -34,10 +28,7 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
-  withScope: vi.fn((callback: (scope: typeof mocks.sentryScope) => void) => {
-    callback(mocks.sentryScope);
-    return mocks.sentryScope;
-  }),
+  withScope: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -109,34 +100,36 @@ describe("api/v2 client environment route", () => {
       details: {},
     });
 
-    expect(mocks.sentryScope.setTag).toHaveBeenCalledWith("apiVersion", "v2");
-    expect(mocks.sentryScope.setTag).toHaveBeenCalledWith("method", "GET");
-    expect(mocks.sentryScope.setTag).toHaveBeenCalledWith("routeScope", "client");
-    expect(mocks.sentryScope.setContext).toHaveBeenCalledWith(
-      "apiRequest",
+    expect(Sentry.withScope).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      underlyingError,
       expect.objectContaining({
-        apiVersion: "v2",
-        correlationId: "req-v2-env",
-        method: "GET",
-        path: "/api/v2/client/ck12345678901234567890123/environment",
-        routeScope: "client",
-        status: 500,
+        tags: expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "req-v2-env",
+          method: "GET",
+          path: "/api/v2/client/ck12345678901234567890123/environment",
+        }),
+        extra: expect.objectContaining({
+          error: expect.objectContaining({
+            name: "Error",
+            message: "Environment load failed",
+          }),
+          originalError: expect.objectContaining({
+            name: "Error",
+            message: "Environment load failed",
+          }),
+        }),
+        contexts: expect.objectContaining({
+          apiRequest: expect.objectContaining({
+            apiVersion: "v2",
+            correlationId: "req-v2-env",
+            method: "GET",
+            path: "/api/v2/client/ck12345678901234567890123/environment",
+            status: 500,
+          }),
+        }),
       })
     );
-    expect(mocks.sentryScope.setExtra).toHaveBeenCalledWith(
-      "error",
-      expect.objectContaining({
-        name: "Error",
-        message: "Environment load failed",
-      })
-    );
-    expect(mocks.sentryScope.setExtra).toHaveBeenCalledWith(
-      "originalError",
-      expect.objectContaining({
-        name: "Error",
-        message: "Environment load failed",
-      })
-    );
-    expect(Sentry.captureException).toHaveBeenCalledWith(underlyingError);
   });
 });
