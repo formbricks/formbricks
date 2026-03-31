@@ -2,12 +2,12 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
-import { responses } from "@/app/lib/api/response";
 import {
   addLegacyProjectOverwrites,
   addLegacyProjectOverwritesToList,
   normaliseProjectOverwritesToWorkspace,
-} from "@/app/lib/api/survey-backwards-compat";
+} from "@/app/lib/api/api-backwards-compat";
+import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
   transformQuestionsToBlocks,

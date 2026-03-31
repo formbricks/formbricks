@@ -5,7 +5,7 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
 import {
   addLegacyProjectOverwritesToList,
   addLegacyProjectToEnvironmentState,
-} from "@/app/lib/api/survey-backwards-compat";
+} from "@/app/lib/api/api-backwards-compat";
 import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getEnvironmentStateData } from "./data";

@@ -4,11 +4,11 @@ import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
-import { responses } from "@/app/lib/api/response";
 import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
-} from "@/app/lib/api/survey-backwards-compat";
+} from "@/app/lib/api/api-backwards-compat";
+import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
   transformQuestionsToBlocks,

@@ -1,9 +1,8 @@
 /**
- * Backwards compatibility layer for the project → workspace rename in survey APIs.
+ * Backwards compatibility layer for the project → workspace rename across APIs.
  *
- * Old API consumers may send `projectOverwrites` instead of `workspaceOverwrites` in
- * survey create/update request bodies. These utilities normalise the input to the new
- * field name and enrich responses with the legacy `projectOverwrites` field so existing
+ * Provides utilities to normalise legacy `project*` field names to their `workspace*`
+ * equivalents in request bodies and enrich responses with legacy fields so existing
  * integrations keep working.
  */
 
