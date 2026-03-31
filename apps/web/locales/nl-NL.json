@@ -400,7 +400,6 @@
     "show_response_count": "Toon het aantal reacties",
     "shown": "Getoond",
     "size": "Maat",
-    "skip": "Overslaan",
     "skipped": "Overgeslagen",
     "skips": "Overslaan",
     "some_files_failed_to_upload": "Sommige bestanden konden niet worden geüpload",
@@ -471,7 +470,6 @@
     "website_survey": "Website-enquête",
     "weeks": "weken",
     "welcome_card": "Welkomstkaart",
-    "workflows": "Workflows",
     "workspace": "Werkruimte",
     "workspace_configuration": "Werkruimte-configuratie",
     "workspace_created_successfully": "Project succesvol aangemaakt",
@@ -3337,18 +3335,5 @@
     "usability_question_9_headline": "Ik voelde me zelfverzekerd tijdens het gebruik van het systeem.",
     "usability_rating_description": "Meet de waargenomen bruikbaarheid door gebruikers te vragen hun ervaring met uw product te beoordelen met behulp van een gestandaardiseerde enquête met tien vragen.",
     "usability_score_name": "Systeembruikbaarheidsscore (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Bedankt voor het delen van je workflow-idee met ons! We zijn momenteel bezig met het ontwerpen van deze functie en jouw feedback helpt ons om precies te bouwen wat je nodig hebt.",
-    "coming_soon_title": "We zijn er bijna!",
-    "follow_up_label": "Is er nog iets dat u wilt toevoegen?",
-    "follow_up_placeholder": "Welke specifieke taken wil je automatiseren? Zijn er tools of integraties die je wilt meenemen?",
-    "generate_button": "Genereer workflow",
-    "heading": "Welke workflow wil je maken?",
-    "placeholder": "Beschrijf de workflow die je wilt genereren…",
-    "subheading": "Genereer je workflow in enkele seconden.",
-    "submit_button": "Voeg details toe",
-    "thank_you_description": "Jouw input helpt ons om de Workflows-functie te bouwen die jij echt nodig hebt. We houden je op de hoogte van onze voortgang.",
-    "thank_you_title": "Bedankt voor je feedback!"
   }
 }

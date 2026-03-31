@@ -400,7 +400,6 @@
     "show_response_count": "Afișează numărul de răspunsuri",
     "shown": "Afișat",
     "size": "Mărime",
-    "skip": "Omite",
     "skipped": "Sărit",
     "skips": "Salturi",
     "some_files_failed_to_upload": "Unele fișiere nu au reușit să se încarce",
@@ -471,7 +470,6 @@
     "website_survey": "Chestionar despre site",
     "weeks": "săptămâni",
     "welcome_card": "Card de bun venit",
-    "workflows": "Workflows",
     "workspace": "Spațiu de lucru",
     "workspace_configuration": "Configurare workspace",
     "workspace_created_successfully": "Spațiul de lucru a fost creat cu succes",
@@ -3337,18 +3335,5 @@
     "usability_question_9_headline": "M-am simțit încrezător în timp ce utilizam sistemul.",
     "usability_rating_description": "Măsurați uzabilitatea percepută cerând utilizatorilor să își evalueze experiența cu produsul dumneavoastră folosind un chestionar standardizat din 10 întrebări.",
     "usability_score_name": "Scor de Uzabilitate al Sistemului (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Îți mulțumim că ai împărtășit cu noi ideea ta de workflow! În prezent, lucrăm la această funcționalitate, iar feedback-ul tău ne ajută să construim exact ce ai nevoie.",
-    "coming_soon_title": "Suntem aproape gata!",
-    "follow_up_label": "Mai este ceva ce ați dori să adăugați?",
-    "follow_up_placeholder": "Ce sarcini specifice ați dori să automatizați? Există instrumente sau integrări pe care ați dori să le includem?",
-    "generate_button": "Generează workflow",
-    "heading": "Ce workflow vrei să creezi?",
-    "placeholder": "Descrieți fluxul de lucru pe care doriți să-l generați…",
-    "subheading": "Generează-ți workflow-ul în câteva secunde.",
-    "submit_button": "Adaugă detalii",
-    "thank_you_description": "Contribuția dvs. ne ajută să dezvoltăm funcția Workflows de care chiar aveți nevoie. Vă vom ține la curent cu progresul nostru.",
-    "thank_you_title": "Îți mulțumim pentru feedback!"
   }
 }

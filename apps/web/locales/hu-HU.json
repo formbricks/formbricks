@@ -400,7 +400,6 @@
     "show_response_count": "Válaszok számának megjelenítése",
     "shown": "Megjelenítve",
     "size": "Méret",
-    "skip": "Kihagyás",
     "skipped": "Kihagyva",
     "skips": "Kihagyja",
     "some_files_failed_to_upload": "Néhány fájlt nem sikerült feltölteni",
@@ -471,7 +470,6 @@
     "website_survey": "Webhely kérdőív",
     "weeks": "hét",
     "welcome_card": "Üdvözlő kártya",
-    "workflows": "Munkafolyamatok",
     "workspace": "Munkaterület",
     "workspace_configuration": "Munkaterület beállítása",
     "workspace_created_successfully": "A munkaterület sikeresen létrehozva",
@@ -3337,18 +3335,5 @@
     "usability_question_9_headline": "Magabiztosnak éreztem magam a rendszer használata során.",
     "usability_rating_description": "Az érzékelt használhatóság mérése arra kérve a felhasználókat, hogy értékeljék a termékkel kapcsolatos tapasztalataikat egy szabványosított, 10 kérdésből álló kérdőív használatával.",
     "usability_score_name": "Rendszer-használhatósági pontszám (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Köszönjük, hogy megosztotta velünk a munkafolyamatra vonatkozó ötletét! Jelenleg a funkció kialakításán dolgozunk, és a visszajelzése segít nekünk abban, hogy pontosan azt alkossuk meg, amire szüksége van.",
-    "coming_soon_title": "Már majdnem kész vagyunk!",
-    "follow_up_label": "Van még bármi egyéb, amit hozzá szeretne fűzni?",
-    "follow_up_placeholder": "Milyen konkrét feladatokat szeretne automatizálni? Vannak olyan eszközök vagy integrációk, amelyeket szívesen látna a rendszerben?",
-    "generate_button": "Munkafolyamat előállítása",
-    "heading": "Milyen munkafolyamatot szeretne létrehozni?",
-    "placeholder": "Mutassa be az előállítani kívánt munkafolyamatot…",
-    "subheading": "Munkafolyamat előállítása másodpercek alatt.",
-    "submit_button": "Részletek hozzáadása",
-    "thank_you_description": "A visszajelzése segít nekünk abban, hogy olyan Munkafolyamatok funkciót alakítsunk ki, amelyre valóban szüksége van. Folyamatosan tájékoztatni fogjuk Önt a fejlesztés előrehaladásáról.",
-    "thank_you_title": "Köszönjük a visszajelzését!"
   }
 }

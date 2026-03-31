@@ -400,7 +400,6 @@
     "show_response_count": "Antwortanzahl anzeigen",
     "shown": "Angezeigt",
     "size": "Größe",
-    "skip": "Überspringen",
     "skipped": "Übersprungen",
     "skips": "Übersprungen",
     "some_files_failed_to_upload": "Einige Dateien konnten nicht hochgeladen werden",
@@ -471,7 +470,6 @@
     "website_survey": "Website-Umfrage",
     "weeks": "Wochen",
     "welcome_card": "Willkommenskarte",
-    "workflows": "Workflows",
     "workspace": "Arbeitsbereich",
     "workspace_configuration": "Projektkonfiguration",
     "workspace_created_successfully": "Projekt erfolgreich erstellt",
@@ -3337,18 +3335,5 @@
     "usability_question_9_headline": "Ich fühlte mich beim Benutzen des Systems sicher.",
     "usability_rating_description": "Bewerte die wahrgenommene Benutzerfreundlichkeit, indem du die Nutzer bittest, ihre Erfahrung mit deinem Produkt mittels eines standardisierten 10-Fragen-Fragebogens zu bewerten.",
     "usability_score_name": "System Usability Score Survey (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Danke, dass du deine Workflow-Idee mit uns geteilt hast! Wir arbeiten gerade an diesem Feature und dein Feedback hilft uns dabei, genau das zu entwickeln, was du brauchst.",
-    "coming_soon_title": "Wir sind fast da!",
-    "follow_up_label": "Möchten Sie noch etwas hinzufügen?",
-    "follow_up_placeholder": "Welche konkreten Aufgaben möchten Sie automatisieren? Gibt es Tools oder Integrationen, die Sie einbinden möchten?",
-    "generate_button": "Workflow generieren",
-    "heading": "Welchen Workflow möchtest du erstellen?",
-    "placeholder": "Beschreiben Sie den Workflow, den Sie erstellen möchten…",
-    "subheading": "Generiere deinen Workflow in Sekunden.",
-    "submit_button": "Details hinzufügen",
-    "thank_you_description": "Ihr Feedback hilft uns, die Workflows-Funktion so zu gestalten, wie Sie sie brauchen. Wir halten Sie über unseren Fortschritt auf dem Laufenden.",
-    "thank_you_title": "Danke für dein Feedback!"
   }
 }
