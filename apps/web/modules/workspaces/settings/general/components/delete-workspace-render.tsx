@@ -38,10 +38,10 @@ export const DeleteWorkspaceRender = ({
         localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       } else if (organizationWorkspaces.length > 1) {
         // prevents changing of organization when deleting workspace
-        const remainingWorkspaces = organizationWorkspaces.filter(
+        const remainingWorkspace = organizationWorkspaces.find(
           (workspace) => workspace.id !== currentWorkspace.id
         );
-        const productionEnvironment = remainingWorkspaces[0].environments.find(
+        const productionEnvironment = remainingWorkspace?.environments.find(
           (environment) => environment.type === "production"
         );
         if (productionEnvironment) {

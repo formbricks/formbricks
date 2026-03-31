@@ -39,8 +39,8 @@ export const AppConnectionLoading = () => {
         <WorkspaceConfigNavigation activeId="app-connection" loading />
       </PageHeader>
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
-      {cards.map((card, index) => (
-        <LoadingCard key={index} {...card} />
+      {cards.map((card) => (
+        <LoadingCard key={card.title} {...card} />
       ))}
     </PageContentWrapper>
   );

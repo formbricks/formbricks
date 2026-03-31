@@ -31,8 +31,8 @@ export const GeneralSettingsLoading = () => {
       <PageHeader pageTitle={t("common.workspace_configuration")}>
         <WorkspaceConfigNavigation activeId="general" loading />
       </PageHeader>
-      {cards.map((card, index) => (
-        <LoadingCard key={index} {...card} />
+      {cards.map((card) => (
+        <LoadingCard key={card.title} {...card} />
       ))}
     </PageContentWrapper>
   );

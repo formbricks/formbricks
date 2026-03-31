@@ -118,7 +118,7 @@ const getLatestStableFbRelease = async (): Promise<string | null> => {
     const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases/latest");
     const release = await res.json();
 
-    if (release && release.tag_name) {
+    if (release?.tag_name) {
       return release.tag_name;
     }
 

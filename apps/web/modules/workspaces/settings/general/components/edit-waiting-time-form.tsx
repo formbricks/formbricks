@@ -81,7 +81,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ workspace,
                         field.onChange("");
                       }
 
-                      field.onChange(parseInt(value, 10));
+                      field.onChange(Number.parseInt(value, 10));
                     }}
                     disabled={isReadOnly}
                   />

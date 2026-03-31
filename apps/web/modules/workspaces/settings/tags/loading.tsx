@@ -24,7 +24,7 @@ export const TagsLoading = () => {
           </div>
           <div className="w-full">
             {[...Array(3)].map((_, idx) => (
-              <div key={idx} className="grid h-16 w-full grid-cols-4 content-center">
+              <div key={`tag-skeleton-${idx}`} className="grid h-16 w-full grid-cols-4 content-center">
                 <div className="col-span-2 h-10 animate-pulse rounded-md bg-slate-200" />
 
                 <div className="flex items-center justify-center">
