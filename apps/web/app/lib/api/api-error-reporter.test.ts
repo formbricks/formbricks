@@ -1,54 +1,58 @@
 import * as Sentry from "@sentry/nextjs";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { logger } from "@formbricks/logger";
 import { reportApiError } from "./api-error-reporter";
 
-const mocks = vi.hoisted(() => ({
-  contextualLoggerError: vi.fn(),
-  loggerError: vi.fn(),
-  sentryScope: {
-    setTag: vi.fn(),
-    setExtra: vi.fn(),
-    setLevel: vi.fn(),
-    setContext: vi.fn(),
-  },
-}));
+const loggerMocks = vi.hoisted(() => {
+  const contextualError = vi.fn();
+  const rootError = vi.fn();
+  const withContext = vi.fn(() => ({
+    error: contextualError,
+  }));
+
+  return {
+    contextualError,
+    rootError,
+    withContext,
+  };
+});
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
-  withScope: vi.fn((callback: (scope: typeof mocks.sentryScope) => void) => {
-    callback(mocks.sentryScope);
-    return mocks.sentryScope;
-  }),
+  withScope: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
-    withContext: vi.fn(() => ({
-      error: mocks.contextualLoggerError,
-    })),
-    error: mocks.loggerError,
+    withContext: loggerMocks.withContext,
+    error: loggerMocks.rootError,
     warn: vi.fn(),
     info: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/constants", () => ({
-  IS_PRODUCTION: true,
-  SENTRY_DSN: "test-dsn",
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+
+  return {
+    ...actual,
+    IS_PRODUCTION: true,
+    SENTRY_DSN: "dsn",
+  };
+});
 
 describe("reportApiError", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("uses low-cardinality tags and stores request details in context", () => {
-    const error = new Error("boom");
-    const request = new Request("https://api.test/api/v2/client/cld1234567890abcdef123456/displays", {
+  test("captures real errors directly with structured context", () => {
+    const request = new Request("https://app.test/api/v2/client/environment", {
       method: "POST",
+      headers: {
+        "x-request-id": "req-1",
+      },
     });
-    request.headers.set("x-request-id", "req-123");
+    const error = new Error("boom");
 
     reportApiError({
       request,
@@ -56,99 +60,162 @@ describe("reportApiError", () => {
       error,
     });
 
-    expect(mocks.contextualLoggerError).toHaveBeenCalledWith("API V2 Error Details");
-    expect(mocks.sentryScope.setTag).toHaveBeenCalledWith("apiVersion", "v2");
-    expect(mocks.sentryScope.setTag).toHaveBeenCalledWith("method", "POST");
-    expect(mocks.sentryScope.setTag).toHaveBeenCalledWith("routeScope", "client");
-    expect(mocks.sentryScope.setTag).not.toHaveBeenCalledWith(
-      "path",
-      "/api/v2/client/cld1234567890abcdef123456/displays"
-    );
-    expect(mocks.sentryScope.setTag).not.toHaveBeenCalledWith("correlationId", "req-123");
-    expect(mocks.sentryScope.setContext).toHaveBeenCalledWith(
-      "apiRequest",
+    expect(loggerMocks.withContext).toHaveBeenCalledWith(
       expect.objectContaining({
         apiVersion: "v2",
-        correlationId: "req-123",
+        correlationId: "req-1",
         method: "POST",
-        path: "/api/v2/client/cld1234567890abcdef123456/displays",
-        routeScope: "client",
+        path: "/api/v2/client/environment",
         status: 500,
+        error: expect.objectContaining({
+          name: "Error",
+          message: "boom",
+        }),
       })
     );
-    expect(mocks.sentryScope.setExtra).toHaveBeenCalledWith(
-      "error",
+    expect(Sentry.withScope).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      error,
       expect.objectContaining({
-        name: "Error",
-        message: "boom",
+        tags: expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "req-1",
+          method: "POST",
+          path: "/api/v2/client/environment",
+        }),
+        extra: expect.objectContaining({
+          error: expect.objectContaining({
+            name: "Error",
+            message: "boom",
+          }),
+          originalError: expect.objectContaining({
+            name: "Error",
+            message: "boom",
+          }),
+        }),
+        contexts: expect.objectContaining({
+          apiRequest: expect.objectContaining({
+            apiVersion: "v2",
+            correlationId: "req-1",
+            method: "POST",
+            path: "/api/v2/client/environment",
+            status: 500,
+          }),
+        }),
       })
     );
-    expect(Sentry.captureException).toHaveBeenCalledWith(error);
   });
 
-  test("serializes cyclic errors without throwing", () => {
-    const error = new Error("cyclic boom") as Error & {
-      metadata?: Record<string, unknown>;
-      self?: unknown;
+  test("captures non-error payloads with a synthetic error while preserving additional data", () => {
+    const request = new Request("https://app.test/api/v1/management/surveys", {
+      headers: {
+        "x-request-id": "req-2",
+      },
+    });
+    const payload = {
+      type: "internal_server_error",
+      details: [{ field: "server", issue: "error occurred" }],
     };
-    error.self = error;
-    error.metadata = { nested: error };
 
-    const request = new Request("https://api.test/api/v2/management/responses", {
-      method: "POST",
+    reportApiError({
+      request,
+      status: 500,
+      error: payload,
+      originalError: payload,
     });
 
-    expect(() =>
-      reportApiError({
-        request,
-        status: 500,
-        error,
-      })
-    ).not.toThrow();
-
-    expect(mocks.sentryScope.setExtra).toHaveBeenCalledWith(
-      "error",
+    expect(Sentry.withScope).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Error",
-        message: "cyclic boom",
-        self: "[Circular]",
-        metadata: {
-          nested: "[Circular]",
-        },
+        message: "API V1 error, id: req-2",
+      }),
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          apiVersion: "v1",
+          correlationId: "req-2",
+          method: "GET",
+          path: "/api/v1/management/surveys",
+        }),
+        extra: expect.objectContaining({
+          error: payload,
+          originalError: payload,
+        }),
       })
     );
-    expect(Sentry.captureException).toHaveBeenCalledWith(error);
   });
 
-  test("swallows logger failures and still reports to Sentry", () => {
-    vi.mocked(logger.withContext).mockImplementationOnce(() => {
-      throw new Error("logger unavailable");
+  test("swallows Sentry failures after logging a fallback reporter error", () => {
+    vi.mocked(Sentry.captureException).mockImplementation(() => {
+      throw new Error("sentry down");
     });
 
-    const request = new Request("https://api.test/api/v2/management/surveys", {
-      method: "GET",
+    const request = new Request("https://app.test/api/v2/client/displays", {
+      headers: {
+        "x-request-id": "req-3",
+      },
     });
 
     expect(() =>
       reportApiError({
         request,
         status: 500,
-        error: new Error("survey failure"),
+        error: new Error("boom"),
       })
     ).not.toThrow();
 
-    expect(mocks.loggerError).toHaveBeenCalledWith(
+    expect(loggerMocks.rootError).toHaveBeenCalledWith(
       expect.objectContaining({
         apiVersion: "v2",
-        path: "/api/v2/management/surveys",
+        correlationId: "req-3",
+        method: "GET",
+        path: "/api/v2/client/displays",
         status: 500,
         reportingError: expect.objectContaining({
           name: "Error",
-          message: "logger unavailable",
+          message: "sentry down",
         }),
       }),
       "Failed to report API error"
     );
-    expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  test("serializes cyclic payloads without throwing", () => {
+    const request = new Request("https://app.test/api/v2/client/responses", {
+      headers: {
+        "x-request-id": "req-4",
+      },
+    });
+    const payload: Record<string, unknown> = {
+      type: "internal_server_error",
+    };
+
+    payload.self = payload;
+
+    expect(() =>
+      reportApiError({
+        request,
+        status: 500,
+        error: payload,
+        originalError: payload,
+      })
+    ).not.toThrow();
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "API V2 error, id: req-4",
+      }),
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          error: {
+            type: "internal_server_error",
+            self: "[Circular]",
+          },
+          originalError: {
+            type: "internal_server_error",
+            self: "[Circular]",
+          },
+        }),
+      })
+    );
   });
 });

@@ -4,14 +4,15 @@ import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 
 type TRequestLike = Pick<Request, "method" | "url" | "headers">;
 
-type TApiRequestContext = {
+type TApiErrorContext = {
   apiVersion: TApiVersion;
   correlationId: string;
   method: string;
   path: string;
-  routeScope: string;
   status: number;
 };
+
+type TSentryCaptureContext = NonNullable<Parameters<typeof Sentry.captureException>[1]>;
 
 export type TApiVersion = "v1" | "v2" | "v3" | "unknown";
 
@@ -25,16 +26,6 @@ const getPathname = (url: string): string => {
   } catch {
     return url;
   }
-};
-
-const getApiRouteScope = (pathname: string): string => {
-  const segments = pathname.split("/").filter(Boolean);
-
-  if (segments[0] !== "api") {
-    return "unknown";
-  }
-
-  return segments[2] ?? "unknown";
 };
 
 export const getApiVersionFromPath = (pathname: string): TApiVersion => {
@@ -118,7 +109,7 @@ const getSerializedValueType = (value: unknown): string => {
   return typeof value;
 };
 
-const serializeErrorSafely = (value: unknown): unknown => {
+export const serializeErrorSafely = (value: unknown): unknown => {
   try {
     return serializeError(value);
   } catch (serializationError) {
@@ -143,7 +134,7 @@ const getSyntheticError = (apiVersion: TApiVersion, correlationId: string): Erro
 const getLogMessage = (apiVersion: TApiVersion): string => {
   switch (apiVersion) {
     case "v1":
-      return "V1 API Error Details";
+      return "API V1 Error Details";
     case "v2":
       return "API V2 Error Details";
     case "v3":
@@ -153,62 +144,86 @@ const getLogMessage = (apiVersion: TApiVersion): string => {
   }
 };
 
-const buildApiRequestContext = (request: TRequestLike, status: number): TApiRequestContext => {
+const buildApiErrorContext = ({
+  request,
+  status,
+  apiVersion,
+}: {
+  request: TRequestLike;
+  status: number;
+  apiVersion?: TApiVersion;
+}): TApiErrorContext => {
   const path = getPathname(request.url);
 
   return {
-    apiVersion: getApiVersionFromPath(path),
+    apiVersion: apiVersion ?? getApiVersionFromPath(path),
     correlationId: request.headers.get("x-request-id") ?? "",
     method: request.method,
     path,
-    routeScope: getApiRouteScope(path),
     status,
   };
 };
 
-const emitApiErrorLog = (context: TApiRequestContext, errorPayload: unknown): void => {
-  logger
-    .withContext({
-      ...context,
-      error: errorPayload,
-    })
-    .error(getLogMessage(context.apiVersion));
-};
-
-const emitSentryApiError = ({
+export const buildSentryCaptureContext = ({
   context,
   errorPayload,
-  capturedError,
+  originalErrorPayload,
 }: {
-  context: TApiRequestContext;
+  context: TApiErrorContext;
   errorPayload: unknown;
-  capturedError: Error;
-}): void => {
-  Sentry.withScope((scope) => {
-    scope.setTag("apiVersion", context.apiVersion);
-    scope.setTag("method", context.method);
-    scope.setTag("routeScope", context.routeScope);
-    scope.setLevel("error");
-    scope.setContext("apiRequest", {
+  originalErrorPayload: unknown;
+}): TSentryCaptureContext => ({
+  level: "error",
+  tags: {
+    apiVersion: context.apiVersion,
+    correlationId: context.correlationId,
+    method: context.method,
+    path: context.path,
+  },
+  extra: {
+    error: errorPayload,
+    originalError: originalErrorPayload,
+  },
+  contexts: {
+    apiRequest: {
       apiVersion: context.apiVersion,
+      correlationId: context.correlationId,
       method: context.method,
       path: context.path,
-      routeScope: context.routeScope,
       status: context.status,
-      ...(context.correlationId ? { correlationId: context.correlationId } : {}),
-    });
-    scope.setExtra("error", errorPayload);
-    scope.setExtra("originalError", errorPayload);
+    },
+  },
+});
 
-    Sentry.captureException(capturedError);
-  });
+export const emitApiErrorLog = (context: TApiErrorContext, errorPayload?: unknown): void => {
+  const logContext =
+    errorPayload === undefined
+      ? context
+      : {
+          ...context,
+          error: errorPayload,
+        };
+
+  logger.withContext(logContext).error(getLogMessage(context.apiVersion));
 };
 
-const logReporterFailure = (context: TApiRequestContext, reportingError: unknown): void => {
+export const emitApiErrorToSentry = ({
+  error,
+  captureContext,
+}: {
+  error: Error;
+  captureContext: TSentryCaptureContext;
+}): void => {
+  Sentry.captureException(error, captureContext);
+};
+
+const logReporterFailure = (context: TApiErrorContext, reportingError: unknown): void => {
   try {
     logger.error(
       {
         apiVersion: context.apiVersion,
+        correlationId: context.correlationId,
+        method: context.method,
         path: context.path,
         status: context.status,
         reportingError: serializeErrorSafely(reportingError),
@@ -216,7 +231,7 @@ const logReporterFailure = (context: TApiRequestContext, reportingError: unknown
       "Failed to report API error"
     );
   } catch {
-    // Swallow reporter failures so observability never breaks API responses.
+    // Swallow reporter failures so API responses are never affected by observability issues.
   }
 };
 
@@ -224,28 +239,41 @@ export const reportApiError = ({
   request,
   status,
   error,
+  apiVersion,
+  originalError,
 }: {
   request: TRequestLike;
   status: number;
   error?: unknown;
+  apiVersion?: TApiVersion;
+  originalError?: unknown;
 }): void => {
-  const context = buildApiRequestContext(request, status);
-  const fallbackError = getSyntheticError(context.apiVersion, context.correlationId);
-  const errorPayload = serializeErrorSafely(error ?? fallbackError);
-  const capturedError = error instanceof Error ? error : fallbackError;
+  const context = buildApiErrorContext({
+    request,
+    status,
+    apiVersion,
+  });
+  const capturedError =
+    error instanceof Error ? error : getSyntheticError(context.apiVersion, context.correlationId);
+  const logErrorPayload = error === undefined ? undefined : serializeErrorSafely(error);
+  const errorPayload = serializeErrorSafely(error ?? capturedError);
+  const originalErrorPayload = serializeErrorSafely(originalError ?? error);
 
   try {
-    emitApiErrorLog(context, errorPayload);
+    emitApiErrorLog(context, logErrorPayload);
   } catch (reportingError) {
     logReporterFailure(context, reportingError);
   }
 
   if (SENTRY_DSN && IS_PRODUCTION && status >= 500) {
     try {
-      emitSentryApiError({
-        context,
-        errorPayload,
-        capturedError,
+      emitApiErrorToSentry({
+        error: capturedError,
+        captureContext: buildSentryCaptureContext({
+          context,
+          errorPayload,
+          originalErrorPayload,
+        }),
       });
     } catch (reportingError) {
       logReporterFailure(context, reportingError);

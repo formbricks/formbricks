@@ -13,7 +13,7 @@ export const handleApiError = (
   request: Request,
   err: ApiErrorResponseV2,
   auditLog?: TApiAuditLog,
-  originalError?: unknown
+  originalError: unknown = err
 ): Response => {
   logApiError(request, err, auditLog, originalError);
 
@@ -88,7 +88,7 @@ export const logApiError = (
   request: Request,
   error: ApiErrorResponseV2,
   auditLog?: TApiAuditLog,
-  originalError?: unknown
+  originalError: unknown = error
 ): void => {
   logApiErrorEdge(request, error, originalError);
 

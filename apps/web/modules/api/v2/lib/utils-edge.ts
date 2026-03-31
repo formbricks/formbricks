@@ -27,11 +27,12 @@ const getStatusFromApiError = (error: ApiErrorResponseV2): number => {
 export const logApiErrorEdge = (
   request: Request,
   error: ApiErrorResponseV2,
-  originalError?: unknown
+  originalError: unknown = error
 ): void => {
   reportApiError({
     request,
     status: getStatusFromApiError(error),
-    error: originalError ?? error,
+    error,
+    originalError,
   });
 };

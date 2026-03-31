@@ -6,7 +6,6 @@ import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthenticationMethod } from "@/app/middleware/endpoint-validator";
 import { responses } from "./response";
 
-// Mocks
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   __esModule: true,
   queueAuditEvent: vi.fn(),
@@ -14,24 +13,13 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
-  withScope: vi.fn((callback) => {
-    callback(mockSentryScope);
-    return mockSentryScope;
-  }),
+  withScope: vi.fn(),
 }));
 
-// Define these outside the mock factory so they can be referenced in tests and reset by clearAllMocks.
 const mockContextualLoggerError = vi.fn();
 const mockContextualLoggerWarn = vi.fn();
 const mockContextualLoggerInfo = vi.fn();
-
-// Mock Sentry scope that can be referenced in tests
-const mockSentryScope = {
-  setTag: vi.fn(),
-  setExtra: vi.fn(),
-  setContext: vi.fn(),
-  setLevel: vi.fn(),
-};
+const V1_MANAGEMENT_SURVEYS_URL = "https://api.test/api/v1/management/surveys";
 
 vi.mock("@formbricks/logger", () => {
   const mockWithContextInstance = vi.fn(() => ({
@@ -86,7 +74,6 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
 }));
 
 function createMockRequest({ method = "GET", url = "https://api.test/endpoint", headers = new Map() } = {}) {
-  // Parse the URL to get the pathname
   const parsedUrl = url.startsWith("/") ? new URL(url, "http://localhost:3000") : new URL(url);
 
   return {
@@ -122,12 +109,6 @@ describe("withV1ApiWrapper", () => {
     }));
 
     vi.clearAllMocks();
-
-    // Reset mock Sentry scope calls
-    mockSentryScope.setTag.mockClear();
-    mockSentryScope.setExtra.mockClear();
-    mockSentryScope.setContext.mockClear();
-    mockSentryScope.setLevel.mockClear();
   });
 
   test("logs and audits on error response with API key authentication", async () => {
@@ -155,7 +136,7 @@ describe("withV1ApiWrapper", () => {
     });
 
     const req = createMockRequest({
-      url: "https://api.test/api/v1/management/surveys",
+      url: V1_MANAGEMENT_SURVEYS_URL,
       headers: new Map([["x-request-id", "abc-123"]]),
     });
     const { withV1ApiWrapper } = await import("./with-api-logging");
@@ -177,23 +158,33 @@ describe("withV1ApiWrapper", () => {
         organizationId: "org-1",
       })
     );
-    expect(Sentry.withScope).toHaveBeenCalled();
-    expect(mockSentryScope.setTag).toHaveBeenCalledWith("apiVersion", "v1");
-    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
-      "error",
+    expect(Sentry.withScope).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
       expect.objectContaining({
-        name: "Error",
-        message: "API V1 error, id: abc-123",
+        tags: expect.objectContaining({
+          apiVersion: "v1",
+          correlationId: "abc-123",
+          method: "GET",
+          path: "/api/v1/management/surveys",
+        }),
+        extra: expect.objectContaining({
+          error: expect.objectContaining({
+            message: "API V1 error, id: abc-123",
+          }),
+          originalError: undefined,
+        }),
+        contexts: expect.objectContaining({
+          apiRequest: expect.objectContaining({
+            apiVersion: "v1",
+            correlationId: "abc-123",
+            method: "GET",
+            path: "/api/v1/management/surveys",
+            status: 500,
+          }),
+        }),
       })
     );
-    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
-      "originalError",
-      expect.objectContaining({
-        name: "Error",
-        message: "API V1 error, id: abc-123",
-      })
-    );
-    expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error));
   });
 
   test("does not log Sentry if not 500", async () => {
@@ -220,7 +211,7 @@ describe("withV1ApiWrapper", () => {
       };
     });
 
-    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
@@ -265,7 +256,7 @@ describe("withV1ApiWrapper", () => {
     });
 
     const req = createMockRequest({
-      url: "https://api.test/api/v1/management/surveys",
+      url: V1_MANAGEMENT_SURVEYS_URL,
       headers: new Map([["x-request-id", "err-1"]]),
     });
     const { withV1ApiWrapper } = await import("./with-api-logging");
@@ -294,79 +285,76 @@ describe("withV1ApiWrapper", () => {
         organizationId: "org-1",
       })
     );
-    expect(Sentry.withScope).toHaveBeenCalled();
-    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
-      "error",
+    expect(Sentry.withScope).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Error",
         message: "fail!",
+      }),
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          apiVersion: "v1",
+          correlationId: "err-1",
+          method: "GET",
+          path: "/api/v1/management/surveys",
+        }),
+        extra: expect.objectContaining({
+          error: expect.objectContaining({
+            message: "fail!",
+          }),
+          originalError: expect.objectContaining({
+            message: "fail!",
+          }),
+        }),
       })
     );
-    expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error));
   });
 
-  test("treats public v2 client routes as v2 and captures passed errors", async () => {
+  test("uses handler result error for handled 500 responses", async () => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
-    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
 
-    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
-      isManagementApi: false,
-      authenticationMethod: AuthenticationMethod.None,
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
-    const underlyingError = new Error("v2 boom");
+    const handledError = new Error("handled failure");
     const handler = vi.fn().mockResolvedValue({
       response: responses.internalServerErrorResponse("fail"),
-      error: underlyingError,
+      error: handledError,
     });
 
     const req = createMockRequest({
-      url: "https://api.test/api/v2/client/displays",
-      headers: new Map([["x-request-id", "v2-123"]]),
+      url: "https://api.test/api/v2/client/environment",
+      headers: new Map([["x-request-id", "handled-1"]]),
     });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
 
     expect(res.status).toBe(500);
-    expect(mockSentryScope.setTag).toHaveBeenCalledWith("apiVersion", "v2");
-    expect(mockSentryScope.setTag).toHaveBeenCalledWith("method", "GET");
-    expect(mockSentryScope.setTag).toHaveBeenCalledWith("routeScope", "client");
-    expect(mockSentryScope.setContext).toHaveBeenCalledWith(
-      "apiRequest",
+    expect(Sentry.withScope).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      handledError,
       expect.objectContaining({
-        apiVersion: "v2",
-        correlationId: "v2-123",
-        method: "GET",
-        path: "/api/v2/client/displays",
-        routeScope: "client",
-        status: 500,
-      })
-    );
-    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
-      "error",
-      expect.objectContaining({
-        name: "Error",
-        message: "v2 boom",
-      })
-    );
-    expect(mockSentryScope.setExtra).toHaveBeenCalledWith(
-      "originalError",
-      expect.objectContaining({
-        name: "Error",
-        message: "v2 boom",
-      })
-    );
-    expect(Sentry.captureException).toHaveBeenCalledWith(underlyingError);
-    expect(logger.withContext).toHaveBeenCalledWith(
-      expect.objectContaining({
-        apiVersion: "v2",
-        path: "/api/v2/client/displays",
-        status: 500,
+        tags: expect.objectContaining({
+          apiVersion: "v2",
+          correlationId: "handled-1",
+          method: "GET",
+          path: "/api/v2/client/environment",
+        }),
+        extra: expect.objectContaining({
+          error: expect.objectContaining({
+            message: "handled failure",
+          }),
+          originalError: expect.objectContaining({
+            message: "handled failure",
+          }),
+        }),
       })
     );
   });
@@ -395,7 +383,7 @@ describe("withV1ApiWrapper", () => {
       };
     });
 
-    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
@@ -445,7 +433,7 @@ describe("withV1ApiWrapper", () => {
       response: responses.internalServerErrorResponse("fail"),
     });
 
-    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
 
@@ -499,7 +487,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(authenticateRequest).mockResolvedValue(null);
 
     const handler = vi.fn();
-    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
@@ -558,7 +546,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
 
     const handler = vi.fn();
-    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
@@ -586,7 +574,7 @@ describe("withV1ApiWrapper", () => {
       response: responses.successResponse({ data: "test" }),
     });
 
-    const req = createMockRequest({ url: "https://api.test/api/v1/management/surveys" });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     await wrapped(req, undefined);
@@ -605,7 +593,7 @@ describe("buildAuditLogBaseObject", () => {
   test("creates audit log base object with correct structure", async () => {
     const { buildAuditLogBaseObject } = await import("./with-api-logging");
 
-    const result = buildAuditLogBaseObject("created", "survey", "https://api.test/v1/management/surveys");
+    const result = buildAuditLogBaseObject("created", "survey", V1_MANAGEMENT_SURVEYS_URL);
 
     expect(result).toEqual({
       action: "created",
@@ -617,7 +605,7 @@ describe("buildAuditLogBaseObject", () => {
       oldObject: undefined,
       newObject: undefined,
       userType: "api",
-      apiUrl: "https://api.test/v1/management/surveys",
+      apiUrl: V1_MANAGEMENT_SURVEYS_URL,
     });
   });
 });

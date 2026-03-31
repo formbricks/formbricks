@@ -176,7 +176,7 @@ const processResponse = async (
   res: Response,
   req: NextRequest,
   auditLog?: TApiAuditLog,
-  error?: any
+  error?: unknown
 ): Promise<void> => {
   const correlationId = req.headers.get("x-request-id") ?? "";
 

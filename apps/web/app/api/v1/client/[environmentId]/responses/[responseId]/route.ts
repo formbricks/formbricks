@@ -1,10 +1,9 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponse, TResponseUpdateInput, ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
@@ -14,6 +13,7 @@ import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
+import { getValidatedUpdateInput } from "./lib/validated-update-input";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -26,7 +26,6 @@ type TRouteResult = {
 
 type TExistingResponseResult = { existingResponse: TResponse } | TRouteResult;
 type TSurveyResult = { survey: TSurvey } | TRouteResult;
-type TValidatedUpdateInputResult = { responseUpdateInput: TResponseUpdateInput } | TRouteResult;
 type TUpdatedResponseResult =
   | { updatedResponse: Awaited<ReturnType<typeof updateResponseWithQuotaEvaluation>> }
   | TRouteResult;
@@ -61,7 +60,6 @@ const validateResponse = (
   survey: TSurvey,
   responseUpdateInput: TResponseUpdateInput
 ) => {
-  // Validate response data against validation rules
   const mergedData = {
     ...response.data,
     ...responseUpdateInput.data,
@@ -83,23 +81,6 @@ const validateResponse = (
       ),
     };
   }
-};
-
-const getValidatedUpdateInput = async (req: Request): Promise<TValidatedUpdateInputResult> => {
-  const responseUpdate = await req.json();
-  const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
-
-  if (!inputValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
-    };
-  }
-
-  return { responseUpdateInput: inputValidation.data };
 };
 
 const getExistingResponse = async (req: Request, responseId: string): Promise<TExistingResponseResult> => {
@@ -261,8 +242,6 @@ export const PUT = withV1ApiWrapper({
 
     const { quotaFull, ...responseData } = updatedResponse;
 
-    // send response update to pipeline
-    // don't await to not block the response
     sendToPipeline({
       event: "responseUpdated",
       environmentId: survey.environmentId,
@@ -271,8 +250,6 @@ export const PUT = withV1ApiWrapper({
     });
 
     if (updatedResponse.finished) {
-      // send response to pipeline
-      // don't await to not block the response
       sendToPipeline({
         event: "responseFinished",
         environmentId: survey.environmentId,
