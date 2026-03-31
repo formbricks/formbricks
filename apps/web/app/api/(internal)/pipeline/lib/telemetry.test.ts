@@ -56,6 +56,7 @@ vi.mock("@/lib/env", () => ({
 }));
 vi.mock("@/lib/constants", () => ({
   E2E_TESTING: false,
+  IS_DEVELOPMENT: false,
   TELEMETRY_DISABLED: false,
 }));
 vi.mock("@/lib/hash-string", () => ({
@@ -210,7 +211,11 @@ describe("sendTelemetryEvents", () => {
   test("should handle telemetry send failure and apply cooldown", async () => {
     // Reset module to clear nextTelemetryCheck state from previous tests
     vi.resetModules();
-    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: false,
+    }));
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
     }));
@@ -258,7 +263,11 @@ describe("sendTelemetryEvents", () => {
   test("should skip if no organization exists", async () => {
     // Reset module to clear nextTelemetryCheck state from previous tests
     vi.resetModules();
-    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: false,
+    }));
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
     }));
@@ -299,7 +308,11 @@ describe("sendTelemetryEvents", () => {
 
   test("should skip telemetry when TELEMETRY_DISABLED is true and no active EE license", async () => {
     vi.resetModules();
-    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: true }));
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: true,
+    }));
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
     }));
@@ -314,7 +327,11 @@ describe("sendTelemetryEvents", () => {
 
   test("should send telemetry when TELEMETRY_DISABLED is true but EE license is active", async () => {
     vi.resetModules();
-    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: false, TELEMETRY_DISABLED: true }));
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: true,
+    }));
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
     }));
@@ -363,7 +380,11 @@ describe("sendTelemetryEvents", () => {
 
   test("should unconditionally skip when E2E_TESTING is true even with active EE license", async () => {
     vi.resetModules();
-    vi.doMock("@/lib/constants", () => ({ E2E_TESTING: true, TELEMETRY_DISABLED: false }));
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: true,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: false,
+    }));
     vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
     }));
@@ -372,6 +393,24 @@ describe("sendTelemetryEvents", () => {
     await freshSendTelemetryEvents();
 
     // E2E_TESTING is a hard skip — no EE bypass, no cache, no fetch
+    expect(getCacheService).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("should unconditionally skip when IS_DEVELOPMENT is true", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: true,
+      TELEMETRY_DISABLED: false,
+    }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: true }),
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./telemetry");
+
+    await freshSendTelemetryEvents();
+
     expect(getCacheService).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
   });

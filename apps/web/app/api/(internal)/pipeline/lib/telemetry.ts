@@ -2,7 +2,7 @@ import { IntegrationType } from "@prisma/client";
 import { createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { E2E_TESTING, TELEMETRY_DISABLED } from "@/lib/constants";
+import { E2E_TESTING, IS_DEVELOPMENT, TELEMETRY_DISABLED } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { getInstanceInfo } from "@/lib/instance";
@@ -34,25 +34,12 @@ const hashedLicenseKey = env.ENTERPRISE_LICENSE_KEY ? hashString(env.ENTERPRISE_
 export const sendTelemetryEvents = async () => {
   try {
     // ============================================================
-    // CHECK 0a: E2E Testing Hard Skip
+    // CHECK 0: Non-Production Hard Skip
     // ============================================================
-    // Purpose: Unconditionally skip telemetry in test/CI environments.
-    // No EE bypass — E2E_TESTING is an internal flag, not customer-facing.
-    if (E2E_TESTING) {
+    // Purpose: Unconditionally skip telemetry in dev and test/CI environments.
+    // No EE bypass — these are internal flags, not customer-facing.
+    if (E2E_TESTING || IS_DEVELOPMENT) {
       return;
-    }
-
-    // ============================================================
-    // CHECK 0b: Telemetry Disabled Check
-    // ============================================================
-    // Purpose: Allow CE self-hosters to opt out of telemetry via env var.
-    // EE bypass: If an active Enterprise License is detected, telemetry is always sent
-    // regardless of the TELEMETRY_DISABLED setting to enforce license compliance.
-    if (TELEMETRY_DISABLED) {
-      const license = await getEnterpriseLicense();
-      if (!license.active) {
-        return;
-      }
     }
 
     const now = Date.now();
@@ -68,7 +55,21 @@ export const sendTelemetryEvents = async () => {
     }
 
     // ============================================================
-    // CHECK 2: Redis Check (Shared State)
+    // CHECK 2: Telemetry Disabled Check
+    // ============================================================
+    // Purpose: Allow CE self-hosters to opt out of telemetry via env var.
+    // EE bypass: If an active Enterprise License is detected, telemetry is always sent
+    // regardless of the TELEMETRY_DISABLED setting to enforce license compliance.
+    // Placed after in-memory check to avoid calling getEnterpriseLicense() on every invocation.
+    if (TELEMETRY_DISABLED) {
+      const license = await getEnterpriseLicense();
+      if (!license.active) {
+        return;
+      }
+    }
+
+    // ============================================================
+    // CHECK 3: Redis Check (Shared State)
     // ============================================================
     // Purpose: Check if telemetry was sent recently by ANY instance (shared across cluster).
     // This persists across restarts and works in multi-instance deployments.
@@ -95,7 +96,7 @@ export const sendTelemetryEvents = async () => {
     }
 
     // ============================================================
-    // CHECK 3: Distributed Lock (Prevent Concurrent Execution)
+    // CHECK 4: Distributed Lock (Prevent Concurrent Execution)
     // ============================================================
     // Purpose: Ensure only ONE instance executes telemetry at a time in a cluster.
     // How it works:
