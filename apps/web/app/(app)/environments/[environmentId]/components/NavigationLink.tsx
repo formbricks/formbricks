@@ -10,6 +10,8 @@ interface NavigationLinkProps {
   children: React.ReactNode;
   linkText: string;
   isTextVisible: boolean;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 export const NavigationLink = ({
@@ -19,10 +21,34 @@ export const NavigationLink = ({
   children,
   linkText,
   isTextVisible = true,
+  disabled = false,
+  disabledMessage,
 }: NavigationLinkProps) => {
+  const tooltipText = disabled ? disabledMessage || linkText : linkText;
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
   const inactiveClass =
     "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300 transition-all duration-150 ease-in-out";
+  const disabledClass = "cursor-not-allowed border-r-4 border-transparent text-slate-400";
+  const getColorClass = (baseClass: string) => {
+    if (disabled) {
+      return disabledClass;
+    }
+
+    return cn(baseClass, isActive ? activeClass : inactiveClass);
+  };
+
+  const collapsedColorClass = getColorClass("text-slate-700 hover:text-slate-900");
+  const expandedColorClass = getColorClass("text-slate-600 hover:text-slate-900");
+
+  const label = (
+    <span
+      className={cn(
+        "ml-2 flex transition-opacity duration-100",
+        isTextVisible ? "opacity-0" : "opacity-100"
+      )}>
+      {linkText}
+    </span>
+  );
 
   return (
     <>
@@ -30,35 +56,30 @@ export const NavigationLink = ({
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <li
-                className={cn(
-                  "mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm text-slate-700 hover:text-slate-900",
-                  isActive ? activeClass : inactiveClass
-                )}>
-                <Link href={href} className="flex items-center">
-                  {children}
-                </Link>
+              <li className={cn("mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm", collapsedColorClass)}>
+                {disabled ? (
+                  <div className="flex items-center">{children}</div>
+                ) : (
+                  <Link href={href}>{children}</Link>
+                )}
               </li>
             </TooltipTrigger>
-            <TooltipContent side="right">{linkText}</TooltipContent>
+            <TooltipContent side="right">{tooltipText}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : (
-        <li
-          className={cn(
-            "mb-1 rounded-l-md py-2 pl-5 text-sm text-slate-600 hover:text-slate-900",
-            isActive ? activeClass : inactiveClass
-          )}>
-          <Link href={href} className="flex items-center">
-            {children}
-            <span
-              className={cn(
-                "ml-2 flex transition-opacity duration-100",
-                isTextVisible ? "opacity-0" : "opacity-100"
-              )}>
-              {linkText}
-            </span>
-          </Link>
+        <li className={cn("mb-1 rounded-l-md py-2 pl-5 text-sm", expandedColorClass)}>
+          {disabled ? (
+            <div className="flex items-center">
+              {children}
+              {label}
+            </div>
+          ) : (
+            <Link href={href} className="flex items-center">
+              {children}
+              {label}
+            </Link>
+          )}
         </li>
       )}
     </>
