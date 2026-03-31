@@ -202,8 +202,6 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
       }
 
       const result = await updateWorkspaceTeam(teamId, workspaceId, {
-        teamId,
-        workspaceId,
         permission: normalisedBody.permission,
       });
       if (!result.ok) {

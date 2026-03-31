@@ -139,10 +139,6 @@ const mockEnvironmentStateData: EnvironmentStateData = {
     appSetupCompleted: true,
     workspace: mockWorkspace,
   },
-  organization: {
-    id: mockOrganization.id,
-    billing: mockOrganization.billing,
-  },
   surveys: mockSurveys,
   actionClasses: mockActionClasses,
 };
@@ -165,11 +161,19 @@ describe("getEnvironmentState", () => {
   test("should return the correct environment state", async () => {
     const result = await getEnvironmentState(environmentId);
 
-    const expectedData: TJsEnvironmentState["data"] = {
+    // Backwards compat: response includes `project` alongside `workspace`,
+    // and each survey includes `projectOverwrites` alongside `workspaceOverwrites`
+    const surveysWithLegacy = mockSurveys.map((s) => ({
+      ...s,
+      projectOverwrites: (s as Record<string, unknown>).workspaceOverwrites ?? null,
+    }));
+
+    const expectedData = {
       recaptchaSiteKey: "mock_recaptcha_site_key",
-      surveys: mockSurveys,
+      surveys: surveysWithLegacy,
       actionClasses: mockActionClasses,
       workspace: mockWorkspace,
+      project: mockWorkspace,
     };
 
     expect(result.data).toEqual(expectedData);
@@ -276,7 +280,12 @@ describe("getEnvironmentState", () => {
 
     const result = await getEnvironmentState(environmentId);
 
-    expect(result.data.surveys).toEqual(mixedSurveys);
+    // Backwards compat: each survey includes `projectOverwrites`
+    const expectedSurveys = mixedSurveys.map((s) => ({
+      ...s,
+      projectOverwrites: (s as Record<string, unknown>).workspaceOverwrites ?? null,
+    }));
+    expect(result.data.surveys).toEqual(expectedSurveys);
   });
 
   test("should handle empty surveys array", async () => {
