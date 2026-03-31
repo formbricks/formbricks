@@ -29,7 +29,6 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
-import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -38,13 +37,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { getLatestStableFbReleaseAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
 import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
   user: TUser;
   organization: TOrganization;
-  project: { id: string; name: string };
+  workspace: { id: string; name: string };
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
@@ -55,7 +55,7 @@ export const MainNavigation = ({
   environment,
   organization,
   user,
-  project,
+  workspace,
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
@@ -92,7 +92,7 @@ export const MainNavigation = ({
   }, [isCollapsed]);
 
   useEffect(() => {
-    // Auto collapse project navbar on org and account settings
+    // Auto collapse workspace navbar on org and account settings
     if (pathname?.includes("/settings")) {
       setIsCollapsed(true);
     }
@@ -186,7 +186,7 @@ export const MainNavigation = ({
 
   return (
     <>
-      {project && (
+      {workspace && (
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",

@@ -71,7 +71,7 @@ type TCachedFetchResult = { value: TEnterpriseLicenseDetails | null };
 // Validation schemas
 const LicenseFeaturesSchema = z.object({
   isMultiOrgEnabled: z.boolean(),
-  projects: z.number().nullable(),
+  workspaces: z.number().nullable(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
   whitelabel: z.boolean(),
@@ -138,7 +138,7 @@ export const getCacheKeys = () => {
 // Default features
 const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   isMultiOrgEnabled: false,
-  projects: 3,
+  workspaces: 3,
   twoFactorAuth: false,
   sso: false,
   whitelabel: false,

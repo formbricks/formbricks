@@ -6,8 +6,8 @@ import { CheckIcon } from "lucide-react";
 import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import {
   ColorField,
@@ -22,7 +22,7 @@ type FormStylingSettingsProps = {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isSettingsPage?: boolean;
   disabled?: boolean;
-  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
 };
 
 export const FormStylingSettings = ({

@@ -4,13 +4,13 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getDisplaysByContactId } from "@/lib/display/service";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { ActivityTimeline } from "./activity-timeline";
 
 interface ActivitySectionProps {
@@ -47,12 +47,12 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
     throw new Error(t("environments.contacts.no_responses_found"));
   }
 
-  const project = await getProjectByEnvironmentId(environment.id);
-  if (!project) {
+  const workspace = await getWorkspaceByEnvironmentId(environment.id);
+  if (!workspace) {
     throw new Error(t("common.workspace_not_found"));
   }
 
-  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
   const locale = user.locale ?? DEFAULT_LOCALE;
 
   return (
@@ -64,7 +64,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
       environment={environment}
       environmentTags={environmentTags}
       locale={locale}
-      projectPermission={projectPermission}
+      workspacePermission={workspacePermission}
     />
   );
 };

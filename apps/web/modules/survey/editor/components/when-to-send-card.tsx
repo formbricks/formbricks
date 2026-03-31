@@ -8,14 +8,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
+import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -23,7 +23,7 @@ interface WhenToSendCardProps {
   environmentId: string;
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
-  projectPermission: TTeamPermission | null;
+  workspacePermission: TTeamPermission | null;
 }
 
 export const WhenToSendCard = ({
@@ -32,7 +32,7 @@ export const WhenToSendCard = ({
   setLocalSurvey,
   propActionClasses,
   membershipRole,
-  projectPermission,
+  workspacePermission,
 }: WhenToSendCardProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
@@ -41,7 +41,7 @@ export const WhenToSendCard = ({
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
   const { isMember } = getAccessFlags(membershipRole);
-  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(workspacePermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

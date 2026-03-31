@@ -1,5 +1,5 @@
-import { type TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { type TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
+import { type TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const TeamPermissionMapping = {
   [ZTeamPermission.enum.read]: "Read",

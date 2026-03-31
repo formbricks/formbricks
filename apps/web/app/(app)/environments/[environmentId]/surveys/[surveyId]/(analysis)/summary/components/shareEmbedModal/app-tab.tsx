@@ -88,7 +88,7 @@ const DisplayCriteriaItem = ({ icon, title, titleSuffix, description }: DisplayC
 
 export const AppTab = () => {
   const { t } = useTranslation();
-  const { environment, project } = useEnvironment();
+  const { environment, workspace } = useEnvironment();
   const { survey } = useSurvey();
 
   const documentationLinks = useMemo(() => createDocumentationLinks(t), [t]);
@@ -98,8 +98,8 @@ export const AppTab = () => {
     if (survey.recontactDays !== null) {
       return formatRecontactDaysString(survey.recontactDays, t);
     }
-    if (project.recontactDays !== null) {
-      return formatRecontactDaysString(project.recontactDays, t);
+    if (workspace.recontactDays !== null) {
+      return formatRecontactDaysString(workspace.recontactDays, t);
     }
     return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
   };

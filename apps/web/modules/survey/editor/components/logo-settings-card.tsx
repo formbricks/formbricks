@@ -8,8 +8,8 @@ import React, { ChangeEvent, useRef, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -25,7 +25,7 @@ type LogoSettingsCardProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
-  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   disabled?: boolean;
   isStorageConfigured: boolean;
 };

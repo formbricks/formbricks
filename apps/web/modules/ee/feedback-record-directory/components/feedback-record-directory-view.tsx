@@ -3,7 +3,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackRecordDirectoryTable } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-table";
 import { getFeedbackRecordDirectories } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
-import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
+import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 
 interface FeedbackRecordDirectoryViewProps {
   organizationId: string;
@@ -16,9 +16,9 @@ export const FeedbackRecordDirectoryView = async ({
 }: FeedbackRecordDirectoryViewProps) => {
   const t = await getTranslate();
 
-  const [directories, orgProjects] = await Promise.all([
+  const [directories, orgWorkspaces] = await Promise.all([
     getFeedbackRecordDirectories(organizationId),
-    getProjectsByOrganizationId(organizationId),
+    getWorkspacesByOrganizationId(organizationId),
   ]);
 
   return (
@@ -28,7 +28,7 @@ export const FeedbackRecordDirectoryView = async ({
       <FeedbackRecordDirectoryTable
         directories={directories}
         organizationId={organizationId}
-        orgProjects={orgProjects}
+        orgWorkspaces={orgWorkspaces}
         membershipRole={membershipRole}
       />
     </SettingsCard>

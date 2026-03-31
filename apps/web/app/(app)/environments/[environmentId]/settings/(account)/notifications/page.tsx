@@ -21,9 +21,9 @@ const setCompleteNotificationSettings = (
     unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
-    for (const project of membership.organization.projects) {
+    for (const workspace of membership.organization.workspaces) {
       // set default values for alerts
-      for (const environment of project.environments) {
+      for (const environment of workspace.environments) {
         for (const survey of environment.surveys) {
           newNotificationSettings.alert[survey.id] =
             (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
@@ -46,17 +46,17 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
       },
       OR: [
         {
-          // Fetch all projects if user role is owner or manager
+          // Fetch all workspaces if user role is owner or manager
           role: {
             in: ["owner", "manager"],
           },
         },
         {
-          // Filter projects based on team membership if user is not owner or manager
+          // Filter workspaces based on team membership if user is not owner or manager
           organization: {
-            projects: {
+            workspaces: {
               some: {
-                projectTeams: {
+                workspaceTeams: {
                   some: {
                     team: {
                       teamUsers: {
@@ -78,12 +78,12 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
         select: {
           id: true,
           name: true,
-          projects: {
+          workspaces: {
             // Apply conditional filtering based on user's role
             where: {
               OR: [
                 {
-                  // Fetch all projects if user is owner or manager
+                  // Fetch all workspaces if user is owner or manager
                   organization: {
                     memberships: {
                       some: {
@@ -96,8 +96,8 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
                   },
                 },
                 {
-                  // Only include projects accessible through teams if user is not owner or manager
-                  projectTeams: {
+                  // Only include workspaces accessible through teams if user is not owner or manager
+                  workspaceTeams: {
                     some: {
                       team: {
                         teamUsers: {

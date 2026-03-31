@@ -1,3 +1,3 @@
-import { TagsPage } from "@/modules/projects/settings/tags/page";
+import { TagsPage } from "@/modules/workspaces/settings/tags/page";
 
 export default TagsPage;

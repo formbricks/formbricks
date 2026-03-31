@@ -1,6 +1,6 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { cn } from "@/lib/cn";
@@ -13,7 +13,7 @@ interface TemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick?: (template: TTemplate) => void;
-  project: Project;
+  workspace: Workspace;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   selectedFilter: TTemplateFilter[];
@@ -25,7 +25,7 @@ export const Template = ({
   activeTemplate,
   setActiveTemplate,
   onTemplateClick = () => {},
-  project,
+  workspace,
   createSurvey,
   loading,
   selectedFilter,
@@ -36,7 +36,7 @@ export const Template = ({
   const showCreateSurveyButton = activeTemplate?.name === template.name;
 
   const handleCardClick = () => {
-    const newTemplate = replacePresetPlaceholders(template, project);
+    const newTemplate = replacePresetPlaceholders(template, workspace);
     if (noPreview) {
       createSurvey(newTemplate);
       return;

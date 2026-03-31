@@ -42,7 +42,7 @@ describe("Organization Lib", () => {
       const result = await getOrganizationIdFromEnvironmentId(environmentId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
         where: {
-          projects: { some: { environments: { some: { id: environmentId } } } },
+          workspaces: { some: { environments: { some: { id: environmentId } } } },
         },
         select: { id: true },
       });
@@ -140,7 +140,7 @@ describe("Organization Lib", () => {
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
         where: { id: organizationId },
         select: {
-          projects: {
+          workspaces: {
             select: {
               environments: { select: { id: true } },
             },

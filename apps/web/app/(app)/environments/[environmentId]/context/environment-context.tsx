@@ -3,11 +3,11 @@
 import { createContext, useContext, useMemo } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
+import { TWorkspace } from "@formbricks/types/workspace";
 
 export interface EnvironmentContextType {
   environment: TEnvironment;
-  project: TProject;
+  workspace: TWorkspace;
   organization: TOrganization;
   organizationId: string;
 }
@@ -22,12 +22,12 @@ export const useEnvironment = () => {
   return context;
 };
 
-export const useProject = () => {
+export const useWorkspace = () => {
   const context = useContext(EnvironmentContext);
   if (!context) {
-    return { project: null };
+    return { workspace: null };
   }
-  return { project: context.project };
+  return { workspace: context.workspace };
 };
 
 export const useOrganization = () => {
@@ -41,25 +41,25 @@ export const useOrganization = () => {
 // Client wrapper component to be used in server components
 interface EnvironmentContextWrapperProps {
   environment: TEnvironment;
-  project: TProject;
+  workspace: TWorkspace;
   organization: TOrganization;
   children: React.ReactNode;
 }
 
 export const EnvironmentContextWrapper = ({
   environment,
-  project,
+  workspace,
   organization,
   children,
 }: EnvironmentContextWrapperProps) => {
   const environmentContextValue = useMemo(
     () => ({
       environment,
-      project,
+      workspace,
       organization,
-      organizationId: project.organizationId,
+      organizationId: workspace.organizationId,
     }),
-    [environment, project, organization]
+    [environment, workspace, organization]
   );
 
   return (

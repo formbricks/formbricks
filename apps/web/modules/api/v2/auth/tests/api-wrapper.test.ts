@@ -34,8 +34,8 @@ const mockAuthentication = {
     {
       environmentId: "env-id",
       environmentType: "development" as const,
-      projectId: "project-id",
-      projectName: "Project Name",
+      workspaceId: "workspace-id",
+      workspaceName: "Workspace Name",
       permission: "manage" as const,
     },
   ],

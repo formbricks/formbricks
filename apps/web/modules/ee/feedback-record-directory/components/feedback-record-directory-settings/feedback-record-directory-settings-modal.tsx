@@ -17,7 +17,7 @@ import {
   ZFeedbackRecordDirectoryUpdateInput,
   getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
-import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
+import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -38,7 +38,7 @@ interface FeedbackRecordDirectorySettingsModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   directory: TFeedbackRecordDirectoryDetails;
-  orgProjects: TOrganizationProject[];
+  orgWorkspaces: TOrganizationWorkspace[];
   membershipRole: TOrganizationRole;
 }
 
@@ -46,7 +46,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
   open,
   setOpen,
   directory,
-  orgProjects,
+  orgWorkspaces,
   membershipRole,
 }: FeedbackRecordDirectorySettingsModalProps) => {
   const { t } = useTranslation();
@@ -54,20 +54,23 @@ export const FeedbackRecordDirectorySettingsModal = ({
   const isOwnerOrManager = isOwner || isManager;
   const router = useRouter();
 
-  const projectOptions = useMemo(
+  const workspaceOptions = useMemo(
     () =>
-      orgProjects
+      orgWorkspaces
         .map((p) => ({ value: p.id, label: p.name }))
         .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" })),
-    [orgProjects]
+    [orgWorkspaces]
   );
 
-  const initialProjectIds = useMemo(() => directory.projects.map((p) => p.projectId), [directory.projects]);
+  const initialWorkspaceIds = useMemo(
+    () => directory.workspaces.map((p) => p.workspaceId),
+    [directory.workspaces]
+  );
 
   const form = useForm<TFeedbackRecordDirectoryUpdateInput>({
     defaultValues: {
       name: directory.name,
-      projectIds: initialProjectIds,
+      workspaceIds: initialWorkspaceIds,
     },
     mode: "onChange",
     resolver: zodResolver(ZFeedbackRecordDirectoryUpdateInput),
@@ -89,7 +92,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
       directoryId: directory.id,
       data: {
         name: data.name,
-        projectIds: data.projectIds,
+        workspaceIds: data.workspaceIds,
       },
     });
 
@@ -152,10 +155,10 @@ export const FeedbackRecordDirectorySettingsModal = ({
                   {t("environments.settings.feedback_record_directories.assign_workspaces_description")}
                 </Muted>
                 <MultiSelect
-                  options={projectOptions}
-                  value={form.watch("projectIds")}
+                  options={workspaceOptions}
+                  value={form.watch("workspaceIds")}
                   onChange={(selected) => {
-                    setValue("projectIds", selected, { shouldDirty: true });
+                    setValue("workspaceIds", selected, { shouldDirty: true });
                   }}
                   disabled={!isOwnerOrManager}
                   placeholder={t(

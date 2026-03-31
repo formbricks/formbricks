@@ -2,10 +2,10 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TLanguage } from "@formbricks/types/project";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TLanguage } from "@formbricks/types/workspace";
 import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -100,7 +100,7 @@ const mockBaseSurvey: TSurvey = {
   createdBy: "user_123",
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   showLanguageSwitch: false,
   isBackButtonHidden: false,
   followUps: [],

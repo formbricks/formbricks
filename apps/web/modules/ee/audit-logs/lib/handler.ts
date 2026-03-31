@@ -260,8 +260,8 @@ export const withAuditLogging = <
           case "user":
             targetId = auditLoggingCtx.userId;
             break;
-          case "project":
-            targetId = auditLoggingCtx.projectId;
+          case "workspace":
+            targetId = auditLoggingCtx.workspaceId;
             break;
           case "language":
             targetId = auditLoggingCtx.languageId;

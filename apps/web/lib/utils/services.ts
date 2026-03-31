@@ -57,7 +57,7 @@ export const getApiKey = reactCache(async (apiKeyId: string): Promise<{ organiza
 });
 
 export const getEnvironment = reactCache(
-  async (environmentId: string): Promise<{ projectId: string } | null> => {
+  async (environmentId: string): Promise<{ workspaceId: string } | null> => {
     validateInputs([environmentId, ZId]);
 
     try {
@@ -66,7 +66,7 @@ export const getEnvironment = reactCache(
           id: environmentId,
         },
         select: {
-          projectId: true,
+          workspaceId: true,
         },
       });
       return environment;
@@ -123,13 +123,13 @@ export const getInvite = reactCache(async (inviteId: string): Promise<{ organiza
   }
 });
 
-export const getLanguage = async (languageId: string): Promise<{ projectId: string }> => {
+export const getLanguage = async (languageId: string): Promise<{ workspaceId: string }> => {
   try {
     validateInputs([languageId, ZId]);
 
     const language = await prisma.language.findFirst({
       where: { id: languageId },
-      select: { projectId: true },
+      select: { workspaceId: true },
     });
 
     if (!language) {
@@ -145,16 +145,16 @@ export const getLanguage = async (languageId: string): Promise<{ projectId: stri
   }
 };
 
-export const getProject = reactCache(
-  async (projectId: string): Promise<{ organizationId: string } | null> => {
+export const getWorkspace = reactCache(
+  async (workspaceId: string): Promise<{ organizationId: string } | null> => {
     try {
-      const projectPrisma = await prisma.project.findUnique({
+      const workspacePrisma = await prisma.workspace.findUnique({
         where: {
-          id: projectId,
+          id: workspaceId,
         },
         select: { organizationId: true },
       });
-      return projectPrisma;
+      return workspacePrisma;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -272,15 +272,15 @@ export const getTeam = reactCache(async (teamId: string): Promise<{ organization
   }
 });
 
-export const isProjectPartOfOrganization = async (
+export const isWorkspacePartOfOrganization = async (
   organizationId: string,
-  projectId: string
+  workspaceId: string
 ): Promise<boolean> => {
-  const project = await getProject(projectId);
-  if (!project) {
-    throw new ResourceNotFoundError("Project", projectId);
+  const workspace = await getWorkspace(workspaceId);
+  if (!workspace) {
+    throw new ResourceNotFoundError("Workspace", workspaceId);
   }
-  return project.organizationId === organizationId;
+  return workspace.organizationId === organizationId;
 };
 
 export const isTeamPartOfOrganization = async (organizationId: string, teamId: string): Promise<boolean> => {

@@ -15,8 +15,8 @@ import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
-import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
+import { getWorkspaceWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/workspace";
+import { TSurvey, TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { mapSurveyRowToSurvey, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
 
 export const getSurveys = reactCache(
@@ -220,7 +220,7 @@ const getExistingSurvey = async (surveyId: string) => {
       hiddenFields: true,
       surveyClosedMessage: true,
       singleUse: true,
-      projectOverwrites: true,
+      workspaceOverwrites: true,
       styling: true,
       segment: true,
       followUps: true,
@@ -256,36 +256,36 @@ export const copySurveyToOtherEnvironment = async (
     const isSameEnvironment = environmentId === targetEnvironmentId;
 
     // Fetch required resources
-    const [existingEnvironment, existingProject, existingSurvey, existingQuotas, organization] =
+    const [existingEnvironment, existingWorkspace, existingSurvey, existingQuotas, organization] =
       await Promise.all([
         doesEnvironmentExist(environmentId),
-        getProjectWithLanguagesByEnvironmentId(environmentId),
+        getWorkspaceWithLanguagesByEnvironmentId(environmentId),
         getExistingSurvey(surveyId),
         getQuotas(surveyId),
         getOrganizationByEnvironmentId(environmentId),
       ]);
 
     if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
-    if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
+    if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", environmentId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
     if (!organization) throw new ResourceNotFoundError("Organization", environmentId);
 
     const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
     let targetEnvironment: string | null = null;
-    let targetProject: TProjectWithLanguages | null = null;
+    let targetWorkspace: TWorkspaceWithLanguages | null = null;
 
     if (isSameEnvironment) {
       targetEnvironment = existingEnvironment;
-      targetProject = existingProject;
+      targetWorkspace = existingWorkspace;
     } else {
-      [targetEnvironment, targetProject] = await Promise.all([
+      [targetEnvironment, targetWorkspace] = await Promise.all([
         doesEnvironmentExist(targetEnvironmentId),
-        getProjectWithLanguagesByEnvironmentId(targetEnvironmentId),
+        getWorkspaceWithLanguagesByEnvironmentId(targetEnvironmentId),
       ]);
 
       if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
-      if (!targetProject) throw new ResourceNotFoundError("Project", targetEnvironmentId);
+      if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetEnvironmentId);
     }
 
     // Fetch existing action classes in target environment for name conflict checks
@@ -318,12 +318,12 @@ export const copySurveyToOtherEnvironment = async (
               language: {
                 connectOrCreate: {
                   where: {
-                    projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
+                    workspaceId_code: { code: surveyLanguage.language.code, workspaceId: targetWorkspace.id },
                   },
                   create: {
                     code: surveyLanguage.language.code,
                     alias: surveyLanguage.language.alias,
-                    projectId: targetProject.id,
+                    workspaceId: targetWorkspace.id,
                   },
                 },
               },
@@ -453,8 +453,8 @@ export const copySurveyToOtherEnvironment = async (
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
       singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-      projectOverwrites: existingSurvey.projectOverwrites
-        ? structuredClone(existingSurvey.projectOverwrites)
+      workspaceOverwrites: existingSurvey.workspaceOverwrites
+        ? structuredClone(existingSurvey.workspaceOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,

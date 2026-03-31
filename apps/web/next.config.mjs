@@ -455,6 +455,11 @@ const nextConfig = {
         source: "/api/v1/management/attribute-classes/:id*",
         destination: "/api/v1/management/contact-attribute-keys/:id*",
       },
+      // Backwards compatibility: project-teams → workspace-teams
+      {
+        source: "/api/v2/organizations/:organizationId/project-teams",
+        destination: "/api/v2/organizations/:organizationId/workspace-teams",
+      },
     ];
   },
   env: {

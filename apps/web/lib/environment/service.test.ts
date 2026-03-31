@@ -1,4 +1,4 @@
-import { EnvironmentType, Prisma, Project } from "@prisma/client";
+import { EnvironmentType, Prisma, Workspace } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -10,7 +10,7 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-    project: {
+    workspace: {
       findFirst: vi.fn(),
     },
   },
@@ -30,7 +30,7 @@ describe("Environment Service", () => {
       const mockEnvironment = {
         id: "clh6pzwx90000e9ogjr0mf7sx",
         type: EnvironmentType.production,
-        projectId: "clh6pzwx90000e9ogjr0mf7sy",
+        workspaceId: "clh6pzwx90000e9ogjr0mf7sy",
         createdAt: new Date(),
         updatedAt: new Date(),
         appSetupCompleted: false,
@@ -68,12 +68,12 @@ describe("Environment Service", () => {
   });
 
   describe("getEnvironments", () => {
-    test("should return environments when project exists", async () => {
+    test("should return environments when workspace exists", async () => {
       const mockEnvironments = [
         {
           id: "clh6pzwx90000e9ogjr0mf7sx",
           type: EnvironmentType.production,
-          projectId: "clh6pzwx90000e9ogjr0mf7sy",
+          workspaceId: "clh6pzwx90000e9ogjr0mf7sy",
           createdAt: new Date(),
           updatedAt: new Date(),
           appSetupCompleted: false,
@@ -81,16 +81,16 @@ describe("Environment Service", () => {
         {
           id: "clh6pzwx90000e9ogjr0mf7sz",
           type: EnvironmentType.development,
-          projectId: "clh6pzwx90000e9ogjr0mf7sy",
+          workspaceId: "clh6pzwx90000e9ogjr0mf7sy",
           createdAt: new Date(),
           updatedAt: new Date(),
           appSetupCompleted: true,
         },
       ];
 
-      vi.mocked(prisma.project.findFirst).mockResolvedValue({
+      vi.mocked(prisma.workspace.findFirst).mockResolvedValue({
         id: "clh6pzwx90000e9ogjr0mf7sy",
-        name: "Test Project",
+        name: "Test Workspace",
         environments: [
           {
             ...mockEnvironments[0],
@@ -99,12 +99,12 @@ describe("Environment Service", () => {
             ...mockEnvironments[1],
           },
         ],
-      } as unknown as Project);
+      } as unknown as Workspace);
 
       const result = await getEnvironments("clh6pzwx90000e9ogjr0mf7sy");
 
       expect(result).toEqual(mockEnvironments);
-      expect(prisma.project.findFirst).toHaveBeenCalledWith({
+      expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
         where: {
           id: "clh6pzwx90000e9ogjr0mf7sy",
         },
@@ -114,8 +114,8 @@ describe("Environment Service", () => {
       });
     });
 
-    test("should throw ResourceNotFoundError when project not found", async () => {
-      vi.mocked(prisma.project.findFirst).mockResolvedValue(null);
+    test("should throw ResourceNotFoundError when workspace not found", async () => {
+      vi.mocked(prisma.workspace.findFirst).mockResolvedValue(null);
 
       await expect(getEnvironments("clh6pzwx90000e9ogjr0mf7sy")).rejects.toThrow(ResourceNotFoundError);
     });
@@ -125,7 +125,7 @@ describe("Environment Service", () => {
         code: "P2002",
         clientVersion: "5.0.0",
       });
-      vi.mocked(prisma.project.findFirst).mockRejectedValue(prismaError);
+      vi.mocked(prisma.workspace.findFirst).mockRejectedValue(prismaError);
 
       await expect(getEnvironments("clh6pzwx90000e9ogjr0mf7sy")).rejects.toThrow(DatabaseError);
     });
@@ -136,7 +136,7 @@ describe("Environment Service", () => {
       const mockEnvironment = {
         id: "clh6pzwx90000e9ogjr0mf7sx",
         type: EnvironmentType.production,
-        projectId: "clh6pzwx90000e9ogjr0mf7sy",
+        workspaceId: "clh6pzwx90000e9ogjr0mf7sy",
         createdAt: new Date(),
         updatedAt: new Date(),
         appSetupCompleted: false,

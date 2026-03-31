@@ -7,7 +7,6 @@ import {
   getIntegration,
   getInvite,
   getLanguage,
-  getProject,
   getQuota,
   getResponse,
   getSegment,
@@ -15,6 +14,7 @@ import {
   getTag,
   getTeam,
   getWebhook,
+  getWorkspace,
 } from "@/lib/utils/services";
 
 export const getFormattedErrorMessage = (result: {
@@ -52,13 +52,13 @@ export const getFormattedErrorMessage = (result: {
  * GET organization ID from RESOURCE ID
  */
 
-export const getOrganizationIdFromProjectId = async (projectId: string) => {
-  const project = await getProject(projectId);
-  if (!project) {
-    throw new ResourceNotFoundError("project", projectId);
+export const getOrganizationIdFromWorkspaceId = async (workspaceId: string) => {
+  const workspace = await getWorkspace(workspaceId);
+  if (!workspace) {
+    throw new ResourceNotFoundError("workspace", workspaceId);
   }
 
-  return project.organizationId;
+  return workspace.organizationId;
 };
 
 export const getOrganizationIdFromEnvironmentId = async (environmentId: string) => {
@@ -67,7 +67,7 @@ export const getOrganizationIdFromEnvironmentId = async (environmentId: string) 
     throw new ResourceNotFoundError("environment", environmentId);
   }
 
-  return await getOrganizationIdFromProjectId(environment.projectId);
+  return await getOrganizationIdFromWorkspaceId(environment.workspaceId);
 };
 
 export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
@@ -95,15 +95,6 @@ export const getOrganizationIdFromContactId = async (contactId: string) => {
   }
 
   return await getOrganizationIdFromEnvironmentId(contact.environmentId);
-};
-
-export const getProjectIdFromContactId = async (contactId: string) => {
-  const contact = await getContact(contactId);
-  if (!contact) {
-    throw new ResourceNotFoundError("contact", contactId);
-  }
-
-  return await getProjectIdFromEnvironmentId(contact.environmentId);
 };
 
 export const getOrganizationIdFromTagId = async (tagId: string) => {
@@ -175,7 +166,7 @@ export const getOrganizationIdFromLanguageId = async (languageId: string) => {
     throw new ResourceNotFoundError("language", languageId);
   }
 
-  return await getOrganizationIdFromProjectId(language.projectId);
+  return await getOrganizationIdFromWorkspaceId(language.workspaceId);
 };
 
 export const getOrganizationIdFromTeamId = async (teamId: string) => {
@@ -193,101 +184,101 @@ export const getOrganizationIdFromQuotaId = async (quotaId: string) => {
   return await getOrganizationIdFromSurveyId(quota.surveyId);
 };
 
-// project id helpers
-export const getProjectIdFromEnvironmentId = async (environmentId: string) => {
+// workspace id helpers
+export const getWorkspaceIdFromEnvironmentId = async (environmentId: string) => {
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new ResourceNotFoundError("environment", environmentId);
   }
 
-  return environment.projectId;
+  return environment.workspaceId;
 };
 
-export const getProjectIdFromSurveyId = async (surveyId: string) => {
+export const getWorkspaceIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new ResourceNotFoundError("survey", surveyId);
   }
 
-  return await getProjectIdFromEnvironmentId(survey.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(survey.environmentId);
 };
 
-export const getProjectIdFromSegmentId = async (segmentId: string) => {
+export const getWorkspaceIdFromSegmentId = async (segmentId: string) => {
   const segment = await getSegment(segmentId);
   if (!segment) {
     throw new ResourceNotFoundError("segment", segmentId);
   }
 
-  return await getProjectIdFromEnvironmentId(segment.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(segment.environmentId);
 };
 
-export const getProjectIdFromActionClassId = async (actionClassId: string) => {
+export const getWorkspaceIdFromActionClassId = async (actionClassId: string) => {
   const actionClass = await getActionClass(actionClassId);
   if (!actionClass) {
     throw new ResourceNotFoundError("actionClass", actionClassId);
   }
 
-  return await getProjectIdFromEnvironmentId(actionClass.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(actionClass.environmentId);
 };
 
-export const getProjectIdFromTagId = async (tagId: string) => {
+export const getWorkspaceIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);
   if (!tag) {
     throw new ResourceNotFoundError("tag", tagId);
   }
 
-  return await getProjectIdFromEnvironmentId(tag.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(tag.environmentId);
 };
 
-export const getProjectIdFromLanguageId = async (languageId: string) => {
+export const getWorkspaceIdFromLanguageId = async (languageId: string) => {
   const language = await getLanguage(languageId);
   if (!language) {
     throw new ResourceNotFoundError("language", languageId);
   }
 
-  return language.projectId;
+  return language.workspaceId;
 };
 
-export const getProjectIdFromResponseId = async (responseId: string) => {
+export const getWorkspaceIdFromResponseId = async (responseId: string) => {
   const response = await getResponse(responseId);
   if (!response) {
     throw new ResourceNotFoundError("response", responseId);
   }
 
-  return await getProjectIdFromSurveyId(response.surveyId);
+  return await getWorkspaceIdFromSurveyId(response.surveyId);
 };
 
-export const getProductIdFromContactId = async (contactId: string) => {
+export const getWorkspaceIdFromContactId = async (contactId: string) => {
   const contact = await getContact(contactId);
   if (!contact) {
     throw new ResourceNotFoundError("contact", contactId);
   }
 
-  return await getProjectIdFromEnvironmentId(contact.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(contact.environmentId);
 };
 
-export const getProjectIdFromIntegrationId = async (integrationId: string) => {
+export const getWorkspaceIdFromIntegrationId = async (integrationId: string) => {
   const integration = await getIntegration(integrationId);
   if (!integration) {
     throw new ResourceNotFoundError("integration", integrationId);
   }
 
-  return await getProjectIdFromEnvironmentId(integration.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(integration.environmentId);
 };
 
-export const getProjectIdFromWebhookId = async (webhookId: string) => {
+export const getWorkspaceIdFromWebhookId = async (webhookId: string) => {
   const webhook = await getWebhook(webhookId);
   if (!webhook) {
     throw new ResourceNotFoundError("webhook", webhookId);
   }
 
-  return await getProjectIdFromEnvironmentId(webhook.environmentId);
+  return await getWorkspaceIdFromEnvironmentId(webhook.environmentId);
 };
 
-export const getProjectIdFromQuotaId = async (quotaId: string) => {
+export const getWorkspaceIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
 
-  return await getProjectIdFromSurveyId(quota.surveyId);
+  return await getWorkspaceIdFromSurveyId(quota.surveyId);
 };
 
 // environment id helpers
