@@ -2464,8 +2464,8 @@ checksums:
     templates/csat_question_1_headline: bd4894e95695ce5bc9fc5d326c79bc90
     templates/csat_question_1_lower_label: 54d464343c0bc17231fd51aa2d73623f
     templates/csat_question_1_upper_label: 9f000f63949d875ae628fc354a2a7f6a
-    templates/csat_question_2_choice_1: a0cf57bc571c95c43924a3c641d1355e
-    templates/csat_question_2_choice_2: a3a49eb9cc86972bce6dc41a107f472d
+    templates/csat_question_2_choice_1: 0cb1260dd25e94f56c2da7ab21b0e0ae
+    templates/csat_question_2_choice_2: f12ed9d98c7965ab949efcc25f8ca85e
     templates/csat_question_2_choice_3: a7c58d9b8afdaefadeb1f5fdf4d5ad3f
     templates/csat_question_2_choice_4: d09723c4bc1d85d99c2a9248ed0d4578
     templates/csat_question_2_choice_5: a89ca2602a3322e89adf17b3349e03ab

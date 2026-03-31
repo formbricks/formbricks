@@ -2133,8 +2133,8 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
               subheader: t("templates.csat_question_2_subheader"),
               required: true,
               choices: [
-                t("templates.csat_question_2_choice_2"),
                 t("templates.csat_question_2_choice_1"),
+                t("templates.csat_question_2_choice_2"),
                 t("templates.csat_question_2_choice_3"),
                 t("templates.csat_question_2_choice_4"),
                 t("templates.csat_question_2_choice_5"),
