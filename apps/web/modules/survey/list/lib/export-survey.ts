@@ -53,6 +53,7 @@ export const ZSurveyExportData = z.object({
   isBackButtonHidden: z.boolean().optional(),
   pin: z.string().nullable().optional(),
   welcomeCard: z.any().optional(),
+  questions: z.array(z.any()).optional(),
   blocks: z.array(z.any()),
   endings: z.array(z.any()).optional(),
   hiddenFields: z.any().optional(),

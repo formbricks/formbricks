@@ -1,11 +1,15 @@
 "use client";
 
 import { ArrowUpFromLineIcon, CheckIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { importSurveyAction, validateSurveyImportAction } from "@/modules/survey/list/actions";
+import {
+  convertSurveyDocxToPayloadAction,
+  importSurveyWithDestinationAction,
+  validateSurveyImportAction,
+} from "@/modules/survey/list/actions";
 import { type TSurveyExportPayload } from "@/modules/survey/list/lib/export-survey";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -27,6 +31,14 @@ interface ImportSurveyModalProps {
   setOpen: (open: boolean) => void;
 }
 
+type TImportLoadingPhase = "idle" | "reading" | "encoding" | "extracting" | "validating" | "importing";
+
+interface TDetectedLanguage {
+  code: string;
+  confidence: number;
+  evidence: string[];
+}
+
 export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurveyModalProps) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +49,35 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
   const [validationInfos, setValidationInfos] = useState<string[]>([]);
   const [newName, setNewName] = useState("");
   const [isValid, setIsValid] = useState(false);
+  const [conversionNotes, setConversionNotes] = useState<string[]>([]);
+  const [detectedLanguages, setDetectedLanguages] = useState<TDetectedLanguage[]>([]);
+  const [importRunId, setImportRunId] = useState<string | undefined>(undefined);
+  const [loadingPhase, setLoadingPhase] = useState<TImportLoadingPhase>("idle");
+  const [loadingVerbIndex, setLoadingVerbIndex] = useState(0);
+
+  const loadingVerbs = [
+    "beaming",
+    "marinating",
+    "untangling",
+    "juggling",
+    "translating",
+    "wizarding",
+  ] as const;
+
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingVerbIndex(0);
+      return;
+    }
+
+    const intervalId = globalThis.setInterval(() => {
+      setLoadingVerbIndex((current) => (current + 1) % loadingVerbs.length);
+    }, 1400);
+
+    return () => {
+      globalThis.clearInterval(intervalId);
+    };
+  }, [isLoading, loadingVerbs.length]);
 
   const resetState = () => {
     setFileName("");
@@ -45,6 +86,10 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
     setValidationWarnings([]);
     setValidationInfos([]);
     setNewName("");
+    setConversionNotes([]);
+    setDetectedLanguages([]);
+    setImportRunId(undefined);
+    setLoadingPhase("idle");
     setIsLoading(false);
     setIsValid(false);
   };
@@ -56,10 +101,44 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
     setOpen(open);
   };
 
+  const isJsonFile = (file: File): boolean =>
+    file.type === "application/json" || file.name.toLowerCase().endsWith(".json");
+
+  const isDocxFile = (file: File): boolean =>
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.name.toLowerCase().endsWith(".docx");
+
+  const isLegacyDocFile = (file: File): boolean =>
+    file.type === "application/msword" || file.name.toLowerCase().endsWith(".doc");
+
+  const validateConvertedSurvey = async (payload: TSurveyExportPayload, runId?: string) => {
+    const result = await validateSurveyImportAction({
+      surveyData: payload,
+      environmentId,
+      importRunId: runId,
+    });
+
+    if (result?.data) {
+      setValidationErrors(result.data.errors || []);
+      setValidationWarnings(result.data.warnings || []);
+      setValidationInfos(result.data.infos || []);
+      setIsValid(result.data.valid);
+
+      if (result.data.valid) {
+        setNewName(result.data.surveyName + " (imported)");
+      }
+    } else if (result?.serverError) {
+      setValidationErrors([result.serverError]);
+      setValidationWarnings([]);
+      setValidationInfos([]);
+      setIsValid(false);
+    }
+  };
+
   const processJSONFile = async (file: File) => {
     if (!file) return;
 
-    if (file.type !== "application/json" && !file.name.endsWith(".json")) {
+    if (!isJsonFile(file)) {
       toast.error(t("environments.surveys.import_error_invalid_json"));
       setValidationErrors([t("environments.surveys.import_error_invalid_json")]);
       setFileName("");
@@ -68,51 +147,124 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
     }
 
     setFileName(file.name);
+    setLoadingPhase("reading");
     setIsLoading(true);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        setSurveyData(json);
+    try {
+      const json = JSON.parse(await file.text());
+      setSurveyData(json);
+      setImportRunId(() => undefined);
+      setDetectedLanguages([]);
+      setLoadingPhase("validating");
+      await validateConvertedSurvey(json, undefined);
+    } catch {
+      toast.error(t("environments.surveys.import_error_invalid_json"));
+      setValidationErrors([t("environments.surveys.import_error_invalid_json")]);
+      setValidationWarnings([]);
+      setValidationInfos([]);
+      setIsValid(false);
+    } finally {
+      setLoadingPhase("idle");
+      setIsLoading(false);
+    }
+  };
 
-        const result = await validateSurveyImportAction({
-          surveyData: json,
-          environmentId,
-        });
+  const toBase64 = async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
+    let binary = "";
 
-        if (result?.data) {
-          setValidationErrors(result.data.errors || []);
-          setValidationWarnings(result.data.warnings || []);
-          setValidationInfos(result.data.infos || []);
-          setIsValid(result.data.valid);
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCodePoint(...bytes.subarray(i, i + chunkSize));
+    }
 
-          if (result.data.valid) {
-            setNewName(result.data.surveyName + " (imported)");
-          }
-        } else if (result?.serverError) {
-          setValidationErrors([result.serverError]);
-          setValidationWarnings([]);
-          setValidationInfos([]);
-          setIsValid(false);
-        }
-      } catch (error) {
-        toast.error(t("environments.surveys.import_error_invalid_json"));
-        setValidationErrors([t("environments.surveys.import_error_invalid_json")]);
-        setValidationWarnings([]);
-        setValidationInfos([]);
-        setIsValid(false);
-      } finally {
-        setIsLoading(false);
+    return btoa(binary);
+  };
+
+  const processDocxFile = async (file: File) => {
+    if (!file) return;
+
+    if (!isDocxFile(file)) {
+      toast.error(t("environments.surveys.import_error_invalid_docx"));
+      setValidationErrors([t("environments.surveys.import_error_invalid_docx")]);
+      setFileName("");
+      setIsValid(false);
+      return;
+    }
+
+    setFileName(file.name);
+    setLoadingPhase("encoding");
+    setIsLoading(true);
+
+    try {
+      const fileBase64 = await toBase64(file);
+      setLoadingPhase("extracting");
+      const conversionResult = await convertSurveyDocxToPayloadAction({
+        fileBase64,
+        fileName: file.name,
+        environmentId,
+      });
+
+      if (!conversionResult?.data) {
+        throw new Error(conversionResult?.serverError || t("environments.surveys.import_error_docx_convert"));
       }
-    };
-    reader.readAsText(file);
+
+      setSurveyData(conversionResult.data.surveyData);
+      setConversionNotes(conversionResult.data.notes || []);
+      setDetectedLanguages(conversionResult.data.detectedLanguages || []);
+      setImportRunId(conversionResult.data.importRunId);
+      setLoadingPhase("validating");
+      await validateConvertedSurvey(conversionResult.data.surveyData, conversionResult.data.importRunId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("environments.surveys.import_error_docx_convert");
+      toast.error(message);
+      setValidationErrors([message]);
+      setValidationWarnings([]);
+      setValidationInfos([]);
+      setIsValid(false);
+    } finally {
+      setLoadingPhase("idle");
+      setIsLoading(false);
+    }
+  };
+
+  const processSelectedFile = async (file: File) => {
+    if (isLegacyDocFile(file) && !isDocxFile(file)) {
+      const message = t("environments.surveys.import_error_doc_unsupported");
+      toast.error(message);
+      setValidationErrors([message]);
+      setValidationWarnings([]);
+      setValidationInfos([]);
+      setFileName("");
+      setIsValid(false);
+      return;
+    }
+
+    if (isJsonFile(file)) {
+      await processJSONFile(file);
+      return;
+    }
+
+    if (isDocxFile(file)) {
+      await processDocxFile(file);
+      return;
+    }
+
+    const message = t("environments.surveys.import_error_invalid_file");
+    toast.error(message);
+    setValidationErrors([message]);
+    setValidationWarnings([]);
+    setValidationInfos([]);
+    setFileName("");
+    setIsValid(false);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      processJSONFile(file);
-    }
+    if (!file) return;
+
+    await processSelectedFile(file);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -121,13 +273,13 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     const file = e.dataTransfer.files[0];
     if (file) {
-      processJSONFile(file);
+      await processSelectedFile(file);
     }
   };
 
@@ -136,18 +288,23 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
       toast.error(t("environments.surveys.import_survey_error"));
       return;
     }
+    setLoadingPhase("importing");
     setIsLoading(true);
     try {
-      const result = await importSurveyAction({
+      const result = await importSurveyWithDestinationAction({
         surveyData,
         environmentId,
         newName,
+        importRunId,
       });
 
       if (result?.data) {
         toast.success(t("environments.surveys.import_survey_success"));
         onOpenChange(false);
-        window.location.href = `/environments/${environmentId}/surveys/${result.data.surveyId}/edit`;
+        globalThis.location.href =
+          "surveyUrl" in result.data && result.data.surveyUrl
+            ? result.data.surveyUrl
+            : `/environments/${environmentId}/surveys/${result.data.surveyId}/edit`;
       } else if (result?.serverError) {
         console.error("[Import Survey] Server error:", result.serverError);
         toast.error(result.serverError);
@@ -161,15 +318,25 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
         error instanceof Error ? error.message : t("environments.surveys.import_survey_error");
       toast.error(errorMessage);
     } finally {
+      setLoadingPhase("idle");
       setIsLoading(false);
     }
   };
 
   const renderUploadSection = () => {
     if (isLoading) {
+      const currentVerb = loadingVerbs[loadingVerbIndex];
       return (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
           <LoadingSpinner />
+          <p className="text-center text-sm font-medium text-slate-700">
+            {t("environments.surveys.import_survey_loading_title", {
+              verb: t(`environments.surveys.import_survey_loading_verbs.${currentVerb}`),
+            })}
+          </p>
+          <p className="text-center text-xs text-slate-500">
+            {t(`environments.surveys.import_survey_loading_phase.${loadingPhase}`)}
+          </p>
         </div>
       );
     }
@@ -188,11 +355,11 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
             <p className="mt-2 text-center text-sm text-slate-500">
               <span className="font-semibold">{t("common.upload_input_description")}</span>
             </p>
-            <p className="text-xs text-slate-400">.json files only</p>
+            <p className="text-xs text-slate-400">.json, .docx files only</p>
             <Input
               id="import-file"
               type="file"
-              accept=".json"
+              accept=".json,.docx,application/json,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -219,7 +386,7 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
         <Input
           id="import-file-retry"
           type="file"
-          accept=".json"
+          accept=".json,.docx,application/json,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           className="hidden"
           onChange={handleFileChange}
         />
@@ -248,10 +415,10 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
                   <ul className="space-y-2 text-sm">
                     {validationErrors.map((error, i) => {
                       // Check if the error contains a field path (format: 'Field "path":')
-                      const fieldMatch = error.match(/^Field "([^"]+)": (.+)$/);
+                      const fieldMatch = /^Field "([^"]+)": (.+)$/.exec(error);
                       if (fieldMatch) {
                         return (
-                          <li key={i} className="flex flex-col gap-1">
+                          <li key={`${fieldMatch[1]}-${i}`} className="flex flex-col gap-1">
                             <code className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-800">
                               {fieldMatch[1]}
                             </code>
@@ -260,7 +427,7 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
                         );
                       }
                       return (
-                        <li key={i} className="text-slate-700">
+                        <li key={`${error}-${i}`} className="text-slate-700">
                           {error}
                         </li>
                       );
@@ -275,8 +442,8 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
                 <AlertTitle>{t("environments.surveys.import_survey_warnings")}</AlertTitle>
                 <AlertDescription className="max-h-60 overflow-y-auto">
                   <ul className="list-disc pl-4 text-sm">
-                    {validationWarnings.map((warningKey, i) => (
-                      <li key={i}>{t(`environments.surveys.${warningKey}`)}</li>
+                    {validationWarnings.map((warningKey) => (
+                      <li key={warningKey}>{t(`environments.surveys.${warningKey}`)}</li>
                     ))}
                   </ul>
                 </AlertDescription>
@@ -287,8 +454,37 @@ export const ImportSurveyModal = ({ environmentId, open, setOpen }: ImportSurvey
               <Alert variant="info">
                 <AlertDescription className="max-h-60 overflow-y-auto">
                   <ul className="list-disc pl-4 text-sm">
-                    {validationInfos.map((infoKey, i) => (
-                      <li key={i}>{t(`environments.surveys.${infoKey}`)}</li>
+                    {validationInfos.map((infoKey) => (
+                      <li key={infoKey}>{t(`environments.surveys.${infoKey}`)}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+            {conversionNotes.length > 0 && (
+              <Alert variant="info">
+                <AlertTitle>{t("environments.surveys.import_docx_notes_title")}</AlertTitle>
+                <AlertDescription className="max-h-60 overflow-y-auto">
+                  <ul className="list-disc pl-4 text-sm">
+                    {conversionNotes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+            {detectedLanguages.length > 0 && (
+              <Alert variant="info">
+                <AlertTitle>{t("environments.surveys.import_docx_languages_title")}</AlertTitle>
+                <AlertDescription className="max-h-60 overflow-y-auto">
+                  <ul className="list-disc pl-4 text-sm">
+                    {detectedLanguages.map((language) => (
+                      <li key={language.code}>
+                        {t("environments.surveys.import_docx_languages_detected_item", {
+                          code: language.code,
+                          confidence: Math.round(language.confidence * 100),
+                        })}
+                      </li>
                     ))}
                   </ul>
                 </AlertDescription>

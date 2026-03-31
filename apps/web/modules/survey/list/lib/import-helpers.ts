@@ -1,7 +1,6 @@
+import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
-import { iso639Languages } from "@/lib/i18n/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -53,14 +52,6 @@ export const buildImportWarnings = async (
   organizationId: string
 ): Promise<string[]> => {
   const warnings: string[] = [];
-
-  if (survey.languages?.length) {
-    try {
-      await checkMultiLanguagePermission(organizationId);
-    } catch (e) {
-      warnings.push("import_warning_multi_language");
-    }
-  }
 
   if (survey.followUps?.length) {
     let hasFollowUps = false;

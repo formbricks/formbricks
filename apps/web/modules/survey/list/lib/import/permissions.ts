@@ -1,4 +1,3 @@
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -10,11 +9,7 @@ export interface TImportCapabilities {
 }
 
 export const resolveImportCapabilities = async (organizationId: string): Promise<TImportCapabilities> => {
-  let hasMultiLanguage = false;
-  try {
-    await checkMultiLanguagePermission(organizationId);
-    hasMultiLanguage = true;
-  } catch (e) {}
+  const hasMultiLanguage = true;
 
   let hasFollowUps = false;
   try {

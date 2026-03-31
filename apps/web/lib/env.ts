@@ -56,6 +56,7 @@ export const env = createEnv({
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
     REDIS_URL:
       process.env.NODE_ENV === "test"
         ? z.string().optional()
@@ -124,6 +125,10 @@ export const env = createEnv({
       .string()
       .transform((val) => parseInt(val))
       .optional(),
+    SURVEY_IMPORT_DESTINATION: z.enum(["local", "remote"]).optional(),
+    SURVEY_IMPORT_TARGET_API_KEY: z.string().optional(),
+    SURVEY_IMPORT_TARGET_ENVIRONMENT_ID: z.string().optional(),
+    SURVEY_IMPORT_TARGET_HOST: z.url().optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
   },
 
@@ -181,6 +186,7 @@ export const env = createEnv({
     OIDC_DISPLAY_NAME: process.env.OIDC_DISPLAY_NAME,
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
@@ -220,6 +226,10 @@ export const env = createEnv({
     AUDIT_LOG_ENABLED: process.env.AUDIT_LOG_ENABLED,
     AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
+    SURVEY_IMPORT_DESTINATION: process.env.SURVEY_IMPORT_DESTINATION,
+    SURVEY_IMPORT_TARGET_API_KEY: process.env.SURVEY_IMPORT_TARGET_API_KEY,
+    SURVEY_IMPORT_TARGET_ENVIRONMENT_ID: process.env.SURVEY_IMPORT_TARGET_ENVIRONMENT_ID,
+    SURVEY_IMPORT_TARGET_HOST: process.env.SURVEY_IMPORT_TARGET_HOST,
     SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
   },
 });
