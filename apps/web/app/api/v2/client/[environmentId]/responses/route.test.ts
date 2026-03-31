@@ -69,7 +69,7 @@ describe("api/v2 client responses route", () => {
     mocks.getClientIpFromHeaders.mockResolvedValue("127.0.0.1");
   });
 
-  test("reports unexpected response creation failures while keeping the v1-compatible payload unchanged", async () => {
+  test("reports unexpected response creation failures while keeping the public payload generic", async () => {
     const underlyingError = new Error("response persistence failed");
     mocks.createResponseWithQuotaEvaluation.mockRejectedValue(underlyingError);
 
@@ -94,7 +94,7 @@ describe("api/v2 client responses route", () => {
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({
       code: "internal_server_error",
-      message: "response persistence failed",
+      message: "Something went wrong. Please try again.",
       details: {},
     });
     expect(mocks.reportApiError).toHaveBeenCalledWith({
@@ -102,6 +102,43 @@ describe("api/v2 client responses route", () => {
       status: 500,
       error: underlyingError,
     });
+    expect(mocks.sendToPipeline).not.toHaveBeenCalled();
+  });
+
+  test("reports unexpected pre-persistence failures with the same generic public response", async () => {
+    const underlyingError = new Error("survey lookup failed");
+    mocks.getSurvey.mockRejectedValue(underlyingError);
+
+    const request = new Request(`https://api.test/api/v2/client/${environmentId}/responses`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": "req-v2-response-pre-check",
+      },
+      body: JSON.stringify({
+        surveyId,
+        finished: false,
+        data: {},
+      }),
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(request, {
+      params: Promise.resolve({ environmentId }),
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      code: "internal_server_error",
+      message: "Something went wrong. Please try again.",
+      details: {},
+    });
+    expect(mocks.reportApiError).toHaveBeenCalledWith({
+      request,
+      status: 500,
+      error: underlyingError,
+    });
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
   });
 });

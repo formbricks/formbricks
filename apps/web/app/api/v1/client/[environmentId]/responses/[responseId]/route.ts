@@ -29,6 +29,12 @@ type TSurveyResult = { survey: TSurvey } | TRouteResult;
 type TUpdatedResponseResult =
   | { updatedResponse: Awaited<ReturnType<typeof updateResponseWithQuotaEvaluation>> }
   | TRouteResult;
+type TPutRouteParams = {
+  params: Promise<{
+    environmentId: string;
+    responseId: string;
+  }>;
+};
 
 const handleDatabaseError = (
   error: Error,
@@ -200,73 +206,84 @@ const getUpdatedResponse = async (
   }
 };
 
-export const PUT = withV1ApiWrapper({
-  handler: async ({ req, props }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {
-    const params = await props.params;
-    const { responseId } = params;
+export const putResponseHandler = async ({
+  req,
+  props,
+}: THandlerParams<TPutRouteParams>): Promise<TRouteResult> => {
+  const params = await props.params;
+  const { environmentId, responseId } = params;
 
-    if (!responseId) {
-      return {
-        response: responses.badRequestResponse("Response ID is missing", undefined, true),
-      };
-    }
+  if (!responseId) {
+    return {
+      response: responses.badRequestResponse("Response ID is missing", undefined, true),
+    };
+  }
 
-    const validatedUpdateInput = await getValidatedUpdateInput(req);
-    if ("response" in validatedUpdateInput) {
-      return validatedUpdateInput;
-    }
-    const { responseUpdateInput } = validatedUpdateInput;
+  const validatedUpdateInput = await getValidatedUpdateInput(req);
+  if ("response" in validatedUpdateInput) {
+    return validatedUpdateInput;
+  }
+  const { responseUpdateInput } = validatedUpdateInput;
 
-    const existingResponseResult = await getExistingResponse(req, responseId);
-    if ("response" in existingResponseResult) {
-      return existingResponseResult;
-    }
-    const { existingResponse } = existingResponseResult;
+  const existingResponseResult = await getExistingResponse(req, responseId);
+  if ("response" in existingResponseResult) {
+    return existingResponseResult;
+  }
+  const { existingResponse } = existingResponseResult;
 
-    const surveyResult = await getSurveyForResponse(req, responseId, existingResponse.surveyId);
-    if ("response" in surveyResult) {
-      return surveyResult;
-    }
-    const { survey } = surveyResult;
+  const surveyResult = await getSurveyForResponse(req, responseId, existingResponse.surveyId);
+  if ("response" in surveyResult) {
+    return surveyResult;
+  }
+  const { survey } = surveyResult;
 
-    const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput);
-    if (validationResult) {
-      return validationResult;
-    }
+  if (survey.environmentId !== environmentId) {
+    return {
+      response: responses.notFoundResponse("Response", responseId, true),
+    };
+  }
 
-    const updatedResponseResult = await getUpdatedResponse(req, responseId, responseUpdateInput);
-    if ("response" in updatedResponseResult) {
-      return updatedResponseResult;
-    }
-    const { updatedResponse } = updatedResponseResult;
+  const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput);
+  if (validationResult) {
+    return validationResult;
+  }
 
-    const { quotaFull, ...responseData } = updatedResponse;
+  const updatedResponseResult = await getUpdatedResponse(req, responseId, responseUpdateInput);
+  if ("response" in updatedResponseResult) {
+    return updatedResponseResult;
+  }
+  const { updatedResponse } = updatedResponseResult;
 
+  const { quotaFull, ...responseData } = updatedResponse;
+
+  sendToPipeline({
+    event: "responseUpdated",
+    environmentId: survey.environmentId,
+    surveyId: survey.id,
+    response: responseData,
+  });
+
+  if (updatedResponse.finished) {
     sendToPipeline({
-      event: "responseUpdated",
+      event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: survey.id,
       response: responseData,
     });
+  }
 
-    if (updatedResponse.finished) {
-      sendToPipeline({
-        event: "responseFinished",
-        environmentId: survey.environmentId,
-        surveyId: survey.id,
-        response: responseData,
-      });
-    }
+  const quotaObj = createQuotaFullObject(quotaFull);
 
-    const quotaObj = createQuotaFullObject(quotaFull);
+  const responseDataWithQuota = {
+    id: responseData.id,
+    ...quotaObj,
+  };
 
-    const responseDataWithQuota = {
-      id: responseData.id,
-      ...quotaObj,
-    };
+  return {
+    response: responses.successResponse(responseDataWithQuota, true),
+  };
+};
 
-    return {
-      response: responses.successResponse(responseDataWithQuota, true),
-    };
-  },
+export const PUT = withV1ApiWrapper({
+  handler: putResponseHandler,
 });

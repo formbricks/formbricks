@@ -39,6 +39,9 @@ const getCountry = (requestHeaders: Headers): string | undefined =>
   requestHeaders.get("CloudFront-Viewer-Country") ||
   undefined;
 
+const getUnexpectedPublicErrorResponse = (): Response =>
+  responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
+
 const parseAndValidateResponseInput = async (
   request: Request,
   environmentId: string
@@ -180,12 +183,10 @@ const createResponseForRequest = async ({
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+      return responses.badRequestResponse(error.message, undefined, true);
     }
 
-    const response = responses.internalServerErrorResponse(
-      error instanceof Error ? error.message : "Unknown error occurred"
-    );
+    const response = getUnexpectedPublicErrorResponse();
     reportApiError({
       request,
       status: response.status,
@@ -215,57 +216,68 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const { environmentId, responseInputData } = validatedInput;
   const country = getCountry(request.headers);
-  const contactsDisabledResponse = await getContactsDisabledResponse(
-    environmentId,
-    responseInputData.contactId
-  );
-  if (contactsDisabledResponse) {
-    return contactsDisabledResponse;
-  }
 
-  const survey = await getSurvey(responseInputData.surveyId);
-  if (!survey) {
-    return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
-  }
+  try {
+    const contactsDisabledResponse = await getContactsDisabledResponse(
+      environmentId,
+      responseInputData.contactId
+    );
+    if (contactsDisabledResponse) {
+      return contactsDisabledResponse;
+    }
 
-  const validationResponse = await validateResponseSubmission(environmentId, responseInputData, survey);
-  if (validationResponse) {
-    return validationResponse;
-  }
+    const survey = await getSurvey(responseInputData.surveyId);
+    if (!survey) {
+      return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
+    }
 
-  const createdResponse = await createResponseForRequest({
-    request,
-    survey,
-    responseInputData,
-    country,
-  });
-  if (createdResponse instanceof Response) {
-    return createdResponse;
-  }
-  const { quotaFull, ...responseData } = createdResponse;
+    const validationResponse = await validateResponseSubmission(environmentId, responseInputData, survey);
+    if (validationResponse) {
+      return validationResponse;
+    }
 
-  sendToPipeline({
-    event: "responseCreated",
-    environmentId,
-    surveyId: responseData.surveyId,
-    response: responseData,
-  });
+    const createdResponse = await createResponseForRequest({
+      request,
+      survey,
+      responseInputData,
+      country,
+    });
+    if (createdResponse instanceof Response) {
+      return createdResponse;
+    }
+    const { quotaFull, ...responseData } = createdResponse;
 
-  if (responseData.finished) {
     sendToPipeline({
-      event: "responseFinished",
+      event: "responseCreated",
       environmentId,
       surveyId: responseData.surveyId,
       response: responseData,
     });
+
+    if (responseData.finished) {
+      sendToPipeline({
+        event: "responseFinished",
+        environmentId,
+        surveyId: responseData.surveyId,
+        response: responseData,
+      });
+    }
+
+    const quotaObj = createQuotaFullObject(quotaFull);
+
+    const responseDataWithQuota = {
+      id: responseData.id,
+      ...quotaObj,
+    };
+
+    return responses.successResponse(responseDataWithQuota, true);
+  } catch (error) {
+    const response = getUnexpectedPublicErrorResponse();
+    reportApiError({
+      request,
+      status: response.status,
+      error,
+    });
+    return response;
   }
-
-  const quotaObj = createQuotaFullObject(quotaFull);
-
-  const responseDataWithQuota = {
-    id: responseData.id,
-    ...quotaObj,
-  };
-
-  return responses.successResponse(responseDataWithQuota, true);
 };

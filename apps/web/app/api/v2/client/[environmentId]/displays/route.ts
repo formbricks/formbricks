@@ -74,24 +74,27 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const { displayInputData } = validatedInput;
 
-  if (displayInputData.contactId) {
-    const organizationId = await getOrganizationIdFromEnvironmentId(params.environmentId);
-    const isContactsEnabled = await getIsContactsEnabled(organizationId);
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
-    }
-  }
-
   try {
+    if (displayInputData.contactId) {
+      const organizationId = await getOrganizationIdFromEnvironmentId(params.environmentId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
+      if (!isContactsEnabled) {
+        return responses.forbiddenResponse(
+          "User identification is only available for enterprise users.",
+          true
+        );
+      }
+    }
+
     const response = await createDisplay(displayInputData);
 
     return responses.successResponse(response, true);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
-      return responses.notFoundResponse("Survey", displayInputData.surveyId);
+      return responses.notFoundResponse("Survey", displayInputData.surveyId, true);
     }
 
-    const response = responses.internalServerErrorResponse("Something went wrong. Please try again.");
+    const response = responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
     reportApiError({
       request,
       status: response.status,

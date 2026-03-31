@@ -97,7 +97,10 @@ export const GET = withV1ApiWrapper({
         "Error in GET /api/v1/client/[environmentId]/environment"
       );
       return {
-        response: responses.internalServerErrorResponse(error.message, true),
+        response: responses.internalServerErrorResponse(
+          "An error occurred while processing your request.",
+          true
+        ),
         error,
       };
     }

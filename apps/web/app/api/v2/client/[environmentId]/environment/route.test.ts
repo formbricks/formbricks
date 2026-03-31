@@ -96,7 +96,7 @@ describe("api/v2 client environment route", () => {
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({
       code: "internal_server_error",
-      message: "Environment load failed",
+      message: "An error occurred while processing your request.",
       details: {},
     });
 

@@ -89,4 +89,38 @@ describe("api/v2 client displays route", () => {
       error: underlyingError,
     });
   });
+
+  test("reports unexpected contact-license lookup failures with the same generic public response", async () => {
+    const underlyingError = new Error("license lookup failed");
+    mocks.getOrganizationIdFromEnvironmentId.mockRejectedValue(underlyingError);
+
+    const request = new Request(`https://api.test/api/v2/client/${environmentId}/displays`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        surveyId,
+        contactId: "clh123456789012345678901234",
+      }),
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(request, {
+      params: Promise.resolve({ environmentId }),
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      code: "internal_server_error",
+      message: "Something went wrong. Please try again.",
+      details: {},
+    });
+    expect(mocks.reportApiError).toHaveBeenCalledWith({
+      request,
+      status: 500,
+      error: underlyingError,
+    });
+    expect(mocks.createDisplay).not.toHaveBeenCalled();
+  });
 });
