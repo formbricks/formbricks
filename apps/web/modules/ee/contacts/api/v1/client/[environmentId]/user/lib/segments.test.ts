@@ -3,9 +3,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getPersonSegmentIds, getSegments } from "./segments";
+
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
 
 vi.mock("@/lib/cache", () => ({
   cache: {
@@ -54,6 +59,7 @@ const mockSegmentsData = [
 describe("segments lib", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   afterEach(() => {
@@ -66,10 +72,10 @@ describe("segments lib", () => {
         mockSegmentsData as Prisma.Result<typeof prisma.segment, unknown, "findMany">
       );
 
-      const result = await getSegments(mockEnvironmentId);
+      const result = await getSegments("workspace-id-mock");
 
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId: mockEnvironmentId },
+        where: { workspaceId: "workspace-id-mock" },
         select: { id: true, filters: true },
       });
 
@@ -84,14 +90,14 @@ describe("segments lib", () => {
 
       vi.mocked(prisma.segment.findMany).mockRejectedValue(prismaError);
 
-      await expect(getSegments(mockEnvironmentId)).rejects.toThrow(DatabaseError);
+      await expect(getSegments("workspace-id-mock")).rejects.toThrow(DatabaseError);
     });
 
     test("should throw generic error if not Prisma error", async () => {
       const genericError = new Error("Test Generic Error");
       vi.mocked(prisma.segment.findMany).mockRejectedValue(genericError);
 
-      await expect(getSegments(mockEnvironmentId)).rejects.toThrow("Test Generic Error");
+      await expect(getSegments("workspace-id-mock")).rejects.toThrow("Test Generic Error");
     });
   });
 
@@ -120,7 +126,7 @@ describe("segments lib", () => {
 
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId: mockEnvironmentId },
+        where: { workspaceId: "workspace-id-mock" },
         select: { id: true, filters: true },
       });
 

@@ -7,16 +7,17 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 
 export const getSegments = reactCache(
-  async (environmentId: string) =>
+  async (workspaceId: string) =>
     await cache.withCache(
       async () => {
         try {
           const segments = await prisma.segment.findMany({
-            where: { environmentId },
+            where: { workspaceId },
             select: {
               id: true,
               filters: true,
@@ -32,7 +33,7 @@ export const getSegments = reactCache(
           throw error;
         }
       },
-      createCacheKey.environment.segments(environmentId),
+      createCacheKey.environment.segments(workspaceId),
       60 * 1000 // 1 minutes in milliseconds
     )
 );
@@ -46,7 +47,8 @@ export const getPersonSegmentIds = async (
   try {
     validateInputs([environmentId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
-    const segments = await getSegments(environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+    const segments = await getSegments(workspaceId);
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return [];

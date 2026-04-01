@@ -146,11 +146,13 @@ export const updateAttributes = async (
       ? null
       : String(contactAttributesParam.userId);
 
+  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+
   // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
       getContactAttributes(contactId),
-      getContactAttributeKeys(environmentId),
+      getContactAttributeKeys(workspaceId),
       emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
       userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
     ]);

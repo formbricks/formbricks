@@ -25,11 +25,11 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
 
   const [environments, actionClasses, locale] = await Promise.all([
     getEnvironments(environment.workspaceId),
-    getActionClasses(environmentId),
+    getActionClasses(environment.workspaceId),
     getUserLocale(session.user.id),
   ]);
   const otherEnvironment = environments.find((env) => env.id !== environmentId)!;
-  const otherEnvActionClasses = otherEnvironment ? await getActionClasses(otherEnvironment.id) : [];
+  const otherEnvActionClasses = otherEnvironment ? await getActionClasses(environment.workspaceId) : [];
 
   return (
     <PageContentWrapper>

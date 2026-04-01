@@ -239,10 +239,7 @@ export const getSurveysAction = authenticatedActionClient
       ],
     });
 
-    return await getSurveys(
-      parsedInput.environmentId,
-      parsedInput.limit,
-      parsedInput.offset,
-      parsedInput.filterCriteria
-    );
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+
+    return await getSurveys(workspaceId, parsedInput.limit, parsedInput.offset, parsedInput.filterCriteria);
   });
