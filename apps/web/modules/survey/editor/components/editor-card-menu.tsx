@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -50,7 +50,7 @@ interface EditorCardMenuProps {
   addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   cardType: "element" | "ending";
-  project?: Project;
+  workspace?: Workspace;
   isCxMode?: boolean;
 }
 
@@ -63,7 +63,7 @@ export const EditorCardMenu = ({
   duplicateCard,
   deleteCard,
   moveCard,
-  project,
+  workspace,
   card,
   updateCard,
   addCard,
@@ -95,7 +95,7 @@ export const EditorCardMenu = ({
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as EditorCardMenuSurveyElement;
 
-    const elementDefaults = getElementDefaults(type, project, t);
+    const elementDefaults = getElementDefaults(type, workspace, t);
 
     if (
       (type === TSurveyElementTypeEnum.MultipleChoiceSingle &&
@@ -134,7 +134,7 @@ export const EditorCardMenu = ({
   };
 
   const addElementCardBelow = (type: TSurveyElementTypeEnum) => {
-    const elementDefaults = getElementDefaults(type, project, t);
+    const elementDefaults = getElementDefaults(type, workspace, t);
 
     const newElement = {
       ...elementDefaults,

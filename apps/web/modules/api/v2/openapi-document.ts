@@ -4,13 +4,13 @@ import { ZApiKeyData } from "@formbricks/database/zod/api-keys";
 import { ZContact } from "@formbricks/database/zod/contact";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
-import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
 import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZRoles } from "@formbricks/database/zod/roles";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 import { ZTeam } from "@formbricks/database/zod/teams";
 import { ZUser } from "@formbricks/database/zod/users";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
+import { ZWorkspaceTeam } from "@formbricks/database/zod/workspace-teams";
 import { healthPaths } from "@/modules/api/v2/health/lib/openapi";
 import { ZOverallHealthStatus } from "@/modules/api/v2/health/types/health-status";
 import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
@@ -19,9 +19,9 @@ import { surveyContactLinksBySegmentPaths } from "@/modules/api/v2/management/su
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
 import { mePaths } from "@/modules/api/v2/me/lib/openapi";
-import { projectTeamPaths } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/openapi";
 import { teamPaths } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/openapi";
 import { userPaths } from "@/modules/api/v2/organizations/[organizationId]/users/lib/openapi";
+import { workspaceTeamPaths } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/openapi";
 import { rolePaths } from "@/modules/api/v2/roles/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import { contactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/lib/openapi";
@@ -45,7 +45,7 @@ const document = createDocument({
     ...surveyContactLinksBySegmentPaths,
     ...webhookPaths,
     ...teamPaths,
-    ...projectTeamPaths,
+    ...workspaceTeamPaths,
     ...userPaths,
   },
   servers: [
@@ -100,8 +100,8 @@ const document = createDocument({
       description: "Operations for managing teams.",
     },
     {
-      name: "Organizations API - Project Teams",
-      description: "Operations for managing project teams.",
+      name: "Organizations API - Workspace Teams",
+      description: "Operations for managing workspace teams.",
     },
     {
       name: "Organizations API - Users",
@@ -128,7 +128,7 @@ const document = createDocument({
       survey: ZSurveyWithoutQuestionType,
       webhook: ZWebhook,
       team: ZTeam,
-      projectTeam: ZProjectTeam,
+      workspaceTeam: ZWorkspaceTeam,
       user: ZUser,
     },
   },

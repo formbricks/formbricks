@@ -3,7 +3,7 @@ import { OrganizationRole } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
-import { createTeamMembership, getTeamProjectIds } from "../team";
+import { createTeamMembership, getTeamWorkspaceIds } from "../team";
 
 // Setup all mocks
 const setupMocks = () => {
@@ -66,9 +66,9 @@ describe("Team Management", () => {
             organizationId: MOCK_IDS.organizationId,
           },
           select: {
-            projectTeams: {
+            workspaceTeams: {
               select: {
-                projectId: true,
+                workspaceId: true,
               },
             },
           },
@@ -145,11 +145,11 @@ describe("Team Management", () => {
     });
   });
 
-  describe("getTeamProjectIds", () => {
-    test("returns team with projectTeams when team exists", async () => {
+  describe("getTeamWorkspaceIds", () => {
+    test("returns team with workspaceTeams when team exists", async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
 
-      const result = await getTeamProjectIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
+      const result = await getTeamWorkspaceIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
 
       expect(result).toEqual(MOCK_TEAM);
       expect(prisma.team.findUnique).toHaveBeenCalledWith({
@@ -158,9 +158,9 @@ describe("Team Management", () => {
           organizationId: MOCK_IDS.organizationId,
         },
         select: {
-          projectTeams: {
+          workspaceTeams: {
             select: {
-              projectId: true,
+              workspaceId: true,
             },
           },
         },
@@ -170,7 +170,7 @@ describe("Team Management", () => {
     test("returns null when team does not exist", async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
-      const result = await getTeamProjectIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
+      const result = await getTeamWorkspaceIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
 
       expect(result).toBeNull();
     });

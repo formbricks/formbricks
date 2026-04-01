@@ -25,6 +25,8 @@ interface DeleteDialogProps {
   onSave?: () => void;
   children?: React.ReactNode;
   disabled?: boolean;
+  title?: string;
+  buttonLabel?: string;
 }
 
 export const DeleteDialog = ({
@@ -39,6 +41,8 @@ export const DeleteDialog = ({
   onSave,
   children,
   disabled,
+  title,
+  buttonLabel,
 }: DeleteDialogProps) => {
   const { t } = useTranslation();
   return (
@@ -48,7 +52,7 @@ export const DeleteDialog = ({
           <div className="flex items-center gap-2">
             <CircleAlert className="h-4 w-4" />
             <div>
-              <DialogTitle>{t("common.delete_what", { deleteWhat })}</DialogTitle>
+              <DialogTitle>{title || t("common.delete_what", { deleteWhat })}</DialogTitle>
               <DialogDescription>
                 {t("environments.workspace.general.this_action_cannot_be_undone")}
               </DialogDescription>
@@ -80,7 +84,7 @@ export const DeleteDialog = ({
             loading={isDeleting}
             disabled={disabled || isDeleting || isSaving}>
             <TrashIcon />
-            {t("common.delete")}
+            {buttonLabel || t("common.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

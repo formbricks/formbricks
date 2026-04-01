@@ -16,10 +16,10 @@ import ZapierLogo from "@/images/zapier-small.png";
 import { getIntegrations } from "@/lib/integration/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 const getStatusText = (count: number, t: TFunction, type: string) => {
   if (count === 1) return `1 ${type}`;
@@ -210,7 +210,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation environmentId={params.environmentId} activeId="integrations" />
+        <WorkspaceConfigNavigation environmentId={params.environmentId} activeId="integrations" />
       </PageHeader>
       <div className="grid grid-cols-3 place-content-stretch gap-4 lg:grid-cols-3">
         {integrationCards.map((card) => (

@@ -108,7 +108,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -174,7 +174,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -220,7 +220,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -273,7 +273,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -333,7 +333,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -389,7 +389,7 @@ describe("widget-file", () => {
           environmentId: "env_123",
           environment: {
             data: {
-              project: {
+              workspace: {
                 clickOutsideClose: true,
                 overlay: "none",
                 placement: "bottomRight",
@@ -473,7 +473,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -684,7 +684,7 @@ describe("widget-file", () => {
         environmentId: "env_123",
         environment: {
           data: {
-            project: {
+            workspace: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",

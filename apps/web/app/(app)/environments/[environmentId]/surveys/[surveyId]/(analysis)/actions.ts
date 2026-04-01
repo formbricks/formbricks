@@ -8,7 +8,7 @@ import { getDisplaysBySurveyIdWithContact } from "@/lib/display/service";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveySummary } from "./summary/lib/surveySummary";
 
 export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {
@@ -36,9 +36,9 @@ export const getResponsesAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -70,9 +70,9 @@ export const getSurveySummaryAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -98,9 +98,9 @@ export const getResponseCountAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -126,9 +126,9 @@ export const getDisplaysWithContactAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });

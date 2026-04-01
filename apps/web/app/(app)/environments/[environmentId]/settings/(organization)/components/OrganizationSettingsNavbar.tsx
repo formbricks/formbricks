@@ -41,6 +41,13 @@ export const OrganizationSettingsNavbar = ({
       current: pathname?.includes("/teams"),
     },
     {
+      id: "feedback-record-directories",
+      label: t("environments.settings.feedback_record_directories.nav_label"),
+      href: `/environments/${environmentId}/settings/feedback-record-directories`,
+      current: pathname?.includes("/feedback-record-directories"),
+      hidden: isMember,
+    },
+    {
       id: "api-keys",
       label: t("common.api_keys"),
       href: `/environments/${environmentId}/settings/api-keys`,

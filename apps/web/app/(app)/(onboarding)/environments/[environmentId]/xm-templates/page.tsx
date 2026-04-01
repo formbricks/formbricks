@@ -4,9 +4,9 @@ import Link from "next/link";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
 import { getEnvironment } from "@/lib/environment/service";
-import { getProjectByEnvironmentId, getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getUserWorkspaces, getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
@@ -37,18 +37,18 @@ const Page = async (props: XMTemplatePageProps) => {
 
   const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 
-  const project = await getProjectByEnvironmentId(environment.id);
-  if (!project) {
+  const workspace = await getWorkspaceByEnvironmentId(environment.id);
+  if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const projects = await getUserProjects(session.user.id, organizationId);
+  const workspaces = await getUserWorkspaces(session.user.id, organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header title={t("environments.xm-templates.headline")} />
-      <XMTemplateList project={project} user={user} environmentId={environment.id} />
-      {projects.length >= 2 && (
+      <XMTemplateList workspace={workspace} user={user} environmentId={environment.id} />
+      {workspaces.length >= 2 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"

@@ -53,7 +53,7 @@ interface ShareSurveyModalProps {
   isFormbricksCloud: boolean;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
-  projectCustomScripts?: string | null;
+  workspaceCustomScripts?: string | null;
 }
 
 export const ShareSurveyModal = ({
@@ -68,7 +68,7 @@ export const ShareSurveyModal = ({
   isFormbricksCloud,
   isReadOnly,
   isStorageConfigured,
-  projectCustomScripts,
+  workspaceCustomScripts,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
@@ -193,7 +193,7 @@ export const ShareSurveyModal = ({
         title: t("environments.surveys.share.custom_html.nav_title"),
         description: t("environments.surveys.share.custom_html.description"),
         componentType: CustomHtmlTab,
-        componentProps: { projectCustomScripts, isReadOnly },
+        componentProps: { workspaceCustomScripts, isReadOnly },
       },
     ];
 
@@ -216,7 +216,7 @@ export const ShareSurveyModal = ({
     isFormbricksCloud,
     email,
     isStorageConfigured,
-    projectCustomScripts,
+    workspaceCustomScripts,
   ]);
 
   const getDefaultActiveId = useCallback(() => {

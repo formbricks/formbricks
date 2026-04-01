@@ -10,8 +10,8 @@ export const ZAuthSession = z.object({
 export const ZAPIKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
   environmentType: z.enum(EnvironmentType),
-  projectId: z.cuid2(),
-  projectName: z.string(),
+  workspaceId: z.cuid2(),
+  workspaceName: z.string(),
   permission: z.enum(ApiKeyPermission),
 });
 

@@ -7,10 +7,10 @@ import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -27,7 +27,7 @@ interface VerifyEmailProps {
   isErrorComponent?: boolean;
   singleUseId?: string;
   languageCode: string;
-  styling: TProjectStyling;
+  styling: TWorkspaceStyling;
   locale: TUserLocale;
 }
 

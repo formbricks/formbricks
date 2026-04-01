@@ -9,8 +9,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import {
   getOrganizationIdFromContactId,
   getOrganizationIdFromEnvironmentId,
-  getProjectIdFromContactId,
-  getProjectIdFromEnvironmentId,
+  getWorkspaceIdFromContactId,
+  getWorkspaceIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
@@ -39,9 +39,9 @@ export const getContactsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -56,7 +56,7 @@ const ZContactDeleteAction = z.object({
 export const deleteContactAction = authenticatedActionClient.inputSchema(ZContactDeleteAction).action(
   withAuditLogging("deleted", "contact", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-    const projectId = await getProjectIdFromContactId(parsedInput.contactId);
+    const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -67,9 +67,9 @@ export const deleteContactAction = authenticatedActionClient.inputSchema(ZContac
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId,
+          workspaceId,
         },
       ],
     });
@@ -105,8 +105,8 @@ export const createContactsFromCSVAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
-            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+            type: "workspaceTeam",
+            workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
             minPermission: "readWrite",
           },
         ],
@@ -141,7 +141,7 @@ export const updateContactAttributesAction = authenticatedActionClient
   .action(
     withAuditLogging("updated", "contact", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-      const projectId = await getProjectIdFromContactId(parsedInput.contactId);
+      const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -152,9 +152,9 @@ export const updateContactAttributesAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId,
+            workspaceId,
           },
         ],
       });

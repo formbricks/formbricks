@@ -54,9 +54,9 @@ describe("getMetadataForLinkSurvey", () => {
       },
     });
     vi.mocked(getEnvironmentContextForLinkSurvey).mockResolvedValue({
-      project: {
-        id: "project-123",
-        name: "Test Project",
+      workspace: {
+        id: "workspace-123",
+        name: "Test Workspace",
         styling: { allowStyleOverwrite: true },
         logo: null,
         linkSurveyBranding: true,
@@ -66,7 +66,7 @@ describe("getMetadataForLinkSurvey", () => {
       organizationBilling: {
         usageCycleAnchor: new Date(),
         stripeCustomerId: null,
-        limits: { projects: 3, monthly: { responses: 1500 } },
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
       },
       organizationWhitelabel: null,
     });

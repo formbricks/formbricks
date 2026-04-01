@@ -11,8 +11,8 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { useMembershipRole } from "@/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { DisplayCard } from "./display-card";
 import { ResponseSurveyCard } from "./response-survey-card";
@@ -29,7 +29,7 @@ interface ActivityTimelineProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   locale: TUserLocale;
-  projectPermission: TTeamPermission | null;
+  workspacePermission: TTeamPermission | null;
 }
 
 export const ActivityTimeline = ({
@@ -40,7 +40,7 @@ export const ActivityTimeline = ({
   environment,
   environmentTags,
   locale,
-  projectPermission,
+  workspacePermission,
 }: ActivityTimelineProps) => {
   const { t } = useTranslation();
   const [responses, setResponses] = useState(initialResponses);
@@ -50,9 +50,9 @@ export const ActivityTimeline = ({
 
   const isReadOnly = useMemo(() => {
     const { isMember } = getAccessFlags(membershipRole);
-    const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
+    const { hasReadAccess } = getTeamPermissionFlags(workspacePermission);
     return isMember && hasReadAccess;
-  }, [membershipRole, projectPermission]);
+  }, [membershipRole, workspacePermission]);
 
   useEffect(() => {
     setResponses(initialResponses);
