@@ -632,7 +632,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         throw new Error("Expected the reset test user to have an environment");
       }
 
-      const protectedUrl = `http://localhost:3000/environments/${environmentId}/settings/profile`;
+      const protectedUrl = `${WEB_APP_URL}/environments/${environmentId}/settings/profile`;
 
       const primarySessionToken = randomBytes(32).toString("hex");
       const secondarySessionToken = randomBytes(32).toString("hex");
@@ -677,12 +677,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         },
       });
 
-      await page.goto(
-        `http://localhost:3000/auth/forgot-password/reset?token=${encodeURIComponent(rawResetToken)}`
-      );
+      await page.goto(`${WEB_APP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(rawResetToken)}`);
       await page.locator("#password").fill(newPassword);
       await page.locator("#confirmPassword").fill(newPassword);
-      await page.getByRole("button", { name: "Reset password" }).click({ noWaitAfter: true });
+      const resetPasswordButton = page.getByRole("button", { name: "Reset password" });
+      await expect(resetPasswordButton).toBeEnabled({ timeout: 15000 });
+      await resetPasswordButton.click();
+      await expect(page).toHaveURL(/\/auth\/forgot-password\/reset\/success$/, { timeout: 30_000 });
 
       await expect
         .poll(
