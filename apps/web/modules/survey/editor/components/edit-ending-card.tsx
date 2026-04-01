@@ -33,8 +33,6 @@ interface EditEndingCardProps {
   setActiveElementId: (id: string | null) => void;
   activeElementId: string | null;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
@@ -50,8 +48,6 @@ export const EditEndingCard = ({
   setActiveElementId,
   activeElementId,
   isInvalid,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   addEndingCard,
   isFormbricksCloud,
   locale,
@@ -232,14 +228,10 @@ export const EditEndingCard = ({
                 <p className="text-sm font-semibold">
                   {endingCard.type === "endScreen" &&
                     (endingCard.headline &&
-                    recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
-                      selectedLanguageCode
-                    ]
+                    recallToHeadline(endingCard.headline, localSurvey, true, "default").default
                       ? formatTextWithSlashes(
                           getTextContent(
-                            recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
-                              selectedLanguageCode
-                            ]
+                            recallToHeadline(endingCard.headline, localSurvey, true, "default").default
                           )
                         )
                       : t("environments.surveys.edit.ending_card"))}
@@ -297,8 +289,6 @@ export const EditEndingCard = ({
               localSurvey={localSurvey}
               endingCardIndex={endingCardIndex}
               isInvalid={isInvalid}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
               locale={locale}

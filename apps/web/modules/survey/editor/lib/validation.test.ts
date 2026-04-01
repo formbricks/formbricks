@@ -949,7 +949,7 @@ describe("validation.isSurveyValid", () => {
   });
 
   test("should return true for a completely valid survey", () => {
-    expect(validation.isSurveyValid(baseSurvey, "en", mockT)).toBe(true);
+    expect(validation.isSurveyValid(baseSurvey, mockT)).toBe(true);
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -966,7 +966,7 @@ describe("validation.isSurveyValid", () => {
       },
       required: false,
     });
-    expect(validation.isSurveyValid(baseSurvey, "de", mockT)).toBe(false);
+    expect(validation.isSurveyValid(baseSurvey, mockT)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.fallback_missing");
   });
 
@@ -975,7 +975,7 @@ describe("validation.isSurveyValid", () => {
       ...baseSurvey,
       autoComplete: 0,
     };
-    expect(validation.isSurveyValid(surveyWithZeroLimit, "en", mockT, 5)).toBe(false);
+    expect(validation.isSurveyValid(surveyWithZeroLimit, mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.response_limit_can_t_be_set_to_0");
   });
 
@@ -984,7 +984,7 @@ describe("validation.isSurveyValid", () => {
       ...baseSurvey,
       autoComplete: 5,
     };
-    expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
+    expect(validation.isSurveyValid(surveyWithLowLimit, mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
       "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
       {
@@ -998,7 +998,7 @@ describe("validation.isSurveyValid", () => {
       ...baseSurvey,
       autoComplete: 3,
     };
-    expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
+    expect(validation.isSurveyValid(surveyWithLowLimit, mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
       "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
       {
@@ -1012,7 +1012,7 @@ describe("validation.isSurveyValid", () => {
       ...baseSurvey,
       autoComplete: 10,
     };
-    expect(validation.isSurveyValid(surveyWithValidLimit, "en", mockT, 5)).toBe(true);
+    expect(validation.isSurveyValid(surveyWithValidLimit, mockT, 5)).toBe(true);
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -1021,7 +1021,7 @@ describe("validation.isSurveyValid", () => {
       ...baseSurvey,
       autoComplete: null,
     };
-    expect(validation.isSurveyValid(surveyWithNoLimit, "en", mockT, 5)).toBe(true);
+    expect(validation.isSurveyValid(surveyWithNoLimit, mockT, 5)).toBe(true);
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -1035,7 +1035,7 @@ describe("validation.isSurveyValid", () => {
       },
     } as unknown as TSurvey;
 
-    expect(validation.isSurveyValid(surveyWithEmptyClosedMessageHeading, "en", mockT)).toBe(false);
+    expect(validation.isSurveyValid(surveyWithEmptyClosedMessageHeading, mockT)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
       "environments.surveys.edit.survey_closed_message_heading_required"
     );
@@ -1051,7 +1051,7 @@ describe("validation.isSurveyValid", () => {
       },
     } as unknown as TSurvey;
 
-    expect(validation.isSurveyValid(surveyWithWhitespaceClosedMessageHeading, "en", mockT)).toBe(false);
+    expect(validation.isSurveyValid(surveyWithWhitespaceClosedMessageHeading, mockT)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
       "environments.surveys.edit.survey_closed_message_heading_required"
     );
@@ -1067,7 +1067,7 @@ describe("validation.isSurveyValid", () => {
       },
     } as unknown as TSurvey;
 
-    expect(validation.isSurveyValid(surveyWithHeadingOnlyClosedMessage, "en", mockT)).toBe(true);
+    expect(validation.isSurveyValid(surveyWithHeadingOnlyClosedMessage, mockT)).toBe(true);
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -1081,7 +1081,7 @@ describe("validation.isSurveyValid", () => {
       },
     } as unknown as TSurvey;
 
-    expect(validation.isSurveyValid(surveyWithClosedMessageContent, "en", mockT)).toBe(true);
+    expect(validation.isSurveyValid(surveyWithClosedMessageContent, mockT)).toBe(true);
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -1101,7 +1101,7 @@ describe("validation.isSurveyValid", () => {
         },
       } as unknown as TSurvey;
 
-      expect(validation.isSurveyValid(surveyWithInvalidSegment, "en", mockT)).toBe(false); // Zod parse will fail
+      expect(validation.isSurveyValid(surveyWithInvalidSegment, mockT)).toBe(false); // Zod parse will fail
       expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.invalid_targeting");
     });
 
@@ -1128,7 +1128,7 @@ describe("validation.isSurveyValid", () => {
       const mockSafeParse = vi.spyOn(ZSegmentFilters, "safeParse");
       mockSafeParse.mockReturnValue({ success: true, data: surveyWithValidSegment.segment!.filters } as any);
 
-      expect(validation.isSurveyValid(surveyWithValidSegment, "en", mockT)).toBe(true);
+      expect(validation.isSurveyValid(surveyWithValidSegment, mockT)).toBe(true);
       expect(toast.error).not.toHaveBeenCalled();
       mockSafeParse.mockRestore();
     });

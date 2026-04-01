@@ -19,8 +19,6 @@ interface EndScreenFormProps {
   localSurvey: TSurvey;
   endingCardIndex: number;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   updateSurvey: (
     input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
   ) => void;
@@ -34,8 +32,6 @@ export const EndScreenForm = ({
   localSurvey,
   endingCardIndex,
   isInvalid,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   updateSurvey,
   endingCard,
   locale,
@@ -44,12 +40,11 @@ export const EndScreenForm = ({
 }: EndScreenFormProps) => {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectedLanguageCode = "default";
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const questions = getElementsFromBlocks(localSurvey.blocks);
-
-  const defaultLanguageCode = localSurvey.languages.find((lang) => lang.default)?.language.code ?? "default";
-  const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
+  const usedLanguageCode = "default";
 
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
@@ -66,8 +61,6 @@ export const EndScreenForm = ({
         elementIdx={questions.length + endingCardIndex}
         isInvalid={isInvalid}
         updateSurvey={updateSurvey}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
@@ -85,8 +78,6 @@ export const EndScreenForm = ({
                 elementIdx={questions.length + endingCardIndex}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
@@ -155,8 +146,6 @@ export const EndScreenForm = ({
                 elementIdx={questions.length + endingCardIndex}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
               />

@@ -17,15 +17,16 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { isValidHTML } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { md } from "@/lib/markdownIt";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { MultiLangWrapper } from "@/modules/survey/components/element-form-input/components/multi-lang-wrapper";
+import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { RecallWrapper } from "@/modules/survey/components/element-form-input/components/recall-wrapper";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { LocalizedEditor } from "@/modules/survey/multi-language-surveys/components/localized-editor";
 import { Button } from "@/modules/ui/components/button";
+import { Editor } from "@/modules/ui/components/editor";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -39,7 +40,6 @@ import {
   getMatrixLabel,
   getPlaceHolderById,
   getWelcomeCardText,
-  isValueIncomplete,
 } from "./utils";
 
 interface ElementFormInputProps {
@@ -54,8 +54,8 @@ interface ElementFormInputProps {
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
+  selectedLanguageCode?: string;
+  setSelectedLanguageCode?: (languageCode: string) => void;
   label: string;
   maxLength?: number;
   placeholder?: string;
@@ -80,14 +80,14 @@ export const ElementFormInput = ({
   updateChoice,
   updateMatrixLabel,
   isInvalid,
+  selectedLanguageCode: _selectedLanguageCode,
+  setSelectedLanguageCode: _setSelectedLanguageCode,
   label,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   maxLength,
   placeholder,
   onBlur,
   className,
-  locale,
+  locale: _locale,
   onKeyDown,
   isStorageConfigured = true,
   autoFocus,
@@ -96,9 +96,7 @@ export const ElementFormInput = ({
   isExternalUrlsAllowed,
 }: ElementFormInputProps) => {
   const { t } = useTranslation();
-  const defaultLanguageCode =
-    localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
-  const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
+  const usedLanguageCode = "default";
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -106,20 +104,21 @@ export const ElementFormInput = ({
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
-  const inputId = useMemo(() => {
-    return isChoice || isMatrixLabelColumn || isMatrixLabelRow ? id.split("-")[0] : id;
-  }, [id, isChoice, isMatrixLabelColumn, isMatrixLabelRow]);
 
   const isEndingCard = elementIdx >= elements.length;
   const isWelcomeCard = elementIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const elementId = useMemo(() => {
-    return isWelcomeCard
-      ? "start"
-      : isEndingCard
-        ? localSurvey.endings[elementIdx - elements.length].id
-        : currentElement.id;
+    if (isWelcomeCard) {
+      return "start";
+    }
+
+    if (isEndingCard) {
+      return localSurvey.endings[elementIdx - elements.length].id;
+    }
+
+    return currentElement.id;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWelcomeCard, isEndingCard, currentElement?.id]);
   const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
@@ -128,11 +127,6 @@ export const ElementFormInput = ({
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]
   );
-  const isTranslationIncomplete = useMemo(
-    () => isValueIncomplete(inputId, isInvalid, surveyLanguageCodes, value),
-    [value, inputId, isInvalid, surveyLanguageCodes]
-  );
-
   const elementText = useMemo((): TI18nString => {
     if (isChoice && typeof index === "number") {
       return getChoiceLabel(currentElement, index, surveyLanguageCodes);
@@ -293,14 +287,14 @@ export const ElementFormInput = ({
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     if (isEndingCard) {
-      if (endingCard && endingCard.type === "endScreen") return endingCard.imageUrl;
+      if (endingCard?.type === "endScreen") return endingCard.imageUrl;
     } else return currentElement.imageUrl;
   };
 
   const getVideoUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
     if (isEndingCard) {
-      if (endingCard && endingCard.type === "endScreen") return endingCard.videoUrl;
+      if (endingCard?.type === "endScreen") return endingCard.videoUrl;
     } else return currentElement.videoUrl;
   };
 
@@ -446,24 +440,43 @@ export const ElementFormInput = ({
 
           <div className="flex w-full items-start gap-2">
             <div className="flex-1">
-              <LocalizedEditor
-                key={`${elementId}-${id}-${selectedLanguageCode}`}
+              <Editor
                 id={id}
-                value={value}
-                localSurvey={localSurvey}
-                elementIdx={elementIdx}
-                isInvalid={isInvalid}
-                updateElement={(isWelcomeCard || isEndingCard ? updateSurvey : updateElement)!}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
+                disableLists
+                excludedToolbarItems={["blockType"]}
                 firstRender={firstRender}
-                setFirstRender={setFirstRender}
-                locale={locale}
-                elementId={elementId}
-                isCard={isWelcomeCard || isEndingCard}
                 autoFocus={autoFocus}
+                getText={() => {
+                  const text = value ? (value.default ?? "") : "";
+                  let html = md.render(text);
+                  if (id === "headline" && text && !isValidHTML(text)) {
+                    html = html.replaceAll(/<p>([\s\S]*?)<\/p>/g, "<p><strong>$1</strong></p>");
+                  }
+                  return html;
+                }}
+                key={`${elementId}-${id}-default`}
+                setFirstRender={setFirstRender}
+                setText={(editorValue: string) => {
+                  if (suppressEditorUpdatesRef.current) return;
+                  const sanitizedContent = isExternalUrlsAllowed
+                    ? editorValue
+                    : editorValue.replaceAll(/<a[^>]*>(.*?)<\/a>/gi, "$1");
+                  const translatedContent = {
+                    ...value,
+                    default: sanitizedContent,
+                  };
+
+                  if (isWelcomeCard || isEndingCard) {
+                    (updateSurvey as any)?.({ [id]: translatedContent });
+                    return;
+                  }
+
+                  updateElement?.(elementIdx, { [id]: translatedContent });
+                }}
+                localSurvey={localSurvey}
+                elementId={elementId}
+                selectedLanguageCode="default"
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
-                suppressUpdates={() => suppressEditorUpdatesRef.current}
               />
             </div>
 
@@ -532,98 +545,68 @@ export const ElementFormInput = ({
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
-      <MultiLangWrapper
-        isTranslationIncomplete={isTranslationIncomplete}
-        value={text}
+      <RecallWrapper
         localSurvey={localSurvey}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
-        key={selectedLanguageCode}
-        onChange={(updatedText) => {
+        elementId={elementId}
+        value={text[usedLanguageCode]}
+        onChange={(updatedValue, recallItems, fallbacks) => {
+          const updatedText =
+            recallItems && fallbacks
+              ? { ...text, [usedLanguageCode]: headlineToRecall(updatedValue, recallItems, fallbacks) }
+              : { ...text, [usedLanguageCode]: updatedValue };
           setText(updatedText);
           debouncedHandleUpdate(updatedText[usedLanguageCode]);
         }}
-        render={({ value, onChange, children: languageIndicator }) => {
+        onAddFallback={() => {
+          inputRef.current?.focus();
+        }}
+        isRecallAllowed={false}
+        usedLanguageCode={usedLanguageCode}
+        render={({ value, onChange, highlightedJSX, children: recallComponents, isRecallSelectVisible }) => {
           return (
-            <RecallWrapper
-              localSurvey={localSurvey}
-              elementId={elementId}
-              value={value[usedLanguageCode]}
-              onChange={(value, recallItems, fallbacks) => {
-                // Pass all values to MultiLangWrapper's onChange
-                onChange(value, recallItems, fallbacks);
-              }}
-              onAddFallback={() => {
-                inputRef.current?.focus();
-              }}
-              isRecallAllowed={false}
-              usedLanguageCode={usedLanguageCode}
-              render={({
-                value,
-                onChange,
-                highlightedJSX,
-                children: recallComponents,
-                isRecallSelectVisible,
-              }) => {
-                return (
-                  <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
-                    <div className="flex w-full items-center space-x-2">
-                      <div className="group relative w-full">
-                        {languageIndicator}
-                        {/* The highlight container is absolutely positioned behind the input */}
-                        <div className="h-10 w-full"></div>
-                        <div
-                          ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
-                            localSurvey.languages?.length > 1 ? "pr-24" : ""
-                          }`}
-                          dir="auto"
-                          key={highlightedJSX.toString()}>
-                          {highlightedJSX}
-                        </div>
-
-                        <Input
-                          key={`${elementId}-${id}-${usedLanguageCode}`}
-                          value={
-                            recallToHeadline(
-                              {
-                                [usedLanguageCode]: value,
-                              },
-                              localSurvey,
-                              false,
-                              usedLanguageCode
-                            )[usedLanguageCode]
-                          }
-                          dir="auto"
-                          onChange={(e) => onChange(e.target.value)}
-                          id={id}
-                          name={id}
-                          placeholder={placeholder ?? getPlaceHolderById(id, t)}
-                          aria-label={label}
-                          maxLength={maxLength}
-                          ref={inputRef}
-                          onBlur={onBlur}
-                          className={`absolute top-0 text-black caret-black ${
-                            localSurvey.languages?.length > 1 ? "pr-24" : ""
-                          } ${className}`}
-                          isInvalid={
-                            isInvalid &&
-                            text[usedLanguageCode]?.trim() === "" &&
-                            localSurvey.languages?.length > 1 &&
-                            isTranslationIncomplete
-                          }
-                          autoComplete={isRecallSelectVisible ? "off" : "on"}
-                          autoFocus={false}
-                          onKeyDown={handleKeyDown}
-                        />
-                        {recallComponents}
-                      </div>
-                    </div>
+            <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
+              <div className="flex w-full items-center space-x-2">
+                <div className="group relative w-full">
+                  <div className="h-10 w-full"></div>
+                  <div
+                    ref={highlightContainerRef}
+                    className="no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent"
+                    dir="auto"
+                    key={`${elementId}-${id}-highlight`}>
+                    {highlightedJSX}
                   </div>
-                );
-              }}
-            />
+
+                  <Input
+                    key={`${elementId}-${id}-${usedLanguageCode}`}
+                    value={
+                      recallToHeadline(
+                        {
+                          [usedLanguageCode]: value,
+                        },
+                        localSurvey,
+                        false,
+                        usedLanguageCode
+                      )[usedLanguageCode]
+                    }
+                    dir="auto"
+                    onChange={(e) => onChange(e.target.value)}
+                    id={id}
+                    name={id}
+                    placeholder={placeholder ?? getPlaceHolderById(id, t)}
+                    aria-label={label}
+                    maxLength={maxLength}
+                    ref={inputRef}
+                    onBlur={onBlur}
+                    className={`absolute top-0 text-black caret-black ${className}`}
+                    isInvalid={isInvalid && text[usedLanguageCode]?.trim() === ""}
+                    autoComplete={isRecallSelectVisible ? "off" : "on"}
+                    autoFocus={false}
+                    onKeyDown={handleKeyDown}
+                  />
+                  {recallComponents}
+                </div>
+              </div>
+            </div>
           );
         }}
       />

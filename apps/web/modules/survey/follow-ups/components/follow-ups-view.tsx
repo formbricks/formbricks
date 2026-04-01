@@ -15,7 +15,6 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 interface FollowUpsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  selectedLanguageCode: string;
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   isFormbricksCloud: boolean;
@@ -27,7 +26,6 @@ interface FollowUpsViewProps {
 export const FollowUpsView = ({
   localSurvey,
   setLocalSurvey,
-  selectedLanguageCode,
   mailFrom,
   isSurveyFollowUpsAllowed,
   isFormbricksCloud,
@@ -105,7 +103,6 @@ export const FollowUpsView = ({
               followUp={followUp}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
@@ -120,7 +117,6 @@ export const FollowUpsView = ({
         setLocalSurvey={setLocalSurvey}
         open={addFollowUpModalOpen}
         setOpen={setAddFollowUpModalOpen}
-        selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
         userEmail={userEmail}
         teamMemberDetails={teamMemberDetails}

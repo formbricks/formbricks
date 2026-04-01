@@ -68,7 +68,6 @@ interface AddFollowUpModalProps {
   localSurvey: TSurvey;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  selectedLanguageCode: string;
   mailFrom: string;
   defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
   mode?: "create" | "edit";
@@ -88,7 +87,6 @@ export const FollowUpModal = ({
   localSurvey,
   open,
   setOpen,
-  selectedLanguageCode,
   mailFrom,
   defaultValues,
   mode = "create",
@@ -98,6 +96,7 @@ export const FollowUpModal = ({
   locale,
 }: AddFollowUpModalProps) => {
   const { t } = useTranslation();
+  const selectedLanguageCode = "default";
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);

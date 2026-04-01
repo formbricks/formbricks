@@ -7,7 +7,6 @@ import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
@@ -55,7 +54,6 @@ interface SurveyEditorProps {
 export const SurveyEditor = ({
   survey,
   project,
-  projectLanguages,
   environment,
   actionClasses,
   contactAttributeKeys,
@@ -85,7 +83,6 @@ export const SurveyEditor = ({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
 
-  const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
 
@@ -147,14 +144,6 @@ export const SurveyEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
-  useEffect(() => {
-    if (!localSurvey?.languages) return;
-    const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages ?? []));
-    if (!enabledLanguageCodes.includes(selectedLanguageCode)) {
-      setSelectedLanguageCode("default");
-    }
-  }, [localSurvey?.languages, selectedLanguageCode]);
-
   if (!localSurvey) {
     return <LoadingSkeleton />;
   }
@@ -174,10 +163,7 @@ export const SurveyEditor = ({
         setInvalidElements={setInvalidElements}
         project={localProject}
         responseCount={responseCount}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
-        locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={isStorageConfigured}
       />
@@ -199,11 +185,8 @@ export const SurveyEditor = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               project={localProject}
-              projectLanguages={projectLanguages}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
-              selectedLanguageCode={selectedLanguageCode || "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
@@ -255,7 +238,6 @@ export const SurveyEditor = ({
             <FollowUpsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
-              selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
               isFormbricksCloud={isFormbricksCloud}
@@ -273,7 +255,7 @@ export const SurveyEditor = ({
             project={localProject}
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
-            languageCode={selectedLanguageCode}
+            languageCode="default"
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
           />

@@ -19,7 +19,6 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 interface FollowUpItemProps {
   followUp: TSurveyFollowUp;
   localSurvey: TSurvey;
-  selectedLanguageCode: string;
   mailFrom: string;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
@@ -31,7 +30,6 @@ export const FollowUpItem = ({
   followUp,
   localSurvey,
   mailFrom,
-  selectedLanguageCode,
   userEmail,
   teamMemberDetails,
   setLocalSurvey,
@@ -190,7 +188,6 @@ export const FollowUpItem = ({
         open={editFollowUpModalOpen}
         setOpen={setEditFollowUpModalOpen}
         mailFrom={mailFrom}
-        selectedLanguageCode={selectedLanguageCode}
         defaultValues={{
           surveyFollowUpId: followUp.id,
           followUpName: followUp.name,

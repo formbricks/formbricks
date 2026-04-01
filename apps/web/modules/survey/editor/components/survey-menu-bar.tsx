@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
@@ -38,10 +37,7 @@ interface SurveyMenuBarProps {
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
   project: Project;
   responseCount: number;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
-  locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
 }
@@ -56,9 +52,7 @@ export const SurveyMenuBar = ({
   setInvalidElements,
   project,
   responseCount,
-  selectedLanguageCode,
   isCxMode,
-  locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
 }: SurveyMenuBarProps) => {
@@ -192,7 +186,17 @@ export const SurveyMenuBar = ({
   const validateSurveyWithZod = (): boolean => {
     const localSurveyValidation = ZSurvey.safeParse(localSurvey);
     if (!localSurveyValidation.success) {
-      const issues = localSurveyValidation.error.issues;
+      const issues = localSurveyValidation.error.issues.filter((issue) => {
+        if (issue.code !== "custom") return true;
+        const params = issue.params as { invalidLanguageCodes?: string[] } | undefined;
+        if (params?.invalidLanguageCodes?.length) return false;
+        return !issue.message.includes("-fLang-");
+      });
+
+      if (issues.length === 0) {
+        return true;
+      }
+
       const newInvalidIds: string[] = [];
 
       for (const issue of issues) {
@@ -236,21 +240,9 @@ export const SurveyMenuBar = ({
 
       const firstError = issues[0];
       if (firstError.code === "custom") {
-        const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
-        if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
-          const invalidLanguageLabels = params.invalidLanguageCodes.map(
-            (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
-          );
-
-          const messageSplit = firstError.message.split("-fLang-")[0];
-
-          toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
-        } else {
-          toast.error(firstError.message, {
-            className: "w-fit !max-w-md",
-          });
-        }
-
+        toast.error(firstError.message, {
+          className: "w-fit !max-w-md",
+        });
         return false;
       }
 
@@ -359,7 +351,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      const isSurveyValidResult = isSurveyValid(localSurvey, t, responseCount);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
@@ -439,7 +431,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      const isSurveyValidResult = isSurveyValid(localSurvey, t, responseCount);
       if (!isSurveyValidResult) {
         isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);

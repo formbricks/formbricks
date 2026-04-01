@@ -59,8 +59,6 @@ interface BlockCardProps {
   setActiveElementId: (elementId: string | null) => void;
   lastElement: boolean;
   lastElementIndex: number;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   invalidElements?: string[];
   addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
@@ -95,8 +93,6 @@ export const BlockCard = ({
   setActiveElementId,
   lastElement,
   lastElementIndex,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   invalidElements,
   addElement,
   isFormbricksCloud,
@@ -136,11 +132,10 @@ export const BlockCard = ({
   const [elementsParent] = useAutoAnimate();
 
   const getElementHeadline = (
-    element: TSurveyElement,
-    languageCode: string
+    element: TSurveyElement
   ): (string | React.ReactElement)[] | string | undefined => {
-    const headlineData = recallToHeadline(element.headline, localSurvey, true, languageCode);
-    const headlineText = headlineData[languageCode];
+    const headlineData = recallToHeadline(element.headline, localSurvey, true, "default");
+    const headlineText = headlineData.default;
     if (headlineText) {
       return formatTextWithSlashes(getTextContent(headlineText ?? ""));
     }
@@ -168,8 +163,8 @@ export const BlockCard = ({
     element,
     elementIdx,
     updateElement,
-    selectedLanguageCode,
-    setSelectedLanguageCode,
+    selectedLanguageCode: "default",
+    setSelectedLanguageCode: () => {},
     isInvalid: invalidElements ? invalidElements.includes(element.id) : false,
     locale,
     isStorageConfigured,
@@ -344,9 +339,7 @@ export const BlockCard = ({
                                     })}
                                   </p>
                                 )}
-                                <h3 className="text-sm font-semibold">
-                                  {getElementHeadline(element, selectedLanguageCode)}
-                                </h3>
+                                <h3 className="text-sm font-semibold">{getElementHeadline(element)}</h3>
                                 {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
                                   <p className="mt-1 truncate text-xs text-slate-500">
                                     {element?.required
@@ -427,7 +420,7 @@ export const BlockCard = ({
                                 updateElement={updateElement}
                                 updateBlockLogic={updateBlockLogic}
                                 updateBlockLogicFallback={updateBlockLogicFallback}
-                                selectedLanguageCode={selectedLanguageCode}
+                                selectedLanguageCode="default"
                               />
                             </Collapsible.CollapsibleContent>
                           </Collapsible.Root>
@@ -460,8 +453,7 @@ export const BlockCard = ({
                 localSurvey={localSurvey}
                 block={block}
                 blockIndex={blockIdx}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
+                selectedLanguageCode="default"
                 updateBlockButtonLabel={updateBlockButtonLabel}
                 updateBlockLogic={updateBlockLogic}
                 updateBlockLogicFallback={updateBlockLogicFallback}

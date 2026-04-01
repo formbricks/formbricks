@@ -23,65 +23,56 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
-import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
-// Utility function to check if label is valid for all required languages
+const getDefaultText = (label?: TI18nString): string => {
+  return getTextContent(label?.default ?? "");
+};
+
 export const isLabelValidForAllLanguages = (
   label: TI18nString,
-  surveyLanguages: TSurveyLanguage[]
+  _surveyLanguages: TSurveyLanguage[]
 ): boolean => {
-  const filteredLanguages = surveyLanguages.filter((surveyLanguages) => {
-    return surveyLanguages.enabled;
-  });
-  const languageCodes = extractLanguageCodes(filteredLanguages);
-  const languages = languageCodes.length === 0 ? ["default"] : languageCodes;
-  return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
+  return getDefaultText(label).trim().length > 0;
 };
 
 // Validation logic for multiple choice elements
 const handleI18nCheckForMultipleChoice = (
   element: TSurveyMultipleChoiceElement,
-  languages: TSurveyLanguage[]
+  _languages: TSurveyLanguage[]
 ): boolean => {
-  const invalidLangCodes = findLanguageCodesForDuplicateLabels(
-    element.choices.map((choice) => choice.label),
-    languages
-  );
-
-  if (invalidLangCodes.length > 0) {
-    return false;
-  }
-
-  return element.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
+  const normalizedLabels = element.choices
+    .map((choice) => getDefaultText(choice.label).trim().toLowerCase())
+    .filter(Boolean);
+  const hasDuplicates = new Set(normalizedLabels).size !== normalizedLabels.length;
+  return !hasDuplicates && element.choices.every((choice) => getDefaultText(choice.label).trim().length > 0);
 };
 
 const handleI18nCheckForMatrixLabels = (
   element: TSurveyMatrixElement,
-  languages: TSurveyLanguage[]
+  _languages: TSurveyLanguage[]
 ): boolean => {
   const rowsAndColumns = [...element.rows, ...element.columns];
+  const rowLabels = element.rows.map((row) => getDefaultText(row.label).trim().toLowerCase()).filter(Boolean);
+  const colLabels = element.columns
+    .map((column) => getDefaultText(column.label).trim().toLowerCase())
+    .filter(Boolean);
 
-  const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(
-    element.rows.map((row) => row.label),
-    languages
-  );
-  const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(
-    element.columns.map((column) => column.label),
-    languages
-  );
+  const hasDuplicateRows = new Set(rowLabels).size !== rowLabels.length;
+  const hasDuplicateColumns = new Set(colLabels).size !== colLabels.length;
 
-  if (invalidRowsLangCodes.length > 0 || invalidColumnsLangCodes.length > 0) {
+  if (hasDuplicateRows || hasDuplicateColumns) {
     return false;
   }
 
-  return rowsAndColumns.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
+  return rowsAndColumns.every((choice) => getDefaultText(choice.label).trim().length > 0);
 };
 
 const handleI18nCheckForContactAndAddressFields = (
   element: TSurveyContactInfoElement | TSurveyAddressElement,
-  languages: TSurveyLanguage[]
+  _languages: TSurveyLanguage[]
 ): boolean => {
   let fields: TInputFieldConfig[] = [];
   if (element.type === "contactInfo") {
@@ -93,7 +84,7 @@ const handleI18nCheckForContactAndAddressFields = (
   }
   return fields.every((field) => {
     if (field.show) {
-      return isLabelValidForAllLanguages(field.placeholder, languages);
+      return getDefaultText(field.placeholder).trim().length > 0;
     }
     return true;
   });
@@ -101,11 +92,11 @@ const handleI18nCheckForContactAndAddressFields = (
 
 // Validation rules
 export const validationRules = {
-  openText: (element: TSurveyOpenTextElement, languages: TSurveyLanguage[]) => {
+  openText: (element: TSurveyOpenTextElement, _languages: TSurveyLanguage[]) => {
     return element.placeholder &&
       getLocalizedValue(element.placeholder, "default").trim() !== "" &&
-      languages.length > 1
-      ? isLabelValidForAllLanguages(element.placeholder, languages)
+      getLocalizedValue(element.placeholder, "default").trim() !== ""
+      ? getDefaultText(element.placeholder).trim().length > 0
       : true;
   },
   multipleChoiceMulti: (element: TSurveyMultipleChoiceElement, languages: TSurveyLanguage[]) => {
@@ -114,15 +105,15 @@ export const validationRules = {
   multipleChoiceSingle: (element: TSurveyMultipleChoiceElement, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMultipleChoice(element, languages);
   },
-  consent: (element: TSurveyConsentElement, languages: TSurveyLanguage[]) => {
-    return isLabelValidForAllLanguages(element.label, languages);
+  consent: (element: TSurveyConsentElement, _languages: TSurveyLanguage[]) => {
+    return getDefaultText(element.label).trim().length > 0;
   },
   pictureSelection: (element: TSurveyPictureSelectionElement) => {
     return element.choices.length >= 2;
   },
-  cta: (element: TSurveyCTAElement, languages: TSurveyLanguage[]) => {
+  cta: (element: TSurveyCTAElement, _languages: TSurveyLanguage[]) => {
     return element.buttonExternal && element.ctaButtonLabel
-      ? isLabelValidForAllLanguages(element.ctaButtonLabel, languages)
+      ? getDefaultText(element.ctaButtonLabel).trim().length > 0
       : true;
   },
   matrix: (element: TSurveyMatrixElement, languages: TSurveyLanguage[]) => {
@@ -135,14 +126,14 @@ export const validationRules = {
     return handleI18nCheckForContactAndAddressFields(element, languages);
   },
   // Assuming headline is of type TI18nString
-  defaultValidation: (element: TSurveyElement, languages: TSurveyLanguage[]) => {
+  defaultValidation: (element: TSurveyElement, _languages: TSurveyLanguage[]) => {
     // headline and subheader are default for every element
-    const isHeadlineValid = isLabelValidForAllLanguages(element.headline, languages);
+    const isHeadlineValid = getDefaultText(element.headline).trim().length > 0;
     const isSubheaderValid =
       element.subheader &&
       getLocalizedValue(element.subheader, "default").trim() !== "" &&
-      languages.length > 1
-        ? isLabelValidForAllLanguages(element.subheader, languages)
+      getLocalizedValue(element.subheader, "default").trim() !== ""
+        ? getDefaultText(element.subheader).trim().length > 0
         : true;
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
@@ -152,7 +143,7 @@ export const validationRules = {
     for (const field of fieldsToValidate) {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
       if (fieldValue?.[defaultLanguageCode] !== undefined && fieldValue[defaultLanguageCode].trim() !== "") {
-        isValid = isValid && isLabelValidForAllLanguages(fieldValue, languages);
+        isValid = isValid && getDefaultText(fieldValue).trim().length > 0;
       }
     }
 
@@ -195,8 +186,8 @@ export const validateSurveyElementsInBatch = (
   return invalidElements;
 };
 
-const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {
-  return !content || isLabelValidForAllLanguages(content, surveyLanguages);
+const isContentValid = (content: Record<string, string> | undefined, _surveyLanguages: TSurveyLanguage[]) => {
+  return !content || getDefaultText(content).trim().length > 0;
 };
 
 const hasValidSurveyClosedMessageHeading = (survey: TSurvey): boolean => {
@@ -247,13 +238,8 @@ export const isEndingCardValid = (
   }
 };
 
-export const isSurveyValid = (
-  survey: TSurvey,
-  selectedLanguageCode: string,
-  t: TFunction,
-  responseCount?: number
-) => {
-  const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
+export const isSurveyValid = (survey: TSurvey, t: TFunction, responseCount?: number) => {
+  const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, "default");
   if (questionWithEmptyFallback) {
     toast.error(t("environments.surveys.edit.fallback_missing"));
     return false;
