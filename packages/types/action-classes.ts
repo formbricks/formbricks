@@ -135,7 +135,6 @@ export const ZActionClass = z.object({
   key: z.string().trim().min(1).nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullable(),
   environmentId: z.string(),
-  projectId: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
