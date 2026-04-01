@@ -2,12 +2,23 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidPasswordResetTokenError,
+  OperationNotAllowedError,
 } from "@formbricks/types/errors";
 import { completePasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
 import { resetPasswordAction } from "./actions";
 
+const constantsState = vi.hoisted(() => ({
+  passwordResetDisabled: false,
+}));
+
 vi.mock("@/modules/auth/forgot-password/lib/password-reset-service", () => ({
   completePasswordReset: vi.fn(),
+}));
+
+vi.mock("@/lib/constants", () => ({
+  get PASSWORD_RESET_DISABLED() {
+    return constantsState.passwordResetDisabled;
+  },
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -37,6 +48,7 @@ describe("resetPasswordAction", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    constantsState.passwordResetDisabled = false;
   });
 
   afterEach(() => {
@@ -84,5 +96,17 @@ describe("resetPasswordAction", () => {
         parsedInput,
       } as any)
     ).rejects.toThrow(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
+  });
+
+  test("rejects reset attempts when password reset is disabled", async () => {
+    constantsState.passwordResetDisabled = true;
+
+    await expect(
+      resetPasswordAction({
+        ctx: mockCtx,
+        parsedInput,
+      } as any)
+    ).rejects.toThrow(OperationNotAllowedError);
+    expect(completePasswordReset).not.toHaveBeenCalled();
   });
 });

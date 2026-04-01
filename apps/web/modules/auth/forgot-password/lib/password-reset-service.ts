@@ -77,7 +77,6 @@ class PasswordResetSessionRevocationError extends Error {
     this.cause = cause;
   }
 }
-
 export const getPasswordResetTokenLifetimeInMinutes = (): number => PASSWORD_RESET_TOKEN_LIFETIME_MINUTES;
 
 const buildPasswordResetLink = (token: string): string =>
@@ -210,7 +209,6 @@ const updatePasswordWithActiveResetToken = async (
     } catch (error) {
       throw new PasswordResetSessionRevocationError(tokenRecord.userId, error);
     }
-
     return {
       userId: tokenRecord.userId,
       oldUser,
@@ -349,7 +347,6 @@ export const completePasswordReset = async (
       );
       throw error.cause instanceof Error ? error.cause : error;
     }
-
     logger.error({ error, stage: "password_update" }, "Password reset completion failed");
     throw error;
   }

@@ -400,7 +400,6 @@
     "show_response_count": "Visa antal svar",
     "shown": "Visad",
     "size": "Storlek",
-    "skip": "Hoppa över",
     "skipped": "Överhoppad",
     "skips": "Överhoppningar",
     "some_files_failed_to_upload": "Några filer misslyckades att laddas upp",
@@ -471,7 +470,6 @@
     "website_survey": "Webbplatsenkät",
     "weeks": "veckor",
     "welcome_card": "Välkomstkort",
-    "workflows": "Arbetsflöden",
     "workspace": "Arbetsyta",
     "workspace_configuration": "Arbetsytans konfiguration",
     "workspace_created_successfully": "Arbetsytan har skapats",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla kraft. Gratis i 30 dagar."
       },
       "general": {
+        "ai_data_analysis_enabled": "Dataförbättring & analys (AI)",
+        "ai_data_analysis_enabled_description": "AI för att få ut mer av din data, skapa dashboards, diagram, rapporter och mer. Använder din upplevelsedata.",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Hantera AI-drivna funktioner för den här organisationen.",
+        "ai_settings_updated_successfully": "AI-inställningarna har uppdaterats",
+        "ai_smart_tools_enabled": "Smarta funktioner (AI)",
+        "ai_smart_tools_enabled_description": "AI som hjälper dig att göra mer på kortare tid. Rör aldrig data som samlats in med Formbricks. Används bara till t.ex. att översätta enkäter till andra språk.",
         "bulk_invite_warning_description": "På gratisplanen tilldelas alla organisationsmedlemmar alltid rollen \"Ägare\".",
         "cannot_delete_only_organization": "Detta är din enda organisation, den kan inte tas bort. Skapa en ny organisation först.",
         "cannot_leave_only_organization": "Du kan inte lämna denna organisation eftersom det är din enda organisation. Skapa en ny organisation först.",
@@ -2614,8 +2619,8 @@
     "csat_question_1_headline": "Hur troligt är det att du skulle rekommendera $[projectName] till en vän eller kollega?",
     "csat_question_1_lower_label": "Inte troligt",
     "csat_question_1_upper_label": "Mycket troligt",
-    "csat_question_2_choice_1": "Ganska nöjd",
-    "csat_question_2_choice_2": "Mycket nöjd",
+    "csat_question_2_choice_1": "Mycket nöjd",
+    "csat_question_2_choice_2": "Ganska nöjd",
     "csat_question_2_choice_3": "Varken nöjd eller missnöjd",
     "csat_question_2_choice_4": "Ganska missnöjd",
     "csat_question_2_choice_5": "Mycket missnöjd",
@@ -3337,18 +3342,5 @@
     "usability_question_9_headline": "Jag kände mig trygg när jag använde systemet.",
     "usability_rating_description": "Mät upplevd användbarhet genom att be användare betygsätta sin upplevelse med din produkt med en standardiserad 10-frågors enkät.",
     "usability_score_name": "System Usability Score (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Tack för att du delade din arbetsflödesidé med oss! Vi håller just nu på att designa den här funktionen och din feedback hjälper oss att bygga precis det du behöver.",
-    "coming_soon_title": "Vi är nästan där!",
-    "follow_up_label": "Finns det något annat du vill lägga till?",
-    "follow_up_placeholder": "Vilka specifika uppgifter vill du automatisera? Några verktyg eller integrationer du vill ha med?",
-    "generate_button": "Skapa arbetsflöde",
-    "heading": "Vilket arbetsflöde vill du skapa?",
-    "placeholder": "Beskriv det arbetsflöde du vill skapa…",
-    "subheading": "Skapa ditt arbetsflöde på några sekunder.",
-    "submit_button": "Lägg till detaljer",
-    "thank_you_description": "Din input hjälper oss att bygga arbetsflödesfunktionen du faktiskt behöver. Vi håller dig uppdaterad om våra framsteg.",
-    "thank_you_title": "Tack för din feedback!"
   }
 }

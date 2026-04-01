@@ -80,22 +80,6 @@ export const findByTokenHash = async (
   }
 };
 
-export const deleteByUserId = async (userId: string, tx?: Prisma.TransactionClient): Promise<number> => {
-  validateInputs([userId, ZId]);
-
-  try {
-    const result = await getDbClient(tx).passwordResetToken.deleteMany({
-      where: {
-        userId,
-      },
-    });
-
-    return result.count;
-  } catch (error) {
-    return handleDatabaseError(error);
-  }
-};
-
 export const deleteByTokenHash = async (
   tokenHash: string,
   tx?: Prisma.TransactionClient

@@ -400,7 +400,6 @@
     "show_response_count": "Mostrar contagem de respostas",
     "shown": "mostrado",
     "size": "Tamanho",
-    "skip": "Pular",
     "skipped": "Pulou",
     "skips": "Pula",
     "some_files_failed_to_upload": "Alguns arquivos falharam ao enviar",
@@ -471,7 +470,6 @@
     "website_survey": "Pesquisa de Site",
     "weeks": "semanas",
     "welcome_card": "Cartão de boas-vindas",
-    "workflows": "Fluxos de trabalho",
     "workspace": "Espaço de trabalho",
     "workspace_configuration": "Configuração do projeto",
     "workspace_created_successfully": "Projeto criado com sucesso",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloqueie todo o poder do Formbricks. Grátis por 30 dias."
       },
       "general": {
+        "ai_data_analysis_enabled": "Enriquecimento e análise de dados (IA)",
+        "ai_data_analysis_enabled_description": "IA para extrair mais dos seus dados, configurar dashboards, gráficos, relatórios e muito mais. Acessa os dados da sua experiência.",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Gerencie recursos com IA para esta organização.",
+        "ai_settings_updated_successfully": "Configurações de IA atualizadas com sucesso",
+        "ai_smart_tools_enabled": "Funcionalidades inteligentes (IA)",
+        "ai_smart_tools_enabled_description": "IA para ajudar você a conquistar mais em menos tempo. Nunca acessa dados coletados com o Formbricks. Usado apenas para, por exemplo, traduzir pesquisas para outros idiomas.",
         "bulk_invite_warning_description": "Por favor, note que no Plano Gratuito, todos os membros da organização são automaticamente atribuídos ao papel de 'Owner', independentemente do papel especificado no arquivo CSV.",
         "cannot_delete_only_organization": "Essa é sua única organização, não pode ser deletada. Crie uma nova organização primeiro.",
         "cannot_leave_only_organization": "Você não pode sair dessa organização porque é a sua única. Crie uma nova organização primeiro.",
@@ -2614,8 +2619,8 @@
     "csat_question_1_headline": "Qual a probabilidade de você recomendar este $[projectName] para um amigo ou colega?",
     "csat_question_1_lower_label": "Pouco provável",
     "csat_question_1_upper_label": "Muito provável",
-    "csat_question_2_choice_1": "Meio satisfeito",
-    "csat_question_2_choice_2": "Muito satisfeito",
+    "csat_question_2_choice_1": "Muito satisfeito",
+    "csat_question_2_choice_2": "Meio satisfeito",
     "csat_question_2_choice_3": "Nem satisfeito nem insatisfeito",
     "csat_question_2_choice_4": "Um pouco insatisfeito",
     "csat_question_2_choice_5": "Muito insatisfeito",
@@ -3337,18 +3342,5 @@
     "usability_question_9_headline": "Me senti confiante ao usar o sistema.",
     "usability_rating_description": "Meça a usabilidade percebida perguntando aos usuários para avaliar sua experiência com seu produto usando uma pesquisa padronizada de 10 perguntas.",
     "usability_score_name": "Pontuação de Usabilidade do Sistema (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Obrigado por compartilhar sua ideia de fluxo de trabalho conosco! Estamos atualmente projetando este recurso e seu feedback nos ajudará a construir exatamente o que você precisa.",
-    "coming_soon_title": "Estamos quase lá!",
-    "follow_up_label": "Há algo mais que você gostaria de acrescentar?",
-    "follow_up_placeholder": "Quais tarefas específicas você gostaria de automatizar? Alguma ferramenta ou integração que gostaria de incluir?",
-    "generate_button": "Gerar fluxo de trabalho",
-    "heading": "Qual fluxo de trabalho você quer criar?",
-    "placeholder": "Descreva o fluxo de trabalho que você quer gerar…",
-    "subheading": "Gere seu fluxo de trabalho em segundos.",
-    "submit_button": "Adicionar detalhes",
-    "thank_you_description": "Sua contribuição nos ajuda a construir a funcionalidade de Fluxos de Trabalho que você realmente precisa. Manteremos você informado sobre nosso progresso.",
-    "thank_you_title": "Obrigado pelo seu feedback!"
   }
 }

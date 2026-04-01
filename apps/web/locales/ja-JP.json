@@ -400,7 +400,6 @@
     "show_response_count": "回答数を表示",
     "shown": "表示済み",
     "size": "サイズ",
-    "skip": "スキップ",
     "skipped": "スキップ済み",
     "skips": "スキップ数",
     "some_files_failed_to_upload": "一部のファイルのアップロードに失敗しました",
@@ -471,7 +470,6 @@
     "website_survey": "ウェブサイトフォーム",
     "weeks": "週間",
     "welcome_card": "ウェルカムカード",
-    "workflows": "ワークフロー",
     "workspace": "ワークスペース",
     "workspace_configuration": "ワークスペース設定",
     "workspace_created_successfully": "ワークスペースが正常に作成されました",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricksの全機能をアンロック。30日間無料。"
       },
       "general": {
+        "ai_data_analysis_enabled": "データエンリッチメントと分析（AI）",
+        "ai_data_analysis_enabled_description": "AIを活用してデータから最大限の価値を引き出し、ダッシュボード、チャート、レポートなどを設定できます。エクスペリエンスデータに触れます。",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "この組織のAI機能を管理します。",
+        "ai_settings_updated_successfully": "AI設定が正常に更新されました",
+        "ai_smart_tools_enabled": "スマート機能（AI）",
+        "ai_smart_tools_enabled_description": "AIを活用して、より短時間でより多くのことを達成できます。Formbricksで収集されたデータには一切触れません。アンケートを他の言語に翻訳するなどの用途にのみ使用されます。",
         "bulk_invite_warning_description": "無料プランでは、すべての組織メンバーに常に「オーナー」ロールが割り当てられます。",
         "cannot_delete_only_organization": "これはあなたの唯一の組織です。削除できません。まず新しい組織を作成してください。",
         "cannot_leave_only_organization": "これはあなたの唯一の組織であるため、離れることはできません。まず新しい組織を作成してください。",
@@ -2614,8 +2619,8 @@
     "csat_question_1_headline": "この$[projectName]を友人や同僚に勧める可能性はどのくらいありますか？",
     "csat_question_1_lower_label": "可能性が低い",
     "csat_question_1_upper_label": "可能性が非常に高い",
-    "csat_question_2_choice_1": "やや満足",
-    "csat_question_2_choice_2": "非常に満足",
+    "csat_question_2_choice_1": "非常に満足",
+    "csat_question_2_choice_2": "やや満足",
     "csat_question_2_choice_3": "満足も不満もない",
     "csat_question_2_choice_4": "やや不満",
     "csat_question_2_choice_5": "非常に不満",
@@ -3337,18 +3342,5 @@
     "usability_question_9_headline": "システムを使っている間、自信がありました。",
     "usability_rating_description": "標準化された10の質問アンケートを使用して、製品に対するユーザーの体験を評価し、知覚された使いやすさを測定する。",
     "usability_score_name": "システムユーザビリティスコア（SUS）"
-  },
-  "workflows": {
-    "coming_soon_description": "ワークフローのアイデアを共有していただきありがとうございます！現在この機能を設計中で、あなたのフィードバックは私たちが必要とされる機能を構築するのに役立ちます。",
-    "coming_soon_title": "もうすぐ完成です！",
-    "follow_up_label": "他に追加したいことはありますか？",
-    "follow_up_placeholder": "自動化したい具体的な作業や使用したいツール・連携があればご記入ください。",
-    "generate_button": "ワークフローを生成",
-    "heading": "どのようなワークフローを作成しますか？",
-    "placeholder": "作成したいワークフローについて説明してください…",
-    "subheading": "数秒でワークフローを生成します。",
-    "submit_button": "詳細を追加",
-    "thank_you_description": "ご入力いただいた内容は、より実用的なWorkflows機能の開発に役立てます。進捗は順次ご案内します。",
-    "thank_you_title": "フィードバックありがとうございます！"
   }
 }

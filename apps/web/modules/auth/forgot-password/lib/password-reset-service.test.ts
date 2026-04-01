@@ -35,7 +35,6 @@ type TPasswordResetSessionRecord = {
   userId: string;
   expires: Date;
 };
-
 type TPasswordResetTransactionStub = {
   user: {
     findUnique: (args: { where: { id: string } }) => Promise<TPasswordResetAuditUserFixture | null>;
@@ -140,7 +139,6 @@ const testState = vi.hoisted(() => {
     store.clear();
     snapshot.forEach(([key, value]) => store.set(key, value));
   };
-
   const mockTransaction = vi.fn(async <T>(callback: (tx: TPasswordResetTransactionStub) => Promise<T>) => {
     const tokenSnapshot = [...tokenStore.entries()].map(
       ([key, record]) => [key, cloneTokenRecord(record)] as const
@@ -245,7 +243,6 @@ vi.mock("./password-reset-token-repository", () => ({
 vi.mock("@/modules/auth/lib/auth-session-repository", () => ({
   deleteSessionsByUserId: testState.mockDeleteSessionsByUserId,
 }));
-
 describe("password-reset-service", () => {
   const user = {
     id: "cm8z6bn2q000008l34h8g7k9m",
@@ -326,7 +323,6 @@ describe("password-reset-service", () => {
 
   const getSessionsForUser = (userId: string): TPasswordResetSessionRecord[] =>
     [...testState.sessionStore.values()].filter((session) => session.userId === userId);
-
   beforeEach(() => {
     constantsState.debugShowResetLink = false;
     testState.tokenStore.clear();
@@ -445,7 +441,6 @@ describe("password-reset-service", () => {
     expect(getSessionsForUser(user.id)).toHaveLength(0);
     expect(getSessionsForUser(otherUserId)).toHaveLength(1);
   });
-
   test("allows only one successful result for concurrent token submissions", async () => {
     await requestPasswordReset(user, "public");
     const token = parseTokenFromResetLink();

@@ -247,4 +247,15 @@ We currently do not offer Formbricks white-labeled. That means that we don't sel
 
 The Enterprise Edition allows us to fund the development of Formbricks sustainably. It guarantees that the free and open-source surveying infrastructure we're building will be around for decades to come.
 
+<a id="readme-de"></a>
+
+## Deutsch
+
+Formbricks ist eine freie, quelloffene und datenschutzorientierte Plattform für Surveys und Experience Management. Mit In-App-, Website-, Link- und E-Mail-Umfragen sammelt ihr Feedback entlang der gesamten User Journey.
+
+- Website & Cloud: [formbricks.com](https://formbricks.com/) und [Cloud starten](https://app.formbricks.com/auth/signup)
+- Self-Hosting: [Deployment-Dokumentation](https://formbricks.com/docs/self-hosting/deployment)
+- Beitrag & Community: [Beitragen](https://formbricks.com/docs/developer-docs/contributing/get-started), [GitHub Discussions](https://github.com/formbricks/formbricks/discussions) und [Issues](https://github.com/formbricks/formbricks/issues)
+- Sicherheit & Lizenz: [`SECURITY.md`](./SECURITY.md) und [AGPLv3](https://github.com/formbricks/formbricks/blob/main/LICENSE)
+
 <p align="right"><a href="#top">🔼 Back to top</a></p>
