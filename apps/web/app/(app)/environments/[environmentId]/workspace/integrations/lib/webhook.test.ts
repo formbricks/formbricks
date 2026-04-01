@@ -14,7 +14,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const environmentId = "test-environment-id";
+const workspaceId = "test-workspace-id";
 const sourceZapier = "zapier";
 
 describe("getWebhookCountBySource", () => {
@@ -26,16 +26,16 @@ describe("getWebhookCountBySource", () => {
     const mockCount = 5;
     vi.mocked(prisma.webhook.count).mockResolvedValue(mockCount);
 
-    const count = await getWebhookCountBySource(environmentId, sourceZapier);
+    const count = await getWebhookCountBySource(workspaceId, sourceZapier);
 
     expect(count).toBe(mockCount);
     expect(validateInputs).toHaveBeenCalledWith(
-      [environmentId, expect.any(Object)],
+      [workspaceId, expect.any(Object)],
       [sourceZapier, expect.any(Object)]
     );
     expect(prisma.webhook.count).toHaveBeenCalledWith({
       where: {
-        workspaceId: environmentId,
+        workspaceId: workspaceId,
         source: sourceZapier,
       },
     });
@@ -45,16 +45,16 @@ describe("getWebhookCountBySource", () => {
     const mockCount = 10;
     vi.mocked(prisma.webhook.count).mockResolvedValue(mockCount);
 
-    const count = await getWebhookCountBySource(environmentId);
+    const count = await getWebhookCountBySource(workspaceId);
 
     expect(count).toBe(mockCount);
     expect(validateInputs).toHaveBeenCalledWith(
-      [environmentId, expect.any(Object)],
+      [workspaceId, expect.any(Object)],
       [undefined, expect.any(Object)]
     );
     expect(prisma.webhook.count).toHaveBeenCalledWith({
       where: {
-        workspaceId: environmentId,
+        workspaceId: workspaceId,
         source: undefined,
       },
     });
