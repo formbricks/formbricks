@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 
 export const getContactAttributeKeys = reactCache(
@@ -32,12 +33,14 @@ export const createContactAttributeKey = async (data: {
   dataType?: TContactAttributeDataType;
 }): Promise<TContactAttributeKey> => {
   try {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(data.environmentId);
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,
         name: data.name ?? formatSnakeCaseToTitleCase(data.key),
         description: data.description ?? null,
         environmentId: data.environmentId,
+        workspaceId,
         type: "custom",
         ...(data.dataType && { dataType: data.dataType }),
       },

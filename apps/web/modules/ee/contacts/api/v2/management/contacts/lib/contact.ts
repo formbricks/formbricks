@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
 import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
@@ -95,9 +96,11 @@ export const createContact = async (
       };
     });
 
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const result = await prisma.contact.create({
       data: {
         environmentId,
+        workspaceId,
         attributes: {
           createMany: {
             data: attributeData,

@@ -10,6 +10,7 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
@@ -111,6 +112,7 @@ export const createWebhook = async (
     }
 
     const signingSecret = secret ?? generateWebhookSecret();
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
 
     const webhook = await prisma.webhook.create({
       data: {
@@ -120,6 +122,11 @@ export const createWebhook = async (
         environment: {
           connect: {
             id: environmentId,
+          },
+        },
+        workspace: {
+          connect: {
+            id: workspaceId,
           },
         },
       },

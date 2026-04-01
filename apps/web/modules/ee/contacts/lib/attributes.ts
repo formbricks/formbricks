@@ -4,6 +4,7 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -351,6 +352,7 @@ export const updateAttributes = async (
         }
 
         // Create new attributes since we're under the limit
+        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
         await prisma.$transaction(
           preparedNewAttributes.map(({ key, dataType, columns }) =>
             prisma.contactAttributeKey.create({
@@ -360,6 +362,7 @@ export const updateAttributes = async (
                 type: "custom",
                 dataType,
                 environment: { connect: { id: environmentId } },
+                workspace: { connect: { id: workspaceId } },
                 attributes: {
                   create: {
                     contactId,

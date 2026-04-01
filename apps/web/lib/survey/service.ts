@@ -11,6 +11,7 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -449,6 +450,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
+        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -469,6 +471,11 @@ export const updateSurveyInternal = async (
                   environment: {
                     connect: {
                       id: environmentId,
+                    },
+                  },
+                  workspace: {
+                    connect: {
+                      id: workspaceId,
                     },
                   },
                 },
@@ -651,12 +658,18 @@ export const createSurvey = async (
       data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedEnvironmentId);
     const survey = await prisma.survey.create({
       data: {
         ...data,
         environment: {
           connect: {
             id: parsedEnvironmentId,
+          },
+        },
+        workspace: {
+          connect: {
+            id: workspaceId,
           },
         },
       },
@@ -673,6 +686,11 @@ export const createSurvey = async (
           environment: {
             connect: {
               id: parsedEnvironmentId,
+            },
+          },
+          workspace: {
+            connect: {
+              id: workspaceId,
             },
           },
         },

@@ -15,7 +15,7 @@ const getEnvironment = async (environmentId: string) =>
     async () => {
       return prisma.environment.findUnique({
         where: { id: environmentId },
-        select: { id: true, type: true },
+        select: { id: true, type: true, workspaceId: true },
       });
     },
     createCacheKey.environment.config(environmentId),
@@ -63,11 +63,14 @@ const getContactWithFullData = async (environmentId: string, userId: string) => 
 /**
  * Creates contact with comprehensive data structure
  */
-const createContact = async (environmentId: string, userId: string) => {
+const createContact = async (environmentId: string, userId: string, workspaceId: string) => {
   return prisma.contact.create({
     data: {
       environment: {
         connect: { id: environmentId },
+      },
+      workspace: {
+        connect: { id: workspaceId },
       },
       attributes: {
         create: [
@@ -164,7 +167,7 @@ export const updateUser = async (
 
   // Create contact if doesn't exist
   if (!contactData) {
-    contactData = await createContact(environmentId, userId);
+    contactData = await createContact(environmentId, userId, environment.workspaceId);
   }
 
   // Process contact attributes efficiently (single pass)

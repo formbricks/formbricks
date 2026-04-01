@@ -444,6 +444,11 @@ export const copySurveyToOtherEnvironment = async (
           id: targetEnvironmentId,
         },
       },
+      workspace: {
+        connect: {
+          id: targetWorkspace!.id,
+        },
+      },
       creator: {
         connect: {
           id: userId,
@@ -493,6 +498,7 @@ export const copySurveyToOtherEnvironment = async (
             isPrivate: true,
             filters: existingSurvey.segment.filters,
             environment: { connect: { id: targetEnvironmentId } },
+            workspace: { connect: { id: targetWorkspace!.id } },
           },
         };
       } else if (isSameEnvironment) {
@@ -514,6 +520,7 @@ export const copySurveyToOtherEnvironment = async (
             isPrivate: false,
             filters: existingSurvey.segment.filters,
             environment: { connect: { id: targetEnvironmentId } },
+            workspace: { connect: { id: targetWorkspace!.id } },
           },
         };
       }
