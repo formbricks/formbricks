@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
@@ -31,7 +32,7 @@ export const SingleContactPage = async (props: {
     ]);
 
   if (!contact) {
-    throw new Error(t("environments.contacts.contact_not_found"));
+    throw new ResourceNotFoundError(t("common.contact"), params.contactId);
   }
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);

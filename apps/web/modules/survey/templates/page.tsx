@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -21,7 +22,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const project = await getProjectWithTeamIdsByEnvironmentId(environmentId);
 
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (isReadOnly) {

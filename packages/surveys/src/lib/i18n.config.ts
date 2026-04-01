@@ -6,6 +6,7 @@ import daTranslations from "../../locales/da.json";
 import deTranslations from "../../locales/de.json";
 import enTranslations from "../../locales/en.json";
 import esTranslations from "../../locales/es.json";
+import etTranslations from "../../locales/et.json";
 import frTranslations from "../../locales/fr.json";
 import hiTranslations from "../../locales/hi.json";
 import huTranslations from "../../locales/hu.json";
@@ -30,6 +31,7 @@ i18n
       "de",
       "en",
       "es",
+      "et",
       "fr",
       "hi",
       "hu",
@@ -50,6 +52,7 @@ i18n
       de: { translation: deTranslations },
       en: { translation: enTranslations },
       es: { translation: esTranslations },
+      et: { translation: etTranslations },
       fr: { translation: frTranslations },
       hi: { translation: hiTranslations },
       hu: { translation: huTranslations },

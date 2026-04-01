@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProject } from "@formbricks/types/project";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getUserProjects } from "@/lib/project/service";
@@ -22,11 +23,11 @@ export const DeleteProject = async ({
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
   const availableProjects = organization ? await getUserProjects(session.user.id, organization.id) : null;
 
