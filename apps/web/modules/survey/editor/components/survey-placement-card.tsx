@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
-import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyWorkspaceOverwrites } from "@formbricks/types/surveys/types";
 import { Placement } from "@/modules/survey/editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -26,19 +26,19 @@ export const SurveyPlacementCard = ({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
-  const { projectOverwrites } = localSurvey ?? {};
-  const { placement, clickOutsideClose, overlay } = projectOverwrites ?? {};
+  const { workspaceOverwrites } = localSurvey ?? {};
+  const { placement, clickOutsideClose, overlay } = workspaceOverwrites ?? {};
 
-  const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites | null) => {
-    setLocalSurvey({ ...localSurvey, projectOverwrites: projectOverwrites });
+  const setWorkspaceOverwrites = (workspaceOverwrites: TSurveyWorkspaceOverwrites | null) => {
+    setLocalSurvey({ ...localSurvey, workspaceOverwrites: workspaceOverwrites });
   };
 
   const togglePlacement = () => {
-    if (setProjectOverwrites) {
+    if (setWorkspaceOverwrites) {
       if (placement) {
-        setProjectOverwrites(null);
+        setWorkspaceOverwrites(null);
       } else {
-        setProjectOverwrites({
+        setWorkspaceOverwrites({
           placement: "bottomRight",
           clickOutsideClose: false,
           overlay: "none",
@@ -48,27 +48,27 @@ export const SurveyPlacementCard = ({
   };
 
   const handlePlacementChange = (placement: TPlacement) => {
-    if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
+    if (setWorkspaceOverwrites) {
+      setWorkspaceOverwrites({
+        ...workspaceOverwrites,
         placement,
       });
     }
   };
 
   const handleOverlay = (overlayValue: TOverlay) => {
-    if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
+    if (setWorkspaceOverwrites) {
+      setWorkspaceOverwrites({
+        ...workspaceOverwrites,
         overlay: overlayValue,
       });
     }
   };
 
   const handleClickOutsideClose = (clickOutsideClose: boolean) => {
-    if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
+    if (setWorkspaceOverwrites) {
+      setWorkspaceOverwrites({
+        ...workspaceOverwrites,
         clickOutsideClose,
       });
     }

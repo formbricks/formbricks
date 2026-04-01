@@ -42,7 +42,7 @@ const mockOrganization: TOrganization = {
   billing: {
     stripeCustomerId: null,
     limits: {
-      projects: 3,
+      workspaces: 3,
       monthly: {
         responses: 1500,
       },
@@ -79,7 +79,7 @@ const mockLanguage: TSurveyCreateInputWithEnvironmentId["languages"][number] = {
     code: "en",
     alias: "English",
     createdAt: new Date(),
-    projectId: "mockProjectId",
+    workspaceId: "mockWorkspaceId",
     updatedAt: new Date(),
   },
   default: true,

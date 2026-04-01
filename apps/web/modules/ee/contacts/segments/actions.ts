@@ -14,9 +14,9 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromSegmentId,
-  getProjectIdFromSurveyId,
+  getWorkspaceIdFromEnvironmentId,
+  getWorkspaceIdFromSegmentId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
@@ -69,9 +69,9 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -113,9 +113,9 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
+          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -172,9 +172,9 @@ export const loadNewSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
+          workspaceId: await getWorkspaceIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -209,9 +209,9 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
+          workspaceId: await getWorkspaceIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -244,9 +244,9 @@ export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDelete
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
+          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -280,9 +280,9 @@ export const resetSegmentFiltersAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           },
         ],
       });
@@ -317,9 +317,9 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });

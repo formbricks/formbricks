@@ -1,3 +1,3 @@
-import { TagsLoading } from "@/modules/projects/settings/tags/loading";
+import { TagsLoading } from "@/modules/workspaces/settings/tags/loading";
 
 export default TagsLoading;

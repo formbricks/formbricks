@@ -8,7 +8,7 @@ import { TOrganizationAccess } from "@formbricks/types/api-key";
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
-  TOrganizationProject,
+  TOrganizationWorkspace,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -30,7 +30,7 @@ interface ViewPermissionModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
   apiKey: TApiKeyWithEnvironmentPermission;
-  projects: TOrganizationProject[];
+  workspaces: TOrganizationWorkspace[];
   isUpdating: boolean;
 }
 
@@ -39,7 +39,7 @@ export const ViewPermissionModal = ({
   setOpen,
   onSubmit,
   apiKey,
-  projects,
+  workspaces,
   isUpdating,
 }: ViewPermissionModalProps) => {
   const { register, getValues, handleSubmit, reset, watch } = useForm<TApiKeyUpdateInput>({
@@ -67,13 +67,14 @@ export const ViewPermissionModal = ({
   const { t } = useTranslation();
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
 
-  const getProjectName = (environmentId: string) => {
-    return projects.find((project) => project.environments.find((env) => env.id === environmentId))?.name;
+  const getWorkspaceName = (environmentId: string) => {
+    return workspaces.find((workspace) => workspace.environments.find((env) => env.id === environmentId))
+      ?.name;
   };
 
   const getEnvironmentName = (environmentId: string) => {
-    return projects
-      .find((project) => project.environments.find((env) => env.id === environmentId))
+    return workspaces
+      .find((workspace) => workspace.environments.find((env) => env.id === environmentId))
       ?.environments.find((env) => env.id === environmentId)?.type;
   };
 
@@ -112,7 +113,7 @@ export const ViewPermissionModal = ({
                   {apiKey.apiKeyEnvironments?.map((permission) => {
                     return (
                       <div key={permission.environmentId} className="flex items-center gap-2">
-                        {/* Project dropdown */}
+                        {/* Workspace dropdown */}
                         <div className="w-1/3">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -121,7 +122,7 @@ export const ViewPermissionModal = ({
                                 className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left">
-                                    {getProjectName(permission.environmentId)}
+                                    {getWorkspaceName(permission.environmentId)}
                                   </span>
                                 </span>
                               </button>

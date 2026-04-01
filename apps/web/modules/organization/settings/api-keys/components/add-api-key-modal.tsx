@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
-import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { TOrganizationWorkspace } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -36,20 +36,20 @@ interface AddApiKeyModalProps {
     environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
-  projects: TOrganizationProject[];
+  workspaces: TOrganizationWorkspace[];
   isCreatingAPIKey: boolean;
 }
 
-interface ProjectOption {
+interface WorkspaceOption {
   id: string;
   name: string;
 }
 
 interface PermissionRecord {
-  projectId: string;
+  workspaceId: string;
   environmentId: string;
   permission: ApiKeyPermission;
-  projectName: string;
+  workspaceName: string;
   environmentType: string;
 }
 
@@ -59,7 +59,7 @@ export const AddApiKeyModal = ({
   open,
   setOpen,
   onSubmit,
-  projects,
+  workspaces,
   isCreatingAPIKey,
 }: AddApiKeyModalProps) => {
   const { t } = useTranslation();
@@ -76,14 +76,14 @@ export const AddApiKeyModal = ({
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
   const getInitialPermissions = (): Record<string, PermissionRecord> => {
-    if (projects.length > 0 && projects[0].environments.length > 0) {
+    if (workspaces.length > 0 && workspaces[0].environments.length > 0) {
       return {
         "permission-0": {
-          projectId: projects[0].id,
-          environmentId: projects[0].environments[0].id,
+          workspaceId: workspaces[0].id,
+          environmentId: workspaces[0].environments[0].id,
           permission: ApiKeyPermission.read,
-          projectName: projects[0].name,
-          environmentType: projects[0].environments[0].type,
+          workspaceName: workspaces[0].name,
+          environmentType: workspaces[0].environments[0].type,
         },
       };
     }
@@ -93,9 +93,9 @@ export const AddApiKeyModal = ({
   // Initialize with one permission by default
   const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
 
-  const projectOptions: ProjectOption[] = projects.map((project) => ({
-    id: project.id,
-    name: project.name,
+  const workspaceOptions: WorkspaceOption[] = workspaces.map((workspace) => ({
+    id: workspace.id,
+    name: workspace.name,
   }));
 
   const removePermission = (index: number) => {
@@ -116,8 +116,8 @@ export const AddApiKeyModal = ({
   };
 
   const updatePermission = (key: string, field: string, value: string) => {
-    const project = projects.find((p) => p.id === selectedPermissions[key].projectId);
-    const environment = project?.environments.find((env) => env.id === value);
+    const workspace = workspaces.find((p) => p.id === selectedPermissions[key].workspaceId);
+    const environment = workspace?.environments.find((env) => env.id === value);
 
     setSelectedPermissions({
       ...selectedPermissions,
@@ -129,18 +129,18 @@ export const AddApiKeyModal = ({
     });
   };
 
-  // Update environment when project changes
-  const updateProjectAndEnvironment = (key: string, projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
-    if (project && project.environments.length > 0) {
-      const environment = project.environments[0];
+  // Update environment when workspace changes
+  const updateWorkspaceAndEnvironment = (key: string, workspaceId: string) => {
+    const workspace = workspaces.find((p) => p.id === workspaceId);
+    if (workspace && workspace.environments.length > 0) {
+      const environment = workspace.environments[0];
       setSelectedPermissions({
         ...selectedPermissions,
         [key]: {
           ...selectedPermissions[key],
-          projectId,
+          workspaceId,
           environmentId: environment.id,
-          projectName: project.name,
+          workspaceName: workspace.name,
           environmentType: environment.type,
         },
       });
@@ -149,7 +149,7 @@ export const AddApiKeyModal = ({
 
   const checkForDuplicatePermissions = () => {
     const permissions = Object.values(selectedPermissions);
-    const uniquePermissions = new Set(permissions.map((p) => `${p.projectId}-${p.environmentId}`));
+    const uniquePermissions = new Set(permissions.map((p) => `${p.workspaceId}-${p.environmentId}`));
     return uniquePermissions.size !== permissions.length;
   };
 
@@ -178,10 +178,10 @@ export const AddApiKeyModal = ({
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
-  // Get environment options for a project
-  const getEnvironmentOptionsForProject = (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
-    return project?.environments || [];
+  // Get environment options for a workspace
+  const getEnvironmentOptionsForWorkspace = (workspaceId: string) => {
+    const workspace = workspaces.find((p) => p.id === workspaceId);
+    return workspace?.environments || [];
   };
 
   const isSubmitDisabled = () => {
@@ -190,15 +190,15 @@ export const AddApiKeyModal = ({
       return true;
     }
 
-    // Check if at least one project permission is set or one organization access toggle is ON
-    const hasProjectAccess = Object.keys(selectedPermissions).length > 0;
+    // Check if at least one workspace permission is set or one organization access toggle is ON
+    const hasWorkspaceAccess = Object.keys(selectedPermissions).length > 0;
 
     const hasOrganizationAccess = Object.values(selectedOrganizationAccess).some((accessGroup) =>
       Object.values(accessGroup).some((value) => value === true)
     );
 
     // Disable submit if no access rights are granted
-    return !(hasProjectAccess || hasOrganizationAccess);
+    return !(hasWorkspaceAccess || hasOrganizationAccess);
   };
 
   const setSelectedOrganizationAccessValue = (key: string, accessType: string, value: boolean) => {
@@ -236,7 +236,7 @@ export const AddApiKeyModal = ({
                   const permission = selectedPermissions[key];
                   return (
                     <div key={key} className="flex items-center gap-2">
-                      {/* Project dropdown */}
+                      {/* Workspace dropdown */}
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -244,7 +244,7 @@ export const AddApiKeyModal = ({
                               type="button"
                               className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                               <span className="flex w-4/5 flex-1">
-                                <span className="w-full truncate text-left">{permission.projectName}</span>
+                                <span className="w-full truncate text-left">{permission.workspaceName}</span>
                               </span>
                               <span className="flex h-full items-center border-l pl-3">
                                 <ChevronDownIcon className="h-4 w-4 text-slate-500" />
@@ -252,11 +252,11 @@ export const AddApiKeyModal = ({
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto">
-                            {projectOptions.map((option) => (
+                            {workspaceOptions.map((option) => (
                               <DropdownMenuItem
                                 key={option.id}
                                 onClick={() => {
-                                  updateProjectAndEnvironment(key, option.id);
+                                  updateWorkspaceAndEnvironment(key, option.id);
                                 }}>
                                 {option.name}
                               </DropdownMenuItem>
@@ -283,7 +283,7 @@ export const AddApiKeyModal = ({
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto capitalize">
-                            {getEnvironmentOptionsForProject(permission.projectId).map((env) => (
+                            {getEnvironmentOptionsForWorkspace(permission.workspaceId).map((env) => (
                               <DropdownMenuItem
                                 key={env.id}
                                 onClick={() => {

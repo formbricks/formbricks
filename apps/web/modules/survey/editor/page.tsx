@@ -18,15 +18,15 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
+import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
+import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
@@ -46,27 +46,27 @@ export const SurveyEditorPage = async (props: {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const { session, isMember, environment, hasReadAccess, currentUserMembership, projectPermission } =
+  const { session, isMember, environment, hasReadAccess, currentUserMembership, workspacePermission } =
     await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
-  const [survey, projectWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
+  const [survey, workspaceWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
     await Promise.all([
       getSurvey(params.surveyId),
-      getProjectWithTeamIdsByEnvironmentId(params.environmentId),
+      getWorkspaceWithTeamIdsByEnvironmentId(params.environmentId),
       getActionClasses(params.environmentId),
       getContactAttributeKeys(params.environmentId),
       getResponseCountBySurveyId(params.surveyId),
       getSegments(params.environmentId),
     ]);
 
-  if (!projectWithTeamIds) {
+  if (!workspaceWithTeamIds) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const organizationBilling = await getOrganizationBilling(projectWithTeamIds.organizationId);
+  const organizationBilling = await getOrganizationBilling(workspaceWithTeamIds.organizationId);
   if (!organizationBilling) {
-    throw new ResourceNotFoundError(t("common.organization"), projectWithTeamIds.organizationId);
+    throw new ResourceNotFoundError(t("common.organization"), workspaceWithTeamIds.organizationId);
   }
 
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
@@ -82,17 +82,17 @@ export const SurveyEditorPage = async (props: {
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
   ] = await Promise.all([
-    getSurveyFollowUpsPermission(projectWithTeamIds.organizationId),
-    getIsSpamProtectionEnabled(projectWithTeamIds.organizationId),
-    getIsQuotasEnabled(projectWithTeamIds.organizationId),
-    getExternalUrlsPermission(projectWithTeamIds.organizationId),
-    getIsContactsEnabled(projectWithTeamIds.organizationId),
+    getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
+    getIsSpamProtectionEnabled(workspaceWithTeamIds.organizationId),
+    getIsQuotasEnabled(workspaceWithTeamIds.organizationId),
+    getExternalUrlsPermission(workspaceWithTeamIds.organizationId),
+    getIsContactsEnabled(workspaceWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
-  const [projectLanguages, teamMemberDetails] = await Promise.all([
-    getProjectLanguages(projectWithTeamIds.id),
-    getTeamMemberDetails(projectWithTeamIds.teamIds),
+  const [workspaceLanguages, teamMemberDetails] = await Promise.all([
+    getWorkspaceLanguages(workspaceWithTeamIds.id),
+    getTeamMemberDetails(workspaceWithTeamIds.teamIds),
   ]);
 
   if (
@@ -100,7 +100,7 @@ export const SurveyEditorPage = async (props: {
     !environment ||
     !actionClasses ||
     !contactAttributeKeys ||
-    !projectWithTeamIds ||
+    !workspaceWithTeamIds ||
     !userEmail ||
     isSurveyCreationDeletionDisabled
   ) {
@@ -113,18 +113,18 @@ export const SurveyEditorPage = async (props: {
   return (
     <SurveyEditor
       survey={survey}
-      project={projectWithTeamIds}
+      workspace={workspaceWithTeamIds}
       environment={environment}
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
       membershipRole={currentUserMembership.role}
-      projectPermission={projectPermission}
+      workspacePermission={workspacePermission}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
-      projectLanguages={projectLanguages}
+      workspaceLanguages={workspaceLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
       isCxMode={isCxMode}

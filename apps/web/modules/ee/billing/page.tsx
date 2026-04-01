@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
-import { getOrganizationProjectsCount } from "@/lib/project/service";
+import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
 import { getStripeBillingCatalogDisplay } from "@/modules/ee/billing/lib/stripe-billing-catalog";
@@ -31,9 +31,9 @@ export const PricingPage = async (props: { params: Promise<{ environmentId: stri
     billing: cloudBillingDisplayContext.billing,
   };
 
-  const [responseCount, projectCount] = await Promise.all([
+  const [responseCount, workspaceCount] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
-    getOrganizationProjectsCount(organization.id),
+    getOrganizationWorkspacesCount(organization.id),
   ]);
 
   const hasBillingRights = !isMember;
@@ -53,7 +53,7 @@ export const PricingPage = async (props: { params: Promise<{ environmentId: stri
         organization={organizationWithSyncedBilling}
         environmentId={params.environmentId}
         responseCount={responseCount}
-        projectCount={projectCount}
+        workspaceCount={workspaceCount}
         hasBillingRights={hasBillingRights}
         currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
         currentBillingInterval={cloudBillingDisplayContext.currentBillingInterval}

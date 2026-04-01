@@ -2,7 +2,7 @@ import { type ApiKey, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
 import { ZEnvironment } from "@formbricks/types/environment";
-import { ZProject } from "@formbricks/types/project";
+import { ZWorkspace } from "@formbricks/types/workspace";
 
 export const ZApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
@@ -27,13 +27,13 @@ export interface TApiKey extends ApiKey {
   apiKey?: string;
 }
 
-export const OrganizationProject = z.object({
+export const OrganizationWorkspace = z.object({
   id: z.string(),
   name: z.string(),
   environments: z.array(ZEnvironment),
 });
 
-export type TOrganizationProject = z.infer<typeof OrganizationProject>;
+export type TOrganizationWorkspace = z.infer<typeof OrganizationWorkspace>;
 
 export const TApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
@@ -49,18 +49,18 @@ export interface TApiKeyWithEnvironmentPermission extends Pick<
   apiKeyEnvironments: TApiKeyEnvironmentPermission[];
 }
 
-const ZApiKeyEnvironmentWithProject = z.object({
+const ZApiKeyEnvironmentWithWorkspace = z.object({
   id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   apiKeyId: z.string(),
   environmentId: z.string(),
-  projectId: z.string(),
-  projectName: z.string(),
+  workspaceId: z.string(),
+  workspaceName: z.string(),
   environmentType: z.string(),
   permission: z.enum(ApiKeyPermission),
   environment: ZEnvironment.extend({
-    project: ZProject.pick({ id: true, name: true }),
+    workspace: ZWorkspace.pick({ id: true, name: true }),
   }),
 });
 
@@ -77,8 +77,8 @@ const ZApiKey = z.object({
   organizationAccess: ZOrganizationAccess,
 });
 
-export const ZApiKeyWithEnvironmentAndProject = ZApiKey.extend({
-  apiKeyEnvironments: z.array(ZApiKeyEnvironmentWithProject),
+export const ZApiKeyWithEnvironmentAndWorkspace = ZApiKey.extend({
+  apiKeyEnvironments: z.array(ZApiKeyEnvironmentWithWorkspace),
 });
 
-export type TApiKeyWithEnvironmentAndProject = z.infer<typeof ZApiKeyWithEnvironmentAndProject>;
+export type TApiKeyWithEnvironmentAndWorkspace = z.infer<typeof ZApiKeyWithEnvironmentAndWorkspace>;

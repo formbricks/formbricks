@@ -29,7 +29,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   surveyClosedMessage: {
     enabled: false,
   },
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   recaptcha: null,
   singleUse: null,
   styling: null,

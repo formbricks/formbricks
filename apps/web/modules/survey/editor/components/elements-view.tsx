@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
+import { Language, Workspace } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -61,8 +61,8 @@ interface ElementsViewProps {
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
-  project: Project;
-  projectLanguages: Language[];
+  workspace: Workspace;
+  workspaceLanguages: Language[];
   invalidElements: string[] | null;
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
@@ -82,8 +82,8 @@ export const ElementsView = ({
   setActiveElementId,
   localSurvey,
   setLocalSurvey,
-  project,
-  projectLanguages,
+  workspace,
+  workspaceLanguages,
   invalidElements,
   setInvalidElements,
   setSelectedLanguageCode,
@@ -867,7 +867,7 @@ export const ElementsView = ({
         <BlocksDroppable
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
-          project={project}
+          workspace={workspace}
           moveElement={moveElement}
           updateElement={updateElement}
           updateBlockLogic={updateBlockLogic}
@@ -896,7 +896,7 @@ export const ElementsView = ({
         />
       </DndContext>
 
-      <AddElementButton addElement={addElement} project={project} isCxMode={isCxMode} />
+      <AddElementButton addElement={addElement} workspace={workspace} isCxMode={isCxMode} />
       <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext
@@ -952,7 +952,7 @@ export const ElementsView = ({
 
             <MultiLanguageCard
               localSurvey={localSurvey}
-              projectLanguages={projectLanguages}
+              workspaceLanguages={workspaceLanguages}
               setLocalSurvey={setLocalSurvey}
               setActiveElementId={setActiveElementId}
               activeElementId={activeElementId}

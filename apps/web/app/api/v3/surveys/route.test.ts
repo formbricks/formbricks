@@ -81,8 +81,8 @@ const apiKeyAuth = {
     {
       environmentId: validWorkspaceId,
       environmentType: EnvironmentType.development,
-      projectId: "proj_1",
-      projectName: "P",
+      workspaceId: "proj_1",
+      workspaceName: "P",
       permission: ApiKeyPermission.read,
     },
   ],
@@ -112,13 +112,13 @@ describe("GET /api/v3/surveys", () => {
         }
         return {
           environmentId: workspaceId,
-          projectId: p.projectId,
+          workspaceId: p.workspaceId,
           organizationId: auth.organizationId,
         };
       }
       return {
         environmentId: resolvedEnvironmentId,
-        projectId: "proj_1",
+        workspaceId: "proj_1",
         organizationId: "org_1",
       };
     });
@@ -194,8 +194,8 @@ describe("GET /api/v3/surveys", () => {
         {
           environmentId: "claa1111111111111111111111",
           environmentType: EnvironmentType.development,
-          projectId: "proj_x",
-          projectName: "X",
+          workspaceId: "proj_x",
+          workspaceName: "X",
           permission: ApiKeyPermission.read,
         },
       ],
