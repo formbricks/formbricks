@@ -67,7 +67,7 @@ describe("getWebhookCountBySource", () => {
     });
     vi.mocked(prisma.webhook.count).mockRejectedValue(prismaError);
 
-    await expect(getWebhookCountBySource(environmentId, sourceZapier)).rejects.toThrow(DatabaseError);
+    await expect(getWebhookCountBySource(workspaceId, sourceZapier)).rejects.toThrow(DatabaseError);
     expect(prisma.webhook.count).toHaveBeenCalledTimes(1);
   });
 
@@ -75,7 +75,7 @@ describe("getWebhookCountBySource", () => {
     const genericError = new Error("Something went wrong");
     vi.mocked(prisma.webhook.count).mockRejectedValue(genericError);
 
-    await expect(getWebhookCountBySource(environmentId)).rejects.toThrow(genericError);
+    await expect(getWebhookCountBySource(workspaceId)).rejects.toThrow(genericError);
     expect(prisma.webhook.count).toHaveBeenCalledTimes(1);
   });
 });
