@@ -10,6 +10,7 @@ import {
 } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
@@ -67,7 +68,8 @@ export const GET = async (req: Request) => {
   }
 
   const integrationType = "googleSheets" as const;
-  const existingIntegration = await getIntegrationByType(environmentId, integrationType);
+  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+  const existingIntegration = await getIntegrationByType(workspaceId, integrationType);
   const existingConfig = existingIntegration?.config as TIntegrationGoogleSheetsConfig;
 
   const googleSheetIntegration = {

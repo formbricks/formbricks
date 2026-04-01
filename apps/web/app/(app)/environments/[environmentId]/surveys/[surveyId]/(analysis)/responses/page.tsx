@@ -6,7 +6,7 @@ import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED, RESPONSES_PER_PAGE } from "
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -23,10 +23,12 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
 
   const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
+  const workspaceId = environment.workspaceId;
+
   const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
     getSurvey(params.surveyId),
     getUser(session.user.id),
-    getTagsByEnvironmentId(params.environmentId),
+    getTagsByWorkspaceId(workspaceId),
     getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
   ]);
@@ -43,7 +45,7 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
+  const segments = isContactsEnabled ? await getSegments(workspaceId) : [];
 
   const publicDomain = getPublicDomain();
 

@@ -14,6 +14,7 @@ import {
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
+import { getWorkspaceIdFromEnvironmentId } from "../utils/helper";
 import { delay } from "../utils/promises";
 import { truncateText } from "../utils/strings";
 
@@ -78,10 +79,8 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 
 export const getAirtableToken = async (environmentId: string) => {
   try {
-    const airtableIntegration = (await getIntegrationByType(
-      environmentId,
-      "airtable"
-    )) as TIntegrationAirtable;
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+    const airtableIntegration = (await getIntegrationByType(workspaceId, "airtable")) as TIntegrationAirtable;
 
     const { access_token, expiry_date, refresh_token } = ZIntegrationAirtableCredential.parse(
       airtableIntegration?.config.key

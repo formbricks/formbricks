@@ -24,6 +24,8 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
 
   const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
+  const workspaceId = environment.workspaceId;
+
   const surveyId = params.surveyId;
 
   if (!surveyId) {
@@ -44,7 +46,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 
   const isContactsEnabled = await getIsContactsEnabled(organizationId);
-  const segments = isContactsEnabled ? await getSegments(environment.id) : [];
+  const segments = isContactsEnabled ? await getSegments(workspaceId) : [];
 
   if (!organizationId) {
     throw new ResourceNotFoundError(t("common.organization"), null);

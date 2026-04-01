@@ -21,16 +21,21 @@ interface ActivitySectionProps {
 }
 
 export const ActivitySection = async ({ environment, contactId, environmentTags }: ActivitySectionProps) => {
-  const [responses, displays] = await Promise.all([
+  const [responses, displays, workspace] = await Promise.all([
     getResponsesByContactId(contactId),
     getDisplaysByContactId(contactId),
+    getWorkspaceByEnvironmentId(environment.id),
   ]);
+
+  if (!workspace) {
+    throw new ResourceNotFoundError("Workspace", null);
+  }
 
   const allSurveyIds = [
     ...new Set([...(responses?.map((r) => r.surveyId) || []), ...displays.map((d) => d.surveyId)]),
   ];
 
-  const surveys: TSurvey[] = allSurveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
+  const surveys: TSurvey[] = allSurveyIds.length === 0 ? [] : ((await getSurveys(workspace.id)) ?? []);
 
   const session = await getServerSession(authOptions);
   const t = await getTranslate();
@@ -46,11 +51,6 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
 
   if (!responses) {
     throw new Error(t("environments.contacts.no_responses_found"));
-  }
-
-  const workspace = await getWorkspaceByEnvironmentId(environment.id);
-  if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);

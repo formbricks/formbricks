@@ -30,6 +30,8 @@ const ZGetContactsAction = z.object({
 export const getContactsAction = authenticatedActionClient
   .inputSchema(ZGetContactsAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
@@ -41,12 +43,12 @@ export const getContactsAction = authenticatedActionClient
         {
           type: "workspaceTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });
 
-    return getContacts(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
+    return getContacts(workspaceId, parsedInput.offset, parsedInput.searchValue);
   });
 
 const ZContactDeleteAction = z.object({

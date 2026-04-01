@@ -1,5 +1,5 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
@@ -22,13 +22,15 @@ export const SingleContactPage = async (props: {
 
   const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
+  const workspaceId = environment.workspaceId;
+
   const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
     await Promise.all([
-      getTagsByEnvironmentId(params.environmentId),
+      getTagsByWorkspaceId(workspaceId),
       getContact(params.contactId),
-      getPublishedLinkSurveys(params.environmentId),
+      getPublishedLinkSurveys(workspaceId),
       getContactAttributesWithKeyInfo(params.contactId),
-      getContactAttributeKeys(params.environmentId),
+      getContactAttributeKeys(workspaceId),
     ]);
 
   if (!contact) {

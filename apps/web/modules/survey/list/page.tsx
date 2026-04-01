@@ -43,7 +43,8 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  const surveyCount = await getSurveyCount(params.environmentId);
+  const workspaceId = environment.workspaceId;
+  const surveyCount = await getSurveyCount(workspaceId);
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;

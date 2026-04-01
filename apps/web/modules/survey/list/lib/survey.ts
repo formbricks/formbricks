@@ -21,7 +21,7 @@ import { mapSurveyRowToSurvey, mapSurveyRowsToSurveys, surveySelect } from "./su
 
 export const getSurveys = reactCache(
   async (
-    environmentId: string,
+    workspaceId: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
@@ -29,13 +29,13 @@ export const getSurveys = reactCache(
     try {
       if (filterCriteria?.sortBy === "relevance") {
         // Call the sortByRelevance function
-        return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
+        return await getSurveysSortedByRelevance(workspaceId, limit, offset ?? 0, filterCriteria);
       }
 
       // Fetch surveys normally with pagination and include response count
       const surveysPrisma = await prisma.survey.findMany({
         where: {
-          environmentId,
+          workspaceId,
           ...buildWhereClause(filterCriteria),
         },
         select: surveySelect,
@@ -57,7 +57,7 @@ export const getSurveys = reactCache(
 
 export const getSurveysSortedByRelevance = reactCache(
   async (
-    environmentId: string,
+    workspaceId: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
@@ -67,7 +67,7 @@ export const getSurveysSortedByRelevance = reactCache(
 
       const inProgressSurveyCount = await prisma.survey.count({
         where: {
-          environmentId,
+          workspaceId,
           status: "inProgress",
           ...buildWhereClause(filterCriteria),
         },
@@ -79,7 +79,7 @@ export const getSurveysSortedByRelevance = reactCache(
           ? []
           : await prisma.survey.findMany({
               where: {
-                environmentId,
+                workspaceId,
                 status: "inProgress",
                 ...buildWhereClause(filterCriteria),
               },
@@ -97,7 +97,7 @@ export const getSurveysSortedByRelevance = reactCache(
         const newOffset = Math.max(0, offset - inProgressSurveyCount);
         const additionalSurveys = await prisma.survey.findMany({
           where: {
-            environmentId,
+            workspaceId,
             status: { not: "inProgress" },
             ...buildWhereClause(filterCriteria),
           },
@@ -288,10 +288,10 @@ export const copySurveyToOtherEnvironment = async (
       if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetEnvironmentId);
     }
 
-    // Fetch existing action classes in target environment for name conflict checks
+    // Fetch existing action classes in target workspace for name conflict checks
     const existingActionClasses = !isSameEnvironment
       ? await prisma.actionClass.findMany({
-          where: { environmentId: targetEnvironmentId },
+          where: { workspaceId: targetWorkspace.id },
           select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
         })
       : [];
@@ -509,7 +509,7 @@ export const copySurveyToOtherEnvironment = async (
           where: {
             title: existingSurvey.segment.title,
             isPrivate: false,
-            environmentId: targetEnvironmentId,
+            workspaceId: targetWorkspace.id,
           },
         });
 
@@ -577,14 +577,14 @@ export const copySurveyToOtherEnvironment = async (
   }
 };
 
-/** Count surveys in an environment, optionally with the same filter as getSurveys (so total matches list). */
+/** Count surveys in a workspace, optionally with the same filter as getSurveys (so total matches list). */
 export const getSurveyCount = reactCache(
-  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> => {
-    validateInputs([environmentId, z.cuid2()]);
+  async (workspaceId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> => {
+    validateInputs([workspaceId, z.cuid2()]);
     try {
       const surveyCount = await prisma.survey.count({
         where: {
-          environmentId,
+          workspaceId,
           ...buildWhereClause(filterCriteria),
         },
       });

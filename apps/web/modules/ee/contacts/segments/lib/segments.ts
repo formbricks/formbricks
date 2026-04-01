@@ -109,12 +109,12 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyRefs[]> => {
-  validateInputs([environmentId, ZId]);
+export const getSegments = reactCache(async (workspaceId: string): Promise<TSegmentWithSurveyRefs[]> => {
+  validateInputs([workspaceId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
       where: {
-        environmentId,
+        workspaceId,
       },
       select: selectSegment,
     });
@@ -394,13 +394,13 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
   }
 };
 
-export const getSegmentsByAttributeKey = reactCache(async (environmentId: string, attributeKey: string) => {
-  validateInputs([environmentId, ZId], [attributeKey, ZString]);
+export const getSegmentsByAttributeKey = reactCache(async (workspaceId: string, attributeKey: string) => {
+  validateInputs([workspaceId, ZId], [attributeKey, ZString]);
 
   try {
     const segments = await prisma.segment.findMany({
       where: {
-        environmentId,
+        workspaceId,
       },
       select: selectSegment,
     });

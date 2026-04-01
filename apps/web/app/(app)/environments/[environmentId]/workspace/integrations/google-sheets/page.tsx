@@ -24,9 +24,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
 
   const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
 
+  const workspaceId = environment.workspaceId;
+
   const [surveys, integrations, locale] = await Promise.all([
-    getSurveys(params.environmentId),
-    getIntegrations(params.environmentId),
+    getSurveys(workspaceId),
+    getIntegrations(workspaceId),
     getUserLocale(session.user.id),
   ]);
 

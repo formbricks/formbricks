@@ -17,11 +17,13 @@ export const SegmentsPage = async ({
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const { isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, environment } = await getEnvironmentAuth(params.environmentId);
+
+  const workspaceId = environment.workspaceId;
 
   const [segments, contactAttributeKeys] = await Promise.all([
-    getSegments(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
+    getSegments(workspaceId),
+    getContactAttributeKeys(workspaceId),
   ]);
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);

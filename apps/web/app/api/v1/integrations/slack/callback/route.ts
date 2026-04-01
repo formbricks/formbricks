@@ -8,6 +8,7 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -88,7 +89,8 @@ export const GET = withV1ApiWrapper({
         team: data.team,
       };
 
-      const slackIntegration = await getIntegrationByType(environmentId, "slack");
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+      const slackIntegration = await getIntegrationByType(workspaceId, "slack");
 
       const slackConfiguration: TIntegrationSlackConfig = {
         data: (slackIntegration?.config.data as TIntegrationSlackConfigData[]) ?? [],

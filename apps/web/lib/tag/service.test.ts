@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TTag } from "@formbricks/types/tags";
 import { TagError } from "@/modules/workspaces/settings/types/tag";
-import { createTag, getTag, getTagsByEnvironmentId } from "./service";
+import { createTag, getTag, getTagsByWorkspaceId } from "./service";
 
 vi.mock("@/lib/utils/helper", () => ({
   getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
@@ -25,8 +25,8 @@ describe("Tag Service", () => {
     vi.clearAllMocks();
   });
 
-  describe("getTagsByEnvironmentId", () => {
-    test("should return tags for a given environment ID", async () => {
+  describe("getTagsByWorkspaceId", () => {
+    test("should return tags for a given workspace ID", async () => {
       const mockTags: TTag[] = [
         {
           id: "tag1",
@@ -39,11 +39,11 @@ describe("Tag Service", () => {
 
       vi.mocked(prisma.tag.findMany).mockResolvedValue(mockTags);
 
-      const result = await getTagsByEnvironmentId("env1");
+      const result = await getTagsByWorkspaceId("env1");
       expect(result).toEqual(mockTags);
       expect(prisma.tag.findMany).toHaveBeenCalledWith({
         where: {
-          environmentId: "env1",
+          workspaceId: "env1",
         },
         take: undefined,
         skip: undefined,
@@ -63,11 +63,11 @@ describe("Tag Service", () => {
 
       vi.mocked(prisma.tag.findMany).mockResolvedValue(mockTags);
 
-      const result = await getTagsByEnvironmentId("env1", 1);
+      const result = await getTagsByWorkspaceId("env1", 1);
       expect(result).toEqual(mockTags);
       expect(prisma.tag.findMany).toHaveBeenCalledWith({
         where: {
-          environmentId: "env1",
+          workspaceId: "env1",
         },
         take: 30,
         skip: 0,

@@ -22,8 +22,12 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
-    const currentSurvey = await getSurvey(surveyId);
+    const [actionClasses, currentSurvey] = await Promise.all([
+      getWorkspaceIdFromEnvironmentId(updatedSurvey.environmentId).then((workspaceId) =>
+        getActionClasses(workspaceId)
+      ),
+      getSurvey(surveyId),
+    ]);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);

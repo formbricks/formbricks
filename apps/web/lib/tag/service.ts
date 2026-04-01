@@ -11,14 +11,14 @@ import { TagError } from "@/modules/workspaces/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
-export const getTagsByEnvironmentId = reactCache(
-  async (environmentId: string, page?: number): Promise<TTag[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+export const getTagsByWorkspaceId = reactCache(
+  async (workspaceId: string, page?: number): Promise<TTag[]> => {
+    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const tags = await prisma.tag.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
