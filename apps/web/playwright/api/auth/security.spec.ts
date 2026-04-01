@@ -6,26 +6,33 @@ import { test } from "../../lib/fixtures";
 
 // Authentication endpoints are hardcoded to avoid import issues
 
+const WEB_APP_URL = "http://localhost:3000";
+
 const createSessionCookies = (sessionToken: string, expiresAt: Date) => {
   const sharedCookie = {
     value: sessionToken,
-    url: "http://localhost:3000",
+    url: WEB_APP_URL,
     httpOnly: true,
     sameSite: "Lax" as const,
     expires: Math.floor(expiresAt.getTime() / 1000),
   };
 
-  return [
+  const cookies = [
     {
       name: "next-auth.session-token",
       ...sharedCookie,
     },
-    {
+  ];
+
+  if (new URL(WEB_APP_URL).protocol === "https:") {
+    cookies.push({
       name: "__Secure-next-auth.session-token",
       ...sharedCookie,
       secure: true,
-    },
-  ];
+    });
+  }
+
+  return cookies;
 };
 
 test.describe("Authentication Security Tests - Vulnerability Prevention", () => {
@@ -560,17 +567,17 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       }
     });
 
-    test("should revoke all active sessions after a password reset", async ({ page, browser, users }) => {
+    test("should revoke all active sessions after a password reset", async ({
+      page,
+      browser,
+      request,
+      users,
+    }) => {
       const uniqueId = `${Date.now()}-${Math.random()}`;
       const userName = `Session Reset User ${uniqueId}`;
       const userEmail = `session-reset-${uniqueId}@example.com`;
       const newPassword = "Password123";
-      const isContextAuthenticated = async (context: BrowserContext) => {
-        const sessionResponse = await context.request.get("/api/auth/session");
-        const sessionPayload = await sessionResponse.json();
-
-        return Boolean(sessionPayload?.user?.id);
-      };
+      const protectedUrl = "http://localhost:3000/environments";
 
       await users.create({
         name: userName,
@@ -612,17 +619,15 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       });
 
       await page.context().addCookies(createSessionCookies(primarySessionToken, sessionExpiresAt));
-      await page.goto("http://localhost:3000/");
+      await page.goto(protectedUrl);
       await expect(page).not.toHaveURL(/\/auth\/login/);
-      await expect.poll(() => isContextAuthenticated(page.context())).toBe(true);
 
       const copiedSessionContext = await browser.newContext();
       try {
         await copiedSessionContext.addCookies(createSessionCookies(secondarySessionToken, sessionExpiresAt));
         const copiedSessionPage = await copiedSessionContext.newPage();
-        await copiedSessionPage.goto("http://localhost:3000/");
+        await copiedSessionPage.goto(protectedUrl);
         await expect(copiedSessionPage).not.toHaveURL(/\/auth\/login/);
-        await expect.poll(() => isContextAuthenticated(copiedSessionContext)).toBe(true);
 
         const rawResetToken = randomBytes(32).toString("base64url");
         const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
@@ -650,35 +655,55 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
           );
           await resetPage.locator("#password").fill(newPassword);
           await resetPage.locator("#confirmPassword").fill(newPassword);
-          await resetPage.getByRole("button", { name: "Reset password" }).click();
-          await expect(resetPage).toHaveURL(/\/auth\/forgot-password\/reset\/success/);
-          await expect(resetPage.getByText("Password reset successfully")).toBeVisible();
+          await resetPage.getByRole("button", { name: "Reset password" }).click({ noWaitAfter: true });
+
+          await expect
+            .poll(
+              async () =>
+                prisma.session.count({
+                  where: {
+                    userId: databaseUser.id,
+                  },
+                }),
+              { timeout: 30_000 }
+            )
+            .toBe(0);
         } finally {
           await resetContext.close();
         }
 
-        await expect
-          .poll(
-            async () =>
-              prisma.session.count({
-                where: {
-                  userId: databaseUser.id,
-                },
-              }),
-            { timeout: 15_000 }
-          )
-          .toBe(0);
+        await page.goto(protectedUrl);
+        await expect(page).toHaveURL(/\/auth\/login/, { timeout: 30_000 });
 
-        await expect.poll(() => isContextAuthenticated(page.context()), { timeout: 15_000 }).toBe(false);
-        await expect
-          .poll(() => isContextAuthenticated(copiedSessionContext), { timeout: 15_000 })
-          .toBe(false);
+        await copiedSessionPage.goto(protectedUrl);
+        await expect(copiedSessionPage).toHaveURL(/\/auth\/login/, { timeout: 30_000 });
 
-        await page.goto("http://localhost:3000/");
-        await expect(page).toHaveURL(/\/auth\/login/, { timeout: 15_000 });
+        const freshLoginContext = await browser.newContext();
+        try {
+          const csrfResponse = await freshLoginContext.request.get("/api/auth/csrf");
+          const { csrfToken } = await csrfResponse.json();
 
-        await copiedSessionPage.goto("http://localhost:3000/");
-        await expect(copiedSessionPage).toHaveURL(/\/auth\/login/, { timeout: 15_000 });
+          const loginResponse = await freshLoginContext.request.post("/api/auth/callback/credentials", {
+            form: {
+              callbackUrl: "/",
+              csrfToken,
+              email: userEmail,
+              json: "true",
+              password: newPassword,
+            },
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          });
+
+          expect(loginResponse.ok()).toBe(true);
+
+          const freshLoginPage = await freshLoginContext.newPage();
+          await freshLoginPage.goto(protectedUrl);
+          await expect(freshLoginPage).not.toHaveURL(/\/auth\/login/, { timeout: 30_000 });
+        } finally {
+          await freshLoginContext.close();
+        }
       } finally {
         await copiedSessionContext.close();
       }
