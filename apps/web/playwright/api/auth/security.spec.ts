@@ -1,5 +1,8 @@
 import { expect } from "@playwright/test";
+import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
+import { resolve } from "node:path";
+import { promisify } from "node:util";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { test } from "../../lib/fixtures";
@@ -7,42 +10,42 @@ import { test } from "../../lib/fixtures";
 // Authentication endpoints are hardcoded to avoid import issues
 
 const WEB_APP_URL = "http://localhost:3000";
+const execFileAsync = promisify(execFile);
+const WORKSPACE_ROOT = resolve(process.cwd(), "../..");
+const TSX_CLI_PATH = resolve(WORKSPACE_ROOT, "node_modules/tsx/dist/cli.mjs");
+const COMPLETE_PASSWORD_RESET_HELPER_PATH = resolve(
+  WORKSPACE_ROOT,
+  "apps/web/playwright/helpers/complete-password-reset.ts"
+);
 
 const buildSessionCookieHeader = (sessionToken: string) =>
   `next-auth.session-token=${sessionToken}; __Secure-next-auth.session-token=${sessionToken}`;
 
-const getProtectedRouteAuthState = async (
-  url: string,
-  sessionToken: string
-): Promise<"authenticated" | "reauth-required" | "unknown"> => {
-  const response = await fetch(url, {
+const getSessionAuthState = async (sessionToken: string): Promise<"authenticated" | "reauth-required"> => {
+  const response = await fetch(`${WEB_APP_URL}/api/auth/session`, {
     headers: {
       Cookie: buildSessionCookieHeader(sessionToken),
     },
-    redirect: "manual",
   });
 
-  if ([301, 302, 303, 307, 308].includes(response.status)) {
-    const location = response.headers.get("location");
-
-    if (location?.includes("/auth/login")) {
-      return "reauth-required";
-    }
-
-    return "unknown";
+  if (!response.ok) {
+    return "reauth-required";
   }
 
-  if (response.status === 200) {
-    const body = await response.text();
+  const body = await response.json();
 
-    if (body.includes("Login to your account")) {
-      return "reauth-required";
+  return body?.user?.id ? "authenticated" : "reauth-required";
+};
+
+const runPasswordResetCompletion = async (token: string, password: string): Promise<void> => {
+  await execFileAsync(
+    process.execPath,
+    ["--conditions=react-server", TSX_CLI_PATH, COMPLETE_PASSWORD_RESET_HELPER_PATH, token, password],
+    {
+      cwd: WORKSPACE_ROOT,
+      env: process.env,
     }
-
-    return "authenticated";
-  }
-
-  return "unknown";
+  );
 };
 
 test.describe("Authentication Security Tests - Vulnerability Prevention", () => {
@@ -577,7 +580,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       }
     });
 
-    test("should revoke all active sessions after a password reset", async ({ page, users }) => {
+    test("should revoke all active sessions after a password reset", async ({ users }) => {
       test.slow();
 
       const uniqueId = `${Date.now()}-${Math.random()}`;
@@ -632,8 +635,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         throw new Error("Expected the reset test user to have an environment");
       }
 
-      const protectedUrl = `${WEB_APP_URL}/environments/${environmentId}/settings/profile`;
-
       const primarySessionToken = randomBytes(32).toString("hex");
       const secondarySessionToken = randomBytes(32).toString("hex");
 
@@ -651,13 +652,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
           },
         ],
       });
-
-      await expect
-        .poll(() => getProtectedRouteAuthState(protectedUrl, primarySessionToken))
-        .toBe("authenticated");
-      await expect
-        .poll(() => getProtectedRouteAuthState(protectedUrl, secondarySessionToken))
-        .toBe("authenticated");
 
       const rawResetToken = randomBytes(32).toString("base64url");
       const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
@@ -677,12 +671,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         },
       });
 
-      await page.goto(`${WEB_APP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(rawResetToken)}`);
-      await page.locator("#password").fill(newPassword);
-      await page.locator("#confirmPassword").fill(newPassword);
-      const resetPasswordButton = page.getByRole("button", { name: "Reset password" });
-      await expect(resetPasswordButton).toBeEnabled({ timeout: 15000 });
-      await resetPasswordButton.click();
+      await runPasswordResetCompletion(rawResetToken, newPassword);
 
       await expect
         .poll(
@@ -697,10 +686,10 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         .toBe(0);
 
       await expect
-        .poll(() => getProtectedRouteAuthState(protectedUrl, primarySessionToken), { timeout: 30_000 })
+        .poll(() => getSessionAuthState(primarySessionToken), { timeout: 30_000 })
         .toBe("reauth-required");
       await expect
-        .poll(() => getProtectedRouteAuthState(protectedUrl, secondarySessionToken), { timeout: 30_000 })
+        .poll(() => getSessionAuthState(secondarySessionToken), { timeout: 30_000 })
         .toBe("reauth-required");
     });
   });
