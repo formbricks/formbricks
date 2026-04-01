@@ -826,7 +826,6 @@ export const ZSurveyBase = z.object({
   name: z.string(),
   type: ZSurveyType,
   environmentId: z.string(),
-  projectId: z.string().nullable(),
   createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
