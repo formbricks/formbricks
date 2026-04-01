@@ -435,6 +435,7 @@ describe("Segment Service Tests", () => {
     };
 
     beforeEach(() => {
+      vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey as any);
       vi.mocked(prisma.segment.findFirst).mockResolvedValue(privateSegmentPrisma as any);
       vi.mocked(prisma.survey.update).mockResolvedValue({} as any);

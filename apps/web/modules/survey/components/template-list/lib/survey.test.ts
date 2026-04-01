@@ -9,6 +9,7 @@ import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { createSurvey, handleTriggerUpdates } from "./survey";
@@ -65,6 +66,7 @@ vi.mock("@formbricks/logger", () => ({
 describe("survey module", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   describe("createSurvey", () => {

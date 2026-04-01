@@ -616,10 +616,13 @@ export const createContactsFromCSV = async (
   );
 
   try {
-    // Step 1: Extract metadata from CSV data
+    // Step 1: Get workspace ID from environment
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+
+    // Step 2: Extract metadata from CSV data
     const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
 
-    // Step 2: Fetch existing data from database
+    // Step 3: Fetch existing data from database
     const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
