@@ -2,21 +2,6 @@ import { Page, expect } from "@playwright/test";
 import { actions } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 
-const getActionButtonLocator = (page: Page, actionName: string) => {
-  return page.getByTitle(actionName);
-};
-
-const waitForCreatedAction = async (page: Page, actionName: string) => {
-  const successToast = page.locator(".formbricks__toast__success");
-  await expect(successToast).toBeVisible({ timeout: 15000 });
-
-  const actionDialog = page.getByRole("dialog");
-  await expect(actionDialog).toBeHidden({ timeout: 15000 });
-
-  await page.waitForLoadState("networkidle", { timeout: 15000 });
-  await expect(getActionButtonLocator(page, actionName)).toBeVisible({ timeout: 15000 });
-};
-
 const createNoCodeClickAction = async ({
   page,
   name,
@@ -52,7 +37,12 @@ const createNoCodeClickAction = async ({
   await expect(page.locator("[name='noCodeConfig.elementSelector.cssSelector']")).toBeVisible();
   await page.locator("[name='noCodeConfig.elementSelector.cssSelector']").fill(selector);
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await waitForCreatedAction(page, name);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const createNoCodePageViewAction = async ({
@@ -101,7 +91,12 @@ const createNoCodePageViewAction = async ({
 
   // User clicks the Create Action button
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await waitForCreatedAction(page, name);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const createNoCodeAction = async ({
@@ -135,7 +130,12 @@ const createNoCodeAction = async ({
 
   // User clicks the Create Action button
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await waitForCreatedAction(page, name);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
+  expect(successToast).toBeTruthy();
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible();
 };
 
 const createCodeAction = async ({
@@ -169,7 +169,19 @@ const createCodeAction = async ({
   await page.getByLabel("Key").fill(key);
 
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-  await waitForCreatedAction(page, name);
+
+  const successToast = await page.waitForSelector(".formbricks__toast__success", { timeout: 15000 });
+  expect(successToast).toBeTruthy();
+
+  // Wait for the action to be fully created and committed to the database
+  await page.waitForLoadState("networkidle", { timeout: 15000 });
+
+  const actionButton = page.getByTitle(name);
+  await expect(actionButton).toBeVisible({ timeout: 10000 });
+};
+
+const getActionButtonLocator = (page: Page, actionName: string) => {
+  return page.getByTitle(actionName);
 };
 
 test.describe("Create and Edit No Code Click Action", async () => {

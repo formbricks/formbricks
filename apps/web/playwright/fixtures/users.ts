@@ -46,29 +46,8 @@ export type UsersFixture = {
     organizationName?: string;
     projectName?: string;
     withoutProject?: boolean;
-    enabledEntitlements?: ("contacts" | "rbac")[];
   }) => Promise<UserFixture>;
   get: () => UserFixture[];
-};
-
-const entitlementLookupKeyMap = {
-  contacts: "contacts",
-  rbac: "rbac",
-} as const;
-
-const getBillingStripeSnapshot = (
-  enabledEntitlements?: ("contacts" | "rbac")[]
-): Prisma.InputJsonValue | undefined => {
-  if (!enabledEntitlements?.length) {
-    return undefined;
-  }
-
-  return {
-    plan: "custom",
-    subscriptionStatus: "active",
-    features: [...new Set(enabledEntitlements.map((entitlement) => entitlementLookupKeyMap[entitlement]))],
-    lastSyncedAt: new Date().toISOString(),
-  } satisfies Prisma.InputJsonValue;
 };
 
 export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixture => {
@@ -83,12 +62,10 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       organizationName?: string;
       projectName?: string;
       withoutProject?: boolean;
-      enabledEntitlements?: ("contacts" | "rbac")[];
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
       const hashedPassword = await bcrypt.hash(uname, 10);
-      const billingStripeSnapshot = getBillingStripeSnapshot(params?.enabledEntitlements);
 
       const user = await prisma.user.create({
         data: {
@@ -107,7 +84,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                       limits: { projects: 3, monthly: { responses: 1500 } },
                       stripeCustomerId: null,
                       usageCycleAnchor: new Date(),
-                      ...(billingStripeSnapshot ? { stripe: billingStripeSnapshot } : {}),
                     },
                   },
                   ...(!params?.withoutProject && {

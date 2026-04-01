@@ -1,12 +1,8 @@
 import { Page } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
 
-export async function loginAndGetApiKey(
-  page: Page,
-  users: UsersFixture,
-  userParams?: Parameters<UsersFixture["create"]>[0]
-) {
-  const user = await users.create(userParams);
+export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
+  const user = await users.create();
   await user.login();
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/, { timeout: 30000 });

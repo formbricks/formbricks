@@ -117,9 +117,7 @@ test.describe("Invite, accept and remove organization member", async () => {
 
 test.describe("Create, update and delete team", async () => {
   test.beforeEach(async ({ page, users }) => {
-    const user = await users.create({
-      enabledEntitlements: ["rbac"],
-    });
+    const user = await users.create();
     await user.login();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
@@ -132,10 +130,11 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("menuitemcheckbox", { name: "General" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
-    await expect(page.getByRole("link", { name: "Members & Teams" })).toBeVisible({ timeout: 15000 });
-    await page.getByRole("link", { name: "Members & Teams" }).click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText("Members & Teams")).toBeVisible();
+    await page.getByText("Members & Teams").click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/teams/);
-    await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
     await page.getByRole("button", { name: "Create" }).click();

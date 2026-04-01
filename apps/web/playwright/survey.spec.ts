@@ -2,12 +2,7 @@ import { expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import * as helper from "./utils/helper";
-import {
-  createSurvey,
-  createSurveyWithLogic,
-  publishCurrentSurveyAsLink,
-  uploadFileForFileUploadQuestion,
-} from "./utils/helper";
+import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
 
 test.use({
   launchOptions: {
@@ -29,7 +24,21 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 
     await test.step("Create Survey", async () => {
       await createSurvey(page, surveys.createAndSubmit);
-      await publishCurrentSurveyAsLink(page, 60000);
+
+      // Save & Publish Survey
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+      await page.locator("#howToSendCardTrigger").click();
+      await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+      await page.locator("#howToSendCardOption-link").click();
+
+      // Wait for any auto-save to complete before publishing
+      await page.waitForTimeout(2000);
+
+      await page.getByRole("button", { name: "Publish" }).click();
+
+      // Get URL - increase timeout for slower local environments
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -698,7 +707,20 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Create your own Survey").click();
     await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.endingCard.buttonLabel);
 
-    await publishCurrentSurveyAsLink(page, 60000);
+    // TODO: @pandeymangg - figure out if this is required
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+    await page.locator("#howToSendCardTrigger").click();
+    await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+    await page.locator("#howToSendCardOption-link").click();
+
+    // Wait for any auto-save to complete before publishing
+    await page.waitForTimeout(2000);
+
+    await page.getByRole("button", { name: "Publish" }).click();
+
+    await page.waitForTimeout(2000);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
     await page.getByLabel("Copy survey link to clipboard").click();
@@ -720,7 +742,18 @@ test.describe("Testing Survey with advanced logic", async () => {
 
     await test.step("Create Survey", async () => {
       await createSurveyWithLogic(page, surveys.createWithLogicAndSubmit);
-      await publishCurrentSurveyAsLink(page);
+
+      // Save & Publish Survey
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+      await page.locator("#howToSendCardTrigger").click();
+      await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+      await page.locator("#howToSendCardOption-link").click();
+
+      await page.getByRole("button", { name: "Publish" }).click();
+
+      // Get URL
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
