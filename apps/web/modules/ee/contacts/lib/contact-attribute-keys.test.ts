@@ -44,7 +44,9 @@ describe("getContactAttributeKeys", () => {
       mockKeys as unknown as ContactAttributeKey[]
     );
     const result = await getContactAttributeKeys(environmentId);
-    expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({ where: { environmentId } });
+    expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
+      where: { workspaceId: environmentId },
+    });
     expect(result).toEqual(mockKeys);
   });
 

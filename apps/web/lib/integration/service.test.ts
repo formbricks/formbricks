@@ -23,6 +23,7 @@ vi.mock("@formbricks/database", () => ({
       upsert: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       delete: vi.fn(),
     },
   },
@@ -136,7 +137,7 @@ describe("Integration Service", () => {
 
       expect(prisma.integration.findMany).toHaveBeenCalledWith({
         where: {
-          environmentId: mockEnvironmentId,
+          workspaceId: mockEnvironmentId,
         },
       });
 
@@ -151,7 +152,7 @@ describe("Integration Service", () => {
 
       expect(prisma.integration.findMany).toHaveBeenCalledWith({
         where: {
-          environmentId: mockEnvironmentId,
+          workspaceId: mockEnvironmentId,
         },
         take: ITEMS_PER_PAGE,
         skip: ITEMS_PER_PAGE * (page - 1),
@@ -226,16 +227,14 @@ describe("Integration Service", () => {
     };
 
     test("should get an integration by type", async () => {
-      vi.mocked(prisma.integration.findUnique).mockResolvedValue(mockIntegration);
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue(mockIntegration);
 
       const result = await getIntegrationByType(mockEnvironmentId, mockType);
 
-      expect(prisma.integration.findUnique).toHaveBeenCalledWith({
+      expect(prisma.integration.findFirst).toHaveBeenCalledWith({
         where: {
-          type_environmentId: {
-            environmentId: mockEnvironmentId,
-            type: mockType,
-          },
+          workspaceId: mockEnvironmentId,
+          type: mockType,
         },
       });
 
@@ -243,7 +242,7 @@ describe("Integration Service", () => {
     });
 
     test("should return null when integration is not found", async () => {
-      vi.mocked(prisma.integration.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue(null);
 
       const result = await getIntegrationByType(mockEnvironmentId, mockType);
 
@@ -256,7 +255,7 @@ describe("Integration Service", () => {
         clientVersion: "5.0.0",
       });
 
-      vi.mocked(prisma.integration.findUnique).mockRejectedValue(prismaError);
+      vi.mocked(prisma.integration.findFirst).mockRejectedValue(prismaError);
 
       await expect(getIntegrationByType(mockEnvironmentId, mockType)).rejects.toThrow(DatabaseError);
     });

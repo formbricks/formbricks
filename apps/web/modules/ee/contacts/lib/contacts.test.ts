@@ -106,9 +106,9 @@ describe("Contacts Lib", () => {
   });
 
   describe("buildContactWhereClause", () => {
-    test("returns where clause with only environmentId when no search provided", () => {
+    test("returns where clause with only workspaceId when no search provided", () => {
       const result = buildContactWhereClause(mockEnvironmentId);
-      expect(result).toEqual({ environmentId: mockEnvironmentId });
+      expect(result).toEqual({ workspaceId: mockEnvironmentId });
     });
 
     test("returns where clause with search filters when search is provided", () => {
@@ -116,7 +116,7 @@ describe("Contacts Lib", () => {
       const result = buildContactWhereClause(mockEnvironmentId, searchTerm);
 
       expect(result).toEqual({
-        environmentId: mockEnvironmentId,
+        workspaceId: mockEnvironmentId,
         OR: [
           {
             attributes: {
@@ -140,7 +140,7 @@ describe("Contacts Lib", () => {
 
     test("handles empty search string same as no search", () => {
       const result = buildContactWhereClause(mockEnvironmentId, "");
-      expect(result).toEqual({ environmentId: mockEnvironmentId });
+      expect(result).toEqual({ workspaceId: mockEnvironmentId });
     });
   });
 
@@ -279,7 +279,7 @@ describe("Contacts Lib", () => {
 
       expect(result).toEqual([mockTransformedContact]);
       expect(prisma.contact.findMany).toHaveBeenCalledWith({
-        where: { environmentId: mockEnvironmentId },
+        where: { workspaceId: mockEnvironmentId },
         select: expect.any(Object),
         take: 30,
         skip: undefined,
@@ -295,7 +295,7 @@ describe("Contacts Lib", () => {
 
       expect(result).toEqual([mockTransformedContact]);
       expect(prisma.contact.findMany).toHaveBeenCalledWith({
-        where: { environmentId: mockEnvironmentId },
+        where: { workspaceId: mockEnvironmentId },
         select: expect.any(Object),
         take: 30,
         skip: 30,

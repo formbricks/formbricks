@@ -71,7 +71,6 @@ export const createSurvey = async (
       data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const survey = await prisma.survey.create({
       data: {
         ...data,

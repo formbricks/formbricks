@@ -159,7 +159,7 @@ describe("Segment Service Tests", () => {
       const segments = await getSegments(environmentId);
       expect(segments).toEqual([mockSegment]);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId },
+        where: { workspaceId: environmentId },
         select: selectSegment,
       });
       expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
@@ -319,7 +319,7 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId },
+        where: { workspaceId: environmentId },
         select: selectSegment,
       });
       expect(prisma.segment.create).toHaveBeenCalledWith({
@@ -620,7 +620,7 @@ describe("Segment Service Tests", () => {
       const result = await getSegmentsByAttributeKey(environmentId, attributeKey);
       expect(result).toEqual([segmentWithAttrPrisma]);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId },
+        where: { workspaceId: environmentId },
         select: selectSegment,
       });
       expect(validateInputs).toHaveBeenCalledWith(

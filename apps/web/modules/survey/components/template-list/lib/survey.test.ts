@@ -102,7 +102,7 @@ describe("survey module", () => {
       const result = await createSurvey(environmentId, surveyBody);
 
       // Verify results
-      expect(getActionClasses).toHaveBeenCalledWith(environmentId);
+      expect(getActionClasses).toHaveBeenCalledWith("workspace-id-mock");
       expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
       expect(prisma.survey.create).toHaveBeenCalledWith({
         data: expect.objectContaining({

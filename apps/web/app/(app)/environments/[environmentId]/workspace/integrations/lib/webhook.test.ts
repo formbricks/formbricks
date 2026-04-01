@@ -35,7 +35,7 @@ describe("getWebhookCountBySource", () => {
     );
     expect(prisma.webhook.count).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: environmentId,
         source: sourceZapier,
       },
     });
@@ -54,7 +54,7 @@ describe("getWebhookCountBySource", () => {
     );
     expect(prisma.webhook.count).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: environmentId,
         source: undefined,
       },
     });
