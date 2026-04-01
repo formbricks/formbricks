@@ -400,7 +400,6 @@
     "show_response_count": "顯示回應數",
     "shown": "已顯示",
     "size": "大小",
-    "skip": "略過",
     "skipped": "已跳過",
     "skips": "跳過次數",
     "some_files_failed_to_upload": "部分檔案上傳失敗",
@@ -471,7 +470,6 @@
     "website_survey": "網站問卷",
     "weeks": "週",
     "welcome_card": "歡迎卡片",
-    "workflows": "工作流程",
     "workspace": "工作區",
     "workspace_configuration": "工作區設定",
     "workspace_created_successfully": "工作區已成功建立",
@@ -507,7 +505,7 @@
     "forgot_password_email_change_password": "變更密碼",
     "forgot_password_email_did_not_request": "如果您沒有要求此操作，請忽略此電子郵件。",
     "forgot_password_email_heading": "變更密碼",
-    "forgot_password_email_link_valid_for_24_hours": "此連結有效期為 24 小時。",
+    "forgot_password_email_link_valid_for_24_hours": "此連結有效期為 {minutes} 分鐘。",
     "forgot_password_email_subject": "重設您的 Formbricks 密碼",
     "forgot_password_email_text": "您已請求變更密碼的連結。您可以點擊以下連結來執行此操作：",
     "hidden_field": "隱藏欄位",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "免費解鎖 Formbricks 的全部功能，為期 30 天。"
       },
       "general": {
+        "ai_data_analysis_enabled": "資料增強與分析（AI）",
+        "ai_data_analysis_enabled_description": "利用 AI 深入分析你的資料，建立儀表板、圖表、報告等。會處理你的體驗資料。",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "管理此組織的 AI 功能。",
+        "ai_settings_updated_successfully": "AI 設定已成功更新",
+        "ai_smart_tools_enabled": "智慧功能（AI）",
+        "ai_smart_tools_enabled_description": "AI 幫你更快完成更多事。絕不會接觸 Formbricks 收集的資料，只用於像是將問卷翻譯成其他語言等用途。",
         "bulk_invite_warning_description": "在免費方案中，所有組織成員始終會被指派「擁有者」角色。",
         "cannot_delete_only_organization": "這是您唯一的組織，無法刪除。請先建立新組織。",
         "cannot_leave_only_organization": "您無法離開此組織，因為它是您唯一的組織。請先建立新組織。",
@@ -2614,8 +2619,8 @@
     "csat_question_1_headline": "您向朋友或同事推薦此 {projectName} 的可能性有多高？",
     "csat_question_1_lower_label": "不太可能",
     "csat_question_1_upper_label": "非常可能",
-    "csat_question_2_choice_1": "有點滿意",
-    "csat_question_2_choice_2": "非常滿意",
+    "csat_question_2_choice_1": "非常滿意",
+    "csat_question_2_choice_2": "有點滿意",
     "csat_question_2_choice_3": "既不滿意也不不滿意",
     "csat_question_2_choice_4": "有點不滿意",
     "csat_question_2_choice_5": "非常不滿意",
@@ -3337,18 +3342,5 @@
     "usability_question_9_headline": "使用 系統 時，我 感到 有 信心。",
     "usability_rating_description": "透過使用標準化的 十個問題 問卷，要求使用者評估他們對 您 產品的使用體驗，來衡量感知的 可用性。",
     "usability_score_name": "系統 可用性 分數 (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "感謝你和我們分享你的工作流程想法！我們目前正在設計這個功能，你的回饋將幫助我們打造真正符合你需求的工具。",
-    "coming_soon_title": "快完成囉！",
-    "follow_up_label": "還有其他想補充的嗎?",
-    "follow_up_placeholder": "您希望自動化哪些具體任務？有沒有想要整合的工具或功能？",
-    "generate_button": "產生工作流程",
-    "heading": "你想建立什麼樣的工作流程？",
-    "placeholder": "請描述您想產生的工作流程……",
-    "subheading": "幾秒鐘就能產生你的工作流程。",
-    "submit_button": "補充細節",
-    "thank_you_description": "您的意見有助於我們打造真正符合您需求的工作流程功能。我們會持續向您更新開發進度。",
-    "thank_you_title": "感謝你的回饋！"
   }
 }

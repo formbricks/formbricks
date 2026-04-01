@@ -17,6 +17,7 @@ export const env = createEnv({
     DATABASE_URL: z.url(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     DEBUG: z.enum(["1", "0"]).optional(),
+    DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
@@ -61,6 +62,7 @@ export const env = createEnv({
         ? z.string().optional()
         : z.url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
+    PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
     PRIVACY_URL: z
       .url()
       .optional()
@@ -144,6 +146,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
+    DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
     E2E_TESTING: process.env.E2E_TESTING,
@@ -183,6 +186,7 @@ export const env = createEnv({
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
+    PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
