@@ -1,4 +1,4 @@
-import { type Page, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -8,37 +8,41 @@ import { test } from "../../lib/fixtures";
 
 const WEB_APP_URL = "http://localhost:3000";
 
-const createSessionCookies = (sessionToken: string, expiresAt: Date) => {
-  const sharedCookie = {
-    value: sessionToken,
-    url: WEB_APP_URL,
-    httpOnly: true,
-    sameSite: "Lax" as const,
-    expires: Math.floor(expiresAt.getTime() / 1000),
-  };
+const buildSessionCookieHeader = (sessionToken: string) =>
+  `next-auth.session-token=${sessionToken}; __Secure-next-auth.session-token=${sessionToken}`;
 
-  const cookies = [
-    {
-      name: "next-auth.session-token",
-      ...sharedCookie,
+const getProtectedRouteAuthState = async (
+  url: string,
+  sessionToken: string
+): Promise<"authenticated" | "reauth-required" | "unknown"> => {
+  const response = await fetch(url, {
+    headers: {
+      Cookie: buildSessionCookieHeader(sessionToken),
     },
-  ];
+    redirect: "manual",
+  });
 
-  if (new URL(WEB_APP_URL).protocol === "https:") {
-    cookies.push({
-      name: "__Secure-next-auth.session-token",
-      ...sharedCookie,
-      secure: true,
-    });
+  if ([301, 302, 303, 307, 308].includes(response.status)) {
+    const location = response.headers.get("location");
+
+    if (location?.includes("/auth/login")) {
+      return "reauth-required";
+    }
+
+    return "unknown";
   }
 
-  return cookies;
-};
+  if (response.status === 200) {
+    const body = await response.text();
 
-const expectLoginPrompt = async (page: Page) => {
-  await expect(page.getByRole("button", { name: "Login with Email" })).toBeVisible({
-    timeout: 30_000,
-  });
+    if (body.includes("Login to your account")) {
+      return "reauth-required";
+    }
+
+    return "authenticated";
+  }
+
+  return "unknown";
 };
 
 test.describe("Authentication Security Tests - Vulnerability Prevention", () => {
@@ -573,7 +577,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       }
     });
 
-    test("should revoke all active sessions after a password reset", async ({ page, browser, users }) => {
+    test("should revoke all active sessions after a password reset", async ({ page, users }) => {
       test.slow();
 
       const uniqueId = `${Date.now()}-${Math.random()}`;
@@ -630,7 +634,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
       const protectedUrl = `http://localhost:3000/environments/${environmentId}/settings/profile`;
 
-      const sessionExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
       const primarySessionToken = randomBytes(32).toString("hex");
       const secondarySessionToken = randomBytes(32).toString("hex");
 
@@ -639,73 +642,66 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
           {
             userId: databaseUser.id,
             sessionToken: primarySessionToken,
-            expires: sessionExpiresAt,
+            expires: new Date(Date.now() + 30 * 60 * 1000),
           },
           {
             userId: databaseUser.id,
             sessionToken: secondarySessionToken,
-            expires: sessionExpiresAt,
+            expires: new Date(Date.now() + 30 * 60 * 1000),
           },
         ],
       });
 
-      await page.context().addCookies(createSessionCookies(primarySessionToken, sessionExpiresAt));
-      await page.goto(protectedUrl);
-      await expect(page).not.toHaveURL(/\/auth\/login/);
+      await expect
+        .poll(() => getProtectedRouteAuthState(protectedUrl, primarySessionToken))
+        .toBe("authenticated");
+      await expect
+        .poll(() => getProtectedRouteAuthState(protectedUrl, secondarySessionToken))
+        .toBe("authenticated");
 
-      const copiedSessionContext = await browser.newContext();
-      try {
-        await copiedSessionContext.addCookies(createSessionCookies(secondarySessionToken, sessionExpiresAt));
+      const rawResetToken = randomBytes(32).toString("base64url");
+      const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
 
-        const rawResetToken = randomBytes(32).toString("base64url");
-        const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
+      await prisma.passwordResetToken.upsert({
+        where: {
+          userId: databaseUser.id,
+        },
+        create: {
+          userId: databaseUser.id,
+          tokenHash,
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        },
+        update: {
+          tokenHash,
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        },
+      });
 
-        await prisma.passwordResetToken.upsert({
-          where: {
-            userId: databaseUser.id,
-          },
-          create: {
-            userId: databaseUser.id,
-            tokenHash,
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-          },
-          update: {
-            tokenHash,
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-          },
-        });
+      await page.goto(
+        `http://localhost:3000/auth/forgot-password/reset?token=${encodeURIComponent(rawResetToken)}`
+      );
+      await page.locator("#password").fill(newPassword);
+      await page.locator("#confirmPassword").fill(newPassword);
+      await page.getByRole("button", { name: "Reset password" }).click({ noWaitAfter: true });
 
-        const resetContext = await browser.newContext();
-        try {
-          const resetPage = await resetContext.newPage();
-          await resetPage.goto(
-            `http://localhost:3000/auth/forgot-password/reset?token=${encodeURIComponent(rawResetToken)}`
-          );
-          await resetPage.locator("#password").fill(newPassword);
-          await resetPage.locator("#confirmPassword").fill(newPassword);
-          await resetPage.getByRole("button", { name: "Reset password" }).click({ noWaitAfter: true });
+      await expect
+        .poll(
+          async () =>
+            prisma.session.count({
+              where: {
+                userId: databaseUser.id,
+              },
+            }),
+          { timeout: 30_000 }
+        )
+        .toBe(0);
 
-          await expect
-            .poll(
-              async () =>
-                prisma.session.count({
-                  where: {
-                    userId: databaseUser.id,
-                  },
-                }),
-              { timeout: 30_000 }
-            )
-            .toBe(0);
-        } finally {
-          await resetContext.close();
-        }
-
-        const copiedSessionPage = await copiedSessionContext.newPage();
-        await Promise.all([page.goto(protectedUrl), copiedSessionPage.goto(protectedUrl)]);
-        await Promise.all([expectLoginPrompt(page), expectLoginPrompt(copiedSessionPage)]);
-      } finally {
-        await copiedSessionContext.close();
-      }
+      await expect
+        .poll(() => getProtectedRouteAuthState(protectedUrl, primarySessionToken), { timeout: 30_000 })
+        .toBe("reauth-required");
+      await expect
+        .poll(() => getProtectedRouteAuthState(protectedUrl, secondarySessionToken), { timeout: 30_000 })
+        .toBe("reauth-required");
     });
   });
 });
