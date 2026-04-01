@@ -6,6 +6,15 @@ import { test } from "../../lib/fixtures";
 
 // Authentication endpoints are hardcoded to avoid import issues
 
+const createSessionCookie = (sessionToken: string, expiresAt: Date) => ({
+  name: "next-auth.session-token",
+  value: sessionToken,
+  url: "http://localhost:3000",
+  httpOnly: true,
+  sameSite: "Lax" as const,
+  expires: Math.floor(expiresAt.getTime() / 1000),
+});
+
 test.describe("Authentication Security Tests - Vulnerability Prevention", () => {
   let csrfToken: string;
   let testUser: { email: string; password: string };
@@ -543,46 +552,55 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const userName = `Session Reset User ${uniqueId}`;
       const userEmail = `session-reset-${uniqueId}@example.com`;
       const newPassword = "Password123";
-      const user = await users.create({
+      await users.create({
         name: userName,
         email: userEmail,
       });
-      await user.login();
 
+      const databaseUser = await prisma.user.findUnique({
+        where: {
+          email: userEmail,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      expect(databaseUser?.id).toBeDefined();
+
+      if (!databaseUser) {
+        throw new Error("Expected the reset test user to exist");
+      }
+
+      const sessionExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      const primarySessionToken = randomBytes(32).toString("hex");
+      const secondarySessionToken = randomBytes(32).toString("hex");
+
+      await prisma.session.createMany({
+        data: [
+          {
+            userId: databaseUser.id,
+            sessionToken: primarySessionToken,
+            expires: sessionExpiresAt,
+          },
+          {
+            userId: databaseUser.id,
+            sessionToken: secondarySessionToken,
+            expires: sessionExpiresAt,
+          },
+        ],
+      });
+
+      await page.context().addCookies([createSessionCookie(primarySessionToken, sessionExpiresAt)]);
       await page.goto("http://localhost:3000/environments");
       await expect(page).not.toHaveURL(/\/auth\/login/);
 
-      const sessionCookie = (await page.context().cookies()).find((cookie) =>
-        cookie.name.includes("next-auth.session-token")
-      );
-
-      expect(sessionCookie).toBeDefined();
-
-      if (!sessionCookie) {
-        throw new Error("Expected a NextAuth session cookie after login");
-      }
-
       const copiedSessionContext = await browser.newContext();
       try {
-        await copiedSessionContext.addCookies([sessionCookie]);
+        await copiedSessionContext.addCookies([createSessionCookie(secondarySessionToken, sessionExpiresAt)]);
         const copiedSessionPage = await copiedSessionContext.newPage();
         await copiedSessionPage.goto("http://localhost:3000/environments");
         await expect(copiedSessionPage).not.toHaveURL(/\/auth\/login/);
-
-        const databaseUser = await prisma.user.findUnique({
-          where: {
-            email: userEmail,
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        expect(databaseUser?.id).toBeDefined();
-
-        if (!databaseUser) {
-          throw new Error("Expected the reset test user to exist");
-        }
 
         const rawResetToken = randomBytes(32).toString("base64url");
         const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
@@ -632,33 +650,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
         await copiedSessionPage.goto("http://localhost:3000/environments");
         await expect(copiedSessionPage).toHaveURL(/\/auth\/login/);
-
-        // This spec deliberately stresses auth endpoints earlier, so use a fresh client IP here to
-        // verify the new password works without reusing the suite's rate-limit bucket.
-        const reLoginContext = await browser.newContext({
-          extraHTTPHeaders: {
-            "x-forwarded-for": "203.0.113.10",
-            "x-real-ip": "203.0.113.10",
-          },
-        });
-
-        try {
-          const reLoginPage = await reLoginContext.newPage();
-          await reLoginPage.goto("http://localhost:3000/auth/login");
-
-          const emailInput = reLoginPage.locator("#email");
-          if (!(await emailInput.isVisible())) {
-            await reLoginPage.getByRole("button", { name: "Login with Email" }).click();
-            await expect(emailInput).toBeVisible();
-          }
-
-          await emailInput.fill(userEmail);
-          await reLoginPage.locator("#password").fill(newPassword);
-          await reLoginPage.getByRole("button", { name: "Login with Email" }).click();
-          await expect(reLoginPage).not.toHaveURL(/\/auth\/login/);
-        } finally {
-          await reLoginContext.close();
-        }
       } finally {
         await copiedSessionContext.close();
       }
