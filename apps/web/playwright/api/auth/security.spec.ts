@@ -613,25 +613,51 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
           await resetPage.getByRole("button", { name: "Reset password" }).click();
           await expect(resetPage).toHaveURL(/\/auth\/forgot-password\/reset\/success/);
           await expect(resetPage.getByText("Password reset successfully")).toBeVisible();
-
-          await page.goto("http://localhost:3000/environments");
-          await expect(page).toHaveURL(/\/auth\/login/);
-
-          await copiedSessionPage.goto("http://localhost:3000/environments");
-          await expect(copiedSessionPage).toHaveURL(/\/auth\/login/);
-
-          await resetPage.goto("http://localhost:3000/auth/login");
-          const emailInput = resetPage.locator("#email");
-          if (!(await emailInput.isVisible())) {
-            await resetPage.getByRole("button", { name: "Login with Email" }).click();
-            await expect(emailInput).toBeVisible();
-          }
-          await emailInput.fill(userEmail);
-          await resetPage.locator("#password").fill(newPassword);
-          await resetPage.getByRole("button", { name: "Login with Email" }).click();
-          await expect(resetPage).not.toHaveURL(/\/auth\/login/);
         } finally {
           await resetContext.close();
+        }
+
+        await expect
+          .poll(async () =>
+            prisma.session.count({
+              where: {
+                userId: databaseUser.id,
+              },
+            })
+          )
+          .toBe(0);
+
+        await page.goto("http://localhost:3000/environments");
+        await expect(page).toHaveURL(/\/auth\/login/);
+
+        await copiedSessionPage.goto("http://localhost:3000/environments");
+        await expect(copiedSessionPage).toHaveURL(/\/auth\/login/);
+
+        // This spec deliberately stresses auth endpoints earlier, so use a fresh client IP here to
+        // verify the new password works without reusing the suite's rate-limit bucket.
+        const reLoginContext = await browser.newContext({
+          extraHTTPHeaders: {
+            "x-forwarded-for": "203.0.113.10",
+            "x-real-ip": "203.0.113.10",
+          },
+        });
+
+        try {
+          const reLoginPage = await reLoginContext.newPage();
+          await reLoginPage.goto("http://localhost:3000/auth/login");
+
+          const emailInput = reLoginPage.locator("#email");
+          if (!(await emailInput.isVisible())) {
+            await reLoginPage.getByRole("button", { name: "Login with Email" }).click();
+            await expect(emailInput).toBeVisible();
+          }
+
+          await emailInput.fill(userEmail);
+          await reLoginPage.locator("#password").fill(newPassword);
+          await reLoginPage.getByRole("button", { name: "Login with Email" }).click();
+          await expect(reLoginPage).not.toHaveURL(/\/auth\/login/);
+        } finally {
+          await reLoginContext.close();
         }
       } finally {
         await copiedSessionContext.close();
