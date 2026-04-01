@@ -5,7 +5,7 @@ import {
   Building2Icon,
   ChevronRightIcon,
   Cog,
-  HotelIcon,
+  FoldersIcon,
   Loader2,
   LogOutIcon,
   MessageCircle,
@@ -21,7 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -82,7 +82,8 @@ const isActiveProjectSetting = (pathname: string, settingId: string): boolean =>
 };
 
 const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
-  if (pathname.includes("/(account)/")) {
+  const accountSettingsPattern = /\/settings\/(profile|account|notifications|security|appearance)(?:\/|$)/;
+  if (accountSettingsPattern.test(pathname)) {
     return false;
   }
 
@@ -209,6 +210,15 @@ export const MainNavigation = ({
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const [openProjectLimitModal, setOpenProjectLimitModal] = useState(false);
 
+  const renderSwitcherError = (error: string, onRetry: () => void, retryLabel: string) => (
+    <div className="px-2 py-4">
+      <p className="mb-2 text-sm text-red-600">{error}</p>
+      <button onClick={onRetry} className="text-xs text-slate-600 underline hover:text-slate-800">
+        {retryLabel}
+      </button>
+    </div>
+  );
+
   const projectSettings = [
     {
       id: "general",
@@ -284,11 +294,7 @@ export const MainNavigation = ({
     },
   ];
 
-  useEffect(() => {
-    if (!isWorkspaceDropdownOpen || projects.length > 0 || isLoadingProjects || workspaceLoadError) {
-      return;
-    }
-
+  const loadProjects = useCallback(() => {
     setIsLoadingProjects(true);
     setWorkspaceLoadError(null);
     getProjectsForSwitcherAction({ organizationId: organization.id }).then((result) => {
@@ -300,18 +306,17 @@ export const MainNavigation = ({
       }
       setIsLoadingProjects(false);
     });
-  }, [isWorkspaceDropdownOpen, projects.length, isLoadingProjects, workspaceLoadError, organization.id, t]);
+  }, [organization.id, t]);
 
   useEffect(() => {
-    if (
-      !isOrganizationDropdownOpen ||
-      organizations.length > 0 ||
-      isLoadingOrganizations ||
-      organizationLoadError
-    ) {
+    if (!isWorkspaceDropdownOpen || projects.length > 0 || isLoadingProjects || workspaceLoadError) {
       return;
     }
 
+    loadProjects();
+  }, [isWorkspaceDropdownOpen, projects.length, isLoadingProjects, workspaceLoadError, loadProjects]);
+
+  const loadOrganizations = useCallback(() => {
     setIsLoadingOrganizations(true);
     setOrganizationLoadError(null);
     getOrganizationsForSwitcherAction({ organizationId: organization.id }).then((result) => {
@@ -325,13 +330,25 @@ export const MainNavigation = ({
       }
       setIsLoadingOrganizations(false);
     });
+  }, [organization.id, t]);
+
+  useEffect(() => {
+    if (
+      !isOrganizationDropdownOpen ||
+      organizations.length > 0 ||
+      isLoadingOrganizations ||
+      organizationLoadError
+    ) {
+      return;
+    }
+
+    loadOrganizations();
   }, [
     isOrganizationDropdownOpen,
     organizations.length,
     isLoadingOrganizations,
     organizationLoadError,
-    organization.id,
-    t,
+    loadOrganizations,
   ]);
 
   useEffect(() => {
@@ -518,7 +535,7 @@ export const MainNavigation = ({
                       isCollapsed && "justify-center"
                     )}>
                     <span className={switcherIconClasses}>
-                      <HotelIcon className="h-4 w-4" strokeWidth={1.5} />
+                      <FoldersIcon className="h-4 w-4" strokeWidth={1.5} />
                     </span>
                     {!isCollapsed && !isTextVisible && (
                       <>
@@ -536,7 +553,7 @@ export const MainNavigation = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
                   <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                    <HotelIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                    <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
                     {t("common.change_workspace")}
                   </div>
                   {isLoadingProjects && (
@@ -544,19 +561,16 @@ export const MainNavigation = ({
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   )}
-                  {!isLoadingProjects && workspaceLoadError && (
-                    <div className="px-2 py-4">
-                      <p className="mb-2 text-sm text-red-600">{workspaceLoadError}</p>
-                      <button
-                        onClick={() => {
-                          setWorkspaceLoadError(null);
-                          setProjects([]);
-                        }}
-                        className="text-xs text-slate-600 underline hover:text-slate-800">
-                        {t("common.try_again")}
-                      </button>
-                    </div>
-                  )}
+                  {!isLoadingProjects &&
+                    workspaceLoadError &&
+                    renderSwitcherError(
+                      workspaceLoadError,
+                      () => {
+                        setWorkspaceLoadError(null);
+                        setProjects([]);
+                      },
+                      t("common.try_again")
+                    )}
                   {!isLoadingProjects && !workspaceLoadError && (
                     <>
                       <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
@@ -636,19 +650,16 @@ export const MainNavigation = ({
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   )}
-                  {!isLoadingOrganizations && organizationLoadError && (
-                    <div className="px-2 py-4">
-                      <p className="mb-2 text-sm text-red-600">{organizationLoadError}</p>
-                      <button
-                        onClick={() => {
-                          setOrganizationLoadError(null);
-                          setOrganizations([]);
-                        }}
-                        className="text-xs text-slate-600 underline hover:text-slate-800">
-                        {t("common.try_again")}
-                      </button>
-                    </div>
-                  )}
+                  {!isLoadingOrganizations &&
+                    organizationLoadError &&
+                    renderSwitcherError(
+                      organizationLoadError,
+                      () => {
+                        setOrganizationLoadError(null);
+                        setOrganizations([]);
+                      },
+                      t("common.try_again")
+                    )}
                   {!isLoadingOrganizations && !organizationLoadError && (
                     <>
                       <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
