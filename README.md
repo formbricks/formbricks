@@ -127,33 +127,9 @@ Formbricks has a hosted cloud offering with a generous free plan to get you up a
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription.
 
-If you opt for self-hosting Formbricks, here are a few options to consider:
-
 #### Docker
 
 To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
-
-#### Community-managed One Click Hosting
-
-##### Railway
-
-You can deploy Formbricks on [Railway](https://railway.app) using the button below.
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
-
-##### RepoCloud
-
-Or you can also deploy Formbricks on [RepoCloud](https://repocloud.io) using the button below.
-
-[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploy.png)](https://repocloud.io/details/?app_id=254)
-
-##### Zeabur
-
-Or you can also deploy Formbricks on [Zeabur](https://zeabur.com) using the button below.
-
-[![Deploy to Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/G4TUJL)
-
-<a id="development"></a>
 
 ## 👨‍💻 Development
 
@@ -248,14 +224,3 @@ We currently do not offer Formbricks white-labeled. That means that we don't sel
 The Enterprise Edition allows us to fund the development of Formbricks sustainably. It guarantees that the free and open-source surveying infrastructure we're building will be around for decades to come.
 
 <a id="readme-de"></a>
-
-## Deutsch
-
-Formbricks ist eine freie, quelloffene und datenschutzorientierte Plattform für Surveys und Experience Management. Mit In-App-, Website-, Link- und E-Mail-Umfragen sammelt ihr Feedback entlang der gesamten User Journey.
-
-- Website & Cloud: [formbricks.com](https://formbricks.com/) und [Cloud starten](https://app.formbricks.com/auth/signup)
-- Self-Hosting: [Deployment-Dokumentation](https://formbricks.com/docs/self-hosting/deployment)
-- Beitrag & Community: [Beitragen](https://formbricks.com/docs/developer-docs/contributing/get-started), [GitHub Discussions](https://github.com/formbricks/formbricks/discussions) und [Issues](https://github.com/formbricks/formbricks/issues)
-- Sicherheit & Lizenz: [`SECURITY.md`](./SECURITY.md) und [AGPLv3](https://github.com/formbricks/formbricks/blob/main/LICENSE)
-
-<p align="right"><a href="#top">🔼 Back to top</a></p>
