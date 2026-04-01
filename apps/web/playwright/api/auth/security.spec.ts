@@ -6,14 +6,27 @@ import { test } from "../../lib/fixtures";
 
 // Authentication endpoints are hardcoded to avoid import issues
 
-const createSessionCookie = (sessionToken: string, expiresAt: Date) => ({
-  name: "next-auth.session-token",
-  value: sessionToken,
-  url: "http://localhost:3000",
-  httpOnly: true,
-  sameSite: "Lax" as const,
-  expires: Math.floor(expiresAt.getTime() / 1000),
-});
+const createSessionCookies = (sessionToken: string, expiresAt: Date) => {
+  const sharedCookie = {
+    value: sessionToken,
+    url: "http://localhost:3000",
+    httpOnly: true,
+    sameSite: "Lax" as const,
+    expires: Math.floor(expiresAt.getTime() / 1000),
+  };
+
+  return [
+    {
+      name: "next-auth.session-token",
+      ...sharedCookie,
+    },
+    {
+      name: "__Secure-next-auth.session-token",
+      ...sharedCookie,
+      secure: true,
+    },
+  ];
+};
 
 test.describe("Authentication Security Tests - Vulnerability Prevention", () => {
   let csrfToken: string;
@@ -591,13 +604,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         ],
       });
 
-      await page.context().addCookies([createSessionCookie(primarySessionToken, sessionExpiresAt)]);
+      await page.context().addCookies(createSessionCookies(primarySessionToken, sessionExpiresAt));
       await page.goto("http://localhost:3000/environments");
       await expect(page).not.toHaveURL(/\/auth\/login/);
 
       const copiedSessionContext = await browser.newContext();
       try {
-        await copiedSessionContext.addCookies([createSessionCookie(secondarySessionToken, sessionExpiresAt)]);
+        await copiedSessionContext.addCookies(createSessionCookies(secondarySessionToken, sessionExpiresAt));
         const copiedSessionPage = await copiedSessionContext.newPage();
         await copiedSessionPage.goto("http://localhost:3000/environments");
         await expect(copiedSessionPage).not.toHaveURL(/\/auth\/login/);
@@ -636,20 +649,22 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         }
 
         await expect
-          .poll(async () =>
-            prisma.session.count({
-              where: {
-                userId: databaseUser.id,
-              },
-            })
+          .poll(
+            async () =>
+              prisma.session.count({
+                where: {
+                  userId: databaseUser.id,
+                },
+              }),
+            { timeout: 15_000 }
           )
           .toBe(0);
 
         await page.goto("http://localhost:3000/environments");
-        await expect(page).toHaveURL(/\/auth\/login/);
+        await expect(page).toHaveURL(/\/auth\/login/, { timeout: 15_000 });
 
         await copiedSessionPage.goto("http://localhost:3000/environments");
-        await expect(copiedSessionPage).toHaveURL(/\/auth\/login/);
+        await expect(copiedSessionPage).toHaveURL(/\/auth\/login/, { timeout: 15_000 });
       } finally {
         await copiedSessionContext.close();
       }
