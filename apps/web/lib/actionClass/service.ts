@@ -21,6 +21,7 @@ const selectActionClass = {
   key: true,
   noCodeConfig: true,
   environmentId: true,
+  workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
 export const getActionClasses = reactCache(
