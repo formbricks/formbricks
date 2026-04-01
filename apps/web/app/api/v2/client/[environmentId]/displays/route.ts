@@ -4,8 +4,8 @@ import {
   ZDisplayCreateInputV2,
 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
@@ -22,33 +22,18 @@ const parseAndValidateDisplayInput = async (
   request: Request,
   environmentId: string
 ): Promise<TValidatedDisplayInputResult> => {
-  let jsonInput;
-
-  try {
-    jsonInput = await request.json();
-  } catch (error) {
-    return {
-      response: responses.badRequestResponse(
-        "Invalid JSON in request body",
-        { error: error instanceof Error ? error.message : "Unknown error occurred" },
-        true
-      ),
-    };
-  }
-
-  const inputValidation = ZDisplayCreateInputV2.safeParse({
-    ...jsonInput,
-    environmentId,
+  const inputValidation = await parseAndValidateJsonBody({
+    request,
+    schema: ZDisplayCreateInputV2,
+    buildInput: (jsonInput) => ({
+      ...(jsonInput !== null && typeof jsonInput === "object" ? jsonInput : {}),
+      environmentId,
+    }),
+    malformedJsonMessage: "Invalid JSON in request body",
   });
 
-  if (!inputValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
-    };
+  if ("response" in inputValidation) {
+    return inputValidation;
   }
 
   return { displayInputData: inputValidation.data };

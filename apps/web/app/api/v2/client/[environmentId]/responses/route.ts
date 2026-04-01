@@ -4,6 +4,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -46,21 +47,7 @@ const parseAndValidateResponseInput = async (
   request: Request,
   environmentId: string
 ): Promise<TValidatedResponseInputResult> => {
-  let responseInput;
-  try {
-    responseInput = await request.json();
-  } catch (error) {
-    return {
-      response: responses.badRequestResponse(
-        "Invalid JSON in request body",
-        { error: error instanceof Error ? error.message : "Unknown error occurred" },
-        true
-      ),
-    };
-  }
-
   const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
-  const responseInputValidation = ZResponseInputV2.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
     return {
@@ -72,14 +59,18 @@ const parseAndValidateResponseInput = async (
     };
   }
 
-  if (!responseInputValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(responseInputValidation.error),
-        true
-      ),
-    };
+  const responseInputValidation = await parseAndValidateJsonBody({
+    request,
+    schema: ZResponseInputV2,
+    buildInput: (jsonInput) => ({
+      ...(jsonInput !== null && typeof jsonInput === "object" ? jsonInput : {}),
+      environmentId,
+    }),
+    malformedJsonMessage: "Invalid JSON in request body",
+  });
+
+  if ("response" in responseInputValidation) {
+    return responseInputValidation;
   }
 
   return {

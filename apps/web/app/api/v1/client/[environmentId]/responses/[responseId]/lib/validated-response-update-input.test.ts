@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { getValidatedUpdateInput } from "./validated-update-input";
+import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
-describe("getValidatedUpdateInput", () => {
+describe("getValidatedResponseUpdateInput", () => {
   test("returns a bad request response for malformed JSON", async () => {
     const request = new Request("http://localhost/api/v1/client/test/responses/response-id", {
       method: "PUT",
@@ -11,7 +11,7 @@ describe("getValidatedUpdateInput", () => {
       body: "{invalid-json",
     });
 
-    const result = await getValidatedUpdateInput(request);
+    const result = await getValidatedResponseUpdateInput(request);
 
     expect("response" in result).toBe(true);
 
@@ -42,7 +42,7 @@ describe("getValidatedUpdateInput", () => {
       }),
     });
 
-    const result = await getValidatedUpdateInput(request);
+    const result = await getValidatedResponseUpdateInput(request);
 
     expect(result).toEqual({
       responseUpdateInput: {
@@ -62,7 +62,7 @@ describe("getValidatedUpdateInput", () => {
       }),
     });
 
-    const result = await getValidatedUpdateInput(request);
+    const result = await getValidatedResponseUpdateInput(request);
 
     expect("response" in result).toBe(true);
 

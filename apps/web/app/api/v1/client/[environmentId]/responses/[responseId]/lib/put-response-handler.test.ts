@@ -2,13 +2,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { updateResponseWithQuotaEvaluation } from "./lib/response";
-import { getValidatedUpdateInput } from "./lib/validated-update-input";
-import { putResponseHandler } from "./route";
-
-vi.mock("@/app/lib/api/with-api-logging", () => ({
-  withV1ApiWrapper: vi.fn(({ handler }) => handler),
-}));
+import { putResponseHandler } from "./put-response-handler";
+import { updateResponseWithQuotaEvaluation } from "./response";
+import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
 vi.mock("@/app/lib/pipelines", () => ({
   sendToPipeline: vi.fn(),
@@ -22,12 +18,12 @@ vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
 }));
 
-vi.mock("./lib/response", () => ({
+vi.mock("./response", () => ({
   updateResponseWithQuotaEvaluation: vi.fn(),
 }));
 
-vi.mock("./lib/validated-update-input", () => ({
-  getValidatedUpdateInput: vi.fn(),
+vi.mock("./validated-response-update-input", () => ({
+  getValidatedResponseUpdateInput: vi.fn(),
 }));
 
 describe("putResponseHandler", () => {
@@ -36,7 +32,7 @@ describe("putResponseHandler", () => {
   });
 
   test("rejects updates when the response survey does not belong to the requested environment", async () => {
-    vi.mocked(getValidatedUpdateInput).mockResolvedValue({
+    vi.mocked(getValidatedResponseUpdateInput).mockResolvedValue({
       responseUpdateInput: {
         data: {},
       },
