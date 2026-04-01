@@ -258,4 +258,15 @@ Formbricks ist eine freie, quelloffene und datenschutzorientierte Plattform für
 - Beitrag & Community: [Beitragen](https://formbricks.com/docs/developer-docs/contributing/get-started), [GitHub Discussions](https://github.com/formbricks/formbricks/discussions) und [Issues](https://github.com/formbricks/formbricks/issues)
 - Sicherheit & Lizenz: [`SECURITY.md`](./SECURITY.md) und [AGPLv3](https://github.com/formbricks/formbricks/blob/main/LICENSE)
 
+<a id="readme-es"></a>
+
+## Español
+
+Formbricks es una plataforma libre, de código abierto y centrada en la privacidad para encuestas y experience management. Permite recoger feedback durante todo el recorrido del usuario con encuestas dentro de la app, en sitios web, por enlace y por correo electrónico.
+
+- Sitio web y Cloud: [formbricks.com](https://formbricks.com/) y [empezar en Cloud](https://app.formbricks.com/auth/signup)
+- Self-Hosting: [documentación de despliegue](https://formbricks.com/docs/self-hosting/deployment)
+- Contribución y comunidad: [guía para contribuir](https://formbricks.com/docs/developer-docs/contributing/get-started), [GitHub Discussions](https://github.com/formbricks/formbricks/discussions) e [Issues](https://github.com/formbricks/formbricks/issues)
+- Seguridad y licencia: [`SECURITY.md`](./SECURITY.md) y [AGPLv3](https://github.com/formbricks/formbricks/blob/main/LICENSE)
+
 <p align="right"><a href="#top">🔼 Back to top</a></p>
