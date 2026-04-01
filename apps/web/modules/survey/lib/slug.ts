@@ -20,7 +20,7 @@ export interface TSurveyWithSlug {
   environment: {
     id: string;
     type: "production" | "development";
-    project: {
+    workspace: {
       id: string;
       name: string;
     };
@@ -80,7 +80,7 @@ export const getSurveysWithSlugsByOrganizationId = reactCache(
         where: {
           slug: { not: null },
           environment: {
-            project: { organizationId },
+            workspace: { organizationId },
           },
         },
         select: {
@@ -93,7 +93,7 @@ export const getSurveysWithSlugsByOrganizationId = reactCache(
             select: {
               id: true,
               type: true,
-              project: {
+              workspace: {
                 select: { id: true, name: true },
               },
             },

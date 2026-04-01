@@ -2,7 +2,7 @@ import type { TConfig } from "@/types/config";
 
 // ids
 export const mockEnvironmentId = "ggskhsue85p2xrxrc7x3qagg";
-export const mockProjectId = "f5kptre0saxmltl7ram364qt";
+export const mockWorkspaceId = "f5kptre0saxmltl7ram364qt";
 export const mockLanguageId = "n4ts6u7wy5lbn4q3jovikqot";
 export const mockSurveyId = "lz5m554yqh1i3moa3y230wei";
 export const mockActionClassId = "wypzu5qw7adgy66vq8s77tso";
@@ -30,7 +30,7 @@ export const mockConfig: TConfig = {
           displayOption: "displayMultiple",
           hiddenFields: [],
           delay: 5, // e.g. 5s
-          projectOverwrites: {},
+          workspaceOverwrites: {},
           languages: [
             {
               // SurveyLanguage fields
@@ -45,7 +45,7 @@ export const mockConfig: TConfig = {
                 alias: "en",
                 createdAt: "2025-01-01T10:00:00Z",
                 updatedAt: "2025-01-01T10:00:00Z",
-                projectId: mockProjectId,
+                workspaceId: mockWorkspaceId,
               },
             },
           ],
@@ -82,15 +82,15 @@ export const mockConfig: TConfig = {
           noCodeConfig: {},
         },
       ],
-      project: {
-        id: mockProjectId,
+      workspace: {
+        id: mockWorkspaceId,
         recontactDays: 14,
         clickOutsideClose: true,
         overlay: "none",
         placement: "bottomRight",
         inAppSurveyBranding: true,
         styling: {
-          // TProjectStyling
+          // TWorkspaceStyling
           allowStyleOverwrite: true,
           brandColor: { light: "#319795" },
         },

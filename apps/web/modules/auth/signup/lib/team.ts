@@ -16,7 +16,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
   const isOwnerOrManager = isOwner || isManager;
   try {
     for (const teamId of teamIds) {
-      const team = await getTeamProjectIds(teamId, invite.organizationId);
+      const team = await getTeamWorkspaceIds(teamId, invite.organizationId);
 
       if (!team) {
         logger.warn({ teamId, userId }, "Team no longer exists during invite acceptance");
@@ -41,20 +41,20 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
   }
 };
 
-export const getTeamProjectIds = reactCache(
+export const getTeamWorkspaceIds = reactCache(
   async (
     teamId: string,
     organizationId: string
-  ): Promise<{ projectTeams: { projectId: string }[] } | null> => {
+  ): Promise<{ workspaceTeams: { workspaceId: string }[] } | null> => {
     const team = await prisma.team.findUnique({
       where: {
         id: teamId,
         organizationId,
       },
       select: {
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
+            workspaceId: true,
           },
         },
       },

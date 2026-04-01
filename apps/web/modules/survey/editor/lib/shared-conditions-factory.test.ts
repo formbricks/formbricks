@@ -163,7 +163,7 @@ describe("shared-conditions-factory", () => {
     pin: null,
     endings: [],
     followUps: [],
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     displayPercentage: null,
   } as unknown as TSurvey;
 

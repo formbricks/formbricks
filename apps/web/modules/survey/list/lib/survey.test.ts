@@ -12,8 +12,8 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
-import { TProjectWithLanguages, TSurvey } from "../types/surveys";
+import { getWorkspaceWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/workspace";
+import { TSurvey, TWorkspaceWithLanguages } from "../types/surveys";
 // Import the module to be tested
 import {
   copySurveyToOtherEnvironment,
@@ -54,8 +54,8 @@ vi.mock("@/modules/survey/list/lib/environment", () => ({
   doesEnvironmentExist: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/list/lib/project", () => ({
-  getProjectWithLanguagesByEnvironmentId: vi.fn(),
+vi.mock("@/modules/survey/list/lib/workspace", () => ({
+  getWorkspaceWithLanguagesByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@paralleldrive/cuid2", () => ({
@@ -118,7 +118,7 @@ const resetMocks = () => {
   vi.mocked(buildOrderByClause).mockClear();
   vi.mocked(buildWhereClause).mockClear();
   vi.mocked(doesEnvironmentExist).mockClear();
-  vi.mocked(getProjectWithLanguagesByEnvironmentId).mockClear();
+  vi.mocked(getWorkspaceWithLanguagesByEnvironmentId).mockClear();
   vi.mocked(getOrganizationByEnvironmentId).mockClear();
   vi.mocked(createId).mockClear();
   vi.mocked(prisma.survey.findMany).mockReset();
@@ -489,7 +489,7 @@ const mockExistingSurveyDetails = {
   hiddenFields: { enabled: true, fieldIds: ["hf1"] },
   surveyClosedMessage: { enabled: false },
   singleUse: { enabled: false },
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   styling: { theme: {} },
   segment: null,
   followUps: [{ name: "Follow Up 1", trigger: {}, action: {} }],
@@ -524,15 +524,15 @@ const mockExistingSurveyDetails = {
 
 describe("copySurveyToOtherEnvironment", () => {
   const targetEnvironmentId = "env_target";
-  const sourceProjectId = "proj_source";
-  const targetProjectId = "proj_target";
+  const sourceWorkspaceId = "proj_source";
+  const targetWorkspaceId = "proj_target";
 
-  const mockSourceProject: TProjectWithLanguages = {
-    id: sourceProjectId,
+  const mockSourceWorkspace: TWorkspaceWithLanguages = {
+    id: sourceWorkspaceId,
     languages: [{ code: "en", alias: "English" }],
   };
-  const mockTargetProject: TProjectWithLanguages = {
-    id: targetProjectId,
+  const mockTargetWorkspace: TWorkspaceWithLanguages = {
+    id: targetWorkspaceId,
     languages: [{ code: "en", alias: "English" }],
   };
 
@@ -552,9 +552,9 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(createId).mockReturnValue("new_cuid2_id");
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockExistingSurveyDetails as any);
     vi.mocked(doesEnvironmentExist).mockResolvedValue(environmentId);
-    vi.mocked(getProjectWithLanguagesByEnvironmentId)
-      .mockResolvedValueOnce(mockSourceProject)
-      .mockResolvedValueOnce(mockTargetProject);
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId)
+      .mockResolvedValueOnce(mockSourceWorkspace)
+      .mockResolvedValueOnce(mockTargetWorkspace);
     vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
@@ -617,12 +617,12 @@ describe("copySurveyToOtherEnvironment", () => {
   });
 
   test("should copy survey to the same environment successfully", async () => {
-    vi.mocked(getProjectWithLanguagesByEnvironmentId).mockReset();
-    vi.mocked(getProjectWithLanguagesByEnvironmentId).mockResolvedValue(mockSourceProject);
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId).mockReset();
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId).mockResolvedValue(mockSourceWorkspace);
 
     await copySurveyToOtherEnvironment(environmentId, surveyId, environmentId, userId);
 
-    expect(getProjectWithLanguagesByEnvironmentId).toHaveBeenCalledTimes(1);
+    expect(getWorkspaceWithLanguagesByEnvironmentId).toHaveBeenCalledTimes(1);
     expect(prisma.survey.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -672,9 +672,9 @@ describe("copySurveyToOtherEnvironment", () => {
       segment: { id: "seg_public", title: "Public Segment", isPrivate: false, filters: [] },
     };
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(surveyWithPublicSegment as any);
-    vi.mocked(getProjectWithLanguagesByEnvironmentId)
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId)
       .mockReset() // for same env part
-      .mockResolvedValueOnce(mockSourceProject);
+      .mockResolvedValueOnce(mockSourceWorkspace);
 
     // Case 1: Same environment
     await copySurveyToOtherEnvironment(environmentId, surveyId, environmentId, userId); // target is same
@@ -691,9 +691,9 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(createId).mockReturnValue("new_cuid2_id");
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(surveyWithPublicSegment as any);
     vi.mocked(doesEnvironmentExist).mockResolvedValue(environmentId);
-    vi.mocked(getProjectWithLanguagesByEnvironmentId)
-      .mockResolvedValueOnce(mockSourceProject)
-      .mockResolvedValueOnce(mockTargetProject);
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId)
+      .mockResolvedValueOnce(mockSourceWorkspace)
+      .mockResolvedValueOnce(mockTargetWorkspace);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null); // No existing public segment with same title in target
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
@@ -725,9 +725,9 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(createId).mockReturnValue("new_cuid2_id");
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(surveyWithPublicSegment as any);
     vi.mocked(doesEnvironmentExist).mockResolvedValue(environmentId);
-    vi.mocked(getProjectWithLanguagesByEnvironmentId)
-      .mockResolvedValueOnce(mockSourceProject)
-      .mockResolvedValueOnce(mockTargetProject);
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId)
+      .mockResolvedValueOnce(mockSourceWorkspace)
+      .mockResolvedValueOnce(mockTargetWorkspace);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue({ id: "existing_target_seg" } as any); // Segment with same title EXISTS
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
@@ -758,11 +758,11 @@ describe("copySurveyToOtherEnvironment", () => {
     ).rejects.toThrow(new ResourceNotFoundError("Environment", environmentId));
   });
 
-  test("should throw ResourceNotFoundError if source project not found", async () => {
-    vi.mocked(getProjectWithLanguagesByEnvironmentId).mockReset().mockResolvedValueOnce(null);
+  test("should throw ResourceNotFoundError if source workspace not found", async () => {
+    vi.mocked(getWorkspaceWithLanguagesByEnvironmentId).mockReset().mockResolvedValueOnce(null);
     await expect(
       copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId)
-    ).rejects.toThrow(new ResourceNotFoundError("Project", environmentId));
+    ).rejects.toThrow(new ResourceNotFoundError("Workspace", environmentId));
   });
 
   test("should throw ResourceNotFoundError if existing survey not found", async () => {

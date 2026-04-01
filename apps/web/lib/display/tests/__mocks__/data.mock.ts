@@ -54,6 +54,6 @@ export const mockEnvironment: TEnvironment = {
   createdAt: new Date(),
   updatedAt: new Date(),
   type: "production",
-  projectId: mockId,
+  workspaceId: mockId,
   appSetupCompleted: false,
 };

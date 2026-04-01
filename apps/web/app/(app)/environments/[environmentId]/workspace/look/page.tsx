@@ -1,3 +1,3 @@
-import { ProjectLookSettingsPage } from "@/modules/projects/settings/look/page";
+import { WorkspaceLookSettingsPage } from "@/modules/workspaces/settings/look/page";
 
-export default ProjectLookSettingsPage;
+export default WorkspaceLookSettingsPage;

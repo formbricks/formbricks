@@ -22,8 +22,11 @@ export const GET = async (request: NextRequest) =>
             environmentId: permission.environmentId,
             environmentType: permission.environmentType,
             permissions: permission.permission,
-            projectId: permission.projectId,
-            projectName: permission.projectName,
+            workspaceId: permission.workspaceId,
+            workspaceName: permission.workspaceName,
+            // Backwards compat: old consumers expect project fields
+            projectId: permission.workspaceId,
+            projectName: permission.workspaceName,
           })),
           organizationId: authentication.organizationId,
           organizationAccess: authentication.organizationAccess,

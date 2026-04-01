@@ -7,13 +7,13 @@ export const organizationBilling: TOrganizationBilling = {
   stripeCustomerId: "cus_P78901234567890123456789",
   limits: {
     monthly: { responses: 100 },
-    projects: 1,
+    workspaces: 1,
   },
   usageCycleAnchor: new Date(),
 };
 
 export const organizationEnvironments = {
-  projects: [
+  workspaces: [
     {
       environments: [{ id: "w6pljnz4l9ljgmyl51xv8ah8" }, { id: "v5sfypq4ib6vjelccho23lmn" }],
     },
