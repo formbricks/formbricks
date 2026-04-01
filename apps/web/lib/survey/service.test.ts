@@ -36,6 +36,10 @@ import {
   updateSurveyInternal,
 } from "./service";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn().mockResolvedValue({

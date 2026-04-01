@@ -8,6 +8,10 @@ import {
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "../contact-attribute-key";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),

@@ -8,6 +8,10 @@ import { TWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     webhook: {

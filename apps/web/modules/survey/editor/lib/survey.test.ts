@@ -10,6 +10,10 @@ import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/mod
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { checkTriggersValidity, handleTriggerUpdates, updateSurvey, updateSurveyDraft } from "./survey";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
   prisma: {

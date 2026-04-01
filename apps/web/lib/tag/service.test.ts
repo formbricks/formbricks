@@ -6,6 +6,10 @@ import { TTag } from "@formbricks/types/tags";
 import { TagError } from "@/modules/workspaces/settings/types/tag";
 import { createTag, getTag, getTagsByEnvironmentId } from "./service";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     tag: {

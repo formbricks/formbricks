@@ -7,6 +7,10 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn((inputs: [unknown, unknown][]) =>
     inputs.map((input: [unknown, unknown]) => input[0])
