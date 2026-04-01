@@ -669,6 +669,7 @@ model Workspace {
   workspaceTeams                    WorkspaceTeam[]
   customHeadScripts                 String? // Custom HTML scripts for link surveys (self-hosted only)
   feedbackRecordDirectoryWorkspaces FeedbackRecordDirectoryWorkspace[]
+  apiKeyEnvironments                ApiKeyEnvironment[]
 
   // Direct resource relations (for environment deprecation migration)
   surveys              Survey[]
@@ -679,7 +680,6 @@ model Workspace {
   tags                 Tag[]
   segments             Segment[]
   integrations         Integration[]
-  apiKeyEnvironments   ApiKeyEnvironment[]
 
   @@unique([organizationId, name])
 }
