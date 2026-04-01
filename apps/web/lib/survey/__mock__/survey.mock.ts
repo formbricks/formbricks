@@ -19,6 +19,7 @@ const selectContact = {
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  workspaceId: true,
   attributes: {
     select: {
       value: true,
@@ -41,6 +42,7 @@ const commonMockProperties = {
   createdAt: currentDate,
   updatedAt: currentDate,
   environmentId: mockId,
+  workspaceId: null,
 };
 
 type SurveyMock = Prisma.SurveyGetPayload<{

@@ -328,6 +328,7 @@
     "or": "或",
     "organization": "組織",
     "organization_id": "組織 ID",
+    "organization_not_found": "找不到組織",
     "organization_settings": "組織設定",
     "other": "其他",
     "other_filters": "其他篩選條件",
