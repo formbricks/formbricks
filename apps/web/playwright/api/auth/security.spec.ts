@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { type BrowserContext, expect } from "@playwright/test";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -565,6 +565,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const userName = `Session Reset User ${uniqueId}`;
       const userEmail = `session-reset-${uniqueId}@example.com`;
       const newPassword = "Password123";
+      const isContextAuthenticated = async (context: BrowserContext) => {
+        const sessionResponse = await context.request.get("/api/auth/session");
+        const sessionPayload = await sessionResponse.json();
+
+        return Boolean(sessionPayload?.user?.id);
+      };
+
       await users.create({
         name: userName,
         email: userEmail,
@@ -605,15 +612,17 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       });
 
       await page.context().addCookies(createSessionCookies(primarySessionToken, sessionExpiresAt));
-      await page.goto("http://localhost:3000/environments");
+      await page.goto("http://localhost:3000/");
       await expect(page).not.toHaveURL(/\/auth\/login/);
+      await expect.poll(() => isContextAuthenticated(page.context())).toBe(true);
 
       const copiedSessionContext = await browser.newContext();
       try {
         await copiedSessionContext.addCookies(createSessionCookies(secondarySessionToken, sessionExpiresAt));
         const copiedSessionPage = await copiedSessionContext.newPage();
-        await copiedSessionPage.goto("http://localhost:3000/environments");
+        await copiedSessionPage.goto("http://localhost:3000/");
         await expect(copiedSessionPage).not.toHaveURL(/\/auth\/login/);
+        await expect.poll(() => isContextAuthenticated(copiedSessionContext)).toBe(true);
 
         const rawResetToken = randomBytes(32).toString("base64url");
         const tokenHash = createHash("sha256").update(rawResetToken).digest("hex");
@@ -660,10 +669,15 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
           )
           .toBe(0);
 
-        await page.goto("http://localhost:3000/environments");
+        await expect.poll(() => isContextAuthenticated(page.context()), { timeout: 15_000 }).toBe(false);
+        await expect
+          .poll(() => isContextAuthenticated(copiedSessionContext), { timeout: 15_000 })
+          .toBe(false);
+
+        await page.goto("http://localhost:3000/");
         await expect(page).toHaveURL(/\/auth\/login/, { timeout: 15_000 });
 
-        await copiedSessionPage.goto("http://localhost:3000/environments");
+        await copiedSessionPage.goto("http://localhost:3000/");
         await expect(copiedSessionPage).toHaveURL(/\/auth\/login/, { timeout: 15_000 });
       } finally {
         await copiedSessionContext.close();
