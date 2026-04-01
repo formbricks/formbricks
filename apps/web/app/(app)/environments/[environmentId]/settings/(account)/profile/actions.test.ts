@@ -13,6 +13,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   return {
     ...actual,
     EMAIL_VERIFICATION_DISABLED: false,
+    PASSWORD_RESET_DISABLED: false,
   };
 });
 
