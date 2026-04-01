@@ -8,6 +8,7 @@ import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { redactPII } from "@/lib/utils/logger-helpers";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
@@ -360,6 +361,14 @@ export const handleSsoCallback = async ({
 
     // send new user to brevo
     createBrevoCustomer({ id: userProfile.id, email: userProfile.email });
+
+    capturePostHogEvent(userProfile.id, "user_signed_up", {
+      auth_provider: provider,
+      email_domain: userProfile.email.split("@")[1],
+      signup_source: callbackUrl?.includes("token=") ? "invite" : "direct",
+      invite_organization_id: organization?.id ?? null,
+    });
+
     await syncSsoAccount(userProfile.id, account);
 
     if (isMultiOrgEnabled) {

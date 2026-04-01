@@ -6,6 +6,7 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -144,6 +145,17 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     const result = await updateSurvey(parsedInput);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
+
+    if (oldObject?.status !== "inProgress" && result.status === "inProgress") {
+      capturePostHogEvent(ctx.user.id, "survey_published", {
+        survey_id: result.id,
+        survey_type: result.type,
+        question_count: result.questions?.length ?? 0,
+        organization_id: organizationId,
+        has_targeting: result.segment ? !result.segment.isPrivate : false,
+        language_count: result.languages?.length ?? 0,
+      });
+    }
 
     revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
 
