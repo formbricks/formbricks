@@ -31,7 +31,7 @@ export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
 
-    // Resolve: accepts either an environmentId (old SDK) or a projectId (new SDK)
+    // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
     const resolved = await resolveClientApiIds(params.environmentId);
     if (!resolved) {
       return {

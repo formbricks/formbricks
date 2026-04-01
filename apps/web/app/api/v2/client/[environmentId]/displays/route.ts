@@ -27,7 +27,7 @@ export const OPTIONS = async (): Promise<Response> => {
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
 
-  // Resolve: accepts either an environmentId (old SDK) or a projectId (new SDK)
+  // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
   const resolved = await resolveClientApiIds(params.environmentId);
   if (!resolved) {
     return responses.notFoundResponse("Environment", params.environmentId);
