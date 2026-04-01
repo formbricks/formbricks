@@ -140,6 +140,7 @@ describe("Response Lib", () => {
               updatedAt: new Date(),
               name: "important",
               environmentId: "env123",
+              workspaceId: null,
             },
           },
         ],
@@ -163,6 +164,7 @@ describe("Response Lib", () => {
               updatedAt: mockPrismaResponse.tags[0].tag.updatedAt,
               name: "important",
               environmentId: "env123",
+              workspaceId: null,
             },
           ],
         });
@@ -184,6 +186,7 @@ describe("Response Lib", () => {
                   updatedAt: true,
                   name: true,
                   environmentId: true,
+                  workspaceId: true,
                 },
               },
             },
