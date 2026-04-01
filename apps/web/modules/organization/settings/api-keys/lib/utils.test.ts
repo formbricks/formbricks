@@ -9,8 +9,8 @@ describe("hasPermission", () => {
       {
         environmentId: envId,
         environmentType: "production",
-        projectId: "project1",
-        projectName: "Project One",
+        workspaceId: "workspace1",
+        workspaceName: "Workspace One",
         permission: "manage",
       },
     ];
@@ -26,8 +26,8 @@ describe("hasPermission", () => {
       {
         environmentId: envId,
         environmentType: "production",
-        projectId: "project1",
-        projectName: "Project One",
+        workspaceId: "workspace1",
+        workspaceName: "Workspace One",
         permission: "write",
       },
     ];
@@ -43,8 +43,8 @@ describe("hasPermission", () => {
       {
         environmentId: envId,
         environmentType: "production",
-        projectId: "project1",
-        projectName: "Project One",
+        workspaceId: "workspace1",
+        workspaceName: "Workspace One",
         permission: "read",
       },
     ];
@@ -60,8 +60,8 @@ describe("hasPermission", () => {
       {
         environmentId: "other",
         environmentType: "production",
-        projectId: "project1",
-        projectName: "Project One",
+        workspaceId: "workspace1",
+        workspaceName: "Workspace One",
         permission: "manage",
       },
     ];
@@ -75,8 +75,8 @@ describe("hasPermission", () => {
       {
         environmentId: "other",
         environmentType: "production",
-        projectId: "project1",
-        projectName: "Project One",
+        workspaceId: "workspace1",
+        workspaceName: "Workspace One",
         permission: "unknown" as any,
       },
     ];

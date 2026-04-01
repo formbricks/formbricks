@@ -47,7 +47,7 @@ const baseMockSurvey: TJsEnvironmentStateSurvey = {
   languages: [],
   segment: null,
   hiddenFields: { enabled: false, fieldIds: [] },
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   triggers: [],
   displayOption: "displayOnce",
 } as unknown as TJsEnvironmentStateSurvey;
@@ -62,7 +62,7 @@ describe("getDefaultLanguageCode", () => {
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
   };
   const mockSurveyLanguageEs: TSurveyLanguage = {
@@ -74,7 +74,7 @@ describe("getDefaultLanguageCode", () => {
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
   };
 
@@ -455,7 +455,7 @@ describe("isRTLLanguage", () => {
             alias: null,
             createdAt: new Date(),
             updatedAt: new Date(),
-            projectId: "p1",
+            workspaceId: "p1",
           },
           default: true,
           enabled: true,
@@ -477,7 +477,7 @@ describe("isRTLLanguage", () => {
             alias: null,
             createdAt: new Date(),
             updatedAt: new Date(),
-            projectId: "p1",
+            workspaceId: "p1",
           },
           default: true,
           enabled: true,

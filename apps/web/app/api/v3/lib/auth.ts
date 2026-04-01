@@ -6,7 +6,7 @@ import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import type { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
@@ -30,7 +30,7 @@ function apiKeyPermissionAllows(permission: ApiKeyPermission, minPermission: TTe
 /**
  * Require session and workspace access. workspaceId is resolved via the V3 workspace-context layer.
  * Returns a Response (401 or 403) on failure, or the resolved workspace context on success so callers
- * use internal IDs (environmentId, projectId, organizationId) without resolving again.
+ * use internal IDs (environmentId, workspaceId, organizationId) without resolving again.
  * We use 403 (not 404) when the workspace is not found to avoid leaking resource existence.
  */
 export async function requireSessionWorkspaceAccess(
@@ -52,16 +52,16 @@ export async function requireSessionWorkspaceAccess(
   const log = logger.withContext({ requestId, workspaceId });
 
   try {
-    // Resolve workspaceId → environmentId, projectId, organizationId (single place to change when Workspace exists).
+    // Resolve workspaceId → environmentId, workspaceId, organizationId (single place to change when Workspace exists).
     const context = await resolveV3WorkspaceContext(workspaceId);
 
-    // Org + project-team access; we use internal IDs from context.
+    // Org + workspace-team access; we use internal IDs from context.
     await checkAuthorizationUpdated({
       userId,
       organizationId: context.organizationId,
       access: [
         { type: "organization", roles: ["owner", "manager"] },
-        { type: "projectTeam", projectId: context.projectId, minPermission },
+        { type: "workspaceTeam", workspaceId: context.workspaceId, minPermission },
       ],
     });
 

@@ -1,4 +1,4 @@
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { CalendarClockIcon, CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,11 +10,11 @@ import footerLogo from "../lib/footerlogo.svg";
 export const SurveyInactive = async ({
   status,
   surveyClosedMessage,
-  project,
+  workspace,
 }: {
   status: "paused" | "completed" | "link invalid" | "response submitted" | "link expired";
   surveyClosedMessage?: TSurveyClosedMessage | null;
-  project?: Pick<Project, "linkSurveyBranding">;
+  workspace?: Pick<Workspace, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
   const icons = {
@@ -37,7 +37,7 @@ export const SurveyInactive = async ({
     status !== "link invalid" &&
     status !== "link expired" &&
     status !== "response submitted" &&
-    ((status !== "paused" && status !== "completed") || project?.linkSurveyBranding || !project) &&
+    ((status !== "paused" && status !== "completed") || workspace?.linkSurveyBranding || !workspace) &&
     !(status === "completed" && surveyClosedMessage);
 
   return (
@@ -60,7 +60,7 @@ export const SurveyInactive = async ({
           </Button>
         )}
       </div>
-      {(!project || project.linkSurveyBranding) && (
+      {(!workspace || workspace.linkSurveyBranding) && (
         <div>
           <Link href="https://formbricks.com">
             <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />

@@ -1,3 +1,3 @@
-import { ProjectLookSettingsLoading } from "@/modules/projects/settings/look/loading";
+import { WorkspaceLookSettingsLoading } from "@/modules/workspaces/settings/look/loading";
 
-export default ProjectLookSettingsLoading;
+export default WorkspaceLookSettingsLoading;

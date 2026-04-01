@@ -25,8 +25,8 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
         "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
     },
     {
-      key: "projects",
-      labelKey: t("environments.settings.enterprise.license_feature_projects"),
+      key: "workspaces",
+      labelKey: t("environments.settings.enterprise.license_feature_workspaces"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/license",
     },
     {

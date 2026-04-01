@@ -8,7 +8,7 @@ export const getOrganizationBillingByEnvironmentId = reactCache(
     try {
       const organization = await prisma.organization.findFirst({
         where: {
-          projects: {
+          workspaces: {
             some: {
               environments: {
                 some: {

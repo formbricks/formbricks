@@ -7,8 +7,8 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserProjectEnvironmentsByOrganizationIds } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
+import { getUserWorkspaceEnvironmentsByOrganizationIds } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
@@ -35,13 +35,13 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  const projectsByOrg = await getUserProjectEnvironmentsByOrganizationIds(
+  const workspacesByOrg = await getUserWorkspaceEnvironmentsByOrganizationIds(
     userOrganizations.map((org) => org.id),
     user.id
   );
 
-  // Flatten all environments from all projects across all organizations
-  const allEnvironments = projectsByOrg.flatMap((project) => project.environments);
+  // Flatten all environments from all workspaces across all organizations
+  const allEnvironments = workspacesByOrg.flatMap((workspace) => workspace.environments);
 
   // Find first production environment and collect all other environment IDs in one pass
   const { firstProductionEnvironmentId, otherEnvironmentIds } = allEnvironments.reduce(

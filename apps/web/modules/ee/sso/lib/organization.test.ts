@@ -34,7 +34,7 @@ describe("getFirstOrganization", () => {
           monthly: {
             responses: 1000,
           },
-          projects: 3,
+          workspaces: 3,
         },
       },
       isAIEnabled: false,
