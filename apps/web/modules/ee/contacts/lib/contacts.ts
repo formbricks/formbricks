@@ -99,6 +99,7 @@ const selectContact = {
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  workspaceId: true,
   attributes: {
     select: {
       value: true,

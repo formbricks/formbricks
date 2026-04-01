@@ -56,6 +56,7 @@ export const selectSegment = {
   title: true,
   description: true,
   environmentId: true,
+  workspaceId: true,
   filters: true,
   isPrivate: true,
   surveys: {

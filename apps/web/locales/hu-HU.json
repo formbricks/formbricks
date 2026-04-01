@@ -328,6 +328,7 @@
     "or": "vagy",
     "organization": "Szervezet",
     "organization_id": "Szervezetazonosító",
+    "organization_not_found": "A szervezet nem található",
     "organization_settings": "Szervezet beállításai",
     "other": "Egyéb",
     "other_filters": "Egyéb szűrők",

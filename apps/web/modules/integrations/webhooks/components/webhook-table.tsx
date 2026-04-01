@@ -27,6 +27,7 @@ export const WebhookTable = ({
   const { t } = useTranslation();
   const [activeWebhook, setActiveWebhook] = useState<Webhook>({
     environmentId: environment.id,
+    workspaceId: null,
     id: "",
     name: "",
     url: "",

@@ -4,15 +4,15 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
 // Table names are from a hardcoded const array, not user input.
 // $executeRawUnsafe is required because Postgres does not support parameterized identifiers.
 const TABLES_TO_BACKFILL = [
-  "Survey",
-  "Contact",
   "ActionClass",
-  "ContactAttributeKey",
-  "Webhook",
-  "Tag",
-  "Segment",
-  "Integration",
   "ApiKeyEnvironment",
+  "Contact",
+  "ContactAttributeKey",
+  "Integration",
+  "Segment",
+  "Survey",
+  "Tag",
+  "Webhook",
 ] as const;
 
 export const backfillWorkspaceId: MigrationScript = {
@@ -21,6 +21,7 @@ export const backfillWorkspaceId: MigrationScript = {
   name: "20260401000001_backfill_workspace_id",
   run: async ({ tx }) => {
     for (const table of TABLES_TO_BACKFILL) {
+      logger.info(`Backfilling ${table}`);
       const updatedRows = await tx.$executeRawUnsafe(`
         UPDATE "${table}" t
         SET "workspaceId" = e."workspaceId"

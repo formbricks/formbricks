@@ -45,6 +45,7 @@ export function CreateSegmentModal({
     isPrivate: false,
     filters: [],
     environmentId,
+    workspaceId: null,
     id: "",
     surveys: [],
     createdAt: new Date(),
