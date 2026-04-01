@@ -385,6 +385,24 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
 };
 
+const surveySummaryUrlPattern = /\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/;
+
+export const publishCurrentSurveyAsLink = async (page: Page, timeout = 60000): Promise<void> => {
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+  await page.locator("#howToSendCardTrigger").click();
+  const linkOption = page.locator("#howToSendCardOption-link");
+  await expect(linkOption).toBeVisible();
+  await linkOption.click();
+
+  await expect(page.locator("#link")).toHaveAttribute("data-state", "checked", { timeout: 15000 });
+
+  const publishButton = page.getByRole("button", { name: "Publish" });
+  await expect(publishButton).toBeEnabled({ timeout: 15000 });
+
+  await Promise.all([page.waitForURL(surveySummaryUrlPattern, { timeout }), publishButton.click()]);
+};
+
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 

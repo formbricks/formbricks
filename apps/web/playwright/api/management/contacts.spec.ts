@@ -4,15 +4,9 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Single Contact Creation", () => {
   test("Create and Test Contact Creation via API", async ({ page, users, request }) => {
-    let environmentId: string;
-    let apiKey: string;
-
-    try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
-    } catch (error) {
-      console.error("Error during login and getting API key:", error);
-      throw error;
-    }
+    const { environmentId, apiKey } = await loginAndGetApiKey(page, users, {
+      enabledEntitlements: ["contacts"],
+    });
 
     const baseEmail = `test-${Date.now()}`;
 

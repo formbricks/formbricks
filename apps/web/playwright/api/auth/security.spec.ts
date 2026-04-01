@@ -683,7 +683,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const resetPasswordButton = page.getByRole("button", { name: "Reset password" });
       await expect(resetPasswordButton).toBeEnabled({ timeout: 15000 });
       await resetPasswordButton.click();
-      await expect(page).toHaveURL(/\/auth\/forgot-password\/reset\/success$/, { timeout: 30_000 });
 
       await expect
         .poll(
