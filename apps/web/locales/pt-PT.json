@@ -328,6 +328,7 @@
     "or": "ou",
     "organization": "Organização",
     "organization_id": "ID da Organização",
+    "organization_not_found": "Organização não encontrada",
     "organization_settings": "Configurações da Organização",
     "other": "Outro",
     "other_filters": "Outros Filtros",
