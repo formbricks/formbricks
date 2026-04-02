@@ -1,5 +1,6 @@
 import { PipelineTriggers } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import {
   PIPELINE_RETRY_BASE_DELAY_MS,
@@ -96,7 +97,31 @@ const createMockRedis = (): TMockRedis => {
       }
       return before - delayed.length;
     }),
-    eval: vi.fn(async () => 1),
+    eval: vi.fn(async (_script: string, options?: { keys?: string[]; arguments?: string[] }) => {
+      const keys = options?.keys ?? [];
+
+      if (keys.length === 2) {
+        const maxScore = Number(options?.arguments?.[0] ?? Date.now());
+        const readyJobs = delayed
+          .filter((entry) => entry.score >= 0 && entry.score <= maxScore)
+          .sort((left, right) => left.score - right.score);
+
+        if (readyJobs.length === 0) {
+          return 0;
+        }
+
+        for (let index = delayed.length - 1; index >= 0; index--) {
+          if (delayed[index].score >= 0 && delayed[index].score <= maxScore) {
+            delayed.splice(index, 1);
+          }
+        }
+
+        pending.push(...readyJobs.map((entry) => entry.value));
+        return readyJobs.length;
+      }
+
+      return 1;
+    }),
   };
 
   return { pending, delayed, client };
@@ -241,5 +266,59 @@ describe("pipeline-queue", () => {
         "x-api-key": "test-cron-secret",
       },
     });
+  });
+
+  test("moves ready delayed jobs into the pending queue before processing", async () => {
+    const mockRedis = createMockRedis();
+
+    mockGetRedisClient.mockResolvedValue(mockRedis.client);
+    mockTryLock.mockResolvedValue({ ok: true, data: true });
+
+    const queuedJob = await enqueuePipelineJob(createPipelineInput("response-delayed"));
+    const serializedJob = mockRedis.pending.pop();
+
+    expect(serializedJob).toBeDefined();
+
+    mockRedis.delayed.push({
+      score: Date.now() - 1,
+      value: serializedJob!,
+    });
+
+    const processJob = vi.fn().mockResolvedValue(undefined);
+
+    const result = await drainPipelineQueue({ processJob });
+
+    expect(result.movedReadyJobs).toBe(1);
+    expect(processJob).toHaveBeenCalledWith(expect.objectContaining({ jobId: queuedJob.jobId }));
+  });
+
+  test("logs non-2xx responses from the drain trigger endpoint", async () => {
+    const mockRedis = createMockRedis();
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response("misconfigured cron secret", {
+        status: 401,
+        statusText: "Unauthorized",
+      })
+    );
+
+    mockGetRedisClient.mockResolvedValue(mockRedis.client);
+    mockTryLock.mockResolvedValue({ ok: true, data: true });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await enqueuePipelineJob(createPipelineInput("response-1"));
+
+    const processJob = vi.fn().mockRejectedValue(new Error("boom"));
+
+    await drainPipelineQueue({ processJob });
+    await vi.advanceTimersByTimeAsync(PIPELINE_RETRY_BASE_DELAY_MS);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 401,
+        statusText: "Unauthorized",
+        responseBody: "misconfigured cron secret",
+      }),
+      "Pipeline drain trigger returned non-2xx status"
+    );
   });
 });

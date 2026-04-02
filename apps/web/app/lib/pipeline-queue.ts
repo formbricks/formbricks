@@ -87,14 +87,28 @@ const triggerPipelineDrainFetch = async (): Promise<void> => {
     return;
   }
 
-  await fetch(`${WEBAPP_URL}/api/pipeline`, {
+  const response = await fetch(`${WEBAPP_URL}/api/pipeline`, {
     method: "POST",
     headers: {
       "x-api-key": CRON_SECRET,
     },
   }).catch((error) => {
     logger.error({ error }, "Failed to trigger pipeline drain");
+    return null;
   });
+
+  if (response && !response.ok) {
+    const responseBody = await response.text().catch(() => undefined);
+
+    logger.warn(
+      {
+        status: response.status,
+        statusText: response.statusText,
+        responseBody: responseBody?.slice(0, 500),
+      },
+      "Pipeline drain trigger returned non-2xx status"
+    );
+  }
 };
 
 const schedulePipelineDrain = (delayMs: number): void => {
@@ -127,14 +141,25 @@ const schedulePipelineDrain = (delayMs: number): void => {
 };
 
 const moveReadyDelayedJobs = async (redis: TPipelineRedisClient): Promise<number> => {
-  const readyJobs = await redis.zRangeByScore(PIPELINE_QUEUE_KEYS.delayed, 0, Date.now());
+  const movedJobs = await redis.eval(
+    `
+      local jobs = redis.call("ZRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+      if #jobs == 0 then
+        return 0
+      end
 
-  for (const readyJob of readyJobs) {
-    await redis.zRem(PIPELINE_QUEUE_KEYS.delayed, readyJob);
-    await redis.rPush(PIPELINE_QUEUE_KEYS.pending, readyJob);
-  }
+      redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+      redis.call("RPUSH", KEYS[2], unpack(jobs))
 
-  return readyJobs.length;
+      return #jobs
+    `,
+    {
+      keys: [PIPELINE_QUEUE_KEYS.delayed, PIPELINE_QUEUE_KEYS.pending],
+      arguments: [String(Date.now())],
+    }
+  );
+
+  return Number(movedJobs ?? 0);
 };
 
 const popPendingJobs = async (

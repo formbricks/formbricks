@@ -197,7 +197,23 @@ describe("processPipelineJob", () => {
         surveyId: baseJob.surveyId,
       },
     });
-    expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              memberships: {
+                some: expect.objectContaining({
+                  role: {
+                    in: ["owner", "manager"],
+                  },
+                }),
+              },
+            }),
+          ]),
+        }),
+      })
+    );
     expect(handleIntegrations).toHaveBeenCalledTimes(1);
     expect(sendFollowUpsForResponse).toHaveBeenCalledWith(baseJob.response.id);
     expect(sendResponseFinishedEmail).toHaveBeenCalledWith(
@@ -217,6 +233,59 @@ describe("processPipelineJob", () => {
       },
     });
     expect(queueAuditEvent).toHaveBeenCalledTimes(1);
+  });
+
+  test("logs webhook delivery failures for non-2xx responses", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("upstream error", {
+          status: 500,
+          statusText: "Internal Server Error",
+        })
+      )
+    );
+
+    await processPipelineJob(baseJob);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.any(Error),
+        webhookId: "webhook_1",
+        url: "https://example.com/webhook",
+      }),
+      "Webhook call failed"
+    );
+  });
+
+  test("awaits metering completion before finishing responseCreated jobs", async () => {
+    let resolveMeterEvent: (() => void) | undefined;
+    vi.mocked(recordResponseCreatedMeterEvent).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveMeterEvent = resolve;
+        })
+    );
+
+    const jobPromise = processPipelineJob(baseJob);
+
+    await vi.waitFor(() => {
+      expect(recordResponseCreatedMeterEvent).toHaveBeenCalledTimes(1);
+    });
+
+    let jobSettled = false;
+    void jobPromise.then(() => {
+      jobSettled = true;
+    });
+
+    await Promise.resolve();
+
+    expect(jobSettled).toBe(false);
+
+    resolveMeterEvent?.();
+
+    await jobPromise;
+    expect(sendTelemetryEvents).toHaveBeenCalledTimes(1);
   });
 });
 

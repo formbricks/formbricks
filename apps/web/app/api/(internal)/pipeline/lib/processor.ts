@@ -124,9 +124,18 @@ const getUsersWithNotifications = async (environmentId: string, surveyId: string
       OR: [
         {
           memberships: {
-            every: {
+            some: {
               role: {
                 in: ["owner", "manager"],
+              },
+              organization: {
+                projects: {
+                  some: {
+                    environments: {
+                      some: { id: environmentId },
+                    },
+                  },
+                },
               },
             },
           },
@@ -159,11 +168,33 @@ const getUsersWithNotifications = async (environmentId: string, surveyId: string
     select: { email: true, locale: true },
   });
 
-const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number = 5000): Promise<Response> =>
-  Promise.race([
-    fetch(url, options),
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs)),
-  ]);
+const fetchWithTimeout = async (
+  url: string,
+  options: RequestInit,
+  timeoutMs: number = 5000
+): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const abortFromParentSignal = () => controller.abort(options.signal?.reason);
+
+  options.signal?.addEventListener("abort", abortFromParentSignal);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError" && !options.signal?.aborted) {
+      throw new Error(`Webhook request timed out after ${timeoutMs}ms`);
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    options.signal?.removeEventListener("abort", abortFromParentSignal);
+  }
+};
 
 export const isPipelinePoolExhaustionError = (error: unknown): boolean => {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2024") {
@@ -223,13 +254,22 @@ const createWebhookPromises = (
     }
 
     return validateWebhookUrl(webhook.url)
-      .then(() =>
-        fetchWithTimeout(webhook.url, {
+      .then(async () => {
+        const webhookResponse = await fetchWithTimeout(webhook.url, {
           method: "POST",
           headers: requestHeaders,
           body,
-        })
-      )
+        });
+
+        if (!webhookResponse.ok) {
+          const responseBody = await webhookResponse.text().catch(() => undefined);
+          throw new Error(
+            `Webhook ${webhook.id} returned ${webhookResponse.status} ${webhookResponse.statusText}${
+              responseBody ? `: ${responseBody.slice(0, 500)}` : ""
+            }`
+          );
+        }
+      })
       .catch((error) => {
         logger.error({ error, webhookId: webhook.id, url: webhook.url }, "Webhook call failed");
       });
@@ -361,13 +401,15 @@ export const processPipelineJob = async (job: TPipelineInput | TPipelineJob): Pr
     }
 
     if (event === "responseCreated") {
-      recordResponseCreatedMeterEvent({
-        stripeCustomerId: organization.billing?.stripeCustomerId ?? null,
-        responseId: response.id,
-        createdAt: response.createdAt,
-      }).catch((error) => {
+      try {
+        await recordResponseCreatedMeterEvent({
+          stripeCustomerId: organization.billing?.stripeCustomerId ?? null,
+          responseId: response.id,
+          createdAt: response.createdAt,
+        });
+      } catch (error) {
         logger.error({ error, responseId: response.id }, "Failed to record response meter event");
-      });
+      }
 
       await sendTelemetryEvents().catch((error) => {
         logger.error({ error, responseId: response.id }, "Failed to send pipeline telemetry events");

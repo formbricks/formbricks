@@ -44,11 +44,11 @@ describe("sendToPipeline", () => {
     expect(triggerPipelineDrain).toHaveBeenCalledTimes(1);
   });
 
-  test("logs enqueue failures without throwing", async () => {
+  test("logs enqueue failures and rethrows", async () => {
     const testError = new Error("Redis unavailable");
     vi.mocked(enqueuePipelineJob).mockRejectedValue(testError);
 
-    await expect(sendToPipeline(testData)).resolves.toBeUndefined();
+    await expect(sendToPipeline(testData)).rejects.toThrow(testError);
 
     expect(triggerPipelineDrain).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(

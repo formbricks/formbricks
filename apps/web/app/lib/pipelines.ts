@@ -8,5 +8,6 @@ export const sendToPipeline = async (job: TPipelineInput): Promise<void> => {
     triggerPipelineDrain();
   } catch (error) {
     logger.error({ error, event: job.event, surveyId: job.surveyId }, "Error queueing pipeline event");
+    throw error;
   }
 };
