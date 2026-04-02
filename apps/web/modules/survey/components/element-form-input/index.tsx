@@ -576,7 +576,7 @@ export const ElementFormInput = ({
                         <div
                           ref={highlightContainerRef}
                           className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
-                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                            localSurvey.languages?.length > 1 ? "pr-36" : ""
                           }`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
@@ -605,7 +605,7 @@ export const ElementFormInput = ({
                           ref={inputRef}
                           onBlur={onBlur}
                           className={`absolute top-0 text-black caret-black ${
-                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                            localSurvey.languages?.length > 1 ? "pr-36" : ""
                           } ${className}`}
                           isInvalid={
                             isInvalid &&
