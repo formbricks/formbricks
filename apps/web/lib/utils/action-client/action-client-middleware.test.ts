@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { ZodIssue, z } from "zod";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { getMembershipRole } from "@/lib/membership/hooks/actions";
-import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamRoleByTeamIdUserId, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { checkAuthorizationUpdated, formatErrors } from "./action-client-middleware";
 
 vi.mock("@/lib/membership/hooks/actions", () => ({
@@ -12,7 +12,7 @@ vi.mock("@/lib/membership/hooks/actions", () => ({
 }));
 
 vi.mock("@/modules/ee/teams/lib/roles", () => ({
-  getProjectPermissionByUserId: vi.fn(),
+  getWorkspacePermissionByUserId: vi.fn(),
   getTeamRoleByTeamIdUserId: vi.fn(),
 }));
 
@@ -23,7 +23,7 @@ vi.mock("next-safe-action", () => ({
 describe("action-client-middleware", () => {
   const userId = "user-1";
   const organizationId = "org-1";
-  const projectId = "project-1";
+  const workspaceId = "workspace-1";
   const teamId = "team-1";
 
   afterEach(() => {
@@ -150,46 +150,46 @@ describe("action-client-middleware", () => {
           roles: ["owner" as const],
         },
         {
-          type: "projectTeam" as const,
-          projectId,
+          type: "workspaceTeam" as const,
+          workspaceId,
           minPermission: "read" as const,
         },
       ];
 
-      vi.mocked(getProjectPermissionByUserId).mockResolvedValue("readWrite");
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("readWrite");
 
       const result = await checkAuthorizationUpdated({ userId, organizationId, access });
 
       expect(result).toBe(true);
-      expect(getProjectPermissionByUserId).toHaveBeenCalledWith(userId, projectId);
+      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
     });
 
-    test("returns true when projectTeam access matches permission", async () => {
+    test("returns true when workspaceTeam access matches permission", async () => {
       vi.mocked(getMembershipRole).mockResolvedValue("member");
 
       const access = [
         {
-          type: "projectTeam" as const,
-          projectId,
+          type: "workspaceTeam" as const,
+          workspaceId,
           minPermission: "read" as const,
         },
       ];
 
-      vi.mocked(getProjectPermissionByUserId).mockResolvedValue("readWrite");
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("readWrite");
 
       const result = await checkAuthorizationUpdated({ userId, organizationId, access });
 
       expect(result).toBe(true);
-      expect(getProjectPermissionByUserId).toHaveBeenCalledWith(userId, projectId);
+      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
     });
 
-    test("continues checking other access items when projectTeam permission is insufficient", async () => {
+    test("continues checking other access items when workspaceTeam permission is insufficient", async () => {
       vi.mocked(getMembershipRole).mockResolvedValue("member");
 
       const access = [
         {
-          type: "projectTeam" as const,
-          projectId,
+          type: "workspaceTeam" as const,
+          workspaceId,
           minPermission: "manage" as const,
         },
         {
@@ -199,13 +199,13 @@ describe("action-client-middleware", () => {
         },
       ];
 
-      vi.mocked(getProjectPermissionByUserId).mockResolvedValue("read");
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
       vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("admin");
 
       const result = await checkAuthorizationUpdated({ userId, organizationId, access });
 
       expect(result).toBe(true);
-      expect(getProjectPermissionByUserId).toHaveBeenCalledWith(userId, projectId);
+      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
       expect(getTeamRoleByTeamIdUserId).toHaveBeenCalledWith(teamId, userId);
     });
 
@@ -260,8 +260,8 @@ describe("action-client-middleware", () => {
           roles: ["owner" as const],
         },
         {
-          type: "projectTeam" as const,
-          projectId,
+          type: "workspaceTeam" as const,
+          workspaceId,
           minPermission: "manage" as const,
         },
         {
@@ -271,7 +271,7 @@ describe("action-client-middleware", () => {
         },
       ];
 
-      vi.mocked(getProjectPermissionByUserId).mockResolvedValue("read");
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
       vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("contributor");
 
       await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
@@ -282,13 +282,13 @@ describe("action-client-middleware", () => {
       );
     });
 
-    test("continues to check when projectPermission is null", async () => {
+    test("continues to check when workspacePermission is null", async () => {
       vi.mocked(getMembershipRole).mockResolvedValue("member");
 
       const access = [
         {
-          type: "projectTeam" as const,
-          projectId,
+          type: "workspaceTeam" as const,
+          workspaceId,
           minPermission: "read" as const,
         },
         {
@@ -297,7 +297,7 @@ describe("action-client-middleware", () => {
         },
       ];
 
-      vi.mocked(getProjectPermissionByUserId).mockResolvedValue(null);
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(null);
 
       const result = await checkAuthorizationUpdated({ userId, organizationId, access });
 
@@ -349,17 +349,17 @@ describe("action-client-middleware", () => {
       expect(result).toBe(true);
     });
 
-    test("handles projectTeam access without minPermission specified", async () => {
+    test("handles workspaceTeam access without minPermission specified", async () => {
       vi.mocked(getMembershipRole).mockResolvedValue("member");
 
       const access = [
         {
-          type: "projectTeam" as const,
-          projectId,
+          type: "workspaceTeam" as const,
+          workspaceId,
         },
       ];
 
-      vi.mocked(getProjectPermissionByUserId).mockResolvedValue("read");
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
 
       const result = await checkAuthorizationUpdated({ userId, organizationId, access });
 

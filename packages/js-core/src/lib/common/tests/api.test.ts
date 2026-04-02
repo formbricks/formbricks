@@ -258,8 +258,8 @@ describe("api.ts", () => {
         data: {
           surveys: [],
           actionClasses: [],
-          project: {
-            id: "project123",
+          workspace: {
+            id: "workspace123",
             recontactDays: 30,
             clickOutsideClose: true,
             overlay: "none",

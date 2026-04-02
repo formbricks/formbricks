@@ -17,7 +17,7 @@ import type { ConfirmationModalProps } from "./multi-language-card";
 interface DefaultLanguageSelectProps {
   defaultLanguage?: Language;
   handleDefaultLanguageChange: (languageCode: string) => void;
-  projectLanguages: Language[];
+  workspaceLanguages: Language[];
   setConfirmationModalInfo: (confirmationModal: ConfirmationModalProps) => void;
   locale: string;
 }
@@ -25,7 +25,7 @@ interface DefaultLanguageSelectProps {
 export function DefaultLanguageSelect({
   defaultLanguage,
   handleDefaultLanguageChange,
-  projectLanguages,
+  workspaceLanguages,
   setConfirmationModalInfo,
   locale,
 }: DefaultLanguageSelectProps) {
@@ -60,7 +60,7 @@ export function DefaultLanguageSelect({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {projectLanguages.map((language) => (
+              {workspaceLanguages.map((language) => (
                 <SelectItem
                   className="px-0.5 py-1 text-sm text-slate-800"
                   key={language.id}

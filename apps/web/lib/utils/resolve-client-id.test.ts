@@ -9,7 +9,7 @@ vi.mock("@formbricks/database", () => ({
     environment: {
       findUnique: vi.fn(),
     },
-    project: {
+    workspace: {
       findUnique: vi.fn(),
     },
   },
@@ -20,40 +20,40 @@ describe("resolveClientApiIds", () => {
     vi.clearAllMocks();
   });
 
-  it("resolves an environmentId to environmentId + projectId", async () => {
+  it("resolves an environmentId to environmentId + workspaceId", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
       id: "env-123",
-      projectId: "proj-456",
+      workspaceId: "ws-456",
     } as any);
 
     const result = await resolveClientApiIds("env-123");
 
     expect(result).toEqual({
       environmentId: "env-123",
-      projectId: "proj-456",
+      workspaceId: "ws-456",
     });
     expect(prisma.environment.findUnique).toHaveBeenCalledWith({
       where: { id: "env-123" },
-      select: { id: true, projectId: true },
+      select: { id: true, workspaceId: true },
     });
-    expect(prisma.project.findUnique).not.toHaveBeenCalled();
+    expect(prisma.workspace.findUnique).not.toHaveBeenCalled();
   });
 
-  it("resolves a projectId to projectId + production environmentId", async () => {
+  it("resolves a workspaceId to workspaceId + production environmentId", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.project.findUnique).mockResolvedValue({
-      id: "proj-456",
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      id: "ws-456",
       environments: [{ id: "env-prod-789" }],
     } as any);
 
-    const result = await resolveClientApiIds("proj-456");
+    const result = await resolveClientApiIds("ws-456");
 
     expect(result).toEqual({
       environmentId: "env-prod-789",
-      projectId: "proj-456",
+      workspaceId: "ws-456",
     });
-    expect(prisma.project.findUnique).toHaveBeenCalledWith({
-      where: { id: "proj-456" },
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: "ws-456" },
       select: {
         id: true,
         environments: {
@@ -65,23 +65,23 @@ describe("resolveClientApiIds", () => {
     });
   });
 
-  it("returns null when neither environment nor project is found", async () => {
+  it("returns null when neither environment nor workspace is found", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.project.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
     const result = await resolveClientApiIds("unknown-id");
 
     expect(result).toBeNull();
   });
 
-  it("returns null when project exists but has no production environment", async () => {
+  it("returns null when workspace exists but has no production environment", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.project.findUnique).mockResolvedValue({
-      id: "proj-456",
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      id: "ws-456",
       environments: [],
     } as any);
 
-    const result = await resolveClientApiIds("proj-456");
+    const result = await resolveClientApiIds("ws-456");
 
     expect(result).toBeNull();
   });

@@ -148,7 +148,7 @@ describe("Survey Logic", () => {
     showLanguageSwitch: false,
     languages: [],
     endings: [],
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     recontactDays: null,
   };
 

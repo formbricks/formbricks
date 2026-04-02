@@ -5,8 +5,8 @@ import { ChevronDownIcon, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
-import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -22,7 +22,7 @@ import { SurveyFilterDropdown } from "./survey-filter-dropdown";
 interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
-  currentProjectChannel: TProjectConfigChannel;
+  currentWorkspaceChannel: TWorkspaceConfigChannel;
 }
 
 const getCreatorOptions = (t: TFunction): TFilterOption[] => [
@@ -59,7 +59,7 @@ const getSortOptions = (t: TFunction): TSortOption[] => [
 export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
-  currentProjectChannel,
+  currentWorkspaceChannel,
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
@@ -142,7 +142,7 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        {currentProjectChannel !== "link" && (
+        {currentWorkspaceChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
               title={t("common.type")}

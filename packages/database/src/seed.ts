@@ -93,10 +93,10 @@ async function deleteData(): Promise<void> {
     "segment",
     "webhook",
     "integration",
-    "projectTeam",
+    "workspaceTeam",
     "teamUser",
     "team",
-    "project",
+    "workspace",
     "invite",
     "membership",
     "account",
@@ -367,7 +367,7 @@ async function main(): Promise<void> {
     update: {},
     create: {
       organizationId: organization.id,
-      limits: { projects: 3, monthly: { responses: 1500 } },
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
       stripeCustomerId: null,
       usageCycleAnchor: new Date(),
     },
@@ -433,13 +433,13 @@ async function main(): Promise<void> {
     },
   });
 
-  // Project
-  const project = await prisma.project.upsert({
-    where: { id: SEED_IDS.PROJECT },
+  // Workspace
+  const workspace = await prisma.workspace.upsert({
+    where: { id: SEED_IDS.WORKSPACE },
     update: {},
     create: {
-      id: SEED_IDS.PROJECT,
-      name: "Seed Project",
+      id: SEED_IDS.WORKSPACE,
+      name: "Seed Workspace",
       organizationId: organization.id,
     },
   });
@@ -451,7 +451,7 @@ async function main(): Promise<void> {
     create: {
       id: SEED_IDS.ENV_DEV,
       type: "development",
-      projectId: project.id,
+      workspaceId: workspace.id,
       appSetupCompleted: false,
       attributeKeys: {
         create: [
@@ -471,7 +471,7 @@ async function main(): Promise<void> {
     create: {
       id: SEED_IDS.ENV_PROD,
       type: "production",
-      projectId: project.id,
+      workspaceId: workspace.id,
       appSetupCompleted: false,
       attributeKeys: {
         create: [

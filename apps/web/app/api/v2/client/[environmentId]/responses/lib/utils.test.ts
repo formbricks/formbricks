@@ -86,7 +86,7 @@ const mockSurvey: TSurvey = {
   isBackButtonHidden: false,
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   showLanguageSwitch: false,
   blocks: [],
   isCaptureIpEnabled: false,
@@ -106,7 +106,7 @@ const mockResponseInput: TResponseInputV2 = {
 const mockBillingData: TOrganizationBilling = {
   limits: {
     monthly: { responses: 0 },
-    projects: 3,
+    workspaces: 3,
   },
   usageCycleAnchor: new Date(),
   stripeCustomerId: "mock-stripe-customer-id",

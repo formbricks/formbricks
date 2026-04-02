@@ -5,8 +5,8 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { SurveyBgSelectorTab } from "@/modules/ui/components/background-styling-card/survey-bg-selector-tab";
 import { Badge } from "@/modules/ui/components/badge";
@@ -21,7 +21,7 @@ interface BackgroundStylingCardProps {
   disabled?: boolean;
   environmentId: string;
   isUnsplashConfigured: boolean;
-  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   isStorageConfigured: boolean;
 }
 

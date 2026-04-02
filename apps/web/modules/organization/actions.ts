@@ -12,7 +12,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { createProject } from "@/modules/projects/settings/lib/project";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreateOrganizationAction = z.object({
   organizationName: z.string().min(1, "Organization name must be at least 1 character long"),
@@ -47,8 +47,8 @@ export const createOrganizationAction = authenticatedActionClient
         });
       }
 
-      await createProject(newOrganization.id, {
-        name: "My Project",
+      await createWorkspace(newOrganization.id, {
+        name: "My Workspace",
       });
 
       const updatedNotificationSettings: TUserNotificationSettings = {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { addCustomThemeToDom, addStylesToDom, getStyleNonce, setStyleNonce } from "./styles";
 
 // Mock CSS module imports
@@ -19,8 +19,8 @@ vi.mock("../../../../apps/web/modules/ui/components/editor/styles-editor-fronten
 //   mixColor: vi.fn(),
 // }));
 
-// Helper to create a base TProjectStyling object with all properties set to null or a default
-const getBaseProjectStyling = (overrides: Partial<TProjectStyling> = {}): TProjectStyling => {
+// Helper to create a base TWorkspaceStyling object with all properties set to null or a default
+const getBaseWorkspaceStyling = (overrides: Partial<TWorkspaceStyling> = {}): TWorkspaceStyling => {
   return {
     brandColor: null,
     cardBackgroundColor: null,
@@ -244,7 +244,7 @@ describe("addCustomThemeToDom", () => {
   };
 
   test("should add a custom theme style element to the head", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     expect(styleElement).not.toBeNull();
@@ -253,11 +253,11 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should reuse existing custom theme style element", () => {
-    const styling1 = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    const styling1 = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling: styling1 });
     const firstElement = document.getElementById("formbricks__css__custom");
 
-    const styling2 = getBaseProjectStyling({ brandColor: { light: "#00FF00" } });
+    const styling2 = getBaseWorkspaceStyling({ brandColor: { light: "#00FF00" } });
     addCustomThemeToDom({ styling: styling2 });
     const secondElement = document.getElementById("formbricks__css__custom");
     const allElements = document.querySelectorAll("#formbricks__css__custom");
@@ -267,7 +267,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should apply minimal styling with brandColor and default roundness", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#0000FF" } }); // A dark color, roundness will use default
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#0000FF" } }); // A dark color, roundness will use default
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -279,7 +279,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should apply brand-text-color as black for light brandColor", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#FFFF00" } }); // A light color
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#FFFF00" } }); // A light color
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -287,7 +287,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should default brand-text-color to white if brandColor is undefined", () => {
-    const styling = getBaseProjectStyling({ brandColor: null }); // Explicitly null brandColor
+    const styling = getBaseWorkspaceStyling({ brandColor: null }); // Explicitly null brandColor
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -338,7 +338,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should generate calendar-tile-color for light brandColor", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#ffffff" } });
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#ffffff" } });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -348,7 +348,7 @@ describe("addCustomThemeToDom", () => {
 
   test("should apply advanced styling properties", () => {
     const styling: TSurveyStyling = {
-      ...getBaseProjectStyling(),
+      ...getBaseWorkspaceStyling(),
       // Buttons
       buttonBgColor: { light: "#btn-bg" },
       buttonTextColor: { light: "#btn-text" },
@@ -431,7 +431,7 @@ describe("addCustomThemeToDom", () => {
 
   test("should format dimensions correctly", () => {
     const styling: TSurveyStyling = {
-      ...getBaseProjectStyling(),
+      ...getBaseWorkspaceStyling(),
       buttonBorderRadius: 10, // number -> px
       buttonHeight: "20", // numeric string -> px
       buttonFontSize: "1.5rem", // string -> string
@@ -448,7 +448,7 @@ describe("addCustomThemeToDom", () => {
 
   test("should derive input-placeholder-color from inputTextColor when set", () => {
     const styling: TSurveyStyling = {
-      ...getBaseProjectStyling(),
+      ...getBaseWorkspaceStyling(),
       questionColor: { light: "#AABBCC" },
       inputTextColor: { light: "#112233" },
     };
@@ -466,7 +466,7 @@ describe("addCustomThemeToDom", () => {
 
   test("should derive input-placeholder-color from questionColor when inputTextColor is not set", () => {
     const styling: TSurveyStyling = {
-      ...getBaseProjectStyling(),
+      ...getBaseWorkspaceStyling(),
       questionColor: { light: "#AABBCC" },
     };
     addCustomThemeToDom({ styling });
@@ -480,7 +480,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should set signature and branding text colors for dark questionColor", () => {
-    const styling = getBaseProjectStyling({
+    const styling = getBaseWorkspaceStyling({
       questionColor: { light: "#202020" }, // A dark color
       brandColor: { light: "#123456" }, // brandColor needed for some default fallbacks if not directly testing them
     });
@@ -494,7 +494,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should handle roundness 0 correctly", () => {
-    const styling = getBaseProjectStyling({ roundness: 0, brandColor: { light: "#123456" } });
+    const styling = getBaseWorkspaceStyling({ roundness: 0, brandColor: { light: "#123456" } });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -504,7 +504,10 @@ describe("addCustomThemeToDom", () => {
   test("should set input-background-color-selected to slate-50 for white inputColor", () => {
     const whiteColors = ["#fff", "#ffffff", "white"];
     whiteColors.forEach((color) => {
-      const styling = getBaseProjectStyling({ inputColor: { light: color }, brandColor: { light: "#123" } });
+      const styling = getBaseWorkspaceStyling({
+        inputColor: { light: color },
+        brandColor: { light: "#123" },
+      });
       addCustomThemeToDom({ styling });
       const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
       const variables = getCssVariables(styleElement);
@@ -513,7 +516,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should mix input-background-color-selected for non-white inputColor", () => {
-    const styling = getBaseProjectStyling({
+    const styling = getBaseWorkspaceStyling({
       inputColor: { light: "#E0E0E0" },
       brandColor: { light: "#123" },
     }); // Not white
@@ -527,7 +530,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should not set calendar-tile-color if brandColor is undefined", () => {
-    const styling = getBaseProjectStyling({ brandColor: null });
+    const styling = getBaseWorkspaceStyling({ brandColor: null });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -535,7 +538,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should not define variables for undefined styling properties", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#ABC" } }); // Only brandColor is defined
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#ABC" } }); // Only brandColor is defined
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
@@ -550,7 +553,7 @@ describe("addCustomThemeToDom", () => {
   test("should apply nonce to new custom theme style element when nonce is set", () => {
     const nonce = "test-nonce-custom";
     setStyleNonce(nonce);
-    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling });
 
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -559,7 +562,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should not apply nonce when nonce is not set", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling });
 
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
@@ -568,7 +571,7 @@ describe("addCustomThemeToDom", () => {
   });
 
   test("should update nonce on existing custom style element if nonce is set after creation", () => {
-    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling }); // Create element without nonce
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     expect(styleElement.getAttribute("nonce")).toBeNull();
@@ -587,7 +590,7 @@ describe("addCustomThemeToDom", () => {
     document.head.appendChild(existingElement);
 
     // Don't call setStyleNonce - just verify addCustomThemeToDom doesn't overwrite
-    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling }); // Should not overwrite since nonce already exists
 
     // The update logic in addCustomThemeToDom only sets nonce if it doesn't exist
@@ -608,9 +611,9 @@ describe("addCustomThemeToDom", () => {
   });
 });
 
-describe("getBaseProjectStyling_Helper", () => {
+describe("getBaseWorkspaceStyling_Helper", () => {
   test("should return default values for all properties when no overrides are provided", () => {
-    const baseStyling = getBaseProjectStyling();
+    const baseStyling = getBaseWorkspaceStyling();
     expect(baseStyling.brandColor).toBeNull();
     expect(baseStyling.cardBackgroundColor).toBeNull();
     expect(baseStyling.cardBorderColor).toBeNull();
@@ -628,7 +631,7 @@ describe("getBaseProjectStyling_Helper", () => {
   });
 
   test("should correctly apply overrides to specified properties", () => {
-    const overrides: Partial<TProjectStyling> = {
+    const overrides: Partial<TWorkspaceStyling> = {
       inputColor: { light: "#111" },
       inputBorderColor: { light: "#222" },
       roundness: 10,
@@ -637,7 +640,7 @@ describe("getBaseProjectStyling_Helper", () => {
       highlightBorderColor: { light: "#333" },
       brandColor: { light: "#FFF" }, // Also test a non-highlighted property
     };
-    const styled = getBaseProjectStyling(overrides);
+    const styled = getBaseWorkspaceStyling(overrides);
 
     expect(styled.inputColor).toEqual({ light: "#111" });
     expect(styled.inputBorderColor).toEqual({ light: "#222" });

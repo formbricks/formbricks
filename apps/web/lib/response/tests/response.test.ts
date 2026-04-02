@@ -94,7 +94,7 @@ beforeEach(() => {
   prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.organizationBilling.findUnique.mockResolvedValue(mockOrganizationBillingRecord as unknown as any);
-  prisma.project.findMany.mockResolvedValue([]);
+  prisma.workspace.findMany.mockResolvedValue([]);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });

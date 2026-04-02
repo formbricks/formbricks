@@ -1,3 +1,3 @@
-import { GeneralSettingsLoading } from "@/modules/projects/settings/general/loading";
+import { GeneralSettingsLoading } from "@/modules/workspaces/settings/general/loading";
 
 export default GeneralSettingsLoading;
