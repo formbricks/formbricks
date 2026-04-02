@@ -127,33 +127,9 @@ Formbricks has a hosted cloud offering with a generous free plan to get you up a
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription.
 
-If you opt for self-hosting Formbricks, here are a few options to consider:
-
 #### Docker
 
 To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
-
-#### Community-managed One Click Hosting
-
-##### Railway
-
-You can deploy Formbricks on [Railway](https://railway.app) using the button below.
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
-
-##### RepoCloud
-
-Or you can also deploy Formbricks on [RepoCloud](https://repocloud.io) using the button below.
-
-[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploy.png)](https://repocloud.io/details/?app_id=254)
-
-##### Zeabur
-
-Or you can also deploy Formbricks on [Zeabur](https://zeabur.com) using the button below.
-
-[![Deploy to Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/G4TUJL)
-
-<a id="development"></a>
 
 ## 👨‍💻 Development
 
@@ -247,4 +223,4 @@ We currently do not offer Formbricks white-labeled. That means that we don't sel
 
 The Enterprise Edition allows us to fund the development of Formbricks sustainably. It guarantees that the free and open-source surveying infrastructure we're building will be around for decades to come.
 
-<p align="right"><a href="#top">🔼 Back to top</a></p>
+<a id="readme-de"></a>
