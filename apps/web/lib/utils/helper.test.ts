@@ -135,11 +135,8 @@ describe("Helper Utilities", () => {
       await expect(getOrganizationIdFromEnvironmentId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("getOrganizationIdFromSurveyId returns organization ID through environment and workspace", async () => {
+    test("getOrganizationIdFromSurveyId returns organization ID through workspace", async () => {
       vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -149,7 +146,6 @@ describe("Helper Utilities", () => {
       const orgId = await getOrganizationIdFromSurveyId("survey1");
       expect(orgId).toBe("org1");
       expect(services.getSurvey).toHaveBeenCalledWith("survey1");
-      expect(services.getEnvironment).toHaveBeenCalledWith("env1");
       expect(services.getWorkspace).toHaveBeenCalledWith("workspace1");
     });
 
@@ -164,9 +160,6 @@ describe("Helper Utilities", () => {
         surveyId: "survey1",
       });
       vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -185,9 +178,6 @@ describe("Helper Utilities", () => {
 
     test("getOrganizationIdFromContactId returns organization ID correctly", async () => {
       vi.mocked(services.getContact).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -206,9 +196,6 @@ describe("Helper Utilities", () => {
 
     test("getOrganizationIdFromTagId returns organization ID correctly", async () => {
       vi.mocked(services.getTag).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -227,9 +214,6 @@ describe("Helper Utilities", () => {
 
     test("getOrganizationIdFromSegmentId returns organization ID correctly", async () => {
       vi.mocked(services.getSegment).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -247,9 +231,6 @@ describe("Helper Utilities", () => {
 
     test("getOrganizationIdFromActionClassId returns organization ID correctly", async () => {
       vi.mocked(services.getActionClass).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -267,9 +248,6 @@ describe("Helper Utilities", () => {
 
     test("getOrganizationIdFromIntegrationId returns organization ID correctly", async () => {
       vi.mocked(services.getIntegration).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -287,9 +265,6 @@ describe("Helper Utilities", () => {
 
     test("getOrganizationIdFromWebhookId returns organization ID correctly", async () => {
       vi.mocked(services.getWebhook).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -369,9 +344,6 @@ describe("Helper Utilities", () => {
         surveyId: "survey1",
       });
       vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
@@ -400,18 +372,14 @@ describe("Helper Utilities", () => {
       await expect(getWorkspaceIdFromEnvironmentId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("getWorkspaceIdFromSurveyId returns workspace ID through environment", async () => {
+    test("getWorkspaceIdFromSurveyId returns workspace ID directly", async () => {
       vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
       const workspaceId = await getWorkspaceIdFromSurveyId("survey1");
       expect(workspaceId).toBe("workspace1");
       expect(services.getSurvey).toHaveBeenCalledWith("survey1");
-      expect(services.getEnvironment).toHaveBeenCalledWith("env1");
     });
 
     test("getWorkspaceIdFromSurveyId throws error when survey not found", async () => {
@@ -421,9 +389,6 @@ describe("Helper Utilities", () => {
 
     test("getWorkspaceIdFromContactId returns workspace ID correctly", async () => {
       vi.mocked(services.getContact).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -438,9 +403,6 @@ describe("Helper Utilities", () => {
 
     test("getWorkspaceIdFromSegmentId returns workspace ID correctly", async () => {
       vi.mocked(services.getSegment).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -455,9 +417,6 @@ describe("Helper Utilities", () => {
 
     test("getWorkspaceIdFromActionClassId returns workspace ID correctly", async () => {
       vi.mocked(services.getActionClass).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -472,9 +431,6 @@ describe("Helper Utilities", () => {
 
     test("getWorkspaceIdFromTagId returns workspace ID correctly", async () => {
       vi.mocked(services.getTag).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -506,9 +462,6 @@ describe("Helper Utilities", () => {
         surveyId: "survey1",
       });
       vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -523,9 +476,6 @@ describe("Helper Utilities", () => {
 
     test("getWorkspaceIdFromIntegrationId returns workspace ID correctly", async () => {
       vi.mocked(services.getIntegration).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -540,9 +490,6 @@ describe("Helper Utilities", () => {
 
     test("getWorkspaceIdFromWebhookId returns workspace ID correctly", async () => {
       vi.mocked(services.getWebhook).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
@@ -560,9 +507,6 @@ describe("Helper Utilities", () => {
         surveyId: "survey1",
       });
       vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
 
