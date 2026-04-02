@@ -8,11 +8,11 @@ import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/li
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -43,7 +43,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   if (!user) {
     throw new AuthenticationError(t("common.not_authenticated"));
   }
-  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   const isContactsEnabled = await getIsContactsEnabled(organizationId);
   const segments = isContactsEnabled ? await getSegments(workspaceId) : [];
