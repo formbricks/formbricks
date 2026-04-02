@@ -4,6 +4,7 @@ import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
@@ -51,12 +52,14 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+
     const MAX_PUBLIC_FILE_SIZE_MB = 5;
     const maxFileUploadSize = MAX_PUBLIC_FILE_SIZE_MB * 1024 * 1024;
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
-      environmentId,
+      workspaceId,
       fileType,
       "public",
       maxFileUploadSize

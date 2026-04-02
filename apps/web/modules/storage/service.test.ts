@@ -307,6 +307,49 @@ describe("storage service", () => {
       expect(result).toEqual(mockErrorResult);
       expect(deleteFileFromS3).toHaveBeenCalledWith("env-123/public/test-file.jpg");
     });
+
+    test("should fall back to fallbackId path when primary returns FileNotFoundError", async () => {
+      const mockNotFound = {
+        ok: false,
+        error: { code: StorageErrorCode.FileNotFoundError },
+      } as MockedDeleteFileReturn;
+      const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
+
+      vi.mocked(deleteFileFromS3).mockResolvedValueOnce(mockNotFound).mockResolvedValueOnce(mockSuccess);
+
+      const result = await deleteFile("ws-456", "public" as TAccessType, "file.jpg", "env-123");
+
+      expect(result).toEqual(mockSuccess);
+      expect(deleteFileFromS3).toHaveBeenCalledTimes(2);
+      expect(deleteFileFromS3).toHaveBeenNthCalledWith(1, "ws-456/public/file.jpg");
+      expect(deleteFileFromS3).toHaveBeenNthCalledWith(2, "env-123/public/file.jpg");
+    });
+
+    test("should not fall back when primary delete succeeds", async () => {
+      const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
+
+      vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
+
+      const result = await deleteFile("ws-456", "public" as TAccessType, "file.jpg", "env-123");
+
+      expect(result).toEqual(mockSuccess);
+      expect(deleteFileFromS3).toHaveBeenCalledTimes(1);
+      expect(deleteFileFromS3).toHaveBeenCalledWith("ws-456/public/file.jpg");
+    });
+
+    test("should not fall back on non-FileNotFound errors", async () => {
+      const mockError = {
+        ok: false,
+        error: { code: StorageErrorCode.S3ClientError },
+      } as MockedDeleteFileReturn;
+
+      vi.mocked(deleteFileFromS3).mockResolvedValue(mockError);
+
+      const result = await deleteFile("ws-456", "public" as TAccessType, "file.jpg", "env-123");
+
+      expect(result).toEqual(mockError);
+      expect(deleteFileFromS3).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("deleteFilesByEnvironmentId", () => {
@@ -409,7 +452,7 @@ describe("storage service", () => {
       expect(getFileStream).toHaveBeenCalledWith("env-123/public/my file.png");
     });
 
-    test("should return error when getFileStream fails with FileNotFoundError", async () => {
+    test("should return error when getFileStream fails with FileNotFoundError and no fallback", async () => {
       const mockErrorResult = {
         ok: false,
         error: {
@@ -425,6 +468,64 @@ describe("storage service", () => {
       if (!result.ok) {
         expect(result.error.code).toBe(StorageErrorCode.FileNotFoundError);
       }
+      expect(getFileStream).toHaveBeenCalledTimes(1);
+    });
+
+    test("should fall back to fallbackId path when primary path returns FileNotFoundError", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: { code: StorageErrorCode.FileNotFoundError },
+      } as MockedFileStreamReturn;
+
+      const mockStream = new ReadableStream();
+      const mockStreamResult = {
+        ok: true,
+        data: { body: mockStream, contentType: "image/jpeg", contentLength: 5000 },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValueOnce(mockErrorResult).mockResolvedValueOnce(mockStreamResult);
+
+      const result = await getFileStreamForDownload(
+        "legacy-file.jpg",
+        "ws-456",
+        "public" as TAccessType,
+        "env-123"
+      );
+
+      expect(result.ok).toBe(true);
+      expect(getFileStream).toHaveBeenCalledTimes(2);
+      expect(getFileStream).toHaveBeenNthCalledWith(1, "ws-456/public/legacy-file.jpg");
+      expect(getFileStream).toHaveBeenNthCalledWith(2, "env-123/public/legacy-file.jpg");
+    });
+
+    test("should not fall back when primary path succeeds", async () => {
+      const mockStream = new ReadableStream();
+      const mockStreamResult = {
+        ok: true,
+        data: { body: mockStream, contentType: "image/jpeg", contentLength: 5000 },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
+
+      const result = await getFileStreamForDownload("file.jpg", "ws-456", "public" as TAccessType, "env-123");
+
+      expect(result.ok).toBe(true);
+      expect(getFileStream).toHaveBeenCalledTimes(1);
+      expect(getFileStream).toHaveBeenCalledWith("ws-456/public/file.jpg");
+    });
+
+    test("should not fall back on non-FileNotFound errors", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: { code: StorageErrorCode.S3ClientError },
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
+
+      const result = await getFileStreamForDownload("file.jpg", "ws-456", "public" as TAccessType, "env-123");
+
+      expect(result.ok).toBe(false);
+      expect(getFileStream).toHaveBeenCalledTimes(1);
     });
 
     test("should return error when getFileStream fails with S3ClientError", async () => {

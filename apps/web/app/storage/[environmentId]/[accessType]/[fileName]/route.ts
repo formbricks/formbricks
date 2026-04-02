@@ -5,6 +5,7 @@ import { ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/stor
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/auth";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -27,11 +28,17 @@ export const GET = async (
     );
   }
 
-  const { environmentId, accessType, fileName } = paramValidation.data;
+  const { environmentId: idParam, accessType, fileName } = paramValidation.data;
 
-  // check auth
+  // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
+  const resolved = await resolveClientApiIds(idParam);
+  if (!resolved) {
+    return responses.notFoundResponse("Environment", idParam);
+  }
+
+  // check auth (always uses environmentId)
   if (accessType === "private") {
-    const authResult = await authorizePrivateDownload(request, environmentId, "GET");
+    const authResult = await authorizePrivateDownload(request, resolved.environmentId, "GET");
     if (!authResult.ok) {
       return authResult.error.unauthorized
         ? responses.unauthorizedResponse()
@@ -39,8 +46,9 @@ export const GET = async (
     }
   }
 
-  // Stream the file directly
-  const streamResult = await getFileStreamForDownload(fileName, environmentId, accessType);
+  // Stream the file — try workspaceId path first (new uploads), fall back to environmentId (legacy)
+  const fallbackId = resolved.workspaceId !== resolved.environmentId ? resolved.environmentId : undefined;
+  const streamResult = await getFileStreamForDownload(fileName, resolved.workspaceId, accessType, fallbackId);
 
   if (!streamResult.ok) {
     const errorResponse = getErrorResponseFromStorageError(streamResult.error, { fileName });
@@ -80,11 +88,22 @@ export const DELETE = async (
     return responses.badRequestResponse("Fields are missing or incorrectly formatted", errorDetails, true);
   }
 
-  const { environmentId, accessType, fileName } = paramValidation.data;
+  const { environmentId: idParam, accessType, fileName } = paramValidation.data;
+
+  // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
+  const resolved = await resolveClientApiIds(idParam);
+  if (!resolved) {
+    await logFileDeletion({
+      failureReason: "Environment or workspace not found",
+      environmentId: idParam,
+      apiUrl: request.url,
+    });
+    return responses.notFoundResponse("Environment", idParam);
+  }
 
   const session = await getServerSession(authOptions);
 
-  const authResult = await authorizePrivateDownload(request, environmentId, "DELETE");
+  const authResult = await authorizePrivateDownload(request, resolved.environmentId, "DELETE");
 
   if (!authResult.ok) {
     await logFileDeletion({
@@ -92,7 +111,7 @@ export const DELETE = async (
         ? "User not authorized to access environment"
         : "User not authenticated",
       accessType,
-      environmentId,
+      environmentId: resolved.environmentId,
       apiUrl: request.url,
     });
 
@@ -115,7 +134,13 @@ export const DELETE = async (
     }
   }
 
-  const deleteResult = await deleteFile(environmentId, accessType, decodeURIComponent(fileName));
+  const fallbackId = resolved.workspaceId !== resolved.environmentId ? resolved.environmentId : undefined;
+  const deleteResult = await deleteFile(
+    resolved.workspaceId,
+    accessType,
+    decodeURIComponent(fileName),
+    fallbackId
+  );
 
   const isSuccess = deleteResult.ok;
 
@@ -126,7 +151,7 @@ export const DELETE = async (
       failureReason: deleteResult.error.code,
       accessType,
       userId: session?.user?.id,
-      environmentId,
+      environmentId: resolved.environmentId,
       apiUrl: request.url,
     });
 
@@ -138,7 +163,7 @@ export const DELETE = async (
     status: "success",
     accessType,
     userId: session?.user?.id,
-    environmentId,
+    environmentId: resolved.environmentId,
     apiUrl: request.url,
   });
 
