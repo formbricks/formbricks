@@ -1,4 +1,4 @@
-import type { LanguageModel } from "ai";
+import type { LanguageModel, generateText } from "ai";
 
 export const AI_PROVIDERS = ["aws", "gcp", "azure"] as const;
 
@@ -45,3 +45,5 @@ export interface AIConfigurationStatus {
 }
 
 export type AILanguageModel = LanguageModel;
+export type TGenerateTextOptions = Omit<Parameters<typeof generateText>[0], "model">;
+export type TGenerateTextResult = Awaited<ReturnType<typeof generateText>>;

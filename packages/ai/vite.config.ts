@@ -15,7 +15,7 @@ export default defineConfig({
       entry: resolve(__dirname, "src/index.ts"),
       name: "formbricksAi",
       fileName: "index",
-      formats: ["es", "cjs"],
+      formats: ["es"],
     },
     rollupOptions: {
       external: [

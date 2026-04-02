@@ -4,7 +4,7 @@ import { updateOrganizationAISettingsAction } from "./actions";
 import { ZOrganizationAISettingsInput } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
-  getInstanceAIConfigStatus: vi.fn(),
+  isInstanceAIConfigured: vi.fn(),
   checkAuthorizationUpdated: vi.fn(),
   deleteOrganization: vi.fn(),
   getOrganization: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock("@/lib/organization/service", () => ({
 }));
 
 vi.mock("@/lib/ai/service", () => ({
-  getInstanceAIConfigStatus: mocks.getInstanceAIConfigStatus,
+  isInstanceAIConfigured: mocks.isInstanceAIConfigured,
 }));
 
 vi.mock("@/lingodotdev/server", () => ({
@@ -59,20 +59,7 @@ describe("organization AI settings actions", () => {
       isAISmartToolsEnabled: false,
       isAIDataAnalysisEnabled: false,
     });
-    mocks.getInstanceAIConfigStatus.mockReturnValue({
-      provider: "gcp",
-      model: "gemini-2.5-flash",
-      isConfigured: true,
-      missingFields: [],
-      invalidFields: [],
-      providerStatus: {
-        provider: "gcp",
-        model: "gemini-2.5-flash",
-        isConfigured: true,
-        missingFields: [],
-        invalidFields: [],
-      },
-    });
+    mocks.isInstanceAIConfigured.mockReturnValue(true);
     mocks.getTranslate.mockResolvedValue((key: string, values?: Record<string, string>) =>
       values ? `${key}:${JSON.stringify(values)}` : key
     );
@@ -164,14 +151,7 @@ describe("organization AI settings actions", () => {
   });
 
   test("rejects enabling AI when the instance AI provider is not configured", async () => {
-    mocks.getInstanceAIConfigStatus.mockReturnValueOnce({
-      provider: "gcp",
-      model: null,
-      isConfigured: false,
-      missingFields: ["AI_MODEL"],
-      invalidFields: [],
-      errorCode: "providerNotConfigured",
-    });
+    mocks.isInstanceAIConfigured.mockReturnValueOnce(false);
 
     await expect(
       updateOrganizationAISettingsAction({
@@ -216,14 +196,7 @@ describe("organization AI settings actions", () => {
       isAISmartToolsEnabled: true,
       isAIDataAnalysisEnabled: false,
     });
-    mocks.getInstanceAIConfigStatus.mockReturnValueOnce({
-      provider: "gcp",
-      model: null,
-      isConfigured: false,
-      missingFields: ["AI_GCP_PROJECT"],
-      invalidFields: [],
-      errorCode: "providerNotConfigured",
-    });
+    mocks.isInstanceAIConfigured.mockReturnValueOnce(false);
 
     await updateOrganizationAISettingsAction({
       ctx: {

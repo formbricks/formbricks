@@ -2,18 +2,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   assertOrganizationAIConfigured,
-  getActiveInstanceAIModel,
-  getActiveInstanceAIProvider,
-  getInstanceAIConfigStatus,
+  generateOrganizationAIText,
   getOrganizationAIConfig,
-  getOrganizationAILanguageModel,
+  isInstanceAIConfigured,
 } from "./service";
 
 const mocks = vi.hoisted(() => ({
-  getActiveAiModel: vi.fn(),
-  getActiveAiProvider: vi.fn(),
-  getAiConfigurationStatus: vi.fn(),
-  getAiModel: vi.fn(),
+  generateText: vi.fn(),
+  isAiConfigured: vi.fn(),
   getOrganization: vi.fn(),
   getIsAIDataAnalysisEnabled: vi.fn(),
   getIsAISmartToolsEnabled: vi.fn(),
@@ -22,10 +18,6 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
-
-vi.mock("react", () => ({
-  cache: vi.fn((fn) => fn),
-}));
 
 vi.mock("@formbricks/ai", () => ({
   AIConfigurationError: class AIConfigurationError extends Error {
@@ -36,10 +28,8 @@ vi.mock("@formbricks/ai", () => ({
       this.code = code;
     }
   },
-  getActiveAiModel: mocks.getActiveAiModel,
-  getActiveAiProvider: mocks.getActiveAiProvider,
-  getAiConfigurationStatus: mocks.getAiConfigurationStatus,
-  getAiModel: mocks.getAiModel,
+  generateText: mocks.generateText,
+  isAiConfigured: mocks.isAiConfigured,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -84,22 +74,7 @@ describe("AI organization service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mocks.getActiveAiProvider.mockReturnValue("gcp");
-    mocks.getActiveAiModel.mockReturnValue("gemini-2.5-flash");
-    mocks.getAiConfigurationStatus.mockReturnValue({
-      provider: "gcp",
-      model: "gemini-2.5-flash",
-      isConfigured: true,
-      missingFields: [],
-      invalidFields: [],
-      providerStatus: {
-        provider: "gcp",
-        model: "gemini-2.5-flash",
-        isConfigured: true,
-        missingFields: [],
-        invalidFields: [],
-      },
-    });
+    mocks.isAiConfigured.mockReturnValue(true);
     mocks.getOrganization.mockResolvedValue({
       id: "org_1",
       isAISmartToolsEnabled: true,
@@ -112,32 +87,13 @@ describe("AI organization service", () => {
     );
   });
 
-  test("returns the instance AI config, active provider, active model, and organization settings", async () => {
-    const status = getInstanceAIConfigStatus();
-    const activeProvider = getActiveInstanceAIProvider();
-    const activeModel = getActiveInstanceAIModel();
+  test("returns the instance AI status and organization settings", async () => {
+    const configured = isInstanceAIConfigured();
     const result = await getOrganizationAIConfig("org_1");
 
-    expect(status).toEqual({
-      provider: "gcp",
-      model: "gemini-2.5-flash",
-      isConfigured: true,
-      missingFields: [],
-      invalidFields: [],
-      providerStatus: {
-        provider: "gcp",
-        model: "gemini-2.5-flash",
-        isConfigured: true,
-        missingFields: [],
-        invalidFields: [],
-      },
-    });
-    expect(activeProvider).toBe("gcp");
-    expect(activeModel).toBe("gemini-2.5-flash");
+    expect(configured).toBe(true);
     expect(result).toMatchObject({
       organizationId: "org_1",
-      activeProvider: "gcp",
-      activeModel: "gemini-2.5-flash",
       isAISmartToolsEnabled: true,
       isAIDataAnalysisEnabled: false,
       isAISmartToolsEntitled: true,
@@ -173,37 +129,28 @@ describe("AI organization service", () => {
   });
 
   test("fails closed when the instance AI configuration is incomplete", async () => {
-    mocks.getAiConfigurationStatus.mockReturnValueOnce({
-      provider: "gcp",
-      model: null,
-      isConfigured: false,
-      missingFields: ["AI_MODEL"],
-      invalidFields: [],
-      errorCode: "providerNotConfigured",
-      providerStatus: {
-        provider: "gcp",
-        model: null,
-        isConfigured: false,
-        missingFields: ["AI_MODEL"],
-        invalidFields: [],
-        errorCode: "missingModel",
-      },
-    });
-    mocks.getActiveAiModel.mockReturnValueOnce(null);
+    mocks.isAiConfigured.mockReturnValueOnce(false);
 
     await expect(assertOrganizationAIConfigured("org_1", "smartTools")).rejects.toThrow(
       OperationNotAllowedError
     );
   });
 
-  test("returns the resolved language model when configuration is valid", async () => {
-    const mockModel = { provider: "gcp", model: "gemini-2.5-flash" };
-    mocks.getAiModel.mockReturnValueOnce(mockModel);
+  test("generates organization AI text with the configured package abstraction", async () => {
+    const generatedText = { text: "Translated text" };
+    mocks.generateText.mockResolvedValueOnce(generatedText);
 
-    const result = await getOrganizationAILanguageModel("org_1", "smartTools");
+    const result = await generateOrganizationAIText({
+      organizationId: "org_1",
+      capability: "smartTools",
+      prompt: "Translate this survey",
+    });
 
-    expect(result).toBe(mockModel);
-    expect(mocks.getAiModel).toHaveBeenCalledWith(
+    expect(result).toBe(generatedText);
+    expect(mocks.generateText).toHaveBeenCalledWith(
+      {
+        prompt: "Translate this survey",
+      },
       expect.objectContaining({
         AI_PROVIDER: "gcp",
         AI_MODEL: "gemini-2.5-flash",
@@ -212,25 +159,26 @@ describe("AI organization service", () => {
     );
   });
 
-  test("logs and rethrows model resolution errors", async () => {
+  test("logs and rethrows generation errors", async () => {
     const modelError = new Error("provider boom");
-    mocks.getAiModel.mockImplementationOnce(() => {
-      throw modelError;
-    });
+    mocks.generateText.mockRejectedValueOnce(modelError);
 
-    await expect(getOrganizationAILanguageModel("org_1", "smartTools")).rejects.toThrow(modelError);
+    await expect(
+      generateOrganizationAIText({
+        organizationId: "org_1",
+        capability: "smartTools",
+        prompt: "Translate this survey",
+      })
+    ).rejects.toThrow(modelError);
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {
         organizationId: "org_1",
         capability: "smartTools",
-        provider: "gcp",
-        model: "gemini-2.5-flash",
-        missingFields: [],
-        invalidFields: [],
+        isInstanceConfigured: true,
         errorCode: undefined,
         err: modelError,
       },
-      "Failed to resolve organization AI language model"
+      "Failed to generate organization AI text"
     );
   });
 });

@@ -5,7 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
-import { getInstanceAIConfigStatus } from "@/lib/ai/service";
+import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { deleteOrganization, getOrganization, updateOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -74,45 +74,45 @@ type TOrganizationAISettings = Pick<
   "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled"
 >;
 
-type TNextOrganizationAISettings = {
-  nextSmartToolsEnabled: boolean;
-  nextDataAnalysisEnabled: boolean;
-  isEnablingAISetting: boolean;
+type TResolvedOrganizationAISettings = {
+  smartToolsEnabled: boolean;
+  dataAnalysisEnabled: boolean;
+  isEnablingAnyAISetting: boolean;
 };
 
-const getNextOrganizationAISettings = ({
+const resolveOrganizationAISettings = ({
   data,
   organization,
 }: {
   data: z.infer<typeof ZOrganizationAISettingsInput>;
   organization: TOrganizationAISettings;
-}): TNextOrganizationAISettings => {
-  const nextSmartToolsEnabled = Object.hasOwn(data, "isAISmartToolsEnabled")
+}): TResolvedOrganizationAISettings => {
+  const smartToolsEnabled = Object.hasOwn(data, "isAISmartToolsEnabled")
     ? (data.isAISmartToolsEnabled ?? organization.isAISmartToolsEnabled)
     : organization.isAISmartToolsEnabled;
-  const nextDataAnalysisEnabled = Object.hasOwn(data, "isAIDataAnalysisEnabled")
+  const dataAnalysisEnabled = Object.hasOwn(data, "isAIDataAnalysisEnabled")
     ? (data.isAIDataAnalysisEnabled ?? organization.isAIDataAnalysisEnabled)
     : organization.isAIDataAnalysisEnabled;
 
   return {
-    nextSmartToolsEnabled,
-    nextDataAnalysisEnabled,
-    isEnablingAISetting:
-      (nextSmartToolsEnabled && !organization.isAISmartToolsEnabled) ||
-      (nextDataAnalysisEnabled && !organization.isAIDataAnalysisEnabled),
+    smartToolsEnabled,
+    dataAnalysisEnabled,
+    isEnablingAnyAISetting:
+      (smartToolsEnabled && !organization.isAISmartToolsEnabled) ||
+      (dataAnalysisEnabled && !organization.isAIDataAnalysisEnabled),
   };
 };
 
 const assertOrganizationAISettingsUpdateAllowed = ({
-  instanceAIConfigStatus,
-  nextSettings,
+  isInstanceAIConfigured,
+  resolvedSettings,
   t,
 }: {
-  instanceAIConfigStatus: ReturnType<typeof getInstanceAIConfigStatus>;
-  nextSettings: TNextOrganizationAISettings;
+  isInstanceAIConfigured: boolean;
+  resolvedSettings: TResolvedOrganizationAISettings;
   t: Awaited<ReturnType<typeof getTranslate>>;
 }) => {
-  if (nextSettings.isEnablingAISetting && !instanceAIConfigStatus.isConfigured) {
+  if (resolvedSettings.isEnablingAnyAISetting && !isInstanceAIConfigured) {
     throw new OperationNotAllowedError(t("environments.settings.general.ai_instance_not_configured"));
   }
 };
@@ -137,15 +137,14 @@ export const updateOrganizationAISettingsAction = authenticatedActionClient
           throw new ResourceNotFoundError("Organization", parsedInput.organizationId);
         }
 
-        const nextSettings = getNextOrganizationAISettings({
+        const resolvedSettings = resolveOrganizationAISettings({
           data: parsedInput.data,
           organization,
         });
-        const instanceAIConfigStatus = getInstanceAIConfigStatus();
 
         assertOrganizationAISettingsUpdateAllowed({
-          instanceAIConfigStatus,
-          nextSettings,
+          isInstanceAIConfigured: isInstanceAIConfigured(),
+          resolvedSettings,
           t,
         });
 
