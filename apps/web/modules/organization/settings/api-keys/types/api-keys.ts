@@ -6,6 +6,7 @@ import { ZWorkspace } from "@formbricks/types/workspace";
 
 export const ZApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
+  workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
 });
 

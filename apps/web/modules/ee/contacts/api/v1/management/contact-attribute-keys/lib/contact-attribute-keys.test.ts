@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./contact-attribute-keys";
 
@@ -117,6 +118,7 @@ describe("createContactAttributeKey", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   test("should create and return a new contact attribute key", async () => {
@@ -133,6 +135,7 @@ describe("createContactAttributeKey", () => {
         type: createInput.type,
         description: createInput.description || "",
         environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
       },
     });
     expect(result).toEqual(mockCreatedAttributeKey);
@@ -188,6 +191,7 @@ describe("createContactAttributeKey", () => {
         type: inputWithoutName.type,
         description: inputWithoutName.description || "",
         environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
       },
     });
   });
@@ -212,6 +216,7 @@ describe("createContactAttributeKey", () => {
         type: inputWithoutDescription.type,
         description: "", // Should fall back to empty string when description is not provided
         environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
       },
     });
   });

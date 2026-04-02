@@ -33,7 +33,11 @@ interface AddApiKeyModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: {
     label: string;
-    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    environmentPermissions: Array<{
+      environmentId: string;
+      permission: ApiKeyPermission;
+      workspaceId: string;
+    }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
   workspaces: TOrganizationWorkspace[];
@@ -165,6 +169,7 @@ export const AddApiKeyModal = ({
     const environmentPermissions = Object.values(selectedPermissions).map((permission) => ({
       environmentId: permission.environmentId,
       permission: permission.permission,
+      workspaceId: permission.workspaceId,
     }));
 
     await onSubmit({

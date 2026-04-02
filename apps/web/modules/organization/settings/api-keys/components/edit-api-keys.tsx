@@ -69,7 +69,11 @@ export const EditAPIKeys = ({
 
   const handleAddAPIKey = async (data: {
     label: string;
-    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    environmentPermissions: Array<{
+      environmentId: string;
+      permission: ApiKeyPermission;
+      workspaceId: string;
+    }>;
     organizationAccess: TOrganizationAccess;
   }): Promise<void> => {
     setIsLoading(true);

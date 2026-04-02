@@ -30,13 +30,15 @@ interface TCreateSegmentModalProps {
   environmentId: string;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
+  workspaceId: string;
 }
 
 export function CreateSegmentModal({
   environmentId,
   contactAttributeKeys,
   segments,
-}: TCreateSegmentModalProps) {
+  workspaceId,
+}: Readonly<TCreateSegmentModalProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const initialSegmentState = {
@@ -45,7 +47,7 @@ export function CreateSegmentModal({
     isPrivate: false,
     filters: [],
     environmentId,
-    workspaceId: null,
+    workspaceId,
     id: "",
     surveys: [],
     createdAt: new Date(),
