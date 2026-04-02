@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 interface LegalFooterProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   surveyUrl: string;
 }
@@ -13,12 +14,12 @@ interface LegalFooterProps {
 export const LegalFooter = ({
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
   surveyUrl,
 }: LegalFooterProps) => {
   const { t } = useTranslation();
-  if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
-
+  if (!IMPRINT_URL && !PRIVACY_URL && !TERMS_URL && !IS_FORMBRICKS_CLOUD) return null;
   return (
     <div className="absolute bottom-0 z-[1500] h-10 w-full" role="contentinfo">
       <div className="mx-auto flex h-full max-w-2xl items-center justify-center p-2 text-center text-xs text-slate-500">
@@ -43,6 +44,13 @@ export const LegalFooter = ({
             {t("common.report_survey")}
           </Link>
         )}
+        {PRIVACY_URL && TERMS_URL && <span className="px-2">|</span>}
+        {TERMS_URL && (
+          <Link href={TERMS_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+            {t("common.terms")}
+          </Link>
+        )}
+        {TERMS_URL && IS_FORMBRICKS_CLOUD && <span className="px-2">|</span>}
       </div>
     </div>
   );

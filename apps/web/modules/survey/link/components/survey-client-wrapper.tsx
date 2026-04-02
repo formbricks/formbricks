@@ -30,11 +30,12 @@ interface SurveyClientWrapperProps {
   verifiedEmail?: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
 }
 
-let setBlockId = (_: string) => {};
-let setResponseData = (_: TResponseData) => {};
+let setBlockId = (_: string) => { };
+let setResponseData = (_: TResponseData) => { };
 
 export const SurveyClientWrapper = ({
   survey,
@@ -53,6 +54,7 @@ export const SurveyClientWrapper = ({
   verifiedEmail,
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
@@ -146,6 +148,7 @@ export const SurveyClientWrapper = ({
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        TERMS_URL={TERMS_URL}
         isBrandingEnabled={project.linkSurveyBranding}
         dir={logoDir}>
         <SurveyInline
@@ -175,7 +178,7 @@ export const SurveyClientWrapper = ({
           }}
           singleUseId={singleUseId}
           singleUseResponseId={singleUseResponseId}
-          getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
+          getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => { }}
           contactId={contactId}
           recaptchaSiteKey={recaptchaSiteKey}
           isSpamProtectionEnabled={isSpamProtectionEnabled}
