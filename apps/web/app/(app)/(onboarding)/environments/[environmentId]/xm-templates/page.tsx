@@ -5,7 +5,6 @@ import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/er
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
 import { getEnvironment } from "@/lib/environment/service";
 import { getUser } from "@/lib/user/service";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getUserWorkspaces, getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -35,14 +34,12 @@ const Page = async (props: XMTemplatePageProps) => {
     throw new ResourceNotFoundError(t("common.environment"), params.environmentId);
   }
 
-  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
-
   const workspace = await getWorkspaceByEnvironmentId(environment.id);
   if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const workspaces = await getUserWorkspaces(session.user.id, organizationId);
+  const workspaces = await getUserWorkspaces(session.user.id, workspace.organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
