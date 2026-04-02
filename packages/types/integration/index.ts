@@ -19,7 +19,7 @@ export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
 export const ZIntegrationBase = z.object({
   id: z.string(),
   environmentId: z.string(),
-  workspaceId: z.string(),
+  workspaceId: z.cuid2(),
 });
 
 export const ZIntegration = ZIntegrationBase.extend({
