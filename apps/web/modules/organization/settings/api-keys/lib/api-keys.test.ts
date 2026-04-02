@@ -412,7 +412,9 @@ describe("API Key Management", () => {
 
       const result = await createApiKey("org123", "user123", {
         ...mockApiKeyData,
-        environmentPermissions: [{ environmentId: "env123", permission: ApiKeyPermission.manage }],
+        environmentPermissions: [
+          { environmentId: "env123", permission: ApiKeyPermission.manage, workspaceId: "workspaceId" },
+        ],
       });
 
       expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "fbk_testSecret123" });

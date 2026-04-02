@@ -14,6 +14,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import {
   mockActionClass,
   mockId,
@@ -54,6 +55,7 @@ vi.mock("@/lib/actionClass/service", () => ({
 }));
 
 beforeEach(() => {
+  vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   prisma.survey.count.mockResolvedValue(1);
 });
 

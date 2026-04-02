@@ -380,6 +380,7 @@ export const copySurveyToOtherEnvironment = async (
           const baseActionClassData = {
             name: modifiedName,
             environment: { connect: { id: targetEnvironmentId } },
+            workspace: { connect: { id: targetWorkspace.id } },
             description: trigger.actionClass.description,
             type: trigger.actionClass.type,
           };

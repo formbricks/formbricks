@@ -8,6 +8,7 @@ import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
@@ -124,6 +125,7 @@ const resetMocks = () => {
   vi.mocked(doesEnvironmentExist).mockClear();
   vi.mocked(getWorkspaceWithLanguagesByEnvironmentId).mockClear();
   vi.mocked(getOrganizationByEnvironmentId).mockClear();
+  vi.mocked(getWorkspaceIdFromEnvironmentId).mockClear();
   vi.mocked(createId).mockClear();
   vi.mocked(prisma.survey.findMany).mockReset();
   vi.mocked(prisma.survey.findUnique).mockReset();
@@ -553,6 +555,7 @@ describe("copySurveyToOtherEnvironment", () => {
 
   beforeEach(() => {
     resetMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     vi.mocked(createId).mockReturnValue("new_cuid2_id");
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockExistingSurveyDetails as any);
     vi.mocked(doesEnvironmentExist).mockResolvedValue(environmentId);
@@ -663,6 +666,7 @@ describe("copySurveyToOtherEnvironment", () => {
               isPrivate: true,
               filters: surveyWithPrivateSegment.segment.filters,
               environment: { connect: { id: targetEnvironmentId } },
+              workspace: { connect: { id: targetWorkspaceId } },
             },
           },
         }),
@@ -713,6 +717,7 @@ describe("copySurveyToOtherEnvironment", () => {
               isPrivate: false,
               filters: [],
               environment: { connect: { id: targetEnvironmentId } },
+              workspace: { connect: { id: targetWorkspaceId } },
             },
           },
         }),
@@ -747,6 +752,7 @@ describe("copySurveyToOtherEnvironment", () => {
               isPrivate: false,
               filters: [],
               environment: { connect: { id: targetEnvironmentId } },
+              workspace: { connect: { id: targetWorkspaceId } },
             },
           },
         }),

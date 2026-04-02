@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { createActionClass } from "./action-class";
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -58,6 +59,7 @@ const mockActionClass: ActionClass = {
 describe("createActionClass", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   test("should create a code action class successfully", async () => {
@@ -73,6 +75,7 @@ describe("createActionClass", () => {
         type: "code",
         key: mockCodeActionInput.key,
         environment: { connect: { id: mockEnvironmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
         noCodeConfig: undefined,
       },
     });
@@ -97,6 +100,7 @@ describe("createActionClass", () => {
         type: "noCode",
         key: undefined,
         environment: { connect: { id: mockEnvironmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
         noCodeConfig: mockNoCodeActionInput.noCodeConfig,
       },
     });

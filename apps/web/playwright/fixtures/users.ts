@@ -91,70 +91,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                       create: {
                         name: params?.workspaceName ?? "My Workspace",
                         environments: {
-                          create: [
-                            {
-                              type: "development",
-                              attributeKeys: {
-                                create: [
-                                  {
-                                    name: "Email",
-                                    key: "email",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "First Name",
-                                    key: "firstName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "Last Name",
-                                    key: "lastName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "userId",
-                                    key: "userId",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                ],
-                              },
-                            },
-                            {
-                              type: "production",
-                              attributeKeys: {
-                                create: [
-                                  {
-                                    name: "Email",
-                                    key: "email",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "First Name",
-                                    key: "firstName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "Last Name",
-                                    key: "lastName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "userId",
-                                    key: "userId",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                ],
-                              },
-                            },
-                          ],
+                          create: [{ type: "development" }, { type: "production" }],
                         },
                       },
                     },
@@ -167,6 +104,33 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
         },
         include: { memberships: true },
       });
+
+      // Create default attribute keys for each environment with the actual workspace ID
+      if (!params?.withoutWorkspace) {
+        const workspace = await prisma.workspace.findFirst({
+          where: { organizationId: user.memberships[0].organizationId },
+          include: { environments: true },
+        });
+
+        if (workspace) {
+          const defaultKeys = [
+            { name: "Email", key: "email", isUnique: true, type: "default" as const },
+            { name: "First Name", key: "firstName", isUnique: false, type: "default" as const },
+            { name: "Last Name", key: "lastName", isUnique: false, type: "default" as const },
+            { name: "userId", key: "userId", isUnique: true, type: "default" as const },
+          ];
+
+          for (const env of workspace.environments) {
+            await prisma.contactAttributeKey.createMany({
+              data: defaultKeys.map((k) => ({
+                ...k,
+                environmentId: env.id,
+                workspaceId: workspace.id,
+              })),
+            });
+          }
+        }
+      }
 
       const userFixture = createUserFixture(user, page);
 

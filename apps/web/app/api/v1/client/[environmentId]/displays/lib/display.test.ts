@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
@@ -87,6 +88,7 @@ const mockSurvey = {
 describe("createDisplay", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
   });
 
@@ -121,6 +123,7 @@ describe("createDisplay", () => {
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
         environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
         attributes: {
           create: {
             attributeKey: {

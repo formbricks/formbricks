@@ -11,6 +11,7 @@ import {
   TSegmentWithSurveyRefs,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   PrismaSegment,
@@ -105,6 +106,10 @@ const mockSurvey = {
 };
 
 describe("Segment Service Tests", () => {
+  beforeEach(() => {
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
+  });
+
   describe("transformPrismaSegment", () => {
     test("should transform Prisma segment to TSegment", () => {
       const transformed = transformPrismaSegment(mockSegmentPrisma as unknown as PrismaSegment);
@@ -115,6 +120,7 @@ describe("Segment Service Tests", () => {
   describe("getSegment", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     });
 
     test("should return a segment successfully", async () => {
@@ -179,6 +185,7 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.create).toHaveBeenCalledWith({
         data: {
           environmentId,
+          workspaceId: "workspace-id-mock",
           title: mockSegmentCreateInput.title,
           description: undefined,
           isPrivate: false,
@@ -197,6 +204,7 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.create).toHaveBeenCalledWith({
         data: {
           environmentId,
+          workspaceId: "workspace-id-mock",
           title: inputWithSurvey.title,
           description: undefined,
           isPrivate: false,
@@ -230,6 +238,7 @@ describe("Segment Service Tests", () => {
         },
         create: {
           environmentId,
+          workspaceId: "workspace-id-mock",
           title: privateInput.title,
           description: undefined,
           isPrivate: true,
@@ -263,6 +272,7 @@ describe("Segment Service Tests", () => {
         },
         create: {
           environmentId,
+          workspaceId: "workspace-id-mock",
           title: privateInputWithSurvey.title,
           description: undefined,
           isPrivate: true,
@@ -318,6 +328,7 @@ describe("Segment Service Tests", () => {
           description: mockSegment.description,
           isPrivate: mockSegment.isPrivate,
           environmentId: mockSegment.environmentId,
+          workspaceId: "workspace-id-mock",
           filters: mockSegment.filters,
           surveys: { connect: { id: surveyId } },
         },
@@ -470,6 +481,7 @@ describe("Segment Service Tests", () => {
           filters: [],
           surveys: { connect: { id: surveyId } },
           environment: { connect: { id: environmentId } },
+          workspace: { connect: { id: "workspace-id-mock" } },
         },
         select: selectSegment,
       });
