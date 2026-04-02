@@ -7,3 +7,10 @@ export interface TPipelineInput {
   workspaceId: string;
   surveyId: string;
 }
+
+export interface TPipelineJob extends TPipelineInput {
+  jobId: string;
+  attempt: number;
+  enqueuedAt: number;
+  notBefore: number | null;
+}

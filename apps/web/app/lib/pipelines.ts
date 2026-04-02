@@ -1,25 +1,12 @@
 import { logger } from "@formbricks/logger";
+import { enqueuePipelineJob, triggerPipelineDrain } from "@/app/lib/pipeline-queue";
 import { TPipelineInput } from "@/app/lib/types/pipelines";
-import { CRON_SECRET, WEBAPP_URL } from "@/lib/constants";
 
-export const sendToPipeline = async ({ event, surveyId, workspaceId, response }: TPipelineInput) => {
-  if (!CRON_SECRET) {
-    throw new Error("CRON_SECRET is not set");
+export const sendToPipeline = async (job: TPipelineInput): Promise<void> => {
+  try {
+    await enqueuePipelineJob(job);
+    triggerPipelineDrain();
+  } catch (error) {
+    logger.error({ error, event: job.event, surveyId: job.surveyId }, "Error queueing pipeline event");
   }
-
-  return fetch(`${WEBAPP_URL}/api/pipeline`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": CRON_SECRET,
-    },
-    body: JSON.stringify({
-      workspaceId,
-      surveyId,
-      event,
-      response,
-    }),
-  }).catch((error) => {
-    logger.error(error, "Error sending event to pipeline");
-  });
 };

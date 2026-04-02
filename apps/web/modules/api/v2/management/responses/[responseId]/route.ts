@@ -224,7 +224,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       // Fetch updated response with relations for pipeline
       const updatedResponseForPipeline = await getResponseForPipeline(params.responseId);
       if (updatedResponseForPipeline.ok) {
-        sendToPipeline({
+        await sendToPipeline({
           event: "responseUpdated",
           workspaceId: workspaceIdResult.data.workspaceId,
           surveyId: existingResponse.data.surveyId,
@@ -232,7 +232,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         });
 
         if (response.data.finished) {
-          sendToPipeline({
+          await sendToPipeline({
             event: "responseFinished",
             workspaceId: workspaceIdResult.data.workspaceId,
             surveyId: existingResponse.data.surveyId,
