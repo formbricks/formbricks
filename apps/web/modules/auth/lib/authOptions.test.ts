@@ -10,6 +10,25 @@ import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
+vi.mock("@next-auth/prisma-adapter", () => ({
+  PrismaAdapter: vi.fn(() => ({
+    createUser: vi.fn(),
+    getUser: vi.fn(),
+    getUserByEmail: vi.fn(),
+    getUserByAccount: vi.fn(),
+    updateUser: vi.fn(),
+    deleteUser: vi.fn(),
+    linkAccount: vi.fn(),
+    unlinkAccount: vi.fn(),
+    createSession: vi.fn(),
+    getSessionAndUser: vi.fn(),
+    updateSession: vi.fn(),
+    deleteSession: vi.fn(),
+    createVerificationToken: vi.fn(),
+    useVerificationToken: vi.fn(),
+  })),
+}));
+
 // Mock encryption utilities
 vi.mock("@/lib/encryption", () => ({
   symmetricEncrypt: vi.fn((value: string) => `encrypted_${value}`),
@@ -300,51 +319,20 @@ describe("authOptions", () => {
   });
 
   describe("Callbacks", () => {
-    describe("jwt callback", () => {
-      test("should add profile information to token if user is found", async () => {
-        vi.spyOn(prisma.user, "findFirst").mockResolvedValue({
-          id: mockUser.id,
-          locale: mockUser.locale,
-          email: mockUser.email,
-          emailVerified: mockUser.emailVerified,
-        } as any);
-
-        const token = { email: mockUser.email };
-        if (!authOptions.callbacks?.jwt) {
-          throw new Error("jwt callback is not defined");
-        }
-        const result = await authOptions.callbacks.jwt({ token } as any);
-        expect(result).toEqual({
-          ...token,
-          profile: { id: mockUser.id },
-        });
-      });
-
-      test("should return token unchanged if no existing user is found", async () => {
-        vi.spyOn(prisma.user, "findFirst").mockResolvedValue(null);
-
-        const token = { email: "nonexistent@example.com" };
-        if (!authOptions.callbacks?.jwt) {
-          throw new Error("jwt callback is not defined");
-        }
-        const result = await authOptions.callbacks.jwt({ token } as any);
-        expect(result).toEqual(token);
-      });
-    });
-
     describe("session callback", () => {
-      test("should add user profile to session", async () => {
-        const token = {
-          id: "user6",
-          profile: { id: "user6", email: "user6@example.com" },
-        };
+      test("should add user id and isActive to session from database user", async () => {
+        const session = { user: { email: "user6@example.com" } };
+        const user = { id: "user6", isActive: false };
 
-        const session = { user: {} };
         if (!authOptions.callbacks?.session) {
           throw new Error("session callback is not defined");
         }
-        const result = await authOptions.callbacks.session({ session, token } as any);
-        expect(result.user).toEqual(token.profile);
+        const result = await authOptions.callbacks.session({ session, user } as any);
+        expect(result.user).toEqual({
+          email: "user6@example.com",
+          id: "user6",
+          isActive: false,
+        });
       });
     });
 

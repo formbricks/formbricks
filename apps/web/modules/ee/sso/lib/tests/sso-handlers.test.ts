@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TUser } from "@formbricks/types/user";
+import { upsertAccount } from "@/lib/account/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -62,7 +63,7 @@ vi.mock("@/modules/ee/sso/lib/team", () => ({
 }));
 
 vi.mock("@/lib/account/service", () => ({
-  createAccount: vi.fn(),
+  upsertAccount: vi.fn(),
 }));
 
 vi.mock("@/lib/membership/service", () => ({
@@ -200,6 +201,36 @@ describe("handleSsoCallback", () => {
           identityProvider: mockAccount.provider.toLowerCase().replace("-", ""),
           identityProviderAccountId: mockAccount.providerAccountId,
         },
+      });
+    });
+
+    test("should not overwrite stored tokens when the provider omits them", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        ...mockUser,
+        email: mockUser.email,
+        accounts: [{ provider: mockAccount.provider }],
+      } as any);
+
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: {
+          ...mockAccount,
+          access_token: undefined,
+          refresh_token: undefined,
+          expires_at: undefined,
+          scope: undefined,
+          token_type: undefined,
+          id_token: undefined,
+        },
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith({
+        userId: mockUser.id,
+        type: mockAccount.type,
+        provider: mockAccount.provider,
+        providerAccountId: mockAccount.providerAccountId,
       });
     });
 

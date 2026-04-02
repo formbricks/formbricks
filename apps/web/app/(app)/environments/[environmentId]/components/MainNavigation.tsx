@@ -16,7 +16,6 @@ import {
   SettingsIcon,
   UserCircleIcon,
   UserIcon,
-  WorkflowIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -162,20 +161,13 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
-        name: t("common.workflows"),
-        href: `/environments/${environment.id}/workflows`,
-        icon: WorkflowIcon,
-        isActive: pathname?.includes("/workflows"),
-        isHidden: !isFormbricksCloud,
-      },
-      {
         name: t("common.configuration"),
         href: `/environments/${environment.id}/workspace/general`,
         icon: Cog,
         isActive: pathname?.includes("/workspace"),
       },
     ],
-    [t, environment.id, pathname, isFormbricksCloud]
+    [t, environment.id, pathname]
   );
 
   const dropdownNavigation = [

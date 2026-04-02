@@ -1,8 +1,30 @@
+diff --git a/core/lib/assert.js b/core/lib/assert.js
+--- a/core/lib/assert.js
++++ b/core/lib/assert.js
+@@ -52,12 +52,6 @@
+     if (provider.type === "credentials") hasCredentials = true;else if (provider.type === "email") hasEmail = true;else if (provider.id === "twitter" && provider.version === "2.0") hasTwitterOAuth2 = true;
+   }
+   if (hasCredentials) {
+-    var _options$session;
+-    const dbStrategy = ((_options$session = options.session) === null || _options$session === void 0 ? void 0 : _options$session.strategy) === "database";
+-    const onlyCredentials = !options.providers.some(p => p.type !== "credentials");
+-    if (dbStrategy && onlyCredentials) {
+-      return new _errors.UnsupportedStrategy("Signin in with credentials only supported if JWT strategy is enabled");
+-    }
+     const credentialsNoAuthorize = options.providers.some(p => p.type === "credentials" && !p.authorize);
+     if (credentialsNoAuthorize) {
+       return new _errors.MissingAuthorize("Must define an authorize() handler to use credentials authentication provider");
+@@ -80,4 +74,4 @@
+     warned = true;
+   }
+   return warnings;
+-}
+\ No newline at end of file
++}
 diff --git a/core/lib/oauth/client.js b/core/lib/oauth/client.js
-index 52c51eb6ff422dc0899ccec31baf3fa39e42eeae..472772cfefc2c2947536d6a22b022c2f9c27c61f 100644
 --- a/core/lib/oauth/client.js
 +++ b/core/lib/oauth/client.js
-@@ -5,9 +5,73 @@ Object.defineProperty(exports, "__esModule", {
+@@ -5,9 +5,73 @@
  });
  exports.openidClient = openidClient;
  var _openidClient = require("openid-client");
@@ -77,3 +99,199 @@ index 52c51eb6ff422dc0899ccec31baf3fa39e42eeae..472772cfefc2c2947536d6a22b022c2f
    let issuer;
    if (provider.wellKnown) {
      issuer = await _openidClient.Issuer.discover(provider.wellKnown);
+diff --git a/core/routes/callback.js b/core/routes/callback.js
+--- a/core/routes/callback.js
++++ b/core/routes/callback.js
+@@ -377,29 +377,48 @@
+         cookies
+       };
+     }
+-    const defaultToken = {
+-      name: user.name,
+-      email: user.email,
+-      picture: user.image,
+-      sub: (_user$id3 = user.id) === null || _user$id3 === void 0 ? void 0 : _user$id3.toString()
+-    };
+-    const token = await callbacks.jwt({
+-      token: defaultToken,
+-      user,
+-      account,
+-      isNewUser: false,
+-      trigger: "signIn"
+-    });
+-    const newToken = await jwt.encode({
+-      ...jwt,
+-      token
+-    });
+-    const cookieExpires = new Date();
+-    cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1000);
+-    const sessionCookies = sessionStore.chunk(newToken, {
+-      expires: cookieExpires
+-    });
+-    cookies.push(...sessionCookies);
++    if (useJwtSession) {
++      const defaultToken = {
++        name: user.name,
++        email: user.email,
++        picture: user.image,
++        sub: (_user$id3 = user.id) === null || _user$id3 === void 0 ? void 0 : _user$id3.toString()
++      };
++      const token = await callbacks.jwt({
++        token: defaultToken,
++        user,
++        account,
++        isNewUser: false,
++        trigger: "signIn"
++      });
++      const newToken = await jwt.encode({
++        ...jwt,
++        token
++      });
++      const cookieExpires = new Date();
++      cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1000);
++      const sessionCookies = sessionStore.chunk(newToken, {
++        expires: cookieExpires
++      });
++      cookies.push(...sessionCookies);
++    } else {
++      if (!adapter) {
++        throw new Error("Missing adapter");
++      }
++      const session = await adapter.createSession({
++        sessionToken: await options.session.generateSessionToken(),
++        userId: user.id,
++        expires: (0, _utils.fromDate)(options.session.maxAge)
++      });
++      cookies.push({
++        name: options.cookies.sessionToken.name,
++        value: session.sessionToken,
++        options: {
++          ...options.cookies.sessionToken.options,
++          expires: session.expires
++        }
++      });
++    }
+     await ((_events$signIn3 = events.signIn) === null || _events$signIn3 === void 0 ? void 0 : _events$signIn3.call(events, {
+       user,
+       account
+@@ -414,4 +433,4 @@
+     body: `Error: Callback for provider type ${provider.type} not supported`,
+     cookies
+   };
+-}
+\ No newline at end of file
++}
+diff --git a/src/core/lib/assert.ts b/src/core/lib/assert.ts
+--- a/src/core/lib/assert.ts
++++ b/src/core/lib/assert.ts
+@@ -101,16 +101,6 @@
+   }
+ 
+   if (hasCredentials) {
+-    const dbStrategy = options.session?.strategy === "database"
+-    const onlyCredentials = !options.providers.some(
+-      (p) => p.type !== "credentials"
+-    )
+-    if (dbStrategy && onlyCredentials) {
+-      return new UnsupportedStrategy(
+-        "Signin in with credentials only supported if JWT strategy is enabled"
+-      )
+-    }
+-
+     const credentialsNoAuthorize = options.providers.some(
+       (p) => p.type === "credentials" && !p.authorize
+     )
+diff --git a/src/core/routes/callback.ts b/src/core/routes/callback.ts
+--- a/src/core/routes/callback.ts
++++ b/src/core/routes/callback.ts
+@@ -1,6 +1,6 @@
+ import oAuthCallback from "../lib/oauth/callback"
+ import callbackHandler from "../lib/callback-handler"
+-import { hashToken } from "../lib/utils"
++import { fromDate, hashToken } from "../lib/utils"
+ import getAdapterUserFromEmail from "../lib/email/getUserFromEmail"
+ 
+ import type { InternalOptions } from "../types"
+@@ -385,37 +385,58 @@
+         )}`,
+         cookies,
+       }
+-    }
+-
+-    const defaultToken = {
+-      name: user.name,
+-      email: user.email,
+-      picture: user.image,
+-      sub: user.id?.toString(),
+     }
+ 
+-    const token = await callbacks.jwt({
+-      token: defaultToken,
+-      user,
+-      // @ts-expect-error
+-      account,
+-      isNewUser: false,
+-      trigger: "signIn",
+-    })
++    if (useJwtSession) {
++      const defaultToken = {
++        name: user.name,
++        email: user.email,
++        picture: user.image,
++        sub: user.id?.toString(),
++      }
+ 
+-    // Encode token
+-    const newToken = await jwt.encode({ ...jwt, token })
++      const token = await callbacks.jwt({
++        token: defaultToken,
++        user,
++        // @ts-expect-error
++        account,
++        isNewUser: false,
++        trigger: "signIn",
++      })
+ 
+-    // Set cookie expiry date
+-    const cookieExpires = new Date()
+-    cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1000)
++      // Encode token
++      const newToken = await jwt.encode({ ...jwt, token })
+ 
+-    const sessionCookies = sessionStore.chunk(newToken, {
+-      expires: cookieExpires,
+-    })
++      // Set cookie expiry date
++      const cookieExpires = new Date()
++      cookieExpires.setTime(cookieExpires.getTime() + sessionMaxAge * 1000)
+ 
+-    cookies.push(...sessionCookies)
++      const sessionCookies = sessionStore.chunk(newToken, {
++        expires: cookieExpires,
++      })
+ 
++      cookies.push(...sessionCookies)
++    } else {
++      if (!adapter) {
++        throw new Error("Missing adapter")
++      }
++
++      const session = await adapter.createSession({
++        sessionToken: await options.session.generateSessionToken(),
++        userId: user.id,
++        expires: fromDate(options.session.maxAge),
++      })
++
++      cookies.push({
++        name: options.cookies.sessionToken.name,
++        value: (session as AdapterSession).sessionToken,
++        options: {
++          ...options.cookies.sessionToken.options,
++          expires: (session as AdapterSession).expires,
++        },
++      })
++    }
++
+     // @ts-expect-error
+     await events.signIn?.({ user, account })
+ 

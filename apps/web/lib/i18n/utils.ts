@@ -84,7 +84,9 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 
 export const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
   if (!surveyLanguages?.length || !languageCode) return "default";
-  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+  const language = surveyLanguages.find(
+    (surveyLanguage) => surveyLanguage.language.code.toLowerCase() === languageCode.toLowerCase()
+  );
   return language?.default ? "default" : language?.language.code || "default";
 };
 
