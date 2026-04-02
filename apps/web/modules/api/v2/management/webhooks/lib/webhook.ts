@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { generateWebhookSecret } from "@/lib/crypto";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { getWebhooksQuery } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
@@ -70,11 +71,17 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
 
   try {
     const secret = generateWebhookSecret();
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
 
     const prismaData: Prisma.WebhookCreateInput = {
       environment: {
         connect: {
           id: environmentId,
+        },
+      },
+      workspace: {
+        connect: {
+          id: workspaceId,
         },
       },
       name,

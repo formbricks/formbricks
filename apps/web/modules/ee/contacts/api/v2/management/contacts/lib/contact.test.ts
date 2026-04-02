@@ -4,6 +4,10 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { createContact } from "./contact";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
   prisma: {

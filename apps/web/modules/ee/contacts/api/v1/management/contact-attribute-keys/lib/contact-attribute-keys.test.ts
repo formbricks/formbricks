@@ -8,6 +8,10 @@ import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./contact-attribute-keys";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     contactAttributeKey: {

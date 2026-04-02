@@ -6,6 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TagError } from "@/modules/workspaces/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -53,10 +54,12 @@ export const createTag = async (
   validateInputs([environmentId, ZId], [name, ZString]);
 
   try {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const tag = await prisma.tag.create({
       data: {
         name,
         environmentId,
+        workspaceId,
       },
     });
 

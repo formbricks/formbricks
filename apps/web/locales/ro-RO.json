@@ -328,6 +328,7 @@
     "or": "sau",
     "organization": "Organizație",
     "organization_id": "ID Organizație",
+    "organization_not_found": "Organizația nu a fost găsită",
     "organization_settings": "Setări Organizație",
     "other": "Altele",
     "other_filters": "Alte Filtre",

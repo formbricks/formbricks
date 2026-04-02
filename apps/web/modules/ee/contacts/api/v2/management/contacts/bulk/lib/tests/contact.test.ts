@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Ensure that createId always returns "mock-id" for predictability
 vi.mock("@paralleldrive/cuid2", () => ({
   createId: vi.fn(() => "mock-id"),

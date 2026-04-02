@@ -8,6 +8,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
@@ -67,12 +68,18 @@ export const createSurvey = async (
       data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const survey = await prisma.survey.create({
       data: {
         ...data,
         environment: {
           connect: {
             id: environmentId,
+          },
+        },
+        workspace: {
+          connect: {
+            id: workspaceId,
           },
         },
       },
@@ -89,6 +96,11 @@ export const createSurvey = async (
           environment: {
             connect: {
               id: environmentId,
+            },
+          },
+          workspace: {
+            connect: {
+              id: workspaceId,
             },
           },
         },

@@ -6,6 +6,10 @@ import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
 import { createActionClass } from "./action-class";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     actionClass: {

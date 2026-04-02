@@ -28,6 +28,10 @@ import {
   updateSegment,
 } from "./segments";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
   prisma: {

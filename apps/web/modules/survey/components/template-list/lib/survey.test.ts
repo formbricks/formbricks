@@ -13,6 +13,10 @@ import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { createSurvey, handleTriggerUpdates } from "./survey";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Mock dependencies
 vi.mock("@/lib/survey/utils", () => ({
   checkForInvalidImagesInQuestions: vi.fn(),

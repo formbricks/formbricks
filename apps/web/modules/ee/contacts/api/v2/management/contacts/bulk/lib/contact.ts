@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -628,7 +629,8 @@ export const upsertBulkContacts = async (
         }
 
         // Create new contacts
-        const newContacts = contactsToCreate.map(() => ({ id: createId(), environmentId }));
+        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+        const newContacts = contactsToCreate.map(() => ({ id: createId(), environmentId, workspaceId }));
 
         if (newContacts.length > 0) {
           await tx.contact.createMany({ data: newContacts });

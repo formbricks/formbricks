@@ -7,6 +7,7 @@ import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common"
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -98,6 +99,7 @@ const selectContact = {
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  workspaceId: true,
   attributes: {
     select: {
       value: true,
@@ -421,12 +423,14 @@ const createMissingAttributeKeys = async (
     }
   }
 
+  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
   await prisma.contactAttributeKey.createMany({
     data: Array.from(uniqueMissingKeys.values()).map((key) => ({
       key,
       name: formatSnakeCaseToTitleCase(key),
       dataType: attributeTypeMap.get(key)?.dataType ?? "string",
       environmentId,
+      workspaceId,
     })),
     skipDuplicates: true,
   });
@@ -497,9 +501,11 @@ const processCsvRecord = async (
 
   if (!existingContact) {
     // Create new contact
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     return prisma.contact.create({
       data: {
         environmentId,
+        workspaceId,
         attributes: {
           create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
         },

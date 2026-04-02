@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { getContactAttributeKeysQuery } from "@/modules/api/v2/management/contact-attribute-keys/lib/utils";
 import {
@@ -46,10 +47,16 @@ export const createContactAttributeKey = async (
   const { environmentId, name, description, key, dataType } = contactAttributeKey;
 
   try {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {
       environment: {
         connect: {
           id: environmentId,
+        },
+      },
+      workspace: {
+        connect: {
+          id: workspaceId,
         },
       },
       name: name ?? formatSnakeCaseToTitleCase(key),

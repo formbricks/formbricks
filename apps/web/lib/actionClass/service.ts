@@ -8,6 +8,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -21,6 +22,7 @@ const selectActionClass = {
   key: true,
   noCodeConfig: true,
   environmentId: true,
+  workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
 export const getActionClasses = reactCache(
@@ -113,10 +115,12 @@ export const createActionClass = async (
   const { environmentId: _, ...actionClassInput } = actionClass;
 
   try {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
         environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
           actionClassInput.type === "noCode"

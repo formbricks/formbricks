@@ -5,6 +5,10 @@ import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";
 
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
+
 // Mock the cache functions
 vi.mock("@/lib/cache", () => ({
   cache: {
