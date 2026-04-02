@@ -12,9 +12,10 @@ import { logApiErrorEdge } from "./utils-edge";
 export const handleApiError = (
   request: Request,
   err: ApiErrorResponseV2,
-  auditLog?: TApiAuditLog
+  auditLog?: TApiAuditLog,
+  originalError: unknown = err
 ): Response => {
-  logApiError(request, err, auditLog);
+  logApiError(request, err, auditLog, originalError);
 
   switch (err.type) {
     case "bad_request":
@@ -64,9 +65,9 @@ export const logApiRequest = (request: Request, responseStatus: number, auditLog
   const startTime = request.headers.get("x-start-time") || "";
   const queryParams = Object.fromEntries(url.searchParams.entries());
 
-  const sensitiveParams = ["apikey", "token", "secret"];
+  const sensitiveParams = new Set(["apikey", "token", "secret"]);
   const safeQueryParams = Object.fromEntries(
-    Object.entries(queryParams).filter(([key]) => !sensitiveParams.includes(key.toLowerCase()))
+    Object.entries(queryParams).filter(([key]) => !sensitiveParams.has(key.toLowerCase()))
   );
 
   logger
@@ -74,7 +75,7 @@ export const logApiRequest = (request: Request, responseStatus: number, auditLog
       method,
       path,
       responseStatus,
-      duration: `${Date.now() - parseInt(startTime)} ms`,
+      duration: `${Date.now() - Number.parseInt(startTime, 10)} ms`,
       correlationId,
       queryParams: safeQueryParams,
     })
@@ -83,8 +84,13 @@ export const logApiRequest = (request: Request, responseStatus: number, auditLog
   logAuditLog(request, auditLog);
 };
 
-export const logApiError = (request: Request, error: ApiErrorResponseV2, auditLog?: TApiAuditLog): void => {
-  logApiErrorEdge(request, error);
+export const logApiError = (
+  request: Request,
+  error: ApiErrorResponseV2,
+  auditLog?: TApiAuditLog,
+  originalError: unknown = error
+): void => {
+  logApiErrorEdge(request, error, originalError);
 
   logAuditLog(request, auditLog);
 };
