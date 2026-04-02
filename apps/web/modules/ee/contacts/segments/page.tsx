@@ -1,5 +1,3 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -33,10 +31,6 @@ export const SegmentsPage = async ({
   }
 
   const filteredSegments = segments.filter((segment) => !segment.isPrivate);
-  const workspaceId = await getWorkspaceIdFromEnvironmentId(params.environmentId);
-  if (!workspaceId) {
-    throw new ResourceNotFoundError("workspace", params.environmentId);
-  }
 
   return (
     <ContactsPageLayout
