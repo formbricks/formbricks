@@ -3,9 +3,9 @@ import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
+import { resolveWorkspaceInBodyV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
-import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { ZGetWebhooksFilter, ZWebhookCreateInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -41,7 +41,7 @@ export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     schemas: {
-      body: ZWebhookInput,
+      body: ZWebhookCreateInput,
     },
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
@@ -65,18 +65,16 @@ export const POST = async (request: NextRequest) =>
         }
       }
 
-      if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
-        return handleApiError(
-          request,
-          {
-            type: "forbidden",
-            details: [{ field: "environmentId", issue: "does not have permission to create webhook" }],
-          },
-          auditLog
-        );
+      // Resolve workspaceId → production environmentId when environmentId is not provided
+      const envResult = await resolveWorkspaceInBodyV2(body, authentication.environmentPermissions, "POST");
+      if (!envResult.ok) {
+        return handleApiError(request, envResult.error, auditLog);
       }
 
-      const createWebhookResult = await createWebhook(body);
+      const createWebhookResult = await createWebhook({
+        ...body,
+        environmentId: envResult.data,
+      });
 
       if (!createWebhookResult.ok) {
         return handleApiError(request, createWebhookResult.error, auditLog);

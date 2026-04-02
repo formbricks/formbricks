@@ -42,6 +42,35 @@ export const hasPermission = (
   }
 };
 
+// Check if API key has sufficient permission for the requested workspace and method.
+// Only considers the production environment's permission, since workspace-level access
+// always resolves to the production environment.
+export const hasWorkspacePermission = (
+  permissions: TAPIKeyEnvironmentPermission[],
+  workspaceId: string,
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+): boolean => {
+  if (!permissions) return false;
+
+  const prodPermission = permissions.find(
+    (p) => p.workspaceId === workspaceId && p.environmentType === "production"
+  );
+  if (!prodPermission) return false;
+
+  const requiredPermission = methodPermissionMap[method];
+
+  switch (prodPermission.permission) {
+    case "manage":
+      return true;
+    case "write":
+      return requiredPermission === "write" || requiredPermission === "read";
+    case "read":
+      return requiredPermission === "read";
+    default:
+      return false;
+  }
+};
+
 export const hasOrganizationAccess = (
   authentication: TAuthenticationApiKey,
   accessType: OrganizationAccessType

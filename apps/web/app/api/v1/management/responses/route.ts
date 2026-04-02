@@ -1,6 +1,10 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import {
+  checkEnvPermissionIfNeeded,
+  resolveWorkspaceInBody,
+} from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -66,29 +70,6 @@ export const GET = withV1ApiWrapper({
   },
 });
 
-const validateInput = async (request: Request) => {
-  let jsonInput;
-  try {
-    jsonInput = await request.json();
-  } catch (err) {
-    logger.error({ error: err, url: request.url }, "Error parsing JSON input");
-    return { error: responses.badRequestResponse("Malformed JSON input, please check your request body") };
-  }
-
-  const inputValidation = ZResponseInput.safeParse(jsonInput);
-  if (!inputValidation.success) {
-    return {
-      error: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
-    };
-  }
-
-  return { data: inputValidation.data };
-};
-
 const validateSurvey = async (responseInput: TResponseInput, environmentId: string) => {
   const survey = await getSurvey(responseInput.surveyId);
   if (!survey) {
@@ -116,21 +97,41 @@ export const POST = withV1ApiWrapper({
     }
 
     try {
-      const inputResult = await validateInput(req);
-      if (inputResult.error) {
+      let jsonInput;
+      try {
+        jsonInput = await req.json();
+      } catch (error) {
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
-          response: inputResult.error,
+          response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
 
-      const responseInput = inputResult.data;
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveWorkspaceInBody(jsonInput, authentication.environmentPermissions, "POST");
+      if (!resolved.ok) return { response: resolved.response };
+
+      const inputValidation = ZResponseInput.safeParse(resolved.body);
+      if (!inputValidation.success) {
+        return {
+          response: responses.badRequestResponse(
+            "Fields are missing or incorrectly formatted",
+            transformErrorToDetails(inputValidation.error),
+            true
+          ),
+        };
+      }
+
+      const responseInput = inputValidation.data;
       const environmentId = responseInput.environmentId;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-        return {
-          response: responses.unauthorizedResponse(),
-        };
-      }
+      const permDenied = checkEnvPermissionIfNeeded(
+        resolved.alreadyAuthorized,
+        authentication.environmentPermissions,
+        environmentId,
+        "POST"
+      );
+      if (permDenied) return { response: permDenied };
 
       const surveyResult = await validateSurvey(responseInput, environmentId);
       if (surveyResult.error) {

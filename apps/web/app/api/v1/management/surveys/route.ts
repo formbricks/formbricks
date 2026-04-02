@@ -1,6 +1,10 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
+import {
+  checkEnvPermissionIfNeeded,
+  resolveWorkspaceInBody,
+} from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
@@ -17,7 +21,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -93,6 +96,15 @@ export const POST = withV1ApiWrapper({
       // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
       surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);
 
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveWorkspaceInBody(
+        surveyInput,
+        authentication.environmentPermissions,
+        "POST"
+      );
+      if (!resolved.ok) return { response: resolved.response };
+      surveyInput = resolved.body;
+
       const inputValidation = ZSurveyCreateInputWithEnvironmentId.safeParse(surveyInput);
 
       if (!inputValidation.success) {
@@ -107,11 +119,13 @@ export const POST = withV1ApiWrapper({
 
       const { environmentId } = inputValidation.data;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-        return {
-          response: responses.unauthorizedResponse(),
-        };
-      }
+      const permDenied = checkEnvPermissionIfNeeded(
+        resolved.alreadyAuthorized,
+        authentication.environmentPermissions,
+        environmentId,
+        "POST"
+      );
+      if (permDenied) return { response: permDenied };
 
       const organization = await getOrganizationByEnvironmentId(environmentId);
       if (!organization) {

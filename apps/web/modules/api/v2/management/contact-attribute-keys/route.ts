@@ -7,9 +7,10 @@ import {
   getContactAttributeKeys,
 } from "@/modules/api/v2/management/contact-attribute-keys/lib/contact-attribute-key";
 import {
-  ZContactAttributeKeyInput,
+  ZContactAttributeKeyCreateInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import { resolveWorkspaceInBodyV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -49,25 +50,21 @@ export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     schemas: {
-      body: ZContactAttributeKeyInput,
+      body: ZContactAttributeKeyCreateInput,
     },
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
-      if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
-        return handleApiError(
-          request,
-          {
-            type: "forbidden",
-            details: [
-              { field: "environmentId", issue: "does not have permission to create contact attribute key" },
-            ],
-          },
-          auditLog
-        );
+      // Resolve workspaceId → production environmentId when environmentId is not provided
+      const envResult = await resolveWorkspaceInBodyV2(body, authentication.environmentPermissions, "POST");
+      if (!envResult.ok) {
+        return handleApiError(request, envResult.error, auditLog);
       }
 
-      const createContactAttributeKeyResult = await createContactAttributeKey(body);
+      const createContactAttributeKeyResult = await createContactAttributeKey({
+        ...body,
+        environmentId: envResult.data,
+      });
 
       if (!createContactAttributeKeyResult.ok) {
         return handleApiError(request, createContactAttributeKeyResult.error, auditLog);

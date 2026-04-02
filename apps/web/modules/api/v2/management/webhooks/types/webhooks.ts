@@ -28,3 +28,22 @@ export const ZWebhookInput = ZWebhook.pick({
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;
+
+// Route-level schema that accepts either environmentId or workspaceId
+export const ZWebhookCreateInput = ZWebhook.pick({
+  name: true,
+  url: true,
+  source: true,
+  triggers: true,
+  surveyIds: true,
+})
+  .extend({
+    environmentId: z.cuid2().optional(),
+    workspaceId: z.cuid2().optional(),
+  })
+  .refine((data) => data.environmentId || data.workspaceId, {
+    message: "Either environmentId or workspaceId must be provided",
+    path: ["environmentId"],
+  });
+
+export type TWebhookCreateInput = z.infer<typeof ZWebhookCreateInput>;

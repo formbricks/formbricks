@@ -23,6 +23,7 @@ describe("getApiKeyWithPermissions", () => {
       apiKeyEnvironments: [
         {
           environmentId: "env-1",
+          workspaceId: "workspace-1",
           permission: "manage" as const,
           environment: {
             id: "env-1",
@@ -31,8 +32,8 @@ describe("getApiKeyWithPermissions", () => {
             type: "development" as const,
             workspaceId: "workspace-1",
             appSetupCompleted: true,
-            workspace: { id: "workspace-1", name: "Workspace 1" },
           },
+          workspace: { id: "workspace-1", name: "Workspace 1" },
         },
       ],
     };
@@ -119,6 +120,7 @@ describe("authenticateRequest", () => {
       apiKeyEnvironments: [
         {
           environmentId: "env-1",
+          workspaceId: "workspace-1",
           permission: "manage" as const,
           environment: {
             id: "env-1",
@@ -127,8 +129,8 @@ describe("authenticateRequest", () => {
             type: "development" as const,
             workspaceId: "workspace-1",
             appSetupCompleted: true,
-            workspace: { id: "workspace-1", name: "Workspace 1" },
           },
+          workspace: { id: "workspace-1", name: "Workspace 1" },
         },
       ],
     };

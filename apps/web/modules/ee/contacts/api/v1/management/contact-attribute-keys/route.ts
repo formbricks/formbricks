@@ -1,10 +1,13 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import {
+  checkEnvPermissionIfNeeded,
+  resolveWorkspaceInBody,
+} from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
@@ -70,7 +73,15 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const inputValidation = ZContactAttributeKeyCreateInput.safeParse(contactAttributeKeyInput);
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveWorkspaceInBody(
+        contactAttributeKeyInput,
+        authentication.environmentPermissions,
+        "POST"
+      );
+      if (!resolved.ok) return { response: resolved.response };
+
+      const inputValidation = ZContactAttributeKeyCreateInput.safeParse(resolved.body);
 
       if (!inputValidation.success) {
         return {
@@ -83,11 +94,13 @@ export const POST = withV1ApiWrapper({
       }
       const environmentId = inputValidation.data.environmentId;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-        return {
-          response: responses.unauthorizedResponse(),
-        };
-      }
+      const permDenied = checkEnvPermissionIfNeeded(
+        resolved.alreadyAuthorized,
+        authentication.environmentPermissions,
+        environmentId,
+        "POST"
+      );
+      if (permDenied) return { response: permDenied };
 
       const contactAttributeKey = await createContactAttributeKey(environmentId, inputValidation.data);
 

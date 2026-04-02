@@ -2,6 +2,10 @@ import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
+import {
+  checkEnvPermissionIfNeeded,
+  resolveWorkspaceInBody,
+} from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -91,7 +95,15 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const inputValidation = ZActionClassInput.safeParse(actionClassUpdate);
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveWorkspaceInBody(
+        actionClassUpdate,
+        authentication.environmentPermissions,
+        "PUT"
+      );
+      if (!resolved.ok) return { response: resolved.response };
+
+      const inputValidation = ZActionClassInput.safeParse(resolved.body);
       if (!inputValidation.success) {
         return {
           response: responses.badRequestResponse(
@@ -100,6 +112,15 @@ export const PUT = withV1ApiWrapper({
           ),
         };
       }
+
+      const permDenied = checkEnvPermissionIfNeeded(
+        resolved.alreadyAuthorized,
+        authentication.environmentPermissions,
+        inputValidation.data.environmentId,
+        "PUT"
+      );
+      if (permDenied) return { response: permDenied };
+
       const updatedActionClass = await updateActionClass(
         inputValidation.data.environmentId,
         params.actionClassId,

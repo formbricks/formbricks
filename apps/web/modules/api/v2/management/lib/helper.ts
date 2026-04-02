@@ -1,3 +1,4 @@
+import { prisma } from "@formbricks/database";
 import { Result, ok } from "@formbricks/types/error-handlers";
 import {
   fetchEnvironmentId,
@@ -46,4 +47,32 @@ export const getEnvironmentIdFromSurveyIds = async (
   }
 
   return ok(result.data[0]);
+};
+
+/**
+ * Resolves a workspaceId to its production environment's ID.
+ * Used when management API callers provide workspaceId instead of environmentId.
+ */
+export const getProductionEnvironmentIdByWorkspaceId = async (
+  workspaceId: string
+): Promise<Result<string, ApiErrorResponseV2>> => {
+  const environment = await prisma.environment.findFirst({
+    where: {
+      workspaceId,
+      type: "production",
+    },
+    select: { id: true },
+  });
+
+  if (!environment) {
+    return {
+      ok: false,
+      error: {
+        type: "not_found",
+        details: [{ field: "workspaceId", issue: "workspace not found or has no production environment" }],
+      },
+    };
+  }
+
+  return ok(environment.id);
 };

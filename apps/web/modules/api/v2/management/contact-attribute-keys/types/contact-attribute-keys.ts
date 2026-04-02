@@ -47,3 +47,38 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   });
 
 export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;
+
+// Route-level schema that accepts either environmentId or workspaceId
+export const ZContactAttributeKeyCreateInput = ZContactAttributeKey.pick({
+  key: true,
+  name: true,
+  description: true,
+})
+  .extend({
+    environmentId: z.cuid2().optional(),
+    workspaceId: z.cuid2().optional(),
+    dataType: ZContactAttributeKey.shape.dataType.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.environmentId && !data.workspaceId) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Either environmentId or workspaceId must be provided",
+        path: ["environmentId"],
+      });
+    }
+    if (!isSafeIdentifier(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+        path: ["key"],
+      });
+    }
+  })
+  .meta({
+    id: "contactAttributeKeyCreateInput",
+    description: "Input data for creating a contact attribute key (accepts workspaceId or environmentId)",
+  });
+
+export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;
