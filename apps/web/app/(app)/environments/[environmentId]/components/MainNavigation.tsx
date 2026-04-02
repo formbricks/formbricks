@@ -286,18 +286,29 @@ export const MainNavigation = ({
     },
   ];
 
-  const loadProjects = useCallback(() => {
+  const loadProjects = useCallback(async () => {
     setIsLoadingProjects(true);
     setWorkspaceLoadError(null);
-    getProjectsForSwitcherAction({ organizationId: organization.id }).then((result) => {
+
+    try {
+      const result = await getProjectsForSwitcherAction({ organizationId: organization.id });
       if (result?.data) {
         const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
         setProjects(sorted);
       } else {
         setWorkspaceLoadError(getFormattedErrorMessage(result) || t("common.failed_to_load_workspaces"));
       }
+    } catch (error) {
+      const formattedError =
+        typeof error === "object" && error !== null
+          ? getFormattedErrorMessage(error as { serverError?: string; validationErrors?: unknown })
+          : "";
+      setWorkspaceLoadError(
+        formattedError || (error instanceof Error ? error.message : t("common.failed_to_load_workspaces"))
+      );
+    } finally {
       setIsLoadingProjects(false);
-    });
+    }
   }, [organization.id, t]);
 
   useEffect(() => {
@@ -308,10 +319,12 @@ export const MainNavigation = ({
     loadProjects();
   }, [isWorkspaceDropdownOpen, projects.length, isLoadingProjects, workspaceLoadError, loadProjects]);
 
-  const loadOrganizations = useCallback(() => {
+  const loadOrganizations = useCallback(async () => {
     setIsLoadingOrganizations(true);
     setOrganizationLoadError(null);
-    getOrganizationsForSwitcherAction({ organizationId: organization.id }).then((result) => {
+
+    try {
+      const result = await getOrganizationsForSwitcherAction({ organizationId: organization.id });
       if (result?.data) {
         const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
         setOrganizations(sorted);
@@ -320,8 +333,17 @@ export const MainNavigation = ({
           getFormattedErrorMessage(result) || t("common.failed_to_load_organizations")
         );
       }
+    } catch (error) {
+      const formattedError =
+        typeof error === "object" && error !== null
+          ? getFormattedErrorMessage(error as { serverError?: string; validationErrors?: unknown })
+          : "";
+      setOrganizationLoadError(
+        formattedError || (error instanceof Error ? error.message : t("common.failed_to_load_organizations"))
+      );
+    } finally {
       setIsLoadingOrganizations(false);
-    });
+    }
   }, [organization.id, t]);
 
   useEffect(() => {
@@ -432,7 +454,7 @@ export const MainNavigation = ({
   };
 
   const switcherTriggerClasses = cn(
-    "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus:outline-none",
+    "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset",
     isCollapsed ? "flex items-center justify-center" : ""
   );
 
@@ -521,11 +543,10 @@ export const MainNavigation = ({
             <div className="flex flex-col">
               <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
                 <DropdownMenuTrigger asChild id="workspaceDropdownTrigger" className={switcherTriggerClasses}>
-                  <div
-                    className={cn(
-                      "flex w-full cursor-pointer items-center gap-3",
-                      isCollapsed && "justify-center"
-                    )}>
+                  <button
+                    type="button"
+                    aria-label={isCollapsed ? t("common.change_workspace") : undefined}
+                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                     <span className={switcherIconClasses}>
                       <FoldersIcon className="h-4 w-4" strokeWidth={1.5} />
                     </span>
@@ -541,7 +562,7 @@ export const MainNavigation = ({
                         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                       </>
                     )}
-                  </div>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
                   <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
@@ -610,11 +631,10 @@ export const MainNavigation = ({
                   asChild
                   id="organizationDropdownTriggerSidebar"
                   className={switcherTriggerClasses}>
-                  <div
-                    className={cn(
-                      "flex w-full cursor-pointer items-center gap-3",
-                      isCollapsed && "justify-center"
-                    )}>
+                  <button
+                    type="button"
+                    aria-label={isCollapsed ? t("common.change_organization") : undefined}
+                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                     <span className={switcherIconClasses}>
                       <Building2Icon className="h-4 w-4" strokeWidth={1.5} />
                     </span>
@@ -630,7 +650,7 @@ export const MainNavigation = ({
                         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                       </>
                     )}
-                  </div>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
                   <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
@@ -702,11 +722,10 @@ export const MainNavigation = ({
                   asChild
                   id="userDropdownTrigger"
                   className={cn(switcherTriggerClasses, "rounded-br-xl")}>
-                  <div
-                    className={cn(
-                      "flex w-full cursor-pointer items-center gap-3",
-                      isCollapsed && "justify-center"
-                    )}>
+                  <button
+                    type="button"
+                    aria-label={isCollapsed ? t("common.account_settings") : undefined}
+                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                     <span className={switcherIconClasses}>
                       <ProfileAvatar userId={user.id} />
                     </span>
@@ -723,7 +742,7 @@ export const MainNavigation = ({
                         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                       </>
                     )}
-                  </div>
+                  </button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent

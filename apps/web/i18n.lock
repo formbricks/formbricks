@@ -121,6 +121,8 @@ checksums:
     common/bottom_right: aaef9a70ef795affc806c6d1853d8373
     common/cancel: 2e2a849c2223911717de8caa2c71bade
     common/centered_modal: 982ff411cb7e91e30300c2ed56b7e507
+    common/change_organization: 3b2c873962509445ff2cb8cde5ad913b
+    common/change_workspace: 489cbcf7eef9b9b960e426fbf4da318f
     common/choices: 8a7a77a71ec6eebc363c5dc0f8490a4d
     common/choose_environment: 5762cd499529815fc3e6a7feea39f90b
     common/choose_organization: a8f5db68012323bfbb1a0ad0fb194603
@@ -476,7 +478,7 @@ checksums:
     emails/forgot_password_email_change_password: fe6d4ba303b82f4833b3293f0c4e88c0
     emails/forgot_password_email_did_not_request: 79d35c3800e23e9d4c95bf33f250104f
     emails/forgot_password_email_heading: fe6d4ba303b82f4833b3293f0c4e88c0
-    emails/forgot_password_email_link_valid_for_24_hours: 1616714e6bf36e4379b9868e98e82957
+    emails/forgot_password_email_link_valid_for_24_hours: 962358a7f9674f13f49278afa15d14d3
     emails/forgot_password_email_subject: bd7a2b22e7b480c29f512532fd2b7e2b
     emails/forgot_password_email_text: 5100fa2fe2180ded9cb2d89b4f77d2e0
     emails/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
@@ -2464,8 +2466,8 @@ checksums:
     templates/csat_question_1_headline: bd4894e95695ce5bc9fc5d326c79bc90
     templates/csat_question_1_lower_label: 54d464343c0bc17231fd51aa2d73623f
     templates/csat_question_1_upper_label: 9f000f63949d875ae628fc354a2a7f6a
-    templates/csat_question_2_choice_1: 0cb1260dd25e94f56c2da7ab21b0e0ae
-    templates/csat_question_2_choice_2: f12ed9d98c7965ab949efcc25f8ca85e
+    templates/csat_question_2_choice_1: a3a49eb9cc86972bce6dc41a107f472d
+    templates/csat_question_2_choice_2: a0cf57bc571c95c43924a3c641d1355e
     templates/csat_question_2_choice_3: a7c58d9b8afdaefadeb1f5fdf4d5ad3f
     templates/csat_question_2_choice_4: d09723c4bc1d85d99c2a9248ed0d4578
     templates/csat_question_2_choice_5: a89ca2602a3322e89adf17b3349e03ab
