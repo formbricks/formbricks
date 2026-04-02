@@ -205,6 +205,10 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
+    if (!segment.workspaceId) {
+      throw new DatabaseError("Segment is not associated with a workspace");
+    }
+
     const allSegments = await getSegments(segment.workspaceId);
 
     // Find the last "Copy of" title and extract the number from it
