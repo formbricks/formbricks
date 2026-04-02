@@ -192,14 +192,15 @@ const handleFailedPipelineJob = async (
 
   const nextAttempt = job.attempt + 1;
   const retryDelayMs = getRetryDelayMs(job.attempt);
+  const notBefore = Date.now() + retryDelayMs;
   const retriedJob: TPipelineJob = {
     ...job,
     attempt: nextAttempt,
-    notBefore: Date.now() + retryDelayMs,
+    notBefore,
   };
 
   await redis.zAdd(PIPELINE_QUEUE_KEYS.delayed, {
-    score: retriedJob.notBefore,
+    score: notBefore,
     value: serializePipelineJob(retriedJob),
   });
 
