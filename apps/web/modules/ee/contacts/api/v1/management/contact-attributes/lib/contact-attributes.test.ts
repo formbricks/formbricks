@@ -70,7 +70,7 @@ describe("getContactAttributes", () => {
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
         attributeKey: {
-          environmentId: { in: mockEnvironmentIds },
+          workspaceId: { in: mockEnvironmentIds },
         },
       },
     });
@@ -103,7 +103,7 @@ describe("getContactAttributes", () => {
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
         attributeKey: {
-          environmentId: { in: mockEnvironmentIds },
+          workspaceId: { in: mockEnvironmentIds },
         },
       },
     });

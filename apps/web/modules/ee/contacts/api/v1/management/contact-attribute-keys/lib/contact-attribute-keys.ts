@@ -10,10 +10,10 @@ import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentIds: string[]): Promise<TContactAttributeKey[]> => {
+  async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
     try {
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-        where: { environmentId: { in: environmentIds } },
+        where: { workspaceId: { in: workspaceIds } },
       });
 
       return contactAttributeKeys;

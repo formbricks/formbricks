@@ -13,11 +13,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
-import {
-  createResponseWithQuotaEvaluation,
-  getResponses,
-  getResponsesByEnvironmentIds,
-} from "./lib/response";
+import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -48,11 +44,11 @@ export const GET = withV1ApiWrapper({
         const surveyResponses = await getResponses(surveyId, limit, offset);
         allResponses.push(...surveyResponses);
       } else {
-        const environmentIds = authentication.environmentPermissions.map(
-          (permission) => permission.environmentId
-        );
-        const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
-        allResponses.push(...environmentResponses);
+        const workspaceIds = [
+          ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ];
+        const workspaceResponses = await getResponsesByWorkspaceIds(workspaceIds, limit, offset);
+        allResponses.push(...workspaceResponses);
       }
       return {
         response: responses.successResponse(

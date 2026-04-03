@@ -13,10 +13,10 @@ export const GET = withV1ApiWrapper({
     }
 
     try {
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
-      const webhooks = await getWebhooks(environmentIds);
+      const workspaceIds = [
+        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+      ];
+      const webhooks = await getWebhooks(workspaceIds);
       return {
         response: responses.successResponse(webhooks),
       };

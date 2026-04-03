@@ -23,11 +23,11 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const environemntIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const res = await getWebhooks(environemntIds, query);
+      const res = await getWebhooks(workspaceIds, query);
 
       if (res.ok) {
         return responses.successResponse(res.data);

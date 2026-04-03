@@ -18,11 +18,11 @@ import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 
 export const getResponses = async (
-  environmentIds: string[],
+  workspaceIds: string[],
   params: TGetResponsesFilter
 ): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
-    const query = getResponsesQuery(environmentIds, params);
+    const query = getResponsesQuery(workspaceIds, params);
     const whereClause = query.where;
 
     const [responses, totalCount] = await Promise.all([

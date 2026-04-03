@@ -46,7 +46,7 @@ describe("getContacts", () => {
     const result = await getContacts(mockEnvironmentIds);
 
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: mockEnvironmentIds } },
+      where: { workspaceId: { in: mockEnvironmentIds } },
     });
     expect(result).toEqual(mockContacts);
   });
@@ -60,7 +60,7 @@ describe("getContacts", () => {
 
     await expect(getContacts(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: mockEnvironmentIds } },
+      where: { workspaceId: { in: mockEnvironmentIds } },
     });
   });
 
@@ -70,7 +70,7 @@ describe("getContacts", () => {
 
     await expect(getContacts(mockEnvironmentIds)).rejects.toThrow(genericError);
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: mockEnvironmentIds } },
+      where: { workspaceId: { in: mockEnvironmentIds } },
     });
   });
 

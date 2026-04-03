@@ -10,7 +10,7 @@ import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
-import { createResponse, getResponsesByEnvironmentIds } from "./response";
+import { createResponse, getResponsesByWorkspaceIds } from "./response";
 
 // Mock Data
 const environmentId = "test-environment-id";
@@ -87,7 +87,7 @@ const mockResponse: TResponse = {
   tags: [], // Transformed structure
 };
 
-const mockEnvironmentIds = [environmentId, "env-2"];
+const mockWorkspaceIds = ["workspace-1", "workspace-2"];
 const mockLimit = 10;
 const mockOffset = 5;
 
@@ -228,19 +228,19 @@ describe("Response Lib Tests", () => {
     });
   });
 
-  describe("getResponsesByEnvironmentIds", () => {
+  describe("getResponsesByWorkspaceIds", () => {
     test("should return responses successfully", async () => {
       vi.mocked(prisma.response.findMany).mockResolvedValue(mockResponsesPrisma);
       vi.mocked(getResponseContact).mockReturnValue(null); // Assume no contact for simplicity
 
-      const responses = await getResponsesByEnvironmentIds(mockEnvironmentIds);
+      const responses = await getResponsesByWorkspaceIds(mockWorkspaceIds);
 
       expect(validateInputs).toHaveBeenCalledTimes(1);
       expect(prisma.response.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             survey: {
-              environmentId: { in: mockEnvironmentIds },
+              workspaceId: { in: mockWorkspaceIds },
             },
           },
           orderBy: [{ createdAt: "desc" }],
@@ -256,7 +256,7 @@ describe("Response Lib Tests", () => {
       vi.mocked(prisma.response.findMany).mockResolvedValue(mockResponsesPrisma);
       vi.mocked(getResponseContact).mockReturnValue(null);
 
-      await getResponsesByEnvironmentIds(mockEnvironmentIds, mockLimit, mockOffset);
+      await getResponsesByWorkspaceIds(mockWorkspaceIds, mockLimit, mockOffset);
 
       expect(prisma.response.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -269,7 +269,7 @@ describe("Response Lib Tests", () => {
     test("should return empty array if no responses found", async () => {
       vi.mocked(prisma.response.findMany).mockResolvedValue([]);
 
-      const responses = await getResponsesByEnvironmentIds(mockEnvironmentIds);
+      const responses = await getResponsesByWorkspaceIds(mockWorkspaceIds);
 
       expect(responses).toEqual([]);
       expect(prisma.response.findMany).toHaveBeenCalled();
@@ -283,14 +283,14 @@ describe("Response Lib Tests", () => {
       });
       vi.mocked(prisma.response.findMany).mockRejectedValue(prismaError);
 
-      await expect(getResponsesByEnvironmentIds(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
+      await expect(getResponsesByWorkspaceIds(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
     });
 
     test("should handle generic errors", async () => {
       const genericError = new Error("Something went wrong");
       vi.mocked(prisma.response.findMany).mockRejectedValue(genericError);
 
-      await expect(getResponsesByEnvironmentIds(mockEnvironmentIds)).rejects.toThrow(genericError);
+      await expect(getResponsesByWorkspaceIds(mockWorkspaceIds)).rejects.toThrow(genericError);
     });
   });
 });

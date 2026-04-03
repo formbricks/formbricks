@@ -11,11 +11,11 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 
 export const getWebhooks = async (
-  environmentIds: string[],
+  workspaceIds: string[],
   params: TGetWebhooksFilter
 ): Promise<Result<ApiResponseWithMeta<Webhook[]>, ApiErrorResponseV2>> => {
   try {
-    const query = getWebhooksQuery(environmentIds, params);
+    const query = getWebhooksQuery(workspaceIds, params);
 
     const [webhooks, count] = await prisma.$transaction([
       prisma.webhook.findMany({

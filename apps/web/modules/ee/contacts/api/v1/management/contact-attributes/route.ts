@@ -20,11 +20,11 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const attributes = await getContactAttributes(environmentIds);
+      const attributes = await getContactAttributes(workspaceIds);
       return {
         response: responses.successResponse(attributes),
       };

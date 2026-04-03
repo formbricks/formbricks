@@ -31,21 +31,21 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const environmentResponses: Response[] = [];
-      const res = await getResponses(environmentIds, query);
+      const workspaceResponses: Response[] = [];
+      const res = await getResponses(workspaceIds, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error);
       }
 
-      environmentResponses.push(...res.data.data);
+      workspaceResponses.push(...res.data.data);
 
       return responses.successResponse({
-        data: environmentResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) })),
+        data: workspaceResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) })),
       });
     },
   });

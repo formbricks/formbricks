@@ -13,9 +13,9 @@ import {
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentIds: string[], params: TGetContactAttributeKeysFilter) => {
+  async (workspaceIds: string[], params: TGetContactAttributeKeysFilter) => {
     try {
-      const query = getContactAttributeKeysQuery(environmentIds, params);
+      const query = getContactAttributeKeysQuery(workspaceIds, params);
 
       const [keys, count] = await prisma.$transaction([
         prisma.contactAttributeKey.findMany({

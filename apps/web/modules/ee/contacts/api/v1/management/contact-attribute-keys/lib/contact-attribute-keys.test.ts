@@ -63,7 +63,7 @@ describe("getContactAttributeKeys", () => {
     const result = await getContactAttributeKeys(mockEnvironmentIds);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: mockEnvironmentIds } },
+      where: { workspaceId: { in: mockEnvironmentIds } },
     });
     expect(result).toEqual(mockAttributeKeys);
   });

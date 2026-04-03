@@ -35,11 +35,11 @@ export const GET = withV1ApiWrapper({
       const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
       const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const surveys = await getSurveys(environmentIds, limit, offset);
+      const surveys = await getSurveys(workspaceIds, limit, offset);
 
       const surveysWithQuestions = surveys.map((survey) => {
         // If the survey has blocks and each block has ONLY ONE element, we can transform the blocks to questions

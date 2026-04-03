@@ -23,7 +23,7 @@ export const GET = async (request: NextRequest) =>
     handler: async ({ authentication, parsedInput }) => {
       const { query } = parsedInput;
 
-      let environmentIds: string[] = [];
+      let workspaceIds: string[] = [];
 
       if (query.environmentId) {
         if (!hasPermission(authentication.environmentPermissions, query.environmentId, "GET")) {
@@ -31,12 +31,17 @@ export const GET = async (request: NextRequest) =>
             type: "unauthorized",
           });
         }
-        environmentIds = [query.environmentId];
+        const permission = authentication.environmentPermissions.find(
+          (p) => p.environmentId === query.environmentId
+        );
+        workspaceIds = permission ? [permission.workspaceId] : [];
       } else {
-        environmentIds = authentication.environmentPermissions.map((permission) => permission.environmentId);
+        workspaceIds = [
+          ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ];
       }
 
-      const res = await getContactAttributeKeys(environmentIds, query);
+      const res = await getContactAttributeKeys(workspaceIds, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2);

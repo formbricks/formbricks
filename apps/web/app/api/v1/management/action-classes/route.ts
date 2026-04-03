@@ -18,11 +18,11 @@ export const GET = withV1ApiWrapper({
     }
 
     try {
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const actionClasses = await getActionClasses(environmentIds);
+      const actionClasses = await getActionClasses(workspaceIds);
 
       return {
         response: responses.successResponse(actionClasses),
