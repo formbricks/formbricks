@@ -3,7 +3,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZDisplayCreateInputV2 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
@@ -32,12 +32,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!resolved) {
     return responses.notFoundResponse("Environment", params.environmentId);
   }
-  const { environmentId } = resolved;
+  const { environmentId, workspaceId } = resolved;
 
   const jsonInput = await request.json();
   const inputValidation = ZDisplayCreateInputV2.safeParse({
     ...jsonInput,
     environmentId,
+    workspaceId,
   });
 
   if (!inputValidation.success) {
@@ -49,7 +50,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   if (inputValidation.data.contactId) {
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);

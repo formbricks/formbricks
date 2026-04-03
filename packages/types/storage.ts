@@ -109,6 +109,7 @@ export const ZUploadPrivateFileRequest = z
     allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
     surveyId: z.cuid2(),
     environmentId: z.cuid2(),
+    workspaceId: z.cuid2(),
   })
   .superRefine((data, ctx) => {
     refineFileUploadInput({

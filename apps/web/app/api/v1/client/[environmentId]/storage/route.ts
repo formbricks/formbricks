@@ -4,8 +4,9 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
@@ -38,7 +39,7 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Environment", params.environmentId),
       };
     }
-    const { environmentId } = resolved;
+    const { environmentId, workspaceId } = resolved;
 
     let jsonInput: TUploadPrivateFileRequest;
 
@@ -54,6 +55,7 @@ export const POST = withV1ApiWrapper({
     const parsedInputResult = ZUploadPrivateFileRequest.safeParse({
       ...jsonInput,
       environmentId,
+      workspaceId,
     });
 
     if (!parsedInputResult.success) {
@@ -72,10 +74,11 @@ export const POST = withV1ApiWrapper({
 
     const { fileName, fileType, surveyId } = parsedInputResult.data;
 
-    const [survey, organization] = await Promise.all([
+    const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
-      getOrganizationByEnvironmentId(environmentId),
+      getOrganizationIdFromWorkspaceId(workspaceId),
     ]);
+    const organization = await getOrganization(organizationId);
 
     if (!survey) {
       return {

@@ -3,14 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn((inputs: [unknown, unknown][]) =>
@@ -36,20 +31,23 @@ vi.mock("./contact", () => ({
   getContactByUserId: vi.fn(),
 }));
 
-const environmentId = "test-env-id";
-const surveyId = "test-survey-id";
+const environmentId = "scgavd0rtce5xgahiresk4p0";
+const workspaceId = "cqiu9au22kgzgqjossdlp5qh";
+const surveyId = "kf4w7x11wut39ttl4j5v9ccg";
 const userId = "test-user-id";
-const contactId = "test-contact-id";
-const displayId = "test-display-id";
+const contactId = "f9bufd72cffj19a7qj67z5fm";
+const displayId = "apbycx5war0mfsyztgpwb8wr";
 
 const displayInput: TDisplayCreateInput = {
   environmentId,
+  workspaceId,
   surveyId,
   userId,
 };
 
 const displayInputWithoutUserId: TDisplayCreateInput = {
   environmentId,
+  workspaceId,
   surveyId,
 };
 
@@ -88,7 +86,9 @@ const mockSurvey = {
 describe("createDisplay", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
+    vi.mocked(validateInputs).mockImplementation((inputs: [unknown, unknown][]) =>
+      inputs.map((input: [unknown, unknown]) => input[0])
+    );
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
   });
 
@@ -123,7 +123,7 @@ describe("createDisplay", () => {
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
         environment: { connect: { id: environmentId } },
-        workspace: { connect: { id: "workspace-id-mock" } },
+        workspace: { connect: { id: workspaceId } },
         attributes: {
           create: {
             attributeKey: {

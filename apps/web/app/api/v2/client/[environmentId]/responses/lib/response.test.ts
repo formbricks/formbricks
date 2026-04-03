@@ -7,8 +7,9 @@ import { TResponseWithQuotaFull, TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContact } from "./contact";
@@ -45,6 +46,7 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/response/utils");
+vi.mock("@/lib/utils/helper");
 vi.mock("@/lib/utils/validate");
 vi.mock("@/modules/ee/quotas/lib/evaluation-service");
 vi.mock("@formbricks/database", () => ({
@@ -58,6 +60,7 @@ vi.mock("@formbricks/logger");
 vi.mock("./contact");
 
 const environmentId = "test-environment-id";
+const workspaceId = "test-workspace-id";
 const surveyId = "test-survey-id";
 const organizationId = "test-organization-id";
 const responseId = "test-response-id";
@@ -79,6 +82,7 @@ const mockContact: { id: string; attributes: TContactAttributes } = {
 
 const mockResponseInput: TResponseInputV2 = {
   environmentId,
+  workspaceId,
   surveyId,
   contactId: null,
   displayId: null,
@@ -151,7 +155,8 @@ describe("createResponse V2", () => {
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
 
     vi.mocked(validateInputs).mockImplementation((() => {}) as typeof validateInputs);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization as any);
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
+    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as any);
     vi.mocked(getContact).mockResolvedValue(mockContact);
     vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ({
@@ -169,7 +174,7 @@ describe("createResponse V2", () => {
   });
 
   test("should throw ResourceNotFoundError if organization not found", async () => {
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
+    vi.mocked(getOrganization).mockResolvedValue(null);
     await expect(
       createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
     ).rejects.toThrow(ResourceNotFoundError);
@@ -199,6 +204,7 @@ describe("createResponse V2", () => {
       id: "tag1",
       name: "Tag 1",
       environmentId,
+      workspaceId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -223,7 +229,8 @@ describe("createResponseWithQuotaEvaluation V2", () => {
       },
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization as any);
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
+    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as any);
     vi.mocked(getContact).mockResolvedValue(mockContact);
     vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ({
