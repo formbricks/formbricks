@@ -21,14 +21,14 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
-
-  const workspaceId = environment.workspaceId;
+  const { session, environment, organization, isReadOnly, workspace } = await getEnvironmentAuth(
+    params.environmentId
+  );
 
   const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
     getSurvey(params.surveyId),
     getUser(session.user.id),
-    getTagsByWorkspaceId(workspaceId),
+    getTagsByWorkspaceId(workspace.id),
     getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
   ]);
@@ -45,7 +45,7 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  const segments = isContactsEnabled ? await getSegments(workspaceId) : [];
+  const segments = isContactsEnabled ? await getSegments(workspace.id) : [];
 
   const publicDomain = getPublicDomain();
 

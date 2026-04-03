@@ -18,13 +18,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslate();
   const isEnabled = !!AIRTABLE_CLIENT_ID;
 
-  const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
-
-  const workspaceId = environment.workspaceId;
+  const { isReadOnly, environment, session, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [surveys, integrations, locale] = await Promise.all([
-    getSurveys(workspaceId),
-    getIntegrations(workspaceId),
+    getSurveys(workspace.id),
+    getIntegrations(workspace.id),
     getUserLocale(session.user.id),
   ]);
 

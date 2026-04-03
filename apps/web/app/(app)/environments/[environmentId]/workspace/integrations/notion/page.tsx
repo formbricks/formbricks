@@ -29,13 +29,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     NOTION_REDIRECT_URI
   );
 
-  const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
-
-  const workspaceId = environment.workspaceId;
+  const { isReadOnly, environment, session, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [surveys, notionIntegration, locale] = await Promise.all([
-    getSurveys(workspaceId),
-    getIntegrationByType(workspaceId, "notion"),
+    getSurveys(workspace.id),
+    getIntegrationByType(workspace.id, "notion"),
     getUserLocale(session.user.id),
   ]);
 

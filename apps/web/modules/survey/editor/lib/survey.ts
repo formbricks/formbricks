@@ -21,11 +21,10 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(updatedSurvey.environmentId);
 
     const [actionClasses, currentSurvey] = await Promise.all([
-      getWorkspaceIdFromEnvironmentId(updatedSurvey.environmentId).then((workspaceId) =>
-        getActionClasses(workspaceId)
-      ),
+      getActionClasses(workspaceId),
       getSurvey(surveyId),
     ]);
 

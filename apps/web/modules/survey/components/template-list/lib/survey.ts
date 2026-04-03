@@ -3,12 +3,9 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
-import {
-  getOrganizationByEnvironmentId,
-  subscribeOrganizationMembersToSurveyResponses,
-} from "@/lib/organization/service";
+import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
@@ -25,12 +22,12 @@ export const createSurvey = async (
       delete restSurveyBody.languages;
     }
 
-    const [organization, workspaceId] = await Promise.all([
-      getOrganizationByEnvironmentId(environmentId),
-      getWorkspaceIdFromEnvironmentId(environmentId),
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+    const [organizationId, actionClasses] = await Promise.all([
+      getOrganizationIdFromWorkspaceId(workspaceId),
+      getActionClasses(workspaceId),
     ]);
-
-    const actionClasses = await getActionClasses(workspaceId);
+    const organization = await getOrganization(organizationId);
 
     // @ts-expect-error
     let data: Omit<Prisma.SurveyCreateInput, "environment"> = {

@@ -8,7 +8,6 @@ import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/li
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -22,9 +21,9 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
-
-  const workspaceId = environment.workspaceId;
+  const { session, environment, isReadOnly, workspace, organization } = await getEnvironmentAuth(
+    params.environmentId
+  );
 
   const surveyId = params.surveyId;
 
@@ -43,19 +42,18 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   if (!user) {
     throw new AuthenticationError(t("common.not_authenticated"));
   }
-  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-  const isContactsEnabled = await getIsContactsEnabled(organizationId);
-  const segments = isContactsEnabled ? await getSegments(workspaceId) : [];
+  const isContactsEnabled = await getIsContactsEnabled(organization.id);
+  const segments = isContactsEnabled ? await getSegments(workspace.id) : [];
 
-  if (!organizationId) {
+  if (!organization) {
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
-  const organizationBilling = await getOrganizationBilling(organizationId);
+  const organizationBilling = await getOrganizationBilling(organization.id);
   if (!organizationBilling) {
-    throw new ResourceNotFoundError(t("common.organization"), organizationId);
+    throw new ResourceNotFoundError(t("common.organization"), organization.id);
   }
-  const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);

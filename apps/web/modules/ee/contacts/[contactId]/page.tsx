@@ -20,17 +20,15 @@ export const SingleContactPage = async (props: {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
-
-  const workspaceId = environment.workspaceId;
+  const { environment, isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
     await Promise.all([
-      getTagsByWorkspaceId(workspaceId),
+      getTagsByWorkspaceId(workspace.id),
       getContact(params.contactId),
-      getPublishedLinkSurveys(workspaceId),
+      getPublishedLinkSurveys(workspace.id),
       getContactAttributesWithKeyInfo(params.contactId),
-      getContactAttributeKeys(workspaceId),
+      getContactAttributeKeys(workspace.id),
     ]);
 
   if (!contact) {

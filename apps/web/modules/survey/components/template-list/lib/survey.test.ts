@@ -5,17 +5,15 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
-import {
-  getOrganizationByEnvironmentId,
-  subscribeOrganizationMembersToSurveyResponses,
-} from "@/lib/organization/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "@/lib/organization/service";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { createSurvey, handleTriggerUpdates } from "./survey";
 
 vi.mock("@/lib/utils/helper", () => ({
   getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+  getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("org-123"),
 }));
 
 // Mock dependencies
@@ -25,7 +23,7 @@ vi.mock("@/lib/survey/utils", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
-  getOrganizationByEnvironmentId: vi.fn(),
+  getOrganization: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/action-class", () => ({
@@ -67,6 +65,7 @@ describe("survey module", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org-123");
   });
 
   describe("createSurvey", () => {
@@ -84,7 +83,7 @@ describe("survey module", () => {
       // Mock dependencies
       const mockActionClasses: ActionClass[] = [];
       vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses);
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123", name: "Org" } as any);
+      vi.mocked(getOrganization).mockResolvedValue({ id: "org-123", name: "Org" } as any);
 
       const mockCreatedSurvey = {
         id: "survey-123",
@@ -105,7 +104,7 @@ describe("survey module", () => {
 
       // Verify results
       expect(getActionClasses).toHaveBeenCalledWith("workspace-id-mock");
-      expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
+      expect(getOrganization).toHaveBeenCalledWith("org-123");
       expect(prisma.survey.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: surveyBody.name,
@@ -137,7 +136,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123" } as any);
+      vi.mocked(getOrganization).mockResolvedValue({ id: "org-123" } as any);
       vi.mocked(prisma.survey.create).mockResolvedValue({
         id: "survey-123",
         environmentId,
@@ -165,7 +164,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123" } as any);
+      vi.mocked(getOrganization).mockResolvedValue({ id: "org-123" } as any);
       vi.mocked(prisma.survey.create).mockResolvedValue({
         id: "survey-123",
         environmentId,
@@ -196,7 +195,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
+      vi.mocked(getOrganization).mockResolvedValue(null);
 
       await expect(createSurvey(environmentId, surveyBody)).rejects.toThrow(ResourceNotFoundError);
     });
@@ -211,7 +210,7 @@ describe("survey module", () => {
       };
 
       vi.mocked(getActionClasses).mockResolvedValue([]);
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org-123" } as any);
+      vi.mocked(getOrganization).mockResolvedValue({ id: "org-123" } as any);
 
       const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: "P2002",

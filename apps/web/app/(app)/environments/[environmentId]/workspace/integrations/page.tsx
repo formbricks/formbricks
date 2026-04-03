@@ -31,9 +31,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, environment, isBilling } = await getEnvironmentAuth(params.environmentId);
-
-  const workspaceId = environment.workspaceId;
+  const { isReadOnly, environment, isBilling, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [
     integrations,
@@ -43,12 +41,12 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     n8nwebhookCount,
     activePiecesWebhookCount,
   ] = await Promise.all([
-    getIntegrations(workspaceId),
-    getWebhookCountBySource(workspaceId, "user"),
-    getWebhookCountBySource(workspaceId, "zapier"),
-    getWebhookCountBySource(workspaceId, "make"),
-    getWebhookCountBySource(workspaceId, "n8n"),
-    getWebhookCountBySource(workspaceId, "activepieces"),
+    getIntegrations(workspace.id),
+    getWebhookCountBySource(workspace.id, "user"),
+    getWebhookCountBySource(workspace.id, "zapier"),
+    getWebhookCountBySource(workspace.id, "make"),
+    getWebhookCountBySource(workspace.id, "n8n"),
+    getWebhookCountBySource(workspace.id, "activepieces"),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
