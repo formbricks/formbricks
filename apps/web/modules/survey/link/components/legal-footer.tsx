@@ -23,18 +23,26 @@ export const LegalFooter = ({
   return (
     <div className="absolute bottom-0 z-[1500] h-10 w-full" role="contentinfo">
       <div className="mx-auto flex h-full max-w-2xl items-center justify-center p-2 text-center text-xs text-slate-500">
-        {IMPRINT_URL && (
-          <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>
-            {t("common.imprint")}
-          </Link>
-        )}
-        {IMPRINT_URL && PRIVACY_URL && <span className="px-2">|</span>}
         {PRIVACY_URL && (
           <Link href={PRIVACY_URL} target="_blank" className="hover:underline" tabIndex={-1}>
             {t("common.privacy")}
           </Link>
         )}
-        {PRIVACY_URL && IS_FORMBRICKS_CLOUD && <span className="px-2">|</span>}
+        {PRIVACY_URL && TERMS_URL && <span className="px-2">|</span>}
+        {TERMS_URL && (
+          <Link href={TERMS_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+            {t("common.terms")}
+          </Link>
+        )}
+        {(PRIVACY_URL || TERMS_URL) && IMPRINT_URL && <span className="px-2">|</span>}
+        {IMPRINT_URL && (
+          <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+            {t("common.imprint")}
+          </Link>
+        )}
+        {(PRIVACY_URL || TERMS_URL || IMPRINT_URL) && IS_FORMBRICKS_CLOUD && (
+          <span className="px-2">|</span>
+        )}
         {IS_FORMBRICKS_CLOUD && (
           <Link
             href={`https://app.formbricks.com/s/clxbivtla014iye2vfrn436xd?surveyUrl=${surveyUrl}`}
@@ -44,13 +52,6 @@ export const LegalFooter = ({
             {t("common.report_survey")}
           </Link>
         )}
-        {PRIVACY_URL && TERMS_URL && <span className="px-2">|</span>}
-        {TERMS_URL && (
-          <Link href={TERMS_URL} target="_blank" className="hover:underline" tabIndex={-1}>
-            {t("common.terms")}
-          </Link>
-        )}
-        {TERMS_URL && IS_FORMBRICKS_CLOUD && <span className="px-2">|</span>}
       </div>
     </div>
   );
