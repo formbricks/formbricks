@@ -303,7 +303,8 @@ async function verifyPlan(
     );
   }
 
-  // Verify before/after counts match and log for auditability
+  // Verify before/after counts match
+  const summary: string[] = [];
   for (const table of TABLES_TO_REPARENT) {
     const newCount: [{ count: bigint }] = await tx.$queryRawUnsafe(
       `SELECT COUNT(*) as count FROM "${table}" WHERE "environmentId" = $1`,
@@ -320,8 +321,13 @@ async function verifyPlan(
     }
 
     if (actual > 0) {
-      logger.info(`Workspace "${plan.newWorkspaceName}": ${actual.toString()} rows in ${table}`);
+      summary.push(`${table}=${actual.toString()}`);
     }
+  }
+
+  // Single log line per workspace for auditability
+  if (summary.length > 0) {
+    logger.info(`Workspace "${plan.newWorkspaceName}": ${summary.join(", ")}`);
   }
 
   return failures;
