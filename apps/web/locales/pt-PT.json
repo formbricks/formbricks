@@ -400,7 +400,6 @@
     "show_response_count": "Mostrar contagem de respostas",
     "shown": "Mostrado",
     "size": "Tamanho",
-    "skip": "Saltar",
     "skipped": "Ignorado",
     "skips": "Saltos",
     "some_files_failed_to_upload": "Alguns ficheiros falharam ao carregar",
@@ -471,7 +470,6 @@
     "website_survey": "Inquérito do Website",
     "weeks": "semanas",
     "welcome_card": "Cartão de boas-vindas",
-    "workflows": "Fluxos de trabalho",
     "workspace": "Espaço de trabalho",
     "workspace_configuration": "Configuração do projeto",
     "workspace_created_successfully": "Projeto criado com sucesso",
@@ -507,7 +505,7 @@
     "forgot_password_email_change_password": "Alterar palavra-passe",
     "forgot_password_email_did_not_request": "Se não solicitou isto, por favor ignore este email.",
     "forgot_password_email_heading": "Alterar palavra-passe",
-    "forgot_password_email_link_valid_for_24_hours": "O link é válido por 24 horas.",
+    "forgot_password_email_link_valid_for_24_hours": "O link é válido por {minutes} minutos.",
     "forgot_password_email_subject": "Redefina a sua palavra-passe do Formbricks",
     "forgot_password_email_text": "Solicitou um link para alterar a sua palavra-passe. Pode fazê-lo clicando no link abaixo:",
     "hidden_field": "Campo oculto",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloqueie todo o poder do Formbricks. Grátis por 30 dias."
       },
       "general": {
+        "ai_data_analysis_enabled": "Enriquecimento e análise de dados (IA)",
+        "ai_data_analysis_enabled_description": "IA para tirar mais partido dos teus dados, configurar dashboards, gráficos, relatórios e muito mais. Acede aos dados da tua experiência.",
+        "ai_enabled": "IA da Formbricks",
+        "ai_enabled_description": "Gerir funcionalidades com IA para esta organização.",
+        "ai_settings_updated_successfully": "Definições de IA atualizadas com sucesso",
+        "ai_smart_tools_enabled": "Funcionalidade inteligente (IA)",
+        "ai_smart_tools_enabled_description": "IA para te ajudar a alcançar mais em menos tempo. Nunca acede aos dados recolhidos com o Formbricks. Apenas usado para, por exemplo, traduzir inquéritos para outros idiomas.",
         "bulk_invite_warning_description": "No plano gratuito, todos os membros da organização são sempre atribuídos ao papel de \"Proprietário\".",
         "cannot_delete_only_organization": "Esta é a sua única organização, não pode ser eliminada. Crie uma nova organização primeiro.",
         "cannot_leave_only_organization": "Não pode sair desta organização, pois é a sua única organização. Crie uma nova organização primeiro.",
@@ -2614,8 +2619,8 @@
     "csat_question_1_headline": "Qual a probabilidade de recomendar este $[projectName] a um amigo ou colega?",
     "csat_question_1_lower_label": "Pouco provável",
     "csat_question_1_upper_label": "Muito provável",
-    "csat_question_2_choice_1": "Algo satisfeito",
-    "csat_question_2_choice_2": "Muito satisfeito",
+    "csat_question_2_choice_1": "Muito satisfeito",
+    "csat_question_2_choice_2": "Algo satisfeito",
     "csat_question_2_choice_3": "Nem satisfeito nem insatisfeito",
     "csat_question_2_choice_4": "Algo insatisfeito",
     "csat_question_2_choice_5": "Muito insatisfeito",
@@ -3337,18 +3342,5 @@
     "usability_question_9_headline": "Eu senti-me confiante ao usar o sistema.",
     "usability_rating_description": "Meça a usabilidade percebida ao solicitar que os utilizadores avaliem a sua experiência com o seu produto usando um questionário padronizado de 10 perguntas.",
     "usability_score_name": "System Usability Score (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Obrigado por partilhar a sua ideia de fluxo de trabalho connosco! Estamos atualmente a desenhar esta funcionalidade e o seu feedback vai ajudar-nos a construir exatamente o que precisa.",
-    "coming_soon_title": "Estamos quase lá!",
-    "follow_up_label": "Há mais alguma coisa que gostaria de acrescentar?",
-    "follow_up_placeholder": "Que tarefas específicas gostaria de automatizar? Existe alguma ferramenta ou integração que queira incluir?",
-    "generate_button": "Gerar fluxo de trabalho",
-    "heading": "Que fluxo de trabalho quer criar?",
-    "placeholder": "Descreva o fluxo de trabalho que pretende gerar…",
-    "subheading": "Gere o seu fluxo de trabalho em segundos.",
-    "submit_button": "Adicionar detalhes",
-    "thank_you_description": "A sua contribuição ajuda-nos a criar a funcionalidade Workflows de que realmente precisa. Mantê-lo-emos informado sobre o nosso progresso.",
-    "thank_you_title": "Obrigado pelo seu feedback!"
   }
 }

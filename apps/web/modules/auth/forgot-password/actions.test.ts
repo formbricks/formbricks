@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import { requestPasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { sendForgotPasswordEmail } from "@/modules/email";
 import { forgotPasswordAction } from "./actions";
 
 // Mock dependencies
@@ -27,8 +28,14 @@ vi.mock("@/modules/auth/lib/user", () => ({
   getUserByEmail: vi.fn(),
 }));
 
-vi.mock("@/modules/email", () => ({
-  sendForgotPasswordEmail: vi.fn(),
+vi.mock("@/modules/auth/forgot-password/lib/password-reset-service", () => ({
+  requestPasswordReset: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -77,7 +84,7 @@ describe("forgotPasswordAction", () => {
       );
 
       expect(getUserByEmail).not.toHaveBeenCalled();
-      expect(sendForgotPasswordEmail).not.toHaveBeenCalled();
+      expect(requestPasswordReset).not.toHaveBeenCalled();
     });
 
     test("should use correct rate limit configuration", async () => {
@@ -104,39 +111,39 @@ describe("forgotPasswordAction", () => {
 
   describe("Password Reset Flow", () => {
     test("should send password reset email when user exists with email identity provider", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
-      expect(sendForgotPasswordEmail).toHaveBeenCalledWith(mockUser);
+      expect(requestPasswordReset).toHaveBeenCalledWith(mockUser, "public");
       expect(result).toEqual({ success: true });
     });
 
     test("should not send email when user doesn't exist", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
-      expect(sendForgotPasswordEmail).not.toHaveBeenCalled();
+      expect(requestPasswordReset).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
 
     test("should not send email when user has non-email identity provider", async () => {
       const ssoUser = { ...mockUser, identityProvider: "google" };
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(ssoUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
-      expect(sendForgotPasswordEmail).not.toHaveBeenCalled();
+      expect(requestPasswordReset).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
   });
@@ -146,7 +153,7 @@ describe("forgotPasswordAction", () => {
       // This test verifies that password reset is enabled by default
       // The actual PASSWORD_RESET_DISABLED check is part of the implementation
       // and we've mocked it as false, so rate limiting should work normally
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -168,7 +175,7 @@ describe("forgotPasswordAction", () => {
     });
 
     test("should handle user lookup errors after rate limiting", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockRejectedValue(new Error("Database error"));
 
       await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
@@ -178,23 +185,30 @@ describe("forgotPasswordAction", () => {
       expect(applyIPRateLimit).toHaveBeenCalled();
     });
 
-    test("should handle email sending errors after rate limiting", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+    test("should propagate unexpected password reset request errors after rate limiting", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
-      vi.mocked(sendForgotPasswordEmail).mockRejectedValue(new Error("Email service error"));
+      vi.mocked(requestPasswordReset).mockRejectedValue(new Error("Password reset request failed"));
 
-      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
-        "Email service error"
-      );
+      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).resolves.toEqual({
+        success: true,
+      });
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stage: "dispatch",
+          userId: mockUser.id,
+        }),
+        "Password reset request failed"
+      );
     });
   });
 
   describe("Security Considerations", () => {
     test("should always return success even for non-existent users to prevent email enumeration", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -204,17 +218,17 @@ describe("forgotPasswordAction", () => {
 
     test("should always return success even for SSO users to prevent identity provider enumeration", async () => {
       const ssoUser = { ...mockUser, identityProvider: "github" };
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
       vi.mocked(getUserByEmail).mockResolvedValue(ssoUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
 
       expect(result).toEqual({ success: true });
-      expect(sendForgotPasswordEmail).not.toHaveBeenCalled();
+      expect(requestPasswordReset).not.toHaveBeenCalled();
     });
 
     test("should rate limit all requests regardless of user existence", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
 
       // Test with existing user
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);

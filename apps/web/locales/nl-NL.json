@@ -400,7 +400,6 @@
     "show_response_count": "Toon het aantal reacties",
     "shown": "Getoond",
     "size": "Maat",
-    "skip": "Overslaan",
     "skipped": "Overgeslagen",
     "skips": "Overslaan",
     "some_files_failed_to_upload": "Sommige bestanden konden niet worden geüpload",
@@ -471,7 +470,6 @@
     "website_survey": "Website-enquête",
     "weeks": "weken",
     "welcome_card": "Welkomstkaart",
-    "workflows": "Workflows",
     "workspace": "Werkruimte",
     "workspace_configuration": "Werkruimte-configuratie",
     "workspace_created_successfully": "Project succesvol aangemaakt",
@@ -507,7 +505,7 @@
     "forgot_password_email_change_password": "Wachtwoord wijzigen",
     "forgot_password_email_did_not_request": "Als u dit niet heeft aangevraagd, kunt u deze e-mail negeren.",
     "forgot_password_email_heading": "Wachtwoord wijzigen",
-    "forgot_password_email_link_valid_for_24_hours": "De link is 24 uur geldig.",
+    "forgot_password_email_link_valid_for_24_hours": "De link is {minutes} minuten geldig.",
     "forgot_password_email_subject": "Reset uw Formbricks-wachtwoord",
     "forgot_password_email_text": "U heeft een link aangevraagd om uw wachtwoord te wijzigen. Dit kunt u doen door op onderstaande link te klikken:",
     "hidden_field": "Verborgen veld",
@@ -1131,6 +1129,13 @@
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Ontgrendel de volledige kracht van Formbricks. 30 dagen gratis."
       },
       "general": {
+        "ai_data_analysis_enabled": "Dataverrijking & analyse (AI)",
+        "ai_data_analysis_enabled_description": "AI om meer uit je data te halen, dashboards op te zetten, grafieken, rapporten en meer. Raakt je ervaringsdata aan.",
+        "ai_enabled": "Formbricks AI",
+        "ai_enabled_description": "Beheer AI-functies voor deze organisatie.",
+        "ai_settings_updated_successfully": "AI-instellingen succesvol bijgewerkt",
+        "ai_smart_tools_enabled": "Slimme functionaliteit (AI)",
+        "ai_smart_tools_enabled_description": "AI om je te helpen meer te bereiken in minder tijd. Raakt nooit data aan die met Formbricks is verzameld. Wordt alleen gebruikt om bijvoorbeeld enquêtes naar andere talen te vertalen.",
         "bulk_invite_warning_description": "Bij het gratis abonnement krijgen alle organisatieleden altijd de rol 'Eigenaar' toegewezen.",
         "cannot_delete_only_organization": "Dit is uw enige organisatie. Deze kan niet worden verwijderd. Maak eerst een nieuwe organisatie aan.",
         "cannot_leave_only_organization": "U kunt deze organisatie niet verlaten, aangezien dit uw enige organisatie is. Maak eerst een nieuwe organisatie aan.",
@@ -2614,8 +2619,8 @@
     "csat_question_1_headline": "Hoe waarschijnlijk is het dat u deze $[projectName] zou aanbevelen aan een vriend of collega?",
     "csat_question_1_lower_label": "Niet waarschijnlijk",
     "csat_question_1_upper_label": "Zeer waarschijnlijk",
-    "csat_question_2_choice_1": "Enigszins tevreden",
-    "csat_question_2_choice_2": "Zeer tevreden",
+    "csat_question_2_choice_1": "Zeer tevreden",
+    "csat_question_2_choice_2": "Enigszins tevreden",
     "csat_question_2_choice_3": "Noch tevreden, noch ontevreden",
     "csat_question_2_choice_4": "Enigszins ontevreden",
     "csat_question_2_choice_5": "Zeer ontevreden",
@@ -3337,18 +3342,5 @@
     "usability_question_9_headline": "Ik voelde me zelfverzekerd tijdens het gebruik van het systeem.",
     "usability_rating_description": "Meet de waargenomen bruikbaarheid door gebruikers te vragen hun ervaring met uw product te beoordelen met behulp van een gestandaardiseerde enquête met tien vragen.",
     "usability_score_name": "Systeembruikbaarheidsscore (SUS)"
-  },
-  "workflows": {
-    "coming_soon_description": "Bedankt voor het delen van je workflow-idee met ons! We zijn momenteel bezig met het ontwerpen van deze functie en jouw feedback helpt ons om precies te bouwen wat je nodig hebt.",
-    "coming_soon_title": "We zijn er bijna!",
-    "follow_up_label": "Is er nog iets dat u wilt toevoegen?",
-    "follow_up_placeholder": "Welke specifieke taken wil je automatiseren? Zijn er tools of integraties die je wilt meenemen?",
-    "generate_button": "Genereer workflow",
-    "heading": "Welke workflow wil je maken?",
-    "placeholder": "Beschrijf de workflow die je wilt genereren…",
-    "subheading": "Genereer je workflow in enkele seconden.",
-    "submit_button": "Voeg details toe",
-    "thank_you_description": "Jouw input helpt ons om de Workflows-functie te bouwen die jij echt nodig hebt. We houden je op de hoogte van onze voortgang.",
-    "thank_you_title": "Bedankt voor je feedback!"
   }
 }
