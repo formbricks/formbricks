@@ -92,11 +92,11 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    if (survey.environmentId !== environmentId) {
+    if (survey.workspaceId !== workspaceId) {
       return {
         response: responses.badRequestResponse(
-          "Survey does not belong to the environment",
-          { surveyId, environmentId },
+          "Survey does not belong to the workspace",
+          { surveyId, workspaceId },
           true
         ),
       };
