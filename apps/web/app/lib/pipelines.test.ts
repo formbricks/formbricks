@@ -45,6 +45,7 @@ describe("pipelines", () => {
       event: PipelineTriggers.responseCreated,
       surveyId: "cm8ckvchx000008lb710n0gdn",
       environmentId: "cm8cmp9hp000008jf7l570ml2",
+      workspaceId: "cm8cnq2hp000008jf7l570abc",
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };
 
@@ -61,6 +62,7 @@ describe("pipelines", () => {
       },
       body: JSON.stringify({
         environmentId: testData.environmentId,
+        workspaceId: testData.workspaceId,
         surveyId: testData.surveyId,
         event: testData.event,
         response: testData.response,
@@ -78,6 +80,7 @@ describe("pipelines", () => {
       event: PipelineTriggers.responseCreated,
       surveyId: "cm8ckvchx000008lb710n0gdn",
       environmentId: "cm8cmp9hp000008jf7l570ml2",
+      workspaceId: "cm8cnq2hp000008jf7l570abc",
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };
 
@@ -104,6 +107,7 @@ describe("pipelines", () => {
       event: PipelineTriggers.responseCreated,
       surveyId: "cm8ckvchx000008lb710n0gdn",
       environmentId: "cm8cmp9hp000008jf7l570ml2",
+      workspaceId: "cm8cnq2hp000008jf7l570abc",
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };
 
