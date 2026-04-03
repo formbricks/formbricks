@@ -53,7 +53,6 @@ export const createOrganizationAction = authenticatedActionClient
       capturePostHogEvent(ctx.user.id, "organization_created", {
         organization_id: newOrganization.id,
         is_first_org: hasNoOrganizations,
-        user_id: ctx.user.id,
       });
 
       return newOrganization;

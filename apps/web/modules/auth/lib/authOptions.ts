@@ -343,18 +343,22 @@ export const authOptions: NextAuthOptions = {
       const captureSignIn = async (provider: string) => {
         if (!POSTHOG_KEY) return;
 
-        const [membershipCount, userData] = await Promise.all([
-          prisma.membership.count({ where: { userId } }),
-          prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
-        ]);
-        const isFirstLoginToday =
-          !userData?.lastLoginAt || userData.lastLoginAt.toDateString() !== new Date().toDateString();
+        try {
+          const [membershipCount, userData] = await Promise.all([
+            prisma.membership.count({ where: { userId } }),
+            prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
+          ]);
+          const isFirstLoginToday =
+            userData?.lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
 
-        capturePostHogEvent(userId, "user_signed_in", {
-          auth_provider: provider,
-          organization_count: membershipCount,
-          is_first_login_today: isFirstLoginToday,
-        });
+          capturePostHogEvent(userId, "user_signed_in", {
+            auth_provider: provider,
+            organization_count: membershipCount,
+            is_first_login_today: isFirstLoginToday,
+          });
+        } catch (error) {
+          logger.warn({ error }, "Failed to capture PostHog sign-in event");
+        }
       };
 
       if (account?.provider === "credentials" || account?.provider === "token") {
@@ -363,7 +367,7 @@ export const authOptions: NextAuthOptions = {
           logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
-        await captureSignIn(account.provider);
+        void captureSignIn(account.provider);
         await updateUserLastLoginAt(userEmail);
         return true;
       }
@@ -375,12 +379,12 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (result) {
-          await captureSignIn(account.provider);
+          void captureSignIn(account.provider);
           await updateUserLastLoginAt(userEmail);
         }
         return result;
       }
-      await captureSignIn(account?.provider ?? "unknown");
+      void captureSignIn(account?.provider ?? "unknown");
       await updateUserLastLoginAt(userEmail);
       return true;
     },

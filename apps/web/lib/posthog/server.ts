@@ -7,6 +7,7 @@ const POSTHOG_HOST = "https://eu.i.posthog.com";
 
 const globalForPostHog = globalThis as unknown as {
   posthogServerClient: PostHog | undefined;
+  posthogHandlersRegistered: boolean | undefined;
 };
 
 function createPostHogClient(): PostHog | null {
@@ -26,7 +27,11 @@ if (process.env.NODE_ENV !== "production" && posthogServerClient) {
   globalForPostHog.posthogServerClient = posthogServerClient;
 }
 
-if (process.env.NEXT_RUNTIME === "nodejs" && posthogServerClient) {
+if (
+  process.env.NEXT_RUNTIME === "nodejs" &&
+  posthogServerClient &&
+  !globalForPostHog.posthogHandlersRegistered
+) {
   const shutdownPostHog = () => {
     posthogServerClient?.shutdown().catch((err) => {
       logger.error(err, "Error shutting down PostHog server client");
@@ -34,4 +39,5 @@ if (process.env.NEXT_RUNTIME === "nodejs" && posthogServerClient) {
   };
   process.on("SIGTERM", shutdownPostHog);
   process.on("SIGINT", shutdownPostHog);
+  globalForPostHog.posthogHandlersRegistered = true;
 }

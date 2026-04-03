@@ -22,6 +22,7 @@ import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-e
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
 import { ZSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getProject } from "./lib/project";
@@ -150,7 +151,7 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       capturePostHogEvent(ctx.user.id, "survey_published", {
         survey_id: result.id,
         survey_type: result.type,
-        question_count: result.questions?.length ?? 0,
+        question_count: getElementsFromBlocks(result.blocks).length,
         organization_id: organizationId,
         has_targeting: result.segment ? !result.segment.isPrivate : false,
         language_count: result.languages?.length ?? 0,
