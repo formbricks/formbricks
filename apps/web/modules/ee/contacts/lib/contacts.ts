@@ -116,8 +116,8 @@ const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-export const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
-  const whereClause: Prisma.ContactWhereInput = { environmentId };
+export const buildContactWhereClause = (workspaceId: string, search?: string): Prisma.ContactWhereInput => {
+  const whereClause: Prisma.ContactWhereInput = { workspaceId };
 
   if (search) {
     whereClause.OR = [
@@ -144,12 +144,12 @@ export const buildContactWhereClause = (environmentId: string, search?: string):
 };
 
 export const getContacts = reactCache(
-  async (environmentId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
-    validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
+  async (workspaceId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
+    validateInputs([workspaceId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
 
     try {
       const contacts = await prisma.contact.findMany({
-        where: buildContactWhereClause(environmentId, searchValue),
+        where: buildContactWhereClause(workspaceId, searchValue),
         select: selectContact,
         take: ITEMS_PER_PAGE,
         skip: offset,
@@ -616,14 +616,17 @@ export const createContactsFromCSV = async (
   );
 
   try {
-    // Step 1: Extract metadata from CSV data
+    // Step 1: Get workspace ID from environment
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+
+    // Step 2: Extract metadata from CSV data
     const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
 
-    // Step 2: Fetch existing data from database
+    // Step 3: Fetch existing data from database
     const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
-          environmentId,
+          workspaceId,
           attributes: { some: { attributeKey: { key: "email" }, value: { in: csvEmails } } },
         },
         select: {
@@ -632,11 +635,11 @@ export const createContactsFromCSV = async (
         },
       }),
       prisma.contactAttribute.findMany({
-        where: { attributeKey: { key: "userId", environmentId }, value: { in: csvUserIds } },
+        where: { attributeKey: { key: "userId", workspaceId }, value: { in: csvUserIds } },
         select: { value: true, contactId: true },
       }),
       prisma.contactAttributeKey.findMany({
-        where: { environmentId },
+        where: { workspaceId },
         select: { key: true, id: true, dataType: true },
       }),
     ]);

@@ -1,5 +1,3 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -17,11 +15,11 @@ export const SegmentsPage = async ({
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const { isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [segments, contactAttributeKeys] = await Promise.all([
-    getSegments(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
+    getSegments(workspace.id),
+    getContactAttributeKeys(workspace.id),
   ]);
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
@@ -31,10 +29,6 @@ export const SegmentsPage = async ({
   }
 
   const filteredSegments = segments.filter((segment) => !segment.isPrivate);
-  const workspaceId = await getWorkspaceIdFromEnvironmentId(params.environmentId);
-  if (!workspaceId) {
-    throw new ResourceNotFoundError("workspace", params.environmentId);
-  }
 
   return (
     <ContactsPageLayout
@@ -48,7 +42,7 @@ export const SegmentsPage = async ({
           environmentId={params.environmentId}
           contactAttributeKeys={contactAttributeKeys}
           segments={filteredSegments}
-          workspaceId={workspaceId}
+          workspaceId={workspace.id}
         />
       }
       upgradePromptTitle={t("environments.segments.unlock_segments_title")}

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   getContactAttributes,
@@ -8,6 +9,10 @@ import {
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
 import { updateAttributes } from "./attributes";
+
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
 
 vi.mock("@/lib/constants", () => ({
   MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT: 2,
@@ -81,6 +86,7 @@ const attributeKeys: TContactAttributeKey[] = [
 describe("updateAttributes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     // Set default mock return values - these will be overridden in individual tests
     vi.mocked(getContactAttributes).mockResolvedValue({});
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);

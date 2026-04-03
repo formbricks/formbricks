@@ -11,6 +11,7 @@ import {
 import { symmetricEncrypt } from "@/lib/crypto";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -88,7 +89,8 @@ export const GET = withV1ApiWrapper({
         },
       };
 
-      const existingIntegration = await getIntegrationByType(environmentId, "notion");
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+      const existingIntegration = await getIntegrationByType(workspaceId, "notion");
       if (existingIntegration) {
         notionIntegration.config.data = existingIntegration.config.data as TIntegrationNotionConfigData[];
       }

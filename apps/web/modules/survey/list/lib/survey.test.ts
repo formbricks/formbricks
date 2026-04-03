@@ -173,7 +173,7 @@ describe("getSurveyCount", () => {
     const count = await getSurveyCount(environmentId);
     expect(count).toBe(5);
     expect(prisma.survey.count).toHaveBeenCalledWith({
-      where: { environmentId },
+      where: { workspaceId: environmentId },
     });
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
   });
@@ -271,7 +271,7 @@ describe("getSurveys", () => {
     expect(surveys).toEqual(expectedSurveys);
     expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, ...buildWhereClause() },
+      where: { workspaceId: environmentId, ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause(),
       take: undefined,
@@ -285,7 +285,7 @@ describe("getSurveys", () => {
 
     expect(surveys).toEqual([expectedSurveys[0]]);
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, ...buildWhereClause() },
+      where: { workspaceId: environmentId, ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause(),
       take: 1,
@@ -306,7 +306,7 @@ describe("getSurveys", () => {
     expect(buildOrderByClause).toHaveBeenCalledWith("createdAt");
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { environmentId, AND: [{ name: { contains: "Test" } }] }, // Check with correct structure
+        where: { workspaceId: environmentId, AND: [{ name: { contains: "Test" } }] }, // Check with correct structure
         orderBy: [{ createdAt: "desc" }], // Check the mocked order by
       })
     );
@@ -380,17 +380,17 @@ describe("getSurveysSortedByRelevance", () => {
     expect(surveys).toEqual([expectedInProgressSurvey, expectedOtherSurvey]);
     expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.count).toHaveBeenCalledWith({
-      where: { environmentId, status: "inProgress", ...buildWhereClause() },
+      where: { workspaceId: environmentId, status: "inProgress", ...buildWhereClause() },
     });
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(1, {
-      where: { environmentId, status: "inProgress", ...buildWhereClause() },
+      where: { workspaceId: environmentId, status: "inProgress", ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause("updatedAt"),
       take: 2,
       skip: 0,
     });
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(2, {
-      where: { environmentId, status: { not: "inProgress" }, ...buildWhereClause() },
+      where: { workspaceId: environmentId, status: { not: "inProgress" }, ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause("updatedAt"),
       take: 1,

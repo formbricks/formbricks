@@ -62,7 +62,6 @@ vi.mock("@formbricks/logger", () => ({
 const getServerSession = vi.mocked((await import("next-auth")).getServerSession);
 
 const validWorkspaceId = "clxx1234567890123456789012";
-const resolvedEnvironmentId = "clzz9876543210987654321098";
 
 function createRequest(url: string, requestId?: string, extraHeaders?: Record<string, string>): NextRequest {
   const headers: Record<string, string> = { ...extraHeaders };
@@ -117,7 +116,7 @@ describe("GET /api/v3/surveys", () => {
         };
       }
       return {
-        environmentId: resolvedEnvironmentId,
+        environmentId: "proj_1",
         workspaceId: "proj_1",
         organizationId: "org_1",
       };
@@ -153,13 +152,13 @@ describe("GET /api/v3/surveys", () => {
       "req-456",
       "/api/v3/surveys"
     );
-    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+    expect(getSurveyListPage).toHaveBeenCalledWith("proj_1", {
       limit: 20,
       cursor: null,
       sortBy: "updatedAt",
       filterCriteria: undefined,
     });
-    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
+    expect(getSurveyCount).toHaveBeenCalledWith("proj_1", undefined);
   });
 
   test("returns 200 with x-api-key when workspace is on the key", async () => {
@@ -177,13 +176,13 @@ describe("GET /api/v3/surveys", () => {
       "req-k",
       "/api/v3/surveys"
     );
-    expect(getSurveyListPage).toHaveBeenCalledWith(validWorkspaceId, {
+    expect(getSurveyListPage).toHaveBeenCalledWith("proj_1", {
       limit: 20,
       cursor: null,
       sortBy: "updatedAt",
       filterCriteria: undefined,
     });
-    expect(getSurveyCount).toHaveBeenCalledWith(validWorkspaceId, undefined);
+    expect(getSurveyCount).toHaveBeenCalledWith("proj_1", undefined);
   });
 
   test("returns 403 when API key does not include workspace", async () => {
@@ -248,13 +247,13 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.meta).toEqual({ limit: 10, nextCursor: "cursor-123", totalCount: 42 });
-    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+    expect(getSurveyListPage).toHaveBeenCalledWith("proj_1", {
       limit: 10,
       cursor: null,
       sortBy: "updatedAt",
       filterCriteria: undefined,
     });
-    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
+    expect(getSurveyCount).toHaveBeenCalledWith("proj_1", undefined);
   });
 
   test("passes filter query to getSurveyListPage", async () => {
@@ -264,13 +263,13 @@ describe("GET /api/v3/surveys", () => {
     );
     const res = await GET(req, {} as any);
     expect(res.status).toBe(200);
-    expect(getSurveyListPage).toHaveBeenCalledWith(resolvedEnvironmentId, {
+    expect(getSurveyListPage).toHaveBeenCalledWith("proj_1", {
       limit: 20,
       cursor: null,
       sortBy: "updatedAt",
       filterCriteria,
     });
-    expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, filterCriteria);
+    expect(getSurveyCount).toHaveBeenCalledWith("proj_1", filterCriteria);
   });
 
   test("returns 400 when filterCriteria is used", async () => {

@@ -1,11 +1,12 @@
 import { logger } from "@formbricks/logger";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
 const getOrgId = async (environmentId: string): Promise<string> => {
   try {
-    return await getOrganizationIdFromEnvironmentId(environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+    return await getOrganizationIdFromWorkspaceId(workspaceId);
   } catch (error) {
     logger.error({ error }, "Failed to get organization ID for environment");
     return UNKNOWN_DATA;

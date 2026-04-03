@@ -3,11 +3,11 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
-import { createWebhook } from "@/app/api/v1/webhooks/lib/webhook";
 import { TWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import { createWebhook } from "./webhook";
 
 vi.mock("@/lib/utils/helper", () => ({
   getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),

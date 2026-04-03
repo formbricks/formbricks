@@ -7,8 +7,8 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getEnvironmentIdFromSurveyId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
@@ -71,9 +71,11 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
         );
       }
 
-      const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(sourceEnvironmentId);
-      const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
-        parsedInput.targetEnvironmentId
+      const sourceEnvironmentOrganizationId = await getOrganizationIdFromWorkspaceId(
+        sourceEnvironmentWorkspaceId
+      );
+      const targetEnvironmentOrganizationId = await getOrganizationIdFromWorkspaceId(
+        targetEnvironmentWorkspaceId
       );
 
       if (sourceEnvironmentOrganizationId !== targetEnvironmentOrganizationId) {
@@ -134,7 +136,8 @@ const ZGetWorkspacesByEnvironmentIdAction = z.object({
 export const getWorkspacesByEnvironmentIdAction = authenticatedActionClient
   .inputSchema(ZGetWorkspacesByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
@@ -146,7 +149,7 @@ export const getWorkspacesByEnvironmentIdAction = authenticatedActionClient
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });
@@ -221,9 +224,11 @@ const ZGetSurveysAction = z.object({
 export const getSurveysAction = authenticatedActionClient
   .inputSchema(ZGetSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           data: parsedInput.filterCriteria,
@@ -234,15 +239,10 @@ export const getSurveysAction = authenticatedActionClient
         {
           type: "workspaceTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });
 
-    return await getSurveys(
-      parsedInput.environmentId,
-      parsedInput.limit,
-      parsedInput.offset,
-      parsedInput.filterCriteria
-    );
+    return await getSurveys(workspaceId, parsedInput.limit, parsedInput.offset, parsedInput.filterCriteria);
   });

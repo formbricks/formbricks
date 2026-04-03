@@ -9,7 +9,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 
 export const getActionClass = reactCache(
-  async (actionClassId: string): Promise<{ environmentId: string } | null> => {
+  async (actionClassId: string): Promise<{ environmentId: string; workspaceId: string } | null> => {
     validateInputs([actionClassId, ZId]);
 
     try {
@@ -19,6 +19,7 @@ export const getActionClass = reactCache(
         },
         select: {
           environmentId: true,
+          workspaceId: true,
         },
       });
 
@@ -80,7 +81,7 @@ export const getEnvironment = reactCache(
 );
 
 export const getIntegration = reactCache(
-  async (integrationId: string): Promise<{ environmentId: string } | null> => {
+  async (integrationId: string): Promise<{ environmentId: string; workspaceId: string } | null> => {
     try {
       const integration = await prisma.integration.findUnique({
         where: {
@@ -88,6 +89,7 @@ export const getIntegration = reactCache(
         },
         select: {
           environmentId: true,
+          workspaceId: true,
         },
       });
       return integration;
@@ -185,41 +187,49 @@ export const getResponse = reactCache(async (responseId: string): Promise<{ surv
   }
 });
 
-export const getSurvey = reactCache(async (surveyId: string): Promise<{ environmentId: string } | null> => {
-  validateInputs([surveyId, ZId]);
-  try {
-    const survey = await prisma.survey.findUnique({
+export const getSurvey = reactCache(
+  async (surveyId: string): Promise<{ environmentId: string; workspaceId: string } | null> => {
+    validateInputs([surveyId, ZId]);
+    try {
+      const survey = await prisma.survey.findUnique({
+        where: {
+          id: surveyId,
+        },
+        select: {
+          environmentId: true,
+          workspaceId: true,
+        },
+      });
+
+      return survey;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
+export const getTag = reactCache(
+  async (id: string): Promise<{ environmentId: string; workspaceId: string } | null> => {
+    validateInputs([id, ZId]);
+    const tag = await prisma.tag.findUnique({
       where: {
-        id: surveyId,
+        id,
       },
       select: {
         environmentId: true,
+        workspaceId: true,
       },
     });
-
-    return survey;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
+    return tag;
   }
-});
+);
 
-export const getTag = reactCache(async (id: string): Promise<{ environmentId: string } | null> => {
-  validateInputs([id, ZId]);
-  const tag = await prisma.tag.findUnique({
-    where: {
-      id,
-    },
-    select: {
-      environmentId: true,
-    },
-  });
-  return tag;
-});
-
-export const getWebhook = async (id: string): Promise<{ environmentId: string } | null> => {
+export const getWebhook = async (
+  id: string
+): Promise<{ environmentId: string; workspaceId: string } | null> => {
   validateInputs([id, ZId]);
 
   try {
@@ -229,6 +239,7 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
       },
       select: {
         environmentId: true,
+        workspaceId: true,
       },
     });
     return webhook;
@@ -291,41 +302,45 @@ export const isTeamPartOfOrganization = async (organizationId: string, teamId: s
   return team.organizationId === organizationId;
 };
 
-export const getContact = reactCache(async (contactId: string): Promise<{ environmentId: string } | null> => {
-  validateInputs([contactId, ZId]);
+export const getContact = reactCache(
+  async (contactId: string): Promise<{ environmentId: string; workspaceId: string } | null> => {
+    validateInputs([contactId, ZId]);
 
-  try {
-    return await prisma.contact.findUnique({
-      where: {
-        id: contactId,
-      },
-      select: { environmentId: true },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+    try {
+      return await prisma.contact.findUnique({
+        where: {
+          id: contactId,
+        },
+        select: { environmentId: true, workspaceId: true },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-});
+);
 
-export const getSegment = reactCache(async (segmentId: string): Promise<{ environmentId: string } | null> => {
-  validateInputs([segmentId, ZId]);
-  try {
-    const segment = await prisma.segment.findUnique({
-      where: {
-        id: segmentId,
-      },
-      select: { environmentId: true },
-    });
+export const getSegment = reactCache(
+  async (segmentId: string): Promise<{ environmentId: string; workspaceId: string } | null> => {
+    validateInputs([segmentId, ZId]);
+    try {
+      const segment = await prisma.segment.findUnique({
+        where: {
+          id: segmentId,
+        },
+        select: { environmentId: true, workspaceId: true },
+      });
 
-    return segment;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+      return segment;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-});
+);

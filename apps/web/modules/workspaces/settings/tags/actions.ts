@@ -7,8 +7,8 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getEnvironmentIdFromTagId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromTagId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromTagId,
 } from "@/lib/utils/helper";
@@ -104,7 +104,8 @@ export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsA
       throw new Error("Tags must be in the same environment");
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(newTagEnvironmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(newTagEnvironmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -116,7 +117,7 @@ export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsA
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(newTagEnvironmentId),
+          workspaceId,
         },
       ],
     });

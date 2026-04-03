@@ -6,15 +6,15 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getWebhookCountBySource = async (
-  environmentId: string,
+  workspaceId: string,
   source?: Webhook["source"]
 ): Promise<number> => {
-  validateInputs([environmentId, ZId], [source, z.string().optional()]);
+  validateInputs([workspaceId, ZId], [source, z.string().optional()]);
 
   try {
     const count = await prisma.webhook.count({
       where: {
-        environmentId,
+        workspaceId,
         source,
       },
     });

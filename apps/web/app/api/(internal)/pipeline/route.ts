@@ -11,10 +11,11 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { CRON_SECRET } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -54,7 +55,9 @@ export const POST = async (request: Request) => {
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  const organization = await getOrganization(organizationId);
   if (!organization) {
     throw new ResourceNotFoundError("Organization", "Organization not found");
   }
@@ -153,7 +156,7 @@ export const POST = async (request: Request) => {
   if (event === "responseFinished") {
     // Fetch integrations and responseCount in parallel
     const [integrations, responseCount] = await Promise.all([
-      getIntegrations(environmentId),
+      getIntegrations(workspaceId),
       getResponseCountBySurveyId(surveyId),
     ]);
 

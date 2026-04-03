@@ -64,7 +64,7 @@ describe("getActionClasses", () => {
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
     expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId: environmentId,
+        workspaceId: environmentId,
       },
       orderBy: {
         createdAt: "asc",
@@ -78,7 +78,7 @@ describe("getActionClasses", () => {
 
     await expect(getActionClasses(environmentId)).rejects.toThrow(DatabaseError);
     await expect(getActionClasses(environmentId)).rejects.toThrow(
-      `Database error when fetching actions for environment ${environmentId}`
+      `Database error when fetching actions for workspace ${environmentId}`
     );
 
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);

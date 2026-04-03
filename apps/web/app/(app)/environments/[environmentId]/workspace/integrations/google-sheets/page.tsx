@@ -22,11 +22,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslate();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
 
-  const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, environment, session, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [surveys, integrations, locale] = await Promise.all([
-    getSurveys(params.environmentId),
-    getIntegrations(params.environmentId),
+    getSurveys(workspace.id),
+    getIntegrations(workspace.id),
     getUserLocale(session.user.id),
   ]);
 

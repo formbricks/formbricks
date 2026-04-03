@@ -2,6 +2,7 @@ import "server-only";
 import { TContactAttributes, TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TAttributeUpdateMessage, updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
@@ -24,6 +25,7 @@ export const updateContactAttributes = async (
   }
 
   const environmentId = contact.environmentId;
+  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
 
   // Extract userId from attributes (required by updateAttributes)
   // If missing, pass empty string but note it in messages
@@ -32,7 +34,7 @@ export const updateContactAttributes = async (
   const messages: TAttributeUpdateMessage[] = [];
 
   // Get current attribute keys before update to detect new ones
-  const currentAttributeKeys = await getContactAttributeKeys(environmentId);
+  const currentAttributeKeys = await getContactAttributeKeys(workspaceId);
   const currentKeysSet = new Set(currentAttributeKeys.map((key) => key.key));
 
   // Call updateAttributes with deleteRemovedAttributes: true
@@ -48,7 +50,7 @@ export const updateContactAttributes = async (
   const updatedAttributes = await getContactAttributes(contactId);
 
   // Detect if new keys were created by comparing before/after
-  const updatedAttributeKeys = await getContactAttributeKeys(environmentId);
+  const updatedAttributeKeys = await getContactAttributeKeys(workspaceId);
   const newKeys = updatedAttributeKeys.filter((key) => !currentKeysSet.has(key.key));
 
   return {

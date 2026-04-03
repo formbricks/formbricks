@@ -60,13 +60,13 @@ export const createOrUpdateIntegration = async (
 };
 
 export const getIntegrations = reactCache(
-  async (environmentId: string, page?: number): Promise<TIntegration[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+  async (workspaceId: string, page?: number): Promise<TIntegration[]> => {
+    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const integrations = await prisma.integration.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -98,16 +98,14 @@ export const getIntegration = reactCache(async (integrationId: string): Promise<
 });
 
 export const getIntegrationByType = reactCache(
-  async (environmentId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> => {
-    validateInputs([environmentId, ZId], [type, ZIntegrationType]);
+  async (workspaceId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> => {
+    validateInputs([workspaceId, ZId], [type, ZIntegrationType]);
 
     try {
-      const integration = await prisma.integration.findUnique({
+      const integration = await prisma.integration.findFirst({
         where: {
-          type_environmentId: {
-            environmentId,
-            type,
-          },
+          workspaceId,
+          type,
         },
       });
       return integration ? transformIntegration(integration) : null;

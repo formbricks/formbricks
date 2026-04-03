@@ -15,10 +15,9 @@ export const AttributesPage = async ({
   const params = await paramsProps;
   const locale = await getLocale();
   const t = await getTranslate();
-  const [{ isReadOnly, organization }, contactAttributeKeys] = await Promise.all([
-    getEnvironmentAuth(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
-  ]);
+  const { isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
+
+  const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
 

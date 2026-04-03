@@ -12,7 +12,6 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -22,7 +21,9 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, environment, isReadOnly, workspace, organization } = await getEnvironmentAuth(
+    params.environmentId
+  );
 
   const surveyId = params.surveyId;
 
@@ -41,19 +42,18 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   if (!user) {
     throw new AuthenticationError(t("common.not_authenticated"));
   }
-  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 
-  const isContactsEnabled = await getIsContactsEnabled(organizationId);
-  const segments = isContactsEnabled ? await getSegments(environment.id) : [];
+  const isContactsEnabled = await getIsContactsEnabled(organization.id);
+  const segments = isContactsEnabled ? await getSegments(workspace.id) : [];
 
-  if (!organizationId) {
+  if (!organization) {
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
-  const organizationBilling = await getOrganizationBilling(organizationId);
+  const organizationBilling = await getOrganizationBilling(organization.id);
   if (!organizationBilling) {
-    throw new ResourceNotFoundError(t("common.organization"), organizationId);
+    throw new ResourceNotFoundError(t("common.organization"), organization.id);
   }
-  const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);

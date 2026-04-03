@@ -46,18 +46,26 @@ export const SurveyEditorPage = async (props: {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const { session, isMember, environment, hasReadAccess, currentUserMembership, workspacePermission } =
-    await getEnvironmentAuth(params.environmentId);
+  const {
+    session,
+    isMember,
+    environment,
+    hasReadAccess,
+    currentUserMembership,
+    workspacePermission,
+    workspace,
+  } = await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
+
   const [survey, workspaceWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
     await Promise.all([
       getSurvey(params.surveyId),
       getWorkspaceWithTeamIdsByEnvironmentId(params.environmentId),
-      getActionClasses(params.environmentId),
-      getContactAttributeKeys(params.environmentId),
+      getActionClasses(workspace.id),
+      getContactAttributeKeys(workspace.id),
       getResponseCountBySurveyId(params.surveyId),
-      getSegments(params.environmentId),
+      getSegments(workspace.id),
     ]);
 
   if (!workspaceWithTeamIds) {

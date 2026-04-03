@@ -10,8 +10,8 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getEnvironmentIdFromResponseId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromResponseId,
 } from "@/lib/utils/helper";
@@ -25,7 +25,8 @@ const ZCreateTagAction = z.object({
 
 export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagAction).action(
   withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -37,7 +38,7 @@ export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagA
         },
         {
           type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
           minPermission: "readWrite",
         },
       ],
@@ -76,7 +77,8 @@ export const createTagToResponseAction = authenticatedActionClient
         throw new Error("Response and tag are not in the same environment");
       }
 
-      const organizationId = await getOrganizationIdFromEnvironmentId(responseEnvironmentId);
+      const responseWorkspaceId = await getWorkspaceIdFromEnvironmentId(responseEnvironmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(responseWorkspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -88,7 +90,7 @@ export const createTagToResponseAction = authenticatedActionClient
           },
           {
             type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(responseEnvironmentId),
+            workspaceId: responseWorkspaceId,
             minPermission: "readWrite",
           },
         ],

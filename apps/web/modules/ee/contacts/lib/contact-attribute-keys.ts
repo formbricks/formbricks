@@ -7,9 +7,9 @@ import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentId: string): Promise<TContactAttributeKey[]> => {
+  async (workspaceId: string): Promise<TContactAttributeKey[]> => {
     return await prisma.contactAttributeKey.findMany({
-      where: { environmentId },
+      where: { workspaceId },
     });
   }
 );

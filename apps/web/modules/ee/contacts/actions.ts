@@ -8,7 +8,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromContactId,
-  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromContactId,
   getWorkspaceIdFromEnvironmentId,
 } from "@/lib/utils/helper";
@@ -30,9 +30,11 @@ const ZGetContactsAction = z.object({
 export const getContactsAction = authenticatedActionClient
   .inputSchema(ZGetContactsAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
       access: [
         {
           type: "organization",
@@ -41,12 +43,12 @@ export const getContactsAction = authenticatedActionClient
         {
           type: "workspaceTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });
 
-    return getContacts(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
+    return getContacts(workspaceId, parsedInput.offset, parsedInput.searchValue);
   });
 
 const ZContactDeleteAction = z.object({
@@ -95,7 +97,8 @@ export const createContactsFromCSVAction = authenticatedActionClient
   .inputSchema(ZCreateContactsFromCSV)
   .action(
     withAuditLogging("createdFromCSV", "contact", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -106,7 +109,7 @@ export const createContactsFromCSVAction = authenticatedActionClient
           },
           {
             type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+            workspaceId,
             minPermission: "readWrite",
           },
         ],

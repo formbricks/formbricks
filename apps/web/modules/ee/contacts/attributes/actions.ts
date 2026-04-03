@@ -6,7 +6,7 @@ import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-k
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -31,8 +31,8 @@ export const createContactAttributeKeyAction = authenticatedActionClient
   .inputSchema(ZCreateContactAttributeKeyAction)
   .action(
     withAuditLogging("created", "contactAttributeKey", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
       const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -82,8 +82,8 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
         throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
       }
 
-      const organizationId = await getOrganizationIdFromEnvironmentId(existingKey.environmentId);
       const workspaceId = await getWorkspaceIdFromEnvironmentId(existingKey.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -129,8 +129,8 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
         throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
       }
 
-      const organizationId = await getOrganizationIdFromEnvironmentId(existingKey.environmentId);
       const workspaceId = await getWorkspaceIdFromEnvironmentId(existingKey.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,

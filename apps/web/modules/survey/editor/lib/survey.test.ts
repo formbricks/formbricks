@@ -5,8 +5,9 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { updateSurveyInternal } from "@/lib/survey/service";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { checkTriggersValidity, handleTriggerUpdates, updateSurvey, updateSurveyDraft } from "./survey";
 
@@ -40,7 +41,7 @@ vi.mock("@/modules/survey/lib/action-class", () => ({
 }));
 
 vi.mock("@/modules/survey/lib/organization", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   getOrganizationAIKeys: vi.fn(),
 }));
 
@@ -157,6 +158,7 @@ describe("Survey Editor Library Tests", () => {
     };
 
     beforeEach(() => {
+      vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
       vi.mocked(prisma.survey.update).mockResolvedValue(mockSurvey as any);
       vi.mocked(prisma.segment.update).mockResolvedValue({
         id: "segment1",
@@ -166,7 +168,7 @@ describe("Survey Editor Library Tests", () => {
 
       vi.mocked(getSurvey).mockResolvedValue(mockCurrentSurvey);
       vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(mockOrganizationId);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganizationId);
       vi.mocked(getOrganizationAIKeys).mockResolvedValue(mockOrganization as any);
     });
 
