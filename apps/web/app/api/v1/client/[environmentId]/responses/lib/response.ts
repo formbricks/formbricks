@@ -84,7 +84,7 @@ export const createResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
 
-  const { environmentId, workspaceId, userId, finished, ttc: initialTtc } = responseInput;
+  const { workspaceId, userId, finished, ttc: initialTtc } = responseInput;
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;
@@ -92,11 +92,11 @@ export const createResponse = async (
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const organization = await getOrganization(organizationId);
     if (!organization) {
-      throw new ResourceNotFoundError("Organization", environmentId);
+      throw new ResourceNotFoundError("Organization", organizationId);
     }
 
     if (userId) {
-      contact = await getContactByUserId(environmentId, userId);
+      contact = await getContactByUserId(workspaceId, userId);
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};

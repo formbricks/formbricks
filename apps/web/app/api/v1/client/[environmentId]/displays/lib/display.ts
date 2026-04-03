@@ -13,7 +13,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   try {
     let contact: { id: string } | null = null;
     if (userId) {
-      contact = await getContactByUserId(environmentId, userId);
+      contact = await getContactByUserId(workspaceId, userId);
       if (!contact) {
         contact = await prisma.contact.create({
           data: {
@@ -35,7 +35,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
     const survey = await prisma.survey.findUnique({
       where: {
         id: surveyId,
-        environmentId,
+        workspaceId,
       },
     });
     if (!survey) {

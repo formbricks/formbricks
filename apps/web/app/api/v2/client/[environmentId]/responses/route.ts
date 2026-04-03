@@ -169,6 +169,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   sendToPipeline({
     event: "responseCreated",
     environmentId,
+    workspaceId,
     surveyId: responseData.surveyId,
     response: responseData,
   });
@@ -177,6 +178,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     sendToPipeline({
       event: "responseFinished",
       environmentId,
+      workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
     });

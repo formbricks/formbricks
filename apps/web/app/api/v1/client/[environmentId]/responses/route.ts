@@ -122,13 +122,13 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Survey", responseInputData.surveyId, true),
       };
     }
-    if (survey.environmentId !== environmentId) {
+    if (survey.workspaceId !== workspaceId) {
       return {
         response: responses.badRequestResponse(
-          "Survey is part of another environment",
+          "Survey is part of another workspace",
           {
-            "survey.environmentId": survey.environmentId,
-            environmentId,
+            "survey.workspaceId": survey.workspaceId,
+            workspaceId,
           },
           true
         ),
@@ -191,6 +191,7 @@ export const POST = withV1ApiWrapper({
     sendToPipeline({
       event: "responseCreated",
       environmentId: survey.environmentId,
+      workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
     });
@@ -199,6 +200,7 @@ export const POST = withV1ApiWrapper({
       sendToPipeline({
         event: "responseFinished",
         environmentId: survey.environmentId,
+        workspaceId,
         surveyId: responseData.surveyId,
         response: responseData,
       });
