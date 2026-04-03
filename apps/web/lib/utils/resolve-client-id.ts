@@ -38,7 +38,7 @@ export const resolveClientApiIds = reactCache(async (id: string): Promise<TResol
     },
   });
 
-  if (workspace && workspace.environments[0]) {
+  if (workspace?.environments[0]) {
     return { workspaceId: workspace.id, environmentId: workspace.environments[0].id };
   }
 
