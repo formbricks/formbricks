@@ -102,6 +102,11 @@ vi.mock("@/lib/constants", () => ({
   DEFAULT_TEAM_ID: "team-123",
   DEFAULT_ORGANIZATION_ID: "org-123",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
+  POSTHOG_KEY: undefined,
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 describe("handleSsoCallback", () => {
