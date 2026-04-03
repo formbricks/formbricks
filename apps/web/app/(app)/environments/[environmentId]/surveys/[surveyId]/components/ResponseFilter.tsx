@@ -101,14 +101,15 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           attributes,
           meta,
           hiddenFields,
-          quotas
+          quotas,
+          t
         );
         setSelectedOptions({ elementFilterOptions: elementFilterOptions, elementOptions: elementOptions });
       }
     };
 
     handleInitialData();
-  }, [isOpen, setSelectedOptions, survey]);
+  }, [isOpen, setSelectedOptions, survey, t]);
 
   const handleOnChangeElementComboBoxValue = (value: ElementOption, index: number) => {
     const matchingFilterOption = selectedOptions.elementFilterOptions.find(

@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TResponseFilterCriteria,
@@ -24,39 +25,61 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
-const conditionOptions: Record<string, string[]> = {
-  openText: ["is"],
-  multipleChoiceSingle: ["Includes either"],
-  multipleChoiceMulti: ["Includes all", "Includes either"],
-  nps: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped", "Includes either"],
-  rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
-  cta: ["is"],
-  tags: ["is"],
-  languages: ["Equals", "Not equals"],
-  pictureSelection: ["Includes all", "Includes either"],
-  userAttributes: ["Equals", "Not equals"],
-  consent: ["is"],
+const getConditionOptions = (t: TFunction): Record<string, string[]> => ({
+  openText: [t("environments.surveys.filter.is")],
+  multipleChoiceSingle: [t("environments.surveys.filter.includes_either")],
+  multipleChoiceMulti: [
+    t("environments.surveys.filter.includes_all"),
+    t("environments.surveys.filter.includes_either"),
+  ],
+  nps: [
+    t("environments.surveys.filter.is_equal_to"),
+    t("environments.surveys.filter.is_less_than"),
+    t("environments.surveys.filter.is_more_than"),
+    t("environments.surveys.filter.submitted"),
+    t("environments.surveys.filter.skipped"),
+    t("environments.surveys.filter.includes_either"),
+  ],
+  rating: [
+    t("environments.surveys.filter.is_equal_to"),
+    t("environments.surveys.filter.is_less_than"),
+    t("environments.surveys.filter.is_more_than"),
+    t("environments.surveys.filter.submitted"),
+    t("environments.surveys.filter.skipped"),
+  ],
+  cta: [t("environments.surveys.filter.is")],
+  tags: [t("environments.surveys.filter.is")],
+  languages: [t("environments.surveys.filter.equals"), t("environments.surveys.filter.not_equals")],
+  pictureSelection: [
+    t("environments.surveys.filter.includes_all"),
+    t("environments.surveys.filter.includes_either"),
+  ],
+  userAttributes: [t("environments.surveys.filter.equals"), t("environments.surveys.filter.not_equals")],
+  consent: [t("environments.surveys.filter.is")],
   matrix: [""],
-  address: ["is"],
-  contactInfo: ["is"],
-  ranking: ["is"],
-};
-const filterOptions: Record<string, string[]> = {
-  openText: ["Filled out", "Skipped"],
+  address: [t("environments.surveys.filter.is")],
+  contactInfo: [t("environments.surveys.filter.is")],
+  ranking: [t("environments.surveys.filter.is")],
+});
+const getFilterOptions = (t: TFunction): Record<string, string[]> => ({
+  openText: [t("environments.surveys.filter.filled_out"), t("environments.surveys.filter.skipped")],
   rating: ["1", "2", "3", "4", "5"],
   nps: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-  cta: ["Clicked", "Dismissed"],
-  tags: ["Applied", "Not applied"],
-  consent: ["Accepted", "Dismissed"],
-  address: ["Filled out", "Skipped"],
-  contactInfo: ["Filled out", "Skipped"],
-  ranking: ["Filled out", "Skipped"],
-};
+  cta: [t("environments.surveys.filter.clicked"), t("environments.surveys.filter.dismissed")],
+  tags: [t("environments.surveys.filter.applied"), t("environments.surveys.filter.not_applied")],
+  consent: [t("environments.surveys.filter.accepted"), t("environments.surveys.filter.dismissed")],
+  address: [t("environments.surveys.filter.filled_out"), t("environments.surveys.filter.skipped")],
+  contactInfo: [t("environments.surveys.filter.filled_out"), t("environments.surveys.filter.skipped")],
+  ranking: [t("environments.surveys.filter.filled_out"), t("environments.surveys.filter.skipped")],
+});
 
 // Helper function to get filter options for a specific element type
 const getElementFilterOption = (
-  element: ReturnType<typeof getElementsFromBlocks>[number]
+  element: ReturnType<typeof getElementsFromBlocks>[number],
+  t: TFunction
 ): ElementFilterOptions | null => {
+  const conditionOptions = getConditionOptions(t);
+  const filterOptions = getFilterOptions(t);
   if (!Object.keys(conditionOptions).includes(element.type)) {
     return null;
   }
@@ -81,7 +104,9 @@ const getElementFilterOption = (
     case TSurveyElementTypeEnum.PictureSelection:
       return {
         ...baseOption,
-        filterComboBoxOptions: element.choices?.map((_, idx) => `Picture ${idx + 1}`) ?? [""],
+        filterComboBoxOptions: element.choices?.map((_, idx) =>
+          t("environments.surveys.filter.picture_idx", { idx: idx + 1 })
+        ) ?? [""],
       };
     case TSurveyElementTypeEnum.Matrix:
       return {
@@ -99,16 +124,17 @@ const getElementFilterOption = (
 };
 
 // URL/meta text operators mapping
-const META_OP_MAP = {
-  Equals: "equals",
-  "Not equals": "notEquals",
-  Contains: "contains",
-  "Does not contain": "doesNotContain",
-  "Starts with": "startsWith",
-  "Does not start with": "doesNotStartWith",
-  "Ends with": "endsWith",
-  "Does not end with": "doesNotEndWith",
-} as const;
+const getMetaOpMap = (t: TFunction) =>
+  ({
+    [t("environments.surveys.filter.equals")]: "equals",
+    [t("environments.surveys.filter.not_equals")]: "notEquals",
+    [t("environments.surveys.filter.contains")]: "contains",
+    [t("environments.surveys.filter.does_not_contain")]: "doesNotContain",
+    [t("environments.surveys.filter.starts_with")]: "startsWith",
+    [t("environments.surveys.filter.does_not_start_with")]: "doesNotStartWith",
+    [t("environments.surveys.filter.ends_with")]: "endsWith",
+    [t("environments.surveys.filter.does_not_end_with")]: "doesNotEndWith",
+  }) as const;
 
 export const generateElementAndFilterOptions = (
   survey: TSurvey,
@@ -116,7 +142,8 @@ export const generateElementAndFilterOptions = (
   attributes: TSurveyContactAttributes,
   meta: TSurveyMetaFieldFilter,
   hiddenFields: TResponseHiddenFieldsFilter,
-  quotas: TSurveyQuota[]
+  quotas: TSurveyQuota[],
+  t: TFunction
 ): {
   elementOptions: ElementOptions[];
   elementFilterOptions: ElementFilterOptions[];
@@ -124,6 +151,10 @@ export const generateElementAndFilterOptions = (
   let elementOptions: ElementOptions[] = [];
   let elementFilterOptions: ElementFilterOptions[] = [];
   let elementsOptions: ElementOption[] = [];
+
+  const conditionOptions = getConditionOptions(t);
+  const filterOptions = getFilterOptions(t);
+  const META_OP_MAP = getMetaOpMap(t);
 
   const elements = getElementsFromBlocks(survey.blocks);
 
@@ -141,7 +172,7 @@ export const generateElementAndFilterOptions = (
   });
   elementOptions = [...elementOptions, { header: OptionsType.ELEMENTS, option: elementsOptions }];
   elements.forEach((q) => {
-    const filterOption = getElementFilterOption(q);
+    const filterOption = getElementFilterOption(q, t);
     if (filterOption) {
       elementFilterOptions.push(filterOption);
     }
@@ -195,7 +226,10 @@ export const generateElementAndFilterOptions = (
     Object.keys(meta).forEach((m) => {
       elementFilterOptions.push({
         type: "Meta",
-        filterOptions: m === "url" ? Object.keys(META_OP_MAP) : ["Equals", "Not equals"],
+        filterOptions:
+          m === "url"
+            ? Object.keys(META_OP_MAP)
+            : [t("environments.surveys.filter.equals"), t("environments.surveys.filter.not_equals")],
         filterComboBoxOptions: meta[m],
         id: m,
       });
@@ -215,7 +249,7 @@ export const generateElementAndFilterOptions = (
     Object.keys(hiddenFields).forEach((hiddenField) => {
       elementFilterOptions.push({
         type: "Hidden Fields",
-        filterOptions: ["Equals", "Not equals"],
+        filterOptions: [t("environments.surveys.filter.equals"), t("environments.surveys.filter.not_equals")],
         filterComboBoxOptions: hiddenFields[hiddenField],
         id: hiddenField,
       });
@@ -226,7 +260,11 @@ export const generateElementAndFilterOptions = (
 
   //can be extended to include more properties
   if (survey.languages?.length > 0) {
-    languageElement.push({ label: "Language", type: OptionsType.OTHERS, id: "language" });
+    languageElement.push({
+      label: t("environments.surveys.filter.language"),
+      type: OptionsType.OTHERS,
+      id: "language",
+    });
     const languageOptions = survey.languages.map((sl) => sl.language.code);
     elementFilterOptions.push({
       type: OptionsType.OTHERS,
@@ -246,8 +284,12 @@ export const generateElementAndFilterOptions = (
     quotas.forEach((quota) => {
       elementFilterOptions.push({
         type: "Quotas",
-        filterOptions: ["Status"],
-        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Not in quota"],
+        filterOptions: [t("environments.surveys.filter.status")],
+        filterComboBoxOptions: [
+          t("environments.surveys.filter.screened_in"),
+          t("environments.surveys.filter.screened_out_overquota"),
+          t("environments.surveys.filter.not_in_quota"),
+        ],
         id: quota.id,
       });
     });

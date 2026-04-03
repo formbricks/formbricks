@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
+import type { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
 import { TLanguage } from "@formbricks/types/project";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -11,6 +12,8 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
 import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
+
+const t = ((key: string) => key) as unknown as TFunction;
 
 describe("surveys", () => {
   afterEach(() => {
@@ -45,7 +48,7 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, [], t);
 
       expect(result.elementOptions.length).toBeGreaterThan(0);
       expect(result.elementOptions[0].header).toBe(OptionsType.ELEMENTS);
@@ -69,7 +72,7 @@ describe("surveys", () => {
         { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const result = generateElementAndFilterOptions(survey, tags, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, tags, {}, {}, {}, [], t);
 
       const tagsHeader = result.elementOptions.find((opt) => opt.header === OptionsType.TAGS);
       expect(tagsHeader).toBeDefined();
@@ -93,7 +96,7 @@ describe("surveys", () => {
         role: ["admin", "user"],
       };
 
-      const result = generateElementAndFilterOptions(survey, undefined, attributes, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, attributes, {}, {}, [], t);
 
       const attributesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
       expect(attributesHeader).toBeDefined();
@@ -117,7 +120,7 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, [], t);
 
       const metaHeader = result.elementOptions.find((opt) => opt.header === OptionsType.META);
       expect(metaHeader).toBeDefined();
@@ -141,7 +144,7 @@ describe("surveys", () => {
         segment: ["free", "paid"],
       };
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, hiddenFields, [], t);
 
       const hiddenFieldsHeader = result.elementOptions.find(
         (opt) => opt.header === OptionsType.HIDDEN_FIELDS
@@ -164,11 +167,13 @@ describe("surveys", () => {
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, [], t);
 
       const othersHeader = result.elementOptions.find((opt) => opt.header === OptionsType.OTHERS);
       expect(othersHeader).toBeDefined();
-      expect(othersHeader?.option.some((o) => o.label === "Language")).toBeTruthy();
+      expect(
+        othersHeader?.option.some((o) => o.label === "environments.surveys.filter.language")
+      ).toBeTruthy();
     });
 
     test("should handle all question types correctly", () => {
@@ -262,7 +267,7 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, [], t);
 
       expect(result.elementFilterOptions.length).toBe(8);
       expect(result.elementFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
@@ -288,25 +293,28 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, [], t);
 
       const urlFilterOption = result.elementFilterOptions.find((o) => o.id === "url");
       const sourceFilterOption = result.elementFilterOptions.find((o) => o.id === "source");
 
       expect(urlFilterOption).toBeDefined();
       expect(urlFilterOption?.filterOptions).toEqual([
-        "Equals",
-        "Not equals",
-        "Contains",
-        "Does not contain",
-        "Starts with",
-        "Does not start with",
-        "Ends with",
-        "Does not end with",
+        "environments.surveys.filter.equals",
+        "environments.surveys.filter.not_equals",
+        "environments.surveys.filter.contains",
+        "environments.surveys.filter.does_not_contain",
+        "environments.surveys.filter.starts_with",
+        "environments.surveys.filter.does_not_start_with",
+        "environments.surveys.filter.ends_with",
+        "environments.surveys.filter.does_not_end_with",
       ]);
 
       expect(sourceFilterOption).toBeDefined();
-      expect(sourceFilterOption?.filterOptions).toEqual(["Equals", "Not equals"]);
+      expect(sourceFilterOption?.filterOptions).toEqual([
+        "environments.surveys.filter.equals",
+        "environments.surveys.filter.not_equals",
+      ]);
     });
 
     test("should include quota options in filter options when quotas are provided", () => {
@@ -322,16 +330,16 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }];
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any, t);
 
       const quotaFilterOption = result.elementFilterOptions.find((o) => o.id === "quota1");
       expect(quotaFilterOption).toBeDefined();
       expect(quotaFilterOption?.type).toBe("Quotas");
-      expect(quotaFilterOption?.filterOptions).toEqual(["Status"]);
+      expect(quotaFilterOption?.filterOptions).toEqual(["environments.surveys.filter.status"]);
       expect(quotaFilterOption?.filterComboBoxOptions).toEqual([
-        "Screened in",
-        "Screened out (overquota)",
-        "Not in quota",
+        "environments.surveys.filter.screened_in",
+        "environments.surveys.filter.screened_out_overquota",
+        "environments.surveys.filter.not_in_quota",
       ]);
     });
 
@@ -348,7 +356,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }, { id: "quota2" }];
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any, t);
 
       const quota1 = result.elementFilterOptions.find((o) => o.id === "quota1");
       const quota2 = result.elementFilterOptions.find((o) => o.id === "quota2");
@@ -356,14 +364,14 @@ describe("surveys", () => {
       expect(quota1).toBeDefined();
       expect(quota2).toBeDefined();
       expect(quota1?.filterComboBoxOptions).toEqual([
-        "Screened in",
-        "Screened out (overquota)",
-        "Not in quota",
+        "environments.surveys.filter.screened_in",
+        "environments.surveys.filter.screened_out_overquota",
+        "environments.surveys.filter.not_in_quota",
       ]);
       expect(quota2?.filterComboBoxOptions).toEqual([
-        "Screened in",
-        "Screened out (overquota)",
-        "Not in quota",
+        "environments.surveys.filter.screened_in",
+        "environments.surveys.filter.screened_out_overquota",
+        "environments.surveys.filter.not_in_quota",
       ]);
     });
   });
