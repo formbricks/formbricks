@@ -113,7 +113,9 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         languageId,
       });
 
-      if (surveysUsingLanguageResponse?.data) {
+      if (surveysUsingLanguageResponse?.serverError) {
+        toast.error(getFormattedErrorMessage(surveysUsingLanguageResponse));
+      } else if (surveysUsingLanguageResponse?.data) {
         if (surveysUsingLanguageResponse.data.length > 0) {
           const surveyList = surveysUsingLanguageResponse.data
             .map((surveyName) => `• ${surveyName}`)
