@@ -1,27 +1,27 @@
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
+import { getOrganizationBillingByWorkspaceId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
 
 export const checkSurveyValidity = async (
   survey: TSurvey,
-  environmentId: string,
+  workspaceId: string,
   responseInput: TResponseInputV2
 ): Promise<Response | null> => {
-  if (survey.environmentId !== environmentId) {
+  if (survey.workspaceId !== workspaceId) {
     return responses.badRequestResponse(
-      "Survey is part of another environment",
+      "Survey is part of another workspace",
       {
-        "survey.environmentId": survey.environmentId,
-        environmentId,
+        "survey.workspaceId": survey.workspaceId,
+        workspaceId,
       },
       true
     );
@@ -31,14 +31,14 @@ export const checkSurveyValidity = async (
     if (!responseInput.singleUseId) {
       return responses.badRequestResponse("Missing single use id", {
         surveyId: survey.id,
-        environmentId,
+        workspaceId,
       });
     }
 
     if (!responseInput.meta?.url) {
       return responses.badRequestResponse("Missing or invalid URL in response metadata", {
         surveyId: survey.id,
-        environmentId,
+        workspaceId,
       });
     }
 
@@ -48,7 +48,7 @@ export const checkSurveyValidity = async (
     } catch (error) {
       return responses.badRequestResponse("Invalid URL in response metadata", {
         surveyId: survey.id,
-        environmentId,
+        workspaceId,
         error: error instanceof Error ? error.message : "Unknown error occurred",
       });
     }
@@ -56,7 +56,7 @@ export const checkSurveyValidity = async (
     if (!suId) {
       return responses.badRequestResponse("Missing single use id", {
         surveyId: survey.id,
-        environmentId,
+        workspaceId,
       });
     }
 
@@ -65,13 +65,13 @@ export const checkSurveyValidity = async (
       if (decryptedSuId !== responseInput.singleUseId) {
         return responses.badRequestResponse("Invalid single use id", {
           surveyId: survey.id,
-          environmentId,
+          workspaceId,
         });
       }
     } else if (responseInput.singleUseId !== suId) {
       return responses.badRequestResponse("Invalid single use id", {
         surveyId: survey.id,
-        environmentId,
+        workspaceId,
       });
     }
   }
@@ -87,13 +87,13 @@ export const checkSurveyValidity = async (
         true
       );
     }
-    const billing = await getOrganizationBillingByEnvironmentId(environmentId);
+    const billing = await getOrganizationBillingByWorkspaceId(workspaceId);
 
     if (!billing) {
       return responses.notFoundResponse("Organization", null);
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationId);
 
     if (!isSpamProtectionEnabled) {

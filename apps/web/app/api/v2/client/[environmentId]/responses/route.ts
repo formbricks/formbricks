@@ -94,7 +94,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!survey) {
     return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
-  const surveyCheckResult = await checkSurveyValidity(survey, environmentId, responseInput);
+  const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInput);
   if (surveyCheckResult) return surveyCheckResult;
 
   // Validate response data for "other" options exceeding character limit

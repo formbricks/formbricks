@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
-import { getOrganizationBillingByEnvironmentId } from "./organization";
+import { getOrganizationBillingByWorkspaceId } from "./organization";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -17,8 +17,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-describe("getOrganizationBillingByEnvironmentId", () => {
-  const environmentId = "env-123";
+describe("getOrganizationBillingByWorkspaceId", () => {
+  const workspaceId = "ws-123";
   const mockBillingData: TOrganizationBilling = {
     limits: {
       monthly: { responses: 0 },
@@ -30,17 +30,13 @@ describe("getOrganizationBillingByEnvironmentId", () => {
 
   test("returns billing when organization is found", async () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: mockBillingData } as any);
-    const result = await getOrganizationBillingByEnvironmentId(environmentId);
+    const result = await getOrganizationBillingByWorkspaceId(workspaceId);
     expect(result).toEqual(mockBillingData);
     expect(prisma.organization.findFirst).toHaveBeenCalledWith({
       where: {
         workspaces: {
           some: {
-            environments: {
-              some: {
-                id: environmentId,
-              },
-            },
+            id: workspaceId,
           },
         },
       },
@@ -59,15 +55,15 @@ describe("getOrganizationBillingByEnvironmentId", () => {
 
   test("returns null when organization is not found", async () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValueOnce(null);
-    const result = await getOrganizationBillingByEnvironmentId(environmentId);
+    const result = await getOrganizationBillingByWorkspaceId(workspaceId);
     expect(result).toBeNull();
   });
 
   test("logs error and returns null on exception", async () => {
     const error = new Error("db error");
     vi.mocked(prisma.organization.findFirst).mockRejectedValueOnce(error);
-    const result = await getOrganizationBillingByEnvironmentId(environmentId);
+    const result = await getOrganizationBillingByWorkspaceId(workspaceId);
     expect(result).toBeNull();
-    expect(logger.error).toHaveBeenCalledWith(error, "Failed to get organization billing by environment ID");
+    expect(logger.error).toHaveBeenCalledWith(error, "Failed to get organization billing by workspace ID");
   });
 });
