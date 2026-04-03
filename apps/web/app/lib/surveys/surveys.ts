@@ -124,7 +124,7 @@ const getElementFilterOption = (
 };
 
 // URL/meta text operators mapping
-const getMetaOpMap = (t: TFunction) =>
+const META_OP_MAP = (t: TFunction) =>
   ({
     [t("environments.surveys.filter.equals")]: "equals",
     [t("environments.surveys.filter.not_equals")]: "notEquals",
@@ -154,7 +154,6 @@ export const generateElementAndFilterOptions = (
 
   const conditionOptions = getConditionOptions(t);
   const filterOptions = getFilterOptions(t);
-  const META_OP_MAP = getMetaOpMap(t);
 
   const elements = getElementsFromBlocks(survey.blocks);
 
