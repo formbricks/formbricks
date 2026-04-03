@@ -304,7 +304,6 @@ async function verifyPlan(
   }
 
   // Verify before/after counts match
-  const summary: string[] = [];
   for (const table of TABLES_TO_REPARENT) {
     const newCount: [{ count: bigint }] = await tx.$queryRawUnsafe(
       `SELECT COUNT(*) as count FROM "${table}" WHERE "environmentId" = $1`,
@@ -319,15 +318,6 @@ async function verifyPlan(
         `${table}: expected ${expected.toString()} rows in new env ${plan.newEnvId}, got ${actual.toString()}`
       );
     }
-
-    if (actual > 0) {
-      summary.push(`${table}=${actual.toString()}`);
-    }
-  }
-
-  // Single log line per workspace for auditability
-  if (summary.length > 0) {
-    logger.info(`Workspace "${plan.newWorkspaceName}": ${summary.join(", ")}`);
   }
 
   return failures;
