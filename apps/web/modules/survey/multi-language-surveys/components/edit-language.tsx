@@ -113,7 +113,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         languageId,
       });
 
-      if (surveysUsingLanguageResponse?.data) {
+      if (surveysUsingLanguageResponse?.data && !surveysUsingLanguageResponse?.serverError) {
         if (surveysUsingLanguageResponse.data.length > 0) {
           const surveyList = surveysUsingLanguageResponse.data
             .map((surveyName) => `• ${surveyName}`)

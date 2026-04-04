@@ -105,7 +105,7 @@ export const SurveyDropDownMenu = ({
         targetEnvironmentId: environmentId,
       });
 
-      if (duplicatedSurveyResponse?.data) {
+      if (duplicatedSurveyResponse?.data && !duplicatedSurveyResponse?.serverError) {
         const transformedDuplicatedSurvey = await getSurveyAction({
           surveyId: duplicatedSurveyResponse.data.id,
         });
