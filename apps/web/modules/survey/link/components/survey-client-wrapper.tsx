@@ -30,6 +30,7 @@ interface SurveyClientWrapperProps {
   verifiedEmail?: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
 }
 
@@ -53,6 +54,7 @@ export const SurveyClientWrapper = ({
   verifiedEmail,
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
@@ -146,6 +148,7 @@ export const SurveyClientWrapper = ({
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        TERMS_URL={TERMS_URL}
         isBrandingEnabled={project.linkSurveyBranding}
         dir={logoDir}>
         <SurveyInline
