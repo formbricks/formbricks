@@ -44,7 +44,7 @@ export const CreateOrganization = () => {
         router.push(`/setup/organization/${createOrganizationResponse.data.id}/invite`);
       }
     } catch (error) {
-      toast.error("Some error occurred while creating organization");
+      toast.error(t("common.something_went_wrong"));
       setIsSubmitting(false);
     }
   };
