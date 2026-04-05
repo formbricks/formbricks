@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
@@ -91,6 +93,30 @@ describe("Users Lib", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
+      }
+    });
+
+    test("returns conflict error if user with email already exists", async () => {
+      (prisma.user.create as any).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError(
+          "Unique constraint failed on the fields: (`email`)",
+          {
+            code: PrismaErrorType.UniqueConstraintViolation,
+            clientVersion: "1.0.0",
+            meta: { target: ["email"] },
+          }
+        )
+      );
+      const result = await createUser(
+        { name: "Duplicate", email: "test@example.com", role: "member" },
+        "org456"
+      );
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("conflict");
+        expect(result.error.details).toEqual([
+          { field: "email", issue: "A user with this email already exists" },
+        ]);
       }
     });
   });
