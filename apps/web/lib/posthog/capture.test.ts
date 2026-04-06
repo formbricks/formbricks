@@ -63,6 +63,7 @@ describe("capturePostHogEvent", () => {
 
 describe("capturePostHogEvent with null client", () => {
   test("no-ops when posthogServerClient is null", async () => {
+    vi.clearAllMocks();
     vi.resetModules();
 
     vi.doMock("server-only", () => ({}));
