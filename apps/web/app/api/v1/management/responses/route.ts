@@ -174,6 +174,7 @@ export const POST = withV1ApiWrapper({
         sendToPipeline({
           event: "responseCreated",
           environmentId: surveyResult.survey.environmentId,
+          workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
         });
@@ -182,6 +183,7 @@ export const POST = withV1ApiWrapper({
           sendToPipeline({
             event: "responseFinished",
             environmentId: surveyResult.survey.environmentId,
+            workspaceId: surveyResult.survey.workspaceId,
             surveyId: response.surveyId,
             response: response,
           });

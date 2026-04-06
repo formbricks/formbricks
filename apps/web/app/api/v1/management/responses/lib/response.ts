@@ -100,7 +100,7 @@ export const createResponse = async (
 
     const organization = await getOrganizationByEnvironmentId(environmentId);
     if (!organization) {
-      throw new ResourceNotFoundError("Organization", environmentId);
+      throw new ResourceNotFoundError("Organization", null);
     }
 
     if (userId) {

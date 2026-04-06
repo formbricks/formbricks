@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -224,9 +225,12 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       // Fetch updated response with relations for pipeline
       const updatedResponseForPipeline = await getResponseForPipeline(params.responseId);
       if (updatedResponseForPipeline.ok) {
+        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentIdResult.data);
+
         sendToPipeline({
           event: "responseUpdated",
           environmentId: environmentIdResult.data,
+          workspaceId,
           surveyId: existingResponse.data.surveyId,
           response: updatedResponseForPipeline.data,
         });
@@ -235,6 +239,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
           sendToPipeline({
             event: "responseFinished",
             environmentId: environmentIdResult.data,
+            workspaceId,
             surveyId: existingResponse.data.surveyId,
             response: updatedResponseForPipeline.data,
           });

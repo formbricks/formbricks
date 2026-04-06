@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 
 export const getContactByUserId = reactCache(
   async (
-    environmentId: string,
+    workspaceId: string,
     userId: string
   ): Promise<{
     id: string;
@@ -14,7 +14,7 @@ export const getContactByUserId = reactCache(
           some: {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },

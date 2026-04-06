@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
+import { getOrganizationBillingByWorkspaceId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
 import { symmetricDecrypt } from "@/lib/crypto";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
 vi.mock("@/lib/i18n/utils", () => ({
@@ -33,11 +33,11 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/organization", () => ({
-  getOrganizationBillingByEnvironmentId: vi.fn(),
+  getOrganizationBillingByWorkspaceId: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -97,6 +97,7 @@ const mockSurvey: TSurvey = {
 const mockResponseInput: TResponseInputV2 = {
   surveyId: "survey-1",
   environmentId: "env-1",
+  workspaceId: "ws-1",
   data: {},
   finished: false,
   ttc: {},
@@ -115,37 +116,37 @@ const mockBillingData: TOrganizationBilling = {
 describe("checkSurveyValidity", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("cm8f4x9mm0001gx9h5b7d7h3q");
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("cm8f4x9mm0001gx9h5b7d7h3q");
   });
 
-  test("should return badRequestResponse if survey environmentId does not match", async () => {
-    const survey = { ...mockSurvey, environmentId: "env-2" };
-    const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
+  test("should return badRequestResponse if survey workspaceId does not match", async () => {
+    const survey = { ...mockSurvey, workspaceId: "ws-2" };
+    const result = await checkSurveyValidity(survey, "ws-1", mockResponseInput);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith(
-      "Survey is part of another environment",
+      "Survey is part of another workspace",
       {
-        "survey.environmentId": "env-2",
-        environmentId: "env-1",
+        "survey.workspaceId": "ws-2",
+        workspaceId: "ws-1",
       },
       true
     );
   });
 
   test("should return null if recaptcha is not enabled", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: false, threshold: 0.5 } };
-    const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
+    const survey = { ...mockSurvey, recaptcha: { enabled: false, threshold: 0.5 }, workspaceId: "ws-1" };
+    const result = await checkSurveyValidity(survey, "ws-1", mockResponseInput);
     expect(result).toBeNull();
   });
 
   test("should return badRequestResponse if recaptcha enabled, spam protection enabled, but token is missing", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 }, workspaceId: "ws-1" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     const responseInputWithoutToken = { ...mockResponseInput };
     delete responseInputWithoutToken.recaptchaToken;
 
-    const result = await checkSurveyValidity(survey, "env-1", responseInputWithoutToken);
+    const result = await checkSurveyValidity(survey, "ws-1", responseInputWithoutToken);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
     expect(logger.error).toHaveBeenCalledWith("Missing recaptcha token");
@@ -157,26 +158,26 @@ describe("checkSurveyValidity", () => {
   });
 
   test("should return not found response if billing data is not found", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 }, workspaceId: "ws-1" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
-    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(null);
+    vi.mocked(getOrganizationBillingByWorkspaceId).mockResolvedValue(null);
 
-    const result = await checkSurveyValidity(survey, "env-1", {
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       recaptchaToken: "test-token",
     });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(404);
     expect(responses.notFoundResponse).toHaveBeenCalledWith("Organization", null);
-    expect(getOrganizationBillingByEnvironmentId).toHaveBeenCalledWith("env-1");
+    expect(getOrganizationBillingByWorkspaceId).toHaveBeenCalledWith("ws-1");
   });
 
   test("should return null if recaptcha is enabled but spam protection is disabled", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 }, workspaceId: "ws-1" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(false);
     vi.mocked(verifyRecaptchaToken).mockResolvedValue(true);
-    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(mockBillingData);
-    const result = await checkSurveyValidity(survey, "env-1", {
+    vi.mocked(getOrganizationBillingByWorkspaceId).mockResolvedValue(mockBillingData);
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       recaptchaToken: "test-token",
     });
@@ -185,13 +186,13 @@ describe("checkSurveyValidity", () => {
   });
 
   test("should return badRequestResponse if recaptcha verification fails", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 }, workspaceId: "ws-1" };
     const responseInputWithToken = { ...mockResponseInput, recaptchaToken: "test-token" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     vi.mocked(verifyRecaptchaToken).mockResolvedValue(false);
-    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(mockBillingData);
+    vi.mocked(getOrganizationBillingByWorkspaceId).mockResolvedValue(mockBillingData);
 
-    const result = await checkSurveyValidity(survey, "env-1", responseInputWithToken);
+    const result = await checkSurveyValidity(survey, "ws-1", responseInputWithToken);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
     expect(verifyRecaptchaToken).toHaveBeenCalledWith("test-token", 0.5);
@@ -203,37 +204,37 @@ describe("checkSurveyValidity", () => {
   });
 
   test("should return null if recaptcha verification passes", async () => {
-    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 } };
+    const survey = { ...mockSurvey, recaptcha: { enabled: true, threshold: 0.5 }, workspaceId: "ws-1" };
     const responseInputWithToken = { ...mockResponseInput, recaptchaToken: "test-token" };
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
     vi.mocked(verifyRecaptchaToken).mockResolvedValue(true);
-    vi.mocked(getOrganizationBillingByEnvironmentId).mockResolvedValue(mockBillingData);
+    vi.mocked(getOrganizationBillingByWorkspaceId).mockResolvedValue(mockBillingData);
 
-    const result = await checkSurveyValidity(survey, "env-1", responseInputWithToken);
+    const result = await checkSurveyValidity(survey, "ws-1", responseInputWithToken);
     expect(result).toBeNull();
     expect(verifyRecaptchaToken).toHaveBeenCalledWith("test-token", 0.5);
   });
 
   test("should return null for a valid survey and input", async () => {
-    const survey = { ...mockSurvey }; // Recaptcha disabled by default in mock
-    const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
+    const survey = { ...mockSurvey, workspaceId: "ws-1" }; // Recaptcha disabled by default in mock
+    const result = await checkSurveyValidity(survey, "ws-1", mockResponseInput);
     expect(result).toBeNull();
   });
 
   test("should return badRequestResponse if singleUse is enabled and singleUseId is missing", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
-    const result = await checkSurveyValidity(survey, "env-1", { ...mockResponseInput });
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false }, workspaceId: "ws-1" };
+    const result = await checkSurveyValidity(survey, "ws-1", { ...mockResponseInput });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing single use id", {
       surveyId: survey.id,
-      environmentId: "env-1",
+      workspaceId: "ws-1",
     });
   });
 
   test("should return badRequestResponse if singleUse is enabled and meta.url is missing", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
-    const result = await checkSurveyValidity(survey, "env-1", {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false }, workspaceId: "ws-1" };
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: {},
@@ -242,13 +243,13 @@ describe("checkSurveyValidity", () => {
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing or invalid URL in response metadata", {
       surveyId: survey.id,
-      environmentId: "env-1",
+      workspaceId: "ws-1",
     });
   });
 
   test("should return badRequestResponse if meta.url is invalid", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
-    const result = await checkSurveyValidity(survey, "env-1", {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false }, workspaceId: "ws-1" };
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: { url: "not-a-url" },
@@ -257,14 +258,14 @@ describe("checkSurveyValidity", () => {
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith(
       "Invalid URL in response metadata",
-      expect.objectContaining({ surveyId: survey.id, environmentId: "env-1" })
+      expect.objectContaining({ surveyId: survey.id, workspaceId: "ws-1" })
     );
   });
 
   test("should return badRequestResponse if suId is missing from url", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false }, workspaceId: "ws-1" };
     const url = "https://example.com/?foo=bar";
-    const result = await checkSurveyValidity(survey, "env-1", {
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: { url },
@@ -273,15 +274,15 @@ describe("checkSurveyValidity", () => {
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing single use id", {
       surveyId: survey.id,
-      environmentId: "env-1",
+      workspaceId: "ws-1",
     });
   });
 
   test("should return badRequestResponse if isEncrypted and decrypted suId does not match singleUseId", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true } };
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true }, workspaceId: "ws-1" };
     const url = "https://example.com/?suId=encrypted-id";
     vi.mocked(symmetricDecrypt).mockReturnValue("decrypted-id");
-    const resultEncryptedMismatch = await checkSurveyValidity(survey, "env-1", {
+    const resultEncryptedMismatch = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: { url },
@@ -291,14 +292,14 @@ describe("checkSurveyValidity", () => {
     expect(resultEncryptedMismatch?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
       surveyId: survey.id,
-      environmentId: "env-1",
+      workspaceId: "ws-1",
     });
   });
 
   test("should return badRequestResponse if not encrypted and suId does not match singleUseId", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false }, workspaceId: "ws-1" };
     const url = "https://example.com/?suId=su-2";
-    const result = await checkSurveyValidity(survey, "env-1", {
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: { url },
@@ -307,14 +308,14 @@ describe("checkSurveyValidity", () => {
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
       surveyId: survey.id,
-      environmentId: "env-1",
+      workspaceId: "ws-1",
     });
   });
 
   test("should return null if singleUse is enabled, not encrypted, and suId matches singleUseId", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false }, workspaceId: "ws-1" };
     const url = "https://example.com/?suId=su-1";
-    const result = await checkSurveyValidity(survey, "env-1", {
+    const result = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: { url },
@@ -323,10 +324,10 @@ describe("checkSurveyValidity", () => {
   });
 
   test("should return null if singleUse is enabled, encrypted, and decrypted suId matches singleUseId", async () => {
-    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true } };
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true }, workspaceId: "ws-1" };
     const url = "https://example.com/?suId=encrypted-id";
     vi.mocked(symmetricDecrypt).mockReturnValue("su-1");
-    const _resultEncryptedMatch = await checkSurveyValidity(survey, "env-1", {
+    const _resultEncryptedMatch = await checkSurveyValidity(survey, "ws-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
       meta: { url },

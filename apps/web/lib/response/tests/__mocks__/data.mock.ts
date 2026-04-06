@@ -14,6 +14,7 @@ type ResponseMock = Prisma.ResponseGetPayload<{
 }>;
 
 export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
+export const mockWorkspaceId = "wksp2tjk8hsi8oqk1uac00mo";
 export const mockContactId = "lhwy39ga2zy8by1ol1bnaiso";
 export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
@@ -48,6 +49,7 @@ export const mockTags = [
       createdAt: new Date(),
       updatedAt: new Date(),
       environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
     },
   },
 ];
@@ -117,6 +119,7 @@ const getMockTags = (tags: string[]): { tag: TTag }[] => {
       createdAt: new Date(),
       updatedAt: new Date(),
       environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
     },
   }));
 };

@@ -29,18 +29,21 @@ vi.mock("./contact", () => ({
 }));
 
 const environmentId = "test-env-id";
+const workspaceId = "workspace-id-mock";
 const surveyId = "test-survey-id";
 const contactId = "test-contact-id";
 const displayId = "test-display-id";
 
 const displayInput: TDisplayCreateInputV2 = {
   environmentId,
+  workspaceId,
   surveyId,
   contactId,
 };
 
 const displayInputWithoutContact: TDisplayCreateInputV2 = {
   environmentId,
+  workspaceId,
   surveyId,
 };
 
@@ -144,7 +147,7 @@ describe("createDisplay", () => {
     await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
     expect(doesContactExist).toHaveBeenCalledWith(contactId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
-      where: { id: surveyId, environmentId },
+      where: { id: surveyId, workspaceId },
     });
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
