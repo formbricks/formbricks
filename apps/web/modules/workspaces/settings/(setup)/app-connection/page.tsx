@@ -85,6 +85,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
           otherEnvironment={otherEnvironment}
           otherEnvActionClasses={otherEnvActionClasses}
           environmentId={environmentId}
+          workspaceId={workspace.id}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}
           locale={locale ?? DEFAULT_LOCALE}

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createContact } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
 import { ZContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -12,6 +13,11 @@ export const POST = async (request: NextRequest) =>
     request,
     schemas: {
       body: ZContactCreateRequest,
+    },
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
     },
 
     handler: async ({ authentication, parsedInput, auditLog }) => {

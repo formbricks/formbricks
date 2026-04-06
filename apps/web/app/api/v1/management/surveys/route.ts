@@ -150,7 +150,8 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const survey = await createSurvey(workspaceId, { ...surveyData, environmentId: undefined });
+      const { environmentId: _, workspaceId: __, ...surveyCreateInput } = surveyData;
+      const survey = await createSurvey(workspaceId, surveyCreateInput);
       if (auditLog) {
         auditLog.targetId = survey.id;
         auditLog.newObject = survey;

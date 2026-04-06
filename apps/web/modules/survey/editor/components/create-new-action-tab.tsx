@@ -26,6 +26,7 @@ interface CreateNewActionTabProps {
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
+  workspaceId: string;
 }
 
 export const CreateNewActionTab = ({
@@ -35,6 +36,7 @@ export const CreateNewActionTab = ({
   isReadOnly,
   setLocalSurvey,
   environmentId,
+  workspaceId,
 }: CreateNewActionTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -50,6 +52,7 @@ export const CreateNewActionTab = ({
       name: "",
       description: "",
       environmentId,
+      workspaceId,
       type: "noCode",
       noCodeConfig: {
         type: "click",
@@ -65,7 +68,7 @@ export const CreateNewActionTab = ({
   });
 
   const { control, handleSubmit, watch, reset } = form;
-  const { isSubmitting } = form.formState;
+  const { isSubmitting, errors } = form.formState;
 
   const submitHandler = async (data: TActionClassInput) => {
     try {

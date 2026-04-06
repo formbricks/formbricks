@@ -16,6 +16,7 @@ interface ActionSettingsCardProps {
   otherEnvironment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
   environmentId: string;
+  workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   locale: TUserLocale;
@@ -25,6 +26,7 @@ export const ActionSettingsCard = ({
   otherEnvironment,
   otherEnvActionClasses,
   environmentId,
+  workspaceId,
   actionClasses,
   isReadOnly,
   locale,
@@ -56,6 +58,7 @@ export const ActionSettingsCard = ({
       </SettingsCard>
       <AddActionModal
         environmentId={environmentId}
+        workspaceId={workspaceId}
         actionClasses={actionClasses}
         isReadOnly={isReadOnly}
         open={isActionModalOpen}

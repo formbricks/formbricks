@@ -1,6 +1,7 @@
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -11,6 +12,11 @@ export const PUT = async (request: Request) =>
     request,
     schemas: {
       body: ZContactBulkUploadRequest,
+    },
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "PUT");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
     },
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);

@@ -60,20 +60,15 @@ export const POST = async (request: NextRequest) =>
     schemas: {
       body: ZContactAttributeKeyCreateInput,
     },
-    handler: async ({ authentication, parsedInput, auditLog }) => {
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
+    },
+    handler: async ({ parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
-      // Resolve workspaceId → production environmentId when environmentId is not provided
-      const envResult = await resolveBodyIdsV2(body, authentication.environmentPermissions, "POST");
-      if (!envResult.ok) {
-        return handleApiError(request, envResult.error, auditLog);
-      }
-
-      const createContactAttributeKeyResult = await createContactAttributeKey({
-        ...body,
-        environmentId: envResult.data.environmentId,
-        workspaceId: envResult.data.workspaceId,
-      });
+      const createContactAttributeKeyResult = await createContactAttributeKey(body);
 
       if (!createContactAttributeKeyResult.ok) {
         return handleApiError(request, createContactAttributeKeyResult.error, auditLog);

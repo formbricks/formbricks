@@ -43,6 +43,11 @@ export const POST = async (request: NextRequest) =>
     schemas: {
       body: ZWebhookCreateInput,
     },
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
+    },
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
@@ -65,17 +70,7 @@ export const POST = async (request: NextRequest) =>
         }
       }
 
-      // Resolve workspaceId → production environmentId when environmentId is not provided
-      const envResult = await resolveBodyIdsV2(body, authentication.environmentPermissions, "POST");
-      if (!envResult.ok) {
-        return handleApiError(request, envResult.error, auditLog);
-      }
-
-      const createWebhookResult = await createWebhook({
-        ...body,
-        environmentId: envResult.data.environmentId,
-        workspaceId: envResult.data.workspaceId,
-      });
+      const createWebhookResult = await createWebhook(body);
 
       if (!createWebhookResult.ok) {
         return handleApiError(request, createWebhookResult.error, auditLog);
