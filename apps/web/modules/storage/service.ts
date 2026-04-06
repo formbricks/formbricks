@@ -117,6 +117,20 @@ export const deleteFile = async (
   return result;
 };
 
-// We don't need to return or throw any errors, even if the files don't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFilesByPrefix function
-export const deleteFilesByEnvironmentId = async (environmentId: string) =>
-  await deleteFilesByPrefix(environmentId);
+// Deletes all files for a workspace — cleans up both workspaceId-prefixed (new uploads) and
+// environmentId-prefixed (legacy uploads) paths. Errors are not thrown; callers should check results.
+export const deleteFilesByWorkspaceId = async (workspaceId: string, environmentIds: string[]) => {
+  const results = await Promise.all([
+    deleteFilesByPrefix(workspaceId),
+    ...environmentIds.map((envId) => deleteFilesByPrefix(envId)),
+  ]);
+
+  // Return the first error if any, otherwise success
+  for (const result of results) {
+    if (!result.ok) {
+      return result;
+    }
+  }
+
+  return results[0];
+};

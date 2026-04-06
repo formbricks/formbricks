@@ -14,7 +14,7 @@ import {
 } from "@formbricks/types/workspace";
 import { createEnvironment } from "@/lib/environment/service";
 import { validateInputs } from "@/lib/utils/validate";
-import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
+import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
 const selectWorkspace = {
   id: true,
@@ -144,19 +144,13 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
     });
 
     if (workspace) {
-      // delete all files from storage related to this workspace
+      // delete all files from storage — both workspaceId-prefixed (new) and environmentId-prefixed (legacy)
+      const environmentIds = workspace.environments.map((env) => env.id);
+      const s3Result = await deleteFilesByWorkspaceId(workspaceId, environmentIds);
 
-      const s3FilesPromises = workspace.environments.map(async (environment) => {
-        return deleteFilesByEnvironmentId(environment.id);
-      });
-
-      const s3FilesResult = await Promise.all(s3FilesPromises);
-
-      for (const result of s3FilesResult) {
-        if (!result.ok) {
-          // fail silently because we don't want to throw an error if the files are not deleted
-          logger.error(result.error, "Error deleting S3 files");
-        }
+      if (!s3Result.ok) {
+        // fail silently because we don't want to throw an error if the files are not deleted
+        logger.error(s3Result.error, "Error deleting S3 files");
       }
     }
 

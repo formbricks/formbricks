@@ -47,8 +47,12 @@ export const GET = async (
   }
 
   // Stream the file — try workspaceId path first (new uploads), fall back to environmentId (legacy)
-  const fallbackId = resolved.workspaceId !== resolved.environmentId ? resolved.environmentId : undefined;
-  const streamResult = await getFileStreamForDownload(fileName, resolved.workspaceId, accessType, fallbackId);
+  const streamResult = await getFileStreamForDownload(
+    fileName,
+    resolved.workspaceId,
+    accessType,
+    resolved.environmentId
+  );
 
   if (!streamResult.ok) {
     const errorResponse = getErrorResponseFromStorageError(streamResult.error, { fileName });
@@ -134,12 +138,11 @@ export const DELETE = async (
     }
   }
 
-  const fallbackId = resolved.workspaceId !== resolved.environmentId ? resolved.environmentId : undefined;
   const deleteResult = await deleteFile(
     resolved.workspaceId,
     accessType,
     decodeURIComponent(fileName),
-    fallbackId
+    resolved.environmentId
   );
 
   const isSuccess = deleteResult.ok;

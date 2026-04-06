@@ -4,7 +4,7 @@ import { StorageErrorCode } from "@formbricks/storage";
 import { TAccessType } from "@formbricks/types/storage";
 import {
   deleteFile,
-  deleteFilesByEnvironmentId,
+  deleteFilesByWorkspaceId,
   getFileStreamForDownload,
   getSignedUrlForUpload,
 } from "./service";
@@ -352,8 +352,8 @@ describe("storage service", () => {
     });
   });
 
-  describe("deleteFilesByEnvironmentId", () => {
-    test("should call deleteFilesByPrefix with environment ID", async () => {
+  describe("deleteFilesByWorkspaceId", () => {
+    test("should delete files under workspaceId and all environmentId prefixes", async () => {
       const mockSuccessResult = {
         ok: true,
         data: undefined,
@@ -361,13 +361,21 @@ describe("storage service", () => {
 
       vi.mocked(deleteFilesByPrefix).mockResolvedValue(mockSuccessResult);
 
-      const result = await deleteFilesByEnvironmentId("env-123");
+      const result = await deleteFilesByWorkspaceId("ws-456", ["env-123", "env-789"]);
 
       expect(result).toEqual(mockSuccessResult);
+      expect(deleteFilesByPrefix).toHaveBeenCalledTimes(3);
+      expect(deleteFilesByPrefix).toHaveBeenCalledWith("ws-456");
       expect(deleteFilesByPrefix).toHaveBeenCalledWith("env-123");
+      expect(deleteFilesByPrefix).toHaveBeenCalledWith("env-789");
     });
 
-    test("should handle when deleteFilesByPrefix returns error", async () => {
+    test("should return error if any prefix deletion fails", async () => {
+      const mockSuccessResult = {
+        ok: true,
+        data: undefined,
+      } as MockedDeleteFilesByPrefixReturn;
+
       const mockErrorResult = {
         ok: false,
         error: {
@@ -375,12 +383,13 @@ describe("storage service", () => {
         },
       } as MockedDeleteFilesByPrefixReturn;
 
-      vi.mocked(deleteFilesByPrefix).mockResolvedValue(mockErrorResult);
+      vi.mocked(deleteFilesByPrefix)
+        .mockResolvedValueOnce(mockSuccessResult)
+        .mockResolvedValueOnce(mockErrorResult);
 
-      const result = await deleteFilesByEnvironmentId("env-123");
+      const result = await deleteFilesByWorkspaceId("ws-456", ["env-123"]);
 
-      expect(result).toEqual(mockErrorResult);
-      expect(deleteFilesByPrefix).toHaveBeenCalledWith("env-123");
+      expect(result!.ok).toBe(false);
     });
   });
 
