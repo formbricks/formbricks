@@ -1,29 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import type { DataMigrationContext, MigrationScript } from "../../src/scripts/migration-runner";
 
 type TxClient = DataMigrationContext["tx"];
-
-// Table names are from a hardcoded const array, not user input.
-// $executeRawUnsafe is required because Postgres does not support parameterized identifiers.
-//
-// Tables NOT listed here need no re-parenting because they have no environmentId/workspaceId columns
-// and follow their parent via FK cascade:
-//   - Response, Display → reference Survey by surveyId (unchanged)
-//   - ContactAttribute → references Contact by contactId (unchanged)
-//   - TagsOnResponses, SurveyTrigger, SurveyQuota, SurveyFollowUp → reference Survey/Response by ID
-const TABLES_TO_REPARENT = [
-  "Survey",
-  "Contact",
-  "ActionClass",
-  "ContactAttributeKey",
-  "Webhook",
-  "Tag",
-  "Segment",
-  "Integration",
-  "ApiKeyEnvironment",
-] as const;
 
 interface DevEnvWithData {
   envId: string;
@@ -36,7 +15,6 @@ interface MigrationPlan {
   oldEnvId: string;
   oldWorkspaceId: string;
   newWorkspaceId: string;
-  newEnvId: string;
   newWorkspaceName: string;
   organizationId: string;
 }
@@ -55,17 +33,29 @@ async function findDevEnvsWithData(tx: TxClient): Promise<DevEnvWithData[]> {
       AND (
         EXISTS (SELECT 1 FROM "Survey" s WHERE s."environmentId" = e."id")
         OR EXISTS (SELECT 1 FROM "Contact" c WHERE c."environmentId" = e."id")
+        OR EXISTS (SELECT 1 FROM "ActionClass" ac WHERE ac."environmentId" = e."id")
         OR EXISTS (SELECT 1 FROM "Webhook" wh WHERE wh."environmentId" = e."id")
+        OR EXISTS (SELECT 1 FROM "Tag" t WHERE t."environmentId" = e."id")
+        OR EXISTS (SELECT 1 FROM "Segment" seg WHERE seg."environmentId" = e."id")
+        OR EXISTS (SELECT 1 FROM "Integration" i WHERE i."environmentId" = e."id")
+        OR EXISTS (SELECT 1 FROM "ApiKeyEnvironment" ake WHERE ake."environmentId" = e."id")
+        -- ContactAttributeKey excluded: every environment has 5 default rows (userId, email,
+        -- firstName, lastName, language) auto-created, which don't indicate real usage.
       )
   `;
 }
 
 // -- Step 2 --
 async function buildMigrationPlans(tx: TxClient, devEnvs: DevEnvWithData[]): Promise<MigrationPlan[]> {
-  const orgIds = [...new Set(devEnvs.map((e) => e.organizationId))];
+  // Use a subquery instead of IN(...) to avoid the 32,767 bind variable limit
   const allExistingWorkspaces: { organizationId: string; name: string }[] = await tx.$queryRaw`
-    SELECT "organizationId", "name" FROM "Workspace"
-    WHERE "organizationId" IN (${Prisma.join(orgIds)})
+    SELECT w."organizationId", w."name" FROM "Workspace" w
+    WHERE w."organizationId" IN (
+      SELECT DISTINCT w2."organizationId"
+      FROM "Environment" e
+      JOIN "Workspace" w2 ON w2."id" = e."workspaceId"
+      WHERE e."type" = 'development'
+    )
   `;
 
   const namesByOrg = new Map<string, Set<string>>();
@@ -82,7 +72,6 @@ async function buildMigrationPlans(tx: TxClient, devEnvs: DevEnvWithData[]): Pro
 
   for (const devEnv of devEnvs) {
     const newWorkspaceId = createId();
-    const newEnvId = createId();
     const orgNames = namesByOrg.get(devEnv.organizationId) ?? new Set<string>();
 
     let newName = `${devEnv.workspaceName} (Dev)`;
@@ -106,7 +95,6 @@ async function buildMigrationPlans(tx: TxClient, devEnvs: DevEnvWithData[]): Pro
       oldEnvId: devEnv.envId,
       oldWorkspaceId: devEnv.workspaceId,
       newWorkspaceId,
-      newEnvId,
       newWorkspaceName: newName,
       organizationId: devEnv.organizationId,
     });
@@ -118,8 +106,6 @@ async function buildMigrationPlans(tx: TxClient, devEnvs: DevEnvWithData[]): Pro
 // -- Step 3 --
 async function createWorkspaces(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
   for (const plan of plans) {
-    logger.info(`Creating workspace "${plan.newWorkspaceName}" (${plan.newWorkspaceId})`);
-
     await tx.$executeRaw`
       INSERT INTO "Workspace" (
         "id", "created_at", "updated_at", "name", "organizationId",
@@ -136,24 +122,29 @@ async function createWorkspaces(tx: TxClient, plans: MigrationPlan[]): Promise<v
       WHERE w."id" = ${plan.oldWorkspaceId}
     `;
   }
+
+  logger.info(`Created ${plans.length.toString()} new workspace(s)`);
 }
 
 // -- Step 4 --
-// appSetupCompleted is intentionally not copied: the promoted workspace is a new standalone
-// workspace with a fresh production environment. SDK setup must be re-done against the new env.
-async function createEnvironments(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
+// Move the existing dev environment into the new workspace and promote it to production.
+// This preserves the environment ID so existing API keys and SDK integrations continue to work.
+async function promoteEnvironments(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
   for (const plan of plans) {
-    logger.info(`Creating production environment ${plan.newEnvId} for workspace ${plan.newWorkspaceId}`);
-
     await tx.$executeRaw`
-      INSERT INTO "Environment" ("id", "created_at", "updated_at", "type", "workspaceId")
-      VALUES (${plan.newEnvId}, NOW(), NOW(), 'production', ${plan.newWorkspaceId})
+      UPDATE "Environment"
+      SET "workspaceId" = ${plan.newWorkspaceId}, "type" = 'production', "updated_at" = NOW()
+      WHERE "id" = ${plan.oldEnvId}
     `;
   }
+
+  logger.info(`Promoted ${plans.length.toString()} dev environment(s) to production in new workspaces`);
 }
 
 // -- Step 5 --
 async function copyTeamAssignments(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
+  let totalCopied = 0;
+
   for (const plan of plans) {
     const copied = await tx.$executeRaw`
       INSERT INTO "WorkspaceTeam" ("created_at", "updated_at", "workspaceId", "teamId", "permission")
@@ -162,8 +153,12 @@ async function copyTeamAssignments(tx: TxClient, plans: MigrationPlan[]): Promis
       WHERE wt."workspaceId" = ${plan.oldWorkspaceId}
     `;
 
-    logger.info(`Copied ${copied.toString()} WorkspaceTeam assignments to workspace ${plan.newWorkspaceId}`);
+    totalCopied += copied;
   }
+
+  logger.info(
+    `Copied ${totalCopied.toString()} WorkspaceTeam assignment(s) across ${plans.length.toString()} workspace(s)`
+  );
 }
 
 // -- Step 6 --
@@ -180,10 +175,6 @@ async function migrateLanguages(tx: TxClient, plans: MigrationPlan[]): Promise<v
     if (referencedLanguages.length === 0) {
       continue;
     }
-
-    logger.info(
-      `Migrating ${referencedLanguages.length.toString()} language(s) for dev env ${plan.oldEnvId}`
-    );
 
     for (const lang of referencedLanguages) {
       const newLangId = createId();
@@ -230,147 +221,80 @@ async function migrateLanguages(tx: TxClient, plans: MigrationPlan[]): Promise<v
 }
 
 // -- Step 7 --
-async function reparentResources(
-  tx: TxClient,
-  plans: MigrationPlan[]
-): Promise<Map<string, Map<string, number>>> {
-  // Capture before-counts for verification
-  const beforeCounts = new Map<string, Map<string, number>>();
-  for (const plan of plans) {
-    const tableCounts = new Map<string, number>();
-    for (const table of TABLES_TO_REPARENT) {
-      const result: [{ count: bigint }] = await tx.$queryRawUnsafe(
-        `SELECT COUNT(*) as count FROM "${table}" WHERE "environmentId" = $1`,
-        plan.oldEnvId
-      );
-      tableCounts.set(table, Number(result[0].count));
-    }
-    beforeCounts.set(plan.oldEnvId, tableCounts);
-  }
-
-  // The new environment is empty before re-parenting, so unique constraints scoped to
-  // environmentId (e.g. on Tag, ActionClass, Integration, Segment) cannot conflict.
-  for (const plan of plans) {
-    for (const table of TABLES_TO_REPARENT) {
-      const updated = await tx.$executeRawUnsafe(
-        `UPDATE "${table}"
-         SET "workspaceId" = $1, "environmentId" = $2
-         WHERE "environmentId" = $3`,
-        plan.newWorkspaceId,
-        plan.newEnvId,
-        plan.oldEnvId
-      );
-
-      if (updated > 0) {
-        logger.info(`Re-parented ${updated.toString()} rows in ${table} from env ${plan.oldEnvId}`);
-      }
-    }
-  }
-
-  return beforeCounts;
-}
-
-// -- Step 8 --
-async function verifyPlan(
-  tx: TxClient,
-  plan: MigrationPlan,
-  expectedCounts: Map<string, number> | undefined
-): Promise<string[]> {
-  const failures: string[] = [];
-
-  // Verify zero rows remain in old environment
-  for (const table of TABLES_TO_REPARENT) {
-    const remaining: [{ count: bigint }] = await tx.$queryRawUnsafe(
-      `SELECT COUNT(*) as count FROM "${table}" WHERE "environmentId" = $1`,
-      plan.oldEnvId
-    );
-
-    if (remaining[0].count > 0n) {
-      failures.push(
-        `${table}: ${remaining[0].count.toString()} rows still reference old env ${plan.oldEnvId}`
-      );
-    }
-  }
-
-  // Verify exactly one environment exists in new workspace
-  const envCount: [{ count: bigint }] = await tx.$queryRaw`
-    SELECT COUNT(*) as count FROM "Environment" WHERE "workspaceId" = ${plan.newWorkspaceId}
-  `;
-
-  if (envCount[0].count !== 1n) {
-    failures.push(
-      `New workspace ${plan.newWorkspaceId} has ${envCount[0].count.toString()} environments (expected 1)`
-    );
-  }
-
-  // Verify before/after counts match
-  for (const table of TABLES_TO_REPARENT) {
-    const newCount: [{ count: bigint }] = await tx.$queryRawUnsafe(
-      `SELECT COUNT(*) as count FROM "${table}" WHERE "environmentId" = $1`,
-      plan.newEnvId
-    );
-
-    const actual = Number(newCount[0].count);
-    const expected = expectedCounts?.get(table) ?? 0;
-
-    if (actual !== expected) {
-      failures.push(
-        `${table}: expected ${expected.toString()} rows in new env ${plan.newEnvId}, got ${actual.toString()}`
-      );
-    }
-  }
-
-  return failures;
-}
-
-async function verifyMigration(
-  tx: TxClient,
-  plans: MigrationPlan[],
-  beforeCounts: Map<string, Map<string, number>>
-): Promise<void> {
-  const startMs = Date.now();
+async function verifyMigration(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
   const failures: string[] = [];
 
   for (const plan of plans) {
-    const planFailures = await verifyPlan(tx, plan, beforeCounts.get(plan.oldEnvId));
-    failures.push(...planFailures);
-  }
+    // Verify the environment now belongs to the new workspace
+    const env: [{ workspaceId: string; type: string }] = await tx.$queryRaw`
+      SELECT "workspaceId", "type" FROM "Environment" WHERE "id" = ${plan.oldEnvId}
+    `;
 
-  const elapsedMs = Date.now() - startMs;
-  logger.info(`Verification completed in ${elapsedMs.toString()}ms`);
+    if (env[0].workspaceId !== plan.newWorkspaceId) {
+      failures.push(
+        `Environment ${plan.oldEnvId} still points to workspace ${env[0].workspaceId} (expected ${plan.newWorkspaceId})`
+      );
+    }
+
+    if (env[0].type !== "production") {
+      failures.push(`Environment ${plan.oldEnvId} type is "${env[0].type}" (expected "production")`);
+    }
+
+    // Verify exactly one environment exists in new workspace
+    const envCount: [{ count: bigint }] = await tx.$queryRaw`
+      SELECT COUNT(*) as count FROM "Environment" WHERE "workspaceId" = ${plan.newWorkspaceId}
+    `;
+
+    if (envCount[0].count !== 1n) {
+      failures.push(
+        `New workspace ${plan.newWorkspaceId} has ${envCount[0].count.toString()} environments (expected 1)`
+      );
+    }
+  }
 
   if (failures.length > 0) {
     throw new Error(`Promotion verification failed:\n${failures.join("\n")}`);
   }
+
+  logger.info(`Verification passed for ${plans.length.toString()} promoted environment(s)`);
+}
+
+// -- Step 8 --
+async function deleteRemainingDevEnvironments(tx: TxClient): Promise<void> {
+  const deleted = await tx.$executeRaw`
+    DELETE FROM "Environment" WHERE "type" = 'development'
+  `;
+
+  logger.info(`Deleted ${deleted.toString()} remaining dev environment(s)`);
 }
 
 // -- Migration entry point --
 export const promoteDevEnvironments: MigrationScript = {
   type: "data",
   id: "k8m2vqwx4r1tnp6jb3yfs5ho",
-  name: "20260403000001_promote_dev_environments",
+  name: "20260401000001_promote_dev_environments",
   run: async ({ tx }) => {
-    // Expected volume is small (tens of dev envs with data at most).
-    // Steps use per-plan loops for readability; acceptable at this cardinality.
     const devEnvsWithData = await findDevEnvsWithData(tx);
 
     if (devEnvsWithData.length === 0) {
       logger.info("No dev environments with data found. Nothing to promote.");
-      return;
+    } else {
+      logger.info(`Found ${devEnvsWithData.length.toString()} dev environment(s) with data to promote`);
+
+      const plans = await buildMigrationPlans(tx, devEnvsWithData);
+      await createWorkspaces(tx, plans);
+      await promoteEnvironments(tx, plans);
+      await copyTeamAssignments(tx, plans);
+      await migrateLanguages(tx, plans);
+      await verifyMigration(tx, plans);
+
+      logger.info(
+        `Successfully promoted ${plans.length.toString()} dev environment(s) to standalone workspaces`
+      );
     }
 
-    logger.info(`Found ${devEnvsWithData.length.toString()} dev environment(s) with data to promote`);
-
-    const plans = await buildMigrationPlans(tx, devEnvsWithData);
-    await createWorkspaces(tx, plans);
-    await createEnvironments(tx, plans);
-    await copyTeamAssignments(tx, plans);
-    await migrateLanguages(tx, plans);
-    const beforeCounts = await reparentResources(tx, plans);
-    await verifyMigration(tx, plans, beforeCounts);
-
-    logger.info(
-      `Successfully promoted ${plans.length.toString()} dev environment(s) to standalone workspaces`
-    );
+    // Delete remaining dev environments — promoted ones are now production,
+    // non-promoted ones had no real data (FK cascade cleans up defaults like ContactAttributeKey)
+    await deleteRemainingDevEnvironments(tx);
   },
 };
