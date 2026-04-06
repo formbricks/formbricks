@@ -1,13 +1,12 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { getWorkspaceId } from "@/modules/api/v2/management/lib/helper";
 import { getResponseForPipeline } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
@@ -71,15 +70,15 @@ export const POST = async (request: Request) =>
         );
       }
 
-      const environmentIdResult = await getEnvironmentId(body.surveyId, false);
+      const workspaceIdResult = await getWorkspaceId(body.surveyId, false);
 
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error, auditLog);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      const environmentId = environmentIdResult.data;
+      const { environmentId, workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      if (!hasPermission(authentication.environmentPermissions, workspaceId, "POST")) {
         return handleApiError(
           request,
           {
@@ -159,11 +158,9 @@ export const POST = async (request: Request) =>
       // Fetch created response with relations for pipeline
       const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
       if (createdResponseForPipeline.ok) {
-        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
-
         sendToPipeline({
           event: "responseCreated",
-          environmentId: environmentId,
+          environmentId,
           workspaceId,
           surveyId: body.surveyId,
           response: createdResponseForPipeline.data,
@@ -172,7 +169,7 @@ export const POST = async (request: Request) =>
         if (createResponseResult.data.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId: environmentId,
+            environmentId,
             workspaceId,
             surveyId: body.surveyId,
             response: createdResponseForPipeline.data,

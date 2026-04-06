@@ -3826,7 +3826,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBase)
+export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
   .omit({
     id: true,
     createdAt: true,
@@ -3838,6 +3838,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
   .extend({
     name: z.string(), // Keep name required
     environmentId: z.string(),
+    workspaceId: z.string(),
     questions: ZSurveyBase.shape.questions,
     blocks: ZSurveyBase.shape.blocks,
     languages: z.array(ZSurveyLanguage).prefault([]),
@@ -3872,7 +3873,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     }
   });
 
-export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
+export type TSurveyCreateInputWithWorkspaceId = z.infer<typeof ZSurveyCreateInputWithWorkspaceId>;
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];

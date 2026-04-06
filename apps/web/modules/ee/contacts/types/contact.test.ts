@@ -20,6 +20,7 @@ describe("ZContact", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
     };
     const result = ZContact.parse(validContact);
     expect(result).toEqual(validContact);
@@ -31,6 +32,7 @@ describe("ZContact", () => {
       createdAt: "invalid-date",
       updatedAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
     };
     expect(() => ZContact.parse(invalidContact)).toThrow(ZodError);
   });
@@ -85,6 +87,7 @@ describe("ZContactWithAttributes", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
         firstName: "John",
@@ -203,6 +206,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should validate valid bulk upload request", () => {
     const validRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -224,6 +228,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request without email attribute", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -244,6 +249,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request with empty email value", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -264,6 +270,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request with invalid email format", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -284,6 +291,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request with duplicate emails across contacts", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -315,6 +323,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request with duplicate userIds across contacts", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -360,6 +369,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request with duplicate attribute keys within same contact", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: [
         {
           attributes: [
@@ -387,6 +397,7 @@ describe("ZContactBulkUploadRequest", () => {
   test("should reject request exceeding 250 contacts", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       contacts: Array.from({ length: 251 }, (_, i) => ({
         attributes: [
           {
@@ -407,6 +418,7 @@ describe("ZContactCreateRequest", () => {
   test("should validate valid create request with simplified flat attributes", () => {
     const validRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
         firstName: "John",
@@ -420,6 +432,7 @@ describe("ZContactCreateRequest", () => {
   test("should validate create request with only email attribute", () => {
     const validRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
       },
@@ -431,6 +444,7 @@ describe("ZContactCreateRequest", () => {
   test("should reject create request without email attribute", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         firstName: "John",
         lastName: "Doe",
@@ -442,6 +456,7 @@ describe("ZContactCreateRequest", () => {
   test("should reject create request with invalid email format", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "invalid-email",
         firstName: "John",
@@ -453,6 +468,7 @@ describe("ZContactCreateRequest", () => {
   test("should reject create request with empty email", () => {
     const invalidRequest = {
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "",
         firstName: "John",
@@ -464,6 +480,7 @@ describe("ZContactCreateRequest", () => {
   test("should reject create request with invalid environmentId", () => {
     const invalidRequest = {
       environmentId: "invalid-id",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
       },
@@ -478,6 +495,7 @@ describe("ZContactResponse", () => {
       id: "cld1234567890abcdef123456",
       createdAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
         firstName: "John",
@@ -493,6 +511,7 @@ describe("ZContactResponse", () => {
       id: "cld1234567890abcdef123456",
       createdAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
       },
@@ -506,6 +525,7 @@ describe("ZContactResponse", () => {
       id: "cld1234567890abcdef123456",
       createdAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
         firstName: "John",
@@ -520,6 +540,7 @@ describe("ZContactResponse", () => {
       id: "invalid-id",
       createdAt: new Date(),
       environmentId: "cld1234567890abcdef123456",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
       },
@@ -532,6 +553,7 @@ describe("ZContactResponse", () => {
       id: "cld1234567890abcdef123456",
       createdAt: new Date(),
       environmentId: "invalid-env-id",
+      workspaceId: "cld1234567890abcdef123456",
       attributes: {
         email: "test@example.com",
       },

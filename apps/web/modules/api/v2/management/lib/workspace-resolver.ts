@@ -7,20 +7,20 @@ import { hasPermission, hasWorkspacePermission } from "@/modules/organization/se
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /**
- * Resolves workspaceId → production environmentId for v2 management routes.
+ * Resolves workspaceId or environmentId for v2 management routes, checking permissions accordingly.
  *
  * - If `workspaceId` is provided (without `environmentId`): resolves + checks workspace permission.
  * - If `environmentId` is provided (without `workspaceId`): checks environment permission.
  * - If both are provided: returns an error.
  * - If neither is provided: returns an error.
  *
- * On success, returns the resolved `environmentId`.
+ * On success, returns the resolved `environmentId` and `workspaceId`.
  */
-export const resolveWorkspaceInBodyV2 = async (
+export const resolveBodyIdsV2 = async (
   body: { workspaceId?: string; environmentId?: string },
   permissions: TAPIKeyEnvironmentPermission[],
   method: HttpMethod
-): Promise<Result<string, ApiErrorResponseV2>> => {
+): Promise<Result<{ environmentId: string; workspaceId: string }, ApiErrorResponseV2>> => {
   if (body.workspaceId && body.environmentId) {
     return err({
       type: "bad_request",
@@ -38,15 +38,16 @@ export const resolveWorkspaceInBodyV2 = async (
       return err(envResult.error);
     }
 
-    return ok(envResult.data);
+    return ok({ environmentId: envResult.data, workspaceId: body.workspaceId });
   }
 
   if (body.environmentId) {
-    if (!hasPermission(permissions, body.environmentId, method)) {
+    const perm = permissions.find((p) => p.environmentId === body.environmentId);
+    if (!perm || !hasPermission(permissions, perm.workspaceId, method)) {
       return err({ type: "forbidden" });
     }
 
-    return ok(body.environmentId);
+    return ok({ environmentId: body.environmentId, workspaceId: perm.workspaceId });
   }
 
   return err({

@@ -1,10 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
-import {
-  checkEnvPermissionIfNeeded,
-  resolveWorkspaceInBody,
-} from "@/app/api/v1/management/lib/workspace-resolver";
+import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
+import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
@@ -19,7 +16,7 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
@@ -97,15 +94,11 @@ export const POST = withV1ApiWrapper({
       surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveWorkspaceInBody(
-        surveyInput,
-        authentication.environmentPermissions,
-        "POST"
-      );
+      const resolved = await resolveBodyIds(surveyInput, authentication.environmentPermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
       surveyInput = resolved.body;
 
-      const inputValidation = ZSurveyCreateInputWithEnvironmentId.safeParse(surveyInput);
+      const inputValidation = ZSurveyCreateInputWithWorkspaceId.safeParse(surveyInput);
 
       if (!inputValidation.success) {
         return {
@@ -117,17 +110,17 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const { environmentId } = inputValidation.data;
+      const { environmentId, workspaceId } = inputValidation.data;
 
-      const permDenied = checkEnvPermissionIfNeeded(
+      const permDenied = checkPermissionIfNeeded(
         resolved.alreadyAuthorized,
         authentication.environmentPermissions,
-        environmentId,
+        workspaceId,
         "POST"
       );
       if (permDenied) return { response: permDenied };
 
-      const organization = await getOrganizationByEnvironmentId(environmentId);
+      const organization = await getOrganizationByWorkspaceId(workspaceId);
       if (!organization) {
         return {
           response: responses.notFoundResponse("Organization", null),

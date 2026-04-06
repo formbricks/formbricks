@@ -144,6 +144,34 @@ export const getOrganizationByEnvironmentId = reactCache(
   }
 );
 
+export const getOrganizationByWorkspaceId = reactCache(
+  async (workspaceId: string): Promise<TOrganization | null> => {
+    validateInputs([workspaceId, ZId]);
+
+    try {
+      const organization = await prisma.organization.findFirst({
+        where: {
+          workspaces: {
+            some: {
+              id: workspaceId,
+            },
+          },
+        },
+        select: { ...select, memberships: true },
+      });
+
+      return organization ? mapOrganization(organization) : null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error getting organization by workspace id");
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const getOrganization = reactCache(async (organizationId: string): Promise<TOrganization | null> => {
   validateInputs([organizationId, ZString]);
 

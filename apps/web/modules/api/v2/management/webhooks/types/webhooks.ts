@@ -23,6 +23,7 @@ export const ZWebhookInput = ZWebhook.pick({
   url: true,
   source: true,
   environmentId: true,
+  workspaceId: true,
   triggers: true,
   surveyIds: true,
 });

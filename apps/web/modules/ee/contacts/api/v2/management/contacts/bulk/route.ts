@@ -25,14 +25,14 @@ export const PUT = async (request: Request) =>
         );
       }
 
-      const environmentId = parsedInput.body?.environmentId;
+      const workspaceId = parsedInput.body?.workspaceId;
 
-      if (!environmentId) {
+      if (!workspaceId) {
         return handleApiError(
           request,
           {
             type: "bad_request",
-            details: [{ field: "environmentId", issue: "missing" }],
+            details: [{ field: "workspaceId", issue: "missing" }],
           },
           auditLog
         );
@@ -40,15 +40,16 @@ export const PUT = async (request: Request) =>
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "PUT")) {
+      const perm = authentication.environmentPermissions.find((p) => p.workspaceId === workspaceId);
+      if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
             type: "forbidden",
             details: [
               {
-                field: "environmentId",
-                issue: "insufficient permissions to create contact in this environment",
+                field: "workspaceId",
+                issue: "insufficient permissions to create contact in this workspace",
               },
             ],
           },
@@ -60,7 +61,7 @@ export const PUT = async (request: Request) =>
         (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!
       );
 
-      const upsertBulkContactsResult = await upsertBulkContacts(contacts, environmentId, emails);
+      const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, emails);
 
       if (!upsertBulkContactsResult.ok) {
         return handleApiError(request, upsertBulkContactsResult.error, auditLog);

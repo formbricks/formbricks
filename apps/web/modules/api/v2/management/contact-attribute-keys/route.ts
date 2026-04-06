@@ -10,7 +10,7 @@ import {
   ZContactAttributeKeyCreateInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
-import { resolveWorkspaceInBodyV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -26,14 +26,17 @@ export const GET = async (request: NextRequest) =>
       let workspaceIds: string[] = [];
 
       if (query.environmentId) {
-        if (!hasPermission(authentication.environmentPermissions, query.environmentId, "GET")) {
+        const permission = authentication.environmentPermissions.find(
+          (p) => p.environmentId === query.environmentId
+        );
+        if (
+          !permission ||
+          !hasPermission(authentication.environmentPermissions, permission.workspaceId, "GET")
+        ) {
           return handleApiError(request, {
             type: "unauthorized",
           });
         }
-        const permission = authentication.environmentPermissions.find(
-          (p) => p.environmentId === query.environmentId
-        );
         workspaceIds = permission ? [permission.workspaceId] : [];
       } else {
         workspaceIds = [
@@ -61,14 +64,15 @@ export const POST = async (request: NextRequest) =>
       const { body } = parsedInput;
 
       // Resolve workspaceId → production environmentId when environmentId is not provided
-      const envResult = await resolveWorkspaceInBodyV2(body, authentication.environmentPermissions, "POST");
+      const envResult = await resolveBodyIdsV2(body, authentication.environmentPermissions, "POST");
       if (!envResult.ok) {
         return handleApiError(request, envResult.error, auditLog);
       }
 
       const createContactAttributeKeyResult = await createContactAttributeKey({
         ...body,
-        environmentId: envResult.data,
+        environmentId: envResult.data.environmentId,
+        workspaceId: envResult.data.workspaceId,
       });
 
       if (!createContactAttributeKeyResult.ok) {

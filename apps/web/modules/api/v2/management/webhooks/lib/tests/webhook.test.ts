@@ -6,10 +6,6 @@ import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { createWebhook, getWebhooks } from "../webhook";
 
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
-
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
@@ -71,6 +67,7 @@ describe("getWebhooks", () => {
 describe("createWebhook", () => {
   const inputWebhook = {
     environmentId: "env1",
+    workspaceId: "workspace-1",
     name: "New Webhook",
     url: "http://example.com",
     source: "user" as WebhookSource,

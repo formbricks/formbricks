@@ -41,7 +41,8 @@ export const authorizePrivateDownload = async (
     });
   }
 
-  if (!hasPermission(auth.environmentPermissions, environmentId, action)) {
+  const perm = auth.environmentPermissions.find((p) => p.environmentId === environmentId);
+  if (!perm || !hasPermission(auth.environmentPermissions, perm.workspaceId, action)) {
     return err({
       unauthorized: true,
     });

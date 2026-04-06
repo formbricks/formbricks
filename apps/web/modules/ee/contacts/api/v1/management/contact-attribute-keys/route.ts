@@ -1,9 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import {
-  checkEnvPermissionIfNeeded,
-  resolveWorkspaceInBody,
-} from "@/app/api/v1/management/lib/workspace-resolver";
+import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -74,7 +71,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveWorkspaceInBody(
+      const resolved = await resolveBodyIds(
         contactAttributeKeyInput,
         authentication.environmentPermissions,
         "POST"
@@ -92,12 +89,10 @@ export const POST = withV1ApiWrapper({
           ),
         };
       }
-      const environmentId = inputValidation.data.environmentId;
-
-      const permDenied = checkEnvPermissionIfNeeded(
+      const permDenied = checkPermissionIfNeeded(
         resolved.alreadyAuthorized,
         authentication.environmentPermissions,
-        environmentId,
+        inputValidation.data.workspaceId,
         "POST"
       );
       if (permDenied) return { response: permDenied };

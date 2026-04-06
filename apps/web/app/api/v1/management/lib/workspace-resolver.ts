@@ -17,15 +17,14 @@ export const getProductionEnvironmentIdByWorkspaceId = async (
 };
 
 /**
- * Given a raw request body that may contain workspaceId instead of environmentId,
- * resolves the environment, checks permissions, and returns a normalized body
- * with environmentId guaranteed to be present.
+ * Given a request body that contains either workspaceId or environmentId (but not both),
+ * resolves the missing identifier so the returned body is guaranteed to contain both.
  *
  * Returns `{ body, alreadyAuthorized: true }` when workspace-level auth was used,
  * or `{ body, alreadyAuthorized: false }` when the caller still needs to check env-level permission.
  * Returns an error response if authorization or resolution fails.
  */
-export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
+export const resolveBodyIds = async <T extends Record<string, unknown>>(
   body: T,
   permissions: TAPIKeyEnvironmentPermission[],
   method: HttpMethod
@@ -74,7 +73,7 @@ export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
 
     return {
       ok: true,
-      body: { ...body, workspaceId: resolvedWorkspaceId, environmentId: body.environmentId },
+      body: { ...body, workspaceId: resolvedWorkspaceId.id, environmentId: body.environmentId },
       alreadyAuthorized: false,
     };
   }
@@ -87,17 +86,17 @@ export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
 };
 
 /**
- * Checks environment-level permission, but only if the request was not already
+ * Checks workspace-level permission, but only if the request was not already
  * authorized at the workspace level.
  */
-export const checkEnvPermissionIfNeeded = (
+export const checkPermissionIfNeeded = (
   alreadyAuthorized: boolean,
   permissions: TAPIKeyEnvironmentPermission[],
-  environmentId: string,
+  workspaceId: string,
   method: HttpMethod
 ): Response | null => {
   if (alreadyAuthorized) return null;
-  if (!hasPermission(permissions, environmentId, method)) {
+  if (!hasPermission(permissions, workspaceId, method)) {
     return responses.unauthorizedResponse();
   }
   return null;

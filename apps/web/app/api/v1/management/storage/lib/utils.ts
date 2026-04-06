@@ -14,7 +14,8 @@ export const checkAuth = async (authentication: TApiV1Authentication | undefined
       return responses.unauthorizedResponse();
     }
   } else if ("apiKeyId" in authentication) {
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+    const perm = authentication.environmentPermissions.find((p) => p.environmentId === environmentId);
+    if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "POST")) {
       return responses.unauthorizedResponse();
     }
   } else {

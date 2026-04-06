@@ -69,7 +69,7 @@ describe("checkAuth", () => {
 
     expect(hasPermission).toHaveBeenCalledWith(
       mockAuthentication.environmentPermissions,
-      environmentId,
+      "workspace-1",
       "POST"
     );
     expect(responses.unauthorizedResponse).toHaveBeenCalled();
@@ -101,7 +101,7 @@ describe("checkAuth", () => {
 
     expect(hasPermission).toHaveBeenCalledWith(
       mockAuthentication.environmentPermissions,
-      environmentId,
+      "workspace-1",
       "POST"
     );
     expect(result).toBeUndefined();

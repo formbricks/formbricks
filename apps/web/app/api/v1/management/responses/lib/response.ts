@@ -10,10 +10,10 @@ import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/res
 import { TTag } from "@formbricks/types/tags";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContactByUserId } from "./contact";
@@ -93,18 +93,18 @@ export const createResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
 
-  const { environmentId, userId, finished, ttc: initialTtc } = responseInput;
+  const { environmentId, workspaceId, userId, finished, ttc: initialTtc } = responseInput;
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;
 
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const organization = await getOrganizationIdFromWorkspaceId(workspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
 
     if (userId) {
-      contact = await getContactByUserId(environmentId, userId);
+      contact = await getContactByUserId(workspaceId, userId);
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};

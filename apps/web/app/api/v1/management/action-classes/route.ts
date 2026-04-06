@@ -1,10 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
-import {
-  checkEnvPermissionIfNeeded,
-  resolveWorkspaceInBody,
-} from "@/app/api/v1/management/lib/workspace-resolver";
+import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -56,11 +53,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveWorkspaceInBody(
-        actionClassInput,
-        authentication.environmentPermissions,
-        "POST"
-      );
+      const resolved = await resolveBodyIds(actionClassInput, authentication.environmentPermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZActionClassInput.safeParse(resolved.body);
@@ -74,17 +67,15 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const environmentId = inputValidation.data.environmentId;
-
-      const permDenied = checkEnvPermissionIfNeeded(
+      const permDenied = checkPermissionIfNeeded(
         resolved.alreadyAuthorized,
         authentication.environmentPermissions,
-        environmentId,
+        inputValidation.data.workspaceId,
         "POST"
       );
       if (permDenied) return { response: permDenied };
 
-      const actionClass: TActionClass = await createActionClass(environmentId, inputValidation.data);
+      const actionClass: TActionClass = await createActionClass(inputValidation.data);
       if (auditLog) {
         auditLog.targetId = actionClass.id;
         auditLog.newObject = actionClass;

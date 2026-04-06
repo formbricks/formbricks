@@ -57,7 +57,8 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+    const perm = authentication.environmentPermissions.find((p) => p.environmentId === environmentId);
+    if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "POST")) {
       return {
         response: responses.unauthorizedResponse(),
       };

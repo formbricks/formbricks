@@ -26,6 +26,7 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   name: true,
   description: true,
   environmentId: true,
+  workspaceId: true,
 })
   .extend({
     dataType: ZContactAttributeKey.shape.dataType.optional(),

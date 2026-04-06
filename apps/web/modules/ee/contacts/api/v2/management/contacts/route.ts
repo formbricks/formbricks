@@ -30,7 +30,8 @@ export const POST = async (request: NextRequest) =>
 
       const { environmentId } = body;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      const perm = authentication.environmentPermissions.find((p) => p.environmentId === environmentId);
+      if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "POST")) {
         return handleApiError(
           request,
           {
