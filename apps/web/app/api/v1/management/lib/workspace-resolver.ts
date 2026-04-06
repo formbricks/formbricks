@@ -2,6 +2,7 @@ import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
 import { getProductionEnvironmentIdByWorkspaceId as resolveFromV2 } from "@/modules/api/v2/management/lib/helper";
 import { hasPermission, hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -29,7 +30,7 @@ export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
   permissions: TAPIKeyEnvironmentPermission[],
   method: HttpMethod
 ): Promise<
-  | { ok: true; body: T & { environmentId: string }; alreadyAuthorized: boolean }
+  | { ok: true; body: T & { environmentId: string; workspaceId: string }; alreadyAuthorized: boolean }
   | { ok: false; response: Response }
 > => {
   if (body.workspaceId && body.environmentId) {
@@ -56,14 +57,31 @@ export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
 
     return {
       ok: true,
-      body: { ...body, environmentId: resolvedEnvId },
+      body: { ...body, environmentId: resolvedEnvId, workspaceId },
       alreadyAuthorized: true,
+    };
+  }
+
+  if (body.environmentId && !body.workspaceId) {
+    if (typeof body.environmentId !== "string") {
+      return { ok: false, response: responses.badRequestResponse("environmentId must be a string") };
+    }
+
+    const resolvedWorkspaceId = await getWorkspaceWithTeamIdsByEnvironmentId(body.environmentId);
+    if (!resolvedWorkspaceId) {
+      return { ok: false, response: responses.notFoundResponse("Environment", body.environmentId) };
+    }
+
+    return {
+      ok: true,
+      body: { ...body, workspaceId: resolvedWorkspaceId, environmentId: body.environmentId },
+      alreadyAuthorized: false,
     };
   }
 
   return {
     ok: true,
-    body: body as T & { environmentId: string },
+    body: body as T & { environmentId: string; workspaceId: string },
     alreadyAuthorized: false,
   };
 };
