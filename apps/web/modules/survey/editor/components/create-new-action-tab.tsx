@@ -68,7 +68,7 @@ export const CreateNewActionTab = ({
   });
 
   const { control, handleSubmit, watch, reset } = form;
-  const { isSubmitting, errors } = form.formState;
+  const { isSubmitting } = form.formState;
 
   const submitHandler = async (data: TActionClassInput) => {
     try {

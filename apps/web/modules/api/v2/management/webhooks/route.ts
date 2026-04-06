@@ -48,7 +48,7 @@ export const POST = async (request: NextRequest) =>
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },
-    handler: async ({ authentication, parsedInput, auditLog }) => {
+    handler: async ({ parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
       if (!body) {
