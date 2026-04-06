@@ -2,7 +2,7 @@ import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
-import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -106,13 +106,12 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const permDenied = checkPermissionIfNeeded(
-        resolved.alreadyAuthorized,
-        authentication.environmentPermissions,
-        inputValidation.data.workspaceId,
-        "PUT"
-      );
-      if (permDenied) return { response: permDenied };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.environmentPermissions, inputValidation.data.workspaceId, "PUT")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
       const updatedActionClass = await updateActionClass(
         inputValidation.data.workspaceId,

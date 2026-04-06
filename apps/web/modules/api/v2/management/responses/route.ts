@@ -150,7 +150,7 @@ export const POST = async (request: Request) =>
         );
       }
 
-      const createResponseResult = await createResponseWithQuotaEvaluation(environmentId, body);
+      const createResponseResult = await createResponseWithQuotaEvaluation(workspaceId, body);
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error, auditLog);
       }

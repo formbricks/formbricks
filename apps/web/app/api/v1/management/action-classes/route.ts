@@ -1,11 +1,12 @@
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
-import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getActionClasses } from "./lib/action-classes";
 
 export const GET = withV1ApiWrapper({
@@ -67,13 +68,12 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const permDenied = checkPermissionIfNeeded(
-        resolved.alreadyAuthorized,
-        authentication.environmentPermissions,
-        inputValidation.data.workspaceId,
-        "POST"
-      );
-      if (permDenied) return { response: permDenied };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.environmentPermissions, inputValidation.data.workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
       const actionClass: TActionClass = await createActionClass(inputValidation.data);
       if (auditLog) {

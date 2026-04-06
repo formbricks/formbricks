@@ -93,7 +93,7 @@ export const createResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
 
-  const { environmentId, workspaceId, userId, finished, ttc: initialTtc } = responseInput;
+  const { workspaceId, userId, finished, ttc: initialTtc } = responseInput;
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;

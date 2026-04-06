@@ -9,7 +9,7 @@ import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/co
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
-  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
 import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
@@ -49,7 +49,7 @@ export const getResponses = async (
 };
 
 export const createResponse = async (
-  environmentId: string,
+  workspaceId: string,
   responseInput: TResponseInput,
   tx?: Prisma.TransactionClient
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
@@ -74,7 +74,7 @@ export const createResponse = async (
 
     // If userId is provided, look up the contact by userId
     if (userId) {
-      const contactResult = await getContactByUserId(environmentId, userId);
+      const contactResult = await getContactByUserId(workspaceId, userId);
       if (!contactResult.ok) {
         return err(contactResult.error);
       }
@@ -117,7 +117,7 @@ export const createResponse = async (
       endingId,
     };
 
-    const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationIdResult = await getOrganizationIdFromWorkspaceId(workspaceId);
     if (!organizationIdResult.ok) {
       return err(organizationIdResult.error as ApiErrorResponseV2);
     }
@@ -154,11 +154,11 @@ export const createResponse = async (
 };
 
 export const createResponseWithQuotaEvaluation = async (
-  environmentId: string,
+  workspaceId: string,
   responseInput: TResponseInput
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
-    const responseResult = await createResponse(environmentId, responseInput, tx);
+    const responseResult = await createResponse(workspaceId, responseInput, tx);
     if (!responseResult.ok) {
       return responseResult;
     }

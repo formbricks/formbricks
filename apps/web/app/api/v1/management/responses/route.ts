@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -117,13 +117,12 @@ export const POST = withV1ApiWrapper({
 
       const responseInput = inputValidation.data;
 
-      const permDenied = checkPermissionIfNeeded(
-        resolved.alreadyAuthorized,
-        authentication.environmentPermissions,
-        responseInput.workspaceId,
-        "POST"
-      );
-      if (permDenied) return { response: permDenied };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.environmentPermissions, responseInput.workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
       const surveyResult = await validateSurvey(responseInput, responseInput.workspaceId);
       if (surveyResult.error) {

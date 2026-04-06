@@ -1,7 +1,7 @@
+import { prisma } from "@formbricks/database";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
-import { getProductionEnvironmentIdByWorkspaceId as resolveFromV2 } from "@/modules/api/v2/management/lib/helper";
-import { hasPermission, hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -12,8 +12,11 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export const getProductionEnvironmentIdByWorkspaceId = async (
   workspaceId: string
 ): Promise<string | null> => {
-  const result = await resolveFromV2(workspaceId);
-  return result.ok ? result.data : null;
+  const environment = await prisma.environment.findFirst({
+    where: { workspaceId, type: "production" },
+    select: { id: true },
+  });
+  return environment?.id ?? null;
 };
 
 /**
@@ -83,21 +86,4 @@ export const resolveBodyIds = async <T extends Record<string, unknown>>(
     body: body as T & { environmentId: string; workspaceId: string },
     alreadyAuthorized: false,
   };
-};
-
-/**
- * Checks workspace-level permission, but only if the request was not already
- * authorized at the workspace level.
- */
-export const checkPermissionIfNeeded = (
-  alreadyAuthorized: boolean,
-  permissions: TAPIKeyEnvironmentPermission[],
-  workspaceId: string,
-  method: HttpMethod
-): Response | null => {
-  if (alreadyAuthorized) return null;
-  if (!hasPermission(permissions, workspaceId, method)) {
-    return responses.unauthorizedResponse();
-  }
-  return null;
 };

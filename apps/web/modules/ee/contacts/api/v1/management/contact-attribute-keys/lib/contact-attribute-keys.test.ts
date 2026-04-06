@@ -4,13 +4,13 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { getProductionEnvironmentIdByWorkspaceId } from "@/app/api/v1/management/lib/workspace-resolver";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./contact-attribute-keys";
 
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+vi.mock("@/app/api/v1/management/lib/workspace-resolver", () => ({
+  getProductionEnvironmentIdByWorkspaceId: vi.fn().mockResolvedValue("env-id-mock"),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -92,12 +92,12 @@ describe("getContactAttributeKeys", () => {
 });
 
 describe("createContactAttributeKey", () => {
-  const environmentId = "testEnvId";
+  const workspaceId = "testWorkspaceId";
   const key = "testKey";
   const type: TContactAttributeKeyType = "custom";
   const mockCreatedAttributeKey = {
     id: "newKeyId",
-    environmentId,
+    environmentId: "env-id-mock",
     name: key,
     key,
     type,
@@ -111,31 +111,31 @@ describe("createContactAttributeKey", () => {
   const createInput: TContactAttributeKeyCreateInput = {
     key,
     type,
-    environmentId,
+    environmentId: "env-id-mock",
     name: key,
     description: "",
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
+    vi.mocked(getProductionEnvironmentIdByWorkspaceId).mockResolvedValue("env-id-mock");
   });
 
   test("should create and return a new contact attribute key", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
     vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
 
-    const result = await createContactAttributeKey(environmentId, createInput);
+    const result = await createContactAttributeKey(workspaceId, createInput);
 
-    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { environmentId } });
+    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { workspaceId } });
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
         key: createInput.key,
         name: createInput.name || createInput.key,
         type: createInput.type,
         description: createInput.description || "",
-        environment: { connect: { id: environmentId } },
-        workspace: { connect: { id: "workspace-id-mock" } },
+        environment: { connect: { id: "env-id-mock" } },
+        workspace: { connect: { id: workspaceId } },
       },
     });
     expect(result).toEqual(mockCreatedAttributeKey);
@@ -144,10 +144,10 @@ describe("createContactAttributeKey", () => {
   test("should throw OperationNotAllowedError if max attribute classes reached", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT);
 
-    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(
       OperationNotAllowedError
     );
-    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { environmentId } });
+    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { workspaceId } });
     expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
   });
 
@@ -158,8 +158,8 @@ describe("createContactAttributeKey", () => {
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P2000", clientVersion: "test" })
     );
 
-    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(DatabaseError);
-    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(errorMessage);
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(DatabaseError);
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(errorMessage);
   });
 
   test("should throw generic error if non-Prisma error occurs during create", async () => {
@@ -167,8 +167,8 @@ describe("createContactAttributeKey", () => {
     const errorMessage = "Some other create error";
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(new Error(errorMessage));
 
-    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(Error);
-    await expect(createContactAttributeKey(environmentId, createInput)).rejects.toThrow(errorMessage);
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(Error);
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(errorMessage);
   });
 
   test("should use key as name when name is not provided", async () => {
@@ -178,11 +178,11 @@ describe("createContactAttributeKey", () => {
     const inputWithoutName: TContactAttributeKeyCreateInput = {
       key,
       type,
-      environmentId,
+      environmentId: "env-id-mock",
       description: "",
     };
 
-    await createContactAttributeKey(environmentId, inputWithoutName);
+    await createContactAttributeKey(workspaceId, inputWithoutName);
 
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
@@ -190,8 +190,8 @@ describe("createContactAttributeKey", () => {
         name: "TestKey", // formatSnakeCaseToTitleCase("testKey") capitalizes first letter
         type: inputWithoutName.type,
         description: inputWithoutName.description || "",
-        environment: { connect: { id: environmentId } },
-        workspace: { connect: { id: "workspace-id-mock" } },
+        environment: { connect: { id: "env-id-mock" } },
+        workspace: { connect: { id: workspaceId } },
       },
     });
   });
@@ -203,11 +203,11 @@ describe("createContactAttributeKey", () => {
     const inputWithoutDescription: TContactAttributeKeyCreateInput = {
       key,
       type,
-      environmentId,
+      environmentId: "env-id-mock",
       name: "Test Name",
     };
 
-    await createContactAttributeKey(environmentId, inputWithoutDescription);
+    await createContactAttributeKey(workspaceId, inputWithoutDescription);
 
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
@@ -215,8 +215,8 @@ describe("createContactAttributeKey", () => {
         name: inputWithoutDescription.name,
         type: inputWithoutDescription.type,
         description: "", // Should fall back to empty string when description is not provided
-        environment: { connect: { id: environmentId } },
-        workspace: { connect: { id: "workspace-id-mock" } },
+        environment: { connect: { id: "env-id-mock" } },
+        workspace: { connect: { id: workspaceId } },
       },
     });
   });

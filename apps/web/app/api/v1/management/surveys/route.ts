@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
-import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
@@ -18,6 +18,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -112,13 +113,12 @@ export const POST = withV1ApiWrapper({
 
       const { environmentId, workspaceId } = inputValidation.data;
 
-      const permDenied = checkPermissionIfNeeded(
-        resolved.alreadyAuthorized,
-        authentication.environmentPermissions,
-        workspaceId,
-        "POST"
-      );
-      if (permDenied) return { response: permDenied };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.environmentPermissions, workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
       const organization = await getOrganizationByWorkspaceId(workspaceId);
       if (!organization) {
@@ -150,7 +150,7 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const survey = await createSurvey(environmentId, { ...surveyData, environmentId: undefined });
+      const survey = await createSurvey(workspaceId, { ...surveyData, environmentId: undefined });
       if (auditLog) {
         auditLog.targetId = survey.id;
         auditLog.newObject = survey;

@@ -1,10 +1,11 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { checkPermissionIfNeeded, resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
@@ -89,15 +90,17 @@ export const POST = withV1ApiWrapper({
           ),
         };
       }
-      const permDenied = checkPermissionIfNeeded(
-        resolved.alreadyAuthorized,
-        authentication.environmentPermissions,
-        inputValidation.data.workspaceId,
-        "POST"
-      );
-      if (permDenied) return { response: permDenied };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.environmentPermissions, inputValidation.data.workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
-      const contactAttributeKey = await createContactAttributeKey(environmentId, inputValidation.data);
+      const contactAttributeKey = await createContactAttributeKey(
+        inputValidation.data.workspaceId,
+        inputValidation.data
+      );
 
       if (!contactAttributeKey) {
         return {
