@@ -1,6 +1,19 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
+    "@formbricks/ai#build": {
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/ai#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/ai#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/ai#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/cache#build": {
       "dependsOn": ["@formbricks/logger#build"],
       "outputs": ["dist/**"]
@@ -104,13 +117,32 @@
     "@formbricks/surveys#test:coverage": {
       "dependsOn": ["@formbricks/survey-ui#build"]
     },
+    "@formbricks/web#dev": {
+      "cache": false,
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/logger#build",
+        "@formbricks/storage#build"
+      ],
+      "persistent": true
+    },
     "@formbricks/web#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup"],
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/database#db:setup",
+        "@formbricks/logger#build",
+        "@formbricks/storage#build"
+      ],
       "persistent": true
     },
     "@formbricks/web#test": {
       "dependsOn": [
+        "@formbricks/ai#build",
         "@formbricks/logger#build",
         "@formbricks/database#build",
         "@formbricks/storage#build",
@@ -120,6 +152,7 @@
     },
     "@formbricks/web#test:coverage": {
       "dependsOn": [
+        "@formbricks/ai#build",
         "@formbricks/logger#build",
         "@formbricks/database#build",
         "@formbricks/storage#build",
@@ -132,6 +165,20 @@
       "env": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
+        "AI_AWS_ACCESS_KEY_ID",
+        "AI_AWS_REGION",
+        "AI_AWS_SECRET_ACCESS_KEY",
+        "AI_AWS_SESSION_TOKEN",
+        "AI_AZURE_API_KEY",
+        "AI_AZURE_API_VERSION",
+        "AI_AZURE_BASE_URL",
+        "AI_AZURE_RESOURCE_NAME",
+        "AI_GCP_APPLICATION_CREDENTIALS",
+        "AI_GCP_CREDENTIALS_JSON",
+        "AI_GCP_LOCATION",
+        "AI_GCP_PROJECT",
+        "AI_MODEL",
+        "AI_PROVIDER",
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
         "AZUREAD_CLIENT_ID",
