@@ -1,8 +1,8 @@
 import { prisma } from "@formbricks/database";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -69,14 +69,14 @@ export const resolveBodyIds = async <T extends Record<string, unknown>>(
       return { ok: false, response: responses.badRequestResponse("environmentId must be a string") };
     }
 
-    const resolvedWorkspaceId = await getWorkspaceWithTeamIdsByEnvironmentId(body.environmentId);
+    const resolvedWorkspaceId = await getWorkspaceIdFromEnvironmentId(body.environmentId);
     if (!resolvedWorkspaceId) {
       return { ok: false, response: responses.notFoundResponse("Environment", body.environmentId) };
     }
 
     return {
       ok: true,
-      body: { ...body, workspaceId: resolvedWorkspaceId.id, environmentId: body.environmentId },
+      body: { ...body, workspaceId: resolvedWorkspaceId, environmentId: body.environmentId },
       alreadyAuthorized: false,
     };
   }
