@@ -8,6 +8,7 @@ import {
 import type { TUser } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import { hashString } from "@/lib/hash-string";
+import { deleteSessionsByUserId } from "@/modules/auth/lib/auth-session-repository";
 import { sendPasswordResetLinkEmail, sendPasswordResetNotifyEmail } from "@/modules/email";
 import {
   ACCOUNT_RECOVERY_LINK_EMAIL_ERROR_CODE,
@@ -26,6 +27,14 @@ type TPasswordResetAuditUserFixture = Pick<
   "id" | "email" | "locale" | "emailVerified"
 >;
 
+type TPasswordResetSessionRecord = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  sessionToken: string;
+  userId: string;
+  expires: Date;
+};
 type TPasswordResetTransactionStub = {
   user: {
     findUnique: (args: { where: { id: string } }) => Promise<TPasswordResetAuditUserFixture | null>;
@@ -39,6 +48,26 @@ type TPasswordResetTransactionStub = {
 const testState = vi.hoisted(() => {
   const tokenStore = new Map<string, TPasswordResetTokenRecord>();
   const users = new Map<string, TPasswordResetTestUser>();
+  const sessionStore = new Map<string, TPasswordResetSessionRecord>();
+
+  const cloneTokenRecord = (record: TPasswordResetTokenRecord): TPasswordResetTokenRecord => ({
+    ...record,
+    expiresAt: new Date(record.expiresAt),
+    createdAt: new Date(record.createdAt),
+    updatedAt: new Date(record.updatedAt),
+  });
+
+  const cloneUser = (user: TPasswordResetTestUser): TPasswordResetTestUser => ({
+    ...user,
+    emailVerified: user.emailVerified ? new Date(user.emailVerified) : null,
+  });
+
+  const cloneSessionRecord = (session: TPasswordResetSessionRecord): TPasswordResetSessionRecord => ({
+    ...session,
+    createdAt: new Date(session.createdAt),
+    updatedAt: new Date(session.updatedAt),
+    expires: new Date(session.expires),
+  });
 
   const selectAuditUser = (user: TPasswordResetTestUser): TPasswordResetAuditUserFixture => ({
     id: user.id,
@@ -91,7 +120,33 @@ const testState = vi.hoisted(() => {
     return 1;
   });
 
+  const mockDeleteSessionsByUserId = vi.fn(async (userId: string) => {
+    const matchingSessionEntries = [...sessionStore.entries()].filter(
+      ([, sessionRecord]) => sessionRecord.userId === userId
+    );
+
+    for (const [sessionId] of matchingSessionEntries) {
+      sessionStore.delete(sessionId);
+    }
+
+    return matchingSessionEntries.length;
+  });
+
+  const restoreMap = <TKey, TValue>(
+    store: Map<TKey, TValue>,
+    snapshot: ReadonlyArray<readonly [TKey, TValue]>
+  ): void => {
+    store.clear();
+    snapshot.forEach(([key, value]) => store.set(key, value));
+  };
   const mockTransaction = vi.fn(async <T>(callback: (tx: TPasswordResetTransactionStub) => Promise<T>) => {
+    const tokenSnapshot = [...tokenStore.entries()].map(
+      ([key, record]) => [key, cloneTokenRecord(record)] as const
+    );
+    const userSnapshot = [...users.entries()].map(([key, user]) => [key, cloneUser(user)] as const);
+    const sessionSnapshot = [...sessionStore.entries()].map(
+      ([key, session]) => [key, cloneSessionRecord(session)] as const
+    );
     const tx: TPasswordResetTransactionStub = {
       user: {
         findUnique: vi.fn(async ({ where }) => {
@@ -116,15 +171,24 @@ const testState = vi.hoisted(() => {
       },
     };
 
-    return await callback(tx);
+    try {
+      return await callback(tx);
+    } catch (error) {
+      restoreMap(tokenStore, tokenSnapshot);
+      restoreMap(users, userSnapshot);
+      restoreMap(sessionStore, sessionSnapshot);
+      throw error;
+    }
   });
 
   return {
     tokenStore,
     users,
+    sessionStore,
     mockUpsertActiveToken,
     mockFindByTokenHash,
     mockDeleteByTokenHash,
+    mockDeleteSessionsByUserId,
     mockConsumeActiveToken,
     mockTransaction,
   };
@@ -176,6 +240,9 @@ vi.mock("./password-reset-token-repository", () => ({
   consumeActiveToken: testState.mockConsumeActiveToken,
 }));
 
+vi.mock("@/modules/auth/lib/auth-session-repository", () => ({
+  deleteSessionsByUserId: testState.mockDeleteSessionsByUserId,
+}));
 describe("password-reset-service", () => {
   const user = {
     id: "cm8z6bn2q000008l34h8g7k9m",
@@ -241,10 +308,26 @@ describe("password-reset-service", () => {
     return storedUser;
   };
 
+  const createSessionRecord = (userId: string, sessionId: string): TPasswordResetSessionRecord => {
+    const now = new Date("2026-03-30T12:00:00.000Z");
+
+    return {
+      id: sessionId,
+      userId,
+      sessionToken: `session-token-${sessionId}`,
+      expires: new Date("2026-03-31T12:00:00.000Z"),
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
+
+  const getSessionsForUser = (userId: string): TPasswordResetSessionRecord[] =>
+    [...testState.sessionStore.values()].filter((session) => session.userId === userId);
   beforeEach(() => {
     constantsState.debugShowResetLink = false;
     testState.tokenStore.clear();
     testState.users.clear();
+    testState.sessionStore.clear();
     testState.users.set(user.id, {
       ...user,
       emailVerified: null,
@@ -343,6 +426,21 @@ describe("password-reset-service", () => {
     );
   });
 
+  test("revokes all active sessions for the user after a successful reset", async () => {
+    const otherUserId = "cm8z6bn2q000008l34h8g7k9n";
+    testState.sessionStore.set("session-user-1", createSessionRecord(user.id, "session-user-1"));
+    testState.sessionStore.set("session-user-2", createSessionRecord(user.id, "session-user-2"));
+    testState.sessionStore.set("session-other-1", createSessionRecord(otherUserId, "session-other-1"));
+
+    await requestPasswordReset(user, "public");
+    const token = parseTokenFromResetLink();
+
+    await completePasswordReset(token, "Password123");
+
+    expect(deleteSessionsByUserId).toHaveBeenCalledWith(user.id, expect.any(Object));
+    expect(getSessionsForUser(user.id)).toHaveLength(0);
+    expect(getSessionsForUser(otherUserId)).toHaveLength(1);
+  });
   test("allows only one successful result for concurrent token submissions", async () => {
     await requestPasswordReset(user, "public");
     const token = parseTokenFromResetLink();
@@ -424,12 +522,14 @@ describe("password-reset-service", () => {
   test("does not roll back a successful password reset when the notification email fails", async () => {
     await requestPasswordReset(user, "public");
     const token = parseTokenFromResetLink();
+    testState.sessionStore.set("session-user-1", createSessionRecord(user.id, "session-user-1"));
     vi.mocked(sendPasswordResetNotifyEmail).mockResolvedValueOnce(false);
 
     const result = await completePasswordReset(token, "Password123");
 
     expect(result.userId).toBe(user.id);
     expect(getStoredUser(user.id).password).toBe("hashed:Password123");
+    expect(getSessionsForUser(user.id)).toHaveLength(0);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         stage: "notify_email",
@@ -473,5 +573,30 @@ describe("password-reset-service", () => {
     );
 
     expect(hashPassword).not.toHaveBeenCalled();
+  });
+
+  test("rolls back the reset when session revocation fails", async () => {
+    await requestPasswordReset(user, "public");
+    const token = parseTokenFromResetLink();
+    testState.sessionStore.set("session-user-1", createSessionRecord(user.id, "session-user-1"));
+    testState.mockDeleteSessionsByUserId.mockRejectedValueOnce(new Error("Session revoke failed"));
+
+    await expect(completePasswordReset(token, "Password123")).rejects.toThrow("Session revoke failed");
+
+    expect(getStoredUser(user.id).password).toBe("old-password-hash");
+    expect(getStoredToken(user.id).tokenHash).toBe(`hash:${token}`);
+    expect(getSessionsForUser(user.id)).toHaveLength(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "session_revoke",
+        userId: user.id,
+      }),
+      "Password reset completion failed"
+    );
+
+    await expect(completePasswordReset(token, "Password123")).resolves.toMatchObject({
+      userId: user.id,
+    });
+    expect(getStoredUser(user.id).password).toBe("hashed:Password123");
   });
 });

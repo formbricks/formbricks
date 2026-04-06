@@ -1,9 +1,9 @@
-import * as Sentry from "@sentry/nextjs";
 import { Session, getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -11,7 +11,7 @@ import {
   isIntegrationRoute,
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
-import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -33,7 +33,10 @@ export interface THandlerParams<TProps = unknown> {
 }
 
 // Interface for wrapper function parameters
-export interface TWithV1ApiWrapperParams<TResult extends { response: Response }, TProps = unknown> {
+export interface TWithV1ApiWrapperParams<
+  TResult extends { response: Response; error?: unknown },
+  TProps = unknown,
+> {
   handler: (params: THandlerParams<TProps>) => Promise<TResult>;
   action?: TAuditAction;
   targetType?: TAuditTarget;
@@ -93,7 +96,7 @@ const handleRateLimiting = async (
 /**
  * Execute handler with error handling
  */
-const executeHandler = async <TResult extends { response: Response }, TProps>(
+const executeHandler = async <TResult extends { response: Response; error?: unknown }, TProps>(
   handler: (params: THandlerParams<TProps>) => Promise<TResult>,
   req: NextRequest,
   props: TProps,
@@ -158,34 +161,12 @@ const handleAuthentication = async (
 /**
  * Log error details to system logger and Sentry
  */
-const logErrorDetails = (res: Response, req: NextRequest, correlationId: string, error?: any): void => {
-  const logContext = {
-    correlationId,
-    method: req.method,
-    path: req.url,
+const logErrorDetails = (res: Response, req: NextRequest, error?: unknown): void => {
+  reportApiError({
+    request: req,
     status: res.status,
-    ...(error && { error }),
-  };
-
-  logger.withContext(logContext).error("V1 API Error Details");
-
-  if (SENTRY_DSN && IS_PRODUCTION && res.status >= 500) {
-    // Set correlation ID as a tag for easy filtering
-    Sentry.withScope((scope) => {
-      scope.setTag("correlationId", correlationId);
-      scope.setLevel("error");
-
-      // If we have an actual error, capture it with full stacktrace
-      // Otherwise, create a generic error with context
-      if (error instanceof Error) {
-        Sentry.captureException(error);
-      } else {
-        scope.setExtra("originalError", error);
-        const genericError = new Error(`API V1 error, id: ${correlationId}`);
-        Sentry.captureException(genericError);
-      }
-    });
-  }
+    error,
+  });
 };
 
 /**
@@ -195,7 +176,7 @@ const processResponse = async (
   res: Response,
   req: NextRequest,
   auditLog?: TApiAuditLog,
-  error?: any
+  error?: unknown
 ): Promise<void> => {
   const correlationId = req.headers.get("x-request-id") ?? "";
 
@@ -210,7 +191,7 @@ const processResponse = async (
 
   // Handle error logging
   if (!res.ok) {
-    logErrorDetails(res, req, correlationId, error);
+    logErrorDetails(res, req, error);
   }
 
   // Queue audit event if enabled and audit log exists
@@ -267,7 +248,7 @@ const getRouteType = (
  * @returns Wrapped handler function that returns the final HTTP response
  *
  */
-export const withV1ApiWrapper = <TResult extends { response: Response }, TProps = unknown>(
+export const withV1ApiWrapper = <TResult extends { response: Response; error?: unknown }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
   const { handler, action, targetType, customRateLimitConfig, unauthenticatedResponse } = params;
@@ -312,9 +293,10 @@ export const withV1ApiWrapper = <TResult extends { response: Response }, TProps 
     // === Handler Execution ===
     const { result, error } = await executeHandler(handler, req, props, auditLog, authentication);
     const res = result.response;
+    const reportedError = result.error ?? error;
 
     // === Response Processing & Logging ===
-    await processResponse(res, req, auditLog, error);
+    await processResponse(res, req, auditLog, reportedError);
 
     return res;
   };
