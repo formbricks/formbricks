@@ -219,6 +219,11 @@ export const startHobbyAction = authenticatedActionClient
 
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+
+    capturePostHogEvent(ctx.user.id, "stayed_on_hobby_plan", {
+      organization_id: parsedInput.organizationId,
+    });
+
     return { success: true };
   });
 
@@ -256,6 +261,10 @@ export const startProTrialAction = authenticatedActionClient
       plan: "pro",
       organization_id: parsedInput.organizationId,
       trial_duration_days: 14,
+    });
+
+    capturePostHogEvent(ctx.user.id, "reverse_trial_started", {
+      organization_id: parsedInput.organizationId,
     });
 
     return { success: true };

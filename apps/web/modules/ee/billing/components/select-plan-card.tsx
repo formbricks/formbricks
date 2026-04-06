@@ -3,7 +3,6 @@
 import { CheckIcon, GiftIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -50,9 +49,6 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
 
   const handleStartTrial = async () => {
     setIsStartingTrial(true);
-    if (posthog.__loaded) {
-      posthog.capture("reverse_trial_started", { organization_id: organizationId });
-    }
     try {
       const result = await startProTrialAction({ organizationId });
       if (result?.data) {
@@ -72,9 +68,6 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
 
   const handleContinueHobby = async () => {
     setIsStartingHobby(true);
-    if (posthog.__loaded) {
-      posthog.capture("stayed_on_hobby_plan", { organization_id: organizationId });
-    }
     try {
       const result = await startHobbyAction({ organizationId });
       if (result?.data) {

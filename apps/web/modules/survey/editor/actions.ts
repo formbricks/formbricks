@@ -147,8 +147,8 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    if (oldObject?.status !== "inProgress" && result.status === "inProgress") {
-      capturePostHogEvent(ctx.user.id, "survey_published", {
+    if (result.status !== "draft") {
+      capturePostHogEvent(ctx.user.id, "survey_updated", {
         survey_id: result.id,
         survey_type: result.type,
         question_count: getElementsFromBlocks(result.blocks).length,
