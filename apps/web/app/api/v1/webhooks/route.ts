@@ -1,4 +1,5 @@
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
@@ -37,7 +38,20 @@ export const POST = withV1ApiWrapper({
       return { response: responses.notAuthenticatedResponse() };
     }
 
-    const webhookInput = await req.json();
+    let webhookInput;
+    try {
+      webhookInput = await req.json();
+    } catch {
+      return {
+        response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+      };
+    }
+
+    // Accept workspaceId as alternative to environmentId
+    const resolved = await resolveBodyIds(webhookInput, authentication.environmentPermissions, "POST");
+    if (!resolved.ok) return { response: resolved.response };
+    webhookInput = resolved.body;
+
     const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
     if (!inputValidation.success) {
@@ -50,15 +64,12 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const environmentId = inputValidation.data.environmentId;
-    if (!environmentId) {
-      return {
-        response: responses.badRequestResponse("Environment ID is required"),
-      };
-    }
+    const { workspaceId } = inputValidation.data;
 
-    const perm = authentication.environmentPermissions.find((p) => p.environmentId === environmentId);
-    if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "POST")) {
+    if (
+      !resolved.alreadyAuthorized &&
+      !hasPermission(authentication.environmentPermissions, workspaceId, "POST")
+    ) {
       return {
         response: responses.unauthorizedResponse(),
       };

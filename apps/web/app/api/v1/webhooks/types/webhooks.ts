@@ -12,6 +12,7 @@ export const ZWebhookInput = ZWebhook.partial({
   triggers: true,
   url: true,
   environmentId: true,
+  workspaceId: true,
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;

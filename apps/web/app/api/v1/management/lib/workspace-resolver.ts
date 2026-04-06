@@ -69,8 +69,10 @@ export const resolveBodyIds = async <T extends Record<string, unknown>>(
       return { ok: false, response: responses.badRequestResponse("environmentId must be a string") };
     }
 
-    const resolvedWorkspaceId = await getWorkspaceIdFromEnvironmentId(body.environmentId);
-    if (!resolvedWorkspaceId) {
+    let resolvedWorkspaceId: string;
+    try {
+      resolvedWorkspaceId = await getWorkspaceIdFromEnvironmentId(body.environmentId);
+    } catch {
       return { ok: false, response: responses.notFoundResponse("Environment", body.environmentId) };
     }
 
@@ -82,8 +84,7 @@ export const resolveBodyIds = async <T extends Record<string, unknown>>(
   }
 
   return {
-    ok: true,
-    body: body as T & { environmentId: string; workspaceId: string },
-    alreadyAuthorized: false,
+    ok: false,
+    response: responses.badRequestResponse("Either environmentId or workspaceId must be provided"),
   };
 };
