@@ -11,7 +11,7 @@ import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -73,9 +73,13 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Environment", params.environmentId),
       };
     }
-    const { environmentId } = resolved;
+    const { environmentId, workspaceId } = resolved;
 
-    const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
+    const responseInputValidation = ZResponseInput.safeParse({
+      ...responseInput,
+      environmentId,
+      workspaceId,
+    });
 
     if (!responseInputValidation.success) {
       return {
@@ -99,7 +103,7 @@ export const POST = withV1ApiWrapper({
     const responseInputData = responseInputValidation.data;
 
     if (responseInputData.userId) {
-      const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
         return {
@@ -118,13 +122,13 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Survey", responseInputData.surveyId, true),
       };
     }
-    if (survey.environmentId !== environmentId) {
+    if (survey.workspaceId !== workspaceId) {
       return {
         response: responses.badRequestResponse(
-          "Survey is part of another environment",
+          "Survey is part of another workspace",
           {
-            "survey.environmentId": survey.environmentId,
-            environmentId,
+            "survey.workspaceId": survey.workspaceId,
+            workspaceId,
           },
           true
         ),
@@ -187,6 +191,7 @@ export const POST = withV1ApiWrapper({
     sendToPipeline({
       event: "responseCreated",
       environmentId: survey.environmentId,
+      workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
     });
@@ -195,6 +200,7 @@ export const POST = withV1ApiWrapper({
       sendToPipeline({
         event: "responseFinished",
         environmentId: survey.environmentId,
+        workspaceId,
         surveyId: responseData.surveyId,
         response: responseData,
       });

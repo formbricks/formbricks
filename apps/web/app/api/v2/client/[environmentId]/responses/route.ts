@@ -10,7 +10,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -54,9 +54,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!resolved) {
     return responses.notFoundResponse("Environment", params.environmentId);
   }
-  const { environmentId } = resolved;
+  const { environmentId, workspaceId } = resolved;
 
-  const responseInputValidation = ZResponseInputV2.safeParse({ ...responseInput, environmentId });
+  const responseInputValidation = ZResponseInputV2.safeParse({
+    ...responseInput,
+    environmentId,
+    workspaceId,
+  });
 
   if (!responseInputValidation.success) {
     return responses.badRequestResponse(
@@ -78,7 +82,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInputData = responseInputValidation.data;
 
   if (responseInputData.contactId) {
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
@@ -90,7 +94,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!survey) {
     return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
-  const surveyCheckResult = await checkSurveyValidity(survey, environmentId, responseInput);
+  const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInput);
   if (surveyCheckResult) return surveyCheckResult;
 
   // Validate response data for "other" options exceeding character limit
@@ -165,6 +169,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   sendToPipeline({
     event: "responseCreated",
     environmentId,
+    workspaceId,
     surveyId: responseData.surveyId,
     response: responseData,
   });
@@ -173,6 +178,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     sendToPipeline({
       event: "responseFinished",
       environmentId,
+      workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
     });

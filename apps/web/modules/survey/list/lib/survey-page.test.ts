@@ -90,7 +90,7 @@ describe("getSurveyListPage", () => {
 
     expect(buildWhereClause).toHaveBeenCalledWith(undefined);
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, AND: [] },
+      where: { workspaceId: environmentId, AND: [] },
       select: expect.any(Object),
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: 2,
@@ -130,7 +130,7 @@ describe("getSurveyListPage", () => {
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: environmentId,
         AND: [],
         OR: [{ name: { gt: "Bravo" } }, { name: "Bravo", id: { gt: "survey_b" } }],
       },
@@ -170,7 +170,7 @@ describe("getSurveyListPage", () => {
 
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(1, {
       where: {
-        environmentId,
+        workspaceId: environmentId,
         AND: [],
         status: "inProgress",
       },
@@ -180,7 +180,7 @@ describe("getSurveyListPage", () => {
     });
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(2, {
       where: {
-        environmentId,
+        workspaceId: environmentId,
         AND: [],
         status: { not: "inProgress" },
       },
@@ -260,7 +260,7 @@ describe("getSurveyListPage", () => {
     expect(prisma.survey.findMany).toHaveBeenCalledOnce();
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: environmentId,
         AND: [],
         status: { not: "inProgress" },
         OR: [

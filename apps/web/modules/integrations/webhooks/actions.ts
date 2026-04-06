@@ -7,8 +7,8 @@ import { generateWebhookSecret } from "@/lib/crypto";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromWebhookId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromWebhookId,
 } from "@/lib/utils/helper";
@@ -30,7 +30,8 @@ const ZCreateWebhookAction = z.object({
 
 export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreateWebhookAction).action(
   withAuditLogging("created", "webhook", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -42,7 +43,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
         {
           type: "workspaceTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });

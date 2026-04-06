@@ -42,7 +42,7 @@ const commonMockProperties = {
   createdAt: currentDate,
   updatedAt: currentDate,
   environmentId: mockId,
-  workspaceId: null,
+  workspaceId: mockId,
 };
 
 type SurveyMock = Prisma.SurveyGetPayload<{

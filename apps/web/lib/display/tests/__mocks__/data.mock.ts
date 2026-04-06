@@ -32,6 +32,7 @@ export const mockDisplayWithResponseId = createMockDisplay({
 
 export const mockDisplayInput = {
   environmentId: mockEnvironmentId,
+  workspaceId: mockId,
   surveyId: mockSurveyId,
 };
 export const mockDisplayInputWithUserId = {

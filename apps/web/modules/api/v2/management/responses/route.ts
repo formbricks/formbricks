@@ -1,6 +1,7 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -158,9 +159,12 @@ export const POST = async (request: Request) =>
       // Fetch created response with relations for pipeline
       const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
       if (createdResponseForPipeline.ok) {
+        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+
         sendToPipeline({
           event: "responseCreated",
           environmentId: environmentId,
+          workspaceId,
           surveyId: body.surveyId,
           response: createdResponseForPipeline.data,
         });
@@ -169,6 +173,7 @@ export const POST = async (request: Request) =>
           sendToPipeline({
             event: "responseFinished",
             environmentId: environmentId,
+            workspaceId,
             surveyId: body.surveyId,
             response: createdResponseForPipeline.data,
           });

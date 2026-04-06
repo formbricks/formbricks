@@ -5,5 +5,6 @@ export interface TPipelineInput {
   event: PipelineTriggers;
   response: TResponse;
   environmentId: string;
+  workspaceId: string;
   surveyId: string;
 }

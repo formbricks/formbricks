@@ -15,11 +15,11 @@ export const SegmentsPage = async ({
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const { isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const [segments, contactAttributeKeys] = await Promise.all([
-    getSegments(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
+    getSegments(workspace.id),
+    getContactAttributeKeys(workspace.id),
   ]);
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
@@ -42,6 +42,7 @@ export const SegmentsPage = async ({
           environmentId={params.environmentId}
           contactAttributeKeys={contactAttributeKeys}
           segments={filteredSegments}
+          workspaceId={workspace.id}
         />
       }
       upgradePromptTitle={t("environments.segments.unlock_segments_title")}

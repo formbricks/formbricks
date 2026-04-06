@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { ITEMS_PER_PAGE } from "../constants";
 import {
   createOrUpdateIntegration,
@@ -22,6 +23,7 @@ vi.mock("@formbricks/database", () => ({
       upsert: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       delete: vi.fn(),
     },
   },
@@ -30,6 +32,7 @@ vi.mock("@formbricks/database", () => ({
 describe("Integration Service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   afterEach(() => {
@@ -90,10 +93,12 @@ describe("Integration Service", () => {
         update: {
           ...mockIntegrationData,
           environment: { connect: { id: mockEnvironmentId } },
+          workspace: { connect: { id: "workspace-id-mock" } },
         },
         create: {
           ...mockIntegrationData,
           environment: { connect: { id: mockEnvironmentId } },
+          workspace: { connect: { id: "workspace-id-mock" } },
         },
       });
 
@@ -115,11 +120,11 @@ describe("Integration Service", () => {
   });
 
   describe("getIntegrations", () => {
-    const mockEnvironmentId = "clg123456789012345678901234";
+    const mockWorkspaceId = "clg123456789012345678901234";
     const mockIntegrations = [
       {
         id: "int_123",
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         type: IntegrationType.googleSheets,
         config: mockIntegrationConfig,
       },
@@ -128,11 +133,11 @@ describe("Integration Service", () => {
     test("should get all integrations for an environment", async () => {
       vi.mocked(prisma.integration.findMany).mockResolvedValue(mockIntegrations);
 
-      const result = await getIntegrations(mockEnvironmentId);
+      const result = await getIntegrations(mockWorkspaceId);
 
       expect(prisma.integration.findMany).toHaveBeenCalledWith({
         where: {
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
         },
       });
 
@@ -143,11 +148,11 @@ describe("Integration Service", () => {
       const page = 2;
       vi.mocked(prisma.integration.findMany).mockResolvedValue(mockIntegrations);
 
-      const result = await getIntegrations(mockEnvironmentId, page);
+      const result = await getIntegrations(mockWorkspaceId, page);
 
       expect(prisma.integration.findMany).toHaveBeenCalledWith({
         where: {
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
         },
         take: ITEMS_PER_PAGE,
         skip: ITEMS_PER_PAGE * (page - 1),
@@ -164,7 +169,7 @@ describe("Integration Service", () => {
 
       vi.mocked(prisma.integration.findMany).mockRejectedValue(prismaError);
 
-      await expect(getIntegrations(mockEnvironmentId)).rejects.toThrow(DatabaseError);
+      await expect(getIntegrations(mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -172,7 +177,7 @@ describe("Integration Service", () => {
     const mockIntegrationId = "int_123";
     const mockIntegration = {
       id: mockIntegrationId,
-      environmentId: "clg123456789012345678901234",
+      workspaceId: "clg123456789012345678901234",
       type: IntegrationType.googleSheets,
       config: mockIntegrationConfig,
     };
@@ -212,26 +217,24 @@ describe("Integration Service", () => {
   });
 
   describe("getIntegrationByType", () => {
-    const mockEnvironmentId = "clg123456789012345678901234";
+    const mockWorkspaceId = "clg123456789012345678901234";
     const mockType = IntegrationType.googleSheets;
     const mockIntegration = {
       id: "int_123",
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       type: mockType,
       config: mockIntegrationConfig,
     };
 
     test("should get an integration by type", async () => {
-      vi.mocked(prisma.integration.findUnique).mockResolvedValue(mockIntegration);
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue(mockIntegration);
 
-      const result = await getIntegrationByType(mockEnvironmentId, mockType);
+      const result = await getIntegrationByType(mockWorkspaceId, mockType);
 
-      expect(prisma.integration.findUnique).toHaveBeenCalledWith({
+      expect(prisma.integration.findFirst).toHaveBeenCalledWith({
         where: {
-          type_environmentId: {
-            environmentId: mockEnvironmentId,
-            type: mockType,
-          },
+          workspaceId: mockWorkspaceId,
+          type: mockType,
         },
       });
 
@@ -239,9 +242,9 @@ describe("Integration Service", () => {
     });
 
     test("should return null when integration is not found", async () => {
-      vi.mocked(prisma.integration.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue(null);
 
-      const result = await getIntegrationByType(mockEnvironmentId, mockType);
+      const result = await getIntegrationByType(mockWorkspaceId, mockType);
 
       expect(result).toBeNull();
     });
@@ -252,9 +255,9 @@ describe("Integration Service", () => {
         clientVersion: "5.0.0",
       });
 
-      vi.mocked(prisma.integration.findUnique).mockRejectedValue(prismaError);
+      vi.mocked(prisma.integration.findFirst).mockRejectedValue(prismaError);
 
-      await expect(getIntegrationByType(mockEnvironmentId, mockType)).rejects.toThrow(DatabaseError);
+      await expect(getIntegrationByType(mockWorkspaceId, mockType)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -262,7 +265,7 @@ describe("Integration Service", () => {
     const mockIntegrationId = "int_123";
     const mockIntegration = {
       id: mockIntegrationId,
-      environmentId: "clg123456789012345678901234",
+      workspaceId: "clg123456789012345678901234",
       type: IntegrationType.googleSheets,
       config: mockIntegrationConfig,
     };

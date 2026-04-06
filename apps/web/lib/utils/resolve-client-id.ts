@@ -1,4 +1,5 @@
 import "server-only";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 
 export type TResolvedClientIds = {
@@ -13,7 +14,7 @@ export type TResolvedClientIds = {
  * - If not, checks the Workspace table and returns the workspace's production environment id.
  * - Returns null if neither lookup succeeds.
  */
-export const resolveClientApiIds = async (id: string): Promise<TResolvedClientIds | null> => {
+export const resolveClientApiIds = reactCache(async (id: string): Promise<TResolvedClientIds | null> => {
   // Try as environmentId first (existing SDKs)
   const environment = await prisma.environment.findUnique({
     where: { id },
@@ -42,4 +43,4 @@ export const resolveClientApiIds = async (id: string): Promise<TResolvedClientId
   }
 
   return null;
-};
+});

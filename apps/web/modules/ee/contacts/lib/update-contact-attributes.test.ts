@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
@@ -6,6 +7,9 @@ import { getContact } from "./contacts";
 import { updateContactAttributes } from "./update-contact-attributes";
 
 // Mock dependencies
+vi.mock("@/lib/utils/helper", () => ({
+  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+}));
 vi.mock("./contacts");
 vi.mock("./contact-attributes");
 vi.mock("./contact-attribute-keys");
@@ -14,6 +18,7 @@ vi.mock("./attributes");
 describe("updateContactAttributes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   test("should update contact attributes with deleteRemovedAttributes: true", async () => {
@@ -93,7 +98,7 @@ describe("updateContactAttributes", () => {
     const result = await updateContactAttributes(contactId, attributes);
 
     expect(getContact).toHaveBeenCalledWith(contactId);
-    expect(getContactAttributeKeys).toHaveBeenCalledWith(environmentId);
+    expect(getContactAttributeKeys).toHaveBeenCalledWith("workspace-id-mock");
     // Should call updateAttributes with deleteRemovedAttributes: true for UI form updates
     expect(updateAttributes).toHaveBeenCalledWith(contactId, userId, environmentId, attributes, true);
     expect(getContactAttributes).toHaveBeenCalledWith(contactId);

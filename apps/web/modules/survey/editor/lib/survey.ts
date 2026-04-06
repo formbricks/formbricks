@@ -9,7 +9,7 @@ import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 
 export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -21,9 +21,12 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(updatedSurvey.environmentId);
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
-    const currentSurvey = await getSurvey(surveyId);
+    const [actionClasses, currentSurvey] = await Promise.all([
+      getActionClasses(workspaceId),
+      getSurvey(surveyId),
+    ]);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
@@ -246,7 +249,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const surveyWorkspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(surveyWorkspaceId);
     const organization = await getOrganizationAIKeys(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);

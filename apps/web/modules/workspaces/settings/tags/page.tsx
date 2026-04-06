@@ -1,5 +1,5 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -12,10 +12,12 @@ export const TagsPage = async (props: { params: Promise<{ environmentId: string 
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
+
+  const workspaceId = environment.workspaceId;
 
   const [tags, environmentTagsCount] = await Promise.all([
-    getTagsByEnvironmentId(params.environmentId),
+    getTagsByWorkspaceId(workspaceId),
     getTagsOnResponsesCount(params.environmentId),
   ]);
 

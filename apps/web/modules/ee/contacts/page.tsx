@@ -15,7 +15,7 @@ export const ContactsPage = async ({
 }) => {
   const params = await paramsProps;
 
-  const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
 
@@ -23,8 +23,8 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
-  const initialContacts = await getContacts(params.environmentId, 0);
+  const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
+  const initialContacts = await getContacts(workspace.id, 0);
 
   const AddContactsButton = (
     <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />

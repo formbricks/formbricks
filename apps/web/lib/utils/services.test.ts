@@ -123,7 +123,7 @@ describe("Service Functions", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.actionClass.findUnique).toHaveBeenCalledWith({
         where: { id: actionClassId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockActionClass);
     });
@@ -206,7 +206,7 @@ describe("Service Functions", () => {
       const result = await getIntegration(integrationId);
       expect(prisma.integration.findUnique).toHaveBeenCalledWith({
         where: { id: integrationId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockIntegration);
     });
@@ -351,7 +351,7 @@ describe("Service Functions", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { id: surveyId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockSurvey);
     });
@@ -379,7 +379,7 @@ describe("Service Functions", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({
         where: { id: tagId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockTag);
     });
@@ -396,7 +396,7 @@ describe("Service Functions", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.webhook.findUnique).toHaveBeenCalledWith({
         where: { id: webhookId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockWebhook);
     });
@@ -530,7 +530,7 @@ describe("Service Functions", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.contact.findUnique).toHaveBeenCalledWith({
         where: { id: contactId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockContact);
     });
@@ -558,7 +558,7 @@ describe("Service Functions", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.segment.findUnique).toHaveBeenCalledWith({
         where: { id: segmentId },
-        select: { environmentId: true },
+        select: { environmentId: true, workspaceId: true },
       });
       expect(result).toEqual(mockSegment);
     });

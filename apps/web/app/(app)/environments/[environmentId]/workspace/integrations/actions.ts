@@ -7,8 +7,8 @@ import { createOrUpdateIntegration, deleteIntegration } from "@/lib/integration/
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromIntegrationId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromIntegrationId,
 } from "@/lib/utils/helper";
@@ -23,7 +23,8 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
   .inputSchema(ZCreateOrUpdateIntegrationAction)
   .action(
     withAuditLogging("createdUpdated", "integration", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -36,7 +37,7 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
           {
             type: "workspaceTeam",
             minPermission: "readWrite",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+            workspaceId,
           },
         ],
       });

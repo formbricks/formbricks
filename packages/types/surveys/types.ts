@@ -826,7 +826,7 @@ export const ZSurveyBase = z.object({
   name: z.string(),
   type: ZSurveyType,
   environmentId: z.string(),
-  workspaceId: z.string().nullable(),
+  workspaceId: z.cuid2(),
   createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,

@@ -190,6 +190,7 @@ export const createApiKey = async (
                 create: environmentPermissions.map((envPerm) => ({
                   environmentId: envPerm.environmentId,
                   permission: envPerm.permission,
+                  workspaceId: envPerm.workspaceId,
                 })),
               },
             }

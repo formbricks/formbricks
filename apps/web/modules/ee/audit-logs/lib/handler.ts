@@ -2,7 +2,7 @@ import { logger } from "@formbricks/logger";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
@@ -230,7 +230,8 @@ export const withAuditLogging = <
           const environmentId = (parsedInput as Record<string, any>)?.environmentId;
           if (environmentId && typeof environmentId === "string") {
             try {
-              organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+              const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+              organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
             } catch (err) {
               logger.error(err, "Failed to get organizationId from environmentId in audit logging");
               organizationId = UNKNOWN_DATA;

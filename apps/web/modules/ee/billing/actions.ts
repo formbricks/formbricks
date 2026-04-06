@@ -8,7 +8,7 @@ import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
@@ -31,7 +31,8 @@ export const manageSubscriptionAction = authenticatedActionClient
   .inputSchema(ZManageSubscriptionAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -72,7 +73,8 @@ export const createPlanCheckoutAction = authenticatedActionClient
   .inputSchema(ZCreatePlanCheckoutAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -146,7 +148,8 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
   .inputSchema(ZCreateTrialPaymentCheckoutAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -268,7 +271,8 @@ const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
 
 export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZChangeBillingPlanAction).action(
   withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -321,7 +325,8 @@ export const undoPendingPlanChangeAction = authenticatedActionClient
   .inputSchema(ZUndoPendingPlanChangeAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,

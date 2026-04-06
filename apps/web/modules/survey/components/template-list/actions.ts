@@ -5,7 +5,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -39,7 +39,8 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
 
 export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateSurveyAction).action(
   withAuditLogging("created", "survey", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -51,7 +52,7 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });

@@ -14,7 +14,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const environmentId = "test-environment-id";
+const workspaceId = "test-workspace-id";
 const sourceZapier = "zapier";
 
 describe("getWebhookCountBySource", () => {
@@ -26,16 +26,16 @@ describe("getWebhookCountBySource", () => {
     const mockCount = 5;
     vi.mocked(prisma.webhook.count).mockResolvedValue(mockCount);
 
-    const count = await getWebhookCountBySource(environmentId, sourceZapier);
+    const count = await getWebhookCountBySource(workspaceId, sourceZapier);
 
     expect(count).toBe(mockCount);
     expect(validateInputs).toHaveBeenCalledWith(
-      [environmentId, expect.any(Object)],
+      [workspaceId, expect.any(Object)],
       [sourceZapier, expect.any(Object)]
     );
     expect(prisma.webhook.count).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: workspaceId,
         source: sourceZapier,
       },
     });
@@ -45,16 +45,16 @@ describe("getWebhookCountBySource", () => {
     const mockCount = 10;
     vi.mocked(prisma.webhook.count).mockResolvedValue(mockCount);
 
-    const count = await getWebhookCountBySource(environmentId);
+    const count = await getWebhookCountBySource(workspaceId);
 
     expect(count).toBe(mockCount);
     expect(validateInputs).toHaveBeenCalledWith(
-      [environmentId, expect.any(Object)],
+      [workspaceId, expect.any(Object)],
       [undefined, expect.any(Object)]
     );
     expect(prisma.webhook.count).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: workspaceId,
         source: undefined,
       },
     });
@@ -67,7 +67,7 @@ describe("getWebhookCountBySource", () => {
     });
     vi.mocked(prisma.webhook.count).mockRejectedValue(prismaError);
 
-    await expect(getWebhookCountBySource(environmentId, sourceZapier)).rejects.toThrow(DatabaseError);
+    await expect(getWebhookCountBySource(workspaceId, sourceZapier)).rejects.toThrow(DatabaseError);
     expect(prisma.webhook.count).toHaveBeenCalledTimes(1);
   });
 
@@ -75,7 +75,7 @@ describe("getWebhookCountBySource", () => {
     const genericError = new Error("Something went wrong");
     vi.mocked(prisma.webhook.count).mockRejectedValue(genericError);
 
-    await expect(getWebhookCountBySource(environmentId)).rejects.toThrow(genericError);
+    await expect(getWebhookCountBySource(workspaceId)).rejects.toThrow(genericError);
     expect(prisma.webhook.count).toHaveBeenCalledTimes(1);
   });
 });

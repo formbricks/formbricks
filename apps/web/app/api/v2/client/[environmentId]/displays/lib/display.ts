@@ -11,7 +11,7 @@ import { doesContactExist } from "./contact";
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInputV2]);
 
-  const { contactId, surveyId, environmentId } = displayInput;
+  const { contactId, surveyId, workspaceId } = displayInput;
 
   try {
     const contactExists = contactId ? await doesContactExist(contactId) : false;
@@ -19,7 +19,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
     const survey = await prisma.survey.findUnique({
       where: {
         id: surveyId,
-        environmentId,
+        workspaceId,
       },
     });
     if (!survey) {

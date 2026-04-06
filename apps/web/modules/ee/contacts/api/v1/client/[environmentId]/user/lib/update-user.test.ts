@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";
@@ -57,10 +58,12 @@ const mockContactData = {
 describe("updateUser", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     // Mock environment lookup (cached) - just provide what's needed
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
       id: mockEnvironmentId,
       type: "production",
+      workspaceId: "workspace-id-mock",
     } as any);
     // Mock successful attribute updates
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: [] });
@@ -88,6 +91,7 @@ describe("updateUser", () => {
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
         environment: { connect: { id: mockEnvironmentId } },
+        workspace: { connect: { id: "workspace-id-mock" } },
         attributes: {
           create: [
             {

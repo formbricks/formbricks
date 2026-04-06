@@ -8,6 +8,7 @@ import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
@@ -124,6 +125,7 @@ const resetMocks = () => {
   vi.mocked(doesEnvironmentExist).mockClear();
   vi.mocked(getWorkspaceWithLanguagesByEnvironmentId).mockClear();
   vi.mocked(getOrganizationByEnvironmentId).mockClear();
+  vi.mocked(getWorkspaceIdFromEnvironmentId).mockClear();
   vi.mocked(createId).mockClear();
   vi.mocked(prisma.survey.findMany).mockReset();
   vi.mocked(prisma.survey.findUnique).mockReset();
@@ -171,7 +173,7 @@ describe("getSurveyCount", () => {
     const count = await getSurveyCount(environmentId);
     expect(count).toBe(5);
     expect(prisma.survey.count).toHaveBeenCalledWith({
-      where: { environmentId },
+      where: { workspaceId: environmentId },
     });
     expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
   });
@@ -269,7 +271,7 @@ describe("getSurveys", () => {
     expect(surveys).toEqual(expectedSurveys);
     expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, ...buildWhereClause() },
+      where: { workspaceId: environmentId, ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause(),
       take: undefined,
@@ -283,7 +285,7 @@ describe("getSurveys", () => {
 
     expect(surveys).toEqual([expectedSurveys[0]]);
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, ...buildWhereClause() },
+      where: { workspaceId: environmentId, ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause(),
       take: 1,
@@ -304,7 +306,7 @@ describe("getSurveys", () => {
     expect(buildOrderByClause).toHaveBeenCalledWith("createdAt");
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { environmentId, AND: [{ name: { contains: "Test" } }] }, // Check with correct structure
+        where: { workspaceId: environmentId, AND: [{ name: { contains: "Test" } }] }, // Check with correct structure
         orderBy: [{ createdAt: "desc" }], // Check the mocked order by
       })
     );
@@ -378,17 +380,17 @@ describe("getSurveysSortedByRelevance", () => {
     expect(surveys).toEqual([expectedInProgressSurvey, expectedOtherSurvey]);
     expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.count).toHaveBeenCalledWith({
-      where: { environmentId, status: "inProgress", ...buildWhereClause() },
+      where: { workspaceId: environmentId, status: "inProgress", ...buildWhereClause() },
     });
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(1, {
-      where: { environmentId, status: "inProgress", ...buildWhereClause() },
+      where: { workspaceId: environmentId, status: "inProgress", ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause("updatedAt"),
       take: 2,
       skip: 0,
     });
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(2, {
-      where: { environmentId, status: { not: "inProgress" }, ...buildWhereClause() },
+      where: { workspaceId: environmentId, status: { not: "inProgress" }, ...buildWhereClause() },
       select: surveySelect,
       orderBy: buildOrderByClause("updatedAt"),
       take: 1,
@@ -553,6 +555,7 @@ describe("copySurveyToOtherEnvironment", () => {
 
   beforeEach(() => {
     resetMocks();
+    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     vi.mocked(createId).mockReturnValue("new_cuid2_id");
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockExistingSurveyDetails as any);
     vi.mocked(doesEnvironmentExist).mockResolvedValue(environmentId);
@@ -663,6 +666,7 @@ describe("copySurveyToOtherEnvironment", () => {
               isPrivate: true,
               filters: surveyWithPrivateSegment.segment.filters,
               environment: { connect: { id: targetEnvironmentId } },
+              workspace: { connect: { id: targetWorkspaceId } },
             },
           },
         }),
@@ -713,6 +717,7 @@ describe("copySurveyToOtherEnvironment", () => {
               isPrivate: false,
               filters: [],
               environment: { connect: { id: targetEnvironmentId } },
+              workspace: { connect: { id: targetWorkspaceId } },
             },
           },
         }),
@@ -747,6 +752,7 @@ describe("copySurveyToOtherEnvironment", () => {
               isPrivate: false,
               filters: [],
               environment: { connect: { id: targetEnvironmentId } },
+              workspace: { connect: { id: targetWorkspaceId } },
             },
           },
         }),
