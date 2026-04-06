@@ -1,10 +1,10 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -18,7 +18,7 @@ import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-n
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditLogoProps {
-  workspace: Workspace;
+  workspace: TWorkspace;
   environmentId: string;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
@@ -68,7 +68,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
 
     setIsLoading(true);
     try {
-      const updatedWorkspace: Workspace["logo"] = {
+      const updatedWorkspace = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
@@ -98,7 +98,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
 
     setIsLoading(true);
     try {
-      const updatedWorkspace: Workspace["logo"] = {
+      const updatedWorkspace = {
         logo: { url: undefined, bgColor: undefined },
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({

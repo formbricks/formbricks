@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createQuotaAction,
@@ -69,10 +70,11 @@ export const QuotasCard = ({
   hasResponses,
 }: QuotasCardProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [activeQuota, setActiveQuota] = useState<TSurveyQuota | null>(null);
-  const environmentId = localSurvey.environmentId;
   const [quotaToDelete, setQuotaToDelete] = useState<TSurveyQuota | null>(null);
   const [quotaResponseCount, setQuotaResponseCount] = useState(0);
   const [isDeletingQuota, setIsDeletingQuota] = useState(false);
@@ -175,13 +177,13 @@ export const QuotasCard = ({
                   {
                     text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
+                      ? `${workspaceBasePath}/settings/billing`
                       : "https://formbricks.com/upgrade-self-hosting-license",
                   },
                   {
                     text: t("common.learn_more"),
                     href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
+                      ? `${workspaceBasePath}/settings/billing`
                       : "https://formbricks.com/learn-more-self-hosting-license",
                   },
                 ]}

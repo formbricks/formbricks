@@ -7,6 +7,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
@@ -42,7 +43,8 @@ export const SingleResponseCardHeader = ({
     : null;
 
   const { t } = useTranslation();
-  const environmentId = survey.environmentId;
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const canResponseBeDeleted = response.finished
     ? true
     : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
@@ -59,7 +61,7 @@ export const SingleResponseCardHeader = ({
                 user ? (
                   <Link
                     className="flex items-center space-x-2"
-                    href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
+                    href={`${workspaceBasePath}/contacts/${response.contact.id}`}>
                     <PersonAvatar personId={response.contact.id} />
                     <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                       {displayIdentifier}
@@ -88,9 +90,7 @@ export const SingleResponseCardHeader = ({
               {(survey.type === "link" || environment.appSetupCompleted) && (
                 <SurveyStatusIndicator status={survey.status} />
               )}
-              <Link
-                className="hover:underline"
-                href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
+              <Link className="hover:underline" href={`${workspaceBasePath}/surveys/${survey.id}/summary`}>
                 {survey.name}
               </Link>
             </div>

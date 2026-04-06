@@ -7,8 +7,8 @@ import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 interface SurveyTemplateProps {
   params: Promise<{
-    environmentId: string;
+    workspaceId: string;
   }>;
 }
 
@@ -31,27 +31,27 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(params.environmentId);
+  const workspace = await getWorkspaceWithTeamIds(params.workspaceId);
 
   if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, isBilling, environment, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
+    return redirect(`/workspaces/${workspace.id}/settings/billing`);
   }
 
-  const workspaceId = environment.workspaceId;
-  const surveyCount = await getSurveyCount(workspaceId);
+  const surveyCount = await getSurveyCount(params.workspaceId);
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" asChild>
-        <Link href={`/environments/${environment.id}/surveys/templates`}>
+        <Link href={`${workspaceBasePath}/surveys/templates`}>
           {t("environments.surveys.new_survey")}
           <PlusIcon />
         </Link>

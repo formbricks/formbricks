@@ -11,6 +11,7 @@ import {
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
@@ -32,6 +33,9 @@ export const GET = async (req: Request) => {
     return responses.unauthorizedResponse();
   }
 
+  const workspace = await getWorkspaceByEnvironmentId(environmentId);
+  const basePath = workspace ? `/workspaces/${workspace.id}` : `/environments/${environmentId}`;
+
   if (code && typeof code !== "string") {
     return responses.badRequestResponse("`code` must be a string");
   }
@@ -45,17 +49,13 @@ export const GET = async (req: Request) => {
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
 
   if (!code) {
-    return Response.redirect(
-      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
-    );
+    return Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/google-sheets`);
   }
 
   const token = await oAuth2Client.getToken(code);
   const key = token.res?.data;
   if (!key) {
-    return Response.redirect(
-      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
-    );
+    return Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/google-sheets`);
   }
 
   oAuth2Client.setCredentials({ access_token: key.access_token });
@@ -84,9 +84,7 @@ export const GET = async (req: Request) => {
 
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
   if (result) {
-    return Response.redirect(
-      `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
-    );
+    return Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/google-sheets`);
   }
 
   return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");

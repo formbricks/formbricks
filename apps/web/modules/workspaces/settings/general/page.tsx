@@ -1,8 +1,8 @@
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -12,12 +12,12 @@ import { DeleteWorkspace } from "./components/delete-workspace";
 import { EditWaitingTimeForm } from "./components/edit-waiting-time-form";
 import { EditWorkspaceNameForm } from "./components/edit-workspace-name-form";
 
-export const GeneralSettingsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, isOwner, isManager, workspace, organization } = await getEnvironmentAuth(
-    params.environmentId
+  const { isReadOnly, isOwner, isManager, workspace, organization } = await getWorkspaceAuth(
+    params.workspaceId
   );
 
   const organizationWorkspaces = await getWorkspaces(organization.id);
@@ -27,7 +27,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation environmentId={params.environmentId} activeId="general" />
+        <WorkspaceConfigNavigation activeId="general" />
       </PageHeader>
       <SettingsCard
         title={t("common.workspace_name")}
@@ -50,7 +50,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
         title={t("environments.workspace.general.delete_workspace")}
         description={t("environments.workspace.general.delete_workspace_settings_description")}>
         <DeleteWorkspace
-          environmentId={params.environmentId}
+          organizationId={organization.id}
           currentWorkspace={workspace}
           organizationWorkspaces={organizationWorkspaces}
           isOwnerOrManager={isOwnerOrManager}

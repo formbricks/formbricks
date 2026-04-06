@@ -8,8 +8,8 @@ import { TLanguage } from "@formbricks/types/workspace";
 import {
   DateRange,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
 import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
 
 describe("surveys", () => {

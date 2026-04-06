@@ -33,7 +33,6 @@ interface OrganizationActionsProps {
   isInviteDisabled: boolean;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
-  environmentId: string;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
   isStorageConfigured: boolean;
@@ -50,7 +49,6 @@ export const OrganizationActions = ({
   isInviteDisabled,
   isAccessControlAllowed,
   isFormbricksCloud,
-  environmentId,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
   isStorageConfigured,
@@ -168,7 +166,6 @@ export const OrganizationActions = ({
         membershipRole={membershipRole}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
-        environmentId={environmentId}
         teams={teams}
         isStorageConfigured={isStorageConfigured}
         isOwnerOrManager={isOwnerOrManager}

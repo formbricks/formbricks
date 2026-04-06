@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-export const WorkspaceSettingsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const WorkspaceSettingsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
-  return redirect(`/environments/${params.environmentId}/workspace/general`);
+  return redirect(`/workspaces/${params.workspaceId}/settings/general`);
 };

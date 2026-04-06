@@ -45,7 +45,9 @@ export const EditWelcomeCard = ({
   const { t } = useTranslation();
 
   const path = usePathname();
-  const environmentId = path?.split("/environments/")[1]?.split("/")[0];
+  // Parse environment or workspace ID from path to build the base path for file uploads
+  const environmentId =
+    path?.split("/environments/")[1]?.split("/")[0] ?? path?.split("/workspaces/")[1]?.split("/")[0];
 
   let open = activeElementId == "start";
 

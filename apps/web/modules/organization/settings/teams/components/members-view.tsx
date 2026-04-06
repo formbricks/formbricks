@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -16,7 +16,6 @@ interface MembersViewProps {
   membershipRole?: TOrganizationRole;
   organization: TOrganization;
   currentUserId: string;
-  environmentId: string;
   isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
@@ -35,7 +34,6 @@ export const MembersView = async ({
   membershipRole,
   organization,
   currentUserId,
-  environmentId,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
@@ -70,7 +68,6 @@ export const MembersView = async ({
           isAccessControlAllowed={isAccessControlAllowed}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isStorageConfigured={IS_STORAGE_CONFIGURED}
-          environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}

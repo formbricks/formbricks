@@ -5,17 +5,13 @@ import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
 
-export const ContactsPage = async ({
-  params: paramsProps,
-}: {
-  params: Promise<{ environmentId: string }>;
-}) => {
+export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
   const params = await paramsProps;
 
-  const { environment, isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const t = await getTranslate();
 
@@ -34,7 +30,7 @@ export const ContactsPage = async ({
     <ContactsPageLayout
       pageTitle={t("common.contacts")}
       activeId="contacts"
-      environmentId={params.environmentId}
+      workspaceId={params.workspaceId}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
       cta={AddContactsButton}>

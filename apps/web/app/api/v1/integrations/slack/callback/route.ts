@@ -9,6 +9,7 @@ import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } 
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -34,6 +35,9 @@ export const GET = withV1ApiWrapper({
         response: responses.unauthorizedResponse(),
       };
     }
+
+    const workspace = await getWorkspaceByEnvironmentId(environmentId);
+    const basePath = workspace ? `/workspaces/${workspace.id}` : `/environments/${environmentId}`;
 
     if (code && typeof code !== "string") {
       return {
@@ -107,16 +111,12 @@ export const GET = withV1ApiWrapper({
 
       if (result) {
         return {
-          response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack`
-          ),
+          response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/slack`),
         };
       }
     } else if (error) {
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack?error=${error}`
-        ),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/slack?error=${error}`),
       };
     }
 

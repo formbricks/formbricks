@@ -17,7 +17,7 @@ import {
   getIsSpamProtectionEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
@@ -26,7 +26,7 @@ import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
+import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
@@ -40,7 +40,7 @@ export const generateMetadata = async (props: { params: Promise<{ surveyId: stri
 };
 
 export const SurveyEditorPage = async (props: {
-  params: Promise<{ environmentId: string; surveyId: string }>;
+  params: Promise<{ workspaceId: string; surveyId: string }>;
   searchParams: Promise<{ mode?: string }>;
 }) => {
   const searchParams = await props.searchParams;
@@ -54,14 +54,14 @@ export const SurveyEditorPage = async (props: {
     currentUserMembership,
     workspacePermission,
     workspace,
-  } = await getEnvironmentAuth(params.environmentId);
+  } = await getWorkspaceAuth(params.workspaceId);
 
   const t = await getTranslate();
 
   const [survey, workspaceWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
     await Promise.all([
       getSurvey(params.surveyId),
-      getWorkspaceWithTeamIdsByEnvironmentId(params.environmentId),
+      getWorkspaceWithTeamIds(params.workspaceId),
       getActionClasses(workspace.id),
       getContactAttributeKeys(workspace.id),
       getResponseCountBySurveyId(params.surveyId),

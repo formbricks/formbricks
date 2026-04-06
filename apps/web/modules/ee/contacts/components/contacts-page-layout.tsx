@@ -9,7 +9,7 @@ import { ContactsSecondaryNavigation } from "./contacts-secondary-navigation";
 interface ContactsPageLayoutProps {
   pageTitle: string;
   activeId: string;
-  environmentId: string;
+  workspaceId: string;
   isContactsEnabled: boolean;
   isReadOnly: boolean;
   cta?: ReactNode;
@@ -21,7 +21,7 @@ interface ContactsPageLayoutProps {
 export const ContactsPageLayout = async ({
   pageTitle,
   activeId,
-  environmentId,
+  workspaceId,
   isContactsEnabled,
   isReadOnly,
   cta,
@@ -30,11 +30,12 @@ export const ContactsPageLayout = async ({
   upgradePromptDescription,
 }: ContactsPageLayoutProps) => {
   const t = await getTranslate();
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
 
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={pageTitle} cta={isContactsEnabled && !isReadOnly ? cta : undefined}>
-        <ContactsSecondaryNavigation activeId={activeId} environmentId={environmentId} />
+        <ContactsSecondaryNavigation activeId={activeId} workspaceId={workspaceId} />
       </PageHeader>
 
       {isContactsEnabled ? (
@@ -48,13 +49,13 @@ export const ContactsPageLayout = async ({
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/environments/${environmentId}/settings/billing`
+                  ? `${workspaceBasePath}/settings/billing`
                   : "https://formbricks.com/upgrade-self-hosting-license",
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/environments/${environmentId}/settings/billing`
+                  ? `${workspaceBasePath}/settings/billing`
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}

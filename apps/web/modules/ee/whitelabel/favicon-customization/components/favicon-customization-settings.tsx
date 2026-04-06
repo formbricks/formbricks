@@ -7,7 +7,8 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationFaviconUrlAction,
@@ -43,6 +44,8 @@ export const FaviconCustomizationSettings = ({
   isReadOnly,
   isStorageConfigured,
 }: FaviconCustomizationSettingsProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -150,11 +153,11 @@ export const FaviconCustomizationSettings = ({
   const buttons: [ModalButton, ModalButton] = [
     {
       text: t("common.upgrade_plan"),
-      href: `/environments/${environmentId}/settings/billing`,
+      href: `${workspaceBasePath}/settings/billing`,
     },
     {
       text: t("common.learn_more"),
-      href: `/environments/${environmentId}/settings/billing`,
+      href: `${workspaceBasePath}/settings/billing`,
     },
   ];
 

@@ -6,6 +6,7 @@ import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -48,6 +49,9 @@ export const GET = withV1ApiWrapper({
       };
     }
 
+    const workspace = await getWorkspaceByEnvironmentId(environmentId);
+    const basePath = workspace ? `/workspaces/${workspace.id}` : `/environments/${environmentId}`;
+
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
     const code_verifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
@@ -87,9 +91,7 @@ export const GET = withV1ApiWrapper({
       };
       await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/airtable`
-        ),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/airtable`),
       };
     } catch (error) {
       logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");

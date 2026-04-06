@@ -47,6 +47,7 @@ export const FileUploadElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const [isMaxSizeError, setIsMaxSizeError] = useState(false);
   const {
@@ -184,10 +185,7 @@ export const FileUploadElementForm = ({
               <p className="text-xs text-red-500">
                 {t("environments.surveys.edit.max_file_size_limit_is")} {maxSizeInMBLimit} MB.{" "}
                 {t("environments.surveys.edit.if_you_need_more_please")}
-                <Link
-                  className="underline"
-                  target="_blank"
-                  href={`/environments/${localSurvey.environmentId}/settings/billing`}>
+                <Link className="underline" target="_blank" href={`${workspaceBasePath}/settings/billing`}>
                   {t("common.please_upgrade_your_plan")}
                 </Link>
               </p>

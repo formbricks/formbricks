@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Workspace } from "@prisma/client";
 import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -9,6 +8,7 @@ import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { TWorkspaceStyling, ZWorkspaceStyling } from "@formbricks/types/workspace";
 import { previewSurvey } from "@/app/lib/templates";
 import {
@@ -38,7 +38,7 @@ import { ThemeStylingPreviewSurvey } from "@/modules/ui/components/theme-styling
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface ThemeStylingProps {
-  workspace: Workspace;
+  workspace: TWorkspace;
   environmentId: string;
   colors: string[];
   isUnsplashConfigured: boolean;

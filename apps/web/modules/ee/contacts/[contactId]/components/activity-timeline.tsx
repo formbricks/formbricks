@@ -113,7 +113,6 @@ export const ActivityTimeline = ({
                 key={`display-${item.data.id}`}
                 display={item.data}
                 surveys={surveys}
-                environmentId={environment.id}
                 locale={locale}
               />
             ) : (

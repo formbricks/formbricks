@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { cn } from "@/lib/cn";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -60,6 +61,8 @@ export const ContactsTable = ({
   isQuotasAllowed,
   refreshContacts,
 }: ContactsTableProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
@@ -280,7 +283,7 @@ export const ContactsTable = ({
                       key={cell.id}
                       onClick={() => {
                         if (cell.column.id === "select") return;
-                        router.push(`/environments/${environmentId}/contacts/${row.id}`);
+                        router.push(`${workspaceBasePath}/contacts/${row.id}`);
                       }}
                       style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                       className={cn(

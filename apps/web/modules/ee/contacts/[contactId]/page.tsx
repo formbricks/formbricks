@@ -8,19 +8,19 @@ import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/conta
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { ActivitySection } from "./components/activity-section";
 
 export const SingleContactPage = async (props: {
-  params: Promise<{ environmentId: string; contactId: string }>;
+  params: Promise<{ workspaceId: string; contactId: string }>;
 }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { environment, isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
     await Promise.all([
@@ -47,7 +47,6 @@ export const SingleContactPage = async (props: {
   const getContactControlBar = () => {
     return (
       <ContactControlBar
-        environmentId={environment.id}
         contactId={params.contactId}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
@@ -60,7 +59,7 @@ export const SingleContactPage = async (props: {
 
   return (
     <PageContentWrapper>
-      <GoBackButton url={`/environments/${params.environmentId}/contacts`} />
+      <GoBackButton url={`/workspaces/${workspace.id}/contacts`} />
       <PageHeader pageTitle={contactIdentifier} cta={getContactControlBar()} />
       <section className="pb-24 pt-6">
         <div className="grid grid-cols-4 gap-x-8">

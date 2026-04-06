@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
@@ -35,6 +36,8 @@ export const FollowUpsView = ({
   teamMemberDetails,
   locale,
 }: FollowUpsViewProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
@@ -52,7 +55,7 @@ export const FollowUpsView = ({
                 ? t("environments.settings.billing.upgrade")
                 : t("common.request_trial_license"),
               href: isFormbricksCloud
-                ? `/environments/${localSurvey.environmentId}/settings/billing`
+                ? `${workspaceBasePath}/settings/billing`
                 : "https://formbricks.com/docs/self-hosting/license",
             },
             {

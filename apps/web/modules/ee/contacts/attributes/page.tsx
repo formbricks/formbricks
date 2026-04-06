@@ -3,19 +3,19 @@ import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { AttributesTable } from "./components/attributes-table";
 import { CreateAttributeModal } from "./components/create-attribute-modal";
 
 export const AttributesPage = async ({
   params: paramsProps,
 }: {
-  params: Promise<{ environmentId: string }>;
+  params: Promise<{ workspaceId: string }>;
 }) => {
   const params = await paramsProps;
   const locale = await getLocale();
   const t = await getTranslate();
-  const { isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, workspace, environment } = await getWorkspaceAuth(params.workspaceId);
 
   const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
 
@@ -25,14 +25,14 @@ export const AttributesPage = async ({
     <ContactsPageLayout
       pageTitle={t("common.contacts")}
       activeId="attributes"
-      environmentId={params.environmentId}
+      workspaceId={params.workspaceId}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
-      cta={<CreateAttributeModal environmentId={params.environmentId} />}>
+      cta={<CreateAttributeModal environmentId={environment.id} />}>
       <AttributesTable
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
-        environmentId={params.environmentId}
+        workspaceId={params.workspaceId}
         locale={locale}
       />
     </ContactsPageLayout>

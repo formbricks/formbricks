@@ -70,7 +70,7 @@ export const SettingsView = ({
               </div>
             </div>
           ) : (
-            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} environmentId={environment.id} />
+            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} />
           )}
         </div>
       ) : null}
@@ -100,13 +100,7 @@ export const SettingsView = ({
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
-      {isAppSurvey && (
-        <SurveyPlacementCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          environmentId={environment.id}
-        />
-      )}
+      {isAppSurvey && <SurveyPlacementCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
     </div>
   );
 };

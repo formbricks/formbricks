@@ -1,48 +1,46 @@
 "use server";
 
 import Link from "next/link";
-import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { WidgetStatusIndicator } from "@/app/(app)/workspaces/[workspaceId]/components/WidgetStatusIndicator";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getEnvironments } from "@/lib/environment/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
-export const AppConnectionPage = async ({ params }: { params: Promise<{ environmentId: string }> }) => {
+export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
-  const { environmentId } = await params;
+  const { workspaceId } = await params;
 
-  const { environment, isReadOnly, session, workspace } = await getEnvironmentAuth(environmentId);
+  const { environment, isReadOnly, session, workspace } = await getWorkspaceAuth(workspaceId);
 
   const [environments, actionClasses, locale] = await Promise.all([
     getEnvironments(workspace.id),
     getActionClasses(workspace.id),
     getUserLocale(session.user.id),
   ]);
-  const otherEnvironment = environments.find((env) => env.id !== environmentId)!;
+  const otherEnvironment = environments.find((env) => env.id !== workspaceId)!;
   const otherEnvActionClasses = otherEnvironment ? await getActionClasses(workspace.id) : [];
 
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation environmentId={environmentId} activeId="app-connection" />
+        <WorkspaceConfigNavigation activeId="app-connection" />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={environmentId} subPageUrl="/workspace/app-connection" />
         <SettingsCard
           title={t("environments.workspace.app-connection.sdk_connection_details")}
           description={t("environments.workspace.app-connection.sdk_connection_details_description")}>
           <div className="space-y-3">
-            <IdBadge id={environmentId} label={t("environments.workspace.app-connection.environment_id")} />
+            <IdBadge id={environment.id} label={t("environments.workspace.app-connection.environment_id")} />
             <IdBadge id={WEBAPP_URL} label={t("environments.workspace.app-connection.webapp_url")} />
           </div>
         </SettingsCard>
@@ -84,7 +82,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ environm
           environment={environment}
           otherEnvironment={otherEnvironment}
           otherEnvActionClasses={otherEnvActionClasses}
-          environmentId={environmentId}
+          environmentId={environment.id}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}
           locale={locale ?? DEFAULT_LOCALE}

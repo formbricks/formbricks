@@ -38,7 +38,7 @@ export const XMTemplateList = ({ workspace, user, environmentId }: XMTemplateLis
     });
 
     if (createSurveyResponse?.data) {
-      router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit?mode=cx`);
+      router.push(`/workspaces/${workspace.id}/surveys/${createSurveyResponse.data.id}/edit?mode=cx`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
       toast.error(errorMessage);

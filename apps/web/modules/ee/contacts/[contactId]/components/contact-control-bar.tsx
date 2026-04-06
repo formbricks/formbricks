@@ -6,6 +6,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edit-contact-attributes-modal";
@@ -22,7 +23,6 @@ interface TContactAttributeWithKeyInfo {
 }
 
 interface ContactControlBarProps {
-  environmentId: string;
   contactId: string;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
@@ -32,7 +32,6 @@ interface ContactControlBarProps {
 }
 
 export const ContactControlBar = ({
-  environmentId,
   contactId,
   isReadOnly,
   isQuotasAllowed,
@@ -41,6 +40,8 @@ export const ContactControlBar = ({
   currentAttributes,
 }: ContactControlBarProps) => {
   const router = useRouter();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
@@ -52,7 +53,7 @@ export const ContactControlBar = ({
     const deletePersonResponse = await deleteContactAction({ contactId });
     if (deletePersonResponse?.data) {
       router.refresh();
-      router.push(`/environments/${environmentId}/contacts`);
+      router.push(`${workspaceBasePath}/contacts`);
       toast.success(t("environments.contacts.contact_deleted_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(deletePersonResponse);

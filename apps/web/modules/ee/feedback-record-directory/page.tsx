@@ -1,19 +1,17 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackRecordDirectoryView } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-view";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const FeedbackRecordDirectoriesPage = async (props: {
-  params: Promise<{ environmentId: string }>;
-}) => {
+export const FeedbackRecordDirectoriesPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
+  const { currentUserMembership, organization } = await getWorkspaceAuth(params.workspaceId);
 
   const { isOwner, isManager } = getAccessFlags(currentUserMembership.role);
 
@@ -22,7 +20,6 @@ export const FeedbackRecordDirectoriesPage = async (props: {
       <PageContentWrapper>
         <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
           <OrganizationSettingsNavbar
-            environmentId={params.environmentId}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             membershipRole={currentUserMembership.role}
             activeId="feedback-record-directories"
@@ -39,7 +36,6 @@ export const FeedbackRecordDirectoriesPage = async (props: {
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership.role}
           activeId="feedback-record-directories"

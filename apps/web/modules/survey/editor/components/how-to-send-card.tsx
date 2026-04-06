@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -22,6 +23,8 @@ interface HowToSendCardProps {
 }
 
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const { t } = useTranslation();
@@ -193,10 +196,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                           </AlertDescription>
                           <AlertButton
                             onClick={() =>
-                              window.open(
-                                `/environments/${environment.id}/workspace/${option.id}-connection`,
-                                "_blank"
-                              )
+                              window.open(`${workspaceBasePath}/workspace/${option.id}-connection`, "_blank")
                             }>
                             {t("common.connect_formbricks")}
                           </AlertButton>
