@@ -1,13 +1,13 @@
 import { randomUUID } from "crypto";
 import { logger } from "@formbricks/logger";
 import {
-  type StorageError,
   StorageErrorCode,
   deleteFile as deleteFileFromS3,
   deleteFilesByPrefix,
   getFileStream,
   getSignedUploadUrl,
 } from "@formbricks/storage";
+import type { StorageError } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
