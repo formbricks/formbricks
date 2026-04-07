@@ -10,7 +10,7 @@ vi.mock("@/lib/i18n/utils", () => ({
   }),
 }));
 
-vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/recaptcha", () => ({
+vi.mock("@/app/api/v2/client/[workspaceId]/responses/lib/recaptcha", () => ({
   verifyRecaptchaToken: vi.fn(),
 }));
 
@@ -25,7 +25,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSpamProtectionEnabled: vi.fn(),
 }));
 
-vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/organization", () => ({
+vi.mock("@/app/api/v2/client/[workspaceId]/responses/lib/organization", () => ({
   getOrganizationBillingByEnvironmentId: vi.fn(),
 }));
 
