@@ -150,10 +150,7 @@ describe("workspace lib", () => {
       vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
-      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", [
-        "cmi2sra0j000004l73fvh7lhe",
-        "cmi2srt9q000104l7127e67v7",
-      ]);
+      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", ["cmi2sra0j000004l73fvh7lhe"]);
     });
 
     test("logs error if file deletion fails", async () => {
