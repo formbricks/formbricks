@@ -124,7 +124,6 @@ checksums:
     common/cancel: 2e2a849c2223911717de8caa2c71bade
     common/centered_modal: 982ff411cb7e91e30300c2ed56b7e507
     common/choices: 8a7a77a71ec6eebc363c5dc0f8490a4d
-    common/choose_environment: 5762cd499529815fc3e6a7feea39f90b
     common/choose_organization: a8f5db68012323bfbb1a0ad0fb194603
     common/choose_workspace: f9ed22d76c69cc75aa56cf3da3fa6320
     common/clear_all: 854be0c051e4a3491a2cdd9dd8c1b4d5
@@ -150,7 +149,6 @@ checksums:
     common/copy: 627c00d2c850b9b45f7341a6ac01b6bb
     common/copy_code: 704c13d9bc01caad29a1cf3179baa111
     common/copy_link: 57a37acfe6d7ed71d00fbbc8079fbb35
-    common/copy_to_environment: c482d26b8fd4962af6542bbf49e49a32
     common/count_attributes: 48805e836a9b50f9635ad00fed953058
     common/count_contacts: 9f71d503455264f1eec1ae58894cf143
     common/count_members: 31ce64ca63fdf95e02ab5543b6e2f717
@@ -172,9 +170,6 @@ checksums:
     common/delete: 8bcf303dd10a645b5baacb02b47d72c9
     common/delete_what: 718ddfcc1dec7f3e8b67856fba838267
     common/description: e17686a22ffad04cc7bb70524ed4478b
-    common/dev_env: e650911d5e19ba256358e0cda154c005
-    common/development: 85211dbb918bda7a6e87649dcfc1b17a
-    common/development_environment_banner: c5ee195b0d4b88e43dad7b52097de506
     common/disable: 81b754fd7962e0bd9b6ba87f3972e7fc
     common/disallow: 01c8ed3ce545ed836d3ccffc562c8a0c
     common/discard: de83a114a79d086e372c43dbfe9f47b4
@@ -398,7 +393,6 @@ checksums:
     common/survey_paused: c770d174d6b57e8425a54906a09c8b39
     common/survey_type: 417fcfecf8eaedefc4f11172426811f9
     common/surveys: 33f68ad4111b32a6361beb9d5c184533
-    common/switch_to: 75216ee24e6d6c1b000d6534ee83e69b
     common/table_items_deleted_successfully: 46f29d20b26ecfbaf34d4e7291e88b05
     common/table_settings: 5dddbe3e421fca83b26b014635e06dc1
     common/tags: 97813c8ae67d69575fd04e35a88aed0c
@@ -529,8 +523,6 @@ checksums:
     emails/verification_new_email_subject: 48e8ebbb04ac6bc420545cea025a4b28
     emails/verification_security_notice: ccc15212d996214c5c2d2ea021951fe2
     emails/verified_link_survey_email_subject: 23449a8b573295a42031a09613c7fb10
-    environments/actions/action_copied_successfully: 7a1bce3deeed22abdc2e81adf144079b
-    environments/actions/action_copy_failed: a4507e5e05c93324d6ece99be2e6af4e
     environments/actions/action_created_successfully: 921ad191eabd7852fcedd09b00973e08
     environments/actions/action_deleted_successfully: c3b79bd82557fd8b0b70724c5fcc8539
     environments/actions/action_type: 48526c701cdbfd8ff8f0c9aa2f5d3eb8
@@ -1242,9 +1234,10 @@ checksums:
     environments/surveys/all_set_time_to_create_first_survey: 21d3bb74c3b9642b3195d17c17346399
     environments/surveys/alphabetical: 5fcfeff9c5fd28714f0a390e0ddaaaee
     environments/surveys/copy_survey: de8142b45e7bca61f2dca0069a62b417
-    environments/surveys/copy_survey_description: 66d0aadf192ad5790fbf3f55f3bb5485
+    environments/surveys/copy_survey_description: b78f714a4a4baae883210b13fb196bd5
     environments/surveys/copy_survey_error: 74cab7d84ea8b669e106d4c326cac005
     environments/surveys/copy_survey_link_to_clipboard: 77387e3d3de4be07a2a34963f73cd7e8
+    environments/surveys/copy_survey_no_workspaces: 6f4547d91b2c14dad83c44b01df365eb
     environments/surveys/copy_survey_partially_success: a436a5fb7167b95c2308794d35aab070
     environments/surveys/copy_survey_success: a829e645fe034b3e712d0b8572a5edc4
     environments/surveys/delete_survey_and_responses_warning: 3320c91c1fd27378b7f3d6abc003f2ae
@@ -2067,8 +2060,8 @@ checksums:
     environments/workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
     environments/workspace/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c
     environments/workspace/app-connection/cache_update_delay_title: 60e4a0fcfbd8850bddf29b5c3f59550c
-    environments/workspace/app-connection/environment_id: 3dba898b081c18cd4cae131765ef411f
-    environments/workspace/app-connection/environment_id_description: 8b4a763d069b000cfa1a2025a13df80c
+    environments/workspace/app-connection/environment_id: 49141af65970ea79e22ecedb97ceb2e4
+    environments/workspace/app-connection/environment_id_description: d611755139dbe9865f1436acf6f679be
     environments/workspace/app-connection/formbricks_sdk_connected: 29e8a40ad6a7fdb5af5ee9451a70a9aa
     environments/workspace/app-connection/formbricks_sdk_not_connected: 557c534e665750978ba6edb0eacb428e
     environments/workspace/app-connection/formbricks_sdk_not_connected_description: 4ddbacae084238bd0cefeded0fe9dbb9
@@ -2077,7 +2070,7 @@ checksums:
     environments/workspace/app-connection/receiving_data: 9f2a48c0b0278861add70b526061264c
     environments/workspace/app-connection/recheck: f95f2bbe6990a123d60255c87bdd59f7
     environments/workspace/app-connection/sdk_connection_details: 89f2c169fd1604c1df5a834517f1eae1
-    environments/workspace/app-connection/sdk_connection_details_description: d9b5d06776a139aef6fc8ed53d71bf0a
+    environments/workspace/app-connection/sdk_connection_details_description: 8e6d79678736819bf2f2940404ba5c3e
     environments/workspace/app-connection/setup_alert_description: 6d676044d01dc2147731ffab7df6c259
     environments/workspace/app-connection/setup_alert_title: 9561cca2b391e0df81e8a982921ff2bb
     environments/workspace/app-connection/webapp_url: d64d8cc3c4c4ecce780d94755f7e4de9
