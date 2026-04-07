@@ -117,20 +117,20 @@ export const DELETE = async (
 
   const deleteResult = await deleteFile(environmentId, accessType, decodeURIComponent(fileName));
 
-  const isSuccess = deleteResult.ok;
+  if (!deleteResult.ok) {
+    const { error } = deleteResult;
 
-  if (!isSuccess) {
-    logger.error({ error: deleteResult.error }, "Error deleting file");
+    logger.error({ error }, "Error deleting file");
 
     await logFileDeletion({
-      failureReason: deleteResult.error.code,
+      failureReason: error.code,
       accessType,
       userId: session?.user?.id,
       environmentId,
       apiUrl: request.url,
     });
 
-    const errorResponse = getErrorResponseFromStorageError(deleteResult.error, { fileName });
+    const errorResponse = getErrorResponseFromStorageError(error, { fileName });
     return errorResponse;
   }
 
