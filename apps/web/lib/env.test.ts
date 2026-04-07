@@ -8,6 +8,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     NODE_ENV: "test",
     DATABASE_URL: "https://example.com/db",
     ENCRYPTION_KEY: "12345678901234567890123456789012",
+    HUB_API_URL: "https://hub.formbricks.local",
     ...overrides,
   };
 };
