@@ -25,6 +25,7 @@ describe("resolveClientApiIds", () => {
       id: "env-123",
       workspaceId: "ws-456",
     } as any);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
     const result = await resolveClientApiIds("env-123");
 
@@ -36,7 +37,8 @@ describe("resolveClientApiIds", () => {
       where: { id: "env-123" },
       select: { id: true, workspaceId: true },
     });
-    expect(prisma.workspace.findUnique).not.toHaveBeenCalled();
+    // Both queries run in parallel
+    expect(prisma.workspace.findUnique).toHaveBeenCalled();
   });
 
   it("resolves a workspaceId to workspaceId + production environmentId", async () => {

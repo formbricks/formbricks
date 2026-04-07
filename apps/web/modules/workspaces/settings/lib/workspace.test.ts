@@ -7,7 +7,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { ZWorkspace } from "@formbricks/types/workspace";
 import { createEnvironment } from "@/lib/environment/service";
-import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
+import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
 
 const baseWorkspace = {
@@ -59,7 +59,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/modules/storage/service", () => ({
-  deleteFilesByEnvironmentId: vi.fn(),
+  deleteFilesByWorkspaceId: vi.fn(),
 }));
 
 vi.mock("@/lib/environment/service", () => ({
@@ -147,15 +147,18 @@ describe("workspace lib", () => {
     test("deletes workspace, deletes files, and revalidates cache", async () => {
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
 
-      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({ ok: true, data: undefined });
+      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
-      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("cmi2sra0j000004l73fvh7lhe");
+      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", [
+        "cmi2sra0j000004l73fvh7lhe",
+        "cmi2srt9q000104l7127e67v7",
+      ]);
     });
 
     test("logs error if file deletion fails", async () => {
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
-      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({
+      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({
         ok: false,
         error: { code: StorageErrorCode.Unknown },
       } as any);

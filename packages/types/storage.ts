@@ -147,6 +147,7 @@ export const ZUploadPublicFileRequest = z
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
     environmentId: z.cuid2(),
+    workspaceId: z.cuid2(),
     allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
   })
   .superRefine((data, ctx) => {
