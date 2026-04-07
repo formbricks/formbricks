@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { type Instrumentation } from "next";
+import { logger } from "@formbricks/logger";
 import { isExpectedError } from "@formbricks/types/errors";
 import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
@@ -22,8 +23,12 @@ export const register = async () => {
       await import("./instrumentation-node");
     }
 
-    const { registerJobsWorker } = await import("./instrumentation-jobs");
-    await registerJobsWorker();
+    try {
+      const { registerJobsWorker } = await import("./instrumentation-jobs");
+      await registerJobsWorker();
+    } catch (error) {
+      logger.error({ err: error }, "BullMQ worker registration failed during Next.js instrumentation");
+    }
   }
   // Sentry init loads after OTEL to avoid TracerProvider conflicts
   // Sentry tracing is disabled (tracesSampleRate: 0) -- SigNoz handles distributed tracing

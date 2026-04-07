@@ -3,13 +3,12 @@ import { startJobsRuntime } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 
-const globalForJobsRuntime = globalThis as {
-  formbricksJobsRuntime: JobsRuntimeHandle | undefined;
-  formbricksJobsRuntimeInitializing: Promise<JobsRuntimeHandle> | undefined;
-} as unknown as {
+type TJobsRuntimeGlobal = typeof globalThis & {
   formbricksJobsRuntime: JobsRuntimeHandle | undefined;
   formbricksJobsRuntimeInitializing: Promise<JobsRuntimeHandle> | undefined;
 };
+
+const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 
 export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> => {
   const jobsWorkerBootstrapConfig = getJobsWorkerBootstrapConfig();

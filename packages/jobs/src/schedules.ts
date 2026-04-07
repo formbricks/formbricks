@@ -14,6 +14,9 @@ const ZScheduleWindow = {
   startAt: ZValidDate.optional(),
 } as const;
 
+const hasValidScheduleWindow = (value: { startAt?: Date; endAt?: Date }): boolean =>
+  !value.startAt || !value.endAt || value.endAt.getTime() > value.startAt.getTime();
+
 export const ZBackgroundJobScheduleId = z.string().trim().min(1);
 export const ZBackgroundJobScheduleScope = z.string().trim().min(1);
 export const ZBackgroundJobScheduleIdentity = z.object({
@@ -35,7 +38,7 @@ export const ZRecurringEveryBackgroundJobSchedule = z
     everyMs: ZPositiveInteger,
     kind: z.literal("every"),
   })
-  .refine((value) => !value.startAt || !value.endAt || value.endAt.getTime() > value.startAt.getTime(), {
+  .refine(hasValidScheduleWindow, {
     message: "endAt must be after startAt",
     path: ["endAt"],
   });
@@ -48,7 +51,7 @@ export const ZRecurringCronBackgroundJobSchedule = z
     kind: z.literal("cron"),
     timeZone: z.string().trim().min(1).optional(),
   })
-  .refine((value) => !value.startAt || !value.endAt || value.endAt.getTime() > value.startAt.getTime(), {
+  .refine(hasValidScheduleWindow, {
     message: "endAt must be after startAt",
     path: ["endAt"],
   });

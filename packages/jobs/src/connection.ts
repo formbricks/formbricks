@@ -55,11 +55,20 @@ export const getRedisUrlFromEnv = (): string => {
     throw new Error("REDIS_URL is required for BullMQ");
   }
 
+  if (!URL.canParse(redisUrl)) {
+    throw new Error("REDIS_URL must be a valid URL for BullMQ");
+  }
+
   return redisUrl;
 };
 
 export const closeRedisConnection = async (connection: IORedis): Promise<void> => {
   if (connection.status === "end") {
+    return;
+  }
+
+  if (connection.status !== "ready") {
+    connection.disconnect();
     return;
   }
 

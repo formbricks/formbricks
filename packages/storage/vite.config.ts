@@ -19,6 +19,7 @@ export default defineConfig({
         "@formbricks/logger",
       ],
     },
+    emptyOutDir: false,
   },
   test: {
     environment: "node",
@@ -29,5 +30,11 @@ export default defineConfig({
       include: ["src/**/*.ts"],
     },
   },
-  plugins: [dts({ rollupTypes: true }) as PluginOption],
+  plugins: [
+    dts({
+      include: ["src/**/*"],
+      entryRoot: ".",
+      outDir: "dist",
+    }) as PluginOption,
+  ],
 });

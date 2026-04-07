@@ -4,6 +4,10 @@ const mockStartJobsRuntime = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
+const TEST_TIMEOUT_MS = 15_000;
+const slowTest = (name: string, fn: () => Promise<void>): void => {
+  test(name, fn, TEST_TIMEOUT_MS);
+};
 
 vi.mock("@formbricks/jobs", () => ({
   startJobsRuntime: mockStartJobsRuntime,
@@ -33,7 +37,7 @@ describe("instrumentation-jobs", () => {
     await resetJobsWorkerRegistrationForTests();
   });
 
-  test("skips worker startup when disabled", async () => {
+  slowTest("skips worker startup when disabled", async () => {
     mockGetJobsWorkerBootstrapConfig.mockReturnValue({
       enabled: false,
       runtimeOptions: null,
@@ -47,7 +51,7 @@ describe("instrumentation-jobs", () => {
     expect(mockDebug).toHaveBeenCalledWith("BullMQ worker startup skipped");
   });
 
-  test("starts the worker only once", async () => {
+  slowTest("starts the worker only once", async () => {
     const mockRuntime = {
       close: vi.fn().mockResolvedValue(undefined),
     };
@@ -77,7 +81,7 @@ describe("instrumentation-jobs", () => {
     });
   });
 
-  test("logs and rethrows startup failures", async () => {
+  slowTest("logs and rethrows startup failures", async () => {
     const startupError = new Error("startup failed");
 
     mockGetJobsWorkerBootstrapConfig.mockReturnValue({

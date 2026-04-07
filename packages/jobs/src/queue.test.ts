@@ -21,12 +21,14 @@ import { getRecurringJobSchedulerId } from "./schedules";
 
 const {
   mockCloseRedisConnection,
+  mockLoggerError,
   mockQueueAdd,
   mockQueueClose,
   mockQueueUpsertJobScheduler,
   mockQueueWaitUntilReady,
 } = vi.hoisted(() => ({
   mockCloseRedisConnection: vi.fn(),
+  mockLoggerError: vi.fn(),
   mockQueueAdd: vi.fn(),
   mockQueueClose: vi.fn(),
   mockQueueUpsertJobScheduler: vi.fn(),
@@ -42,7 +44,7 @@ const mockConnection = {
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
-    error: vi.fn(),
+    error: mockLoggerError,
     info: vi.fn(),
     warn: vi.fn(),
     debug: vi.fn(),
@@ -220,5 +222,19 @@ describe("@formbricks/jobs queue helpers", () => {
 
     expect(mockQueueClose).toHaveBeenCalledTimes(1);
     expect(mockCloseRedisConnection).toHaveBeenCalledWith(mockConnection);
+  });
+
+  test("keeps cleaning up when queue shutdown fails during reset", async () => {
+    await getJobsQueue();
+    mockQueueClose.mockRejectedValueOnce(new Error("queue close failed"));
+
+    await expect(resetJobsQueueFactory()).resolves.toBeUndefined();
+
+    expect(mockQueueClose).toHaveBeenCalledTimes(1);
+    expect(mockCloseRedisConnection).toHaveBeenCalledWith(mockConnection);
+    expect(mockLoggerError).toHaveBeenCalledTimes(1);
+    const [context, message] = mockLoggerError.mock.calls[0] as [{ err: Error }, string];
+    expect(context.err).toBeInstanceOf(Error);
+    expect(message).toBe("Failed to close BullMQ producer queue during reset");
   });
 });

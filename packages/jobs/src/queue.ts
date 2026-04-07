@@ -293,12 +293,20 @@ export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
 });
 
 export const resetJobsQueueFactory = async (): Promise<void> => {
-  if (queueSingleton) {
-    await queueSingleton.close();
+  try {
+    if (queueSingleton) {
+      await queueSingleton.close();
+    }
+  } catch (error) {
+    logger.error({ err: error }, "Failed to close BullMQ producer queue during reset");
   }
 
-  if (connectionSingleton) {
-    await closeRedisConnection(connectionSingleton);
+  try {
+    if (connectionSingleton) {
+      await closeRedisConnection(connectionSingleton);
+    }
+  } catch (error) {
+    logger.error({ err: error }, "Failed to close BullMQ producer connection during reset");
   }
 
   queueSingleton = undefined;

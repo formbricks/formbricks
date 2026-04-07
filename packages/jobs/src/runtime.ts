@@ -120,11 +120,15 @@ export const startJobsRuntime = async ({
   };
 
   const handleSigterm = (): void => {
-    void closeRuntime();
+    closeRuntime().catch((error: unknown) => {
+      logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGTERM");
+    });
   };
 
   const handleSigint = (): void => {
-    void closeRuntime();
+    closeRuntime().catch((error: unknown) => {
+      logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGINT");
+    });
   };
 
   try {

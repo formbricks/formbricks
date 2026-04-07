@@ -3,7 +3,7 @@ import type { JobHandler } from "@/src/contracts";
 import type { TResponsePipelineJobData } from "@/src/types";
 
 export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = (data, context) => {
-  logger.debug(
+  logger.error(
     {
       attempt: context.attempt,
       environmentId: data.environmentId,
@@ -13,8 +13,10 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       jobName: context.jobName,
       queueName: context.queueName,
     },
-    "Processed placeholder response pipeline job"
+    "Unimplemented response pipeline processor"
   );
 
-  return Promise.resolve();
+  throw new Error(
+    `Unimplemented response pipeline processor for job ${context.jobId} (${data.environmentId}/${data.surveyId})`
+  );
 };

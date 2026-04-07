@@ -47,6 +47,49 @@ describe("@formbricks/jobs processor registry", () => {
     );
   });
 
+  test("fails fast for the unimplemented response pipeline processor", async () => {
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: {
+          environmentId: "env_123",
+          event: "responseCreated",
+          response: {
+            contact: null,
+            contactAttributes: null,
+            createdAt: new Date("2026-04-07T10:00:00.000Z"),
+            data: {},
+            displayId: null,
+            endingId: null,
+            finished: false,
+            id: "cm8cmpnjj000108jfdr9dfqe6",
+            language: null,
+            meta: {},
+            singleUseId: null,
+            surveyId: "cm8cmpnjj000108jfdr9dfqe7",
+            tags: [],
+            updatedAt: new Date("2026-04-07T10:00:00.000Z"),
+            variables: {},
+          },
+          surveyId: "survey_123",
+        },
+        id: "job-3",
+        name: JOB_NAMES.responsePipeline,
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow("Unimplemented response pipeline processor");
+
+    expect(mockError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        environmentId: "env_123",
+        jobId: "job-3",
+        jobName: JOB_NAMES.responsePipeline,
+        surveyId: "survey_123",
+      }),
+      "Unimplemented response pipeline processor"
+    );
+  });
+
   test("throws for unknown jobs", async () => {
     await expect(
       processJob({

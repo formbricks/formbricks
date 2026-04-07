@@ -15,7 +15,9 @@ export const env = createEnv({
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
-    DEBUG: z.enum(["1", "0"]).optional(),
+    // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
+    // and only treat "1" as enabling Formbricks-specific debug behavior downstream.
+    DEBUG: z.string().optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
     BULLMQ_WORKER_CONCURRENCY: z.coerce.number().int().min(1).optional(),

@@ -1,6 +1,5 @@
 import { S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 import { logger } from "@formbricks/logger";
-import { type Result, type StorageError, StorageErrorCode, err, ok } from "../types/error";
 import {
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
@@ -9,6 +8,7 @@ import {
   S3_REGION,
   S3_SECRET_KEY,
 } from "./constants";
+import { type Result, type StorageError, StorageErrorCode, err, ok } from "./types/error";
 
 // Cached singleton instance of S3Client
 let cachedS3Client: S3Client | undefined;

@@ -6,4 +6,4 @@ export {
   getFileStream,
   type FileStreamResult,
 } from "./service";
-export { type StorageError, StorageErrorCode } from "../types/error";
+export { type StorageError, StorageErrorCode } from "./types/error";

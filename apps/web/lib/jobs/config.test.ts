@@ -69,4 +69,23 @@ describe("jobs runtime config", () => {
       },
     });
   });
+
+  test("respects explicit worker disable flag outside tests", async () => {
+    vi.doMock("@/lib/env", () => ({
+      env: {
+        BULLMQ_WORKER_CONCURRENCY: 6,
+        BULLMQ_WORKER_COUNT: 3,
+        BULLMQ_WORKER_ENABLED: "0",
+        NODE_ENV: "production",
+        REDIS_URL: "redis://cache.internal:6379",
+      },
+    }));
+
+    const { getJobsWorkerBootstrapConfig } = await import("./config");
+
+    expect(getJobsWorkerBootstrapConfig()).toEqual({
+      enabled: false,
+      runtimeOptions: null,
+    });
+  });
 });

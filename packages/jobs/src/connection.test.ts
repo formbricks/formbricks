@@ -78,6 +78,12 @@ describe("@formbricks/jobs connection helpers", () => {
     expect(() => getRedisUrlFromEnv()).toThrow("REDIS_URL is required for BullMQ");
   });
 
+  test("throws when REDIS_URL is malformed", () => {
+    process.env.REDIS_URL = "not-a-url";
+
+    expect(() => getRedisUrlFromEnv()).toThrow("REDIS_URL must be a valid URL for BullMQ");
+  });
+
   test("quits an active Redis connection", async () => {
     await closeRedisConnection({
       quit: mockQuit.mockResolvedValue(undefined),
@@ -87,5 +93,16 @@ describe("@formbricks/jobs connection helpers", () => {
 
     expect(mockQuit).toHaveBeenCalledTimes(1);
     expect(mockDisconnect).not.toHaveBeenCalled();
+  });
+
+  test("disconnects a non-ready Redis connection", async () => {
+    await closeRedisConnection({
+      quit: mockQuit,
+      disconnect: mockDisconnect,
+      status: "connecting",
+    } as unknown as IORedis);
+
+    expect(mockQuit).not.toHaveBeenCalled();
+    expect(mockDisconnect).toHaveBeenCalledTimes(1);
   });
 });

@@ -18,13 +18,22 @@ let queueEventsConnection: IORedis | null = null;
 let isRedisAvailable = false;
 
 async function isQueueReady(url: string): Promise<boolean> {
+  let probe: Awaited<ReturnType<typeof startJobsRuntime>> | null = null;
+
   try {
-    const probe = await startJobsRuntime({ redisUrl: url });
-    await probe.close();
+    probe = await startJobsRuntime({ redisUrl: url });
     return true;
   } catch (error) {
     logger.info({ error }, "BullMQ integration tests skipped because Redis is not available");
     return false;
+  } finally {
+    if (probe) {
+      try {
+        await probe.close();
+      } catch (error) {
+        logger.warn({ err: error }, "Failed to close BullMQ runtime probe cleanly");
+      }
+    }
   }
 }
 

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZWebhook } from "@formbricks/database/zod/webhooks";
 import { ZResponse } from "@formbricks/types/responses";
 
 export const ZTestLogJobData = z.object({
@@ -10,8 +9,12 @@ export const ZTestLogJobData = z.object({
 
 export type TTestLogJobData = z.infer<typeof ZTestLogJobData>;
 
+export const ZResponsePipelineEvent = z.enum(["responseFinished", "responseCreated", "responseUpdated"]);
+
+export type TResponsePipelineEvent = z.infer<typeof ZResponsePipelineEvent>;
+
 export const ZResponsePipelineJobData = z.object({
-  event: ZWebhook.shape.triggers.element,
+  event: ZResponsePipelineEvent,
   response: ZResponse,
   environmentId: z.string().min(1),
   surveyId: z.string().min(1),
