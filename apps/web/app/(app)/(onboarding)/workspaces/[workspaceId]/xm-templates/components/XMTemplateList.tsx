@@ -9,9 +9,9 @@ import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { TWorkspace } from "@formbricks/types/workspace";
-import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/utils";
-import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/workspaces/[workspaceId]/xm-templates/lib/utils";
+import { getXMTemplates } from "@/app/(app)/(onboarding)/workspaces/[workspaceId]/xm-templates/lib/xm-templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 

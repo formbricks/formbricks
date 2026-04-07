@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { getEnvironment } from "@/lib/environment/service";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (
@@ -17,11 +17,11 @@ export const GET = async (
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthenticationError("Not authenticated");
 
-  const hasAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  const workspace = await getWorkspaceByEnvironmentId(environmentId);
+  if (!workspace) return notFound();
+
+  const hasAccess = await hasUserWorkspaceAccess(session.user.id, workspace.id);
   if (!hasAccess) throw new AuthorizationError("Unauthorized");
 
-  const environment = await getEnvironment(environmentId);
-  if (!environment) return notFound();
-
-  return redirect(`/workspaces/${environment.workspaceId}/${path.join("/")}`);
+  return redirect(`/workspaces/${workspace.id}/${path.join("/")}`);
 };

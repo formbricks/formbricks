@@ -9,9 +9,9 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 
 export const GET = withV1ApiWrapper({
@@ -32,15 +32,21 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const workspace = await getWorkspaceByEnvironmentId(environmentId);
+    if (!workspace) {
+      return {
+        response: responses.notFoundResponse("Workspace", environmentId),
+      };
+    }
+
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspace.id);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
-    const workspace = await getWorkspaceByEnvironmentId(environmentId);
-    const basePath = workspace ? `/workspaces/${workspace.id}` : `/environments/${environmentId}`;
+    const basePath = `/workspaces/${workspace.id}`;
 
     if (code && typeof code !== "string") {
       return {

@@ -2,7 +2,6 @@ import { XIcon } from "lucide-react";
 import Link from "next/link";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/workspaces/[workspaceId]/connect/components/ConnectWithFormbricks";
-import { getEnvironments } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -24,12 +23,6 @@ const Page = async (props: ConnectPageProps) => {
     throw new ResourceNotFoundError(t("common.workspace"), params.workspaceId);
   }
 
-  const environments = await getEnvironments(params.workspaceId);
-  const environment = environments[0];
-  if (!environment) {
-    throw new ResourceNotFoundError(t("common.environment"), null);
-  }
-
   const channel = workspace.config.channel || null;
 
   const publicDomain = getPublicDomain();
@@ -42,10 +35,9 @@ const Page = async (props: ConnectPageProps) => {
         <p className="text-sm text-slate-500"></p>
       </div>
       <ConnectWithFormbricks
-        environment={environment}
         workspaceId={params.workspaceId}
         publicDomain={publicDomain}
-        appSetupCompleted={environment.appSetupCompleted}
+        appSetupCompleted={workspace.appSetupCompleted}
         channel={channel}
       />
       <Button

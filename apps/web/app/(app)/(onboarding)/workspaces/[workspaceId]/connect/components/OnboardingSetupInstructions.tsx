@@ -17,14 +17,14 @@ const tabs = [
 ];
 
 interface OnboardingSetupInstructionsProps {
-  environmentId: string;
+  workspaceId: string;
   publicDomain: string;
   channel: TWorkspaceConfigChannel;
   appSetupCompleted: boolean;
 }
 
 export const OnboardingSetupInstructions = ({
-  environmentId,
+  workspaceId,
   publicDomain,
   channel,
   appSetupCompleted,
@@ -35,8 +35,8 @@ export const OnboardingSetupInstructions = ({
   <script type="text/javascript">
   !function(){
       var appUrl = "${publicDomain}";
-      var environmentId = "${environmentId}";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:environmentId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
+      var workspaceId = "${workspaceId}";
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:workspaceId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -45,8 +45,8 @@ export const OnboardingSetupInstructions = ({
   <script type="text/javascript">
   !function(){
     var appUrl = "${publicDomain}";
-    var environmentId = "${environmentId}";
-    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:environmentId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
+    var workspaceId = "${workspaceId}";
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.setup({environmentId:workspaceId,appUrl:appUrl}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -56,7 +56,7 @@ export const OnboardingSetupInstructions = ({
 
   if (typeof window !== "undefined") {
     formbricks.setup({
-      environmentId: "${environmentId}",
+      workspaceId: "${workspaceId}",
       appUrl: "${publicDomain}",
     });
   }
@@ -74,7 +74,7 @@ export const OnboardingSetupInstructions = ({
 
   if (typeof window !== "undefined") {
     formbricks.setup({
-      environmentId: "${environmentId}",
+      workspaceId: "${workspaceId}",
       appUrl: "${publicDomain}",
     });
   }

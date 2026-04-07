@@ -160,6 +160,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
             styling: true,
             logo: true,
             customHeadScripts: true,
+            appSetupCompleted: true,
             // All workspace environments
             environments: {
               select: {
@@ -240,6 +241,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         overlay: data.workspace.overlay,
         styling: data.workspace.styling,
         logo: data.workspace.logo,
+        appSetupCompleted: data.workspace.appSetupCompleted,
         customHeadScripts: data.workspace.customHeadScripts,
         environments: data.workspace.environments,
       },
@@ -364,6 +366,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         placement: true,
         clickOutsideClose: true,
         overlay: true,
+        appSetupCompleted: true,
         styling: true,
         logo: true,
         customHeadScripts: true,
@@ -433,6 +436,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         styling: data.styling,
         logo: data.logo,
         customHeadScripts: data.customHeadScripts,
+        appSetupCompleted: data.appSetupCompleted,
         environments: data.environments,
       },
       organization: {

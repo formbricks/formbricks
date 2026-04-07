@@ -4,8 +4,8 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 
 const getEmail = async (token: string) => {
@@ -42,15 +42,21 @@ export const GET = withV1ApiWrapper({
         response: responses.badRequestResponse("`code` is missing"),
       };
     }
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const workspace = await getWorkspaceByEnvironmentId(environmentId);
+    if (!workspace) {
+      return {
+        response: responses.notFoundResponse("Workspace", environmentId),
+      };
+    }
+
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspace.id);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
-    const workspace = await getWorkspaceByEnvironmentId(environmentId);
-    const basePath = workspace ? `/workspaces/${workspace.id}` : `/environments/${environmentId}`;
+    const basePath = `/workspaces/${workspace.id}`;
 
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";

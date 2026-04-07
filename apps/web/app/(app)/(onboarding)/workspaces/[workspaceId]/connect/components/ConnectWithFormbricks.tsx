@@ -4,14 +4,12 @@ import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
-  environment: TEnvironment;
   workspaceId: string;
   publicDomain: string;
   appSetupCompleted: boolean;
@@ -19,7 +17,6 @@ interface ConnectWithFormbricksProps {
 }
 
 export const ConnectWithFormbricks = ({
-  environment,
   workspaceId,
   publicDomain,
   appSetupCompleted,
@@ -50,7 +47,7 @@ export const ConnectWithFormbricks = ({
       <div className="flex w-full space-x-10">
         <div className="flex w-1/2 flex-col space-y-4">
           <OnboardingSetupInstructions
-            environmentId={environment.id}
+            workspaceId={workspaceId}
             publicDomain={publicDomain}
             channel={channel}
             appSetupCompleted={appSetupCompleted}

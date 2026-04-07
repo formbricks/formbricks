@@ -15,6 +15,7 @@ const baseWorkspace = {
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Workspace 1",
+  appSetupCompleted: false,
   organizationId: "org1",
   languages: [],
   recontactDays: 0,

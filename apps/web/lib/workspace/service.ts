@@ -24,6 +24,7 @@ const selectWorkspace = {
   clickOutsideClose: true,
   overlay: true,
   environments: true,
+  appSetupCompleted: true,
   styling: true,
   logo: true,
   customHeadScripts: true,

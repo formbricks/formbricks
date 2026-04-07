@@ -667,6 +667,7 @@ model Workspace {
   /// [Logo]
   logo                              Json?
   workspaceTeams                    WorkspaceTeam[]
+  appSetupCompleted                 Boolean                            @default(false)
   customHeadScripts                 String? // Custom HTML scripts for link surveys (self-hosted only)
   feedbackRecordDirectoryWorkspaces FeedbackRecordDirectoryWorkspace[]
 

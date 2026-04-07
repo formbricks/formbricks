@@ -19,3 +19,13 @@ ALTER TABLE "ActionClass" ALTER COLUMN "workspaceId" SET NOT NULL;
 ALTER TABLE "Integration" ALTER COLUMN "workspaceId" SET NOT NULL;
 ALTER TABLE "ApiKeyEnvironment" ALTER COLUMN "workspaceId" SET NOT NULL;
 ALTER TABLE "Segment" ALTER COLUMN "workspaceId" SET NOT NULL;
+
+-- Add appSetupCompleted to Workspace and backfill from production environment
+ALTER TABLE "Workspace" ADD COLUMN "appSetupCompleted" BOOLEAN NOT NULL DEFAULT false;
+
+UPDATE "Workspace" w
+SET "appSetupCompleted" = e."appSetupCompleted"
+FROM "Environment" e
+WHERE e."workspaceId" = w."id"
+  AND e."type" = 'production'
+  AND e."appSetupCompleted" = true;

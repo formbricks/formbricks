@@ -73,6 +73,7 @@ export const ZWorkspace = z.object({
   overlay: ZOverlay,
   environments: z.array(ZEnvironment),
   languages: z.array(ZLanguage),
+  appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
   customHeadScripts: z.string().nullish(),
 });

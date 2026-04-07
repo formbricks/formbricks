@@ -72,12 +72,6 @@ export const ViewPermissionModal = ({
       ?.name;
   };
 
-  const getEnvironmentName = (environmentId: string) => {
-    return workspaces
-      .find((workspace) => workspace.environments.find((env) => env.id === environmentId))
-      ?.environments.find((env) => env.id === environmentId)?.type;
-  };
-
   const updateApiKey = async () => {
     const data = getValues();
     await onSubmit(data);
@@ -114,7 +108,7 @@ export const ViewPermissionModal = ({
                     return (
                       <div key={permission.environmentId} className="flex items-center gap-2">
                         {/* Workspace dropdown */}
-                        <div className="w-1/3">
+                        <div className="w-1/2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -130,25 +124,8 @@ export const ViewPermissionModal = ({
                           </DropdownMenu>
                         </div>
 
-                        {/* Environment dropdown */}
-                        <div className="w-1/3">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
-                                <span className="flex w-4/5 flex-1">
-                                  <span className="w-full truncate text-left capitalize">
-                                    {getEnvironmentName(permission.environmentId)}
-                                  </span>
-                                </span>
-                              </button>
-                            </DropdownMenuTrigger>
-                          </DropdownMenu>
-                        </div>
-
                         {/* Permission level dropdown */}
-                        <div className="w-1/3">
+                        <div className="w-1/2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button

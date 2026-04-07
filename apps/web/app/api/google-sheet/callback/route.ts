@@ -8,9 +8,9 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
   WEBAPP_URL,
 } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
@@ -28,13 +28,17 @@ export const GET = async (req: Request) => {
     return responses.notAuthenticatedResponse();
   }
 
-  const canUserAccessEnvironment = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!canUserAccessEnvironment) {
+  const workspace = await getWorkspaceByEnvironmentId(environmentId);
+  if (!workspace) {
+    return responses.notFoundResponse("Workspace", environmentId);
+  }
+
+  const canUserAccessWorkspace = await hasUserWorkspaceAccess(session.user.id, workspace.id);
+  if (!canUserAccessWorkspace) {
     return responses.unauthorizedResponse();
   }
 
-  const workspace = await getWorkspaceByEnvironmentId(environmentId);
-  const basePath = workspace ? `/workspaces/${workspace.id}` : `/environments/${environmentId}`;
+  const basePath = `/workspaces/${workspace.id}`;
 
   if (code && typeof code !== "string") {
     return responses.badRequestResponse("`code` must be a string");
