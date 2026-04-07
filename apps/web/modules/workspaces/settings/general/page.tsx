@@ -2,10 +2,10 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { CustomScriptsForm } from "./components/custom-scripts-form";
 import { DeleteWorkspace } from "./components/delete-workspace";

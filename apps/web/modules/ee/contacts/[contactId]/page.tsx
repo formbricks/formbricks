@@ -8,10 +8,10 @@ import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/conta
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ActivitySection } from "./components/activity-section";
 
 export const SingleContactPage = async (props: {

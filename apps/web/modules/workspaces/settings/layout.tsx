@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 export const metadata: Metadata = {
   title: "Configuration",

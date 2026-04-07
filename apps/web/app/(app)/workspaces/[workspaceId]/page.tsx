@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const WorkspacePage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

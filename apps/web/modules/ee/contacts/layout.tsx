@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const ConfigLayout = async (props: {
   params: Promise<{ workspaceId: string }>;

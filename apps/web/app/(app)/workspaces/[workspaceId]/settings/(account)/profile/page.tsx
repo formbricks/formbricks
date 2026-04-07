@@ -9,11 +9,11 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/servi
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();

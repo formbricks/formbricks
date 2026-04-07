@@ -12,10 +12,10 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: string }> }) => {
   const params = await props.params;

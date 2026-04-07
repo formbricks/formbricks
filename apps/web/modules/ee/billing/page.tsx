@@ -6,9 +6,9 @@ import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
 import { getStripeBillingCatalogDisplay } from "@/modules/ee/billing/lib/stripe-billing-catalog";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { PricingTable } from "./components/pricing-table";
 
 export const PricingPage = async (props: { params: Promise<{ workspaceId: string }> }) => {

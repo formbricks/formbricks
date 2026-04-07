@@ -6,13 +6,11 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
-const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
 const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
 
 export const ConfirmationPage = () => {
   const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
-  const [resolvedEnvironmentId, setResolvedEnvironmentId] = useState<string | null>(null);
   const [resolvedWorkspaceId, setResolvedWorkspaceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,13 +18,6 @@ export const ConfirmationPage = () => {
 
     if (globalThis.window === undefined) {
       return;
-    }
-
-    const storedEnvironmentId = globalThis.window.sessionStorage.getItem(
-      BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY
-    );
-    if (storedEnvironmentId) {
-      setResolvedEnvironmentId(storedEnvironmentId);
     }
 
     const storedWorkspaceId = globalThis.window.sessionStorage.getItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY);
@@ -48,14 +39,7 @@ export const ConfirmationPage = () => {
           </p>
         </div>
         <Button asChild className="w-full justify-center">
-          <Link
-            href={
-              resolvedWorkspaceId
-                ? `/workspaces/${resolvedWorkspaceId}/settings/billing`
-                : resolvedEnvironmentId
-                  ? `/environments/${resolvedEnvironmentId}/settings/billing`
-                  : "/environments"
-            }>
+          <Link href={resolvedWorkspaceId ? `/workspaces/${resolvedWorkspaceId}/settings/billing` : "/"}>
             {t("billing_confirmation.back_to_billing_overview")}
           </Link>
         </Button>

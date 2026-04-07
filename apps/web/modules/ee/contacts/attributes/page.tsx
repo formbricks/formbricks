@@ -3,7 +3,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { AttributesTable } from "./components/attributes-table";
 import { CreateAttributeModal } from "./components/create-attribute-modal";
 

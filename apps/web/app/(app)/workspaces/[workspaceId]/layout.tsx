@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { EnvironmentLayout } from "@/app/(app)/workspaces/[workspaceId]/components/EnvironmentLayout";
 import { EnvironmentContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getWorkspaceLayoutData } from "@/modules/environments/lib/utils";
+import { getWorkspaceLayoutData } from "@/modules/workspaces/lib/utils";
 import WorkspaceStorageHandler from "./components/WorkspaceStorageHandler";
 
 const WorkspaceLayout = async (props: {

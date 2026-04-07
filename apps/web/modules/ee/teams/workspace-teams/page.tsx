@@ -1,9 +1,9 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getTranslate } from "@/lingodotdev/server";
 import { AccessView } from "@/modules/ee/teams/workspace-teams/components/access-view";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { getTeamsByWorkspaceId } from "./lib/team";
 

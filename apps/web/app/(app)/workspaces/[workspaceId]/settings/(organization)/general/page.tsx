@@ -8,11 +8,11 @@ import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import packageJson from "@/package.json";
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {

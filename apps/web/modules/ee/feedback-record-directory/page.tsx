@@ -3,9 +3,9 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackRecordDirectoryView } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-view";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 export const FeedbackRecordDirectoriesPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

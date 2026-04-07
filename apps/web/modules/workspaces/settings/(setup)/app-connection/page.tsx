@@ -7,11 +7,11 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { ActionSettingsCard } from "../components/action-settings-card";
 

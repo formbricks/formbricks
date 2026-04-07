@@ -7,11 +7,11 @@ import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { FaviconCustomizationSettings } from "@/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getSurveysWithSlugsByOrganizationId } from "@/modules/survey/lib/slug";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

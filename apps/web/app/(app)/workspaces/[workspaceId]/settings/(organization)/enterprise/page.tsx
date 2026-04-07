@@ -7,10 +7,10 @@ import { EnterpriseLicenseStatus } from "@/app/(app)/workspaces/[workspaceId]/se
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { GRACE_PERIOD_MS, getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

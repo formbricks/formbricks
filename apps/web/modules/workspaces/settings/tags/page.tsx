@@ -2,9 +2,9 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { EditTagsWrapper } from "./components/edit-tags-wrapper";
 

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getWorkspace } from "@/lib/workspace/service";
-import { workspaceIdLayoutChecks } from "@/modules/environments/lib/utils";
+import { workspaceIdLayoutChecks } from "@/modules/workspaces/lib/utils";
 
 const SurveyEditorWorkspaceLayout = async (props: {
   params: Promise<{ workspaceId: string }>;

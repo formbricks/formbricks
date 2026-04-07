@@ -4,7 +4,7 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attri
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
 export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {

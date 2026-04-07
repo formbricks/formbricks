@@ -11,11 +11,11 @@ import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const SurveyPage = async (props: { params: Promise<{ workspaceId: string; surveyId: string }> }) => {
   const params = await props.params;

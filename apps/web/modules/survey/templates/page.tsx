@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TemplateContainerWithPreview } from "./components/template-container";
 
 interface SurveyTemplateProps {

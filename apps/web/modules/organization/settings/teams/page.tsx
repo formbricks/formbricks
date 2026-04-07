@@ -5,10 +5,10 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 export const TeamsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;

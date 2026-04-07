@@ -6,10 +6,10 @@ import { DEFAULT_LOCALE, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from
 import { getIntegrationByType } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
@@ -17,7 +17,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const t = await getTranslate();
 
-  const { isReadOnly, environment, session, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [surveys, slackIntegration, locale] = await Promise.all([
     getSurveys(workspace.id),

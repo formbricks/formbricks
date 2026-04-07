@@ -7,7 +7,6 @@ import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -15,6 +14,7 @@ import { TemplateContainerWithPreview } from "@/modules/survey/templates/compone
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 export const metadata: Metadata = {
   title: "Your Surveys",

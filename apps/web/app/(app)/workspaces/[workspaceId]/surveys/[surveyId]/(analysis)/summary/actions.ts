@@ -56,7 +56,7 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
     return await sendEmbedSurveyPreviewEmail(
       ctx.user.email,
       emailHtml,
-      survey.environmentId,
+      survey.workspaceId,
       ctx.user.locale,
       organizationLogoUrl || ""
     );

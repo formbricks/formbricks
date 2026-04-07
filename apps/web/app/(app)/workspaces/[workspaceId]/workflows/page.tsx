@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { WorkflowsPage } from "./components/workflows-page";
 
 export const metadata: Metadata = {

@@ -5,7 +5,7 @@ import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
 
 export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {

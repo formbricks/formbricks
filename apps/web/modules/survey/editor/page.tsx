@@ -17,7 +17,6 @@ import {
   getIsSpamProtectionEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
@@ -28,6 +27,7 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
