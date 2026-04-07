@@ -104,7 +104,7 @@ export const ActivityTimeline = ({
         </div>
       </div>
       {timelineItems.length === 0 ? (
-        <EmptyState text={t("environments.contacts.no_activity_yet")} />
+        <EmptyState text={t("workspace.contacts.no_activity_yet")} />
       ) : (
         <div className="space-y-4">
           {timelineItems.map((item) =>

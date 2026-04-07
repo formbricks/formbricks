@@ -112,14 +112,14 @@ export const AddChannelMappingModal = ({
   const linkChannel = async () => {
     try {
       if (!selectedChannel) {
-        throw new Error(t("environments.integrations.slack.please_select_a_channel"));
+        throw new Error(t("workspace.integrations.slack.please_select_a_channel"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.please_select_a_survey_error"));
+        throw new Error(t("workspace.integrations.please_select_a_survey_error"));
       }
 
       if (selectedElements.length === 0) {
-        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
+        throw new Error(t("workspace.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingChannel(true);
       const integrationData: TIntegrationSlackConfigData = {
@@ -154,9 +154,9 @@ export const AddChannelMappingModal = ({
         return;
       }
       if (selectedIntegration) {
-        toast.success(t("environments.integrations.integration_updated_successfully"));
+        toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
-        toast.success(t("environments.integrations.integration_added_successfully"));
+        toast.success(t("workspace.integrations.integration_added_successfully"));
       }
       resetForm();
       setOpen(false);
@@ -197,7 +197,7 @@ export const AddChannelMappingModal = ({
         toast.error(getFormattedErrorMessage(result));
         return;
       }
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
@@ -227,13 +227,13 @@ export const AddChannelMappingModal = ({
                 fill
                 className="object-contain object-center"
                 src={SlackLogo}
-                alt={t("environments.integrations.slack.slack_logo")}
+                alt={t("workspace.integrations.slack.slack_logo")}
               />
             </div>
             <div className="space-y-0.5">
-              <DialogTitle>{t("environments.integrations.slack.link_slack_channel")}</DialogTitle>
+              <DialogTitle>{t("workspace.integrations.slack.link_slack_channel")}</DialogTitle>
               <DialogDescription>
-                {t("environments.integrations.slack.slack_integration_description")}
+                {t("workspace.integrations.slack.slack_integration_description")}
               </DialogDescription>
             </div>
           </div>
@@ -244,7 +244,7 @@ export const AddChannelMappingModal = ({
               <div>
                 <div className="mb-4">
                   <DropdownSelector
-                    label={t("environments.integrations.slack.select_channel")}
+                    label={t("workspace.integrations.slack.select_channel")}
                     items={channels}
                     selectedItem={selectedChannel}
                     setSelectedItem={setSelectedChannel}
@@ -256,18 +256,18 @@ export const AddChannelMappingModal = ({
                     className="text-xs">
                     <Button variant="ghost" size="sm" className="my-2" type="button">
                       <CircleHelpIcon className="h-4 w-4" />
-                      {t("environments.integrations.slack.dont_see_your_channel")}
+                      {t("workspace.integrations.slack.dont_see_your_channel")}
                     </Button>
                   </Link>
                   {selectedChannel && hasMatchingId && (
                     <p className="text-xs text-amber-700">
                       <strong>{t("common.note")}:</strong>{" "}
-                      {t("environments.integrations.slack.already_connected_another_survey")}
+                      {t("workspace.integrations.slack.already_connected_another_survey")}
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
                     {channels.length === 0 &&
-                      t("environments.integrations.slack.create_at_least_one_channel_error")}
+                      t("workspace.integrations.slack.create_at_least_one_channel_error")}
                   </p>
                 </div>
                 <div>
@@ -279,7 +279,7 @@ export const AddChannelMappingModal = ({
                     disabled={surveys.length === 0}
                   />
                   <p className="m-1 text-xs text-slate-500">
-                    {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
+                    {surveys.length === 0 && t("workspace.integrations.create_survey_warning")}
                   </p>
                 </div>
               </div>
@@ -346,7 +346,7 @@ export const AddChannelMappingModal = ({
               </Button>
             )}
             <Button type="submit" loading={isLinkingChannel}>
-              {selectedIntegration ? t("common.update") : t("environments.integrations.slack.link_channel")}
+              {selectedIntegration ? t("common.update") : t("workspace.integrations.slack.link_channel")}
             </Button>
           </DialogFooter>
         </form>

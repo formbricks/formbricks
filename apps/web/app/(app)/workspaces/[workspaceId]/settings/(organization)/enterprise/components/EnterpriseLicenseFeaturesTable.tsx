@@ -20,60 +20,60 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
   return [
     {
       key: "contacts",
-      labelKey: t("environments.settings.enterprise.license_feature_contacts"),
+      labelKey: t("workspace.settings.enterprise.license_feature_contacts"),
       docsUrl:
         "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
     },
     {
       key: "workspaces",
-      labelKey: t("environments.settings.enterprise.license_feature_workspaces"),
+      labelKey: t("workspace.settings.enterprise.license_feature_workspaces"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/license",
     },
     {
       key: "whitelabel",
-      labelKey: t("environments.settings.enterprise.license_feature_whitelabel"),
+      labelKey: t("workspace.settings.enterprise.license_feature_whitelabel"),
       docsUrl:
         "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
     },
     {
       key: "removeBranding",
-      labelKey: t("environments.settings.enterprise.license_feature_remove_branding"),
+      labelKey: t("workspace.settings.enterprise.license_feature_remove_branding"),
       docsUrl:
         "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
     },
     {
       key: "twoFactorAuth",
-      labelKey: t("environments.settings.enterprise.license_feature_two_factor_auth"),
+      labelKey: t("workspace.settings.enterprise.license_feature_two_factor_auth"),
       docsUrl: "https://formbricks.com/docs/xm-and-surveys/core-features/user-management/two-factor-auth",
     },
     {
       key: "sso",
-      labelKey: t("environments.settings.enterprise.license_feature_sso"),
+      labelKey: t("workspace.settings.enterprise.license_feature_sso"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/oidc-sso",
     },
     {
       key: "saml",
-      labelKey: t("environments.settings.enterprise.license_feature_saml"),
+      labelKey: t("workspace.settings.enterprise.license_feature_saml"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/saml-sso",
     },
     {
       key: "spamProtection",
-      labelKey: t("environments.settings.enterprise.license_feature_spam_protection"),
+      labelKey: t("workspace.settings.enterprise.license_feature_spam_protection"),
       docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/spam-protection",
     },
     {
       key: "auditLogs",
-      labelKey: t("environments.settings.enterprise.license_feature_audit_logs"),
+      labelKey: t("workspace.settings.enterprise.license_feature_audit_logs"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging",
     },
     {
       key: "accessControl",
-      labelKey: t("environments.settings.enterprise.license_feature_access_control"),
+      labelKey: t("workspace.settings.enterprise.license_feature_access_control"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/team-access",
     },
     {
       key: "quotas",
-      labelKey: t("environments.settings.enterprise.license_feature_quotas"),
+      labelKey: t("workspace.settings.enterprise.license_feature_quotas"),
       docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/quota-management",
     },
   ];
@@ -88,15 +88,15 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
 
   return (
     <SettingsCard
-      title={t("environments.settings.enterprise.license_features_table_title")}
-      description={t("environments.settings.enterprise.license_features_table_description")}
+      title={t("workspace.settings.enterprise.license_features_table_title")}
+      description={t("workspace.settings.enterprise.license_features_table_description")}
       noPadding>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-white">
-            <TableHead>{t("environments.settings.enterprise.license_features_table_feature")}</TableHead>
-            <TableHead>{t("environments.settings.enterprise.license_features_table_access")}</TableHead>
-            <TableHead>{t("environments.settings.enterprise.license_features_table_value")}</TableHead>
+            <TableHead>{t("workspace.settings.enterprise.license_features_table_feature")}</TableHead>
+            <TableHead>{t("workspace.settings.enterprise.license_features_table_access")}</TableHead>
+            <TableHead>{t("workspace.settings.enterprise.license_features_table_value")}</TableHead>
             <TableHead>{t("common.documentation")}</TableHead>
           </TableRow>
         </TableHeader>
@@ -109,7 +109,7 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
             if (typeof value === "number") {
               displayValue = value;
             } else if (value === null) {
-              displayValue = t("environments.settings.enterprise.license_features_table_unlimited");
+              displayValue = t("workspace.settings.enterprise.license_features_table_unlimited");
             }
 
             return (
@@ -121,8 +121,8 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
                     size="normal"
                     text={
                       isEnabled
-                        ? t("environments.settings.enterprise.license_features_table_enabled")
-                        : t("environments.settings.enterprise.license_features_table_disabled")
+                        ? t("workspace.settings.enterprise.license_features_table_enabled")
+                        : t("workspace.settings.enterprise.license_features_table_disabled")
                     }
                   />
                 </TableCell>

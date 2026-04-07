@@ -10,7 +10,7 @@ export const buildActionObject = (data: TActionClassInput, environmentId: string
 
 export const buildNoCodeAction = (data: TActionClassInput, environmentId: string, t: TFunction) => {
   if (data.type !== "noCode") {
-    throw new Error(t("environments.actions.invalid_action_type_no_code"));
+    throw new Error(t("workspace.actions.invalid_action_type_no_code"));
   }
 
   const baseAction = {
@@ -40,7 +40,7 @@ export const buildNoCodeAction = (data: TActionClassInput, environmentId: string
 
 export const buildCodeAction = (data: TActionClassInput, environmentId: string, t: TFunction) => {
   if (data.type !== "code") {
-    throw new Error(t("environments.actions.invalid_action_type_code"));
+    throw new Error(t("workspace.actions.invalid_action_type_code"));
   }
 
   return {

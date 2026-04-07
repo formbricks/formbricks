@@ -25,7 +25,7 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
         <DialogHeader>
           <DialogTitle className="text-sm font-medium text-slate-900">
             {type === "multi-use"
-              ? t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_title")
+              ? t("workspace.surveys.share.anonymous_links.disable_multi_use_link_modal_title")
               : t("common.are_you_sure")}
           </DialogTitle>
         </DialogHeader>
@@ -33,20 +33,18 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
         <DialogBody>
           {type === "multi-use" ? (
             <>
-              <p>
-                {t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_description")}
-              </p>
+              <p>{t("workspace.surveys.share.anonymous_links.disable_multi_use_link_modal_description")}</p>
 
               <br />
 
               <p>
                 {t(
-                  "environments.surveys.share.anonymous_links.disable_multi_use_link_modal_description_subtext"
+                  "workspace.surveys.share.anonymous_links.disable_multi_use_link_modal_description_subtext"
                 )}
               </p>
             </>
           ) : (
-            <p>{t("environments.surveys.share.anonymous_links.disable_single_use_link_modal_description")}</p>
+            <p>{t("workspace.surveys.share.anonymous_links.disable_single_use_link_modal_description")}</p>
           )}
         </DialogBody>
 
@@ -59,8 +57,8 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
                 onOpenChange(false);
               }}>
               {type === "multi-use"
-                ? t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_button")
-                : t("environments.surveys.share.anonymous_links.disable_single_use_link_modal_button")}
+                ? t("workspace.surveys.share.anonymous_links.disable_multi_use_link_modal_button")
+                : t("workspace.surveys.share.anonymous_links.disable_single_use_link_modal_button")}
             </Button>
 
             <Button variant="secondary" onClick={() => onOpenChange(false)}>

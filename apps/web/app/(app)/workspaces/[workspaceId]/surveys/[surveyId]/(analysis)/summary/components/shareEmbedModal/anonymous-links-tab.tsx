@@ -206,9 +206,9 @@ export const AnonymousLinksTab = ({
         return;
       }
 
-      toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
+      toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
     } catch (error) {
-      toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
+      toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
     }
   };
 
@@ -220,8 +220,8 @@ export const AnonymousLinksTab = ({
             htmlId="multi-use-link-switch"
             isChecked={isMultiUseLink}
             onToggle={handleMultiUseToggle}
-            title={t("environments.surveys.share.anonymous_links.multi_use_link")}
-            description={t("environments.surveys.share.anonymous_links.multi_use_link_description")}
+            title={t("workspace.surveys.share.anonymous_links.multi_use_link")}
+            description={t("workspace.surveys.share.anonymous_links.multi_use_link_description")}
             customContainerClass="pl-1 pr-0 py-0"
             childBorder>
             <div className="flex w-full flex-col gap-4 overflow-hidden bg-white p-4">
@@ -237,12 +237,10 @@ export const AnonymousLinksTab = ({
               <div className="w-full">
                 <Alert variant="info" size="default">
                   <AlertTitle>
-                    {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
+                    {t("workspace.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
                   </AlertTitle>
                   <AlertDescription>
-                    {t(
-                      "environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description"
-                    )}
+                    {t("workspace.surveys.share.anonymous_links.multi_use_powers_other_channels_description")}
                   </AlertDescription>
                 </Alert>
               </div>
@@ -253,8 +251,8 @@ export const AnonymousLinksTab = ({
             htmlId="single-use-link-switch"
             isChecked={isSingleUseLink}
             onToggle={handleSingleUseToggle}
-            title={t("environments.surveys.share.anonymous_links.single_use_link")}
-            description={t("environments.surveys.share.anonymous_links.single_use_link_description")}
+            title={t("workspace.surveys.share.anonymous_links.single_use_link")}
+            description={t("workspace.surveys.share.anonymous_links.single_use_link_description")}
             customContainerClass="pl-1 pr-0 py-0"
             childBorder>
             <div className="flex w-full flex-col gap-4 bg-white p-4">
@@ -262,8 +260,8 @@ export const AnonymousLinksTab = ({
                 htmlId="single-use-encryption-switch"
                 isChecked={singleUseEncryption}
                 onToggle={handleSingleUseEncryptionToggle}
-                title={t("environments.surveys.share.anonymous_links.url_encryption_label")}
-                description={t("environments.surveys.share.anonymous_links.url_encryption_description")}
+                title={t("workspace.surveys.share.anonymous_links.url_encryption_label")}
+                description={t("workspace.surveys.share.anonymous_links.url_encryption_description")}
                 customContainerClass="pl-1 pr-0 py-0"
               />
 
@@ -271,10 +269,10 @@ export const AnonymousLinksTab = ({
                 <div className="flex w-full flex-col gap-4">
                   <Alert variant="info" size="default">
                     <AlertTitle>
-                      {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
+                      {t("workspace.surveys.share.anonymous_links.custom_single_use_id_title")}
                     </AlertTitle>
                     <AlertDescription>
-                      {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
+                      {t("workspace.surveys.share.anonymous_links.custom_single_use_id_description")}
                     </AlertDescription>
                   </Alert>
 
@@ -300,7 +298,7 @@ export const AnonymousLinksTab = ({
               {singleUseEncryption && (
                 <div className="flex w-full flex-col gap-2">
                   <h3 className="text-sm font-medium text-slate-900">
-                    {t("environments.surveys.share.anonymous_links.number_of_links_label")}
+                    {t("workspace.surveys.share.anonymous_links.number_of_links_label")}
                   </h3>
 
                   <div className="flex w-full flex-col gap-2">
@@ -325,7 +323,7 @@ export const AnonymousLinksTab = ({
                         </div>
 
                         <span className="text-sm text-slate-50">
-                          {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
+                          {t("workspace.surveys.share.anonymous_links.generate_and_download_links")}
                         </span>
                       </Button>
                     </div>
@@ -339,19 +337,19 @@ export const AnonymousLinksTab = ({
         <DocumentationLinks
           links={[
             {
-              title: t("environments.surveys.share.anonymous_links.single_use_links"),
+              title: t("workspace.surveys.share.anonymous_links.single_use_links"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
             },
             {
-              title: t("environments.surveys.share.anonymous_links.data_prefilling"),
+              title: t("workspace.surveys.share.anonymous_links.data_prefilling"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
             },
             {
-              title: t("environments.surveys.share.anonymous_links.source_tracking"),
+              title: t("workspace.surveys.share.anonymous_links.source_tracking"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
             },
             {
-              title: t("environments.surveys.share.anonymous_links.custom_start_point"),
+              title: t("workspace.surveys.share.anonymous_links.custom_start_point"),
               href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-block",
             },
           ]}

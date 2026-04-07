@@ -21,8 +21,8 @@ export const LanguagesLoading = () => {
         <WorkspaceConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.workspace.languages.multi_language_surveys")}
-        description={t("environments.workspace.languages.multi_language_surveys_description")}>
+        title={t("workspace.languages.multi_language_surveys")}
+        description={t("workspace.languages.multi_language_surveys_description")}>
         <div className="flex flex-col space-y-4">
           <LanguageLabels />
           {loaderIds.map((id) => (

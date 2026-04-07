@@ -134,22 +134,22 @@ export const FollowUpItem = ({
               type="gray"
               text={
                 followUp.trigger.type === "response"
-                  ? t("environments.surveys.edit.follow_ups_item_response_tag")
-                  : t("environments.surveys.edit.follow_ups_item_ending_tag")
+                  ? t("workspace.surveys.edit.follow_ups_item_response_tag")
+                  : t("workspace.surveys.edit.follow_ups_item_ending_tag")
               }
             />
 
             <Badge
               size="normal"
               type="gray"
-              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
+              text={t("workspace.surveys.edit.follow_ups_item_send_email_tag")}
             />
 
             {isEmailToInvalid || isEndingInvalid ? (
               <Badge
                 size="normal"
                 type="warning"
-                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
+                text={t("workspace.surveys.edit.follow_ups_item_issue_detected_tag")}
               />
             ) : null}
           </div>
@@ -231,8 +231,8 @@ export const FollowUpItem = ({
             };
           });
         }}
-        body={t("environments.surveys.edit.follow_ups_delete_modal_text")}
-        title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
+        body={t("workspace.surveys.edit.follow_ups_delete_modal_text")}
+        title={t("workspace.surveys.edit.follow_ups_delete_modal_title")}
         buttonVariant="destructive"
       />
     </>

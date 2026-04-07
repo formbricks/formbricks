@@ -34,11 +34,11 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const tabs = [
     {
       id: "preview",
-      label: t("environments.surveys.share.send_email.email_preview_tab"),
+      label: t("workspace.surveys.share.send_email.email_preview_tab"),
     },
     {
       id: "embed",
-      label: t("environments.surveys.share.send_email.embed_code_tab"),
+      label: t("workspace.surveys.share.send_email.embed_code_tab"),
     },
   ];
 
@@ -55,7 +55,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     try {
       const val = await sendEmbedSurveyPreviewEmailAction({ surveyId });
       if (val?.data) {
-        toast.success(t("environments.surveys.share.send_email.email_sent"));
+        toast.success(t("workspace.surveys.share.send_email.email_sent"));
       } else {
         const errorMessage = getFormattedErrorMessage(val);
         toast.error(errorMessage);
@@ -81,11 +81,11 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             </div>
             <div>
               <div className="mb-2 border-b border-slate-200 pb-2 text-sm">
-                {t("environments.surveys.share.send_email.email_to_label")} : {email || "user@mail.com"}
+                {t("workspace.surveys.share.send_email.email_to_label")} : {email || "user@mail.com"}
               </div>
               <div className="border-b border-slate-200 pb-2 text-sm">
-                {t("environments.surveys.share.send_email.email_subject_label")} :{" "}
-                {t("environments.surveys.share.send_email.formbricks_email_survey_preview")}
+                {t("workspace.surveys.share.send_email.email_subject_label")} :{" "}
+                {t("workspace.surveys.share.send_email.formbricks_email_survey_preview")}
               </div>
               <div className="p-2">
                 {emailHtml ? (
@@ -97,11 +97,11 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             </div>
           </div>
           <Button
-            title={t("environments.surveys.share.send_email.send_preview_email")}
-            aria-label={t("environments.surveys.share.send_email.send_preview_email")}
+            title={t("workspace.surveys.share.send_email.send_preview_email")}
+            aria-label={t("workspace.surveys.share.send_email.send_preview_email")}
             onClick={() => sendPreviewEmail()}
             className="shrink-0">
-            {t("environments.surveys.share.send_email.send_preview")}
+            {t("workspace.surveys.share.send_email.send_preview")}
             <SendIcon />
           </Button>
         </div>
@@ -119,14 +119,14 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             {emailHtml}
           </CodeBlock>
           <Button
-            title={t("environments.surveys.share.send_email.copy_embed_code")}
-            aria-label={t("environments.surveys.share.send_email.copy_embed_code")}
+            title={t("workspace.surveys.share.send_email.copy_embed_code")}
+            aria-label={t("workspace.surveys.share.send_email.copy_embed_code")}
             onClick={() => {
               try {
                 navigator.clipboard.writeText(emailHtml);
-                toast.success(t("environments.surveys.share.send_email.embed_code_copied_to_clipboard"));
+                toast.success(t("workspace.surveys.share.send_email.embed_code_copied_to_clipboard"));
               } catch {
-                toast.error(t("environments.surveys.share.send_email.embed_code_copied_to_clipboard_failed"));
+                toast.error(t("workspace.surveys.share.send_email.embed_code_copied_to_clipboard_failed"));
               }
             }}
             className="shrink-0">

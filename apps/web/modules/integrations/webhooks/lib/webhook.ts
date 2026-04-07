@@ -21,27 +21,27 @@ const getWebhookTestErrorMessage = async (statusCode: number): Promise<string | 
   switch (statusCode) {
     case 500: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_internal_server_error");
+      return t("workspace.integrations.webhooks.endpoint_internal_server_error");
     }
     case 404: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_not_found_error");
+      return t("workspace.integrations.webhooks.endpoint_not_found_error");
     }
     case 405: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_method_not_allowed_error");
+      return t("workspace.integrations.webhooks.endpoint_method_not_allowed_error");
     }
     case 502: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_bad_gateway_error");
+      return t("workspace.integrations.webhooks.endpoint_bad_gateway_error");
     }
     case 503: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_service_unavailable_error");
+      return t("workspace.integrations.webhooks.endpoint_service_unavailable_error");
     }
     case 504: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_gateway_timeout_error");
+      return t("workspace.integrations.webhooks.endpoint_gateway_timeout_error");
     }
     default:
       return null;

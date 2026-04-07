@@ -62,7 +62,7 @@ export const EditWorkspaceNameForm: React.FC<EditWorkspaceNameProps> = ({ worksp
       });
 
       if (updatedWorkspaceResponse?.data) {
-        toast.success(t("environments.workspace.general.workspace_name_updated_successfully"));
+        toast.success(t("workspace.general.workspace_name_updated_successfully"));
         form.resetField("name", { defaultValue: updatedWorkspaceResponse.data.name });
         router.refresh();
       } else {
@@ -71,7 +71,7 @@ export const EditWorkspaceNameForm: React.FC<EditWorkspaceNameProps> = ({ worksp
       }
     } catch (err) {
       console.error(err);
-      toast.error(t("environments.workspace.general.error_saving_workspace_information"));
+      toast.error(t("workspace.general.error_saving_workspace_information"));
     }
   };
 
@@ -86,9 +86,7 @@ export const EditWorkspaceNameForm: React.FC<EditWorkspaceNameProps> = ({ worksp
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="name">
-                  {t("environments.workspace.general.whats_your_workspace_called")}
-                </FormLabel>
+                <FormLabel htmlFor="name">{t("workspace.general.whats_your_workspace_called")}</FormLabel>
                 <FormControl>
                   <Input
                     type="text"

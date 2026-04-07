@@ -22,7 +22,7 @@ export const PrettyUrlInput = ({ value, onChange, publicDomain, disabled = false
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ""))}
-        placeholder={t("environments.surveys.share.pretty_url.slug_placeholder")}
+        placeholder={t("workspace.surveys.share.pretty_url.slug_placeholder")}
         disabled={disabled}
         className="border-0 bg-white focus-visible:ring-0 focus-visible:ring-offset-0"
       />

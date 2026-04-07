@@ -50,7 +50,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
   }
 
   if (!responses) {
-    throw new Error(t("environments.contacts.no_responses_found"));
+    throw new Error(t("workspace.contacts.no_responses_found"));
   }
 
   const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);

@@ -25,8 +25,8 @@ export const TagsPage = async (props: { params: Promise<{ workspaceId: string }>
         <WorkspaceConfigNavigation activeId="tags" />
       </PageHeader>
       <SettingsCard
-        title={t("environments.workspace.tags.manage_tags")}
-        description={t("environments.workspace.tags.manage_tags_description")}>
+        title={t("workspace.tags.manage_tags")}
+        description={t("workspace.tags.manage_tags_description")}>
         <EditTagsWrapper
           environmentTags={tags}
           environmentTagsCount={environmentTagsCount}

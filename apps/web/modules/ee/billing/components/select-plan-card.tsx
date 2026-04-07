@@ -36,15 +36,15 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
   const { t } = useTranslation();
 
   const TRIAL_FEATURE_KEYS = [
-    t("environments.settings.billing.trial_feature_unlimited_seats"),
-    t("environments.settings.billing.trial_feature_hide_branding"),
-    t("environments.settings.billing.trial_feature_respondent_identification"),
-    t("environments.settings.billing.trial_feature_contact_segment_management"),
-    t("environments.settings.billing.trial_feature_attribute_segmentation"),
-    t("environments.settings.billing.trial_feature_mobile_sdks"),
-    t("environments.settings.billing.trial_feature_email_followups"),
-    t("environments.settings.billing.trial_feature_webhooks"),
-    t("environments.settings.billing.trial_feature_api_access"),
+    t("workspace.settings.billing.trial_feature_unlimited_seats"),
+    t("workspace.settings.billing.trial_feature_hide_branding"),
+    t("workspace.settings.billing.trial_feature_respondent_identification"),
+    t("workspace.settings.billing.trial_feature_contact_segment_management"),
+    t("workspace.settings.billing.trial_feature_attribute_segmentation"),
+    t("workspace.settings.billing.trial_feature_mobile_sdks"),
+    t("workspace.settings.billing.trial_feature_email_followups"),
+    t("workspace.settings.billing.trial_feature_webhooks"),
+    t("workspace.settings.billing.trial_feature_api_access"),
   ] as const;
 
   const handleStartTrial = async () => {
@@ -54,14 +54,14 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
       if (result?.data) {
         router.push(nextUrl);
       } else if (result?.serverError === "trial_already_used") {
-        toast.error(t("environments.settings.billing.trial_already_used"));
+        toast.error(t("workspace.settings.billing.trial_already_used"));
         setIsStartingTrial(false);
       } else {
-        toast.error(t("environments.settings.billing.failed_to_start_trial"));
+        toast.error(t("workspace.settings.billing.failed_to_start_trial"));
         setIsStartingTrial(false);
       }
     } catch {
-      toast.error(t("environments.settings.billing.failed_to_start_trial"));
+      toast.error(t("workspace.settings.billing.failed_to_start_trial"));
       setIsStartingTrial(false);
     }
   };
@@ -93,9 +93,9 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
 
           <div className="text-center">
             <h3 className="text-2xl font-semibold text-slate-800">
-              {t("environments.settings.billing.trial_title")}
+              {t("workspace.settings.billing.trial_title")}
             </h3>
-            <p className="mt-2 text-slate-600">{t("environments.settings.billing.trial_no_credit_card")}</p>
+            <p className="mt-2 text-slate-600">{t("workspace.settings.billing.trial_no_credit_card")}</p>
           </div>
 
           <ul className="w-full space-y-3 text-left">
@@ -141,7 +141,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
         onClick={handleContinueHobby}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStartingHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
+        {isStartingHobby ? t("common.loading") : t("workspace.settings.billing.stay_on_hobby_plan")}
       </button>
     </div>
   );

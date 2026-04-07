@@ -32,52 +32,52 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const paidFeatures = [
     {
-      title: t("environments.settings.billing.remove_branding"),
+      title: t("workspace.settings.billing.remove_branding"),
       comingSoon: false,
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.sso"),
+      title: t("workspace.settings.enterprise.sso"),
       comingSoon: false,
       onRequest: false,
     },
     {
-      title: t("environments.workspace.languages.multi_language_surveys"),
+      title: t("workspace.languages.multi_language_surveys"),
       comingSoon: false,
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.organization_roles"),
+      title: t("workspace.settings.enterprise.organization_roles"),
       comingSoon: false,
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.teams"),
+      title: t("workspace.settings.enterprise.teams"),
       comingSoon: false,
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.contacts_and_segments"),
+      title: t("workspace.settings.enterprise.contacts_and_segments"),
       comingSoon: false,
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.audit_logs"),
+      title: t("workspace.settings.enterprise.audit_logs"),
       comingSoon: false,
       onRequest: true,
     },
     {
-      title: t("environments.settings.enterprise.saml_sso"),
+      title: t("workspace.settings.enterprise.saml_sso"),
       comingSoon: false,
       onRequest: true,
     },
     {
-      title: t("environments.settings.enterprise.service_level_agreement"),
+      title: t("workspace.settings.enterprise.service_level_agreement"),
       comingSoon: false,
       onRequest: true,
     },
     {
-      title: t("environments.settings.enterprise.soc2_hipaa_iso_27001_compliance_check"),
+      title: t("workspace.settings.enterprise.soc2_hipaa_iso_27001_compliance_check"),
       comingSoon: false,
       onRequest: true,
     },
@@ -85,7 +85,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
@@ -129,21 +129,19 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
             </svg>
             <div className="mx-auto text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
               <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                {t("environments.settings.enterprise.unlock_the_full_power_of_formbricks_free_for_30_days")}
+                {t("workspace.settings.enterprise.unlock_the_full_power_of_formbricks_free_for_30_days")}
               </h2>
               <p className="text-md mt-6 leading-8 text-slate-300">
-                {t("environments.settings.enterprise.keep_full_control_over_your_data_privacy_and_security")}
+                {t("workspace.settings.enterprise.keep_full_control_over_your_data_privacy_and_security")}
                 <br />
-                {t(
-                  "environments.settings.enterprise.get_an_enterprise_license_to_get_access_to_all_features"
-                )}
+                {t("workspace.settings.enterprise.get_an_enterprise_license_to_get_access_to_all_features")}
               </p>
             </div>
           </div>
           <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
               <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">
-                {t("environments.settings.enterprise.enterprise_features")}
+                {t("workspace.settings.enterprise.enterprise_features")}
               </h2>
               <ul className="my-4 space-y-4">
                 {paidFeatures.map((feature) => (
@@ -154,12 +152,12 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
                     <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
                     {feature.comingSoon && (
                       <span className="mx-2 rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700 dark:bg-slate-700 dark:text-teal-500">
-                        {t("environments.settings.enterprise.coming_soon")}
+                        {t("workspace.settings.enterprise.coming_soon")}
                       </span>
                     )}
                     {feature.onRequest && (
                       <span className="mx-2 rounded-full bg-violet-100 px-3 py-1 text-xs text-violet-700 dark:bg-slate-700 dark:text-teal-500">
-                        {t("environments.settings.enterprise.on_request")}
+                        {t("workspace.settings.enterprise.on_request")}
                       </span>
                     )}
                   </li>
@@ -167,7 +165,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
               </ul>
               <p className="my-6 text-sm text-slate-700">
                 {t(
-                  "environments.settings.enterprise.no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form"
+                  "workspace.settings.enterprise.no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form"
                 )}
               </p>
               <Button asChild>
@@ -176,11 +174,11 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   referrerPolicy="no-referrer">
-                  {t("environments.settings.enterprise.request_30_day_trial_license")}
+                  {t("workspace.settings.enterprise.request_30_day_trial_license")}
                 </Link>
               </Button>
               <p className="mt-2 text-xs text-slate-500">
-                {t("environments.settings.enterprise.no_credit_card_no_sales_call_just_test_it")}
+                {t("workspace.settings.enterprise.no_credit_card_no_sales_call_just_test_it")}
               </p>
             </div>
           </div>

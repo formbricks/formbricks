@@ -59,7 +59,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
   const onSubmit = async (data: PrettyUrlFormData) => {
     if (!data.slug.trim()) {
-      toast.error(t("environments.surveys.share.pretty_url.slug_required"));
+      toast.error(t("workspace.surveys.share.pretty_url.slug_required"));
       return;
     }
 
@@ -74,7 +74,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
       if (errorMessage) {
         toast.error(errorMessage);
       } else {
-        toast.success(t("environments.surveys.share.pretty_url.save_success"));
+        toast.success(t("workspace.surveys.share.pretty_url.save_success"));
         router.refresh();
         setIsEditing(false);
       }
@@ -108,7 +108,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
         reset({ slug: "" });
         router.refresh();
         setIsEditing(true);
-        toast.success(t("environments.surveys.share.pretty_url.remove_success"));
+        toast.success(t("workspace.surveys.share.pretty_url.remove_success"));
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
@@ -134,7 +134,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
             name="slug"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("environments.surveys.share.pretty_url.slug_label")}</FormLabel>
+                <FormLabel>{t("workspace.surveys.share.pretty_url.slug_label")}</FormLabel>
                 <FormControl>
                   <PrettyUrlInput
                     value={field.value}
@@ -143,7 +143,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
                     disabled={isReadOnly || !isEditing}
                   />
                 </FormControl>
-                <FormDescription>{t("environments.surveys.share.pretty_url.slug_help")}</FormDescription>
+                <FormDescription>{t("workspace.surveys.share.pretty_url.slug_help")}</FormDescription>
               </FormItem>
             )}
           />
@@ -189,9 +189,9 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
       <DeleteDialog
         open={showRemoveDialog}
         setOpen={setShowRemoveDialog}
-        deleteWhat={t("environments.surveys.share.pretty_url.title")}
+        deleteWhat={t("workspace.surveys.share.pretty_url.title")}
         onDelete={handleRemove}
-        text={t("environments.surveys.share.pretty_url.remove_description")}></DeleteDialog>
+        text={t("workspace.surveys.share.pretty_url.remove_description")}></DeleteDialog>
     </div>
   );
 };

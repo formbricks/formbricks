@@ -40,9 +40,9 @@ export const AddActionModal = ({
       <DialogContent disableCloseOnOutsideClick>
         <DialogHeader>
           <MousePointerClickIcon />
-          <DialogTitle>{t("environments.actions.track_new_user_action")}</DialogTitle>
+          <DialogTitle>{t("workspace.actions.track_new_user_action")}</DialogTitle>
           <DialogDescription>
-            {t("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")}
+            {t("workspace.actions.track_user_action_to_display_surveys_or_create_user_segment")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>

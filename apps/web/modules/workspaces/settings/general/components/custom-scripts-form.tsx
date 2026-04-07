@@ -53,7 +53,7 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
         },
       });
       if (updatedWorkspaceResponse?.data) {
-        toast.success(t("environments.workspace.general.custom_scripts_updated_successfully"));
+        toast.success(t("workspace.general.custom_scripts_updated_successfully"));
         form.reset({ customHeadScripts: updatedWorkspaceResponse.data.customHeadScripts ?? "" });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
@@ -70,7 +70,7 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
         <form className="flex w-full flex-col space-y-4" onSubmit={form.handleSubmit(updateCustomScripts)}>
           <Alert variant="warning" className="flex items-start gap-2">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-            <AlertDescription>{t("environments.workspace.general.custom_scripts_warning")}</AlertDescription>
+            <AlertDescription>{t("workspace.general.custom_scripts_warning")}</AlertDescription>
           </Alert>
 
           <FormField
@@ -79,16 +79,14 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
             render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="customHeadScripts">
-                  {t("environments.workspace.general.custom_scripts_label")}
+                  {t("workspace.general.custom_scripts_label")}
                 </FormLabel>
-                <FormDescription>
-                  {t("environments.workspace.general.custom_scripts_description")}
-                </FormDescription>
+                <FormDescription>{t("workspace.general.custom_scripts_description")}</FormDescription>
                 <FormControl>
                   <textarea
                     id="customHeadScripts"
                     rows={8}
-                    placeholder={t("environments.workspace.general.custom_scripts_placeholder")}
+                    placeholder={t("workspace.general.custom_scripts_placeholder")}
                     className={cn(
                       "flex w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 font-mono text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                       isReadOnly && "bg-slate-50"

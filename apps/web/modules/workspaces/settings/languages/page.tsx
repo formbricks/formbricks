@@ -26,8 +26,8 @@ export const LanguagesPage = async (props: { params: Promise<{ workspaceId: stri
         <WorkspaceConfigNavigation activeId="languages" />
       </PageHeader>
       <SettingsCard
-        title={t("environments.workspace.languages.multi_language_surveys")}
-        description={t("environments.workspace.languages.multi_language_surveys_description")}>
+        title={t("workspace.languages.multi_language_surveys")}
+        description={t("workspace.languages.multi_language_surveys_description")}>
         <EditLanguage workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
       </SettingsCard>
     </PageContentWrapper>

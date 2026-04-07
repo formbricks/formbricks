@@ -43,7 +43,7 @@ export const AddActionModal = ({
 
   const tabs = [
     {
-      title: t("environments.surveys.edit.select_saved_action"),
+      title: t("workspace.surveys.edit.select_saved_action"),
       children: (
         <SavedActionsTab
           actionClasses={actionClasses}
@@ -54,7 +54,7 @@ export const AddActionModal = ({
       ),
     },
     {
-      title: t("environments.surveys.edit.capture_new_action"),
+      title: t("workspace.surveys.edit.capture_new_action"),
       children: (
         <CreateNewActionTab
           actionClasses={actionClasses}
@@ -85,7 +85,7 @@ export const AddActionModal = ({
         <DialogHeader>
           <DialogTitle>{t("common.add_action")}</DialogTitle>
           <DialogDescription>
-            {t("environments.surveys.edit.capture_a_new_action_to_trigger_a_survey_on")}
+            {t("workspace.surveys.edit.capture_a_new_action_to_trigger_a_survey_on")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>

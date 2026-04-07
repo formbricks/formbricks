@@ -250,7 +250,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         onOpenAutoFocus={(event) => event.preventDefault()}>
         <div className="mb-6 flex flex-wrap items-start justify-between gap-2">
           <p className="font-semibold text-slate-800">
-            {t("environments.surveys.summary.show_all_responses_that_match")}
+            {t("workspace.surveys.summary.show_all_responses_that_match")}
           </p>
           <div className="flex items-center space-x-2">
             <Select
@@ -263,12 +263,10 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectItem value="all">
-                  {t("environments.surveys.filter.complete_and_partial_responses")}
+                  {t("workspace.surveys.filter.complete_and_partial_responses")}
                 </SelectItem>
-                <SelectItem value="complete">
-                  {t("environments.surveys.filter.complete_responses")}
-                </SelectItem>
-                <SelectItem value="partial">{t("environments.surveys.filter.partial_responses")}</SelectItem>
+                <SelectItem value="complete">{t("workspace.surveys.filter.complete_responses")}</SelectItem>
+                <SelectItem value="partial">{t("workspace.surveys.filter.partial_responses")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

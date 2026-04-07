@@ -16,7 +16,7 @@ export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProp
     return (
       <div className="mb-4">
         <p className="text-sm font-semibold text-slate-800">
-          {t("environments.surveys.edit.send_survey_to_audience_who_match")}
+          {t("workspace.surveys.edit.send_survey_to_audience_who_match")}
         </p>
       </div>
     );

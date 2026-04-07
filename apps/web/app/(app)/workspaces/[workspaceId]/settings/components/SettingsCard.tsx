@@ -45,7 +45,7 @@ export const SettingsCard = ({
           <div className="ml-2">
             {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (
-              <Badge size="normal" type="success" text={t("environments.settings.enterprise.coming_soon")} />
+              <Badge size="normal" type="success" text={t("workspace.settings.enterprise.coming_soon")} />
             )}
           </div>
           <Small color="muted" margin="headerDescription">

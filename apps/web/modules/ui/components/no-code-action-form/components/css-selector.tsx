@@ -29,17 +29,15 @@ export const CssSelector = ({ form, disabled }: CssSelectorProps) => {
               onToggle={(checked) => {
                 field.onChange(checked ? "" : undefined);
               }}
-              title={t("environments.actions.css_selector")}
-              description={t(
-                "environments.actions.if_a_user_clicks_a_button_with_a_specific_css_class_or_id"
-              )}
+              title={t("workspace.actions.css_selector")}
+              description={t("workspace.actions.if_a_user_clicks_a_button_with_a_specific_css_class_or_id")}
               childBorder={true}>
               <div className="w-full rounded-lg border border-slate-100 p-4">
                 <Input
                   type="text"
                   className="bg-white"
                   disabled={disabled}
-                  placeholder={t("environments.actions.add_css_class_or_id")}
+                  placeholder={t("workspace.actions.add_css_class_or_id")}
                   {...field}
                   isInvalid={!!error}
                 />

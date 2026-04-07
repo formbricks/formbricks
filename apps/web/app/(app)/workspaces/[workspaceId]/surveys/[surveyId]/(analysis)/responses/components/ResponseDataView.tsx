@@ -96,8 +96,8 @@ const mapResponsesToTableData = (
     responseData: extractResponseData(response, survey),
     createdAt: response.createdAt,
     status: response.finished
-      ? t("environments.surveys.responses.completed")
-      : t("environments.surveys.responses.not_completed"),
+      ? t("workspace.surveys.responses.completed")
+      : t("workspace.surveys.responses.not_completed"),
     responseId: response.id,
     singleUseId: response.singleUseId,
     tags: response.tags,

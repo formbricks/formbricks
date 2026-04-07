@@ -26,7 +26,7 @@ export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
@@ -35,7 +35,7 @@ export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string
       </PageHeader>
       <SettingsCard
         title={t("common.api_keys")}
-        description={t("environments.settings.api_keys.api_keys_description")}>
+        description={t("workspace.settings.api_keys.api_keys_description")}>
         <ApiKeyList
           organizationId={organization.id}
           locale={locale ?? DEFAULT_LOCALE}

@@ -248,7 +248,7 @@ export const ContactsTable = ({
               <SearchBar
                 value={searchValue}
                 onChange={setSearchValue}
-                placeholder={t("environments.contacts.search_contact")}
+                placeholder={t("workspace.contacts.search_contact")}
               />
             </div>
           }

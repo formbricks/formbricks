@@ -37,8 +37,8 @@ export const BrandingSettingsCard = async ({
 
   return (
     <SettingsCard
-      title={t("environments.workspace.look.formbricks_branding")}
-      description={t("environments.workspace.look.formbricks_branding_settings_description")}>
+      title={t("workspace.look.formbricks_branding")}
+      description={t("workspace.look.formbricks_branding_settings_description")}>
       {canRemoveBranding ? (
         <div className="space-y-4">
           <EditBranding
@@ -56,8 +56,8 @@ export const BrandingSettingsCard = async ({
         </div>
       ) : (
         <UpgradePrompt
-          title={t("environments.workspace.look.remove_branding_with_a_higher_plan")}
-          description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
+          title={t("workspace.look.remove_branding_with_a_higher_plan")}
+          description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
           buttons={buttons}
         />
       )}

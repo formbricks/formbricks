@@ -216,11 +216,11 @@ export const ResponseTable = ({
       if (downloadResponse?.data) {
         downloadResponsesFile(downloadResponse.data.fileName, downloadResponse.data.fileContents, format);
       } else {
-        toast.error(t("environments.surveys.responses.error_downloading_responses"));
+        toast.error(t("workspace.surveys.responses.error_downloading_responses"));
       }
     } catch (error) {
       Sentry.captureException(error);
-      toast.error(t("environments.surveys.responses.error_downloading_responses"));
+      toast.error(t("workspace.surveys.responses.error_downloading_responses"));
     }
   };
 

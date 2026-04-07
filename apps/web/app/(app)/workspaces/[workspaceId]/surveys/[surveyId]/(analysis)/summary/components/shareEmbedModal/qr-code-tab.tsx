@@ -64,10 +64,10 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
       const downloadInstance = new QRCodeStyling(getQRCodeOptions(500, 500));
       downloadInstance.update({ data: surveyUrl });
       downloadInstance.download({ name: "survey-qr-code", extension: "png" });
-      toast.success(t("environments.surveys.summary.qr_code_download_with_start_soon"));
+      toast.success(t("workspace.surveys.summary.qr_code_download_with_start_soon"));
     } catch (error) {
       logger.error(error as Error, "Failed to download QR code");
-      toast.error(t("environments.surveys.summary.qr_code_download_failed"));
+      toast.error(t("workspace.surveys.summary.qr_code_download_failed"));
     } finally {
       setIsDownloading(false);
     }
@@ -78,14 +78,14 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
       {isLoading && (
         <div className="flex flex-col items-center gap-2">
           <LoaderCircle className="h-8 w-8 animate-spin text-slate-500" />
-          <p className="text-sm text-slate-500">{t("environments.surveys.summary.generating_qr_code")}</p>
+          <p className="text-sm text-slate-500">{t("workspace.surveys.summary.generating_qr_code")}</p>
         </div>
       )}
 
       {hasError && (
         <Alert variant="error">
           <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
-          <AlertDescription>{t("environments.surveys.summary.qr_code_generation_failed")}</AlertDescription>
+          <AlertDescription>{t("workspace.surveys.summary.qr_code_generation_failed")}</AlertDescription>
         </Alert>
       )}
 
@@ -100,8 +100,8 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
             disabled={!surveyUrl || isDownloading || hasError}
             className="flex items-center gap-2">
             {isDownloading
-              ? t("environments.surveys.summary.downloading_qr_code")
-              : t("environments.surveys.summary.download_qr_code")}
+              ? t("workspace.surveys.summary.downloading_qr_code")
+              : t("workspace.surveys.summary.download_qr_code")}
             {isDownloading ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : (

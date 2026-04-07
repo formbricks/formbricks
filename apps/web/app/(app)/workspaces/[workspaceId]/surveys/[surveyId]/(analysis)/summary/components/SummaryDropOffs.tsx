@@ -33,14 +33,14 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
                   <TimerIcon className="h-5 w-5" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"}>
-                  <p className="text-center font-normal">{t("environments.surveys.summary.ttc_tooltip")}</p>
+                  <p className="text-center font-normal">{t("workspace.surveys.summary.ttc_tooltip")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <div className="px-4 text-right md:px-6">{t("environments.surveys.summary.impressions")}</div>
+          <div className="px-4 text-right md:px-6">{t("workspace.surveys.summary.impressions")}</div>
           <div className="px-4 text-right md:mr-1 md:pl-6 md:pr-6">
-            {t("environments.surveys.summary.drop_offs")}
+            {t("workspace.surveys.summary.drop_offs")}
           </div>
         </div>
         {dropOff.map((quesDropOff) => (

@@ -28,9 +28,9 @@ export const WorkspaceLookSettingsLoading = () => {
         <WorkspaceConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.workspace.look.theme")}
+        title={t("workspace.look.theme")}
         className="max-w-7xl"
-        description={t("environments.workspace.look.theme_settings_description")}>
+        description={t("workspace.look.theme_settings_description")}>
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
@@ -39,10 +39,10 @@ export const WorkspaceLookSettingsLoading = () => {
                   <Switch />
                   <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-slate-700">
-                      {t("environments.workspace.look.enable_custom_styling")}
+                      {t("workspace.look.enable_custom_styling")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {t("environments.workspace.look.enable_custom_styling_description")}
+                      {t("workspace.look.enable_custom_styling_description")}
                     </p>
                   </div>
                 </div>
@@ -52,10 +52,10 @@ export const WorkspaceLookSettingsLoading = () => {
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
                     <h2 className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.survey_styling")}
+                      {t("workspace.surveys.edit.survey_styling")}
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
+                      {t("workspace.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
                     </p>
                   </div>
                 </div>
@@ -63,10 +63,10 @@ export const WorkspaceLookSettingsLoading = () => {
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
                     <h2 className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.card_styling")}
+                      {t("workspace.surveys.edit.card_styling")}
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      {t("environments.surveys.edit.style_the_survey_card")}
+                      {t("workspace.surveys.edit.style_the_survey_card")}
                     </p>
                   </div>
                 </div>
@@ -75,12 +75,12 @@ export const WorkspaceLookSettingsLoading = () => {
                   <div className="flex flex-col p-4">
                     <div className="flex items-center gap-2">
                       <h2 className="text-sm font-semibold text-slate-700">
-                        {t("environments.surveys.edit.background_styling")}
+                        {t("workspace.surveys.edit.background_styling")}
                       </h2>
                       <Badge type="gray" size="normal" text={t("common.link_surveys")} />
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}
+                      {t("workspace.surveys.edit.change_the_background_to_a_color_image_or_animation")}
                     </p>
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export const WorkspaceLookSettingsLoading = () => {
         <div className="w-full items-center">
           <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
             <Switch id="signature" checked={false} />
-            <Label htmlFor="signature">{t("environments.workspace.look.show_powered_by_formbricks")}</Label>
+            <Label htmlFor="signature">{t("workspace.look.show_powered_by_formbricks")}</Label>
           </div>
         </div>
       </SettingsCard>

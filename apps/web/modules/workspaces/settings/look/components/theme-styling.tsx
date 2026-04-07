@@ -102,7 +102,7 @@ export const ThemeStyling = ({
     if (updatedWorkspaceResponse?.data) {
       form.reset({ ...STYLE_DEFAULTS });
       setPreviewBrandColor(STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
-      toast.success(t("environments.workspace.look.styling_updated_successfully"));
+      toast.success(t("workspace.look.styling_updated_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
@@ -121,7 +121,7 @@ export const ThemeStyling = ({
     // Commit brand color to the preview now that all derived colours are in sync.
     setPreviewBrandColor(brandColor ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
 
-    toast.success(t("environments.workspace.look.suggested_colors_applied_please_save"));
+    toast.success(t("workspace.look.suggested_colors_applied_please_save"));
     setConfirmSuggestColorsOpen(false);
   };
 
@@ -139,7 +139,7 @@ export const ThemeStyling = ({
       setPreviewBrandColor(
         saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
       );
-      toast.success(t("environments.workspace.look.styling_updated_successfully"));
+      toast.success(t("workspace.look.styling_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
       toast.error(errorMessage);
@@ -179,9 +179,9 @@ export const ThemeStyling = ({
                         </FormControl>
 
                         <div>
-                          <FormLabel>{t("environments.workspace.look.enable_custom_styling")}</FormLabel>
+                          <FormLabel>{t("workspace.look.enable_custom_styling")}</FormLabel>
                           <FormDescription>
-                            {t("environments.workspace.look.enable_custom_styling_description")}
+                            {t("workspace.look.enable_custom_styling_description")}
                           </FormDescription>
                         </div>
                       </FormItem>
@@ -197,9 +197,9 @@ export const ThemeStyling = ({
                     name="brandColor.light"
                     render={({ field }) => (
                       <FormItem className="space-y-1">
-                        <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
+                        <FormLabel>{t("workspace.surveys.edit.brand_color")}</FormLabel>
                         <FormDescription>
-                          {t("environments.surveys.edit.brand_color_description")}
+                          {t("workspace.surveys.edit.brand_color_description")}
                         </FormDescription>
                         <FormControl>
                           <ColorPicker
@@ -220,7 +220,7 @@ export const ThemeStyling = ({
                       className="h-10 justify-center gap-1"
                       onClick={() => setConfirmSuggestColorsOpen(true)}>
                       <SparklesIcon className="mr-2 h-4 w-4" />
-                      {t("environments.workspace.look.suggest_colors")}
+                      {t("workspace.look.suggest_colors")}
                     </Button>
                   </div>
                 </div>
@@ -289,9 +289,9 @@ export const ThemeStyling = ({
           <AlertDialog
             open={confirmSuggestColorsOpen}
             setOpen={setConfirmSuggestColorsOpen}
-            headerText={t("environments.workspace.look.generate_theme_header")}
-            mainText={t("environments.workspace.look.generate_theme_confirmation")}
-            confirmBtnLabel={t("environments.workspace.look.generate_theme_btn")}
+            headerText={t("workspace.look.generate_theme_header")}
+            mainText={t("workspace.look.generate_theme_confirmation")}
+            confirmBtnLabel={t("workspace.look.generate_theme_btn")}
             declineBtnLabel={t("common.cancel")}
             onConfirm={handleSuggestColors}
             onDecline={() => setConfirmSuggestColorsOpen(false)}
@@ -301,8 +301,8 @@ export const ThemeStyling = ({
           <AlertDialog
             open={confirmResetStylingModalOpen}
             setOpen={setConfirmResetStylingModalOpen}
-            headerText={t("environments.workspace.look.reset_styling")}
-            mainText={t("environments.workspace.look.reset_styling_confirmation")}
+            headerText={t("workspace.look.reset_styling")}
+            mainText={t("workspace.look.reset_styling_confirmation")}
             confirmBtnLabel={t("common.confirm")}
             onConfirm={() => {
               onReset();

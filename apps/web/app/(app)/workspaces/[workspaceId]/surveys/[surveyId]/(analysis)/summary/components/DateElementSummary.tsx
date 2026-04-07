@@ -55,7 +55,7 @@ export const DateElementSummary = ({ elementSummary, survey, locale }: DateEleme
         <div className="max-h-[62vh] w-full overflow-y-auto">
           {elementSummary.samples.length === 0 ? (
             <div className="p-8">
-              <EmptyState text={t("environments.surveys.summary.no_responses_found")} variant="simple" />
+              <EmptyState text={t("workspace.surveys.summary.no_responses_found")} variant="simple" />
             </div>
           ) : (
             elementSummary.samples.slice(0, visibleResponses).map((response) => (

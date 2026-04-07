@@ -23,8 +23,8 @@ export const FeedbackRecordDirectoryView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.feedback_record_directories.title")}
-      description={t("environments.settings.feedback_record_directories.description")}>
+      title={t("workspace.settings.feedback_record_directories.title")}
+      description={t("workspace.settings.feedback_record_directories.description")}>
       <FeedbackRecordDirectoryTable
         directories={directories}
         organizationId={organizationId}

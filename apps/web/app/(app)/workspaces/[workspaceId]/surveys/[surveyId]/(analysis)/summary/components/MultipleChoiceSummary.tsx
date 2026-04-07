@@ -96,8 +96,8 @@ export const MultipleChoiceSummary = ({
                       elementSummary.element.type,
                       elementSummary.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
                         otherValue === result.value
-                        ? t("environments.surveys.summary.includes_either")
-                        : t("environments.surveys.summary.includes_all"),
+                        ? t("workspace.surveys.summary.includes_either")
+                        : t("workspace.surveys.summary.includes_all"),
                       [result.value]
                     )
                   }>
@@ -125,7 +125,7 @@ export const MultipleChoiceSummary = ({
                   <div className="mt-4 rounded-lg border border-slate-200">
                     <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
                       <div className="col-span-1 pl-6">
-                        {t("environments.surveys.summary.other_values_found")}
+                        {t("workspace.surveys.summary.other_values_found")}
                       </div>
                       <div className="col-span-1 pl-6">{surveyType === "app" && t("common.user")}</div>
                     </div>

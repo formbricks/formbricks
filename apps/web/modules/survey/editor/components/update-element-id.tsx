@@ -52,7 +52,7 @@ export const UpdateElementId = ({
     }
 
     setIsInputInvalid(false);
-    toast.success(t("environments.surveys.edit.question_id_updated"));
+    toast.success(t("workspace.surveys.edit.question_id_updated"));
     updateElement(elementIdx, { id: currentValue });
     setPrevValue(currentValue); // after successful update, set current value as previous value
   };

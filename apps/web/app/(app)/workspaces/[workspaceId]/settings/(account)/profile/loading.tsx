@@ -10,8 +10,8 @@ const Loading = () => {
   const { t } = useTranslation();
   const cards = [
     {
-      title: t("environments.settings.profile.personal_information"),
-      description: t("environments.settings.profile.update_personal_info"),
+      title: t("workspace.settings.profile.personal_information"),
+      description: t("workspace.settings.profile.update_personal_info"),
       skeletonLines: [
         { classes: "h-4 w-28" },
         { classes: "h-6 w-64" },
@@ -20,8 +20,8 @@ const Loading = () => {
       ],
     },
     {
-      title: t("environments.settings.profile.delete_account"),
-      description: t("environments.settings.profile.confirm_delete_account"),
+      title: t("workspace.settings.profile.delete_account"),
+      description: t("workspace.settings.profile.confirm_delete_account"),
       skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
     },
   ];

@@ -27,20 +27,20 @@ const getBadgeConfig = (
 ): { type: "success" | "error" | "warning" | "gray"; label: string } => {
   switch (status) {
     case "active":
-      return { type: "success", label: t("environments.settings.enterprise.license_status_active") };
+      return { type: "success", label: t("workspace.settings.enterprise.license_status_active") };
     case "expired":
-      return { type: "error", label: t("environments.settings.enterprise.license_status_expired") };
+      return { type: "error", label: t("workspace.settings.enterprise.license_status_expired") };
     case "instance_mismatch":
       return {
         type: "error",
-        label: t("environments.settings.enterprise.license_status_instance_mismatch"),
+        label: t("workspace.settings.enterprise.license_status_instance_mismatch"),
       };
     case "unreachable":
-      return { type: "warning", label: t("environments.settings.enterprise.license_status_unreachable") };
+      return { type: "warning", label: t("workspace.settings.enterprise.license_status_unreachable") };
     case "invalid_license":
-      return { type: "error", label: t("environments.settings.enterprise.license_status_invalid") };
+      return { type: "error", label: t("workspace.settings.enterprise.license_status_invalid") };
     default:
-      return { type: "gray", label: t("environments.settings.enterprise.license_status") };
+      return { type: "gray", label: t("workspace.settings.enterprise.license_status") };
   }
 };
 
@@ -60,27 +60,27 @@ export const EnterpriseLicenseStatus = ({
     try {
       const result = await recheckLicenseAction({ workspaceId });
       if (result?.serverError) {
-        toast.error(result.serverError || t("environments.settings.enterprise.recheck_license_failed"));
+        toast.error(result.serverError || t("workspace.settings.enterprise.recheck_license_failed"));
         return;
       }
 
       if (result?.data) {
         if (result.data.status === "unreachable") {
-          toast.error(t("environments.settings.enterprise.recheck_license_unreachable"));
+          toast.error(t("workspace.settings.enterprise.recheck_license_unreachable"));
         } else if (result.data.status === "instance_mismatch") {
-          toast.error(t("environments.settings.enterprise.recheck_license_instance_mismatch"));
+          toast.error(t("workspace.settings.enterprise.recheck_license_instance_mismatch"));
         } else if (result.data.status === "invalid_license") {
-          toast.error(t("environments.settings.enterprise.recheck_license_invalid"));
+          toast.error(t("workspace.settings.enterprise.recheck_license_invalid"));
         } else {
-          toast.success(t("environments.settings.enterprise.recheck_license_success"));
+          toast.success(t("workspace.settings.enterprise.recheck_license_success"));
         }
         router.refresh();
       } else {
-        toast.error(t("environments.settings.enterprise.recheck_license_failed"));
+        toast.error(t("workspace.settings.enterprise.recheck_license_failed"));
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : t("environments.settings.enterprise.recheck_license_failed")
+        error instanceof Error ? error.message : t("workspace.settings.enterprise.recheck_license_failed")
       );
     } finally {
       setIsRechecking(false);
@@ -91,8 +91,8 @@ export const EnterpriseLicenseStatus = ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.enterprise.license_status")}
-      description={t("environments.settings.enterprise.license_status_description")}>
+      title={t("workspace.settings.enterprise.license_status")}
+      description={t("workspace.settings.enterprise.license_status_description")}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col gap-1.5">
@@ -113,12 +113,12 @@ export const EnterpriseLicenseStatus = ({
             {isRechecking ? (
               <>
                 <RotateCcwIcon className="mr-2 h-4 w-4 animate-spin" />
-                {t("environments.settings.enterprise.rechecking")}
+                {t("workspace.settings.enterprise.rechecking")}
               </>
             ) : (
               <>
                 <RotateCcwIcon className="mr-2 h-4 w-4" />
-                {t("environments.settings.enterprise.recheck_license")}
+                {t("workspace.settings.enterprise.recheck_license")}
               </>
             )}
           </Button>
@@ -126,7 +126,7 @@ export const EnterpriseLicenseStatus = ({
         {status === "unreachable" && gracePeriodEnd && (
           <Alert variant="warning" size="small">
             <AlertDescription className="overflow-visible whitespace-normal">
-              {t("environments.settings.enterprise.license_unreachable_grace_period", {
+              {t("workspace.settings.enterprise.license_unreachable_grace_period", {
                 gracePeriodEnd: formatDateForDisplay(new Date(gracePeriodEnd), locale, {
                   year: "numeric",
                   month: "short",
@@ -139,19 +139,19 @@ export const EnterpriseLicenseStatus = ({
         {status === "invalid_license" && (
           <Alert variant="error" size="small">
             <AlertDescription className="overflow-visible whitespace-normal">
-              {t("environments.settings.enterprise.license_invalid_description")}
+              {t("workspace.settings.enterprise.license_invalid_description")}
             </AlertDescription>
           </Alert>
         )}
         {status === "instance_mismatch" && (
           <Alert variant="error" size="small">
             <AlertDescription className="overflow-visible whitespace-normal">
-              {t("environments.settings.enterprise.license_instance_mismatch_description")}
+              {t("workspace.settings.enterprise.license_instance_mismatch_description")}
             </AlertDescription>
           </Alert>
         )}
         <p className="border-t border-slate-100 pt-4 text-sm text-slate-500">
-          {t("environments.settings.enterprise.questions_please_reach_out_to")}{" "}
+          {t("workspace.settings.enterprise.questions_please_reach_out_to")}{" "}
           <a
             className="font-medium text-slate-700 underline hover:text-slate-900"
             href="mailto:hola@formbricks.com">

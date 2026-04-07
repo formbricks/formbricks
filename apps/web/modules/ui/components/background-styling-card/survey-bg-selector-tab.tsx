@@ -36,10 +36,10 @@ export const SurveyBgSelectorTab = ({
   const [uploadBackground, setUploadBackground] = useState(bg);
 
   const tabs = [
-    { id: "color", label: t("environments.surveys.edit.color") },
-    { id: "animation", label: t("environments.surveys.edit.animation") },
-    { id: "upload", label: t("environments.surveys.edit.upload") },
-    { id: "image", label: t("environments.surveys.edit.image") },
+    { id: "color", label: t("workspace.surveys.edit.color") },
+    { id: "animation", label: t("workspace.surveys.edit.animation") },
+    { id: "upload", label: t("workspace.surveys.edit.upload") },
+    { id: "image", label: t("workspace.surveys.edit.image") },
   ];
 
   useEffect(() => {

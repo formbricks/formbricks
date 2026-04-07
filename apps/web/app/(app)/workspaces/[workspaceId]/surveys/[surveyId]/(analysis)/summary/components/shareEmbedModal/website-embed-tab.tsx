@@ -33,8 +33,8 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         htmlId="enableEmbedMode"
         isChecked={embedModeEnabled}
         onToggle={setEmbedModeEnabled}
-        title={t("environments.surveys.share.embed_on_website.embed_mode")}
-        description={t("environments.surveys.share.embed_on_website.embed_mode_description")}
+        title={t("workspace.surveys.share.embed_on_website.embed_mode")}
+        description={t("workspace.surveys.share.embed_on_website.embed_mode_description")}
         customContainerClass="pl-1 pr-0 py-0"
       />
       <Button
@@ -43,7 +43,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         aria-label={t("common.copy_code")}
         onClick={() => {
           navigator.clipboard.writeText(iframeCode);
-          toast.success(t("environments.surveys.share.embed_on_website.embed_code_copied_to_clipboard"));
+          toast.success(t("workspace.surveys.share.embed_on_website.embed_code_copied_to_clipboard"));
         }}>
         {t("common.copy_code")}
         <CopyIcon />

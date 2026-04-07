@@ -81,9 +81,9 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
       }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("environments.settings.profile.disable_two_factor_authentication")}</DialogTitle>
+          <DialogTitle>{t("workspace.settings.profile.disable_two_factor_authentication")}</DialogTitle>
           <DialogDescription>
-            {t("environments.settings.profile.disable_two_factor_authentication_description")}
+            {t("workspace.settings.profile.disable_two_factor_authentication_description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -123,17 +123,17 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                 <div className="flex flex-col gap-2">
                   <label htmlFor="code" className="text-sm font-medium text-slate-700">
                     {backupCodeInputVisible
-                      ? t("environments.settings.profile.backup_code")
-                      : t("environments.settings.profile.two_factor_code")}
+                      ? t("workspace.settings.profile.backup_code")
+                      : t("workspace.settings.profile.two_factor_code")}
                   </label>
 
                   <p className="text-sm text-slate-700">
                     {backupCodeInputVisible
                       ? t(
-                          "environments.settings.profile.each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator"
+                          "workspace.settings.profile.each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator"
                         )
                       : t(
-                          "environments.settings.profile.two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app"
+                          "workspace.settings.profile.two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app"
                         )}
                   </p>
                 </div>
@@ -183,9 +183,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                   variant="ghost"
                   type="button"
                   onClick={() => setBackupCodeInputVisible((prev) => !prev)}>
-                  {backupCodeInputVisible
-                    ? t("common.go_back")
-                    : t("environments.settings.profile.lost_access")}
+                  {backupCodeInputVisible ? t("common.go_back") : t("workspace.settings.profile.lost_access")}
                 </Button>
               </div>
               <div className="flex items-center space-x-4">

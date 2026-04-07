@@ -54,7 +54,7 @@ export const CreateFeedbackRecordDirectoryModal = ({
   const handleCreation: SubmitHandler<TFeedbackRecordDirectoryCreateInput> = async (data) => {
     const response = await createFeedbackRecordDirectoryAction({ name: data.name, organizationId });
     if (response?.data) {
-      toast.success(t("environments.settings.feedback_record_directories.directory_created_successfully"));
+      toast.success(t("workspace.settings.feedback_record_directories.directory_created_successfully"));
       router.refresh();
       setOpen(false);
       reset();
@@ -69,7 +69,7 @@ export const CreateFeedbackRecordDirectoryModal = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {t("environments.settings.feedback_record_directories.create_feedback_directory")}
+            {t("workspace.settings.feedback_record_directories.create_feedback_directory")}
           </DialogTitle>
         </DialogHeader>
 
@@ -82,13 +82,11 @@ export const CreateFeedbackRecordDirectoryModal = ({
                 render={({ field, fieldState: { error } }) => (
                   <FormItem className="pb-4">
                     <FormLabel>
-                      {t("environments.settings.feedback_record_directories.directory_name")}
+                      {t("workspace.settings.feedback_record_directories.directory_name")}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder={t(
-                          "environments.settings.feedback_record_directories.enter_directory_name"
-                        )}
+                        placeholder={t("workspace.settings.feedback_record_directories.enter_directory_name")}
                         {...field}
                       />
                     </FormControl>
@@ -109,7 +107,7 @@ export const CreateFeedbackRecordDirectoryModal = ({
                 {t("common.cancel")}
               </Button>
               <Button disabled={!form.formState.isValid || isSubmitting} loading={isSubmitting} type="submit">
-                {t("environments.settings.feedback_record_directories.create_feedback_directory")}
+                {t("workspace.settings.feedback_record_directories.create_feedback_directory")}
               </Button>
             </DialogFooter>
           </form>

@@ -34,8 +34,8 @@ export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditB
     if (updateBrandingResponse?.data) {
       toast.success(
         newBrandingState
-          ? t("environments.workspace.look.formbricks_branding_shown")
-          : t("environments.workspace.look.formbricks_branding_hidden")
+          ? t("workspace.look.formbricks_branding_shown")
+          : t("workspace.look.formbricks_branding_hidden")
       );
     } else {
       const errorMessage = getFormattedErrorMessage(updateBrandingResponse);
@@ -53,7 +53,7 @@ export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditB
         disabled={updatingBranding || isReadOnly}
       />
       <Label htmlFor={`branding-${type}`}>
-        {t("environments.workspace.look.show_formbricks_branding_in", {
+        {t("workspace.look.show_formbricks_branding_in", {
           type: type === "linkSurvey" ? t("common.link") : t("common.app"),
         })}
       </Label>

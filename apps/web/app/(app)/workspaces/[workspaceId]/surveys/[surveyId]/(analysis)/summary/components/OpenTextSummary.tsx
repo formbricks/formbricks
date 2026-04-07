@@ -39,7 +39,7 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
       <div className="border-t border-slate-200"></div>
       {elementSummary.samples.length === 0 ? (
         <div className="p-8">
-          <EmptyState text={t("environments.surveys.summary.no_responses_found")} variant="simple" />
+          <EmptyState text={t("workspace.surveys.summary.no_responses_found")} variant="simple" />
         </div>
       ) : (
         <div className="max-h-[40vh] overflow-y-auto">

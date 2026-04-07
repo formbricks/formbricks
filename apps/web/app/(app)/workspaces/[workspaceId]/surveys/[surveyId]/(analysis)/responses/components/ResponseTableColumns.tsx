@@ -293,7 +293,7 @@ export const generateResponseTableColumns = (
               <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
             </TooltipTrigger>
             <TooltipContent side="bottom" className="space-x-1 font-normal">
-              <span>{t("environments.surveys.responses.how_to_identify_users")}</span>
+              <span>{t("workspace.surveys.responses.how_to_identify_users")}</span>
               <Link
                 className="underline underline-offset-2 hover:text-slate-900"
                 href="https://formbricks.com/docs/app-surveys/user-identification"
@@ -317,7 +317,7 @@ export const generateResponseTableColumns = (
 
   const singleUseIdColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "singleUseId",
-    header: () => <div className="gap-x-1.5">{t("environments.surveys.responses.single_use_id")}</div>,
+    header: () => <div className="gap-x-1.5">{t("workspace.surveys.responses.single_use_id")}</div>,
     cell: ({ row }) => {
       return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
     },

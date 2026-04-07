@@ -5,8 +5,8 @@ import { buildActionObject, buildCodeAction, buildNoCodeAction } from "./action-
 
 const mockT = vi.fn((key: string) => {
   const translations: Record<string, string> = {
-    "environments.actions.invalid_action_type_no_code": "Invalid action type for noCode action",
-    "environments.actions.invalid_action_type_code": "Invalid action type for code action",
+    "workspace.actions.invalid_action_type_no_code": "Invalid action type for noCode action",
+    "workspace.actions.invalid_action_type_code": "Invalid action type for code action",
   };
   return translations[key] || key;
 }) as unknown as TFunction;

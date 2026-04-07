@@ -48,7 +48,7 @@ export const WebhookTable = ({
   return (
     <>
       {webhooks.length === 0 ? (
-        <EmptyState text={t("environments.integrations.webhooks.empty_webhook_message")} />
+        <EmptyState text={t("workspace.integrations.webhooks.empty_webhook_message")} />
       ) : (
         <div className="rounded-lg border border-slate-200">
           {TableHeading}

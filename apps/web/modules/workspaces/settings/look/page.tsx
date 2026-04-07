@@ -42,9 +42,9 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
         </Alert>
       )}
       <SettingsCard
-        title={t("environments.workspace.look.theme")}
+        title={t("workspace.look.theme")}
         className={cn(!isReadOnly && "max-w-7xl")}
-        description={t("environments.workspace.look.theme_settings_description")}>
+        description={t("workspace.look.theme_settings_description")}>
         <ThemeStyling
           environmentId={environment.id}
           workspace={workspace}
@@ -55,9 +55,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
           publicDomain={publicDomain}
         />
       </SettingsCard>
-      <SettingsCard
-        title={t("common.logo")}
-        description={t("environments.workspace.look.logo_settings_description")}>
+      <SettingsCard title={t("common.logo")} description={t("workspace.look.logo_settings_description")}>
         <EditLogo
           workspace={workspace}
           environmentId={environment.id}
@@ -66,8 +64,8 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
         />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.workspace.look.app_survey_placement")}
-        description={t("environments.workspace.look.app_survey_placement_settings_description")}>
+        title={t("workspace.look.app_survey_placement")}
+        description={t("workspace.look.app_survey_placement_settings_description")}>
         <EditPlacementForm workspace={workspace} isReadOnly={isReadOnly} />
       </SettingsCard>
 

@@ -28,7 +28,7 @@ export const DisplayCard = ({ display, surveys, locale }: DisplayCardProps) => {
           <EyeIcon className="h-4 w-4 text-slate-600" />
         </div>
         <div>
-          <p className="text-xs text-slate-500">{t("environments.contacts.survey_viewed")}</p>
+          <p className="text-xs text-slate-500">{t("workspace.contacts.survey_viewed")}</p>
           {survey ? (
             <Link
               href={`${workspaceBasePath}/surveys/${survey.id}/summary`}

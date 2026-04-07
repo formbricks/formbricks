@@ -52,8 +52,8 @@ export const TeamsView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.teams.teams")}
-      description={t("environments.settings.teams.teams_description")}>
+      title={t("workspace.settings.teams.teams")}
+      description={t("workspace.settings.teams.teams_description")}>
       {isAccessControlAllowed ? (
         <TeamsTable
           teams={teams}
@@ -65,8 +65,8 @@ export const TeamsView = async ({
         />
       ) : (
         <UpgradePrompt
-          title={t("environments.settings.teams.unlock_teams_title")}
-          description={t("environments.settings.teams.unlock_teams_description")}
+          title={t("workspace.settings.teams.unlock_teams_title")}
+          description={t("workspace.settings.teams.unlock_teams_description")}
           buttons={buttons}
         />
       )}

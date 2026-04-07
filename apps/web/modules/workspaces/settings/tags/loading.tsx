@@ -14,12 +14,12 @@ export const TagsLoading = () => {
         <WorkspaceConfigNavigation activeId="tags" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.workspace.tags.manage_tags")}
-        description={t("environments.workspace.tags.manage_tags_description")}>
+        title={t("workspace.tags.manage_tags")}
+        description={t("workspace.tags.manage_tags_description")}>
         <div className="w-full">
           <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-2">{t("environments.workspace.tags.tag")}</div>
-            <div className="col-span-1 text-center">{t("environments.workspace.tags.count")}</div>
+            <div className="col-span-2">{t("workspace.tags.tag")}</div>
+            <div className="col-span-1 text-center">{t("workspace.tags.count")}</div>
             <div className="col-span-1 flex justify-center text-center">{t("common.actions")}</div>
           </div>
           <div className="w-full">

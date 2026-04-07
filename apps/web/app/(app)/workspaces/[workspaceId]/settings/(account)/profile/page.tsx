@@ -42,8 +42,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       {user && (
         <div>
           <SettingsCard
-            title={t("environments.settings.profile.personal_information")}
-            description={t("environments.settings.profile.update_personal_info")}>
+            title={t("workspace.settings.profile.personal_information")}
+            description={t("workspace.settings.profile.update_personal_info")}>
             <EditProfileDetailsForm
               user={user}
               emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
@@ -53,11 +53,11 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           {user.identityProvider === "email" && (
             <SettingsCard
               title={t("common.security")}
-              description={t("environments.settings.profile.security_description")}>
+              description={t("workspace.settings.profile.security_description")}>
               {!isTwoFactorAuthEnabled && !user.twoFactorEnabled ? (
                 <UpgradePrompt
-                  title={t("environments.settings.profile.unlock_two_factor_authentication")}
-                  description={t("environments.settings.profile.two_factor_authentication_description")}
+                  title={t("workspace.settings.profile.unlock_two_factor_authentication")}
+                  description={t("workspace.settings.profile.two_factor_authentication_description")}
                   buttons={[
                     {
                       text: IS_FORMBRICKS_CLOUD
@@ -82,8 +82,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           )}
 
           <SettingsCard
-            title={t("environments.settings.profile.delete_account")}
-            description={t("environments.settings.profile.confirm_delete_account")}>
+            title={t("workspace.settings.profile.delete_account")}
+            description={t("workspace.settings.profile.confirm_delete_account")}>
             <DeleteAccount
               session={session}
               IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

@@ -50,17 +50,17 @@ enum FilterDownload {
 }
 
 const getFilterDropDownLabels = (t: TFunction) => ({
-  ALL_TIME: t("environments.surveys.summary.all_time"),
-  LAST_7_DAYS: t("environments.surveys.summary.last_7_days"),
-  LAST_30_DAYS: t("environments.surveys.summary.last_30_days"),
-  THIS_MONTH: t("environments.surveys.summary.this_month"),
-  LAST_MONTH: t("environments.surveys.summary.last_month"),
-  LAST_6_MONTHS: t("environments.surveys.summary.last_6_months"),
-  THIS_QUARTER: t("environments.surveys.summary.this_quarter"),
-  LAST_QUARTER: t("environments.surveys.summary.last_quarter"),
-  THIS_YEAR: t("environments.surveys.summary.this_year"),
-  LAST_YEAR: t("environments.surveys.summary.last_year"),
-  CUSTOM_RANGE: t("environments.surveys.summary.custom_range"),
+  ALL_TIME: t("workspace.surveys.summary.all_time"),
+  LAST_7_DAYS: t("workspace.surveys.summary.last_7_days"),
+  LAST_30_DAYS: t("workspace.surveys.summary.last_30_days"),
+  THIS_MONTH: t("workspace.surveys.summary.this_month"),
+  LAST_MONTH: t("workspace.surveys.summary.last_month"),
+  LAST_6_MONTHS: t("workspace.surveys.summary.last_6_months"),
+  THIS_QUARTER: t("workspace.surveys.summary.this_quarter"),
+  LAST_QUARTER: t("workspace.surveys.summary.last_quarter"),
+  THIS_YEAR: t("workspace.surveys.summary.this_year"),
+  LAST_YEAR: t("workspace.surveys.summary.last_year"),
+  CUSTOM_RANGE: t("workspace.surveys.summary.custom_range"),
 });
 
 interface CustomFilterProps {
@@ -258,11 +258,11 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
           fileType
         );
       } else {
-        toast.error(t("environments.surveys.responses.error_downloading_responses"));
+        toast.error(t("workspace.surveys.responses.error_downloading_responses"));
       }
     } catch (err) {
       Sentry.captureException(err);
-      toast.error(t("environments.surveys.responses.error_downloading_responses"));
+      toast.error(t("workspace.surveys.responses.error_downloading_responses"));
     } finally {
       setIsDownloading(false);
     }
@@ -400,28 +400,28 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               onClick={async () => {
                 await handleDownloadResponses(FilterDownload.ALL, "csv");
               }}>
-              <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
+              <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_csv")}</p>
             </DropdownMenuItem>
             <DropdownMenuItem
               data-testid="fb__custom-filter-download-all-xlsx"
               onClick={async () => {
                 await handleDownloadResponses(FilterDownload.ALL, "xlsx");
               }}>
-              <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
+              <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_excel")}</p>
             </DropdownMenuItem>
             <DropdownMenuItem
               data-testid="fb__custom-filter-download-filtered-csv"
               onClick={async () => {
                 await handleDownloadResponses(FilterDownload.FILTER, "csv");
               }}>
-              <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
+              <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_csv")}</p>
             </DropdownMenuItem>
             <DropdownMenuItem
               data-testid="fb__custom-filter-download-filtered-xlsx"
               onClick={async () => {
                 await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
               }}>
-              <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
+              <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_excel")}</p>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

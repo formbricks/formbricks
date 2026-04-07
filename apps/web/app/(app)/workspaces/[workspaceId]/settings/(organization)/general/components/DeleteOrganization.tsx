@@ -39,13 +39,13 @@ export const DeleteOrganization = ({
         setIsDeleting(false);
         return;
       }
-      toast.success(t("environments.settings.general.organization_deleted_successfully"));
+      toast.success(t("workspace.settings.general.organization_deleted_successfully"));
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       }
       router.push("/");
     } catch (err) {
-      toast.error(t("environments.settings.general.error_deleting_organization_please_try_again"));
+      toast.error(t("workspace.settings.general.error_deleting_organization_please_try_again"));
     }
 
     setIsDeleteDialogOpen(false);
@@ -53,16 +53,14 @@ export const DeleteOrganization = ({
   };
 
   const deleteDisabledWarning = isUserOwner
-    ? t("environments.settings.general.cannot_delete_only_organization")
-    : t("environments.settings.general.only_org_owner_can_perform_action");
+    ? t("workspace.settings.general.cannot_delete_only_organization")
+    : t("workspace.settings.general.only_org_owner_can_perform_action");
 
   return (
     <div>
       {!isDeleteDisabled && (
         <div>
-          <p className="text-sm text-slate-900">
-            {t("environments.settings.general.once_its_gone_its_gone")}
-          </p>
+          <p className="text-sm text-slate-900">{t("workspace.settings.general.once_its_gone_its_gone")}</p>
           <Button
             size="sm"
             disabled={isDeleteDisabled}
@@ -117,17 +115,17 @@ const DeleteOrganizationModal = ({
       setOpen={setOpen}
       deleteWhat={t("common.organization")}
       onDelete={deleteOrganization}
-      text={t("environments.settings.general.delete_organization_warning")}
+      text={t("workspace.settings.general.delete_organization_warning")}
       disabled={inputValue !== organizationData?.name}
       isDeleting={isDeleting}>
       <div className="py-5" data-i18n="[html]content.body">
         <ul className="list-disc pb-6 pl-6">
-          <li>{t("environments.settings.general.delete_organization_warning_1")}</li>
-          <li>{t("environments.settings.general.delete_organization_warning_2")}</li>
+          <li>{t("workspace.settings.general.delete_organization_warning_1")}</li>
+          <li>{t("workspace.settings.general.delete_organization_warning_2")}</li>
         </ul>
         <form onSubmit={(e) => e.preventDefault()}>
           <label htmlFor="deleteOrganizationConfirmation">
-            {t("environments.settings.general.delete_organization_warning_3", {
+            {t("workspace.settings.general.delete_organization_warning_3", {
               organizationName: organizationData?.name,
             })}
           </label>

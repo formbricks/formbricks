@@ -109,7 +109,7 @@ export const PersonalLinksTab = ({
     setIsGenerating(true);
 
     // Show initial toast
-    toast.loading(t("environments.surveys.share.personal_links.generating_links_toast"), {
+    toast.loading(t("workspace.surveys.share.personal_links.generating_links_toast"), {
       duration: 5000,
       id: "generating-links",
     });
@@ -134,12 +134,12 @@ export const PersonalLinksTab = ({
         downloadFile(url, fileName);
         URL.revokeObjectURL(url);
       } catch {
-        toast.error(t("environments.surveys.share.personal_links.error_generating_links"));
+        toast.error(t("workspace.surveys.share.personal_links.error_generating_links"));
         setIsGenerating(false);
         return;
       }
 
-      toast.success(t("environments.surveys.share.personal_links.links_generated_success_toast"), {
+      toast.success(t("workspace.surveys.share.personal_links.links_generated_success_toast"), {
         duration: 5000,
         id: "generating-links",
       });
@@ -157,14 +157,14 @@ export const PersonalLinksTab = ({
   // Button state logic
   const isButtonDisabled = !selectedSegment || isGenerating || publicSegments.length === 0;
   const buttonText = isGenerating
-    ? t("environments.surveys.share.personal_links.generating_links")
-    : t("environments.surveys.share.personal_links.generate_and_download_links");
+    ? t("workspace.surveys.share.personal_links.generating_links")
+    : t("workspace.surveys.share.personal_links.generate_and_download_links");
 
   if (!isContactsEnabled) {
     return (
       <UpgradePrompt
-        title={t("environments.surveys.share.personal_links.upgrade_prompt_title")}
-        description={t("environments.surveys.share.personal_links.upgrade_prompt_description")}
+        title={t("workspace.surveys.share.personal_links.upgrade_prompt_title")}
+        description={t("workspace.surveys.share.personal_links.upgrade_prompt_description")}
         buttons={[
           {
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
@@ -203,8 +203,8 @@ export const PersonalLinksTab = ({
                       <SelectValue
                         placeholder={
                           publicSegments.length === 0
-                            ? t("environments.surveys.share.personal_links.no_segments_available")
-                            : t("environments.surveys.share.personal_links.select_segment")
+                            ? t("workspace.surveys.share.personal_links.no_segments_available")
+                            : t("workspace.surveys.share.personal_links.select_segment")
                         }
                       />
                     </SelectTrigger>
@@ -218,7 +218,7 @@ export const PersonalLinksTab = ({
                   </Select>
                 </FormControl>
                 <FormDescription>
-                  {t("environments.surveys.share.personal_links.create_and_manage_segments")}
+                  {t("workspace.surveys.share.personal_links.create_and_manage_segments")}
                 </FormDescription>
               </FormItem>
             )}
@@ -230,12 +230,12 @@ export const PersonalLinksTab = ({
             name="expiryDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("environments.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
+                <FormLabel>{t("workspace.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
                 <FormControl>
                   <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
                 </FormControl>
                 <FormDescription>
-                  {t("environments.surveys.share.personal_links.expiry_date_description")}
+                  {t("workspace.surveys.share.personal_links.expiry_date_description")}
                 </FormDescription>
               </FormItem>
             )}
@@ -255,7 +255,7 @@ export const PersonalLinksTab = ({
       <DocumentationLinks
         links={[
           {
-            title: t("environments.surveys.share.personal_links.work_with_segments"),
+            title: t("workspace.surveys.share.personal_links.work_with_segments"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
           },
         ]}

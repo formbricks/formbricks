@@ -123,7 +123,7 @@ export const EditWelcomeCard = ({
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`}>
           <form>
             <div className="mt-2">
-              <Label htmlFor="companyLogo">{t("environments.surveys.edit.company_logo")}</Label>
+              <Label htmlFor="companyLogo">{t("workspace.surveys.edit.company_logo")}</Label>
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
@@ -168,7 +168,7 @@ export const EditWelcomeCard = ({
               <ElementFormInput
                 id="subheader"
                 value={localSurvey.welcomeCard.subheader}
-                label={t("environments.surveys.edit.welcome_message")}
+                label={t("workspace.surveys.edit.welcome_message")}
                 localSurvey={localSurvey}
                 elementIdx={-1}
                 isInvalid={isInvalid}
@@ -195,7 +195,7 @@ export const EditWelcomeCard = ({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
-                    label={t("environments.surveys.edit.next_button_label")}
+                    label={t("workspace.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
                     isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -217,7 +217,7 @@ export const EditWelcomeCard = ({
               <div className="flex-column">
                 <Label htmlFor="timeToFinish">{t("common.time_to_finish")}</Label>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t("environments.surveys.edit.display_an_estimate_of_completion_time_for_survey")}
+                  {t("workspace.surveys.edit.display_an_estimate_of_completion_time_for_survey")}
                 </div>
               </div>
             </div>
@@ -236,7 +236,7 @@ export const EditWelcomeCard = ({
                 <div className="flex-column">
                   <Label htmlFor="showResponseCount">{t("common.show_response_count")}</Label>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {t("environments.surveys.edit.display_number_of_responses_for_survey")}
+                    {t("workspace.surveys.edit.display_number_of_responses_for_survey")}
                   </div>
                 </div>
               </div>

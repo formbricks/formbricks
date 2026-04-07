@@ -33,25 +33,23 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
       </PageHeader>
       <div className="space-y-4">
         <SettingsCard
-          title={t("environments.workspace.app-connection.sdk_connection_details")}
-          description={t("environments.workspace.app-connection.sdk_connection_details_description")}>
+          title={t("workspace.app-connection.sdk_connection_details")}
+          description={t("workspace.app-connection.sdk_connection_details_description")}>
           <div className="space-y-3">
-            <IdBadge id={workspace.id} label={t("environments.workspace.app-connection.environment_id")} />
-            <IdBadge id={WEBAPP_URL} label={t("environments.workspace.app-connection.webapp_url")} />
+            <IdBadge id={workspace.id} label={t("workspace.app-connection.environment_id")} />
+            <IdBadge id={WEBAPP_URL} label={t("workspace.app-connection.webapp_url")} />
           </div>
         </SettingsCard>
         <SettingsCard
-          title={t("environments.workspace.app-connection.app_connection")}
-          description={t("environments.workspace.app-connection.app_connection_description")}>
+          title={t("workspace.app-connection.app_connection")}
+          description={t("workspace.app-connection.app_connection_description")}>
           {environment && (
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
               {!environment.appSetupCompleted ? (
                 <Alert variant="info">
-                  <AlertTitle>{t("environments.workspace.app-connection.setup_alert_title")}</AlertTitle>
-                  <AlertDescription>
-                    {t("environments.workspace.app-connection.setup_alert_description")}
-                  </AlertDescription>
+                  <AlertTitle>{t("workspace.app-connection.setup_alert_title")}</AlertTitle>
+                  <AlertDescription>{t("workspace.app-connection.setup_alert_description")}</AlertDescription>
                   <AlertButton asChild>
                     <Link
                       href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
@@ -63,11 +61,9 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
                 </Alert>
               ) : (
                 <Alert variant="warning">
-                  <AlertTitle>
-                    {t("environments.workspace.app-connection.cache_update_delay_title")}
-                  </AlertTitle>
+                  <AlertTitle>{t("workspace.app-connection.cache_update_delay_title")}</AlertTitle>
                   <AlertDescription>
-                    {t("environments.workspace.app-connection.cache_update_delay_description")}
+                    {t("workspace.app-connection.cache_update_delay_description")}
                   </AlertDescription>
                 </Alert>
               )}

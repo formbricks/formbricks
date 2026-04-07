@@ -46,7 +46,7 @@ const Page = async (props: XMTemplatePageProps) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
-      <Header title={t("environments.xm-templates.headline")} />
+      <Header title={t("workspace.xm-templates.headline")} />
       <XMTemplateList
         workspace={workspace}
         user={user}

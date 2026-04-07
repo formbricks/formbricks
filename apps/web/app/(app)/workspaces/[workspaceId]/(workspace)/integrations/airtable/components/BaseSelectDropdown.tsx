@@ -33,7 +33,7 @@ export const BaseSelectDropdown = ({
   const { t } = useTranslation();
   return (
     <div className="flex w-full flex-col">
-      <Label htmlFor="base">{t("environments.integrations.airtable.airtable_base")}</Label>
+      <Label htmlFor="base">{t("workspace.integrations.airtable.airtable_base")}</Label>
       <div className="mt-1 flex">
         <Controller
           control={control}

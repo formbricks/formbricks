@@ -18,7 +18,7 @@ export const FeedbackRecordDirectoriesPage = async (props: { params: Promise<{ w
   if (!isOwner && !isManager) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+        <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
           <OrganizationSettingsNavbar
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             membershipRole={currentUserMembership.role}
@@ -26,7 +26,7 @@ export const FeedbackRecordDirectoriesPage = async (props: { params: Promise<{ w
           />
         </PageHeader>
         <p className="text-sm text-slate-500">
-          {t("environments.settings.feedback_record_directories.no_access")}
+          {t("workspace.settings.feedback_record_directories.no_access")}
         </p>
       </PageContentWrapper>
     );
@@ -34,7 +34,7 @@ export const FeedbackRecordDirectoriesPage = async (props: { params: Promise<{ w
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership.role}

@@ -82,8 +82,8 @@ export const InviteMemberModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent disableCloseOnOutsideClick unconstrained>
         <DialogHeader>
-          <DialogTitle>{t("environments.settings.teams.invite_member")}</DialogTitle>
-          <DialogDescription>{t("environments.settings.teams.invite_member_description")}</DialogDescription>
+          <DialogTitle>{t("workspace.settings.teams.invite_member")}</DialogTitle>
+          <DialogDescription>{t("workspace.settings.teams.invite_member_description")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody className="flex min-h-0 flex-col gap-6 overflow-y-auto">
@@ -91,8 +91,8 @@ export const InviteMemberModal = ({
             <TabToggle
               id="type"
               options={[
-                { value: "individual", label: t("environments.settings.teams.individual") },
-                { value: "bulk", label: t("environments.settings.teams.bulk_invite") },
+                { value: "individual", label: t("workspace.settings.teams.individual") },
+                { value: "bulk", label: t("workspace.settings.teams.bulk_invite") },
               ]}
               onChange={(inviteType) => setType(inviteType)}
               defaultSelected={type}

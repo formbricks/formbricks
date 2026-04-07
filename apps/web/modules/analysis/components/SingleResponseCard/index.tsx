@@ -107,7 +107,7 @@ export const SingleResponseCard = ({
       await deleteResponseAction({ responseId: response.id, decrementQuotas });
       updateResponseList?.([response.id]);
       if (setSelectedResponseId) setSelectedResponseId(null);
-      toast.success(t("environments.surveys.responses.response_deleted_successfully"));
+      toast.success(t("workspace.surveys.responses.response_deleted_successfully"));
       setDeleteDialogOpen(false);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
@@ -162,10 +162,10 @@ export const SingleResponseCard = ({
           deleteWhat={t("common.response")}
           onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
-          text={t("environments.surveys.responses.delete_response_confirmation")}>
+          text={t("workspace.surveys.responses.delete_response_confirmation")}>
           {hasQuotas && (
             <DecrementQuotasCheckbox
-              title={t("environments.surveys.responses.delete_response_quotas")}
+              title={t("workspace.surveys.responses.delete_response_quotas")}
               checked={decrementQuotas}
               onCheckedChange={setDecrementQuotas}
             />

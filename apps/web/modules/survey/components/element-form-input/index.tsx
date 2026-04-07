@@ -403,7 +403,7 @@ export const ElementFormInput = ({
             {id === "headline" && currentElement && updateElement && (
               <div className="flex items-center space-x-2">
                 <Label htmlFor="required-toggle" className="text-sm">
-                  {t("environments.surveys.edit.required")}
+                  {t("workspace.surveys.edit.required")}
                 </Label>
                 <Switch
                   id="required-toggle"
@@ -469,7 +469,7 @@ export const ElementFormInput = ({
 
             {id === "headline" && !isWelcomeCard && (
               <TooltipRenderer
-                tooltipContent={t("environments.surveys.edit.add_photo_or_video")}
+                tooltipContent={t("workspace.surveys.edit.add_photo_or_video")}
                 delayDuration={100}>
                 <Button
                   variant="secondary"
@@ -486,7 +486,7 @@ export const ElementFormInput = ({
             )}
 
             {id === "subheader" && renderRemoveDescriptionButton() && (
-              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+              <TooltipRenderer tooltipContent={t("workspace.surveys.edit.remove_description")}>
                 <Button
                   variant="secondary"
                   size="icon"

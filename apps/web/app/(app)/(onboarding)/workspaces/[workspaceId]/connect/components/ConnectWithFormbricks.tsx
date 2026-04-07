@@ -60,9 +60,9 @@ export const ConnectWithFormbricks = ({
           )}>
           {appSetupCompleted ? (
             <div>
-              <p className="text-3xl">{t("environments.connect.congrats")}</p>
+              <p className="text-3xl">{t("workspace.connect.congrats")}</p>
               <p className="pt-4 text-sm font-medium text-slate-600">
-                {t("environments.connect.connection_successful_message")}
+                {t("workspace.connect.connection_successful_message")}
               </p>
             </div>
           ) : (
@@ -72,7 +72,7 @@ export const ConnectWithFormbricks = ({
                 <span className="relative inline-flex h-10 w-10 rounded-full bg-slate-500"></span>
               </span>
               <p className="pt-4 text-sm font-medium text-slate-600">
-                {t("environments.connect.waiting_for_your_signal")}
+                {t("workspace.connect.waiting_for_your_signal")}
               </p>
             </div>
           )}
@@ -82,9 +82,7 @@ export const ConnectWithFormbricks = ({
         id="finishOnboarding"
         variant={appSetupCompleted ? "default" : "ghost"}
         onClick={handleFinishOnboarding}>
-        {appSetupCompleted
-          ? t("environments.connect.finish_onboarding")
-          : t("environments.connect.do_it_later")}
+        {appSetupCompleted ? t("workspace.connect.finish_onboarding") : t("workspace.connect.do_it_later")}
         <ArrowRight />
       </Button>
     </div>

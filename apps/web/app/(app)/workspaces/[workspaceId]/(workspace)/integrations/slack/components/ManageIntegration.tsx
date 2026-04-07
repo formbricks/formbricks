@@ -52,7 +52,7 @@ export const ManageIntegration = ({
     });
 
     if (deleteIntegrationActionResult?.data) {
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
       setIsConnected(false);
     } else {
       const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
@@ -74,12 +74,12 @@ export const ManageIntegration = ({
         <div className="mb-4 flex w-full items-center justify-between space-x-4">
           <p className="text-amber-700">
             <Trans
-              i18nKey="environments.integrations.slack.slack_reconnect_button_description"
+              i18nKey="workspace.integrations.slack.slack_reconnect_button_description"
               components={{ b: <b /> }}
             />
           </p>
           <Button onClick={handleSlackAuthorization} variant="secondary">
-            {t("environments.integrations.slack.slack_reconnect_button")}
+            {t("workspace.integrations.slack.slack_reconnect_button")}
           </Button>
         </div>
       )}
@@ -87,7 +87,7 @@ export const ManageIntegration = ({
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
-            {t("environments.integrations.slack.connected_with_team", {
+            {t("workspace.integrations.slack.connected_with_team", {
               team: slackIntegration.config.key.team?.name,
             })}
           </span>
@@ -98,12 +98,12 @@ export const ManageIntegration = ({
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
-          {t("environments.integrations.slack.link_channel")}
+          {t("workspace.integrations.slack.link_channel")}
         </Button>
       </div>
       {!integrationArray || integrationArray.length === 0 ? (
         <div className="mt-4 w-full">
-          <EmptyState text={t("environments.integrations.slack.connect_your_first_slack_channel")} />
+          <EmptyState text={t("workspace.integrations.slack.connect_your_first_slack_channel")} />
         </div>
       ) : (
         <div className="mt-4 flex w-full flex-col items-center justify-center">
@@ -111,7 +111,7 @@ export const ManageIntegration = ({
             <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-2 hidden text-center sm:block">{t("common.survey")}</div>
               <div className="col-span-2 hidden text-center sm:block">
-                {t("environments.integrations.slack.channel_name")}
+                {t("workspace.integrations.slack.channel_name")}
               </div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.questions")}</div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.updated_at")}</div>
@@ -136,15 +136,15 @@ export const ManageIntegration = ({
       )}
       <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
         <Trash2Icon />
-        {t("environments.integrations.delete_integration")}
+        {t("workspace.integrations.delete_integration")}
       </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat={t("environments.integrations.slack.slack_integration")}
+        deleteWhat={t("workspace.integrations.slack.slack_integration")}
         onDelete={handleDeleteIntegration}
-        text={t("environments.integrations.delete_integration_confirmation")}
+        text={t("workspace.integrations.delete_integration_confirmation")}
         isDeleting={isDeleting}
       />
     </div>

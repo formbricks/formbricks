@@ -109,7 +109,7 @@ export const OnboardingSetupInstructions = ({
               yarn add @formbricks/js
             </CodeBlock>
             <p className="text-sm text-slate-700">
-              {t("environments.connect.import_formbricks_and_initialize_the_widget_in_your_component")}
+              {t("workspace.connect.import_formbricks_and_initialize_the_widget_in_your_component")}
             </p>
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
               {channel === "app" ? npmSnippetForAppSurveys : npmSnippetForWebsiteSurveys}
@@ -126,7 +126,7 @@ export const OnboardingSetupInstructions = ({
         ) : activeTab === "html" ? (
           <div className="prose prose-slate">
             <p className="-mb-1 mt-6 text-sm text-slate-700">
-              {t("environments.connect.insert_this_code_into_the_head_tag_of_your_website")}
+              {t("workspace.connect.insert_this_code_into_the_head_tag_of_your_website")}
             </p>
             <div>
               <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">

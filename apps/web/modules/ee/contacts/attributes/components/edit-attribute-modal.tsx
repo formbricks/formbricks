@@ -64,7 +64,7 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
         return;
       }
 
-      toast.success(t("environments.contacts.attribute_updated_successfully"));
+      toast.success(t("workspace.contacts.attribute_updated_successfully"));
       setOpen(false);
       router.refresh();
     } catch (error) {
@@ -84,54 +84,54 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("environments.contacts.edit_attribute")}</DialogTitle>
-          <DialogDescription>{t("environments.contacts.edit_attribute_description")}</DialogDescription>
+          <DialogTitle>{t("workspace.contacts.edit_attribute")}</DialogTitle>
+          <DialogDescription>{t("workspace.contacts.edit_attribute_description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <DialogBody>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.attribute_key")}
+                  {t("workspace.contacts.attribute_key")}
                 </label>
                 <Input value={attribute.key} disabled className="bg-slate-50" />
                 <p className="text-xs text-slate-500">
-                  {t("environments.contacts.attribute_key_cannot_be_changed")}
+                  {t("workspace.contacts.attribute_key_cannot_be_changed")}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.data_type")}
+                  {t("workspace.contacts.data_type")}
                 </label>
                 <div className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3">
                   {getDataTypeIcon(attribute.dataType)}
                   <Badge text={t(`common.${attribute.dataType}`)} type="gray" size="tiny" />
                 </div>
                 <p className="text-xs text-slate-500">
-                  {t("environments.contacts.data_type_cannot_be_changed")}
+                  {t("workspace.contacts.data_type_cannot_be_changed")}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.attribute_label")}
+                  {t("workspace.contacts.attribute_label")}
                 </label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder={t("environments.contacts.attribute_label_placeholder")}
+                  placeholder={t("workspace.contacts.attribute_label_placeholder")}
                 />
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">
-                  {t("environments.contacts.attribute_description")} ({t("common.optional")})
+                  {t("workspace.contacts.attribute_description")} ({t("common.optional")})
                 </label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder={t("environments.contacts.attribute_description_placeholder")}
+                  placeholder={t("workspace.contacts.attribute_description_placeholder")}
                 />
               </div>
             </div>

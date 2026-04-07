@@ -68,46 +68,46 @@ export const SummaryMetadata = ({
         <InteractiveCard
           key="impressions"
           tab="impressions"
-          label={t("environments.surveys.summary.impressions")}
+          label={t("workspace.surveys.summary.impressions")}
           percentage={null}
           value={displayCount === 0 ? <span>-</span> : displayCount}
-          tooltipText={t("environments.surveys.summary.impressions_tooltip")}
+          tooltipText={t("workspace.surveys.summary.impressions_tooltip")}
           isLoading={isLoading}
           onClick={() => handleTabChange("impressions")}
           isActive={tab === "impressions"}
         />
         <StatCard
-          label={t("environments.surveys.summary.starts")}
+          label={t("workspace.surveys.summary.starts")}
           percentage={Math.round(startsPercentage) > 100 ? null : Math.round(startsPercentage)}
           value={totalResponses === 0 ? <span>-</span> : totalResponses}
-          tooltipText={t("environments.surveys.summary.starts_tooltip")}
+          tooltipText={t("workspace.surveys.summary.starts_tooltip")}
           isLoading={isLoading}
         />
         <StatCard
-          label={t("environments.surveys.summary.completed")}
+          label={t("workspace.surveys.summary.completed")}
           percentage={Math.round(completedPercentage) > 100 ? null : Math.round(completedPercentage)}
           value={completedResponses === 0 ? <span>-</span> : completedResponses}
-          tooltipText={t("environments.surveys.summary.completed_tooltip")}
+          tooltipText={t("workspace.surveys.summary.completed_tooltip")}
           isLoading={isLoading}
         />
 
         <InteractiveCard
           key="dropOffs"
           tab="dropOffs"
-          label={t("environments.surveys.summary.drop_offs")}
+          label={t("workspace.surveys.summary.drop_offs")}
           percentage={dropOffPercentage}
           value={dropoffCountValue}
-          tooltipText={t("environments.surveys.summary.drop_offs_tooltip")}
+          tooltipText={t("workspace.surveys.summary.drop_offs_tooltip")}
           isLoading={isLoading}
           onClick={() => handleTabChange("dropOffs")}
           isActive={tab === "dropOffs"}
         />
 
         <StatCard
-          label={t("environments.surveys.summary.time_to_complete")}
+          label={t("workspace.surveys.summary.time_to_complete")}
           percentage={null}
           value={ttcAverage === 0 ? <span>-</span> : `${formatTime(ttcAverage)}`}
-          tooltipText={t("environments.surveys.summary.ttc_tooltip")}
+          tooltipText={t("workspace.surveys.summary.ttc_tooltip")}
           isLoading={isLoading}
         />
 
@@ -115,10 +115,10 @@ export const SummaryMetadata = ({
           <InteractiveCard
             key="quotas"
             tab="quotas"
-            label={t("environments.surveys.summary.quotas_completed")}
+            label={t("workspace.surveys.summary.quotas_completed")}
             percentage={quotasCompletedPercentage}
             value={quotasCompleted}
-            tooltipText={t("environments.surveys.summary.quotas_completed_tooltip")}
+            tooltipText={t("workspace.surveys.summary.quotas_completed_tooltip")}
             isLoading={isLoading}
             onClick={() => handleTabChange("quotas")}
             isActive={tab === "quotas"}

@@ -52,7 +52,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     return (
       <Button size="sm" asChild>
         <Link href={`${workspaceBasePath}/surveys/templates`}>
-          {t("environments.surveys.new_survey")}
+          {t("workspace.surveys.new_survey")}
           <PlusIcon />
         </Link>
       </Button>
@@ -96,11 +96,11 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     content = (
       <>
         <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.no_surveys_created_yet")}
+          {t("workspace.surveys.no_surveys_created_yet")}
         </h1>
 
         <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
+          {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
         </h2>
       </>
     );

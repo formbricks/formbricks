@@ -339,7 +339,7 @@ export const BlockCard = ({
                               <div className="flex grow flex-col justify-center">
                                 {hasMultipleElements && (
                                   <p className="mb-1 text-xs font-medium text-slate-500">
-                                    {t("environments.surveys.edit.question_number", {
+                                    {t("workspace.surveys.edit.question_number", {
                                       number: elementIndex + 1,
                                     })}
                                   </p>
@@ -350,8 +350,8 @@ export const BlockCard = ({
                                 {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
                                   <p className="mt-1 truncate text-xs text-slate-500">
                                     {element?.required
-                                      ? t("environments.surveys.edit.required")
-                                      : t("environments.surveys.edit.optional")}
+                                      ? t("workspace.surveys.edit.required")
+                                      : t("workspace.surveys.edit.optional")}
                                   </p>
                                 )}
                               </div>
@@ -388,7 +388,7 @@ export const BlockCard = ({
                       <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
                         {shouldShowCautionAlert(element.type) && (
                           <Alert variant="warning" size="small" className="w-fill mt-2" role="alert">
-                            <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
+                            <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
                             <AlertButton onClick={() => onAlertTrigger()}>
                               {t("common.learn_more")}
                             </AlertButton>
@@ -409,8 +409,8 @@ export const BlockCard = ({
                                 <ChevronRightIcon className="mr-2 h-4 w-3" />
                               )}
                               {openAdvanced
-                                ? t("environments.surveys.edit.hide_question_settings")
-                                : t("environments.surveys.edit.show_question_settings")}
+                                ? t("workspace.surveys.edit.hide_question_settings")
+                                : t("workspace.surveys.edit.show_question_settings")}
                             </Collapsible.CollapsibleTrigger>
 
                             <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>

@@ -54,7 +54,7 @@ export const ContactControlBar = ({
     if (deletePersonResponse?.data) {
       router.refresh();
       router.push(`${workspaceBasePath}/contacts`);
-      toast.success(t("environments.contacts.contact_deleted_successfully"));
+      toast.success(t("workspace.contacts.contact_deleted_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(deletePersonResponse);
       toast.error(errorMessage);
@@ -70,7 +70,7 @@ export const ContactControlBar = ({
   const iconActions = [
     {
       icon: PencilIcon,
-      tooltip: t("environments.contacts.edit_attributes"),
+      tooltip: t("workspace.contacts.edit_attributes"),
       onClick: () => {
         setIsEditAttributesModalOpen(true);
       },
@@ -78,7 +78,7 @@ export const ContactControlBar = ({
     },
     {
       icon: LinkIcon,
-      tooltip: t("environments.contacts.generate_personal_link"),
+      tooltip: t("workspace.contacts.generate_personal_link"),
       onClick: () => {
         setIsGenerateLinkModalOpen(true);
       },
@@ -105,10 +105,10 @@ export const ContactControlBar = ({
         isDeleting={isDeletingPerson}
         text={
           isQuotasAllowed
-            ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+            ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
                 value: 1,
               })
-            : t("environments.contacts.delete_contact_confirmation")
+            : t("workspace.contacts.delete_contact_confirmation")
         }
       />
       <GeneratePersonalLinkModal

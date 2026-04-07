@@ -57,7 +57,7 @@ export const SummaryImpressions = ({
     if (displays.length === 0) {
       return (
         <div className="p-8 text-center text-sm text-slate-500">
-          {t("environments.surveys.summary.no_identified_impressions")}
+          {t("workspace.surveys.summary.no_identified_impressions")}
         </div>
       );
     }
@@ -66,7 +66,7 @@ export const SummaryImpressions = ({
       <>
         <div className="grid min-h-10 grid-cols-4 items-center border-b border-slate-200 bg-slate-100 text-sm font-semibold text-slate-600">
           <div className="col-span-2 px-4 md:px-6">{t("common.user")}</div>
-          <div className="col-span-2 px-4 md:px-6">{t("environments.contacts.survey_viewed_at")}</div>
+          <div className="col-span-2 px-4 md:px-6">{t("workspace.contacts.survey_viewed_at")}</div>
         </div>
 
         <div className="max-h-[62vh] overflow-y-auto">
@@ -117,7 +117,7 @@ export const SummaryImpressions = ({
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         <InfoIcon className="h-4 w-4 shrink-0" />
-        <span>{t("environments.surveys.summary.impressions_identified_only")}</span>
+        <span>{t("workspace.surveys.summary.impressions_identified_only")}</span>
       </div>
       {renderContent()}
     </div>

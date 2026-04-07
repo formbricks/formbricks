@@ -11,14 +11,14 @@ const Loading = () => {
       <GoBackButton />
       <div className="mb-6 text-right">
         <Button className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
-          {t("environments.integrations.notion.link_database")}
+          {t("workspace.integrations.notion.link_database")}
         </Button>
       </div>
 
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-2 text-center">{t("common.survey")}</div>
-          <div className="col-span-2 text-center">{t("environments.integrations.notion.database_name")}</div>
+          <div className="col-span-2 text-center">{t("workspace.integrations.notion.database_name")}</div>
           <div className="col-span-2 text-center">{t("common.updated_at")}</div>
         </div>
         <div className="grid-cols-7">

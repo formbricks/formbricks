@@ -49,7 +49,7 @@ export const SingleResponseCardHeader = ({
     ? true
     : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
 
-  const deleteSubmissionToolTip = <>{t("environments.surveys.responses.this_response_is_in_progress")}</>;
+  const deleteSubmissionToolTip = <>{t("workspace.surveys.responses.this_response_is_in_progress")}</>;
 
   return (
     <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">

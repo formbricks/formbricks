@@ -29,7 +29,7 @@ const Page = async (props: ConnectPageProps) => {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
-      <Header title={t("environments.connect.headline")} subtitle={t("environments.connect.subtitle")} />
+      <Header title={t("workspace.connect.headline")} subtitle={t("workspace.connect.subtitle")} />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>
         <p className="text-sm text-slate-500"></p>

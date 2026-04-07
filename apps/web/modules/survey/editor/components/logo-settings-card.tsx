@@ -133,11 +133,9 @@ export const LogoSettingsCard = ({
 
           <div>
             <p className="text-base font-semibold text-slate-800">
-              {t("environments.surveys.edit.logo_settings")}
+              {t("workspace.surveys.edit.logo_settings")}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.customize_survey_logo")}
-            </p>
+            <p className="mt-1 text-sm text-slate-500">{t("workspace.surveys.edit.customize_survey_logo")}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -156,10 +154,10 @@ export const LogoSettingsCard = ({
                 </FormControl>
                 <div>
                   <FormLabel className="text-base font-semibold text-slate-900">
-                    {t("environments.surveys.edit.hide_logo")}
+                    {t("workspace.surveys.edit.hide_logo")}
                   </FormLabel>
                   <FormDescription className="text-sm text-slate-800">
-                    {t("environments.surveys.edit.hide_logo_from_survey")}
+                    {t("workspace.surveys.edit.hide_logo_from_survey")}
                   </FormDescription>
                 </div>
               </FormItem>
@@ -169,7 +167,7 @@ export const LogoSettingsCard = ({
           {!isLogoHidden && (
             <div className="space-y-4">
               <div className="font-medium text-slate-800">
-                {t("environments.surveys.edit.overwrite_survey_logo")}
+                {t("workspace.surveys.edit.overwrite_survey_logo")}
               </div>
 
               {/* Hidden file input for replacing logo */}
@@ -209,7 +207,7 @@ export const LogoSettingsCard = ({
                       variant="secondary"
                       size="sm"
                       disabled={disabled || isLoading}>
-                      {t("environments.workspace.look.replace_logo")}
+                      {t("workspace.look.replace_logo")}
                     </Button>
                     <Button
                       type="button"
@@ -217,7 +215,7 @@ export const LogoSettingsCard = ({
                       size="sm"
                       onClick={handleRemoveLogo}
                       disabled={disabled}>
-                      {t("environments.workspace.look.remove_logo")}
+                      {t("workspace.look.remove_logo")}
                     </Button>
                   </div>
 
@@ -225,8 +223,8 @@ export const LogoSettingsCard = ({
                     isChecked={isBgColorEnabled}
                     onToggle={toggleBackgroundColor}
                     htmlId="surveyLogoBgColor"
-                    title={t("environments.workspace.look.add_background_color")}
-                    description={t("environments.workspace.look.add_background_color_description")}
+                    title={t("workspace.look.add_background_color")}
+                    description={t("workspace.look.add_background_color_description")}
                     childBorder
                     customContainerClass="p-0"
                     childrenContainerClass="overflow-visible"

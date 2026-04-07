@@ -75,7 +75,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
           filterValue: filterValue,
         },
       };
-      toast.success(t("environments.surveys.summary.filter_updated_successfully"), { duration: 5000 });
+      toast.success(t("workspace.surveys.summary.filter_updated_successfully"), { duration: 5000 });
     } else {
       // Add new filter
       filterObject.filter.push({
@@ -87,7 +87,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
       });
       toast.success(
         constructToastMessage(elementType, filterValue, survey, elementId, t, filterComboBoxValue) ??
-          t("environments.surveys.summary.filter_added_successfully"),
+          t("workspace.surveys.summary.filter_added_successfully"),
         { duration: 5000 }
       );
     }
@@ -105,7 +105,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
-        <EmptyState text={t("environments.surveys.summary.no_responses_found")} />
+        <EmptyState text={t("workspace.surveys.summary.no_responses_found")} />
       ) : (
         summary.map((elementSummary) => {
           if (elementSummary.type === TSurveyElementTypeEnum.OpenText) {

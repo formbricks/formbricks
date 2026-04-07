@@ -31,24 +31,24 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId
       </PageHeader>
       <SettingsCard
         title={t("common.workspace_name")}
-        description={t("environments.workspace.general.workspace_name_settings_description")}>
+        description={t("workspace.general.workspace_name_settings_description")}>
         <EditWorkspaceNameForm workspace={workspace} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.workspace.general.recontact_waiting_time")}
-        description={t("environments.workspace.general.recontact_waiting_time_settings_description")}>
+        title={t("workspace.general.recontact_waiting_time")}
+        description={t("workspace.general.recontact_waiting_time_settings_description")}>
         <EditWaitingTimeForm workspace={workspace} isReadOnly={isReadOnly} />
       </SettingsCard>
       {!IS_FORMBRICKS_CLOUD && (
         <SettingsCard
-          title={t("environments.workspace.general.custom_scripts")}
-          description={t("environments.workspace.general.custom_scripts_card_description")}>
+          title={t("workspace.general.custom_scripts")}
+          description={t("workspace.general.custom_scripts_card_description")}>
           <CustomScriptsForm workspace={workspace} isReadOnly={!isOwnerOrManager} />
         </SettingsCard>
       )}
       <SettingsCard
-        title={t("environments.workspace.general.delete_workspace")}
-        description={t("environments.workspace.general.delete_workspace_settings_description")}>
+        title={t("workspace.general.delete_workspace")}
+        description={t("workspace.general.delete_workspace_settings_description")}>
         <DeleteWorkspace
           organizationId={organization.id}
           currentWorkspace={workspace}

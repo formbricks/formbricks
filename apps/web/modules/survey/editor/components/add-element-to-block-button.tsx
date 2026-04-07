@@ -83,7 +83,7 @@ export const AddElementToBlockButton = ({
           <PlusIcon className="h-4 w-4" />
           <div>
             <p className="text-sm font-medium text-slate-900">
-              {t("environments.surveys.edit.add_question_to_block")}
+              {t("workspace.surveys.edit.add_question_to_block")}
             </p>
           </div>
         </Button>

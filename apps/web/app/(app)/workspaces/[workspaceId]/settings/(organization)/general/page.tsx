@@ -35,7 +35,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
@@ -51,8 +51,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       )}
       {!IS_FORMBRICKS_CLOUD && <SecurityListTip />}
       <SettingsCard
-        title={t("environments.settings.general.organization_name")}
-        description={t("environments.settings.general.organization_name_description")}>
+        title={t("workspace.settings.general.organization_name")}
+        description={t("workspace.settings.general.organization_name_description")}>
         <EditOrganizationNameForm
           organization={organization}
           environmentId={params.workspaceId}
@@ -71,8 +71,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       />
       {isMultiOrgEnabled && (
         <SettingsCard
-          title={t("environments.settings.general.delete_organization")}
-          description={t("environments.settings.general.delete_organization_description")}>
+          title={t("workspace.settings.general.delete_organization")}
+          description={t("workspace.settings.general.delete_organization_description")}>
           <DeleteOrganization
             organization={organization}
             isDeleteDisabled={isDeleteDisabled}

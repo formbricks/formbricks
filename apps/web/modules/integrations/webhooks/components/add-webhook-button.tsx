@@ -24,7 +24,7 @@ export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps
           setAddWebhookModalOpen(true);
         }}>
         <Webhook className="mr-2 h-5 w-5 text-white" />
-        {t("environments.integrations.webhooks.add_webhook")}
+        {t("workspace.integrations.webhooks.add_webhook")}
       </Button>
       <AddWebhookModal
         environmentId={environment.id}

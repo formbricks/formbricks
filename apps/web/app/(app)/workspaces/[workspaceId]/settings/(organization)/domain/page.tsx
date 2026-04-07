@@ -36,7 +36,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
@@ -61,8 +61,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       />
 
       <SettingsCard
-        title={t("environments.settings.domain.title")}
-        description={t("environments.settings.domain.description")}>
+        title={t("workspace.settings.domain.title")}
+        description={t("workspace.settings.domain.description")}>
         <PrettyUrlsTable surveys={surveys} />
       </SettingsCard>
     </PageContentWrapper>

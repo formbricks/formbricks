@@ -73,7 +73,7 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
       },
     });
     if (updatedWorkspaceResponse?.data) {
-      toast.success(t("environments.workspace.look.placement_updated_successfully"));
+      toast.success(t("workspace.look.placement_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
       toast.error(errorMessage);

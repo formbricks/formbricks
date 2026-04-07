@@ -17,11 +17,11 @@ export const EmptyAppSurveys = () => {
 
       <div className="flex flex-col">
         <h1 className="text-xl font-semibold text-slate-900">
-          {t("environments.surveys.summary.youre_not_plugged_in_yet")}
+          {t("workspace.surveys.summary.youre_not_plugged_in_yet")}
         </h1>
 
         <p className="mt-2 text-sm text-slate-600">
-          {t("environments.surveys.summary.connect_your_website_or_app_with_formbricks_to_get_started")}
+          {t("workspace.surveys.summary.connect_your_website_or_app_with_formbricks_to_get_started")}
         </p>
 
         <Link className="mt-2" href={`/workspaces/${workspace?.id}/app-connection`}>
