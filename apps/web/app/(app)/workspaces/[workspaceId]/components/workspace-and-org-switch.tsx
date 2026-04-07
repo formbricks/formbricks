@@ -1,7 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { EnvironmentBreadcrumb } from "@/app/(app)/workspaces/[workspaceId]/components/environment-breadcrumb";
 import { OrganizationBreadcrumb } from "@/app/(app)/workspaces/[workspaceId]/components/organization-breadcrumb";
 import { WorkspaceBreadcrumb } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-breadcrumb";
 import { Breadcrumb, BreadcrumbList } from "@/modules/ui/components/breadcrumb";
@@ -28,7 +26,6 @@ export const WorkspaceAndOrgSwitch = ({
   currentWorkspaceId,
   currentWorkspaceName,
   currentEnvironmentId,
-  environments,
   isMultiOrgEnabled,
   organizationWorkspacesLimit,
   isFormbricksCloud,
@@ -37,14 +34,6 @@ export const WorkspaceAndOrgSwitch = ({
   isAccessControlAllowed,
   isMember,
 }: WorkspaceAndOrgSwitchProps) => {
-  const pathname = usePathname();
-  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
-
-  // When on workspace routes, suppress the environment switcher breadcrumb entirely.
-  // On legacy environment routes, only show it when in development mode.
-  const isWorkspaceRoute = pathname?.startsWith("/workspaces/");
-  const showEnvironmentBreadcrumb = !isWorkspaceRoute && currentEnvironment?.type === "development";
-
   return (
     <Breadcrumb>
       <BreadcrumbList className="gap-0">
@@ -67,11 +56,8 @@ export const WorkspaceAndOrgSwitch = ({
             isFormbricksCloud={isFormbricksCloud}
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
-            isEnvironmentBreadcrumbVisible={showEnvironmentBreadcrumb}
+            isEnvironmentBreadcrumbVisible={false}
           />
-        )}
-        {showEnvironmentBreadcrumb && (
-          <EnvironmentBreadcrumb environments={environments} currentEnvironment={currentEnvironment} />
         )}
       </BreadcrumbList>
     </Breadcrumb>

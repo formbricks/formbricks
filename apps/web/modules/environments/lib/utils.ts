@@ -414,10 +414,8 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
       throw new ResourceNotFoundError("OrganizationBilling", data.organization.id);
     }
 
-    const prodEnvironment = data.environments.find((e) => e.type === "production");
-
     return {
-      environment: prodEnvironment!,
+      environment: data.environments[0],
       workspace: {
         id: data.id,
         createdAt: data.createdAt,
@@ -551,8 +549,7 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  // Resolve the production environment for this workspace
-  const prodEnvironment = workspace.environments?.find((e) => e.type === "production");
+  const prodEnvironment = workspace.environments?.[0];
   if (!prodEnvironment) {
     throw new ResourceNotFoundError(t("common.environment"), null);
   }

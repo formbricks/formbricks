@@ -6,10 +6,10 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { getSlackChannelsAction } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/slack/actions";
-import { AddChannelMappingModal } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/slack/components/AddChannelMappingModal";
-import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/slack/components/ManageIntegration";
-import { authorize } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/slack/lib/slack";
+import { getSlackChannelsAction } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/slack/actions";
+import { AddChannelMappingModal } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/slack/components/AddChannelMappingModal";
+import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/slack/components/ManageIntegration";
+import { authorize } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 

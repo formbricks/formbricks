@@ -140,7 +140,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
             <div>
               <p className="text-xs text-slate-500">
                 {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`${workspaceBasePath}/workspace/look`} target="_blank">
+                <Link href={`${workspaceBasePath}/look`} target="_blank">
                   <span className="underline">
                     {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>

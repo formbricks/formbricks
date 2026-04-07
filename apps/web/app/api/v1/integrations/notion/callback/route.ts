@@ -103,12 +103,12 @@ export const GET = withV1ApiWrapper({
 
       if (result) {
         return {
-          response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/notion`),
+          response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/notion`),
         };
       }
     } else if (error) {
       return {
-        response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/notion?error=${error}`),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/notion?error=${error}`),
       };
     }
 

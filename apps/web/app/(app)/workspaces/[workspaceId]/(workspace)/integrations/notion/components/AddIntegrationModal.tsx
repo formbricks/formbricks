@@ -15,12 +15,12 @@ import {
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/actions";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/actions";
 import {
   MappingRow,
   TMapping,
   createEmptyMapping,
-} from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/notion/components/MappingRow";
+} from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/notion/components/MappingRow";
 import NotionLogo from "@/images/notion.png";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";

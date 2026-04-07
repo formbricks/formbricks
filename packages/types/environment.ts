@@ -8,7 +8,7 @@ export const ZEnvironment = z.object({
   id: ZEnvironmentId,
   createdAt: z.date(),
   updatedAt: z.date(),
-  type: z.enum(["development", "production"]),
+  type: z.enum(["production", "development"]),
   workspaceId: z.string(),
   appSetupCompleted: z.boolean(),
 });
@@ -16,13 +16,13 @@ export const ZEnvironment = z.object({
 export type TEnvironment = z.infer<typeof ZEnvironment>;
 
 export const ZEnvironmentUpdateInput = z.object({
-  type: z.enum(["development", "production"]),
+  type: z.enum(["production", "development"]),
   workspaceId: z.string(),
   appSetupCompleted: z.boolean(),
 });
 
 export const ZEnvironmentCreateInput = z.object({
-  type: z.enum(["development", "production"]).optional(),
+  type: z.enum(["production", "development"]).optional(),
   appSetupCompleted: z.boolean().optional(),
 });
 

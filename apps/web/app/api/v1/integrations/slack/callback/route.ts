@@ -111,12 +111,12 @@ export const GET = withV1ApiWrapper({
 
       if (result) {
         return {
-          response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/slack`),
+          response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/slack`),
         };
       }
     } else if (error) {
       return {
-        response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/slack?error=${error}`),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/slack?error=${error}`),
       };
     }
 

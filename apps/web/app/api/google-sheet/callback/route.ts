@@ -49,13 +49,13 @@ export const GET = async (req: Request) => {
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
 
   if (!code) {
-    return Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/google-sheets`);
+    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
   }
 
   const token = await oAuth2Client.getToken(code);
   const key = token.res?.data;
   if (!key) {
-    return Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/google-sheets`);
+    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
   }
 
   oAuth2Client.setCredentials({ access_token: key.access_token });
@@ -84,7 +84,7 @@ export const GET = async (req: Request) => {
 
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
   if (result) {
-    return Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/google-sheets`);
+    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
   }
 
   return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");

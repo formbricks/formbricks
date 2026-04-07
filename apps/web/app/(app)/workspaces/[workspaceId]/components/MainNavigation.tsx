@@ -122,9 +122,16 @@ export const MainNavigation = ({
       },
       {
         name: t("common.configuration"),
-        href: `/workspaces/${workspace.id}/workspace/general`,
+        href: `/workspaces/${workspace.id}/general`,
         icon: Cog,
-        isActive: pathname?.includes("/workspace"),
+        isActive:
+          pathname?.includes("/general") ||
+          pathname?.includes("/look") ||
+          pathname?.includes("/app-connection") ||
+          pathname?.includes("/integrations") ||
+          pathname?.includes("/teams") ||
+          pathname?.includes("/languages") ||
+          pathname?.includes("/tags"),
       },
     ],
     [t, workspace.id, pathname, isFormbricksCloud]

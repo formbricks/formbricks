@@ -35,12 +35,12 @@ interface WorkspaceBreadcrumbProps {
 }
 
 const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
-  // Match /workspace/{settingId} or /workspace/{settingId}/... but exclude settings paths
+  // Match /{settingId} or /{settingId}/... but exclude settings paths
   if (pathname.includes("/settings/")) {
     return false;
   }
-  // Check if path matches /workspace/{settingId} (with optional trailing path)
-  const pattern = new RegExp(`/workspace/${settingId}(?:/|$)`);
+  // Check if path matches /workspaces/{id}/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/workspaces/[^/]+/${settingId}(?:/|$)`);
   return pattern.test(pathname);
 };
 
@@ -101,37 +101,37 @@ export const WorkspaceBreadcrumb = ({
     {
       id: "general",
       label: t("common.general"),
-      href: `${workspaceBasePath}/workspace/general`,
+      href: `${workspaceBasePath}/general`,
     },
     {
       id: "look",
       label: t("common.look_and_feel"),
-      href: `${workspaceBasePath}/workspace/look`,
+      href: `${workspaceBasePath}/look`,
     },
     {
       id: "app-connection",
       label: t("common.website_and_app_connection"),
-      href: `${workspaceBasePath}/workspace/app-connection`,
+      href: `${workspaceBasePath}/app-connection`,
     },
     {
       id: "integrations",
       label: t("common.integrations"),
-      href: `${workspaceBasePath}/workspace/integrations`,
+      href: `${workspaceBasePath}/integrations`,
     },
     {
       id: "teams",
       label: t("common.team_access"),
-      href: `${workspaceBasePath}/workspace/teams`,
+      href: `${workspaceBasePath}/teams`,
     },
     {
       id: "languages",
       label: t("common.survey_languages"),
-      href: `${workspaceBasePath}/workspace/languages`,
+      href: `${workspaceBasePath}/languages`,
     },
     {
       id: "tags",
       label: t("common.tags"),
-      href: `${workspaceBasePath}/workspace/tags`,
+      href: `${workspaceBasePath}/tags`,
     },
   ];
 
@@ -159,7 +159,7 @@ export const WorkspaceBreadcrumb = ({
 
   const handleWorkspaceSettingsNavigation = (settingId: string) => {
     startTransition(() => {
-      router.push(`${workspaceBasePath}/workspace/${settingId}`);
+      router.push(`${workspaceBasePath}/${settingId}`);
     });
   };
 

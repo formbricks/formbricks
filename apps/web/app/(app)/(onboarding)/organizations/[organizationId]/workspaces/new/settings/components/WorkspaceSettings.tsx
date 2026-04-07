@@ -82,15 +82,9 @@ export const WorkspaceSettings = ({
       });
 
       if (createWorkspaceResponse?.data) {
-        // get production environment
-        const productionEnvironment = createWorkspaceResponse.data.environments.find(
-          (environment: { type: string }) => environment.type === "production"
-        );
-        if (productionEnvironment) {
-          if (globalThis.window !== undefined) {
-            // Remove filters when creating a new workspace
-            localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-          }
+        if (globalThis.window !== undefined) {
+          // Remove filters when creating a new workspace
+          localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
         }
         const workspaceId = createWorkspaceResponse.data.id;
         if (channel === "app" || channel === "website") {

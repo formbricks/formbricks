@@ -5,7 +5,6 @@ import { WidgetStatusIndicator } from "@/app/(app)/workspaces/[workspaceId]/comp
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
-import { getEnvironments } from "@/lib/environment/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWorkspaceAuth } from "@/modules/environments/lib/utils";
@@ -22,13 +21,10 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
 
   const { environment, isReadOnly, session, workspace } = await getWorkspaceAuth(workspaceId);
 
-  const [environments, actionClasses, locale] = await Promise.all([
-    getEnvironments(workspace.id),
+  const [actionClasses, locale] = await Promise.all([
     getActionClasses(workspace.id),
     getUserLocale(session.user.id),
   ]);
-  const otherEnvironment = environments.find((env) => env.id !== workspaceId)!;
-  const otherEnvActionClasses = otherEnvironment ? await getActionClasses(workspace.id) : [];
 
   return (
     <PageContentWrapper>
@@ -40,7 +36,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
           title={t("environments.workspace.app-connection.sdk_connection_details")}
           description={t("environments.workspace.app-connection.sdk_connection_details_description")}>
           <div className="space-y-3">
-            <IdBadge id={environment.id} label={t("environments.workspace.app-connection.environment_id")} />
+            <IdBadge id={workspace.id} label={t("environments.workspace.app-connection.environment_id")} />
             <IdBadge id={WEBAPP_URL} label={t("environments.workspace.app-connection.webapp_url")} />
           </div>
         </SettingsCard>
@@ -80,8 +76,8 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
         </SettingsCard>
         <ActionSettingsCard
           environment={environment}
-          otherEnvironment={otherEnvironment}
-          otherEnvActionClasses={otherEnvActionClasses}
+          otherEnvironment={environment}
+          otherEnvActionClasses={[]}
           environmentId={environment.id}
           workspaceId={workspace.id}
           actionClasses={actionClasses}

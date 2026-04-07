@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
-import { GoogleSheetWrapper } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/google-sheets/components/GoogleSheetWrapper";
-import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/lib/surveys";
+import { GoogleSheetWrapper } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/google-sheets/components/GoogleSheetWrapper";
+import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/lib/surveys";
 import {
   DEFAULT_LOCALE,
   GOOGLE_SHEETS_CLIENT_ID,
@@ -39,7 +39,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   return (
     <PageContentWrapper>
-      <GoBackButton url={`${WEBAPP_URL}/workspaces/${params.workspaceId}/workspace/integrations`} />
+      <GoBackButton url={`${WEBAPP_URL}/workspaces/${params.workspaceId}/integrations`} />
       <PageHeader pageTitle={t("environments.integrations.google_sheets.google_sheets_integration")} />
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper

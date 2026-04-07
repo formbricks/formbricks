@@ -9,8 +9,8 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AddIntegrationModal } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/notion/components/AddIntegrationModal";
-import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/notion/components/ManageIntegration";
+import { AddIntegrationModal } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/notion/components/AddIntegrationModal";
+import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/notion/components/ManageIntegration";
 import notionLogo from "@/images/notion.png";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { authorize } from "../lib/notion";

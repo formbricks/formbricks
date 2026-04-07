@@ -37,7 +37,7 @@ describe("authenticateRequest", () => {
           environment: {
             id: "env-id-1",
             workspaceId: "workspace-id-1",
-            type: "development",
+            type: "production",
             createdAt: new Date(),
             updatedAt: new Date(),
             appSetupCompleted: false,
@@ -80,7 +80,7 @@ describe("authenticateRequest", () => {
           {
             environmentId: "env-id-1",
             permission: "manage",
-            environmentType: "development",
+            environmentType: "production",
             workspaceId: "workspace-id-1",
             workspaceName: "Workspace 1",
           },

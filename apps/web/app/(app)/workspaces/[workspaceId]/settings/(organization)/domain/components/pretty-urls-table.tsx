@@ -29,8 +29,8 @@ interface PrettyUrlsTableProps {
 export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
   const { t } = useTranslation();
 
-  const getEnvironmentBadgeColor = (type: string) => {
-    return type === "production" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800";
+  const getEnvironmentBadgeColor = () => {
+    return "bg-green-100 text-green-800";
   };
 
   const tableHeaders = [
@@ -86,11 +86,8 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
                 <IdBadge id={survey.slug ?? ""} />
               </TableCell>
               <TableCell>
-                <span
-                  className={`rounded px-2 py-1 text-xs font-medium ${getEnvironmentBadgeColor(survey.environment.type)}`}>
-                  {survey.environment.type === "production"
-                    ? t("common.production")
-                    : t("common.development")}
+                <span className={`rounded px-2 py-1 text-xs font-medium ${getEnvironmentBadgeColor()}`}>
+                  {t("common.production")}
                 </span>
               </TableCell>
             </TableRow>

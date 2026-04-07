@@ -91,7 +91,7 @@ export const GET = withV1ApiWrapper({
       };
       await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
       return {
-        response: Response.redirect(`${WEBAPP_URL}${basePath}/workspace/integrations/airtable`),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/airtable`),
       };
     } catch (error) {
       logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");

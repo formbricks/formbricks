@@ -27,7 +27,7 @@ const SurveyEditorWorkspaceLayout = async (props: {
     throw new ResourceNotFoundError(t("common.workspace"), params.workspaceId);
   }
 
-  const environment = workspace.environments.find((e) => e.type === "production");
+  const environment = workspace.environments[0];
 
   if (!environment) {
     throw new ResourceNotFoundError(t("common.environment"), null);

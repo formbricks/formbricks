@@ -264,7 +264,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             )}
 
             <Button asChild size="sm" variant="secondary">
-              <Link href={`${workspaceBasePath}/workspace/languages`} target="_blank">
+              <Link href={`${workspaceBasePath}/languages`} target="_blank">
                 {t("environments.surveys.edit.manage_languages")}
                 <ArrowUpRight />
               </Link>

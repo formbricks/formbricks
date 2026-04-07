@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
-import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/lib/surveys";
-import { NotionWrapper } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/notion/components/NotionWrapper";
+import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/lib/surveys";
+import { NotionWrapper } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/notion/components/NotionWrapper";
 import {
   DEFAULT_LOCALE,
   NOTION_AUTH_URL,

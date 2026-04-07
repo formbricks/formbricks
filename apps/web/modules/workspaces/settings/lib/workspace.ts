@@ -110,16 +110,12 @@ export const createWorkspace = async (
       });
     }
 
-    const devEnvironment = await createEnvironment(workspace.id, {
-      type: "development",
-    });
-
     const prodEnvironment = await createEnvironment(workspace.id, {
       type: "production",
     });
 
     const updatedWorkspace = await updateWorkspace(workspace.id, {
-      environments: [devEnvironment, prodEnvironment],
+      environments: [prodEnvironment],
     });
 
     return updatedWorkspace;

@@ -12,13 +12,13 @@ import {
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/actions";
-import { getSpreadsheetNameByIdAction } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/google-sheets/actions";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/actions";
+import { getSpreadsheetNameByIdAction } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/google-sheets/actions";
 import {
   constructGoogleSheetsUrl,
   extractSpreadsheetIdFromUrl,
   isValidGoogleSheetsUrl,
-} from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/google-sheets/lib/util";
+} from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,

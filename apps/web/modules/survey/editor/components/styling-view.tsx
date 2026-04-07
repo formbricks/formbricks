@@ -316,10 +316,7 @@ export const StylingView = ({
               </div>
               <p className="text-sm text-slate-500">
                 {t("environments.surveys.edit.adjust_the_theme_in_the")}{" "}
-                <Link
-                  href={`${workspaceBasePath}/workspace/look`}
-                  target="_blank"
-                  className="font-semibold underline">
+                <Link href={`${workspaceBasePath}/look`} target="_blank" className="font-semibold underline">
                   {t("common.look_and_feel")}
                 </Link>{" "}
                 {t("common.settings")}

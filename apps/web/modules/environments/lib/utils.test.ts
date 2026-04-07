@@ -262,14 +262,6 @@ describe("utils.ts", () => {
             workspaceId: "proj123",
             appSetupCompleted: true,
           },
-          {
-            id: "env456",
-            type: "development" as const,
-            createdAt: new Date("2024-01-01"),
-            updatedAt: new Date("2024-01-02"),
-            workspaceId: "proj123",
-            appSetupCompleted: false,
-          },
         ],
         organization: {
           id: "org123",
@@ -305,7 +297,7 @@ describe("utils.ts", () => {
       expect(result!.workspace.name).toBe("Test Workspace");
       expect(result!.organization.id).toBe("org123");
       expect(result!.organization.name).toBe("Test Organization");
-      expect(result!.environments).toHaveLength(2);
+      expect(result!.environments).toHaveLength(1);
       expect(result!.membership).toEqual({
         userId: "user123",
         organizationId: "org123",
@@ -673,7 +665,7 @@ describe("utils.ts", () => {
         id: "env456",
         createdAt: new Date(),
         updatedAt: new Date(),
-        type: "development",
+        type: "production",
         workspaceId: "proj456",
         appSetupCompleted: true,
         workspace: {

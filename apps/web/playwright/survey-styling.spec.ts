@@ -42,7 +42,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -175,7 +175,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -264,7 +264,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -300,12 +300,12 @@ test.describe("Survey Styling", async () => {
   test("Survey Specific Styling (Survey Editor Override)", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     // Create a new survey
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
     // Ensure Welcome Card is active so we can see it
     await page.locator("p", { hasText: "Welcome card" }).first().click({ force: true });

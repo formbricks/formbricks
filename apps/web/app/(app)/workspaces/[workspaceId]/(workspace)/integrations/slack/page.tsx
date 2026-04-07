@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/lib/surveys";
-import { SlackWrapper } from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/slack/components/SlackWrapper";
+import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/lib/surveys";
+import { SlackWrapper } from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/slack/components/SlackWrapper";
 import { DEFAULT_LOCALE, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
@@ -31,7 +31,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   return (
     <PageContentWrapper>
-      <GoBackButton url={`${WEBAPP_URL}/workspaces/${params.workspaceId}/workspace/integrations`} />
+      <GoBackButton url={`${WEBAPP_URL}/workspaces/${params.workspaceId}/integrations`} />
       <PageHeader pageTitle={t("environments.integrations.slack.slack_integration")} />
       <div className="h-[75vh] w-full">
         <SlackWrapper

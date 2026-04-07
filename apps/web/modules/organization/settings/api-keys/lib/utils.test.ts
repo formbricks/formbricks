@@ -136,7 +136,7 @@ describe("hasWorkspacePermission", () => {
     expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(false);
   });
 
-  test("uses only production environment permission, ignores higher dev permission", () => {
+  test("uses production environment permission", () => {
     const permissions: TAPIKeyEnvironmentPermission[] = [
       {
         environmentId: "env1",
@@ -145,40 +145,10 @@ describe("hasWorkspacePermission", () => {
         workspaceName: "Workspace One",
         permission: "read",
       },
-      {
-        environmentId: "env2",
-        environmentType: "development",
-        workspaceId: wsId,
-        workspaceName: "Workspace One",
-        permission: "manage",
-      },
     ];
-    // Only production permission (read) matters → write/delete should fail
     expect(hasWorkspacePermission(permissions, wsId, "GET")).toBe(true);
     expect(hasWorkspacePermission(permissions, wsId, "POST")).toBe(false);
     expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(false);
-  });
-
-  test("uses production environment permission even when dev has lower", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
-      {
-        environmentId: "env1",
-        environmentType: "production",
-        workspaceId: wsId,
-        workspaceName: "Workspace One",
-        permission: "manage",
-      },
-      {
-        environmentId: "env2",
-        environmentType: "development",
-        workspaceId: wsId,
-        workspaceName: "Workspace One",
-        permission: "read",
-      },
-    ];
-    expect(hasWorkspacePermission(permissions, wsId, "GET")).toBe(true);
-    expect(hasWorkspacePermission(permissions, wsId, "POST")).toBe(true);
-    expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(true);
   });
 
   test("returns false if no permissions for the workspace", () => {
@@ -265,7 +235,7 @@ describe("hasWorkspacePermission", () => {
     expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(false);
   });
 
-  test("uses only production environment permission, ignores higher dev permission", () => {
+  test("uses production environment permission", () => {
     const permissions: TAPIKeyEnvironmentPermission[] = [
       {
         environmentId: "env1",
@@ -274,40 +244,10 @@ describe("hasWorkspacePermission", () => {
         workspaceName: "Workspace One",
         permission: "read",
       },
-      {
-        environmentId: "env2",
-        environmentType: "development",
-        workspaceId: wsId,
-        workspaceName: "Workspace One",
-        permission: "manage",
-      },
     ];
-    // Only production permission (read) matters → write/delete should fail
     expect(hasWorkspacePermission(permissions, wsId, "GET")).toBe(true);
     expect(hasWorkspacePermission(permissions, wsId, "POST")).toBe(false);
     expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(false);
-  });
-
-  test("uses production environment permission even when dev has lower", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
-      {
-        environmentId: "env1",
-        environmentType: "production",
-        workspaceId: wsId,
-        workspaceName: "Workspace One",
-        permission: "manage",
-      },
-      {
-        environmentId: "env2",
-        environmentType: "development",
-        workspaceId: wsId,
-        workspaceName: "Workspace One",
-        permission: "read",
-      },
-    ];
-    expect(hasWorkspacePermission(permissions, wsId, "GET")).toBe(true);
-    expect(hasWorkspacePermission(permissions, wsId, "POST")).toBe(true);
-    expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(true);
   });
 
   test("returns false if no permissions for the workspace", () => {

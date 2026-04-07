@@ -19,14 +19,6 @@ const mockWorkspaces: TOrganizationWorkspace[] = [
         workspaceId: "workspace1",
         appSetupCompleted: true,
       },
-      {
-        id: "env2",
-        type: "development",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        workspaceId: "workspace1",
-        appSetupCompleted: true,
-      },
     ],
   },
   {

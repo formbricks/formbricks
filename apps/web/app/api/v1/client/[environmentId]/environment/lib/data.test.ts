@@ -235,15 +235,15 @@ describe("getEnvironmentStateData", () => {
     await expect(getEnvironmentStateData("invalid-id")).rejects.toThrow();
   });
 
-  test("should handle different environment types", async () => {
+  test("should handle production environment type", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
       ...mockEnvironmentData,
-      type: "development",
+      type: "production",
     } as never);
 
     const result = await getEnvironmentStateData(environmentId);
 
-    expect(result.environment.type).toBe("development");
+    expect(result.environment.type).toBe("production");
   });
 
   test("should handle appSetupCompleted false", async () => {

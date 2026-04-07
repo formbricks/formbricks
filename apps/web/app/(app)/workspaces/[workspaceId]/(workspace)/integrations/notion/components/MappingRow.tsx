@@ -8,7 +8,7 @@ import {
   ERRORS,
   TYPE_MAPPING,
   UNSUPPORTED_TYPES_BY_NOTION,
-} from "@/app/(app)/workspaces/[workspaceId]/workspace/integrations/notion/constants";
+} from "@/app/(app)/workspaces/[workspaceId]/(workspace)/integrations/notion/constants";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";

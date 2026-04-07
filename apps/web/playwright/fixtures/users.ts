@@ -28,12 +28,15 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
 
 export const createUserFixture = (
   user: Prisma.UserGetPayload<{ include: { memberships: true } }>,
-  page: Page
+  page: Page,
+  ids?: { workspaceId: string; environmentId: string }
 ) => {
   return {
     login: async () => {
       await login(user, page);
     },
+    workspaceId: ids?.workspaceId,
+    environmentId: ids?.environmentId,
   };
 };
 
@@ -91,7 +94,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                       create: {
                         name: params?.workspaceName ?? "My Workspace",
                         environments: {
-                          create: [{ type: "development" }, { type: "production" }],
+                          create: [{ type: "production" }],
                         },
                       },
                     },
@@ -105,7 +108,8 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
         include: { memberships: true },
       });
 
-      // Create default attribute keys for each environment with the actual workspace ID
+      // Create default attribute keys for each environment and collect IDs for tests
+      let ids: { workspaceId: string; environmentId: string } | undefined;
       if (!params?.withoutWorkspace) {
         const workspace = await prisma.workspace.findFirst({
           where: { organizationId: user.memberships[0].organizationId },
@@ -129,10 +133,14 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
               })),
             });
           }
+
+          if (workspace.environments[0]) {
+            ids = { workspaceId: workspace.id, environmentId: workspace.environments[0].id };
+          }
         }
       }
 
-      const userFixture = createUserFixture(user, page);
+      const userFixture = createUserFixture(user, page, ids);
 
       store.users.push(userFixture);
 
