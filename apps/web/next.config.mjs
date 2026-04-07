@@ -30,6 +30,8 @@ const nextConfig = {
     "@opentelemetry/sdk-trace-base",
     "@opentelemetry/semantic-conventions",
     "@prisma/instrumentation",
+    "bullmq",
+    "ioredis",
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",

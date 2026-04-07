@@ -21,6 +21,9 @@ export const register = async () => {
     if (PROMETHEUS_ENABLED || process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
       await import("./instrumentation-node");
     }
+
+    const { registerJobsWorker } = await import("./instrumentation-jobs");
+    await registerJobsWorker();
   }
   // Sentry init loads after OTEL to avoid TracerProvider conflicts
   // Sentry tracing is disabled (tracesSampleRate: 0) -- SigNoz handles distributed tracing
