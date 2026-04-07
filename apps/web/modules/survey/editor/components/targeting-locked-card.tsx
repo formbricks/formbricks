@@ -41,6 +41,7 @@ export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: Target
           <UpgradePrompt
             title={t("environments.surveys.edit.unlock_targeting_title")}
             description={t("environments.surveys.edit.unlock_targeting_description")}
+            feature="targeting"
             buttons={[
               {
                 text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),

@@ -148,7 +148,8 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.newObject = result;
 
     if (result.status !== "draft") {
-      capturePostHogEvent(ctx.user.id, "survey_updated", {
+      const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
+      capturePostHogEvent(ctx.user.id, isPublish ? "survey_published" : "survey_updated", {
         survey_id: result.id,
         survey_type: result.type,
         question_count: getElementsFromBlocks(result.blocks).length,
@@ -273,8 +274,6 @@ export const triggerDownloadUnsplashImageAction = actionClient
       const errorData = await response.json();
       throw new Error(errorData.error || "Failed to download image from Unsplash");
     }
-
-    return;
   });
 
 const ZCreateActionClassAction = z.object({
