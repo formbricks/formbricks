@@ -3,7 +3,7 @@ import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getIsDebug } from "@/lib/common/utils";
-import type { TConfigInput, TEnvironmentState } from "@/types/config";
+import type { TEnvironmentState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok } from "@/types/error";
 
 let environmentStateSyncIntervalId: number | null = null;
@@ -11,14 +11,17 @@ let environmentStateSyncIntervalId: number | null = null;
 /**
  * Fetch the environment state from the backend
  * @param appUrl - The app URL
- * @param environmentId - The environment ID
+ * @param environmentId - The environment or workspace ID (server accepts both)
  * @returns The environment state
  * @throws NetworkError
  */
 export const fetchEnvironmentState = async ({
   appUrl,
   environmentId,
-}: TConfigInput): Promise<Result<TEnvironmentState, ApiErrorResponse>> => {
+}: {
+  appUrl: string;
+  environmentId: string;
+}): Promise<Result<TEnvironmentState, ApiErrorResponse>> => {
   const url = `${appUrl}/api/v1/client/${environmentId}/environment`;
   const api = new ApiClient({ appUrl, environmentId, isDebug: getIsDebug() });
 

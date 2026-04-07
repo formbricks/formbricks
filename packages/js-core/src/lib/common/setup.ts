@@ -124,12 +124,21 @@ export const setup = async (
 
   logger.debug("Start setup");
 
-  if (!configInput.environmentId) {
-    logger.debug("No environmentId provided");
+  // Resolve effective ID: prefer workspaceId, fall back to environmentId
+  const effectiveId = configInput.workspaceId ?? configInput.environmentId;
+
+  if (!effectiveId) {
+    logger.debug("No workspaceId or environmentId provided");
     return err({
       code: "missing_field",
-      field: "environmentId",
+      field: "workspaceId",
     });
+  }
+
+  if (configInput.environmentId && !configInput.workspaceId) {
+    logger.debug(
+      "environmentId is deprecated and will be removed in a future version. Please use workspaceId instead."
+    );
   }
 
   if (!configInput.appUrl) {
@@ -143,7 +152,7 @@ export const setup = async (
 
   if (
     existingConfig?.environment &&
-    existingConfig.environmentId === configInput.environmentId &&
+    existingConfig.environmentId === effectiveId &&
     existingConfig.appUrl === configInput.appUrl
   ) {
     logger.debug("Configuration fits setup parameters.");
@@ -174,7 +183,7 @@ export const setup = async (
 
         const environmentStateResponse = await fetchEnvironmentState({
           appUrl: configInput.appUrl,
-          environmentId: configInput.environmentId,
+          environmentId: effectiveId,
         });
 
         if (environmentStateResponse.ok) {
@@ -188,7 +197,7 @@ export const setup = async (
             code: "network_error",
             message: "Error fetching environment state",
             status: 500,
-            url: new URL(`${configInput.appUrl}/api/v1/client/${configInput.environmentId}/environment`),
+            url: new URL(`${configInput.appUrl}/api/v1/client/${effectiveId}/environment`),
             responseMessage: environmentStateResponse.error.message,
           });
         }
@@ -205,7 +214,7 @@ export const setup = async (
         if (userState.data.userId) {
           const updatesResponse = await sendUpdatesToBackend({
             appUrl: configInput.appUrl,
-            environmentId: configInput.environmentId,
+            environmentId: effectiveId,
             updates: {
               userId: userState.data.userId,
             },
@@ -222,7 +231,7 @@ export const setup = async (
               message: "Error updating user state",
               status: 500,
               url: new URL(
-                `${configInput.appUrl}/api/v1/client/${configInput.environmentId}/update/contacts/${userState.data.userId}`
+                `${configInput.appUrl}/api/v1/client/${effectiveId}/update/contacts/${userState.data.userId}`
               ),
               responseMessage: "Unknown error",
             });
@@ -262,7 +271,7 @@ export const setup = async (
     try {
       const environmentStateResponse = await fetchEnvironmentState({
         appUrl: configInput.appUrl,
-        environmentId: configInput.environmentId,
+        environmentId: effectiveId,
       });
 
       if (!environmentStateResponse.ok) {
@@ -275,7 +284,7 @@ export const setup = async (
       if ("userId" in configInput && configInput.userId) {
         const updatesResponse = await sendUpdatesToBackend({
           appUrl: configInput.appUrl,
-          environmentId: configInput.environmentId,
+          environmentId: effectiveId,
           updates: {
             userId: configInput.userId,
             attributes: configInput.attributes,
@@ -297,7 +306,7 @@ export const setup = async (
 
       config.update({
         appUrl: configInput.appUrl,
-        environmentId: configInput.environmentId,
+        environmentId: effectiveId,
         user: userState,
         environment: environmentState,
         filteredSurveys,

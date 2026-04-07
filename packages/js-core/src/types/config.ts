@@ -84,7 +84,9 @@ export type TConfigUpdateInput = Omit<TConfig, "status"> & {
 export type TAttributes = Record<string, string | number>;
 
 export interface TConfigInput {
-  environmentId: string;
+  /** @deprecated Use `workspaceId` instead. Still works as a backward-compatible alias. */
+  environmentId?: string;
+  workspaceId?: string;
   appUrl: string;
 }
 
