@@ -35,15 +35,15 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
 
   const tableHeaders = [
     {
-      label: t("environments.settings.domain.survey_name"),
+      label: t("workspace.settings.domain.survey_name"),
       key: "name",
     },
     {
-      label: t("environments.settings.domain.workspace"),
+      label: t("workspace.settings.domain.workspace"),
       key: "workspace",
     },
     {
-      label: t("environments.settings.domain.pretty_url"),
+      label: t("workspace.settings.domain.pretty_url"),
       key: "slug",
     },
     {
@@ -68,7 +68,7 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
           {surveys.length === 0 && (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={4} className="text-center text-slate-500">
-                {t("environments.settings.domain.no_pretty_urls")}
+                {t("workspace.settings.domain.no_pretty_urls")}
               </TableCell>
             </TableRow>
           )}

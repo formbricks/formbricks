@@ -56,8 +56,8 @@ export const MembersView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.general.manage_members")}
-      description={t("environments.settings.general.manage_members_description")}>
+      title={t("workspace.settings.general.manage_members")}
+      description={t("workspace.settings.general.manage_members_description")}>
       {membershipRole && (
         <OrganizationActions
           organization={organization}

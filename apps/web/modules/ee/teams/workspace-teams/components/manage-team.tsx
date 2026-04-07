@@ -18,7 +18,7 @@ export const ManageTeam = () => {
 
   return (
     <Button variant="secondary" size="sm" onClick={handleManageTeams}>
-      {t("environments.workspace.teams.manage_teams")}
+      {t("workspace.teams.manage_teams")}
     </Button>
   );
 };

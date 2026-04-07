@@ -154,7 +154,7 @@ export const AddApiKeyModal = ({
     const data = getValues();
 
     if (checkForDuplicatePermissions()) {
-      toast.error(t("environments.workspace.api_keys.duplicate_access"));
+      toast.error(t("workspace.api_keys.duplicate_access"));
       return;
     }
 
@@ -207,12 +207,12 @@ export const AddApiKeyModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="px-1">{t("environments.workspace.api_keys.add_api_key")}</DialogTitle>
+          <DialogTitle className="px-1">{t("workspace.api_keys.add_api_key")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitAPIKey)} className="contents">
           <DialogBody className="space-y-4 overflow-y-auto px-1 py-4">
             <div className="space-y-2">
-              <Label>{t("environments.workspace.api_keys.api_key_label")}</Label>
+              <Label>{t("workspace.api_keys.api_key_label")}</Label>
               <Input
                 placeholder="e.g. GitHub, PostHog, Slack"
                 {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
@@ -220,7 +220,7 @@ export const AddApiKeyModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("environments.workspace.api_keys.workspace_access")}</Label>
+              <Label>{t("workspace.api_keys.workspace_access")}</Label>
               <div className="space-y-2">
                 {/* Permission rows */}
                 {Object.keys(selectedPermissions).map((key) => {
@@ -298,13 +298,13 @@ export const AddApiKeyModal = ({
 
                 {/* Add permission button */}
                 <Button type="button" variant="outline" onClick={addPermission}>
-                  <span className="mr-2">+</span> {t("environments.settings.api_keys.add_permission")}
+                  <span className="mr-2">+</span> {t("workspace.settings.api_keys.add_permission")}
                 </Button>
               </div>
             </div>
 
             <div className="space-y-4">
-              <Label>{t("environments.workspace.api_keys.organization_access")}</Label>
+              <Label>{t("workspace.api_keys.organization_access")}</Label>
               {Object.keys(selectedOrganizationAccess).map((key) => (
                 <div key={key} className="mt-2 flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -327,11 +327,11 @@ export const AddApiKeyModal = ({
                 </div>
               ))}
               <p className="text-sm text-slate-500">
-                {t("environments.workspace.api_keys.organization_access_description")}
+                {t("workspace.api_keys.organization_access_description")}
               </p>
             </div>
             <Alert variant="warning">
-              <AlertTitle>{t("environments.workspace.api_keys.api_key_security_warning")}</AlertTitle>
+              <AlertTitle>{t("workspace.api_keys.api_key_security_warning")}</AlertTitle>
             </Alert>
           </DialogBody>
           <DialogFooter>
@@ -349,7 +349,7 @@ export const AddApiKeyModal = ({
               type="submit"
               disabled={isSubmitDisabled() || isCreatingAPIKey}
               loading={isCreatingAPIKey}>
-              {t("environments.workspace.api_keys.add_api_key")}
+              {t("workspace.api_keys.add_api_key")}
             </Button>
           </DialogFooter>
         </form>

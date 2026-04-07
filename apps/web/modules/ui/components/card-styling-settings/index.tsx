@@ -70,10 +70,10 @@ export const CardStylingSettings = ({
 
           <div>
             <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-              {t("environments.surveys.edit.card_styling")}
+              {t("workspace.surveys.edit.card_styling")}
             </p>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
-              {t("environments.surveys.edit.style_the_survey_card")}
+              {t("workspace.surveys.edit.style_the_survey_card")}
             </p>
           </div>
         </div>
@@ -87,8 +87,8 @@ export const CardStylingSettings = ({
           <DimensionInput
             form={form}
             name="roundness"
-            label={t("environments.surveys.edit.roundness")}
-            description={t("environments.surveys.edit.roundness_description")}
+            label={t("workspace.surveys.edit.roundness")}
+            description={t("workspace.surveys.edit.roundness_description")}
           />
 
           <FormField
@@ -96,9 +96,9 @@ export const CardStylingSettings = ({
             name="cardBackgroundColor.light"
             render={({ field }) => (
               <FormItem className="space-y-1">
-                <FormLabel>{t("environments.surveys.edit.card_background_color")}</FormLabel>
+                <FormLabel>{t("workspace.surveys.edit.card_background_color")}</FormLabel>
                 <FormDescription>
-                  {t("environments.surveys.edit.card_background_color_description")}
+                  {t("workspace.surveys.edit.card_background_color_description")}
                 </FormDescription>
 
                 <FormControl>
@@ -117,10 +117,8 @@ export const CardStylingSettings = ({
             name="cardBorderColor.light"
             render={({ field }) => (
               <FormItem className="space-y-1">
-                <FormLabel>{t("environments.surveys.edit.card_border_color")}</FormLabel>
-                <FormDescription>
-                  {t("environments.surveys.edit.card_border_color_description")}
-                </FormDescription>
+                <FormLabel>{t("workspace.surveys.edit.card_border_color")}</FormLabel>
+                <FormDescription>{t("workspace.surveys.edit.card_border_color_description")}</FormDescription>
 
                 <FormControl>
                   <ColorPicker
@@ -140,7 +138,7 @@ export const CardStylingSettings = ({
               <FormItem className="col-span-2">
                 <div>
                   <FormLabel>
-                    {t("environments.surveys.edit.card_arrangement_for_survey_type_derived", {
+                    {t("workspace.surveys.edit.card_arrangement_for_survey_type_derived", {
                       surveyTypeDerived: surveyTypeDerived,
                     })}
                   </FormLabel>
@@ -189,10 +187,10 @@ export const CardStylingSettings = ({
                     </FormControl>
                     <div>
                       <FormLabel className="text-sm font-normal">
-                        {t("environments.surveys.edit.add_highlight_border")}
+                        {t("workspace.surveys.edit.add_highlight_border")}
                       </FormLabel>
                       <FormDescription className="text-xs">
-                        {t("environments.surveys.edit.add_highlight_border_description")}
+                        {t("workspace.surveys.edit.add_highlight_border_description")}
                       </FormDescription>
                     </div>
                   </div>
@@ -237,10 +235,10 @@ export const CardStylingSettings = ({
 
                     <div>
                       <FormLabel className="text-sm font-normal">
-                        {t("environments.surveys.edit.hide_progress_bar")}
+                        {t("workspace.surveys.edit.hide_progress_bar")}
                       </FormLabel>
                       <FormDescription className="text-xs">
-                        {t("environments.surveys.edit.disable_the_visibility_of_survey_progress")}
+                        {t("workspace.surveys.edit.disable_the_visibility_of_survey_progress")}
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -252,24 +250,20 @@ export const CardStylingSettings = ({
                 <ColorField
                   form={form}
                   name="progressTrackBgColor.light"
-                  label={t("environments.workspace.look.advanced_styling_field_track_bg")}
-                  description={t("environments.workspace.look.advanced_styling_field_track_bg_description")}
+                  label={t("workspace.look.advanced_styling_field_track_bg")}
+                  description={t("workspace.look.advanced_styling_field_track_bg_description")}
                 />
                 <ColorField
                   form={form}
                   name="progressIndicatorBgColor.light"
-                  label={t("environments.workspace.look.advanced_styling_field_indicator_bg")}
-                  description={t(
-                    "environments.workspace.look.advanced_styling_field_indicator_bg_description"
-                  )}
+                  label={t("workspace.look.advanced_styling_field_indicator_bg")}
+                  description={t("workspace.look.advanced_styling_field_indicator_bg_description")}
                 />
                 <DimensionInput
                   form={form}
                   name="progressTrackHeight"
-                  label={t("environments.workspace.look.advanced_styling_field_track_height")}
-                  description={t(
-                    "environments.workspace.look.advanced_styling_field_track_height_description"
-                  )}
+                  label={t("workspace.look.advanced_styling_field_track_height")}
+                  description={t("workspace.look.advanced_styling_field_track_height_description")}
                 />
               </div>
             )}

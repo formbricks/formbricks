@@ -60,7 +60,7 @@ export const NotificationSwitch = ({
       notificationSettings: updatedNotificationSettings,
     });
     if (updatedNotificationSettingsActionResponse?.data) {
-      toast.success(t("environments.settings.notifications.notification_settings_updated"), {
+      toast.success(t("workspace.settings.notifications.notification_settings_updated"), {
         id: "notification-switch",
       });
       router.refresh();
@@ -85,7 +85,7 @@ export const NotificationSwitch = ({
             handleSwitchChange();
             toast.success(
               t(
-                "environments.settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"
+                "workspace.settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"
               ),
               {
                 id: "notification-switch",
@@ -101,7 +101,7 @@ export const NotificationSwitch = ({
             handleSwitchChange();
             toast.success(
               t(
-                "environments.settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
+                "workspace.settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
               ),
               {
                 id: "notification-switch",

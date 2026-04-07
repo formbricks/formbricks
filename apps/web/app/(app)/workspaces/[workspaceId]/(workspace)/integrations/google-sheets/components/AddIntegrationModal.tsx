@@ -125,9 +125,9 @@ export const AddIntegrationModal = ({
   const showErrorMessageToast = (response: Awaited<ReturnType<typeof getSpreadsheetNameByIdAction>>) => {
     const errorMessage = getFormattedErrorMessage(response);
     if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
-      toast.error(t("environments.integrations.google_sheets.token_expired_error"));
+      toast.error(t("workspace.integrations.google_sheets.token_expired_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
-      toast.error(t("environments.integrations.google_sheets.spreadsheet_permission_error"));
+      toast.error(t("workspace.integrations.google_sheets.spreadsheet_permission_error"));
     } else {
       toast.error(errorMessage);
     }
@@ -136,13 +136,13 @@ export const AddIntegrationModal = ({
   const linkSheet = async () => {
     try {
       if (!isValidGoogleSheetsUrl(spreadsheetUrl)) {
-        throw new Error(t("environments.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
+        throw new Error(t("workspace.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.please_select_a_survey_error"));
+        throw new Error(t("workspace.integrations.please_select_a_survey_error"));
       }
       if (selectedElements.length === 0) {
-        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
+        throw new Error(t("workspace.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingSheet(true);
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
@@ -188,9 +188,9 @@ export const AddIntegrationModal = ({
         return;
       }
       if (selectedIntegration) {
-        toast.success(t("environments.integrations.integration_updated_successfully"));
+        toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
-        toast.success(t("environments.integrations.integration_added_successfully"));
+        toast.success(t("workspace.integrations.integration_added_successfully"));
       }
       resetForm();
       setOpen(false);
@@ -234,7 +234,7 @@ export const AddIntegrationModal = ({
         toast.error(getFormattedErrorMessage(result));
         return;
       }
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
@@ -253,13 +253,13 @@ export const AddIntegrationModal = ({
                 fill
                 className="object-contain object-center"
                 src={GoogleSheetLogo}
-                alt={t("environments.integrations.google_sheets.google_sheet_logo")}
+                alt={t("workspace.integrations.google_sheets.google_sheet_logo")}
               />
             </div>
             <div className="space-y-0.5">
-              <DialogTitle>{t("environments.integrations.google_sheets.link_google_sheet")}</DialogTitle>
+              <DialogTitle>{t("workspace.integrations.google_sheets.link_google_sheet")}</DialogTitle>
               <DialogDescription>
-                {t("environments.integrations.google_sheets.google_sheets_integration_description")}
+                {t("workspace.integrations.google_sheets.google_sheets_integration_description")}
               </DialogDescription>
             </div>
           </div>
@@ -269,7 +269,7 @@ export const AddIntegrationModal = ({
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
-                  <Label>{t("environments.integrations.google_sheets.spreadsheet_url")}</Label>
+                  <Label>{t("workspace.integrations.google_sheets.spreadsheet_url")}</Label>
                   <Input
                     value={spreadsheetUrl}
                     onChange={(e) => setSpreadsheetUrl(e.target.value)}
@@ -286,7 +286,7 @@ export const AddIntegrationModal = ({
                     disabled={surveys.length === 0}
                   />
                   <p className="m-1 text-xs text-slate-500">
-                    {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
+                    {surveys.length === 0 && t("workspace.integrations.create_survey_warning")}
                   </p>
                 </div>
               </div>
@@ -361,7 +361,7 @@ export const AddIntegrationModal = ({
             <Button type="submit" loading={isLinkingSheet}>
               {selectedIntegration
                 ? t("common.update")
-                : t("environments.integrations.google_sheets.link_google_sheet")}
+                : t("workspace.integrations.google_sheets.link_google_sheet")}
             </Button>
           </DialogFooter>
         </form>

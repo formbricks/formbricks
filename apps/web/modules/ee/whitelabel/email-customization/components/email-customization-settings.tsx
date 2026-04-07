@@ -125,7 +125,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (removeLogoResponse?.data) {
-      toast.success(t("environments.settings.general.logo_removed_successfully"));
+      toast.success(t("workspace.settings.general.logo_removed_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeLogoResponse);
@@ -150,7 +150,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (updateLogoResponse?.data) {
-      toast.success(t("environments.settings.general.logo_saved_successfully"));
+      toast.success(t("workspace.settings.general.logo_saved_successfully"));
       setLogoUrl(url);
       router.refresh();
     } else {
@@ -163,11 +163,11 @@ export const EmailCustomizationSettings = ({
 
   const sendTestEmail = async () => {
     if (!logoUrl) {
-      toast.error(t("environments.settings.general.please_add_a_logo"));
+      toast.error(t("workspace.settings.general.please_add_a_logo"));
       return;
     }
     if (logoUrl !== organization.whitelabel?.logoUrl && !isDefaultLogo) {
-      toast.error(t("environments.settings.general.please_save_logo_before_sending_test_email"));
+      toast.error(t("workspace.settings.general.please_save_logo_before_sending_test_email"));
       return;
     }
     const sendTestEmailResponse = await sendTestEmailAction({
@@ -175,7 +175,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (sendTestEmailResponse?.data) {
-      toast.success(t("environments.settings.general.test_email_sent_successfully"));
+      toast.success(t("workspace.settings.general.test_email_sent_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(sendTestEmailResponse);
       toast.error(errorMessage);
@@ -200,14 +200,14 @@ export const EmailCustomizationSettings = ({
   return (
     <SettingsCard
       className="overflow-hidden pb-0"
-      title={t("environments.workspace.look.email_customization")}
-      description={t("environments.workspace.look.email_customization_description")}
+      title={t("workspace.look.email_customization")}
+      description={t("workspace.look.email_customization_description")}
       noPadding>
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
           <div className="flex items-end justify-between gap-4">
             <div className="mb-10">
-              <Small>{t("environments.settings.general.logo_in_email_header")}</Small>
+              <Small>{t("workspace.settings.general.logo_in_email_header")}</Small>
 
               <div className="mb-6 mt-2 flex items-center gap-4">
                 {logoUrl && (
@@ -235,7 +235,7 @@ export const EmailCustomizationSettings = ({
                         }}
                         disabled={isReadOnly || isSaving}>
                         <RepeatIcon className="h-4 w-4" />
-                        {t("environments.settings.general.replace_logo")}
+                        {t("workspace.settings.general.replace_logo")}
                       </Button>
                       <Button
                         data-testid="remove-logo-button"
@@ -243,7 +243,7 @@ export const EmailCustomizationSettings = ({
                         variant="outline"
                         disabled={isReadOnly || isSaving}>
                         <Trash2Icon className="h-4 w-4" />
-                        {t("environments.settings.general.remove_logo")}
+                        {t("workspace.settings.general.remove_logo")}
                       </Button>
                     </div>
                   </div>
@@ -289,19 +289,19 @@ export const EmailCustomizationSettings = ({
                 height={192}
               />
               <P className="font-bold">
-                {t("environments.settings.general.email_customization_preview_email_heading", {
+                {t("workspace.settings.general.email_customization_preview_email_heading", {
                   userName: user?.name,
                 })}
               </P>
               <Muted className="text-slate-500">
-                {t("environments.settings.general.email_customization_preview_email_text")}
+                {t("workspace.settings.general.email_customization_preview_email_text")}
               </Muted>
             </div>
           </div>
         ) : (
           <UpgradePrompt
-            title={t("environments.settings.general.customize_email_with_a_higher_plan")}
-            description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
+            title={t("workspace.settings.general.customize_email_with_a_higher_plan")}
+            description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
             buttons={buttons}
           />
         )}

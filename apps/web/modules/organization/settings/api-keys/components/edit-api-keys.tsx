@@ -57,11 +57,11 @@ export const EditAPIKeys = ({
     if (deleteApiKeyResponse?.data) {
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
-      toast.success(t("environments.workspace.api_keys.api_key_deleted"));
+      toast.success(t("workspace.api_keys.api_key_deleted"));
       setIsDeleteKeyModalOpen(false);
       setIsLoading(false);
     } else {
-      toast.error(t("environments.workspace.api_keys.unable_to_delete_api_key"));
+      toast.error(t("workspace.api_keys.unable_to_delete_api_key"));
       setIsDeleteKeyModalOpen(false);
       setIsLoading(false);
     }
@@ -90,7 +90,7 @@ export const EditAPIKeys = ({
       const updatedApiKeys = [...apiKeysLocal, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
       setIsLoading(false);
-      toast.success(t("environments.workspace.api_keys.api_key_created"));
+      toast.success(t("workspace.api_keys.api_key_created"));
     } else {
       setIsLoading(false);
       const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
@@ -121,7 +121,7 @@ export const EditAPIKeys = ({
         }) || [];
 
       setApiKeysLocal(updatedApiKeys);
-      toast.success(t("environments.workspace.api_keys.api_key_updated"));
+      toast.success(t("workspace.api_keys.api_key_updated"));
       setIsLoading(false);
     } else {
       const errorMessage = getFormattedErrorMessage(updateApiKeyResponse);
@@ -135,11 +135,11 @@ export const EditAPIKeys = ({
   const ApiKeyDisplay = ({ apiKey }: { apiKey: string }) => {
     const copyToClipboard = () => {
       navigator.clipboard.writeText(apiKey);
-      toast.success(t("environments.workspace.api_keys.api_key_copied_to_clipboard"));
+      toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
     };
 
     if (!apiKey) {
-      return <span className="italic">{t("environments.workspace.api_keys.secret")}</span>;
+      return <span className="italic">{t("workspace.api_keys.secret")}</span>;
     }
 
     return (
@@ -164,16 +164,14 @@ export const EditAPIKeys = ({
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
-          <div className="col-span-4 hidden sm:col-span-5 sm:block">
-            {t("environments.workspace.api_keys.api_key")}
-          </div>
+          <div className="col-span-4 hidden sm:col-span-5 sm:block">{t("workspace.api_keys.api_key")}</div>
           <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
           <div></div>
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal?.length === 0 ? (
             <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
-              {t("environments.workspace.api_keys.no_api_keys_yet")}
+              {t("workspace.api_keys.no_api_keys_yet")}
             </div>
           ) : (
             apiKeysLocal?.map((apiKey) => (
@@ -227,7 +225,7 @@ export const EditAPIKeys = ({
             onClick={() => {
               setIsAddAPIKeyModalOpen(true);
             }}>
-            {t("environments.settings.api_keys.add_api_key")}
+            {t("workspace.settings.api_keys.add_api_key")}
           </Button>
         </div>
       )}
@@ -251,10 +249,10 @@ export const EditAPIKeys = ({
       <DeleteDialog
         open={isDeleteKeyModalOpen}
         setOpen={setIsDeleteKeyModalOpen}
-        deleteWhat={t("environments.workspace.api_keys.api_key")}
+        deleteWhat={t("workspace.api_keys.api_key")}
         onDelete={handleDeleteKey}
         isDeleting={isLoading}
-        text={t("environments.workspace.api_keys.delete_api_key_confirmation")}
+        text={t("workspace.api_keys.delete_api_key_confirmation")}
       />
     </div>
   );

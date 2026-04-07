@@ -45,7 +45,7 @@ export const SurveyEditorTabs = ({
       },
       {
         id: "followUps",
-        label: t("environments.surveys.edit.follow_ups"),
+        label: t("workspace.surveys.edit.follow_ups"),
         icon: <MailIcon className="h-5 w-5" />,
       },
     ];

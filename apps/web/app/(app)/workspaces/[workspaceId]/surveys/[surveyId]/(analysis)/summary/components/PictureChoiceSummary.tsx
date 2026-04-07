@@ -55,8 +55,8 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
                   elementSummary.element.id,
                   elementSummary.element.headline,
                   elementSummary.element.type,
-                  t("environments.surveys.summary.includes_all"),
-                  [`${t("environments.surveys.edit.picture_idx", { idx: index + 1 })}`]
+                  t("workspace.surveys.summary.includes_all"),
+                  [`${t("workspace.surveys.edit.picture_idx", { idx: index + 1 })}`]
                 )
               }>
               <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">

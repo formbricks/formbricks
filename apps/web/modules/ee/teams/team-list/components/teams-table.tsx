@@ -79,7 +79,7 @@ export const TeamsTable = ({
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
               <TableHead className="font-medium text-slate-500">
-                {t("environments.settings.teams.team_name")}
+                {t("workspace.settings.teams.team_name")}
               </TableHead>
               <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
               <TableHead></TableHead>
@@ -90,7 +90,7 @@ export const TeamsTable = ({
             {allTeams.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center hover:bg-transparent">
-                  {t("environments.settings.teams.empty_teams_state")}
+                  {t("workspace.settings.teams.empty_teams_state")}
                 </TableCell>
               </TableRow>
             )}
@@ -99,11 +99,7 @@ export const TeamsTable = ({
                 <TableCell>{team.name}</TableCell>
                 <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
                 <TableCell>
-                  <Badge
-                    type="success"
-                    size={"tiny"}
-                    text={t("environments.settings.teams.you_are_a_member")}
-                  />
+                  <Badge type="success" size={"tiny"} text={t("workspace.settings.teams.you_are_a_member")} />
                 </TableCell>
                 <TableCell className="flex justify-end">
                   <ManageTeamButton

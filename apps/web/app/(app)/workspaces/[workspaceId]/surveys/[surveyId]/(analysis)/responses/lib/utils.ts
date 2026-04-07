@@ -13,17 +13,17 @@ import { TResponseMeta } from "@formbricks/types/responses";
 export const getAddressFieldLabel = (field: string, t: TFunction) => {
   switch (field) {
     case "addressLine1":
-      return t("environments.surveys.responses.address_line_1");
+      return t("workspace.surveys.responses.address_line_1");
     case "addressLine2":
-      return t("environments.surveys.responses.address_line_2");
+      return t("workspace.surveys.responses.address_line_2");
     case "city":
-      return t("environments.surveys.responses.city");
+      return t("workspace.surveys.responses.city");
     case "state":
-      return t("environments.surveys.responses.state_region");
+      return t("workspace.surveys.responses.state_region");
     case "zip":
-      return t("environments.surveys.responses.zip_post_code");
+      return t("workspace.surveys.responses.zip_post_code");
     case "country":
-      return t("environments.surveys.responses.country");
+      return t("workspace.surveys.responses.country");
     default:
       break;
   }
@@ -32,15 +32,15 @@ export const getAddressFieldLabel = (field: string, t: TFunction) => {
 export const getContactInfoFieldLabel = (field: string, t: TFunction) => {
   switch (field) {
     case "firstName":
-      return t("environments.surveys.responses.first_name");
+      return t("workspace.surveys.responses.first_name");
     case "lastName":
-      return t("environments.surveys.responses.last_name");
+      return t("workspace.surveys.responses.last_name");
     case "email":
-      return t("environments.surveys.responses.email");
+      return t("workspace.surveys.responses.email");
     case "phone":
-      return t("environments.surveys.responses.phone");
+      return t("workspace.surveys.responses.phone");
     case "company":
-      return t("environments.surveys.responses.company");
+      return t("workspace.surveys.responses.company");
     default:
       break;
   }
@@ -51,17 +51,17 @@ export const getMetadataFieldLabel = (label: string, t: TFunction) => {
     case "action":
       return t("common.action");
     case "country":
-      return t("environments.surveys.responses.country");
+      return t("workspace.surveys.responses.country");
     case "os":
-      return t("environments.surveys.responses.os");
+      return t("workspace.surveys.responses.os");
     case "device":
-      return t("environments.surveys.responses.device");
+      return t("workspace.surveys.responses.device");
     case "browser":
-      return t("environments.surveys.responses.browser");
+      return t("workspace.surveys.responses.browser");
     case "url":
       return t("common.url");
     case "source":
-      return t("environments.surveys.responses.source");
+      return t("workspace.surveys.responses.source");
     default:
       return capitalize(label);
   }

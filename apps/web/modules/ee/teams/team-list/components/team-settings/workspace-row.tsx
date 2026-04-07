@@ -56,7 +56,7 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
                   showSearch
                   searchPlaceholder={t("common.search")}
                   comboboxClasses="flex-1 min-w-0 w-full"
-                  emptyDropdownText={t("environments.surveys.edit.no_option_found")}
+                  emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
                 />
               </div>
               {error?.message && <FormError className="text-left">{error.message}</FormError>}
@@ -71,15 +71,15 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
           const permissionOptions = [
             {
               value: ZTeamPermission.enum.read,
-              label: t("environments.settings.teams.read"),
+              label: t("workspace.settings.teams.read"),
             },
             {
               value: ZTeamPermission.enum.readWrite,
-              label: t("environments.settings.teams.read_write"),
+              label: t("workspace.settings.teams.read_write"),
             },
             {
               value: ZTeamPermission.enum.manage,
-              label: t("environments.settings.teams.manage"),
+              label: t("workspace.settings.teams.manage"),
             },
           ];
 

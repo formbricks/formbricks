@@ -44,7 +44,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
       }
       setLogoUrl(uploadResult.url);
     } catch (error) {
-      toast.error(t("environments.workspace.look.logo_upload_failed"));
+      toast.error(t("workspace.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -76,13 +76,13 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
         data: updatedWorkspace,
       });
       if (updateWorkspaceResponse?.data) {
-        toast.success(t("environments.workspace.look.logo_updated_successfully"));
+        toast.success(t("workspace.look.logo_updated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.workspace.look.failed_to_update_logo"));
+      toast.error(t("workspace.look.failed_to_update_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -106,13 +106,13 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
         data: updatedWorkspace,
       });
       if (updateWorkspaceResponse?.data) {
-        toast.success(t("environments.workspace.look.logo_removed_successfully"));
+        toast.success(t("workspace.look.logo_removed_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.workspace.look.failed_to_remove_logo"));
+      toast.error(t("workspace.look.failed_to_remove_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -180,22 +180,22 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
                 }}
                 variant="secondary"
                 size="sm">
-                {t("environments.workspace.look.replace_logo")}
+                {t("workspace.look.replace_logo")}
               </Button>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setConfirmRemoveLogoModalOpen(true)}
                 disabled={!isEditing}>
-                {t("environments.workspace.look.remove_logo")}
+                {t("workspace.look.remove_logo")}
               </Button>
             </div>
             <AdvancedOptionToggle
               isChecked={isBgColorEnabled}
               onToggle={toggleBackgroundColor}
               htmlId="addBackgroundColor"
-              title={t("environments.workspace.look.add_background_color")}
-              description={t("environments.workspace.look.add_background_color_description")}
+              title={t("workspace.look.add_background_color")}
+              description={t("workspace.look.add_background_color_description")}
               childBorder
               customContainerClass="p-0"
               childrenContainerClass="overflow-visible"
@@ -221,7 +221,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
           open={confirmRemoveLogoModalOpen}
           setOpen={setConfirmRemoveLogoModalOpen}
           deleteWhat={t("common.logo")}
-          text={t("environments.workspace.look.remove_logo_confirmation")}
+          text={t("workspace.look.remove_logo_confirmation")}
           onDelete={removeLogo}
         />
       </div>

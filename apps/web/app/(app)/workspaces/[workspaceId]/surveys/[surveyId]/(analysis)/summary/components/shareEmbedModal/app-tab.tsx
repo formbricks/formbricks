@@ -22,41 +22,41 @@ import { DocumentationLinksSection } from "./documentation-links-section";
 const createDocumentationLinks = (t: ReturnType<typeof useTranslation>["t"]) => [
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#html",
-    title: t("environments.surveys.summary.in_app.html_embed"),
+    title: t("workspace.surveys.summary.in_app.html_embed"),
   },
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-js",
-    title: t("environments.surveys.summary.in_app.javascript_sdk"),
+    title: t("workspace.surveys.summary.in_app.javascript_sdk"),
   },
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#swift",
-    title: t("environments.surveys.summary.in_app.ios_sdk"),
+    title: t("workspace.surveys.summary.in_app.ios_sdk"),
   },
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#android",
-    title: t("environments.surveys.summary.in_app.kotlin_sdk"),
+    title: t("workspace.surveys.summary.in_app.kotlin_sdk"),
   },
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native",
-    title: t("environments.surveys.summary.in_app.react_native_sdk"),
+    title: t("workspace.surveys.summary.in_app.react_native_sdk"),
   },
 ];
 
 const createNoCodeConfigType = (t: ReturnType<typeof useTranslation>["t"]) => ({
-  click: t("environments.actions.click"),
-  pageView: t("environments.actions.page_view"),
-  exitIntent: t("environments.actions.exit_intent"),
-  fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
-  pageDwell: t("environments.actions.time_on_page"),
+  click: t("workspace.actions.click"),
+  pageView: t("workspace.actions.page_view"),
+  exitIntent: t("workspace.actions.exit_intent"),
+  fiftyPercentScroll: t("workspace.actions.fifty_percent_scroll"),
+  pageDwell: t("workspace.actions.time_on_page"),
 });
 
 const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTranslation>["t"]) => {
   if (days === 0) {
-    return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
+    return t("workspace.surveys.summary.in_app.display_criteria.time_based_always");
   } else if (days === 1) {
-    return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_day")}`;
+    return `${days} ${t("workspace.surveys.summary.in_app.display_criteria.time_based_day")}`;
   } else {
-    return `${days} ${t("environments.surveys.summary.in_app.display_criteria.time_based_days")}`;
+    return `${days} ${t("workspace.surveys.summary.in_app.display_criteria.time_based_days")}`;
   }
 };
 
@@ -101,22 +101,22 @@ export const AppTab = () => {
     if (workspace.recontactDays !== null) {
       return formatRecontactDaysString(workspace.recontactDays, t);
     }
-    return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
+    return t("workspace.surveys.summary.in_app.display_criteria.time_based_always");
   };
 
   const displayOption = () => {
     if (survey.displayOption === "displayOnce") {
-      return t("environments.surveys.edit.show_only_once");
+      return t("workspace.surveys.edit.show_only_once");
     } else if (survey.displayOption === "displayMultiple") {
-      return t("environments.surveys.edit.until_they_submit_a_response");
+      return t("workspace.surveys.edit.until_they_submit_a_response");
     } else if (survey.displayOption === "respondMultiple") {
-      return t("environments.surveys.edit.keep_showing_while_conditions_match");
+      return t("workspace.surveys.edit.keep_showing_while_conditions_match");
     } else if (survey.displayOption === "displaySome") {
-      return t("environments.surveys.edit.show_multiple_times");
+      return t("workspace.surveys.edit.show_multiple_times");
     }
 
     // Default fallback for undefined or unexpected displayOption values
-    return t("environments.surveys.edit.show_only_once");
+    return t("workspace.surveys.edit.show_only_once");
   };
 
   const getTriggerDescription = (
@@ -124,7 +124,7 @@ export const AppTab = () => {
     noCodeConfigTypeParam: ReturnType<typeof createNoCodeConfigType>
   ) => {
     if (actionClass.type === "code") {
-      return `(${t("environments.surveys.summary.in_app.display_criteria.code_trigger")})`;
+      return `(${t("workspace.surveys.summary.in_app.display_criteria.code_trigger")})`;
     } else {
       const configType = actionClass.noCodeConfig?.type;
       let configTypeLabel = "unknown";
@@ -135,17 +135,17 @@ export const AppTab = () => {
         configTypeLabel = configType;
       }
 
-      return `(${t("environments.surveys.summary.in_app.display_criteria.no_code_trigger")}, ${configTypeLabel})`;
+      return `(${t("workspace.surveys.summary.in_app.display_criteria.no_code_trigger")}, ${configTypeLabel})`;
     }
   };
 
   const getSegmentTitle = (segment: TSegment | null) => {
     if (segment?.filters?.length && segment.filters.length > 0) {
       return segment.isPrivate
-        ? t("environments.surveys.summary.in_app.display_criteria.targeted")
+        ? t("workspace.surveys.summary.in_app.display_criteria.targeted")
         : segment.title;
     }
-    return t("environments.surveys.summary.in_app.display_criteria.everyone");
+    return t("workspace.surveys.summary.in_app.display_criteria.everyone");
   };
 
   return (
@@ -154,13 +154,13 @@ export const AppTab = () => {
         <Alert variant={environment.appSetupCompleted ? "success" : "warning"} size="default">
           <AlertTitle>
             {environment.appSetupCompleted
-              ? t("environments.surveys.summary.in_app.connection_title")
-              : t("environments.surveys.summary.in_app.no_connection_title")}
+              ? t("workspace.surveys.summary.in_app.connection_title")
+              : t("workspace.surveys.summary.in_app.no_connection_title")}
           </AlertTitle>
           <AlertDescription>
             {environment.appSetupCompleted
-              ? t("environments.surveys.summary.in_app.connection_description")
-              : t("environments.surveys.summary.in_app.no_connection_description")}
+              ? t("workspace.surveys.summary.in_app.connection_description")
+              : t("workspace.surveys.summary.in_app.no_connection_description")}
           </AlertDescription>
           {!environment.appSetupCompleted && (
             <AlertButton asChild>
@@ -172,7 +172,7 @@ export const AppTab = () => {
         </Alert>
 
         <div className="flex flex-col space-y-3">
-          <H4>{t("environments.surveys.summary.in_app.display_criteria")}</H4>
+          <H4>{t("workspace.surveys.summary.in_app.display_criteria")}</H4>
           <div
             className={
               "flex w-full flex-col space-y-4 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm"
@@ -182,15 +182,15 @@ export const AppTab = () => {
               title={waitTime()}
               titleSuffix={
                 survey.recontactDays !== null
-                  ? `(${t("environments.surveys.summary.in_app.display_criteria.overwritten")})`
+                  ? `(${t("workspace.surveys.summary.in_app.display_criteria.overwritten")})`
                   : undefined
               }
-              description={t("environments.surveys.summary.in_app.display_criteria.time_based_description")}
+              description={t("workspace.surveys.summary.in_app.display_criteria.time_based_description")}
             />
             <DisplayCriteriaItem
               icon={<UsersIcon className="h-4 w-4" />}
               title={getSegmentTitle(survey.segment)}
-              description={t("environments.surveys.summary.in_app.display_criteria.audience_description")}
+              description={t("workspace.surveys.summary.in_app.display_criteria.audience_description")}
             />
             {survey.triggers.map((trigger) => (
               <DisplayCriteriaItem
@@ -204,34 +204,31 @@ export const AppTab = () => {
                 }
                 title={trigger.actionClass.name}
                 titleSuffix={getTriggerDescription(trigger.actionClass, noCodeConfigType)}
-                description={t("environments.surveys.summary.in_app.display_criteria.trigger_description")}
+                description={t("workspace.surveys.summary.in_app.display_criteria.trigger_description")}
               />
             ))}
             {survey.displayPercentage !== null && survey.displayPercentage > 0 && (
               <DisplayCriteriaItem
                 icon={<PercentIcon className="h-4 w-4" />}
-                title={t("environments.surveys.summary.in_app.display_criteria.randomizer", {
+                title={t("workspace.surveys.summary.in_app.display_criteria.randomizer", {
                   percentage: survey.displayPercentage,
                 })}
-                description={t(
-                  "environments.surveys.summary.in_app.display_criteria.randomizer_description",
-                  {
-                    percentage: survey.displayPercentage,
-                  }
-                )}
+                description={t("workspace.surveys.summary.in_app.display_criteria.randomizer_description", {
+                  percentage: survey.displayPercentage,
+                })}
               />
             )}
             <DisplayCriteriaItem
               icon={<Repeat1Icon className="h-4 w-4" />}
               title={displayOption()}
-              description={t("environments.surveys.summary.in_app.display_criteria.recontact_description")}
+              description={t("workspace.surveys.summary.in_app.display_criteria.recontact_description")}
             />
           </div>
         </div>
       </div>
 
       <DocumentationLinksSection
-        title={t("environments.surveys.summary.in_app.documentation_title")}
+        title={t("workspace.surveys.summary.in_app.documentation_title")}
         links={documentationLinks}
       />
     </div>

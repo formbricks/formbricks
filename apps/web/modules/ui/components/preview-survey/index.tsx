@@ -307,15 +307,13 @@ export const PreviewSurvey = ({
                   }}
                   aria-label={
                     isFullScreenPreview
-                      ? t("environments.surveys.edit.shrink_preview")
-                      : t("environments.surveys.edit.expand_preview")
+                      ? t("workspace.surveys.edit.shrink_preview")
+                      : t("workspace.surveys.edit.expand_preview")
                   }></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
-                  {previewType === "modal"
-                    ? t("environments.surveys.edit.your_web_app")
-                    : t("common.preview")}
+                  {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
                 </p>
 
                 <div className="flex items-center">

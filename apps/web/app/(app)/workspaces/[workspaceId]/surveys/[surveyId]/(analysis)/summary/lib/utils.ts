@@ -22,17 +22,17 @@ export const constructToastMessage = (
   const elements = getElementsFromBlocks(survey.blocks);
   const elementIdx = elements.findIndex((element) => element.id === elementId);
   if (elementType === "matrix") {
-    return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question", {
+    return t("workspace.surveys.summary.added_filter_for_responses_where_answer_to_question", {
       questionIdx: elementIdx + 1,
       filterComboBoxValue: filterComboBoxValue?.toString() ?? "",
       filterValue,
     });
   } else if (filterComboBoxValue === undefined) {
-    return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped", {
+    return t("workspace.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped", {
       questionIdx: elementIdx + 1,
     });
   } else {
-    return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question", {
+    return t("workspace.surveys.summary.added_filter_for_responses_where_answer_to_question", {
       questionIdx: elementIdx + 1,
       filterComboBoxValue: Array.isArray(filterComboBoxValue)
         ? filterComboBoxValue.join(",")

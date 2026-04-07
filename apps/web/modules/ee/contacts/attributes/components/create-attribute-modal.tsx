@@ -81,12 +81,12 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
 
   const validateKey = (key: string) => {
     if (!key) {
-      setKeyError(t("environments.contacts.attribute_key_required"));
+      setKeyError(t("workspace.contacts.attribute_key_required"));
       return false;
     }
     if (!isSafeIdentifier(key)) {
       setKeyError(
-        t("environments.contacts.attribute_key_safe_identifier_required") ||
+        t("workspace.contacts.attribute_key_safe_identifier_required") ||
           "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter"
       );
       return false;
@@ -97,7 +97,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
 
   const handleCreate = async () => {
     if (!formData.key) {
-      setKeyError(t("environments.contacts.attribute_key_required"));
+      setKeyError(t("workspace.contacts.attribute_key_required"));
       return;
     }
 
@@ -122,7 +122,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
         return;
       }
 
-      toast.success(t("environments.contacts.attribute_created_successfully"));
+      toast.success(t("workspace.contacts.attribute_created_successfully"));
       handleResetState();
       router.refresh();
     } catch (error) {
@@ -141,7 +141,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
   return (
     <>
       <Button onClick={() => setOpen(true)} size="sm">
-        {t("environments.contacts.create_attribute")}
+        {t("workspace.contacts.create_attribute")}
         <PlusIcon />
       </Button>
 
@@ -154,10 +154,8 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
         }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("environments.contacts.create_new_attribute")}</DialogTitle>
-            <DialogDescription>
-              {t("environments.contacts.create_new_attribute_description")}
-            </DialogDescription>
+            <DialogTitle>{t("workspace.contacts.create_new_attribute")}</DialogTitle>
+            <DialogDescription>{t("workspace.contacts.create_new_attribute_description")}</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit}>
@@ -165,32 +163,32 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">
-                    {t("environments.contacts.attribute_key")}
+                    {t("workspace.contacts.attribute_key")}
                   </label>
                   <Input
                     value={formData.key}
                     onChange={(e) => handleKeyChange(e.target.value)}
-                    placeholder={t("environments.contacts.attribute_key_placeholder")}
+                    placeholder={t("workspace.contacts.attribute_key_placeholder")}
                     className={keyError ? "border-red-500" : ""}
                   />
                   {keyError && <p className="text-sm text-red-500">{keyError}</p>}
-                  <p className="text-xs text-slate-500">{t("environments.contacts.attribute_key_hint")}</p>
+                  <p className="text-xs text-slate-500">{t("workspace.contacts.attribute_key_hint")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">
-                    {t("environments.contacts.attribute_label")}
+                    {t("workspace.contacts.attribute_label")}
                   </label>
                   <Input
                     value={formData.name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder={t("environments.contacts.attribute_label_placeholder")}
+                    placeholder={t("workspace.contacts.attribute_label_placeholder")}
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">
-                    {t("environments.contacts.data_type")}
+                    {t("workspace.contacts.data_type")}
                   </label>
                   <Select
                     value={formData.dataType}
@@ -221,17 +219,17 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500">{t("environments.contacts.data_type_description")}</p>
+                  <p className="text-xs text-slate-500">{t("workspace.contacts.data_type_description")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">
-                    {t("environments.contacts.attribute_description")} ({t("common.optional")})
+                    {t("workspace.contacts.attribute_description")} ({t("common.optional")})
                   </label>
                   <Input
                     value={formData.description}
                     onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                    placeholder={t("environments.contacts.attribute_description_placeholder")}
+                    placeholder={t("workspace.contacts.attribute_description_placeholder")}
                   />
                 </div>
               </div>
@@ -250,7 +248,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
                 disabled={!formData.key || !formData.name || !!keyError}
                 loading={isCreating}
                 type="submit">
-                {t("environments.contacts.create_attribute")}
+                {t("workspace.contacts.create_attribute")}
               </Button>
             </DialogFooter>
           </form>

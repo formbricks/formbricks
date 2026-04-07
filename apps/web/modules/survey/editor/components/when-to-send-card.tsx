@@ -170,9 +170,9 @@ export const WhenToSendCard = ({
             </div>
 
             <div>
-              <p className="font-semibold text-slate-800">{t("environments.surveys.edit.survey_trigger")}</p>
+              <p className="font-semibold text-slate-800">{t("workspace.surveys.edit.survey_trigger")}</p>
               <p className="mt-1 text-sm text-slate-500">
-                {t("environments.surveys.edit.choose_the_actions_which_trigger_the_survey")}
+                {t("workspace.surveys.edit.choose_the_actions_which_trigger_the_survey")}
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export const WhenToSendCard = ({
           <div className="px-3 pb-3 pt-1">
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-800">
-                {t("environments.surveys.edit.trigger_survey_when_one_of_the_actions_is_fired")}
+                {t("workspace.surveys.edit.trigger_survey_when_one_of_the_actions_is_fired")}
               </p>
 
               {localSurvey.triggers.filter(Boolean).map((trigger, idx) => {
@@ -229,25 +229,25 @@ export const WhenToSendCard = ({
             {/* Survey Display Settings */}
             <div className="mb-4 mt-8 space-y-1 px-4">
               <h3 className="font-semibold text-slate-800">
-                {t("environments.surveys.edit.survey_display_settings")}
+                {t("workspace.surveys.edit.survey_display_settings")}
               </h3>
               <p className="text-sm text-slate-500">
-                {t("environments.surveys.edit.add_a_delay_or_auto_close_the_survey")}
+                {t("workspace.surveys.edit.add_a_delay_or_auto_close_the_survey")}
               </p>
             </div>
             <AdvancedOptionToggle
               htmlId="delay"
               isChecked={delay}
               onToggle={handleDelayToggle}
-              title={t("environments.surveys.edit.add_delay_before_showing_survey")}
+              title={t("workspace.surveys.edit.add_delay_before_showing_survey")}
               description={t(
-                "environments.surveys.edit.wait_a_few_seconds_after_the_trigger_before_showing_the_survey"
+                "workspace.surveys.edit.wait_a_few_seconds_after_the_trigger_before_showing_the_survey"
               )}
               childBorder={true}>
               <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
-                    {t("environments.surveys.edit.wait")}
+                    {t("workspace.surveys.edit.wait")}
                     <Input
                       type="number"
                       min="0"
@@ -256,7 +256,7 @@ export const WhenToSendCard = ({
                       onChange={(e) => handleTriggerDelay(e)}
                       className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
-                    {t("environments.surveys.edit.seconds_before_showing_the_survey")}
+                    {t("workspace.surveys.edit.seconds_before_showing_the_survey")}
                   </p>
                 </div>
               </div>
@@ -265,14 +265,14 @@ export const WhenToSendCard = ({
               htmlId="autoClose"
               isChecked={autoClose}
               onToggle={handleAutoCloseToggle}
-              title={t("environments.surveys.edit.auto_close_on_inactivity")}
+              title={t("workspace.surveys.edit.auto_close_on_inactivity")}
               description={t(
-                "environments.surveys.edit.automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds"
+                "workspace.surveys.edit.automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds"
               )}
               childBorder={true}>
               <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  {t("environments.surveys.edit.automatically_close_survey_after")}
+                  {t("workspace.surveys.edit.automatically_close_survey_after")}
                   <Input
                     type="number"
                     min="1"
@@ -281,9 +281,7 @@ export const WhenToSendCard = ({
                     onChange={(e) => handleInputSeconds(e)}
                     className="mx-2 inline w-16 bg-white text-center text-sm"
                   />
-                  {t(
-                    "environments.surveys.edit.seconds_after_trigger_the_survey_will_be_closed_if_no_response"
-                  )}
+                  {t("workspace.surveys.edit.seconds_after_trigger_the_survey_will_be_closed_if_no_response")}
                 </p>
               </label>
             </AdvancedOptionToggle>
@@ -291,12 +289,12 @@ export const WhenToSendCard = ({
               htmlId="randomizer"
               isChecked={randomizerToggle}
               onToggle={handleDisplayPercentageToggle}
-              title={t("environments.surveys.edit.show_survey_to_users")}
-              description={t("environments.surveys.edit.only_display_the_survey_to_a_subset_of_the_users")}
+              title={t("workspace.surveys.edit.show_survey_to_users")}
+              description={t("workspace.surveys.edit.only_display_the_survey_to_a_subset_of_the_users")}
               childBorder={true}>
               <label htmlFor="small-range" className="cursor-pointer p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  {t("environments.surveys.edit.show_to_x_percentage_of_targeted_users", {
+                  {t("workspace.surveys.edit.show_to_x_percentage_of_targeted_users", {
                     percentage: localSurvey.displayPercentage,
                   })}
                   <Input

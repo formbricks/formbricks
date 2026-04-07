@@ -171,12 +171,12 @@ export const getConditionValueOptions = (
         },
         children: [
           {
-            label: t("environments.surveys.edit.matrix_rows", "Rows"),
+            label: t("workspace.surveys.edit.matrix_rows", "Rows"),
             value: `${element.id}-rows`,
             children: rows,
           },
           {
-            label: t("environments.surveys.edit.matrix_all_fields", "All fields"),
+            label: t("workspace.surveys.edit.matrix_all_fields", "All fields"),
             value: element.id,
             meta: {
               type: "element",
@@ -256,9 +256,9 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
 };
 
 export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
-  { label: t("environments.surveys.edit.calculate"), value: "calculate" },
-  { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
-  { label: t("environments.surveys.edit.jump_to_block"), value: "jumpToBlock" },
+  { label: t("workspace.surveys.edit.calculate"), value: "calculate" },
+  { label: t("workspace.surveys.edit.require_answer"), value: "requireAnswer" },
+  { label: t("workspace.surveys.edit.jump_to_block"), value: "jumpToBlock" },
 ];
 
 export const hasJumpToBlockAction = (actions: TSurveyBlockLogicAction[]): boolean => {
@@ -1013,13 +1013,12 @@ export const getActionTargetOptions = (
         "default"
       );
       return {
-        label:
-          getTextContent(processedHeadline.default ?? "") || t("environments.surveys.edit.end_screen_card"),
+        label: getTextContent(processedHeadline.default ?? "") || t("workspace.surveys.edit.end_screen_card"),
         value: ending.id,
       };
     } else {
       return {
-        label: ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
+        label: ending.label || t("workspace.surveys.edit.redirect_thank_you_card"),
         value: ending.id,
       };
     }
@@ -1050,34 +1049,34 @@ export const getActionOperatorOptions = (
   if (variableType === "number") {
     return [
       {
-        label: t("environments.surveys.edit.add"),
+        label: t("workspace.surveys.edit.add"),
         value: "add",
       },
       {
-        label: t("environments.surveys.edit.subtract"),
+        label: t("workspace.surveys.edit.subtract"),
         value: "subtract",
       },
       {
-        label: t("environments.surveys.edit.multiply"),
+        label: t("workspace.surveys.edit.multiply"),
         value: "multiply",
       },
       {
-        label: t("environments.surveys.edit.divide"),
+        label: t("workspace.surveys.edit.divide"),
         value: "divide",
       },
       {
-        label: t("environments.surveys.edit.assign"),
+        label: t("workspace.surveys.edit.assign"),
         value: "assign",
       },
     ];
   } else if (variableType === "text") {
     return [
       {
-        label: t("environments.surveys.edit.assign"),
+        label: t("workspace.surveys.edit.assign"),
         value: "assign",
       },
       {
-        label: t("environments.surveys.edit.concat"),
+        label: t("workspace.surveys.edit.concat"),
         value: "concat",
       },
     ];

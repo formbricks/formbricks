@@ -133,7 +133,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
     const result = await updateSurveyAction(updatedSurvey);
 
     if (result?.data) {
-      toast.success(t("environments.surveys.edit.settings_saved_successfully"));
+      toast.success(t("workspace.surveys.edit.settings_saved_successfully"));
       reset(data);
     } else {
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -150,14 +150,14 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
   }[] = [
     {
       name: "title",
-      label: t("environments.surveys.share.link_settings.link_title"),
-      description: t("environments.surveys.share.link_settings.link_title_description"),
+      label: t("workspace.surveys.share.link_settings.link_title"),
+      description: t("workspace.surveys.share.link_settings.link_title_description"),
       placeholder: survey.name,
     },
     {
       name: "description",
-      label: t("environments.surveys.share.link_settings.link_description"),
-      description: t("environments.surveys.share.link_settings.link_description_description"),
+      label: t("workspace.surveys.share.link_settings.link_description"),
+      description: t("workspace.surveys.share.link_settings.link_description_description"),
       placeholder: "Please complete this survey.",
     },
   ];
@@ -185,7 +185,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
                 </Select>
               </FormControl>
               <FormDescription>
-                {t("environments.surveys.share.link_settings.language_help_text")}
+                {t("workspace.surveys.share.link_settings.language_help_text")}
               </FormDescription>
             </FormItem>
           )}
@@ -228,7 +228,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
             name="ogImage"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("environments.surveys.share.link_settings.preview_image")}</FormLabel>
+                <FormLabel>{t("workspace.surveys.share.link_settings.preview_image")}</FormLabel>
                 <FormControl>
                   <FileInput
                     id={`og-image-upload-${survey.id}`}
@@ -242,7 +242,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
                   />
                 </FormControl>
                 <FormDescription>
-                  {t("environments.surveys.share.link_settings.preview_image_description")}
+                  {t("workspace.surveys.share.link_settings.preview_image_description")}
                 </FormDescription>
                 <FormError />
               </FormItem>

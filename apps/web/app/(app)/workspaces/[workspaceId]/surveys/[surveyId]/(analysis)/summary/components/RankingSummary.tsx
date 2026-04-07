@@ -37,7 +37,7 @@ export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) 
                       <span className="font-bold text-slate-600">
                         #{convertFloatToNDecimal(result.avgRanking, 2)}
                       </span>
-                      <span>{t("environments.surveys.summary.average")}</span>
+                      <span>{t("workspace.surveys.summary.average")}</span>
                     </span>
                   </div>
                 </div>

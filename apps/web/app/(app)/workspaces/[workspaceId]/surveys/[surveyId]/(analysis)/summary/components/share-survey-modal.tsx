@@ -80,10 +80,10 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.ANON_LINKS,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.share.anonymous_links.nav_title"),
+        label: t("workspace.surveys.share.anonymous_links.nav_title"),
         icon: Link2Icon,
-        title: t("environments.surveys.share.anonymous_links.nav_title"),
-        description: t("environments.surveys.share.anonymous_links.description"),
+        title: t("workspace.surveys.share.anonymous_links.nav_title"),
+        description: t("workspace.surveys.share.anonymous_links.description"),
         componentType: AnonymousLinksTab,
         componentProps: {
           survey,
@@ -97,10 +97,10 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.PERSONAL_LINKS,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.share.personal_links.nav_title"),
+        label: t("workspace.surveys.share.personal_links.nav_title"),
         icon: UserIcon,
-        title: t("environments.surveys.share.personal_links.nav_title"),
-        description: t("environments.surveys.share.personal_links.description"),
+        title: t("workspace.surveys.share.personal_links.nav_title"),
+        description: t("workspace.surveys.share.personal_links.description"),
         componentType: PersonalLinksTab,
         componentProps: {
           environmentId,
@@ -114,10 +114,10 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.WEBSITE_EMBED,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.share.embed_on_website.nav_title"),
+        label: t("workspace.surveys.share.embed_on_website.nav_title"),
         icon: Code2Icon,
-        title: t("environments.surveys.share.embed_on_website.nav_title"),
-        description: t("environments.surveys.share.embed_on_website.description"),
+        title: t("workspace.surveys.share.embed_on_website.nav_title"),
+        description: t("workspace.surveys.share.embed_on_website.description"),
         componentType: WebsiteEmbedTab,
         componentProps: { surveyUrl },
         disabled: survey.singleUse?.enabled,
@@ -125,10 +125,10 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.EMAIL,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.share.send_email.nav_title"),
+        label: t("workspace.surveys.share.send_email.nav_title"),
         icon: MailIcon,
-        title: t("environments.surveys.share.send_email.nav_title"),
-        description: t("environments.surveys.share.send_email.description"),
+        title: t("workspace.surveys.share.send_email.nav_title"),
+        description: t("workspace.surveys.share.send_email.description"),
         componentType: EmailTab,
         componentProps: { surveyId: survey.id, email },
         disabled: survey.singleUse?.enabled,
@@ -136,10 +136,10 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.SOCIAL_MEDIA,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.share.social_media.title"),
+        label: t("workspace.surveys.share.social_media.title"),
         icon: Share2Icon,
-        title: t("environments.surveys.share.social_media.title"),
-        description: t("environments.surveys.share.social_media.description"),
+        title: t("workspace.surveys.share.social_media.title"),
+        description: t("workspace.surveys.share.social_media.description"),
         componentType: SocialMediaTab,
         componentProps: { surveyUrl, surveyTitle: survey.name },
         disabled: survey.singleUse?.enabled,
@@ -147,10 +147,10 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.QR_CODE,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.summary.qr_code"),
+        label: t("workspace.surveys.summary.qr_code"),
         icon: QrCodeIcon,
-        title: t("environments.surveys.summary.qr_code"),
-        description: t("environments.surveys.summary.qr_code_description"),
+        title: t("workspace.surveys.summary.qr_code"),
+        description: t("workspace.surveys.summary.qr_code_description"),
         componentType: QRCodeTab,
         componentProps: { surveyUrl },
         disabled: survey.singleUse?.enabled,
@@ -158,40 +158,40 @@ export const ShareSurveyModal = ({
       {
         id: ShareViaType.DYNAMIC_POPUP,
         type: LinkTabsType.SHARE_VIA,
-        label: t("environments.surveys.share.dynamic_popup.nav_title"),
+        label: t("workspace.surveys.share.dynamic_popup.nav_title"),
         icon: SquareStack,
-        title: t("environments.surveys.share.dynamic_popup.nav_title"),
-        description: t("environments.surveys.share.dynamic_popup.description"),
+        title: t("workspace.surveys.share.dynamic_popup.nav_title"),
+        description: t("workspace.surveys.share.dynamic_popup.description"),
         componentType: DynamicPopupTab,
         componentProps: { environmentId, surveyId: survey.id },
       },
       {
         id: ShareSettingsType.LINK_SETTINGS,
         type: LinkTabsType.SHARE_SETTING,
-        label: t("environments.surveys.share.link_settings.title"),
+        label: t("workspace.surveys.share.link_settings.title"),
         icon: Settings,
-        title: t("environments.surveys.share.link_settings.title"),
-        description: t("environments.surveys.share.link_settings.description"),
+        title: t("workspace.surveys.share.link_settings.title"),
+        description: t("workspace.surveys.share.link_settings.description"),
         componentType: LinkSettingsTab,
         componentProps: { isReadOnly, locale: user.locale, isStorageConfigured },
       },
       {
         id: ShareSettingsType.PRETTY_URL,
         type: LinkTabsType.SHARE_SETTING,
-        label: t("environments.surveys.share.pretty_url.title"),
+        label: t("workspace.surveys.share.pretty_url.title"),
         icon: Link2Icon,
-        title: t("environments.surveys.share.pretty_url.title"),
-        description: t("environments.surveys.share.pretty_url.description"),
+        title: t("workspace.surveys.share.pretty_url.title"),
+        description: t("workspace.surveys.share.pretty_url.description"),
         componentType: PrettyUrlTab,
         componentProps: { publicDomain, isReadOnly },
       },
       {
         id: ShareSettingsType.CUSTOM_HTML,
         type: LinkTabsType.SHARE_SETTING,
-        label: t("environments.surveys.share.custom_html.nav_title"),
+        label: t("workspace.surveys.share.custom_html.nav_title"),
         icon: CodeIcon,
-        title: t("environments.surveys.share.custom_html.nav_title"),
-        description: t("environments.surveys.share.custom_html.description"),
+        title: t("workspace.surveys.share.custom_html.nav_title"),
+        description: t("workspace.surveys.share.custom_html.description"),
         componentType: CustomHtmlTab,
         componentProps: { workspaceCustomScripts, isReadOnly },
       },
@@ -284,8 +284,8 @@ export const ShareSurveyModal = ({
     return (
       <div className={`h-full w-full rounded-lg bg-slate-50 p-6`}>
         <TabContainer
-          title={t("environments.surveys.summary.in_app.title")}
-          description={t("environments.surveys.summary.in_app.description")}>
+          title={t("workspace.surveys.summary.in_app.title")}
+          description={t("workspace.surveys.summary.in_app.description")}>
           <AppTab />
         </TabContainer>
       </div>

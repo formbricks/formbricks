@@ -49,7 +49,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={"./"} />
-      <PageHeader pageTitle={t("environments.integrations.notion.notion_integration")} />
+      <PageHeader pageTitle={t("workspace.integrations.notion.notion_integration")} />
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}

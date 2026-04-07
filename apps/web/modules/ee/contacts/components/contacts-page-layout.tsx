@@ -43,8 +43,8 @@ export const ContactsPageLayout = async ({
       ) : (
         <div className="flex items-center justify-center">
           <UpgradePrompt
-            title={upgradePromptTitle ?? t("environments.contacts.unlock_contacts_title")}
-            description={upgradePromptDescription ?? t("environments.contacts.unlock_contacts_description")}
+            title={upgradePromptTitle ?? t("workspace.contacts.unlock_contacts_title")}
+            description={upgradePromptDescription ?? t("workspace.contacts.unlock_contacts_description")}
             buttons={[
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),

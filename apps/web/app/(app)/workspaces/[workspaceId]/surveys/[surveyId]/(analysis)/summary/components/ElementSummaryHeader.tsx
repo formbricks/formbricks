@@ -42,7 +42,7 @@ export const ElementSummaryHeader = ({
       <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
         <div className="flex items-center rounded-lg bg-slate-100 p-2">
           {elementType && <elementType.icon className="mr-2 h-4 w-4" />}
-          {elementType ? elementType.label : t("environments.surveys.summary.unknown_question_type")}{" "}
+          {elementType ? elementType.label : t("workspace.surveys.summary.unknown_question_type")}{" "}
           {t("common.question")}
         </div>
         {showResponses && (
@@ -54,7 +54,7 @@ export const ElementSummaryHeader = ({
         {additionalInfo}
         {!elementSummary.element.required && (
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            {t("environments.surveys.edit.optional")}
+            {t("workspace.surveys.edit.optional")}
           </div>
         )}
         <IdBadge id={elementSummary.element.id} />

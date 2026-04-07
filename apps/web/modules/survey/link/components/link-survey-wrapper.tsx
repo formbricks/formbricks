@@ -90,7 +90,7 @@ export const LinkSurveyWrapper = ({
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
-                  {t("environments.surveys.edit.survey_preview")}
+                  {t("workspace.surveys.edit.survey_preview")}
                   <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}

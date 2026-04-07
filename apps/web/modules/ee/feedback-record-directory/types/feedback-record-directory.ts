@@ -49,11 +49,11 @@ export const getTranslatedFeedbackRecordDirectoryError = (
 ): string => {
   switch (errorCode) {
     case "DIRECTORY_NAME_REQUIRED":
-      return t("environments.settings.feedback_record_directories.error_directory_name_required");
+      return t("workspace.settings.feedback_record_directories.error_directory_name_required");
     case "DIRECTORY_NAME_DUPLICATE":
-      return t("environments.settings.feedback_record_directories.error_directory_name_duplicate");
+      return t("workspace.settings.feedback_record_directories.error_directory_name_duplicate");
     case "DIRECTORY_PROJECTS_INVALID_ORG":
-      return t("environments.settings.feedback_record_directories.error_directory_workspaces_invalid_org");
+      return t("workspace.settings.feedback_record_directories.error_directory_workspaces_invalid_org");
     default:
       return errorCode;
   }

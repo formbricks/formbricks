@@ -8,7 +8,7 @@ const Loading = async () => {
   const t = await getTranslate();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="billing" loading />
       </PageHeader>
       <div className="my-8 h-64 animate-pulse rounded-xl bg-slate-200"></div>

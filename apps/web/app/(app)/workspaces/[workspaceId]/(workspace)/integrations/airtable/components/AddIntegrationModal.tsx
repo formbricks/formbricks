@@ -103,8 +103,8 @@ const NoBaseFoundError = () => {
   const { t } = useTranslation();
   return (
     <Alert>
-      <AlertTitle>{t("environments.integrations.airtable.no_bases_found")}</AlertTitle>
-      <AlertDescription>{t("environments.integrations.airtable.please_create_a_base")}</AlertDescription>
+      <AlertTitle>{t("workspace.integrations.airtable.no_bases_found")}</AlertTitle>
+      <AlertDescription>{t("workspace.integrations.airtable.please_create_a_base")}</AlertDescription>
     </Alert>
   );
 };
@@ -227,19 +227,19 @@ export const AddIntegrationModal = ({
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
       if (!data.base || data.base === "") {
-        throw new Error(t("environments.integrations.airtable.please_select_a_base"));
+        throw new Error(t("workspace.integrations.airtable.please_select_a_base"));
       }
 
       if (!data.table || data.table === "") {
-        throw new Error(t("environments.integrations.airtable.please_select_a_table"));
+        throw new Error(t("workspace.integrations.airtable.please_select_a_table"));
       }
 
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.please_select_a_survey_error"));
+        throw new Error(t("workspace.integrations.please_select_a_survey_error"));
       }
 
       if (data.elements.length === 0) {
-        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
+        throw new Error(t("workspace.integrations.select_at_least_one_question_error"));
       }
 
       const currentTable = tables.find((item) => item.id === data.table);
@@ -278,9 +278,9 @@ export const AddIntegrationModal = ({
         return;
       }
       if (isEditMode) {
-        toast.success(t("environments.integrations.integration_updated_successfully"));
+        toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
-        toast.success(t("environments.integrations.integration_added_successfully"));
+        toast.success(t("workspace.integrations.integration_added_successfully"));
       }
       handleClose();
     } catch (e) {
@@ -320,7 +320,7 @@ export const AddIntegrationModal = ({
       handleClose();
       router.refresh();
 
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     }
@@ -336,13 +336,13 @@ export const AddIntegrationModal = ({
                 fill
                 className="object-contain object-center"
                 src={AirtableLogo}
-                alt={t("environments.integrations.airtable.airtable_logo")}
+                alt={t("workspace.integrations.airtable.airtable_logo")}
               />
             </div>
             <div className="space-y-0.5">
-              <DialogTitle>{t("environments.integrations.airtable.link_airtable_table")}</DialogTitle>
+              <DialogTitle>{t("workspace.integrations.airtable.link_airtable_table")}</DialogTitle>
               <DialogDescription>
-                {t("environments.integrations.airtable.sync_responses_with_airtable")}
+                {t("workspace.integrations.airtable.sync_responses_with_airtable")}
               </DialogDescription>
             </div>
           </div>
@@ -364,7 +364,7 @@ export const AddIntegrationModal = ({
               )}
 
               <div className="flex w-full flex-col">
-                <Label htmlFor="table">{t("environments.integrations.airtable.table_name")}</Label>
+                <Label htmlFor="table">{t("workspace.integrations.airtable.table_name")}</Label>
                 <div className="mt-1 flex">
                   <Controller
                     control={control}
@@ -427,7 +427,7 @@ export const AddIntegrationModal = ({
                 </div>
               ) : (
                 <p className="m-1 text-xs text-slate-500">
-                  {t("environments.integrations.create_survey_warning")}
+                  {t("workspace.integrations.create_survey_warning")}
                 </p>
               )}
 

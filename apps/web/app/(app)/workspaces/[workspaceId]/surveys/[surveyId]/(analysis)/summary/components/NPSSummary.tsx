@@ -43,15 +43,15 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
-        comparison: t("environments.surveys.summary.includes_either"),
+        comparison: t("workspace.surveys.summary.includes_either"),
         values: ["9", "10"],
       },
       passives: {
-        comparison: t("environments.surveys.summary.includes_either"),
+        comparison: t("workspace.surveys.summary.includes_either"),
         values: ["7", "8"],
       },
       detractors: {
-        comparison: t("environments.surveys.summary.is_less_than"),
+        comparison: t("workspace.surveys.summary.is_less_than"),
         values: "7",
       },
       dismissed: {
@@ -84,7 +84,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             <SatisfactionIndicator percentage={elementSummary.promoters.percentage} />
             <div>
-              {t("environments.surveys.summary.promoters")}:{" "}
+              {t("workspace.surveys.summary.promoters")}:{" "}
               {convertFloatToNDecimal(elementSummary.promoters.percentage, 2)}%
             </div>
           </div>
@@ -95,10 +95,10 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
         <div className="flex justify-end px-4 md:px-6">
           <TabsList>
             <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="h-4 w-4" />}>
-              {t("environments.surveys.summary.aggregated")}
+              {t("workspace.surveys.summary.aggregated")}
             </TabsTrigger>
             <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
-              {t("environments.surveys.summary.individual")}
+              {t("workspace.surveys.summary.individual")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -153,7 +153,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                         elementSummary.element.id,
                         elementSummary.element.headline,
                         elementSummary.element.type,
-                        t("environments.surveys.summary.is_equal_to"),
+                        t("workspace.surveys.summary.is_equal_to"),
                         choice.rating.toString()
                       )
                     }>

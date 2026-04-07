@@ -19,7 +19,7 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
 
   if (session) {
     return {
-      title: `${t("common.count_responses", { count: responseCount })} | ${t("environments.surveys.summary.survey_results", { surveyName: survey?.name })}`,
+      title: `${t("common.count_responses", { count: responseCount })} | ${t("workspace.surveys.summary.survey_results", { surveyName: survey?.name })}`,
     };
   }
   return {

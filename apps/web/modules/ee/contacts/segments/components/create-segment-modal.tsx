@@ -79,7 +79,7 @@ export function CreateSegmentModal({
 
   const handleCreateSegment = async () => {
     if (!segment.title) {
-      toast.error(t("environments.segments.title_is_required"));
+      toast.error(t("workspace.segments.title_is_required"));
       return;
     }
 
@@ -95,7 +95,7 @@ export function CreateSegmentModal({
       });
 
       if (createSegmentResponse?.data) {
-        toast.success(t("environments.segments.segment_saved_successfully"));
+        toast.success(t("workspace.segments.segment_saved_successfully"));
         handleResetState();
         router.refresh();
         setIsCreatingSegment(false);
@@ -111,7 +111,7 @@ export function CreateSegmentModal({
       if (parsedFilters.success) {
         toast.error(t("common.something_went_wrong_please_try_again"));
       } else {
-        toast.error(t("environments.segments.invalid_segment_filters"));
+        toast.error(t("workspace.segments.invalid_segment_filters"));
       }
       setIsCreatingSegment(false);
       return;
@@ -161,7 +161,7 @@ export function CreateSegmentModal({
             <UsersIcon />
             <DialogTitle>{t("common.create_segment")}</DialogTitle>
             <DialogDescription>
-              {t("environments.segments.segments_help_you_target_users_with_same_characteristics_easily")}
+              {t("workspace.segments.segments_help_you_target_users_with_same_characteristics_easily")}
             </DialogDescription>
           </DialogHeader>
 
@@ -179,7 +179,7 @@ export function CreateSegmentModal({
                         title: e.target.value,
                       }));
                     }}
-                    placeholder={t("environments.segments.ex_power_users")}
+                    placeholder={t("workspace.segments.ex_power_users")}
                   />
                 </div>
               </div>
@@ -194,7 +194,7 @@ export function CreateSegmentModal({
                       description: e.target.value,
                     }));
                   }}
-                  placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
+                  placeholder={t("workspace.segments.ex_fully_activated_recurring_users")}
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ export function CreateSegmentModal({
                   <div className="-mb-2 flex items-center gap-1">
                     <FilterIcon className="h-5 w-5 text-slate-700" />
                     <h3 className="text-sm font-medium text-slate-700">
-                      {t("environments.segments.add_your_first_filter_to_get_started")}
+                      {t("workspace.segments.add_your_first_filter_to_get_started")}
                     </h3>
                   </div>
                 )}

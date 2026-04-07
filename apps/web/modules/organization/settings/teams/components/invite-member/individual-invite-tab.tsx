@@ -127,8 +127,8 @@ export const IndividualInviteTab = ({
         <div>
           {showTeamAdminRestrictions ? (
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="memberRoleSelect">{t("environments.settings.teams.organization_role")}</Label>
-              <Input value={t("environments.settings.teams.member")} disabled />
+              <Label htmlFor="memberRoleSelect">{t("workspace.settings.teams.organization_role")}</Label>
+              <Input value={t("workspace.settings.teams.member")} disabled />
             </div>
           ) : (
             <>
@@ -141,7 +141,7 @@ export const IndividualInviteTab = ({
               {watch("role") === "member" && (
                 <Alert className="mt-2" variant="info">
                   <AlertDescription>
-                    {t("environments.settings.teams.member_role_info_message")}
+                    {t("workspace.settings.teams.member_role_info_message")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -161,13 +161,13 @@ export const IndividualInviteTab = ({
                     <MultiSelect
                       value={field.value}
                       options={teamOptions}
-                      placeholder={t("environments.settings.teams.team_select_placeholder")}
+                      placeholder={t("workspace.settings.teams.team_select_placeholder")}
                       disabled={!teamOptions.length}
                       onChange={(val) => field.onChange(val)}
                     />
                     {!teamOptions.length && (
                       <Small className="font-normal text-amber-600">
-                        {t("environments.settings.teams.create_first_team_message")}
+                        {t("workspace.settings.teams.create_first_team_message")}
                       </Small>
                     )}
                   </div>
@@ -177,7 +177,7 @@ export const IndividualInviteTab = ({
             />
             <div className="flex flex-col space-y-2">
               <Label htmlFor="teamRoleInput">{t("common.team_role")}</Label>
-              <Input value={t("environments.settings.teams.contributor")} disabled />
+              <Input value={t("workspace.settings.teams.contributor")} disabled />
             </div>
           </>
         )}
@@ -185,7 +185,7 @@ export const IndividualInviteTab = ({
         {!isAccessControlAllowed && (
           <Alert>
             <AlertDescription className="flex">
-              {t("environments.settings.teams.upgrade_plan_notice_message")}
+              {t("workspace.settings.teams.upgrade_plan_notice_message")}
               <Link
                 className="ml-1 underline"
                 target="_blank"

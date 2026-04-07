@@ -83,7 +83,7 @@ export const FaviconCustomizationSettings = ({
     // Validate file size
     const fileSizeInMB = file.size / 1000000;
     if (fileSizeInMB > MAX_FAVICON_SIZE_MB) {
-      toast.error(t("environments.settings.domain.favicon_too_large"));
+      toast.error(t("workspace.settings.domain.favicon_too_large"));
       return;
     }
 
@@ -107,7 +107,7 @@ export const FaviconCustomizationSettings = ({
       });
 
       if (updateFaviconResponse?.data) {
-        toast.success(t("environments.settings.domain.favicon_saved_successfully"));
+        toast.success(t("workspace.settings.domain.favicon_saved_successfully"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updateFaviconResponse);
@@ -136,7 +136,7 @@ export const FaviconCustomizationSettings = ({
       });
 
       if (removeFaviconResponse?.data) {
-        toast.success(t("environments.settings.domain.favicon_removed_successfully"));
+        toast.success(t("workspace.settings.domain.favicon_removed_successfully"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(removeFaviconResponse);
@@ -163,8 +163,8 @@ export const FaviconCustomizationSettings = ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.domain.favicon_customization")}
-      description={t("environments.settings.domain.favicon_customization_description")}>
+      title={t("workspace.settings.domain.favicon_customization")}
+      description={t("workspace.settings.domain.favicon_customization_description")}>
       {hasWhiteLabelPermission ? (
         <div className="w-full space-y-4">
           {faviconUrl ? (
@@ -228,7 +228,7 @@ export const FaviconCustomizationSettings = ({
           )}
 
           <Alert variant="info">
-            <AlertDescription>{t("environments.settings.domain.favicon_size_hint")}</AlertDescription>
+            <AlertDescription>{t("workspace.settings.domain.favicon_size_hint")}</AlertDescription>
           </Alert>
 
           {isReadOnly && (
@@ -241,8 +241,8 @@ export const FaviconCustomizationSettings = ({
         </div>
       ) : (
         <UpgradePrompt
-          title={t("environments.settings.domain.customize_favicon_with_higher_plan")}
-          description={t("environments.settings.domain.customize_favicon_description")}
+          title={t("workspace.settings.domain.customize_favicon_with_higher_plan")}
+          description={t("workspace.settings.domain.customize_favicon_description")}
           buttons={buttons}
         />
       )}

@@ -39,18 +39,18 @@ export const DeleteAccount = ({
         organizationsWithSingleOwner={organizationsWithSingleOwner}
       />
       <p className="text-sm text-slate-700">
-        <strong>{t("environments.settings.profile.warning_cannot_undo")}</strong>
+        <strong>{t("workspace.settings.profile.warning_cannot_undo")}</strong>
       </p>
       <TooltipRenderer
         shouldRender={isDeleteDisabled}
-        tooltipContent={t("environments.settings.profile.warning_cannot_delete_account")}>
+        tooltipContent={t("workspace.settings.profile.warning_cannot_delete_account")}>
         <Button
           className="mt-4"
           variant="destructive"
           size="sm"
           onClick={() => setModalOpen(!isModalOpen)}
           disabled={isDeleteDisabled}>
-          {t("environments.settings.profile.confirm_delete_my_account")}
+          {t("workspace.settings.profile.confirm_delete_my_account")}
         </Button>
       </TooltipRenderer>
     </div>

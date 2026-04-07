@@ -27,8 +27,8 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
       setConfetti(true);
       toast.success(
         isAppSurvey && !appSetupCompleted
-          ? t("environments.surveys.summary.almost_there")
-          : t("environments.surveys.summary.congrats"),
+          ? t("workspace.surveys.summary.almost_there")
+          : t("workspace.surveys.summary.congrats"),
         {
           id: "survey-publish-success-toast",
           icon: isAppSurvey && !appSetupCompleted ? "🤏" : "🎉",

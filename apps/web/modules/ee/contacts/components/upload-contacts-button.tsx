@@ -54,19 +54,19 @@ export const UploadContactsCSVButton = ({
 
     // Check file type
     if (!file.type && !file.name.endsWith(".csv")) {
-      setError(t("environments.contacts.upload_contacts_error_invalid_file_type"));
+      setError(t("workspace.contacts.upload_contacts_error_invalid_file_type"));
       return;
     }
 
     if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
-      setError(t("environments.contacts.upload_contacts_error_invalid_file_type"));
+      setError(t("workspace.contacts.upload_contacts_error_invalid_file_type"));
       return;
     }
 
     // Max file size check (800KB)
     const maxSizeInBytes = 800 * 1024;
     if (file.size > maxSizeInBytes) {
-      setError(t("environments.contacts.upload_contacts_error_file_too_large"));
+      setError(t("workspace.contacts.upload_contacts_error_file_too_large"));
       return;
     }
 
@@ -89,7 +89,7 @@ export const UploadContactsCSVButton = ({
         }
 
         if (!parsedRecords.data.length) {
-          setError(t("environments.contacts.upload_contacts_error_no_valid_contacts"));
+          setError(t("workspace.contacts.upload_contacts_error_no_valid_contacts"));
           return;
         }
 
@@ -169,7 +169,7 @@ export const UploadContactsCSVButton = ({
         .map(([key, _]) => key);
 
       setError(
-        t("environments.contacts.upload_contacts_error_duplicate_mappings", {
+        t("workspace.contacts.upload_contacts_error_duplicate_mappings", {
           attributes: duplicateAttributeKeys.join(", "),
         })
       );
@@ -213,7 +213,7 @@ export const UploadContactsCSVButton = ({
           const sampleInvalid = err.invalidValues.slice(0, 3).join(", ");
           const additionalCount = err.invalidValues.length - 3;
           const suffix = additionalCount > 0 ? ` (${additionalCount.toString()} more)` : "";
-          return t("environments.contacts.upload_contacts_error_attribute_type_mismatch", {
+          return t("workspace.contacts.upload_contacts_error_attribute_type_mismatch", {
             key: err.key,
             dataType: err.dataType,
             values: `${sampleInvalid}${suffix}`,
@@ -225,7 +225,7 @@ export const UploadContactsCSVButton = ({
       }
 
       setError("");
-      toast.success(t("environments.contacts.upload_contacts_success"));
+      toast.success(t("workspace.contacts.upload_contacts_success"));
       resetState(true);
 
       router.refresh();
@@ -246,7 +246,7 @@ export const UploadContactsCSVButton = ({
       if (csvDataErrors) {
         setError(csvDataErrors);
       } else {
-        setError(t("environments.contacts.upload_contacts_error_generic"));
+        setError(t("workspace.contacts.upload_contacts_error_generic"));
       }
       setLoading(false);
       return;
@@ -283,7 +283,7 @@ export const UploadContactsCSVButton = ({
     // Show error for invalid column names that would become new attributes
     if (invalidColumns.length > 0) {
       setError(
-        t("environments.contacts.invalid_csv_column_names", {
+        t("workspace.contacts.invalid_csv_column_names", {
           columns: invalidColumns.join(", "),
         })
       );
@@ -409,9 +409,7 @@ export const UploadContactsCSVButton = ({
           <DialogHeader>
             <FileUpIcon />
             <DialogTitle>{t("common.upload")} CSV</DialogTitle>
-            <DialogDescription>
-              {t("environments.contacts.upload_contacts_modal_description")}
-            </DialogDescription>
+            <DialogDescription>{t("workspace.contacts.upload_contacts_modal_description")}</DialogDescription>
           </DialogHeader>
 
           <DialogBody unconstrained={false}>
@@ -453,7 +451,7 @@ export const UploadContactsCSVButton = ({
                   ) : (
                     <div className="flex flex-col items-center gap-4">
                       <h3 className="font-medium text-slate-500">
-                        {t("environments.contacts.upload_contacts_modal_preview")}
+                        {t("workspace.contacts.upload_contacts_modal_preview")}
                       </h3>
                       <div className="max-h-[300px] w-full overflow-auto rounded-md border border-slate-300">
                         <CsvTable data={[...csvResponse.slice(0, 11)]} />
@@ -464,7 +462,7 @@ export const UploadContactsCSVButton = ({
                 {!csvResponse.length && (
                   <div className="flex justify-start">
                     <Button onClick={handleDownloadExampleCSV} variant="secondary">
-                      {t("environments.contacts.upload_contacts_modal_download_example_csv")}
+                      {t("workspace.contacts.upload_contacts_modal_download_example_csv")}
                     </Button>
                   </div>
                 )}
@@ -473,18 +471,18 @@ export const UploadContactsCSVButton = ({
               {csvResponse.length > 0 ? (
                 <div className="flex flex-col">
                   <h3 className="font-medium text-slate-900">
-                    {t("environments.contacts.upload_contacts_modal_attributes_title")}
+                    {t("workspace.contacts.upload_contacts_modal_attributes_title")}
                   </h3>
                   <p className="mb-2 text-slate-500">
-                    {t("environments.contacts.upload_contacts_modal_attributes_description")}
+                    {t("workspace.contacts.upload_contacts_modal_attributes_description")}
                   </p>
 
                   <div className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,2fr)] gap-x-4 gap-y-3">
                     <div className="font-medium text-slate-900">
-                      {t("environments.contacts.upload_contacts_modal_csv_column_header")}
+                      {t("workspace.contacts.upload_contacts_modal_csv_column_header")}
                     </div>
                     <div className="font-medium text-slate-900">
-                      {t("environments.contacts.upload_contacts_modal_attribute_header")}
+                      {t("workspace.contacts.upload_contacts_modal_attribute_header")}
                     </div>
 
                     {validCsvColumns.map((column, index) => {
@@ -504,25 +502,25 @@ export const UploadContactsCSVButton = ({
 
               <div className="flex flex-col gap-2">
                 <h3 className="font-medium text-slate-900">
-                  {t("environments.contacts.upload_contacts_modal_duplicates_title")}
+                  {t("workspace.contacts.upload_contacts_modal_duplicates_title")}
                 </h3>
                 <p className="text-slate-500">
-                  {t("environments.contacts.upload_contacts_modal_duplicates_description")}
+                  {t("workspace.contacts.upload_contacts_modal_duplicates_description")}
                 </p>
                 <StylingTabs
                   id="duplicate-contacts"
                   options={[
                     {
                       value: "skip",
-                      label: t("environments.contacts.upload_contacts_modal_duplicates_skip_title"),
+                      label: t("workspace.contacts.upload_contacts_modal_duplicates_skip_title"),
                     },
                     {
                       value: "update",
-                      label: t("environments.contacts.upload_contacts_modal_duplicates_update_title"),
+                      label: t("workspace.contacts.upload_contacts_modal_duplicates_update_title"),
                     },
                     {
                       value: "overwrite",
-                      label: t("environments.contacts.upload_contacts_modal_duplicates_overwrite_title"),
+                      label: t("workspace.contacts.upload_contacts_modal_duplicates_overwrite_title"),
                     },
                   ]}
                   defaultSelected={duplicateContactsAction}
@@ -534,11 +532,11 @@ export const UploadContactsCSVButton = ({
                 <div>
                   <p className="text-xs font-medium text-slate-500">
                     {duplicateContactsAction === "skip" &&
-                      t("environments.contacts.upload_contacts_modal_duplicates_skip_description")}
+                      t("workspace.contacts.upload_contacts_modal_duplicates_skip_description")}
                     {duplicateContactsAction === "update" &&
-                      t("environments.contacts.upload_contacts_modal_duplicates_update_description")}
+                      t("workspace.contacts.upload_contacts_modal_duplicates_update_description")}
                     {duplicateContactsAction === "overwrite" &&
-                      t("environments.contacts.upload_contacts_modal_duplicates_overwrite_description")}
+                      t("workspace.contacts.upload_contacts_modal_duplicates_overwrite_description")}
                   </p>
                 </div>
               </div>
@@ -552,7 +550,7 @@ export const UploadContactsCSVButton = ({
                 onClick={() => {
                   resetState();
                 }}>
-                {t("environments.contacts.upload_contacts_modal_pick_different_file")}
+                {t("workspace.contacts.upload_contacts_modal_pick_different_file")}
               </Button>
             ) : null}
 
@@ -560,7 +558,7 @@ export const UploadContactsCSVButton = ({
               onClick={handleUpload}
               loading={loading}
               disabled={loading || !csvResponse.length || !!error}>
-              {t("environments.contacts.upload_contacts_modal_upload_btn")}
+              {t("workspace.contacts.upload_contacts_modal_upload_btn")}
             </Button>
           </DialogFooter>
         </DialogContent>

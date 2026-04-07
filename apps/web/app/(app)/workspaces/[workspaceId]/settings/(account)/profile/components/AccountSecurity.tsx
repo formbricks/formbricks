@@ -31,11 +31,11 @@ export const AccountSecurity = ({ user }: AccountSecurityProps) => {
         />
         <div className="flex flex-col">
           <h1 className="text-sm font-semibold text-slate-800">
-            {t("environments.settings.profile.two_factor_authentication")}
+            {t("workspace.settings.profile.two_factor_authentication")}
           </h1>
 
           <p className="text-xs text-slate-600">
-            {t("environments.settings.profile.two_factor_authentication_description")}
+            {t("workspace.settings.profile.two_factor_authentication_description")}
           </p>
         </div>
       </div>

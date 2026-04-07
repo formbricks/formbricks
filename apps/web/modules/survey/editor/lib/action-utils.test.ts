@@ -25,16 +25,16 @@ const { isValidCssSelector } = await import("@/app/lib/actionClass/actionClass")
 
 // Mock translation function
 const mockT = vi.fn((key: string, params?: any) => {
-  if (key === "environments.actions.action_with_name_already_exists") {
+  if (key === "workspace.actions.action_with_name_already_exists") {
     return `Action with name "${params?.name}" already exists`;
   }
-  if (key === "environments.actions.action_with_key_already_exists") {
+  if (key === "workspace.actions.action_with_key_already_exists") {
     return `Action with key "${params?.key}" already exists`;
   }
-  if (key === "environments.actions.invalid_css_selector") {
+  if (key === "workspace.actions.invalid_css_selector") {
     return "Invalid CSS selector";
   }
-  if (key === "environments.actions.invalid_regex") {
+  if (key === "workspace.actions.invalid_regex") {
     return "Invalid regex pattern";
   }
   if (key === "common.you_are_not_authorized_to_perform_this_action") {

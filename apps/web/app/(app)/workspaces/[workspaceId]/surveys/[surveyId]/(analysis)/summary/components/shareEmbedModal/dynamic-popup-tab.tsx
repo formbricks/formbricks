@@ -18,11 +18,11 @@ export const DynamicPopupTab = ({ environmentId: _environmentId, surveyId }: Dyn
   return (
     <div className="flex h-full flex-col justify-between space-y-4" data-testid="dynamic-popup-container">
       <Alert variant="info" size="default">
-        <AlertTitle>{t("environments.surveys.share.dynamic_popup.alert_title")}</AlertTitle>
-        <AlertDescription>{t("environments.surveys.share.dynamic_popup.alert_description")}</AlertDescription>
+        <AlertTitle>{t("workspace.surveys.share.dynamic_popup.alert_title")}</AlertTitle>
+        <AlertDescription>{t("workspace.surveys.share.dynamic_popup.alert_description")}</AlertDescription>
         <AlertButton asChild>
           <Link href={`/workspaces/${workspace?.id}/surveys/${surveyId}/edit`}>
-            {t("environments.surveys.share.dynamic_popup.alert_button")}
+            {t("workspace.surveys.share.dynamic_popup.alert_button")}
           </Link>
         </AlertButton>
       </Alert>
@@ -30,15 +30,15 @@ export const DynamicPopupTab = ({ environmentId: _environmentId, surveyId }: Dyn
       <DocumentationLinks
         links={[
           {
-            title: t("environments.surveys.share.dynamic_popup.attribute_based_targeting"),
+            title: t("workspace.surveys.share.dynamic_popup.attribute_based_targeting"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
           },
           {
-            title: t("environments.surveys.share.dynamic_popup.code_no_code_triggers"),
+            title: t("workspace.surveys.share.dynamic_popup.code_no_code_triggers"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions",
           },
           {
-            title: t("environments.surveys.share.dynamic_popup.recontact_options"),
+            title: t("workspace.surveys.share.dynamic_popup.recontact_options"),
             href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact",
           },
         ]}

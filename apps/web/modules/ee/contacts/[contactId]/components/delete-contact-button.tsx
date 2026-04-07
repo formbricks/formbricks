@@ -33,7 +33,7 @@ export const DeleteContactButton = ({ contactId, isReadOnly, isQuotasAllowed }: 
       if (deletePersonResponse?.data) {
         router.refresh();
         router.push(`${workspaceBasePath}/contacts`);
-        toast.success(t("environments.contacts.contact_deleted_successfully"));
+        toast.success(t("workspace.contacts.contact_deleted_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(deletePersonResponse);
         toast.error(errorMessage);
@@ -68,10 +68,10 @@ export const DeleteContactButton = ({ contactId, isReadOnly, isQuotasAllowed }: 
         isDeleting={isDeletingPerson}
         text={
           isQuotasAllowed
-            ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+            ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
                 value: 1,
               })
-            : t("environments.contacts.delete_contact_confirmation")
+            : t("workspace.contacts.delete_contact_confirmation")
         }
       />
     </>

@@ -46,7 +46,7 @@ export const DeleteWorkspaceRender = ({
           localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, productionEnvironment.id);
         }
       }
-      toast.success(t("environments.workspace.general.workspace_deleted_successfully"));
+      toast.success(t("workspace.general.workspace_deleted_successfully"));
       router.push("/");
     } else {
       const errorMessage = getFormattedErrorMessage(deleteWorkspaceResponse);
@@ -61,13 +61,10 @@ export const DeleteWorkspaceRender = ({
       {!isDeleteDisabled && (
         <div className="space-y-2">
           <p className="text-sm text-slate-900">
-            {t(
-              "environments.workspace.general.delete_workspace_name_includes_surveys_responses_people_and_more",
-              {
-                workspaceName: truncate(currentWorkspace.name, 30),
-              }
-            )}{" "}
-            <strong>{t("environments.workspace.general.this_action_cannot_be_undone")}</strong>
+            {t("workspace.general.delete_workspace_name_includes_surveys_responses_people_and_more", {
+              workspaceName: truncate(currentWorkspace.name, 30),
+            })}{" "}
+            <strong>{t("workspace.general.this_action_cannot_be_undone")}</strong>
           </p>
           <Button
             disabled={isDeleteDisabled}
@@ -82,18 +79,18 @@ export const DeleteWorkspaceRender = ({
         <Alert variant="warning">
           <AlertDescription>
             {!isOwnerOrManager
-              ? t("environments.workspace.general.only_owners_or_managers_can_delete_workspaces")
-              : t("environments.workspace.general.cannot_delete_only_workspace")}
+              ? t("workspace.general.only_owners_or_managers_can_delete_workspaces")
+              : t("workspace.general.cannot_delete_only_workspace")}
           </AlertDescription>
         </Alert>
       )}
 
       <DeleteDialog
-        deleteWhat={t("environments.settings.domain.workspace")}
+        deleteWhat={t("workspace.settings.domain.workspace")}
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteWorkspace}
-        text={t("environments.workspace.general.delete_workspace_confirmation", {
+        text={t("workspace.general.delete_workspace_confirmation", {
           workspaceName: truncate(currentWorkspace.name, 30),
         })}
         isDeleting={isDeleting}

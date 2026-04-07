@@ -175,18 +175,18 @@ export const AddIntegrationModal = ({
   const linkDatabase = async () => {
     try {
       if (!selectedDatabase) {
-        throw new Error(t("environments.integrations.notion.please_select_a_database"));
+        throw new Error(t("workspace.integrations.notion.please_select_a_database"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.please_select_a_survey_error"));
+        throw new Error(t("workspace.integrations.please_select_a_survey_error"));
       }
 
       if (mapping.length === 1 && (!mapping[0].element.id || !mapping[0].column.id)) {
-        throw new Error(t("environments.integrations.notion.please_select_at_least_one_mapping"));
+        throw new Error(t("workspace.integrations.notion.please_select_at_least_one_mapping"));
       }
 
       if (mapping.filter((m) => m.error).length > 0) {
-        throw new Error(t("environments.integrations.notion.please_resolve_mapping_errors"));
+        throw new Error(t("workspace.integrations.notion.please_resolve_mapping_errors"));
       }
 
       if (
@@ -194,7 +194,7 @@ export const AddIntegrationModal = ({
         mapping.filter((m) => m.element.id && !m.column.id).length >= 1
       ) {
         throw new Error(
-          t("environments.integrations.notion.please_complete_mapping_fields_with_notion_property")
+          t("workspace.integrations.notion.please_complete_mapping_fields_with_notion_property")
         );
       }
 
@@ -227,9 +227,9 @@ export const AddIntegrationModal = ({
         return;
       }
       if (selectedIntegration) {
-        toast.success(t("environments.integrations.integration_updated_successfully"));
+        toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
-        toast.success(t("environments.integrations.integration_added_successfully"));
+        toast.success(t("workspace.integrations.integration_added_successfully"));
       }
       resetForm();
       setOpen(false);
@@ -252,7 +252,7 @@ export const AddIntegrationModal = ({
         toast.error(getFormattedErrorMessage(result));
         return;
       }
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
@@ -283,13 +283,13 @@ export const AddIntegrationModal = ({
                 fill
                 className="object-contain object-center"
                 src={NotionLogo}
-                alt={t("environments.integrations.notion.notion_logo")}
+                alt={t("workspace.integrations.notion.notion_logo")}
               />
             </div>
             <div className="space-y-0.5">
-              <DialogTitle>{t("environments.integrations.notion.link_notion_database")}</DialogTitle>
+              <DialogTitle>{t("workspace.integrations.notion.link_notion_database")}</DialogTitle>
               <DialogDescription>
-                {t("environments.integrations.notion.notion_integration_description")}
+                {t("workspace.integrations.notion.notion_integration_description")}
               </DialogDescription>
             </div>
           </div>
@@ -301,7 +301,7 @@ export const AddIntegrationModal = ({
               <div>
                 <div className="mb-4">
                   <DropdownSelector
-                    label={t("environments.integrations.notion.select_a_database")}
+                    label={t("workspace.integrations.notion.select_a_database")}
                     items={databases.map((d) => ({
                       id: d.id,
                       name: (d as any).title?.[0]?.plain_text,
@@ -314,13 +314,13 @@ export const AddIntegrationModal = ({
                   {selectedDatabase && hasMatchingId && (
                     <p className="text-xs text-amber-700">
                       <strong>{t("common.warning")}:</strong>{" "}
-                      {t("environments.integrations.notion.duplicate_connection_warning")}
+                      {t("workspace.integrations.notion.duplicate_connection_warning")}
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
                     {databases.length === 0 &&
                       t(
-                        "environments.integrations.notion.create_at_least_one_database_to_setup_this_integration"
+                        "workspace.integrations.notion.create_at_least_one_database_to_setup_this_integration"
                       )}
                   </p>
                 </div>
@@ -333,13 +333,13 @@ export const AddIntegrationModal = ({
                     disabled={surveys.length === 0}
                   />
                   <p className="m-1 text-xs text-slate-500">
-                    {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
+                    {surveys.length === 0 && t("workspace.integrations.create_survey_warning")}
                   </p>
                 </div>
                 {selectedDatabase && selectedSurvey && (
                   <div>
                     <Label>
-                      {t("environments.integrations.notion.map_formbricks_fields_to_notion_property")}
+                      {t("workspace.integrations.notion.map_formbricks_fields_to_notion_property")}
                     </Label>
                     <div className="mt-1 space-y-2 overflow-y-auto">
                       {mapping.map((m, idx) => (
@@ -388,7 +388,7 @@ export const AddIntegrationModal = ({
               type="submit"
               loading={isLinkingDatabase}
               disabled={mapping.filter((m) => m.error).length > 0}>
-              {selectedIntegration ? t("common.update") : t("environments.integrations.notion.link_database")}
+              {selectedIntegration ? t("common.update") : t("workspace.integrations.notion.link_database")}
             </Button>
           </DialogFooter>
         </form>

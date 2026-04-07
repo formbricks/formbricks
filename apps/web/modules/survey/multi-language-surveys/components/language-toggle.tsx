@@ -36,7 +36,7 @@ export function LanguageToggle({ language, isChecked, onToggle, onEdit, locale }
             className="truncate text-xs text-slate-600 underline hover:text-slate-800"
             onClick={onEdit}
             type="button">
-            {t("environments.surveys.edit.edit_translations", {
+            {t("workspace.surveys.edit.edit_translations", {
               lang: getLanguageLabel(language.code, locale),
             })}
           </button>

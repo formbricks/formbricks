@@ -170,10 +170,8 @@ const Page = async (props: {
         <AccountSettingsNavbar environmentId={params.workspaceId} activeId="notifications" />
       </PageHeader>
       <SettingsCard
-        title={t("environments.settings.notifications.email_alerts_surveys")}
-        description={t(
-          "environments.settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses"
-        )}>
+        title={t("workspace.settings.notifications.email_alerts_surveys")}
+        description={t("workspace.settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses")}>
         <EditAlerts
           memberships={memberships}
           user={user}

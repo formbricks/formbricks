@@ -65,20 +65,18 @@ export const DeleteAccountModal = ({
       setOpen={setOpen}
       deleteWhat={t("common.account")}
       onDelete={() => deleteAccount()}
-      text={t("environments.settings.profile.account_deletion_consequences_warning")}
+      text={t("workspace.settings.profile.account_deletion_consequences_warning")}
       isDeleting={deleting}
       disabled={inputValue !== user.email}>
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
-            {t(
-              "environments.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data"
-            )}
+            {t("workspace.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data")}
           </li>
           {organizationsWithSingleOwner.length > 0 && (
             <li>
               <Trans
-                i18nKey="environments.settings.profile.organizations_delete_message"
+                i18nKey="workspace.settings.profile.organizations_delete_message"
                 components={{ b: <b /> }}
               />
             </li>
@@ -92,7 +90,7 @@ export const DeleteAccountModal = ({
               })}
             </ul>
           )}
-          <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
+          <li>{t("workspace.settings.profile.warning_cannot_undo")}</li>
         </ul>
         <form
           data-testid="deleteAccountForm"
@@ -101,7 +99,7 @@ export const DeleteAccountModal = ({
             await deleteAccount();
           }}>
           <label htmlFor="deleteAccountConfirmation">
-            {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
+            {t("workspace.settings.profile.please_enter_email_to_confirm_account_deletion", {
               email: user.email,
             })}
           </label>

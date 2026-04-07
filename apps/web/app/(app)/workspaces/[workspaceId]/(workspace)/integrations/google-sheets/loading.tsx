@@ -11,7 +11,7 @@ const Loading = () => {
       <GoBackButton />
       <div className="mb-6 text-right">
         <Button className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
-          {t("environments.integrations.google_sheets.link_new_sheet")}
+          {t("workspace.integrations.google_sheets.link_new_sheet")}
         </Button>
       </div>
 
@@ -19,7 +19,7 @@ const Loading = () => {
         <div className="grid h-12 grid-cols-12 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-4 text-center">{t("common.survey")}</div>
           <div className="col-span-4 text-center">
-            {t("environments.integrations.google_sheets.google_sheet_name")}
+            {t("workspace.integrations.google_sheets.google_sheet_name")}
           </div>
           <div className="col-span-2 text-center">{t("common.questions")}</div>
           <div className="col-span-2 text-center">{t("common.updated_at")}</div>

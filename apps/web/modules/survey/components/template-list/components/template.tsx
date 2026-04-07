@@ -62,7 +62,7 @@ export const Template = ({
             disabled={activeTemplate === null}
             loading={loading}
             onClick={() => createSurvey(activeTemplate)}>
-            {t("environments.surveys.templates.use_this_template")}
+            {t("workspace.surveys.templates.use_this_template")}
           </Button>
         </div>
       )}

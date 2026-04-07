@@ -47,12 +47,12 @@ export const FollowUpsView = ({
     return (
       <div className="mt-12 flex items-center justify-center p-5">
         <UpgradePrompt
-          title={t("environments.surveys.edit.follow_ups_empty_heading")}
-          description={t("environments.surveys.edit.follow_ups_empty_description")}
+          title={t("workspace.surveys.edit.follow_ups_empty_heading")}
+          description={t("workspace.surveys.edit.follow_ups_empty_description")}
           buttons={[
             {
               text: isFormbricksCloud
-                ? t("environments.settings.billing.upgrade")
+                ? t("workspace.settings.billing.upgrade")
                 : t("common.request_trial_license"),
               href: isFormbricksCloud
                 ? `${workspaceBasePath}/settings/billing`
@@ -73,7 +73,7 @@ export const FollowUpsView = ({
       <div className="flex justify-end">
         {surveyFollowUps.length ? (
           <Button size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
-            + {t("environments.surveys.edit.follow_ups_new")}
+            + {t("workspace.surveys.edit.follow_ups_new")}
           </Button>
         ) : null}
       </div>
@@ -86,15 +86,15 @@ export const FollowUpsView = ({
             </div>
             <div>
               <p className="text-lg font-semibold text-slate-800">
-                {t("environments.surveys.edit.follow_ups_empty_heading")}
+                {t("workspace.surveys.edit.follow_ups_empty_heading")}
               </p>
               <p className="text-sm text-slate-500">
-                {t("environments.surveys.edit.follow_ups_empty_description")}
+                {t("workspace.surveys.edit.follow_ups_empty_description")}
               </p>
             </div>
 
             <Button className="w-fit" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
-              {t("environments.surveys.edit.follow_ups_new")}
+              {t("workspace.surveys.edit.follow_ups_new")}
             </Button>
           </div>
         )}

@@ -20,23 +20,23 @@ import {
 describe("utils", () => {
   const mockT = vi.fn((key: string) => {
     const translations: Record<string, string> = {
-      "environments.surveys.responses.address_line_1": "Address Line 1",
-      "environments.surveys.responses.address_line_2": "Address Line 2",
-      "environments.surveys.responses.city": "City",
-      "environments.surveys.responses.state_region": "State/Region",
-      "environments.surveys.responses.zip_post_code": "ZIP/Post Code",
-      "environments.surveys.responses.country": "Country",
-      "environments.surveys.responses.first_name": "First Name",
-      "environments.surveys.responses.last_name": "Last Name",
-      "environments.surveys.responses.email": "Email",
-      "environments.surveys.responses.phone": "Phone",
-      "environments.surveys.responses.company": "Company",
+      "workspace.surveys.responses.address_line_1": "Address Line 1",
+      "workspace.surveys.responses.address_line_2": "Address Line 2",
+      "workspace.surveys.responses.city": "City",
+      "workspace.surveys.responses.state_region": "State/Region",
+      "workspace.surveys.responses.zip_post_code": "ZIP/Post Code",
+      "workspace.surveys.responses.country": "Country",
+      "workspace.surveys.responses.first_name": "First Name",
+      "workspace.surveys.responses.last_name": "Last Name",
+      "workspace.surveys.responses.email": "Email",
+      "workspace.surveys.responses.phone": "Phone",
+      "workspace.surveys.responses.company": "Company",
       "common.action": "Action",
-      "environments.surveys.responses.os": "OS",
-      "environments.surveys.responses.device": "Device",
-      "environments.surveys.responses.browser": "Browser",
+      "workspace.surveys.responses.os": "OS",
+      "workspace.surveys.responses.device": "Device",
+      "workspace.surveys.responses.browser": "Browser",
       "common.url": "URL",
-      "environments.surveys.responses.source": "Source",
+      "workspace.surveys.responses.source": "Source",
     };
     return translations[key] || key;
   }) as unknown as TFunction;
@@ -45,37 +45,37 @@ describe("utils", () => {
     test("returns correct label for addressLine1", () => {
       const result = getAddressFieldLabel("addressLine1", mockT);
       expect(result).toBe("Address Line 1");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.address_line_1");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.address_line_1");
     });
 
     test("returns correct label for addressLine2", () => {
       const result = getAddressFieldLabel("addressLine2", mockT);
       expect(result).toBe("Address Line 2");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.address_line_2");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.address_line_2");
     });
 
     test("returns correct label for city", () => {
       const result = getAddressFieldLabel("city", mockT);
       expect(result).toBe("City");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.city");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.city");
     });
 
     test("returns correct label for state", () => {
       const result = getAddressFieldLabel("state", mockT);
       expect(result).toBe("State/Region");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.state_region");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.state_region");
     });
 
     test("returns correct label for zip", () => {
       const result = getAddressFieldLabel("zip", mockT);
       expect(result).toBe("ZIP/Post Code");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.zip_post_code");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.zip_post_code");
     });
 
     test("returns correct label for country", () => {
       const result = getAddressFieldLabel("country", mockT);
       expect(result).toBe("Country");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.country");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.country");
     });
 
     test("returns undefined for unknown field", () => {
@@ -89,31 +89,31 @@ describe("utils", () => {
     test("returns correct label for firstName", () => {
       const result = getContactInfoFieldLabel("firstName", mockT);
       expect(result).toBe("First Name");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.first_name");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.first_name");
     });
 
     test("returns correct label for lastName", () => {
       const result = getContactInfoFieldLabel("lastName", mockT);
       expect(result).toBe("Last Name");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.last_name");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.last_name");
     });
 
     test("returns correct label for email", () => {
       const result = getContactInfoFieldLabel("email", mockT);
       expect(result).toBe("Email");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.email");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.email");
     });
 
     test("returns correct label for phone", () => {
       const result = getContactInfoFieldLabel("phone", mockT);
       expect(result).toBe("Phone");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.phone");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.phone");
     });
 
     test("returns correct label for company", () => {
       const result = getContactInfoFieldLabel("company", mockT);
       expect(result).toBe("Company");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.company");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.company");
     });
 
     test("returns undefined for unknown field", () => {
@@ -133,25 +133,25 @@ describe("utils", () => {
     test("returns correct label for country", () => {
       const result = getMetadataFieldLabel("country", mockT);
       expect(result).toBe("Country");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.country");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.country");
     });
 
     test("returns correct label for os", () => {
       const result = getMetadataFieldLabel("os", mockT);
       expect(result).toBe("OS");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.os");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.os");
     });
 
     test("returns correct label for device", () => {
       const result = getMetadataFieldLabel("device", mockT);
       expect(result).toBe("Device");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.device");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.device");
     });
 
     test("returns correct label for browser", () => {
       const result = getMetadataFieldLabel("browser", mockT);
       expect(result).toBe("Browser");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.browser");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.browser");
     });
 
     test("returns correct label for url", () => {
@@ -163,7 +163,7 @@ describe("utils", () => {
     test("returns correct label for source", () => {
       const result = getMetadataFieldLabel("source", mockT);
       expect(result).toBe("Source");
-      expect(mockT).toHaveBeenCalledWith("environments.surveys.responses.source");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.source");
     });
 
     test("returns capitalized label for unknown field", () => {

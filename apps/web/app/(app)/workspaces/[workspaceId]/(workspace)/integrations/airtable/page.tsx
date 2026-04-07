@@ -41,7 +41,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/workspaces/${params.workspaceId}/integrations`} />
-      <PageHeader pageTitle={t("environments.integrations.airtable.airtable_integration")} />
+      <PageHeader pageTitle={t("workspace.integrations.airtable.airtable_integration")} />
       <div className="h-[75vh] w-full">
         <AirtableWrapper
           isEnabled={isEnabled}

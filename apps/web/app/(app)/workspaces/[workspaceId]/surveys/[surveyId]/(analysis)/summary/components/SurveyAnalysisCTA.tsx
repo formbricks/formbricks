@@ -98,7 +98,7 @@ export const SurveyAnalysisCTA = ({
       targetEnvironmentId: environment.id,
     });
     if (duplicatedSurveyResponse?.data) {
-      toast.success(t("environments.surveys.survey_duplicated_successfully"));
+      toast.success(t("workspace.surveys.survey_duplicated_successfully"));
       router.push(`/workspaces/${workspace?.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
@@ -132,7 +132,7 @@ export const SurveyAnalysisCTA = ({
     });
     if (result?.data) {
       toast.success(
-        t("environments.surveys.summary.survey_reset_successfully", {
+        t("workspace.surveys.summary.survey_reset_successfully", {
           responseCount: result.data.deletedResponsesCount,
           displayCount: result.data.deletedDisplaysCount,
         })
@@ -149,7 +149,7 @@ export const SurveyAnalysisCTA = ({
   const iconActions = [
     {
       icon: BellRing,
-      tooltip: t("environments.surveys.summary.configure_alerts"),
+      tooltip: t("workspace.surveys.summary.configure_alerts"),
       onClick: () => router.push(`/workspaces/${workspace?.id}/settings/notifications`),
       isVisible: !isReadOnly,
     },
@@ -164,7 +164,7 @@ export const SurveyAnalysisCTA = ({
     },
     {
       icon: ListRestart,
-      tooltip: t("environments.surveys.summary.reset_survey"),
+      tooltip: t("workspace.surveys.summary.reset_survey"),
       onClick: () => setIsResetModalOpen(true),
       isVisible: !isReadOnly,
     },
@@ -191,7 +191,7 @@ export const SurveyAnalysisCTA = ({
         onClick={() => {
           setModalState((prev) => ({ ...prev, share: true }));
         }}>
-        {t("environments.surveys.summary.share_survey")}
+        {t("workspace.surveys.summary.share_survey")}
       </Button>
 
       {user && (
@@ -223,7 +223,7 @@ export const SurveyAnalysisCTA = ({
           setOpen={setIsCautionDialogOpen}
           isLoading={loading}
           primaryButtonAction={() => duplicateSurveyAndRoute(survey.id)}
-          primaryButtonText={t("environments.surveys.edit.caution_edit_duplicate")}
+          primaryButtonText={t("workspace.surveys.edit.caution_edit_duplicate")}
           secondaryButtonAction={() => router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`)}
           secondaryButtonText={t("common.edit")}
         />
@@ -232,9 +232,9 @@ export const SurveyAnalysisCTA = ({
       <ConfirmationModal
         open={isResetModalOpen}
         setOpen={setIsResetModalOpen}
-        title={t("environments.surveys.summary.delete_all_existing_responses_and_displays")}
-        body={t("environments.surveys.summary.reset_survey_warning")}
-        buttonText={t("environments.surveys.summary.reset_survey")}
+        title={t("workspace.surveys.summary.delete_all_existing_responses_and_displays")}
+        body={t("workspace.surveys.summary.reset_survey_warning")}
+        buttonText={t("workspace.surveys.summary.reset_survey")}
         onConfirm={handleResetSurvey}
         buttonVariant="destructive"
         buttonLoading={isResetting}

@@ -74,12 +74,12 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
   const sideBarGroups = [
     {
       id: LinkTabsType.SHARE_VIA,
-      label: t("environments.surveys.share.share_view_title"),
+      label: t("workspace.surveys.share.share_view_title"),
       tabs: shareViaTabs,
     },
     {
       id: LinkTabsType.SHARE_SETTING,
-      label: t("environments.surveys.share.share_settings_title"),
+      label: t("workspace.surveys.share.share_settings_title"),
       tabs: shareSettingsTabs,
     },
   ];

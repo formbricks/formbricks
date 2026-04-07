@@ -53,7 +53,7 @@ export const ManageIntegration = ({
     });
 
     if (deleteIntegrationActionResult?.data) {
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
       setIsConnected(false);
     } else {
       const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
@@ -77,10 +77,10 @@ export const ManageIntegration = ({
       {showReconnectButton && (
         <Alert variant="warning" size="small" className="mb-4 w-full">
           <AlertDescription>
-            {t("environments.integrations.google_sheets.reconnect_button_description")}
+            {t("workspace.integrations.google_sheets.reconnect_button_description")}
           </AlertDescription>
           <AlertButton onClick={handleGoogleAuthorization}>
-            {t("environments.integrations.google_sheets.reconnect_button")}
+            {t("workspace.integrations.google_sheets.reconnect_button")}
           </AlertButton>
         </Alert>
       )}
@@ -88,7 +88,7 @@ export const ManageIntegration = ({
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
-            {t("environments.integrations.connected_with_email", {
+            {t("workspace.integrations.connected_with_email", {
               email: googleSheetIntegration.config.email,
             })}
           </span>
@@ -98,11 +98,11 @@ export const ManageIntegration = ({
             <TooltipTrigger asChild>
               <Button variant="outline" onClick={handleGoogleAuthorization}>
                 <RefreshCcwIcon className="mr-2 h-4 w-4" />
-                {t("environments.integrations.google_sheets.reconnect_button")}
+                {t("workspace.integrations.google_sheets.reconnect_button")}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {t("environments.integrations.google_sheets.reconnect_button_tooltip")}
+              {t("workspace.integrations.google_sheets.reconnect_button_tooltip")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -111,12 +111,12 @@ export const ManageIntegration = ({
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
-          {t("environments.integrations.google_sheets.link_new_sheet")}
+          {t("workspace.integrations.google_sheets.link_new_sheet")}
         </Button>
       </div>
       {!integrationArray || integrationArray.length === 0 ? (
         <div className="mt-4 w-full">
-          <EmptyState text={t("environments.integrations.google_sheets.no_integrations_yet")} />
+          <EmptyState text={t("workspace.integrations.google_sheets.no_integrations_yet")} />
         </div>
       ) : (
         <div className="mt-4 flex w-full flex-col items-center justify-center">
@@ -124,7 +124,7 @@ export const ManageIntegration = ({
             <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-2 hidden text-center sm:block">{t("common.survey")}</div>
               <div className="col-span-2 hidden text-center sm:block">
-                {t("environments.integrations.google_sheets.google_sheet_name")}
+                {t("workspace.integrations.google_sheets.google_sheet_name")}
               </div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.questions")}</div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.updated_at")}</div>
@@ -149,15 +149,15 @@ export const ManageIntegration = ({
       )}
       <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
         <Trash2Icon />
-        {t("environments.integrations.delete_integration")}
+        {t("workspace.integrations.delete_integration")}
       </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat={t("environments.integrations.google_sheets.google_connection")}
+        deleteWhat={t("workspace.integrations.google_sheets.google_connection")}
         onDelete={handleDeleteIntegration}
-        text={t("environments.integrations.google_sheets.google_connection_deletion_description")}
+        text={t("workspace.integrations.google_sheets.google_connection_deletion_description")}
         isDeleting={isDeleting}
       />
     </div>

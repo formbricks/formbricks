@@ -157,14 +157,14 @@ export const LoadSegmentModal = ({
       }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("environments.surveys.edit.load_segment")}</DialogTitle>
+          <DialogTitle>{t("workspace.surveys.edit.load_segment")}</DialogTitle>
         </DialogHeader>
 
         <DialogBody>
           {!segmentsArray?.length ? (
             <div className="group">
               <div className="flex h-16 w-full flex-col items-center justify-center rounded-md text-slate-700">
-                {t("environments.surveys.edit.you_have_not_created_a_segment_yet")}
+                {t("workspace.surveys.edit.you_have_not_created_a_segment_yet")}
               </div>
             </div>
           ) : (

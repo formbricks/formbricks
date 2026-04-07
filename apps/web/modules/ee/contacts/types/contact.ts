@@ -431,7 +431,7 @@ export const createEditContactAttributesSchema = (
         if (!hasValue) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.date_value_required"),
+            message: t("workspace.contacts.date_value_required"),
             path: ["attributes", index, "value"],
           });
           return;
@@ -441,7 +441,7 @@ export const createEditContactAttributesSchema = (
         if (Number.isNaN(date.getTime())) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.invalid_date_format"),
+            message: t("workspace.contacts.invalid_date_format"),
             path: ["attributes", index, "value"],
           });
         }
@@ -449,7 +449,7 @@ export const createEditContactAttributesSchema = (
         if (!hasValue) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.number_value_required"),
+            message: t("workspace.contacts.number_value_required"),
             path: ["attributes", index, "value"],
           });
           return;
@@ -458,7 +458,7 @@ export const createEditContactAttributesSchema = (
         if (Number.isNaN(Number(attr.value))) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.invalid_number_format"),
+            message: t("workspace.contacts.invalid_number_format"),
             path: ["attributes", index, "value"],
           });
         }

@@ -48,7 +48,7 @@ const MappingErrorMessage = ({
         return (
           <>
             -{" "}
-            {t("environments.integrations.notion.col_name_of_type_is_not_supported", {
+            {t("workspace.integrations.notion.col_name_of_type_is_not_supported", {
               col_name: col.name,
               type: col.type,
             })}
@@ -60,7 +60,7 @@ const MappingErrorMessage = ({
         if (!element) return null;
         return (
           <>
-            {t("environments.integrations.notion.que_name_of_type_cant_be_mapped_to", {
+            {t("workspace.integrations.notion.que_name_of_type_cant_be_mapped_to", {
               que_name: elem.name,
               question_label: element.label,
               col_name: col.name,
@@ -194,7 +194,7 @@ export const MappingRow = ({
         <div className="flex w-full items-center">
           <div className="max-w-full flex-1">
             <DropdownSelector
-              placeholder={t("environments.integrations.notion.select_a_survey_question")}
+              placeholder={t("workspace.integrations.notion.select_a_survey_question")}
               items={filteredElementItems}
               selectedItem={mapping?.[idx]?.element}
               setSelectedItem={handleElementSelect}
@@ -204,7 +204,7 @@ export const MappingRow = ({
           <div className="h-px w-4 border-t border-t-slate-300" />
           <div className="max-w-full flex-1">
             <DropdownSelector
-              placeholder={t("environments.integrations.notion.select_a_field_to_map")}
+              placeholder={t("workspace.integrations.notion.select_a_field_to_map")}
               items={getFilteredDbItems()}
               selectedItem={mapping?.[idx]?.column}
               setSelectedItem={handleColumnSelect}

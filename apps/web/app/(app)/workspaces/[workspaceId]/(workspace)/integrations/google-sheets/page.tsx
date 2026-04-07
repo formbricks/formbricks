@@ -40,7 +40,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/workspaces/${params.workspaceId}/integrations`} />
-      <PageHeader pageTitle={t("environments.integrations.google_sheets.google_sheets_integration")} />
+      <PageHeader pageTitle={t("workspace.integrations.google_sheets.google_sheets_integration")} />
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper
           isEnabled={isEnabled}

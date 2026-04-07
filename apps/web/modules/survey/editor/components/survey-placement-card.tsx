@@ -94,9 +94,9 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.survey_placement")}</p>
+            <p className="font-semibold text-slate-800">{t("workspace.surveys.edit.survey_placement")}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.overwrite_the_global_placement_of_the_survey")}
+              {t("workspace.surveys.edit.overwrite_the_global_placement_of_the_survey")}
             </p>
           </div>
         </div>
@@ -111,11 +111,11 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
                 <div className="ml-2">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.overwrite_placement")}
+                      {t("workspace.surveys.edit.overwrite_placement")}
                     </h3>
                   </div>
                   <p className="text-xs font-normal text-slate-500">
-                    {t("environments.surveys.edit.change_the_placement_of_this_survey")}
+                    {t("workspace.surveys.edit.change_the_placement_of_this_survey")}
                   </p>
                 </div>
               </Label>
@@ -139,10 +139,10 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
 
             <div>
               <p className="text-xs text-slate-500">
-                {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
+                {t("workspace.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
                 <Link href={`${workspaceBasePath}/look`} target="_blank">
                   <span className="underline">
-                    {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
+                    {t("workspace.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>
                 </Link>
               </p>

@@ -32,7 +32,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
 
   const tableHeaders = [
     t("common.survey"),
-    t("environments.integrations.airtable.table_name"),
+    t("workspace.integrations.airtable.table_name"),
     t("common.questions"),
     t("common.updated_at"),
   ];
@@ -53,7 +53,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
     });
 
     if (deleteIntegrationActionResult?.data) {
-      toast.success(t("environments.integrations.integration_removed_successfully"));
+      toast.success(t("workspace.integrations.integration_removed_successfully"));
       setIsConnected(false);
     } else {
       const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
@@ -77,7 +77,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
         <div className="flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="cursor-pointer text-slate-500">
-            {t("environments.integrations.connected_with_email", {
+            {t("workspace.integrations.connected_with_email", {
               email: airtableIntegration.config.email,
             })}
           </span>
@@ -87,7 +87,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
             setDefaultValues(null);
             handleModal(true);
           }}>
-          {t("environments.integrations.airtable.link_new_table")}
+          {t("workspace.integrations.airtable.link_new_table")}
         </Button>
       </div>
 
@@ -130,21 +130,21 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
         </div>
       ) : (
         <div className="mt-4 w-full">
-          <EmptyState text={t("environments.integrations.airtable.no_integrations_yet")} />
+          <EmptyState text={t("workspace.integrations.airtable.no_integrations_yet")} />
         </div>
       )}
 
       <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
         <Trash2Icon />
-        {t("environments.integrations.delete_integration")}
+        {t("workspace.integrations.delete_integration")}
       </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat={t("environments.integrations.airtable.airtable_integration")}
+        deleteWhat={t("workspace.integrations.airtable.airtable_integration")}
         onDelete={handleDeleteIntegration}
-        text={t("environments.integrations.delete_integration_confirmation")}
+        text={t("workspace.integrations.delete_integration_confirmation")}
         isDeleting={isDeleting}
       />
 

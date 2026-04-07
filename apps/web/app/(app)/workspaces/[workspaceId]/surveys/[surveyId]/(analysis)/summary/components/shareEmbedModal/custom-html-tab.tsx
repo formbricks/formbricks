@@ -67,7 +67,7 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
     const result = await updateSurveyAction(updatedSurvey);
 
     if (result?.data) {
-      toast.success(t("environments.surveys.share.custom_html.saved_successfully"));
+      toast.success(t("workspace.surveys.share.custom_html.saved_successfully"));
       reset(data);
     } else {
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -82,12 +82,12 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Mode Toggle */}
           <div className="space-y-2">
-            <FormLabel>{t("environments.surveys.share.custom_html.script_mode")}</FormLabel>
+            <FormLabel>{t("workspace.surveys.share.custom_html.script_mode")}</FormLabel>
             <TabToggle
               id="custom-scripts-mode"
               options={[
-                { value: "add", label: t("environments.surveys.share.custom_html.add_to_workspace") },
-                { value: "replace", label: t("environments.surveys.share.custom_html.replace_workspace") },
+                { value: "add", label: t("workspace.surveys.share.custom_html.add_to_workspace") },
+                { value: "replace", label: t("workspace.surveys.share.custom_html.replace_workspace") },
               ]}
               defaultSelected={scriptsMode ?? "add"}
               onChange={(value) => setValue("customHeadScriptsMode", value, { shouldDirty: true })}
@@ -95,15 +95,15 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
             />
             <p className="text-sm text-slate-500">
               {scriptsMode === "add"
-                ? t("environments.surveys.share.custom_html.add_mode_description")
-                : t("environments.surveys.share.custom_html.replace_mode_description")}
+                ? t("workspace.surveys.share.custom_html.add_mode_description")
+                : t("workspace.surveys.share.custom_html.replace_mode_description")}
             </p>
           </div>
 
           {/* Workspace Scripts Preview */}
           {workspaceCustomScripts && (
             <div className={scriptsMode === "replace" ? "opacity-50" : ""}>
-              <FormLabel>{t("environments.surveys.share.custom_html.workspace_scripts_label")}</FormLabel>
+              <FormLabel>{t("workspace.surveys.share.custom_html.workspace_scripts_label")}</FormLabel>
               <div className="mt-2 max-h-32 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3">
                 <pre className="whitespace-pre-wrap font-mono text-xs text-slate-600">
                   {workspaceCustomScripts}
@@ -115,7 +115,7 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
           {!workspaceCustomScripts && (
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
               <p className="text-sm text-slate-500">
-                {t("environments.surveys.share.custom_html.no_workspace_scripts")}
+                {t("workspace.surveys.share.custom_html.no_workspace_scripts")}
               </p>
             </div>
           )}
@@ -126,14 +126,14 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
             name="customHeadScripts"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("environments.surveys.share.custom_html.survey_scripts_label")}</FormLabel>
+                <FormLabel>{t("workspace.surveys.share.custom_html.survey_scripts_label")}</FormLabel>
                 <FormDescription>
-                  {t("environments.surveys.share.custom_html.survey_scripts_description")}
+                  {t("workspace.surveys.share.custom_html.survey_scripts_description")}
                 </FormDescription>
                 <FormControl>
                   <textarea
                     rows={8}
-                    placeholder={t("environments.surveys.share.custom_html.placeholder")}
+                    placeholder={t("workspace.surveys.share.custom_html.placeholder")}
                     className={cn(
                       "flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     )}
@@ -152,9 +152,7 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
           {/* Security Warning */}
           <Alert variant="warning" className="flex items-start gap-2">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-            <AlertDescription>
-              {t("environments.surveys.share.custom_html.security_warning")}
-            </AlertDescription>
+            <AlertDescription>{t("workspace.surveys.share.custom_html.security_warning")}</AlertDescription>
           </Alert>
         </form>
       </FormProvider>

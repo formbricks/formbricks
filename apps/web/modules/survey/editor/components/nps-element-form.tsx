@@ -46,7 +46,7 @@ export const NPSElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -93,7 +93,7 @@ export const NPSElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -103,7 +103,7 @@ export const NPSElementForm = ({
           <ElementFormInput
             id="lowerLabel"
             value={element.lowerLabel}
-            label={t("environments.surveys.edit.lower_label")}
+            label={t("workspace.surveys.edit.lower_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
@@ -118,7 +118,7 @@ export const NPSElementForm = ({
           <ElementFormInput
             id="upperLabel"
             value={element.upperLabel}
-            label={t("environments.surveys.edit.upper_label")}
+            label={t("workspace.surveys.edit.upper_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
@@ -135,8 +135,8 @@ export const NPSElementForm = ({
         isChecked={element.isColorCodingEnabled}
         onToggle={() => updateElement(elementIdx, { isColorCodingEnabled: !element.isColorCodingEnabled })}
         htmlId="isColorCodingEnabled"
-        title={t("environments.surveys.edit.add_color_coding")}
-        description={t("environments.surveys.edit.add_color_coding_description")}
+        title={t("workspace.surveys.edit.add_color_coding")}
+        description={t("workspace.surveys.edit.add_color_coding_description")}
         childBorder
         customContainerClass="p-0 mt-4"
       />

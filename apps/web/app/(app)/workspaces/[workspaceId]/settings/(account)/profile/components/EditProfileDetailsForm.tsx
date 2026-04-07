@@ -91,7 +91,7 @@ export const EditProfileDetailsForm = ({
       if (!emailVerificationDisabled) {
         toast.success(t("auth.verification-requested.new_email_verification_success"));
       } else {
-        toast.success(t("environments.settings.profile.email_change_initiated"));
+        toast.success(t("workspace.settings.profile.email_change_initiated"));
         await signOutWithAudit({
           reason: "email_change",
           redirectUrl: "/email-change-without-verification-success",
@@ -120,7 +120,7 @@ export const EditProfileDetailsForm = ({
           ...data,
           name: data.name.trim(),
         });
-        toast.success(t("environments.settings.profile.profile_updated_successfully"));
+        toast.success(t("workspace.settings.profile.profile_updated_successfully"));
         window.location.reload();
         form.reset(data);
       } catch (error: any) {

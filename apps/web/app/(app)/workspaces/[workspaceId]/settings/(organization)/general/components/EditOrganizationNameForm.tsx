@@ -54,7 +54,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
       });
 
       if (updatedOrganizationResponse?.data) {
-        toast.success(t("environments.settings.general.organization_name_updated_successfully"));
+        toast.success(t("workspace.settings.general.organization_name_updated_successfully"));
         form.reset({ name: updatedOrganizationResponse.data.name });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
@@ -76,14 +76,14 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
             name="name"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>{t("environments.settings.general.organization_name")}</FormLabel>
+                <FormLabel>{t("workspace.settings.general.organization_name")}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="text"
                     disabled={!isOwner}
                     isInvalid={!!fieldState.error?.message}
-                    placeholder={t("environments.settings.general.organization_name_placeholder")}
+                    placeholder={t("workspace.settings.general.organization_name_placeholder")}
                     required
                   />
                 </FormControl>
@@ -106,7 +106,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
       {!isOwner && (
         <Alert variant="warning" className="mt-4">
           <AlertDescription>
-            {t("environments.settings.general.only_org_owner_can_perform_action")}
+            {t("workspace.settings.general.only_org_owner_can_perform_action")}
           </AlertDescription>
         </Alert>
       )}

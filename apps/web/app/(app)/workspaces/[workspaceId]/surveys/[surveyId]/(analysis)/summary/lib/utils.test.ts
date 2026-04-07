@@ -94,7 +94,7 @@ describe("Utils Tests", () => {
         "MatrixValue"
       );
       expect(mockT).toHaveBeenCalledWith(
-        "environments.surveys.summary.added_filter_for_responses_where_answer_to_question",
+        "workspace.surveys.summary.added_filter_for_responses_where_answer_to_question",
         {
           questionIdx: 3,
           filterComboBoxValue: "MatrixValue",
@@ -102,7 +102,7 @@ describe("Utils Tests", () => {
         }
       );
       expect(message).toBe(
-        'environments.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":3,"filterComboBoxValue":"MatrixValue","filterValue":"is"}'
+        'workspace.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":3,"filterComboBoxValue":"MatrixValue","filterValue":"is"}'
       );
     });
 
@@ -112,7 +112,7 @@ describe("Utils Tests", () => {
         "MatrixValue2",
       ]);
       expect(mockT).toHaveBeenCalledWith(
-        "environments.surveys.summary.added_filter_for_responses_where_answer_to_question",
+        "workspace.surveys.summary.added_filter_for_responses_where_answer_to_question",
         {
           questionIdx: 3,
           filterComboBoxValue: "MatrixValue1,MatrixValue2",
@@ -120,7 +120,7 @@ describe("Utils Tests", () => {
         }
       );
       expect(message).toBe(
-        'environments.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":3,"filterComboBoxValue":"MatrixValue1,MatrixValue2","filterValue":"is"}'
+        'workspace.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":3,"filterComboBoxValue":"MatrixValue1,MatrixValue2","filterValue":"is"}'
       );
     });
 
@@ -134,13 +134,13 @@ describe("Utils Tests", () => {
         undefined
       );
       expect(mockT).toHaveBeenCalledWith(
-        "environments.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped",
+        "workspace.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped",
         {
           questionIdx: 1,
         }
       );
       expect(message).toBe(
-        'environments.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped {"questionIdx":1}'
+        'workspace.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped {"questionIdx":1}'
       );
     });
 
@@ -154,7 +154,7 @@ describe("Utils Tests", () => {
         "Choice1"
       );
       expect(mockT).toHaveBeenCalledWith(
-        "environments.surveys.summary.added_filter_for_responses_where_answer_to_question",
+        "workspace.surveys.summary.added_filter_for_responses_where_answer_to_question",
         {
           questionIdx: 2,
           filterComboBoxValue: "Choice1",
@@ -162,7 +162,7 @@ describe("Utils Tests", () => {
         }
       );
       expect(message).toBe(
-        'environments.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":2,"filterComboBoxValue":"Choice1","filterValue":"is"}'
+        'workspace.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":2,"filterComboBoxValue":"Choice1","filterValue":"is"}'
       );
     });
 
@@ -176,7 +176,7 @@ describe("Utils Tests", () => {
         ["Choice1", "Choice2"]
       );
       expect(mockT).toHaveBeenCalledWith(
-        "environments.surveys.summary.added_filter_for_responses_where_answer_to_question",
+        "workspace.surveys.summary.added_filter_for_responses_where_answer_to_question",
         {
           questionIdx: 2,
           filterComboBoxValue: "Choice1,Choice2",
@@ -184,7 +184,7 @@ describe("Utils Tests", () => {
         }
       );
       expect(message).toBe(
-        'environments.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":2,"filterComboBoxValue":"Choice1,Choice2","filterValue":"includes all of"}'
+        'workspace.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":2,"filterComboBoxValue":"Choice1,Choice2","filterValue":"includes all of"}'
       );
     });
 
@@ -199,7 +199,7 @@ describe("Utils Tests", () => {
       );
       // findIndex returns -1, so questionIdx becomes -1 + 1 = 0
       expect(mockT).toHaveBeenCalledWith(
-        "environments.surveys.summary.added_filter_for_responses_where_answer_to_question",
+        "workspace.surveys.summary.added_filter_for_responses_where_answer_to_question",
         {
           questionIdx: 0,
           filterComboBoxValue: "SomeValue",
@@ -207,7 +207,7 @@ describe("Utils Tests", () => {
         }
       );
       expect(message).toBe(
-        'environments.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":0,"filterComboBoxValue":"SomeValue","filterValue":"is"}'
+        'workspace.surveys.summary.added_filter_for_responses_where_answer_to_question {"questionIdx":0,"filterComboBoxValue":"SomeValue","filterValue":"is"}'
       );
     });
   });

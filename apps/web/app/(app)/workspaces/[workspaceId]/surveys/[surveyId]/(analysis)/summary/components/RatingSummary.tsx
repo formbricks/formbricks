@@ -50,14 +50,14 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
               {getIconBasedOnScale}
               <div>
-                {t("environments.surveys.summary.overall")}: {elementSummary.average.toFixed(2)}
+                {t("workspace.surveys.summary.overall")}: {elementSummary.average.toFixed(2)}
               </div>
             </div>
 
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
               <SatisfactionIndicator percentage={elementSummary.csat.satisfiedPercentage} />
               <div>
-                CSAT: {elementSummary.csat.satisfiedPercentage}% {t("environments.surveys.summary.satisfied")}
+                CSAT: {elementSummary.csat.satisfiedPercentage}% {t("workspace.surveys.summary.satisfied")}
               </div>
             </div>
           </div>
@@ -68,10 +68,10 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
         <div className="flex justify-end px-4 md:px-6">
           <TabsList>
             <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="h-4 w-4" />}>
-              {t("environments.surveys.summary.aggregated")}
+              {t("workspace.surveys.summary.aggregated")}
             </TabsTrigger>
             <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
-              {t("environments.surveys.summary.individual")}
+              {t("workspace.surveys.summary.individual")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -80,7 +80,7 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
           <div className="px-4 pb-6 pt-4 md:px-6">
             {elementSummary.responseCount === 0 ? (
               <>
-                <EmptyState text={t("environments.surveys.summary.no_responses_found")} variant="simple" />
+                <EmptyState text={t("workspace.surveys.summary.no_responses_found")} variant="simple" />
                 <RatingScaleLegend
                   scale={elementSummary.element.scale}
                   range={elementSummary.element.range}
@@ -111,7 +111,7 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
                               elementSummary.element.id,
                               elementSummary.element.headline,
                               elementSummary.element.type,
-                              t("environments.surveys.summary.is_equal_to"),
+                              t("workspace.surveys.summary.is_equal_to"),
                               result.rating.toString()
                             )
                           }>
@@ -176,7 +176,7 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
                         elementSummary.element.id,
                         elementSummary.element.headline,
                         elementSummary.element.type,
-                        t("environments.surveys.summary.is_equal_to"),
+                        t("workspace.surveys.summary.is_equal_to"),
                         result.rating.toString()
                       )
                     }>

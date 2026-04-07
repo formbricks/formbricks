@@ -88,10 +88,10 @@ export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }:
 
       if (successCount > 0) {
         if (errorCount === 0) {
-          toast.success(t("environments.surveys.copy_survey_success"));
+          toast.success(t("workspace.surveys.copy_survey_success"));
         } else {
           toast.error(
-            t("environments.surveys.copy_survey_partially_success", {
+            t("workspace.surveys.copy_survey_partially_success", {
               success: successCount,
               error: errorCount,
             }),
@@ -114,7 +114,7 @@ export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }:
         });
       }
     } catch {
-      toast.error(t("environments.surveys.copy_survey_error"));
+      toast.error(t("workspace.surveys.copy_survey_error"));
     } finally {
       setOpen(false);
     }
@@ -123,7 +123,7 @@ export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }:
   if (filteredWorkspaces.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-sm text-slate-500">{t("environments.surveys.copy_survey_no_workspaces")}</p>
+        <p className="text-sm text-slate-500">{t("workspace.surveys.copy_survey_no_workspaces")}</p>
       </div>
     );
   }
@@ -178,7 +178,7 @@ export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }:
           <Button type="button" onClick={onCancel} variant="secondary">
             {t("common.cancel")}
           </Button>
-          <Button type="submit">{t("environments.surveys.copy_survey")}</Button>
+          <Button type="submit">{t("workspace.surveys.copy_survey")}</Button>
         </div>
       </form>
     </FormProvider>
