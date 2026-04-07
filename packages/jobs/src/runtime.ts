@@ -22,7 +22,7 @@ export interface JobsRuntimeHandle {
   close: () => Promise<void>;
 }
 
-type TSignalHandler = () => Promise<void>;
+type TSignalHandler = () => void;
 
 const removeProcessListener = (event: "SIGTERM" | "SIGINT", handler: TSignalHandler): void => {
   process.removeListener(event, handler);
@@ -121,14 +121,14 @@ export const startJobsRuntime = async ({
     await closeRuntimePromise;
   };
 
-  const handleSigterm = async (): Promise<void> => {
-    await closeRuntime().catch((error: unknown) => {
+  const handleSigterm = (): void => {
+    void closeRuntime().catch((error: unknown) => {
       logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGTERM");
     });
   };
 
-  const handleSigint = async (): Promise<void> => {
-    await closeRuntime().catch((error: unknown) => {
+  const handleSigint = (): void => {
+    void closeRuntime().catch((error: unknown) => {
       logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGINT");
     });
   };

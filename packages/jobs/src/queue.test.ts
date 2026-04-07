@@ -420,7 +420,8 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueClose).toHaveBeenCalledTimes(1);
     expect(mockCloseRedisConnection).toHaveBeenCalledWith(mockConnection);
     expect(mockLoggerError).toHaveBeenCalledTimes(1);
-    const [context, message] = mockLoggerError.mock.calls[0] as [{ err: Error }, string];
+    const loggerCalls = mockLoggerError.mock.calls as [{ err: Error }, string][];
+    const [context, message] = loggerCalls[0];
     expect(context.err).toBeInstanceOf(Error);
     expect(message).toBe("Failed to close BullMQ producer queue during reset");
   });
@@ -430,15 +431,13 @@ describe("@formbricks/jobs queue helpers", () => {
     mockCloseRedisConnection.mockRejectedValueOnce(new Error("connection close failed"));
 
     await expect(resetJobsQueueFactory()).resolves.toBeUndefined();
-    await expect(getJobsQueue()).resolves.toEqual(
-      expect.objectContaining({
-        connection: mockConnection,
-        queue: expect.any(Object),
-      })
-    );
+    const nextQueueResult = await getJobsQueue();
+    expect(nextQueueResult.connection).toBe(mockConnection);
+    expect(nextQueueResult.queue).toBeDefined();
 
     expect(mockLoggerError).toHaveBeenCalledTimes(1);
-    const [context, message] = mockLoggerError.mock.calls[0] as [{ err: Error }, string];
+    const secondLoggerCalls = mockLoggerError.mock.calls as [{ err: Error }, string][];
+    const [context, message] = secondLoggerCalls[0];
     expect(context.err).toBeInstanceOf(Error);
     expect(message).toBe("Failed to close BullMQ producer connection during reset");
     expect(Queue).toHaveBeenCalledTimes(2);

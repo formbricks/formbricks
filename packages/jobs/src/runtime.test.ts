@@ -252,7 +252,7 @@ describe("@formbricks/jobs runtime", () => {
     const processOnceSpy = vi.spyOn(process, "once");
     await startJobsRuntime({ redisUrl: "redis://localhost:6379" });
     const sigtermRegistration = processOnceSpy.mock.calls.find(
-      (call): call is ["SIGTERM", () => Promise<void>] => call[0] === "SIGTERM"
+      (call): call is ["SIGTERM", () => void] => call[0] === "SIGTERM"
     );
 
     expect(sigtermRegistration).toBeDefined();
