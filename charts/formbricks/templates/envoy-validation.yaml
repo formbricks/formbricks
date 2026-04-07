@@ -1,0 +1,15 @@
+{{- if and .Values.envoy.controller.enabled (not .Values.envoy.enabled) -}}
+{{- fail "envoy.controller.enabled requires envoy.enabled=true" -}}
+{{- end -}}
+
+{{- if and .Values.envoy.enabled (not .Values.envoyRedis.enabled) (not .Values.envoy.formbricks.ratelimit.redisUrl) -}}
+{{- fail "envoy.enabled requires either envoyRedis.enabled=true or envoy.formbricks.ratelimit.redisUrl to be set" -}}
+{{- end -}}
+
+{{- if and .Values.envoyRedis.enabled .Values.envoyRedis.auth.enabled (not .Values.envoy.formbricks.ratelimit.redisUrl) -}}
+{{- fail "envoyRedis.auth.enabled requires envoy.formbricks.ratelimit.redisUrl to be set explicitly so the controller can authenticate to Redis" -}}
+{{- end -}}
+
+{{- if and .Values.envoy.enabled .Values.envoy.formbricks.ingress.enabled (not (include "formbricks.envoy.ingressHost" .)) -}}
+{{- fail "envoy.formbricks.ingress.enabled requires envoy.formbricks.ingress.host or ingress.hosts[0].host" -}}
+{{- end -}}
