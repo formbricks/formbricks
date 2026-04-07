@@ -24,6 +24,7 @@ export default defineConfig({
     environment: "node",
     globals: true,
     coverage: {
+      exclude: ["src/index.ts"],
       reporter: ["text", "json", "html", "lcov"],
     },
   },

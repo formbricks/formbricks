@@ -3,6 +3,7 @@ import type { JobHandler } from "@/src/contracts";
 import type { TResponsePipelineJobData } from "@/src/types";
 
 export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = (data, context) => {
+  // TODO(#1547): Replace this placeholder when the response pipeline is migrated onto BullMQ.
   logger.error(
     {
       attempt: context.attempt,

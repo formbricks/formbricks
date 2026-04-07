@@ -44,10 +44,11 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
 };
 
 export const resetJobsWorkerRegistrationForTests = async (): Promise<void> => {
-  if (globalForJobsRuntime.formbricksJobsRuntime) {
-    await globalForJobsRuntime.formbricksJobsRuntime.close();
-  }
-
+  const runtime = globalForJobsRuntime.formbricksJobsRuntime;
   globalForJobsRuntime.formbricksJobsRuntime = undefined;
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = undefined;
+
+  if (runtime) {
+    await runtime.close();
+  }
 };

@@ -226,6 +226,27 @@ describe("storage service", () => {
       }
     });
 
+    test("should normalize upload errors without a valid code to unknown", async () => {
+      const mockErrorResponse = {
+        ok: false,
+        error: {},
+      } as MockedSignedUploadReturn;
+
+      vi.mocked(getSignedUploadUrl).mockResolvedValue(mockErrorResponse);
+
+      const result = await getSignedUrlForUpload(
+        "test-file.pdf",
+        "env-123",
+        "application/pdf",
+        "public" as TAccessType
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.Unknown);
+      }
+    });
+
     test("should handle unexpected errors and return unknown error", async () => {
       vi.mocked(getSignedUploadUrl).mockRejectedValue(new Error("Unexpected error"));
 
@@ -307,6 +328,22 @@ describe("storage service", () => {
       expect(result).toEqual(mockErrorResult);
       expect(deleteFileFromS3).toHaveBeenCalledWith("env-123/public/test-file.jpg");
     });
+
+    test("should normalize deleteFile errors without a valid code to unknown", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: {},
+      } as MockedDeleteFileReturn;
+
+      vi.mocked(deleteFileFromS3).mockResolvedValue(mockErrorResult);
+
+      const result = await deleteFile("env-123", "public" as TAccessType, "test-file.jpg");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.Unknown);
+      }
+    });
   });
 
   describe("deleteFilesByEnvironmentId", () => {
@@ -338,6 +375,22 @@ describe("storage service", () => {
 
       expect(result).toEqual(mockErrorResult);
       expect(deleteFilesByPrefix).toHaveBeenCalledWith("env-123");
+    });
+
+    test("should normalize deleteFilesByEnvironmentId errors without a valid code to unknown", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: {},
+      } as MockedDeleteFilesByPrefixReturn;
+
+      vi.mocked(deleteFilesByPrefix).mockResolvedValue(mockErrorResult);
+
+      const result = await deleteFilesByEnvironmentId("env-123");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.Unknown);
+      }
     });
   });
 
@@ -442,6 +495,22 @@ describe("storage service", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(StorageErrorCode.S3ClientError);
+      }
+    });
+
+    test("should normalize file stream errors without a valid code to unknown", async () => {
+      const mockErrorResult = {
+        ok: false,
+        error: {},
+      } as MockedFileStreamReturn;
+
+      vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
+
+      const result = await getFileStreamForDownload("some-file.jpg", "env-123", "public" as TAccessType);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.Unknown);
       }
     });
 

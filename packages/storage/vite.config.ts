@@ -26,15 +26,16 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ["text", "json", "html", "lcov"],
-      exclude: ["src/types/**"],
+      exclude: ["src/index.ts", "src/types/**"],
       include: ["src/**/*.ts"],
     },
   },
   plugins: [
     dts({
       include: ["src/**/*"],
-      entryRoot: ".",
+      entryRoot: "src",
       outDir: "dist",
+      rollupTypes: true,
     }) as PluginOption,
   ],
 });

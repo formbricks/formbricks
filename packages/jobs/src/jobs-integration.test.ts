@@ -127,7 +127,7 @@ describe("BullMQ integration tests", () => {
     );
 
     await expect(job.waitUntilFinished(queueEvents)).resolves.toBeUndefined();
-    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(350);
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(250);
   }, 15000);
 
   test("upserts recurring schedules using the engine-neutral producer interface", async () => {

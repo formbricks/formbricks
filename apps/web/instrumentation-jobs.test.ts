@@ -81,6 +81,39 @@ describe("instrumentation-jobs", () => {
     });
   });
 
+  slowTest("reuses the in-flight startup promise", async () => {
+    const mockRuntime = {
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+
+    mockGetJobsWorkerBootstrapConfig.mockReturnValue({
+      enabled: true,
+      runtimeOptions: {
+        concurrency: 2,
+        redisUrl: "redis://localhost:6379",
+        workerCount: 1,
+      },
+    });
+
+    let resolveRuntime: ((value: typeof mockRuntime) => void) | undefined;
+    mockStartJobsRuntime.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRuntime = resolve;
+      })
+    );
+
+    const { registerJobsWorker } = await import("./instrumentation-jobs");
+    const firstPromise = registerJobsWorker();
+    const secondPromise = registerJobsWorker();
+
+    expect(mockStartJobsRuntime).toHaveBeenCalledTimes(1);
+
+    resolveRuntime?.(mockRuntime);
+
+    await expect(firstPromise).resolves.toBe(mockRuntime);
+    await expect(secondPromise).resolves.toBe(mockRuntime);
+  });
+
   slowTest("logs and rethrows startup failures", async () => {
     const startupError = new Error("startup failed");
 
@@ -99,5 +132,34 @@ describe("instrumentation-jobs", () => {
 
     await expect(registerJobsWorker()).rejects.toThrow("startup failed");
     expect(mockError).toHaveBeenCalledWith({ err: startupError }, "BullMQ worker registration failed");
+  });
+
+  slowTest("clears registration state even when reset close fails", async () => {
+    const failingRuntime = {
+      close: vi.fn().mockRejectedValue(new Error("close failed")),
+    };
+    const nextRuntime = {
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+
+    mockGetJobsWorkerBootstrapConfig.mockReturnValue({
+      enabled: true,
+      runtimeOptions: {
+        concurrency: 1,
+        redisUrl: "redis://localhost:6379",
+        workerCount: 1,
+      },
+    });
+
+    mockStartJobsRuntime.mockResolvedValueOnce(failingRuntime).mockResolvedValueOnce(nextRuntime);
+
+    const { registerJobsWorker, resetJobsWorkerRegistrationForTests } =
+      await import("./instrumentation-jobs");
+
+    await expect(registerJobsWorker()).resolves.toBe(failingRuntime);
+    await expect(resetJobsWorkerRegistrationForTests()).rejects.toThrow("close failed");
+    await expect(registerJobsWorker()).resolves.toBe(nextRuntime);
+
+    expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);
   });
 });

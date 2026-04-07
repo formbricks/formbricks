@@ -22,7 +22,9 @@ export interface JobsRuntimeHandle {
   close: () => Promise<void>;
 }
 
-const removeProcessListener = (event: "SIGTERM" | "SIGINT", handler: () => void): void => {
+type TSignalHandler = () => Promise<void>;
+
+const removeProcessListener = (event: "SIGTERM" | "SIGINT", handler: TSignalHandler): void => {
   process.removeListener(event, handler);
 };
 
@@ -83,50 +85,50 @@ export const startJobsRuntime = async ({
   let queue: Queue | undefined;
   const workerConnections: IORedis[] = [];
   const workers: Worker[] = [];
-  let closed = false;
+  let closeRuntimePromise: Promise<void> | undefined;
 
   const closeRuntime = async (): Promise<void> => {
-    if (closed) {
-      return;
-    }
+    if (!closeRuntimePromise) {
+      closeRuntimePromise = (async () => {
+        removeProcessListener("SIGTERM", handleSigterm);
+        removeProcessListener("SIGINT", handleSigint);
 
-    closed = true;
+        await Promise.all(
+          workers.map(async (worker, index) => {
+            try {
+              await worker.close();
+            } catch (error) {
+              logger.error({ err: error, workerNumber: index + 1 }, "Failed to close BullMQ worker cleanly");
+            }
+          })
+        );
 
-    removeProcessListener("SIGTERM", handleSigterm);
-    removeProcessListener("SIGINT", handleSigint);
-
-    await Promise.all(
-      workers.map(async (worker, index) => {
-        try {
-          await worker.close();
-        } catch (error) {
-          logger.error({ err: error, workerNumber: index + 1 }, "Failed to close BullMQ worker cleanly");
+        if (queue) {
+          try {
+            await queue.close();
+          } catch (error) {
+            logger.error({ err: error }, "Failed to close BullMQ queue cleanly");
+          }
         }
-      })
-    );
 
-    if (queue) {
-      try {
-        await queue.close();
-      } catch (error) {
-        logger.error({ err: error }, "Failed to close BullMQ queue cleanly");
-      }
+        await Promise.all([
+          closeRedisConnection(producerConnection),
+          ...workerConnections.map((workerConnection) => closeRedisConnection(workerConnection)),
+        ]);
+      })();
     }
 
-    await Promise.all([
-      closeRedisConnection(producerConnection),
-      ...workerConnections.map((workerConnection) => closeRedisConnection(workerConnection)),
-    ]);
+    await closeRuntimePromise;
   };
 
-  const handleSigterm = (): void => {
-    closeRuntime().catch((error: unknown) => {
+  const handleSigterm = async (): Promise<void> => {
+    await closeRuntime().catch((error: unknown) => {
       logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGTERM");
     });
   };
 
-  const handleSigint = (): void => {
-    closeRuntime().catch((error: unknown) => {
+  const handleSigint = async (): Promise<void> => {
+    await closeRuntime().catch((error: unknown) => {
       logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGINT");
     });
   };
@@ -158,8 +160,8 @@ export const startJobsRuntime = async ({
 
     await Promise.all([queue.waitUntilReady(), ...workers.map((worker) => worker.waitUntilReady())]);
 
-    process.prependListener("SIGTERM", handleSigterm);
-    process.prependListener("SIGINT", handleSigint);
+    process.once("SIGTERM", handleSigterm);
+    process.once("SIGINT", handleSigint);
 
     logger.info(
       {

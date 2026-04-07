@@ -112,11 +112,23 @@ export const getJobsQueue = async (): Promise<JobsQueueHandle> => {
   }
 };
 
-const toEnqueuedJob = (job: Pick<Job, "id" | "name" | "queueName">): EnqueuedJob => ({
-  jobId: String(job.id),
-  jobName: job.name,
-  queueName: job.queueName,
-});
+const toEnqueuedJob = (
+  job: Pick<Job, "name" | "queueName"> & {
+    id?: Job["id"];
+  }
+): EnqueuedJob => {
+  const jobId = Reflect.get(job as object, "id") as Job["id"] | undefined;
+
+  if (jobId === undefined) {
+    throw new Error(`Missing BullMQ job.id in toEnqueuedJob for jobName=${job.name}`);
+  }
+
+  return {
+    jobId: String(jobId),
+    jobName: job.name,
+    queueName: job.queueName,
+  };
+};
 
 const toUpsertedRecurringJobSchedule = (
   job: Pick<Job, "id" | "name" | "queueName">,

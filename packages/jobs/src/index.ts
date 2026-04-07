@@ -1,3 +1,4 @@
+/* v8 ignore start */
 export {
   closeRedisConnection,
   createProducerConnection,
@@ -26,7 +27,6 @@ export {
   upsertRecurringResponsePipelineJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
-export { getJobProcessor, jobProcessors, processJob } from "./processors/registry";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
 export { processTestLogJob } from "./processors/test-log";
 export { startJobsRuntime } from "./runtime";
@@ -52,3 +52,4 @@ export type {
 } from "./schedules";
 export { ZResponsePipelineJobData, ZTestLogJobData } from "./types";
 export type { TResponsePipelineJobData, TTestLogJobData } from "./types";
+/* v8 ignore stop */

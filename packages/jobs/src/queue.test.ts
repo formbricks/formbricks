@@ -10,11 +10,14 @@ import {
 } from "./constants";
 import {
   createJobsQueue,
+  enqueueResponsePipelineJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
   getJobsQueue,
   resetJobsQueueFactory,
+  scheduleResponsePipelineJobAt,
   scheduleTestLogJobAt,
+  upsertRecurringResponsePipelineJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 import { getRecurringJobSchedulerId } from "./schedules";
@@ -41,6 +44,29 @@ const mockConnection = {
   disconnect: vi.fn(),
   status: "ready",
 } as unknown as IORedis;
+
+const responsePipelineJobData = {
+  environmentId: "env_123",
+  event: "responseCreated" as const,
+  response: {
+    contact: null,
+    contactAttributes: null,
+    createdAt: new Date("2026-04-07T10:00:00.000Z"),
+    data: {},
+    displayId: null,
+    endingId: null,
+    finished: false,
+    id: "cm8cmpnjj000108jfdr9dfqe6",
+    language: null,
+    meta: {},
+    singleUseId: null,
+    surveyId: "cm8cmpnjj000108jfdr9dfqe7",
+    tags: [],
+    updatedAt: new Date("2026-04-07T10:00:00.000Z"),
+    variables: {},
+  },
+  surveyId: "survey_123",
+};
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -113,6 +139,16 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.testLog, { message: "hello world" }, undefined);
   });
 
+  test("enqueues the response pipeline job with the shared queue", async () => {
+    const mockJob = { id: "job-response-1" };
+    mockQueueAdd.mockResolvedValue(mockJob);
+
+    const job = await enqueueResponsePipelineJob(responsePipelineJobData);
+
+    expect(job).toBe(mockJob);
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.responsePipeline, responsePipelineJobData, undefined);
+  });
+
   test("exposes an engine-neutral producer interface", async () => {
     const producer = getBackgroundJobProducer();
     mockQueueAdd.mockResolvedValue({
@@ -130,6 +166,23 @@ describe("@formbricks/jobs queue helpers", () => {
     });
   });
 
+  test("exposes response pipeline enqueues through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueAdd.mockResolvedValue({
+      id: "job-response-1",
+      name: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const job = await producer.enqueueResponsePipeline(responsePipelineJobData);
+
+    expect(job).toEqual({
+      jobId: "job-response-1",
+      jobName: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    });
+  });
+
   test("schedules a delayed job using the runAt schedule type", async () => {
     mockQueueAdd.mockResolvedValue({ id: "job-3" });
 
@@ -143,6 +196,19 @@ describe("@formbricks/jobs queue helpers", () => {
       { message: "hello delayed world" },
       { delay: 5000 }
     );
+  });
+
+  test("schedules a delayed response pipeline job", async () => {
+    mockQueueAdd.mockResolvedValue({ id: "job-response-2" });
+
+    await scheduleResponsePipelineJobAt(
+      { runAt: new Date("2026-04-07T10:00:05.000Z") },
+      responsePipelineJobData
+    );
+
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.responsePipeline, responsePipelineJobData, {
+      delay: 5000,
+    });
   });
 
   test("upserts a recurring scheduler using engine-neutral schedule types", async () => {
@@ -215,6 +281,127 @@ describe("@formbricks/jobs queue helpers", () => {
     });
   });
 
+  test("exposes response pipeline scheduling through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueAdd.mockResolvedValue({
+      id: "job-6",
+      name: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await producer.scheduleResponsePipelineAt(
+      { runAt: new Date("2026-04-07T10:00:05.000Z") },
+      responsePipelineJobData
+    );
+
+    expect(scheduledJob).toEqual({
+      jobId: "job-6",
+      jobName: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    });
+  });
+
+  test("exposes test log scheduling through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueAdd.mockResolvedValue({
+      id: "job-6b",
+      name: JOB_NAMES.testLog,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await producer.scheduleTestLogAt(
+      { runAt: new Date("2026-04-07T10:00:05.000Z") },
+      { message: "scheduled through producer" }
+    );
+
+    expect(scheduledJob).toEqual({
+      jobId: "job-6b",
+      jobName: JOB_NAMES.testLog,
+      queueName: JOBS_QUEUE_NAME,
+    });
+  });
+
+  test("upserts recurring response pipeline schedules", async () => {
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-7",
+      name: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await upsertRecurringResponsePipelineJobSchedule(
+      {
+        scheduleId: "response-pipeline-recurring",
+        scope: "environment_123",
+      },
+      {
+        everyMs: 60_000,
+        kind: "every",
+      },
+      responsePipelineJobData
+    );
+
+    expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
+      getRecurringJobSchedulerId(JOB_NAMES.responsePipeline, {
+        scheduleId: "response-pipeline-recurring",
+        scope: "environment_123",
+      }),
+      {
+        endDate: undefined,
+        every: 60_000,
+        limit: undefined,
+        startDate: undefined,
+      },
+      {
+        data: responsePipelineJobData,
+        name: JOB_NAMES.responsePipeline,
+        opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
+      }
+    );
+    expect(scheduledJob.id).toBe("job-7");
+  });
+
+  test("exposes recurring response pipeline scheduling through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-7b",
+      name: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await producer.upsertRecurringResponsePipelineSchedule(
+      {
+        scheduleId: "response-pipeline-recurring-producer",
+        scope: "environment_123",
+      },
+      {
+        everyMs: 60_000,
+        kind: "every",
+      },
+      responsePipelineJobData
+    );
+
+    expect(scheduledJob).toEqual({
+      jobId: "job-7b",
+      jobName: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+      scheduleId: "response-pipeline-recurring-producer",
+      scope: "environment_123",
+    });
+  });
+
+  test("rejects engine-neutral enqueues when BullMQ returns a job without an id", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueAdd.mockResolvedValue({
+      id: undefined,
+      name: JOB_NAMES.testLog,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    await expect(producer.enqueueTestLog({ message: "missing id" })).rejects.toThrow(
+      "Missing BullMQ job.id in toEnqueuedJob for jobName=system.test-log"
+    );
+  });
+
   test("cleans up producer resources when queue initialization fails", async () => {
     mockQueueWaitUntilReady.mockRejectedValueOnce(new Error("redis unavailable"));
 
@@ -236,5 +423,24 @@ describe("@formbricks/jobs queue helpers", () => {
     const [context, message] = mockLoggerError.mock.calls[0] as [{ err: Error }, string];
     expect(context.err).toBeInstanceOf(Error);
     expect(message).toBe("Failed to close BullMQ producer queue during reset");
+  });
+
+  test("keeps clearing global state when producer connection shutdown fails during reset", async () => {
+    await getJobsQueue();
+    mockCloseRedisConnection.mockRejectedValueOnce(new Error("connection close failed"));
+
+    await expect(resetJobsQueueFactory()).resolves.toBeUndefined();
+    await expect(getJobsQueue()).resolves.toEqual(
+      expect.objectContaining({
+        connection: mockConnection,
+        queue: expect.any(Object),
+      })
+    );
+
+    expect(mockLoggerError).toHaveBeenCalledTimes(1);
+    const [context, message] = mockLoggerError.mock.calls[0] as [{ err: Error }, string];
+    expect(context.err).toBeInstanceOf(Error);
+    expect(message).toBe("Failed to close BullMQ producer connection during reset");
+    expect(Queue).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,5 +1,6 @@
-import IORedis from "ioredis";
+import type IORedis from "ioredis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createMockLogger, createMockRedisConnection } from "../test/boundary-mocks";
 import {
   closeRedisConnection,
   createProducerConnection,
@@ -7,29 +8,32 @@ import {
   getRedisUrlFromEnv,
 } from "./connection";
 
-const { mockDisconnect, mockOn, mockQuit } = vi.hoisted(() => ({
-  mockOn: vi.fn(),
-  mockQuit: vi.fn(),
-  mockDisconnect: vi.fn(),
-}));
+const mockRedisConnection = createMockRedisConnection();
+const mockLogger = createMockLogger();
+const MockIORedis = vi.fn(function MockRedis(_redisUrl?: string, _options?: unknown) {
+  return mockRedisConnection;
+});
 
 vi.mock("ioredis", () => ({
-  default: vi.fn(function MockRedis() {
-    return {
-      on: mockOn,
-      quit: mockQuit,
-      disconnect: mockDisconnect,
-      status: "ready",
-    };
-  }),
+  default: function MockRedis(redisUrl?: string, options?: unknown) {
+    return MockIORedis(redisUrl, options);
+  },
 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
+    error: (context: unknown, message?: string): void => {
+      mockLogger.error(context, message);
+    },
+    info: (context: unknown, message?: string): void => {
+      mockLogger.info(context, message);
+    },
+    warn: (context: unknown, message?: string): void => {
+      mockLogger.warn(context, message);
+    },
+    debug: (context: unknown, message?: string): void => {
+      mockLogger.debug(context, message);
+    },
   },
 }));
 
@@ -37,12 +41,13 @@ describe("@formbricks/jobs connection helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.REDIS_URL;
+    mockRedisConnection.status = "ready";
   });
 
   test("creates producer connections with fail-fast options", () => {
     createProducerConnection({ redisUrl: "redis://localhost:6379" });
 
-    expect(IORedis).toHaveBeenCalledWith(
+    expect(MockIORedis).toHaveBeenCalledWith(
       "redis://localhost:6379",
       expect.objectContaining({
         connectionName: "formbricks-jobs-producer",
@@ -51,13 +56,13 @@ describe("@formbricks/jobs connection helpers", () => {
         maxRetriesPerRequest: 1,
       })
     );
-    expect(mockOn).toHaveBeenCalledWith("error", expect.any(Function));
+    expect(mockRedisConnection.on).toHaveBeenCalledWith("error", expect.any(Function));
   });
 
   test("creates worker connections with blocking-safe options", () => {
     createWorkerConnection({ redisUrl: "redis://localhost:6379" });
 
-    expect(IORedis).toHaveBeenCalledWith(
+    expect(MockIORedis).toHaveBeenCalledWith(
       "redis://localhost:6379",
       expect.objectContaining({
         connectionName: "formbricks-jobs-worker",
@@ -65,7 +70,7 @@ describe("@formbricks/jobs connection helpers", () => {
         maxRetriesPerRequest: null,
       })
     );
-    expect(mockOn).toHaveBeenCalledWith("error", expect.any(Function));
+    expect(mockRedisConnection.on).toHaveBeenCalledWith("error", expect.any(Function));
   });
 
   test("reads REDIS_URL from the environment", () => {
@@ -86,23 +91,23 @@ describe("@formbricks/jobs connection helpers", () => {
 
   test("quits an active Redis connection", async () => {
     await closeRedisConnection({
-      quit: mockQuit.mockResolvedValue(undefined),
-      disconnect: mockDisconnect,
+      quit: mockRedisConnection.quit.mockResolvedValue(undefined),
+      disconnect: mockRedisConnection.disconnect,
       status: "ready",
     } as unknown as IORedis);
 
-    expect(mockQuit).toHaveBeenCalledTimes(1);
-    expect(mockDisconnect).not.toHaveBeenCalled();
+    expect(mockRedisConnection.quit).toHaveBeenCalledTimes(1);
+    expect(mockRedisConnection.disconnect).not.toHaveBeenCalled();
   });
 
   test("disconnects a non-ready Redis connection", async () => {
     await closeRedisConnection({
-      quit: mockQuit,
-      disconnect: mockDisconnect,
+      quit: mockRedisConnection.quit,
+      disconnect: mockRedisConnection.disconnect,
       status: "connecting",
     } as unknown as IORedis);
 
-    expect(mockQuit).not.toHaveBeenCalled();
-    expect(mockDisconnect).toHaveBeenCalledTimes(1);
+    expect(mockRedisConnection.quit).not.toHaveBeenCalled();
+    expect(mockRedisConnection.disconnect).toHaveBeenCalledTimes(1);
   });
 });
