@@ -7,12 +7,28 @@ import {
   getFileStream,
   getSignedUploadUrl,
 } from "@formbricks/storage";
-import type { StorageError } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
 
-type TGetFileStreamResult = Awaited<ReturnType<typeof getFileStream>>;
+type TStorageError = {
+  code: (typeof StorageErrorCode)[keyof typeof StorageErrorCode];
+};
+type TGetFileStreamResult = Result<
+  {
+    body: ReadableStream<Uint8Array>;
+    contentType: string;
+    contentLength: number;
+  },
+  TStorageError
+>;
+
+const normalizeStorageError = (error: { code?: unknown }): TStorageError => ({
+  code:
+    typeof error.code === "string"
+      ? (error.code as (typeof StorageErrorCode)[keyof typeof StorageErrorCode])
+      : StorageErrorCode.Unknown,
+});
 
 export const getSignedUrlForUpload = async (
   fileName: string,
@@ -27,7 +43,7 @@ export const getSignedUrlForUpload = async (
       presignedFields: Record<string, string>;
       fileUrl: string;
     },
-    StorageError
+    TStorageError
   >
 > => {
   try {
@@ -47,8 +63,8 @@ export const getSignedUrlForUpload = async (
       maxFileUploadSize
     );
 
-    if (!signedUrlResult.ok) {
-      return signedUrlResult;
+    if ("error" in signedUrlResult) {
+      return err(normalizeStorageError(signedUrlResult.error));
     }
 
     // Return relative path - can be resolved to absolute URL at runtime when needed
@@ -81,11 +97,11 @@ export const getFileStreamForDownload = async (
 
     const streamResult = await getFileStream(fileKey);
 
-    if (!streamResult.ok) {
-      return streamResult;
+    if ("error" in streamResult) {
+      return err(normalizeStorageError(streamResult.error));
     }
 
-    return streamResult;
+    return ok(streamResult.data);
   } catch (error) {
     logger.error({ error }, "Error getting file stream for download");
 
@@ -100,9 +116,25 @@ export const deleteFile = async (
   environmentId: string,
   accessType: TAccessType,
   fileName: string
-): Promise<Result<void, StorageError>> => deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+): Promise<Result<void, TStorageError>> => {
+  const result = await deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+
+  if ("error" in result) {
+    return err(normalizeStorageError(result.error));
+  }
+
+  return ok(undefined);
+};
 
 // We don't need to return or throw any errors, even if the files don't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFilesByPrefix function
 export const deleteFilesByEnvironmentId = async (
   environmentId: string
-): Promise<Result<void, StorageError>> => deleteFilesByPrefix(environmentId);
+): Promise<Result<void, TStorageError>> => {
+  const result = await deleteFilesByPrefix(environmentId);
+
+  if ("error" in result) {
+    return err(normalizeStorageError(result.error));
+  }
+
+  return ok(undefined);
+};
