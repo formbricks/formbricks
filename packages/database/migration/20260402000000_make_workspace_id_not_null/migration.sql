@@ -19,3 +19,35 @@ ALTER TABLE "ActionClass" ALTER COLUMN "workspaceId" SET NOT NULL;
 ALTER TABLE "Integration" ALTER COLUMN "workspaceId" SET NOT NULL;
 ALTER TABLE "ApiKeyEnvironment" ALTER COLUMN "workspaceId" SET NOT NULL;
 ALTER TABLE "Segment" ALTER COLUMN "workspaceId" SET NOT NULL;
+
+-- Migrate unique indexes from environmentId to workspaceId
+-- (safe to run after dev environment promotion — no duplicates possible)
+-- Note: Prisma creates these as unique indexes, not constraints, so we use DROP INDEX / CREATE UNIQUE INDEX
+
+-- ContactAttributeKey: @@unique([key, environmentId]) -> @@unique([key, workspaceId])
+DROP INDEX "ContactAttributeKey_key_environmentId_key";
+CREATE UNIQUE INDEX "ContactAttributeKey_key_workspaceId_key" ON "ContactAttributeKey"("key", "workspaceId");
+
+-- Tag: @@unique([environmentId, name]) -> @@unique([workspaceId, name])
+DROP INDEX "Tag_environmentId_name_key";
+CREATE UNIQUE INDEX "Tag_workspaceId_name_key" ON "Tag"("workspaceId", "name");
+
+-- ActionClass: @@unique([key, environmentId]) -> @@unique([key, workspaceId])
+DROP INDEX "ActionClass_key_environmentId_key";
+CREATE UNIQUE INDEX "ActionClass_key_workspaceId_key" ON "ActionClass"("key", "workspaceId");
+
+-- ActionClass: @@unique([name, environmentId]) -> @@unique([name, workspaceId])
+DROP INDEX "ActionClass_name_environmentId_key";
+CREATE UNIQUE INDEX "ActionClass_name_workspaceId_key" ON "ActionClass"("name", "workspaceId");
+
+-- Integration: @@unique([type, environmentId]) -> @@unique([type, workspaceId])
+DROP INDEX "Integration_type_environmentId_key";
+CREATE UNIQUE INDEX "Integration_type_workspaceId_key" ON "Integration"("type", "workspaceId");
+
+-- ApiKeyEnvironment: @@unique([apiKeyId, environmentId]) -> @@unique([apiKeyId, workspaceId])
+DROP INDEX "ApiKeyEnvironment_apiKeyId_environmentId_key";
+CREATE UNIQUE INDEX "ApiKeyEnvironment_apiKeyId_workspaceId_key" ON "ApiKeyEnvironment"("apiKeyId", "workspaceId");
+
+-- Segment: @@unique([environmentId, title]) -> @@unique([workspaceId, title])
+DROP INDEX "Segment_environmentId_title_key";
+CREATE UNIQUE INDEX "Segment_workspaceId_title_key" ON "Segment"("workspaceId", "title");

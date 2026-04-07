@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -54,6 +55,8 @@ export const SurveyDropDownMenu = ({
   deleteSurvey,
   onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -151,7 +154,7 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                    href={`${workspaceBasePath}/surveys/${survey.id}/edit`}
                     onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
                     <SquarePenIcon className="mr-2 size-4" />
                     {t("common.edit")}
@@ -265,9 +268,7 @@ export const SurveyDropDownMenu = ({
             setIsCautionDialogOpen(false);
           }}
           primaryButtonText={t("common.duplicate")}
-          secondaryButtonAction={() =>
-            router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)
-          }
+          secondaryButtonAction={() => router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`)}
           secondaryButtonText={t("common.edit")}
         />
       )}

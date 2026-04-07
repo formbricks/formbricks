@@ -124,7 +124,7 @@ model ContactAttributeKey {
   attributes       ContactAttribute[]
   attributeFilters SurveyAttributeFilter[]
 
-  @@unique([key, environmentId])
+  @@unique([key, workspaceId])
   @@index([environmentId, createdAt])
   @@index([workspaceId, createdAt])
 }
@@ -216,7 +216,7 @@ model Tag {
   workspace     Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId   String
 
-  @@unique([environmentId, name])
+  @@unique([workspaceId, name])
   @@index([workspaceId])
 }
 
@@ -526,8 +526,8 @@ model ActionClass {
   workspaceId    String
   surveyTriggers SurveyTrigger[]
 
-  @@unique([key, environmentId])
-  @@unique([name, environmentId])
+  @@unique([key, workspaceId])
+  @@unique([name, workspaceId])
   @@index([environmentId, createdAt])
   @@index([workspaceId, createdAt])
 }
@@ -561,7 +561,7 @@ model Integration {
   workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId   String
 
-  @@unique([type, environmentId])
+  @@unique([type, workspaceId])
   @@index([environmentId])
   @@index([workspaceId])
 }
@@ -667,6 +667,7 @@ model Workspace {
   /// [Logo]
   logo                              Json?
   workspaceTeams                    WorkspaceTeam[]
+  appSetupCompleted                 Boolean                            @default(false)
   customHeadScripts                 String? // Custom HTML scripts for link surveys (self-hosted only)
   feedbackRecordDirectoryWorkspaces FeedbackRecordDirectoryWorkspace[]
 
@@ -845,7 +846,7 @@ model ApiKeyEnvironment {
   workspaceId   String
   permission    ApiKeyPermission
 
-  @@unique([apiKeyId, environmentId])
+  @@unique([apiKeyId, workspaceId])
   @@index([environmentId])
   @@index([workspaceId])
 }
@@ -951,7 +952,7 @@ model Segment {
   workspaceId   String
   surveys       Survey[]
 
-  @@unique([environmentId, title])
+  @@unique([workspaceId, title])
   @@index([workspaceId])
 }
 

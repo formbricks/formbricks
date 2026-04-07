@@ -9,7 +9,8 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
@@ -48,6 +49,8 @@ export const EmailCustomizationSettings = ({
   fbLogoUrl,
   isStorageConfigured,
 }: EmailCustomizationSettingsProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -183,13 +186,13 @@ export const EmailCustomizationSettings = ({
     {
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
     },
     {
       text: t("common.learn_more"),
       href: isFormbricksCloud
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/learn-more-self-hosting-license",
     },
   ];

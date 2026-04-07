@@ -115,13 +115,11 @@ export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<str
       return null;
     }
     const firstWorkspace = workspaces[0];
-    const productionEnvironment = firstWorkspace.environments.find(
-      (environment) => environment.type === "production"
-    );
-    if (!productionEnvironment) {
+    const environment = firstWorkspace.environments[0];
+    if (!environment) {
       return null;
     }
-    return productionEnvironment.id;
+    return environment.id;
   } catch (error) {
     throw error;
   }
@@ -136,7 +134,7 @@ export const createEnvironment = async (
   try {
     const environment = await prisma.environment.create({
       data: {
-        type: environmentInput.type || "development",
+        type: environmentInput.type || "production",
         workspace: { connect: { id: workspaceId } },
         appSetupCompleted: environmentInput.appSetupCompleted || false,
         attributeKeys: {

@@ -88,6 +88,7 @@ export const mockWorkspace: TWorkspace = {
   placement: "bottomRight",
   clickOutsideClose: false,
   overlay: "none",
+  appSetupCompleted: false,
   environments: [],
   languages: [],
   config: {

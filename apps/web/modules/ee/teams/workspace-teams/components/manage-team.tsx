@@ -2,19 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { Button } from "@/modules/ui/components/button";
 
-interface ManageTeamProps {
-  environmentId: string;
-}
-
-export const ManageTeam = ({ environmentId }: ManageTeamProps) => {
+export const ManageTeam = () => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
 
   const router = useRouter();
 
   const handleManageTeams = () => {
-    router.push(`/environments/${environmentId}/settings/teams`);
+    router.push(`${workspaceBasePath}/settings/teams`);
   };
 
   return (

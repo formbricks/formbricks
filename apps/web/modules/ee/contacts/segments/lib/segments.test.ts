@@ -232,8 +232,8 @@ describe("Segment Service Tests", () => {
       expect(segment).toEqual({ ...mockSegment, isPrivate: true });
       expect(prisma.segment.upsert).toHaveBeenCalledWith({
         where: {
-          environmentId_title: {
-            environmentId,
+          workspaceId_title: {
+            workspaceId: "workspace-id-mock",
             title: privateInput.title,
           },
         },
@@ -266,8 +266,8 @@ describe("Segment Service Tests", () => {
       expect(segment).toEqual({ ...mockSegment, isPrivate: true });
       expect(prisma.segment.upsert).toHaveBeenCalledWith({
         where: {
-          environmentId_title: {
-            environmentId,
+          workspaceId_title: {
+            workspaceId: "workspace-id-mock",
             title: privateInputWithSurvey.title,
           },
         },

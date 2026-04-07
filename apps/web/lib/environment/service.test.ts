@@ -78,14 +78,6 @@ describe("Environment Service", () => {
           updatedAt: new Date(),
           appSetupCompleted: false,
         },
-        {
-          id: "clh6pzwx90000e9ogjr0mf7sz",
-          type: EnvironmentType.development,
-          workspaceId: "clh6pzwx90000e9ogjr0mf7sy",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          appSetupCompleted: true,
-        },
       ];
 
       vi.mocked(prisma.workspace.findFirst).mockResolvedValue({
@@ -94,9 +86,6 @@ describe("Environment Service", () => {
         environments: [
           {
             ...mockEnvironments[0],
-          },
-          {
-            ...mockEnvironments[1],
           },
         ],
       } as unknown as Workspace);

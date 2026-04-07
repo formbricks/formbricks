@@ -1,19 +1,19 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ApiKeyList } from "./components/api-key-list";
 
-export const APIKeysPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { currentUserMembership, organization, session } = await getEnvironmentAuth(params.environmentId);
+  const { currentUserMembership, organization, session } = await getWorkspaceAuth(params.workspaceId);
 
   const [workspaces, locale] = await Promise.all([
     getWorkspacesByOrganizationId(organization.id),
@@ -28,7 +28,6 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="api-keys"

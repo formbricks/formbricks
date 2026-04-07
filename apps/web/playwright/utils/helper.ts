@@ -124,7 +124,7 @@ export const finishOnboarding = async (
     await page.getByRole("button", { name: "I will do it later" }).click();
   }
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
   await expect(page.getByText("My Workspace")).toBeVisible();
 };
 
@@ -185,7 +185,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -391,7 +391,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Add variables
   await page.getByText("Variables").click();

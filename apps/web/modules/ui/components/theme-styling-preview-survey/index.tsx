@@ -1,10 +1,10 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
@@ -14,7 +14,7 @@ import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  workspace: Workspace;
+  workspace: TWorkspace;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
   publicDomain: string;

@@ -1,51 +1,18 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getAccessFlags } from "@/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
-import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const ConfigLayout = async (props: {
-  params: Promise<{ environmentId: string }>;
+  params: Promise<{ workspaceId: string }>;
   children: React.ReactNode;
 }) => {
   const params = await props.params;
 
   const { children } = props;
 
-  const t = await getTranslate();
-  const [organization, session] = await Promise.all([
-    getOrganizationByEnvironmentId(params.environmentId),
-    getServerSession(authOptions),
-  ]);
-
-  if (!organization) {
-    throw new ResourceNotFoundError(t("common.organization"), null);
-  }
-
-  if (!session) {
-    throw new AuthenticationError(t("common.not_authenticated"));
-  }
-
-  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
-  if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
-  }
-
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.role);
+  const { isBilling, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
-  }
-
-  const workspace = await getWorkspaceByEnvironmentId(params.environmentId);
-  if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return redirect(`/workspaces/${workspace.id}/settings/billing`);
   }
 
   return children;

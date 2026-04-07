@@ -445,26 +445,6 @@ async function main(): Promise<void> {
   });
 
   // Environments
-  await prisma.environment.upsert({
-    where: { id: SEED_IDS.ENV_DEV },
-    update: { appSetupCompleted: false },
-    create: {
-      id: SEED_IDS.ENV_DEV,
-      type: "development",
-      workspaceId: workspace.id,
-      appSetupCompleted: false,
-      attributeKeys: {
-        create: [
-          { name: "Email", key: "email", isUnique: true, type: "default" },
-          { name: "First Name", key: "firstName", isUnique: false, type: "default" },
-          { name: "Last Name", key: "lastName", isUnique: false, type: "default" },
-          { name: "userId", key: "userId", isUnique: true, type: "default" },
-          { name: "Language", key: "language", isUnique: false, type: "default" },
-        ],
-      },
-    },
-  });
-
   const prodEnv = await prisma.environment.upsert({
     where: { id: SEED_IDS.ENV_PROD },
     update: { appSetupCompleted: false },

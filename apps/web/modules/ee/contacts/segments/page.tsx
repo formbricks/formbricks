@@ -4,18 +4,14 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attri
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
-export const SegmentsPage = async ({
-  params: paramsProps,
-}: {
-  params: Promise<{ environmentId: string }>;
-}) => {
+export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const { isReadOnly, organization, workspace } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, workspace, environment } = await getWorkspaceAuth(params.workspaceId);
 
   const [segments, contactAttributeKeys] = await Promise.all([
     getSegments(workspace.id),
@@ -34,12 +30,12 @@ export const SegmentsPage = async ({
     <ContactsPageLayout
       pageTitle={t("common.contacts")}
       activeId="segments"
-      environmentId={params.environmentId}
+      workspaceId={params.workspaceId}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
       cta={
         <CreateSegmentModal
-          environmentId={params.environmentId}
+          environmentId={environment.id}
           contactAttributeKeys={contactAttributeKeys}
           segments={filteredSegments}
           workspaceId={workspace.id}

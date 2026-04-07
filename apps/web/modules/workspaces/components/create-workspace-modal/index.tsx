@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZWorkspace } from "@formbricks/types/workspace";
 import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
-import { createWorkspaceAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { createWorkspaceAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -96,18 +96,12 @@ export const CreateWorkspaceModal = ({
     });
 
     if (createWorkspaceResponse?.data) {
-      // Get production environment
-      const productionEnvironment = createWorkspaceResponse.data.environments.find(
-        (environment) => environment.type === "production"
-      );
-
-      if (productionEnvironment) {
-        toast.success(t("common.workspace_created_successfully"));
-        setOpen(false);
-        form.reset();
-        // Redirect to the new workspace's surveys page
-        router.push(`/environments/${productionEnvironment.id}/surveys`);
-      }
+      const workspace = createWorkspaceResponse.data;
+      toast.success(t("common.workspace_created_successfully"));
+      setOpen(false);
+      form.reset();
+      // Redirect to the new workspace's surveys page
+      router.push(`/workspaces/${workspace.id}/surveys`);
     } else {
       const errorMessage = getFormattedErrorMessage(createWorkspaceResponse);
       toast.error(errorMessage);

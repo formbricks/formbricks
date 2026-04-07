@@ -168,7 +168,6 @@ export const SurveyEditor = ({
         setLocalSurvey={setLocalSurveyNonNull}
         localSurvey={localSurvey}
         survey={survey}
-        environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidElements={setInvalidElements}

@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -49,7 +50,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   locale,
 }) => {
   const { t } = useTranslation();
-  const environmentId = localSurvey.environmentId;
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const open = activeElementId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
@@ -262,7 +264,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             )}
 
             <Button asChild size="sm" variant="secondary">
-              <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
+              <Link href={`${workspaceBasePath}/languages`} target="_blank">
                 {t("environments.surveys.edit.manage_languages")}
                 <ArrowUpRight />
               </Link>

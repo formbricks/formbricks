@@ -1,5 +1,5 @@
-import { Workspace } from "@prisma/client";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { TWorkspace } from "@formbricks/types/workspace";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
@@ -8,30 +8,29 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 
 interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
-  workspace: Workspace;
-  environmentId: string;
+  workspace: TWorkspace;
   isReadOnly: boolean;
 }
 
 export const BrandingSettingsCard = async ({
   canRemoveBranding,
   workspace,
-  environmentId,
   isReadOnly,
 }: BrandingSettingsCardProps) => {
   const t = await getTranslate();
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
 
   const buttons: [ModalButton, ModalButton] = [
     {
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
     },
     {
       text: t("common.learn_more"),
       href: IS_FORMBRICKS_CLOUD
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/learn-more-self-hosting-license",
     },
   ];

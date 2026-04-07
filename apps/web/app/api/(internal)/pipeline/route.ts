@@ -53,7 +53,7 @@ export const POST = async (request: Request) => {
     );
   }
 
-  const { environmentId, workspaceId, surveyId, event, response } = inputValidation.data;
+  const { workspaceId, surveyId, event, response } = inputValidation.data;
 
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   const organization = await getOrganization(organizationId);
@@ -223,19 +223,14 @@ export const POST = async (request: Request) => {
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(
-        user.email,
-        user.locale,
-        environmentId,
-        survey,
-        response,
-        responseCount
-      ).catch((error) => {
-        logger.error(
-          { error, url: request.url, userEmail: user.email },
-          `Failed to send email to ${user.email}`
-        );
-      })
+      sendResponseFinishedEmail(user.email, user.locale, workspaceId, survey, response, responseCount).catch(
+        (error) => {
+          logger.error(
+            { error, url: request.url, userEmail: user.email },
+            `Failed to send email to ${user.email}`
+          );
+        }
+      )
     );
 
     // Update survey status if necessary

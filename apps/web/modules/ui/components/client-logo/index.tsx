@@ -6,10 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TLogo } from "@formbricks/types/styling";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { cn } from "@/lib/cn";
 
 interface ClientLogoProps {
-  environmentId?: string;
   workspaceLogo: Workspace["logo"] | null;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
@@ -17,12 +17,13 @@ interface ClientLogoProps {
 }
 
 export const ClientLogo = ({
-  environmentId,
   workspaceLogo,
   surveyLogo,
   previewSurvey = false,
   dir = "auto",
 }: ClientLogoProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
 
@@ -39,9 +40,9 @@ export const ClientLogo = ({
     <div
       className={cn(positionClasses, "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: logoToUse?.bgColor }}>
-      {previewSurvey && environmentId && (
+      {previewSurvey && workspaceBasePath && (
         <Link
-          href={`/environments/${environmentId}/workspace/look`}
+          href={`${workspaceBasePath}/look`}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
@@ -63,9 +64,9 @@ export const ClientLogo = ({
         />
       ) : (
         <Link
-          href={`/environments/${environmentId}/workspace/look`}
+          href={workspaceBasePath ? `${workspaceBasePath}/look` : "#"}
           onClick={(e) => {
-            if (!environmentId) {
+            if (!workspaceBasePath) {
               e.preventDefault();
             }
           }}

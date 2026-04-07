@@ -15,6 +15,7 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -54,6 +55,8 @@ export function TargetingCard({
 }: TargetingCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
@@ -356,10 +359,7 @@ export function TargetingCard({
                   <p className="mt-1 flex items-center text-xs text-slate-500">
                     <AlertCircle className="mr-1 inline h-3 w-3" />
                     {t("environments.segments.this_segment_is_used_in_other_surveys")}
-                    <Link
-                      className="ml-1 underline"
-                      href={`/environments/${environmentId}/segments`}
-                      target="_blank">
+                    <Link className="ml-1 underline" href={`${workspaceBasePath}/segments`} target="_blank">
                       {t("environments.segments.here")}
                     </Link>
                   </p>

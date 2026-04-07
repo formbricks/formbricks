@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Workspace } from "@prisma/client";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -18,8 +18,7 @@ import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditPlacementProps {
-  workspace: Workspace;
-  environmentId: string;
+  workspace: TWorkspace;
   isReadOnly: boolean;
 }
 

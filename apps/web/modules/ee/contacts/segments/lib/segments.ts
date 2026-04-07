@@ -148,8 +148,8 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
     if (isPrivate) {
       const segment = await prisma.segment.upsert({
         where: {
-          environmentId_title: {
-            environmentId,
+          workspaceId_title: {
+            workspaceId,
             title,
           },
         },

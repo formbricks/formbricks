@@ -11,7 +11,8 @@ import {
   type TOrganizationStripePendingChange,
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -31,13 +32,14 @@ import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
 const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
+const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
   organization: TOrganization;
-  environmentId: string;
+  workspaceId: string;
   responseCount: number;
   workspaceCount: number;
   usageCycleStart: Date;
@@ -98,15 +100,15 @@ const getPlanPeriodLabel = (
   return t("environments.settings.billing.per_year");
 };
 
-const getPlanChangePayload = (environmentId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
+const getPlanChangePayload = (workspaceId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
   plan === "hobby"
     ? {
-        environmentId,
+        workspaceId,
         targetPlan: "hobby" as const,
         targetInterval: "monthly" as const,
       }
     : {
-        environmentId,
+        workspaceId,
         targetPlan: plan,
         targetInterval: interval,
       };
@@ -131,7 +133,7 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
 };
 
 export const PricingTable = ({
-  environmentId,
+  workspaceId,
   organization,
   responseCount,
   workspaceCount,
@@ -147,6 +149,7 @@ export const PricingTable = ({
   billingCatalog,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
+  const { workspace } = useWorkspace();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
@@ -237,7 +240,10 @@ export const PricingTable = ({
 
   const persistEnvironmentId = () => {
     if (globalThis.window !== undefined) {
-      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
+      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, workspaceId);
+      if (workspace?.id) {
+        globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY, workspace.id);
+      }
     }
   };
 
@@ -248,7 +254,7 @@ export const PricingTable = ({
   };
 
   const openBillingPortal = async () => {
-    const response = await manageSubscriptionAction({ environmentId });
+    const response = await manageSubscriptionAction({ workspaceId });
     if (response?.serverError) {
       toast.error(getActionErrorMessage(response.serverError, t));
       return;
@@ -264,7 +270,7 @@ export const PricingTable = ({
   const openTrialPaymentCheckout = async () => {
     try {
       persistEnvironmentId();
-      const response = await createTrialPaymentCheckoutAction({ environmentId });
+      const response = await createTrialPaymentCheckoutAction({ workspaceId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -316,7 +322,7 @@ export const PricingTable = ({
 
     persistEnvironmentId();
     const response = await createPlanCheckoutAction({
-      environmentId,
+      workspaceId,
       targetPlan: plan,
       targetInterval: interval,
     });
@@ -343,7 +349,7 @@ export const PricingTable = ({
         return;
       }
 
-      const response = await changeBillingPlanAction(getPlanChangePayload(environmentId, plan, interval));
+      const response = await changeBillingPlanAction(getPlanChangePayload(workspaceId, plan, interval));
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -361,7 +367,7 @@ export const PricingTable = ({
   const undoPendingChange = async () => {
     setIsPlanActionPending("undo");
     try {
-      const response = await undoPendingPlanChangeAction({ environmentId });
+      const response = await undoPendingPlanChangeAction({ workspaceId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;

@@ -53,13 +53,13 @@ test.describe("JS Package Test", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
-    // Extract environmentId early in the test
+    // Get the environmentId from the fixture (needed for SDK setup)
     environmentId =
-      /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+      user.environmentId ??
       (() => {
-        throw new Error("Unable to parse environmentId from URL");
+        throw new Error("Unable to get environmentId from user fixture");
       })();
 
     // Create survey from template
@@ -69,7 +69,7 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("button", { name: "Use this template" }).click();
 
     // Configure survey settings
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit/);
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
@@ -92,7 +92,7 @@ test.describe("JS Package Test", async () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);
 
     // No need for file operations anymore, just use the server
     await page.goto("http://localhost:3004");
@@ -129,7 +129,7 @@ test.describe("JS Package Test", async () => {
 
     // Validate displays and response
     await page.goto("/");
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
     await page.waitForSelector("text=Responses");
     await page.waitForTimeout(5000);

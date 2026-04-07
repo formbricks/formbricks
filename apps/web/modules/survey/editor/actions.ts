@@ -96,7 +96,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
@@ -144,7 +144,7 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyWorkspaceOverwrites } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { Placement } from "@/modules/survey/editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -15,14 +16,11 @@ import { Switch } from "@/modules/ui/components/switch";
 interface SurveyPlacementCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  environmentId: string;
 }
 
-export const SurveyPlacementCard = ({
-  localSurvey,
-  setLocalSurvey,
-  environmentId,
-}: SurveyPlacementCardProps) => {
+export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlacementCardProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -142,7 +140,7 @@ export const SurveyPlacementCard = ({
             <div>
               <p className="text-xs text-slate-500">
                 {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`/environments/${environmentId}/workspace/look`} target="_blank">
+                <Link href={`${workspaceBasePath}/look`} target="_blank">
                   <span className="underline">
                     {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -26,7 +27,6 @@ interface IndividualInviteTabProps {
   teams: TOrganizationTeam[];
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
-  environmentId: string;
   membershipRole?: TOrganizationRole;
   showTeamAdminRestrictions: boolean;
 }
@@ -37,10 +37,11 @@ export const IndividualInviteTab = ({
   teams,
   isAccessControlAllowed,
   isFormbricksCloud,
-  environmentId,
   membershipRole,
   showTeamAdminRestrictions,
 }: IndividualInviteTabProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z
@@ -190,7 +191,7 @@ export const IndividualInviteTab = ({
                 target="_blank"
                 href={
                   isFormbricksCloud
-                    ? `/environments/${environmentId}/settings/billing`
+                    ? `${workspaceBasePath}/settings/billing`
                     : "https://formbricks.com/upgrade-self-hosting-license"
                 }>
                 {t("common.upgrade_plan")}

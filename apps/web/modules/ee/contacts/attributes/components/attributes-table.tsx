@@ -36,14 +36,14 @@ import { EditAttributeModal } from "./edit-attribute-modal";
 interface AttributesTableProps {
   contactAttributeKeys: TContactAttributeKey[];
   isReadOnly: boolean;
-  environmentId: string;
+  workspaceId: string;
   locale: TUserLocale;
 }
 
 export const AttributesTable = ({
   contactAttributeKeys,
   isReadOnly,
-  environmentId,
+  workspaceId,
   locale,
 }: AttributesTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -82,9 +82,9 @@ export const AttributesTable = ({
 
   // Load saved settings from localStorage
   useEffect(() => {
-    const savedColumnOrder = localStorage.getItem(`${environmentId}-attributes-columnOrder`);
-    const savedColumnVisibility = localStorage.getItem(`${environmentId}-attributes-columnVisibility`);
-    const savedExpandedSettings = localStorage.getItem(`${environmentId}-attributes-rowExpand`);
+    const savedColumnOrder = localStorage.getItem(`${workspaceId}-attributes-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${workspaceId}-attributes-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${workspaceId}-attributes-rowExpand`);
 
     let savedColumnOrderParsed: string[] = [];
     if (savedColumnOrder) {
@@ -138,7 +138,7 @@ export const AttributesTable = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environmentId]);
+  }, [workspaceId]);
 
   // Hide select column when all attributes are system attributes
   useEffect(() => {
@@ -158,17 +158,17 @@ export const AttributesTable = ({
   // Save settings to localStorage when they change
   useEffect(() => {
     if (columnOrder.length > 0) {
-      localStorage.setItem(`${environmentId}-attributes-columnOrder`, JSON.stringify(columnOrder));
+      localStorage.setItem(`${workspaceId}-attributes-columnOrder`, JSON.stringify(columnOrder));
     }
 
     if (Object.keys(columnVisibility).length > 0) {
-      localStorage.setItem(`${environmentId}-attributes-columnVisibility`, JSON.stringify(columnVisibility));
+      localStorage.setItem(`${workspaceId}-attributes-columnVisibility`, JSON.stringify(columnVisibility));
     }
 
     if (isExpanded !== null) {
-      localStorage.setItem(`${environmentId}-attributes-rowExpand`, JSON.stringify(isExpanded));
+      localStorage.setItem(`${workspaceId}-attributes-rowExpand`, JSON.stringify(isExpanded));
     }
-  }, [columnOrder, columnVisibility, isExpanded, environmentId]);
+  }, [columnOrder, columnVisibility, isExpanded, workspaceId]);
 
   // Initialize DnD sensors
   const sensors = useSensors(

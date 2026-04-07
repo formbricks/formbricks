@@ -1,6 +1,5 @@
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
 import { WebhookTable } from "@/modules/integrations/webhooks/components/webhook-table";
@@ -9,12 +8,13 @@ import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-export const WebhooksPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const WebhooksPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, environment, workspace } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, environment, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [webhooks, surveys] = await Promise.all([
     getWebhooks(workspace.id),

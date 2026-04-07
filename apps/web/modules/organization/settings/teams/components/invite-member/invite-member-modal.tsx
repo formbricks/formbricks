@@ -24,7 +24,6 @@ interface InviteMemberModalProps {
   teams: TOrganizationTeam[];
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
-  environmentId: string;
   membershipRole?: TOrganizationRole;
   isStorageConfigured: boolean;
   isOwnerOrManager: boolean;
@@ -39,7 +38,6 @@ export const InviteMemberModal = ({
   teams,
   isAccessControlAllowed,
   isFormbricksCloud,
-  environmentId,
   membershipRole,
   isStorageConfigured,
   isOwnerOrManager,
@@ -61,7 +59,6 @@ export const InviteMemberModal = ({
     individual: (
       <IndividualInviteTab
         setOpen={setOpen}
-        environmentId={environmentId}
         onSubmit={onSubmit}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}

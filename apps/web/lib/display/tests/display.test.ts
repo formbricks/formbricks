@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
-import { createDisplay } from "@/app/api/v1/client/[environmentId]/displays/lib/display";
+import { createDisplay } from "@/app/api/v1/client/[workspaceId]/displays/lib/display";
 import { deleteDisplay } from "../service";
 
 beforeEach(() => {

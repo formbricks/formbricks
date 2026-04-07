@@ -54,7 +54,6 @@ interface PermissionRecord {
   environmentId: string;
   permission: ApiKeyPermission;
   workspaceName: string;
-  environmentType: string;
 }
 
 const permissionOptions = [ApiKeyPermission.read, ApiKeyPermission.write, ApiKeyPermission.manage];
@@ -87,7 +86,6 @@ export const AddApiKeyModal = ({
           environmentId: workspaces[0].environments[0].id,
           permission: ApiKeyPermission.read,
           workspaceName: workspaces[0].name,
-          environmentType: workspaces[0].environments[0].type,
         },
       };
     }
@@ -120,15 +118,11 @@ export const AddApiKeyModal = ({
   };
 
   const updatePermission = (key: string, field: string, value: string) => {
-    const workspace = workspaces.find((p) => p.id === selectedPermissions[key].workspaceId);
-    const environment = workspace?.environments.find((env) => env.id === value);
-
     setSelectedPermissions({
       ...selectedPermissions,
       [key]: {
         ...selectedPermissions[key],
         [field]: value,
-        ...(field === "environmentId" && environment ? { environmentType: environment.type } : {}),
       },
     });
   };
@@ -145,7 +139,6 @@ export const AddApiKeyModal = ({
           workspaceId,
           environmentId: environment.id,
           workspaceName: workspace.name,
-          environmentType: environment.type,
         },
       });
     }
@@ -153,7 +146,7 @@ export const AddApiKeyModal = ({
 
   const checkForDuplicatePermissions = () => {
     const permissions = Object.values(selectedPermissions);
-    const uniquePermissions = new Set(permissions.map((p) => `${p.workspaceId}-${p.environmentId}`));
+    const uniquePermissions = new Set(permissions.map((p) => p.workspaceId));
     return uniquePermissions.size !== permissions.length;
   };
 
@@ -181,12 +174,6 @@ export const AddApiKeyModal = ({
     reset();
     setSelectedPermissions({});
     setSelectedOrganizationAccess(defaultOrganizationAccess);
-  };
-
-  // Get environment options for a workspace
-  const getEnvironmentOptionsForWorkspace = (workspaceId: string) => {
-    const workspace = workspaces.find((p) => p.id === workspaceId);
-    return workspace?.environments || [];
   };
 
   const isSubmitDisabled = () => {
@@ -242,7 +229,7 @@ export const AddApiKeyModal = ({
                   return (
                     <div key={key} className="flex items-center gap-2">
                       {/* Workspace dropdown */}
-                      <div className="w-1/3">
+                      <div className="w-1/2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
@@ -270,39 +257,8 @@ export const AddApiKeyModal = ({
                         </DropdownMenu>
                       </div>
 
-                      {/* Environment dropdown */}
-                      <div className="w-1/3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
-                              <span className="flex w-4/5 flex-1">
-                                <span className="w-full truncate text-left capitalize">
-                                  {permission.environmentType}
-                                </span>
-                              </span>
-                              <span className="flex h-full items-center border-l pl-3">
-                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
-                              </span>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto capitalize">
-                            {getEnvironmentOptionsForWorkspace(permission.workspaceId).map((env) => (
-                              <DropdownMenuItem
-                                key={env.id}
-                                onClick={() => {
-                                  updatePermission(key, "environmentId", env.id);
-                                }}>
-                                {env.type}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
                       {/* Permission level dropdown */}
-                      <div className="w-1/3">
+                      <div className="w-1/2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button

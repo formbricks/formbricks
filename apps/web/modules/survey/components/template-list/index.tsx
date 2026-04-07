@@ -34,6 +34,7 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
@@ -64,7 +65,7 @@ export const TemplateList = ({
     });
 
     if (createSurveyResponse?.data) {
-      router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit`);
+      router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
       toast.error(errorMessage);

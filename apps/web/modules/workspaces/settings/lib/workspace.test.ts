@@ -15,6 +15,7 @@ const baseWorkspace = {
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Workspace 1",
+  appSetupCompleted: false,
   organizationId: "org1",
   languages: [],
   recontactDays: 0,
@@ -30,14 +31,6 @@ const baseWorkspace = {
       createdAt: new Date(),
       updatedAt: new Date(),
       type: "production" as TEnvironment["type"],
-      workspaceId: "p1",
-      appSetupCompleted: false,
-    },
-    {
-      id: "cmi2srt9q000104l7127e67v7",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      type: "development" as TEnvironment["type"],
       workspaceId: "p1",
       appSetupCompleted: false,
     },
@@ -114,7 +107,6 @@ describe("workspace lib", () => {
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p2" } as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
       vi.mocked(createEnvironment).mockResolvedValueOnce(baseWorkspace.environments[0] as any);
-      vi.mocked(createEnvironment).mockResolvedValueOnce(baseWorkspace.environments[1] as any);
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace as any);
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
       expect(result).toEqual(baseWorkspace);
@@ -158,10 +150,7 @@ describe("workspace lib", () => {
       vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
-      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", [
-        "cmi2sra0j000004l73fvh7lhe",
-        "cmi2srt9q000104l7127e67v7",
-      ]);
+      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", ["cmi2sra0j000004l73fvh7lhe"]);
     });
 
     test("logs error if file deletion fails", async () => {

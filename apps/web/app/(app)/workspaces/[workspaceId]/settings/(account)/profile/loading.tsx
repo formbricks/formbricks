@@ -1,0 +1,41 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
+import { LoadingCard } from "@/app/(app)/components/LoadingCard";
+import { AccountSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(account)/components/AccountSettingsNavbar";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+
+const Loading = () => {
+  const { t } = useTranslation();
+  const cards = [
+    {
+      title: t("environments.settings.profile.personal_information"),
+      description: t("environments.settings.profile.update_personal_info"),
+      skeletonLines: [
+        { classes: "h-4 w-28" },
+        { classes: "h-6 w-64" },
+        { classes: "h-4 w-28" },
+        { classes: "h-6 w-64" },
+      ],
+    },
+    {
+      title: t("environments.settings.profile.delete_account"),
+      description: t("environments.settings.profile.confirm_delete_account"),
+      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
+    },
+  ];
+
+  return (
+    <PageContentWrapper>
+      <PageHeader pageTitle={t("common.account_settings")}>
+        <AccountSettingsNavbar activeId="profile" loading />
+      </PageHeader>
+      {cards.map((card, index) => (
+        <LoadingCard key={index} {...card} />
+      ))}
+    </PageContentWrapper>
+  );
+};
+
+export default Loading;

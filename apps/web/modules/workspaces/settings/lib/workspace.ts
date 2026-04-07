@@ -31,6 +31,7 @@ const selectWorkspace = {
   clickOutsideClose: true,
   overlay: true,
   environments: true,
+  appSetupCompleted: true,
   styling: true,
   logo: true,
   customHeadScripts: true,
@@ -110,16 +111,12 @@ export const createWorkspace = async (
       });
     }
 
-    const devEnvironment = await createEnvironment(workspace.id, {
-      type: "development",
-    });
-
     const prodEnvironment = await createEnvironment(workspace.id, {
       type: "production",
     });
 
     const updatedWorkspace = await updateWorkspace(workspace.id, {
-      environments: [devEnvironment, prodEnvironment],
+      environments: [prodEnvironment],
     });
 
     return updatedWorkspace;

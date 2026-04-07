@@ -51,7 +51,7 @@ describe("checkAuth", () => {
         {
           environmentId: "env-123",
           permission: "read",
-          environmentType: "development",
+          environmentType: "production",
           workspaceId: "workspace-1",
           workspaceName: "Workspace 1",
         },
@@ -83,7 +83,7 @@ describe("checkAuth", () => {
         {
           environmentId: "env-123",
           permission: "write",
-          environmentType: "development",
+          environmentType: "production",
           workspaceId: "workspace-1",
           workspaceName: "Workspace 1",
         },

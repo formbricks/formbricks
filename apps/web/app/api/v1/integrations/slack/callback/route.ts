@@ -6,9 +6,8 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -18,22 +17,24 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
     const code = queryParams.get("code");
     const error = queryParams.get("error");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid workspaceId"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
+
+    const basePath = `/workspaces/${workspaceId}`;
 
     if (code && typeof code !== "string") {
       return {
@@ -89,7 +90,6 @@ export const GET = withV1ApiWrapper({
         team: data.team,
       };
 
-      const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
       const slackIntegration = await getIntegrationByType(workspaceId, "slack");
 
       const slackConfiguration: TIntegrationSlackConfig = {
@@ -99,24 +99,19 @@ export const GET = withV1ApiWrapper({
 
       const integration = {
         type: "slack" as "slack",
-        environment: environmentId,
         config: slackConfiguration,
       };
 
-      const result = await createOrUpdateIntegration(environmentId, integration);
+      const result = await createOrUpdateIntegration(workspaceId, integration);
 
       if (result) {
         return {
-          response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack`
-          ),
+          response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/slack`),
         };
       }
     } else if (error) {
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack?error=${error}`
-        ),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/slack?error=${error}`),
       };
     }
 
