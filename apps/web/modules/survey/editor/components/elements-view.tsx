@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
+import { Project } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -52,7 +52,6 @@ import {
   isUsedInRecall,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { MultiLanguageCard } from "@/modules/survey/multi-language-surveys/components/multi-language-card";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
@@ -62,7 +61,6 @@ interface ElementsViewProps {
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
   project: Project;
-  projectLanguages: Language[];
   invalidElements: string[] | null;
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
@@ -83,7 +81,6 @@ export const ElementsView = ({
   localSurvey,
   setLocalSurvey,
   project,
-  projectLanguages,
   invalidElements,
   setInvalidElements,
   setSelectedLanguageCode,
@@ -948,16 +945,6 @@ export const ElementsView = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               quotas={quotas}
-            />
-
-            <MultiLanguageCard
-              localSurvey={localSurvey}
-              projectLanguages={projectLanguages}
-              setLocalSurvey={setLocalSurvey}
-              setActiveElementId={setActiveElementId}
-              activeElementId={activeElementId}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
             />
           </>
         )}

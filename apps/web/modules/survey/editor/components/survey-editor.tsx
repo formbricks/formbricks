@@ -20,6 +20,7 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { refetchProjectAction } from "../actions";
 
@@ -84,6 +85,7 @@ export const SurveyEditor = ({
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
+  const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
@@ -190,6 +192,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!project.styling.allowStyleOverwrite}
+            hasLanguageErrors={hasIncompleteTranslations}
           />
 
           {activeView === "elements" && (
@@ -199,7 +202,6 @@ export const SurveyEditor = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               project={localProject}
-              projectLanguages={projectLanguages}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
@@ -229,6 +231,16 @@ export const SurveyEditor = ({
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
               isStorageConfigured={isStorageConfigured}
+            />
+          )}
+
+          {activeView === "language" && (
+            <LanguageView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
+              projectLanguages={projectLanguages}
+              locale={locale}
+              setHasIncompleteTranslations={setHasIncompleteTranslations}
             />
           )}
 
