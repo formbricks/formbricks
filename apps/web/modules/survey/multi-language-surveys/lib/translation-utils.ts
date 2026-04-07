@@ -9,6 +9,7 @@ export interface TranslatableString {
   fieldLabel: string;
   value: TI18nString;
   isRichText: boolean;
+  elementId: string;
 }
 
 export interface TranslationProgress {
@@ -33,7 +34,8 @@ const pushIfI18n = (
   field: string,
   path: string,
   displayId: string,
-  fieldLabel: string
+  fieldLabel: string,
+  elementId: string
 ) => {
   const val = (obj as Record<string, unknown>)?.[field];
   if (val && isI18nObject(val)) {
@@ -43,6 +45,7 @@ const pushIfI18n = (
       fieldLabel,
       value: val as TI18nString,
       isRichText: RICH_TEXT_FIELDS.has(field),
+      elementId,
     });
   }
 };
@@ -55,39 +58,50 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
     const wc = survey.welcomeCard;
     const base = "welcomeCard";
     const did = "W";
-    pushIfI18n(result, wc, "headline", base, did, "Headline");
-    pushIfI18n(result, wc, "subheader", base, did, "Subheader");
-    pushIfI18n(result, wc, "buttonLabel", base, did, "Button Label");
+    const eid = "start";
+    pushIfI18n(result, wc, "headline", base, did, "Headline", eid);
+    pushIfI18n(result, wc, "subheader", base, did, "Subheader", eid);
+    pushIfI18n(result, wc, "buttonLabel", base, did, "Button Label", eid);
   }
 
   // Blocks → elements
   survey.blocks.forEach((block, blockIdx) => {
     // Block-level fields
-    pushIfI18n(result, block, "buttonLabel", `blocks.${blockIdx}`, `${blockIdx + 1}`, "Button Label");
+    pushIfI18n(
+      result,
+      block,
+      "buttonLabel",
+      `blocks.${blockIdx}`,
+      `${blockIdx + 1}`,
+      "Button Label",
+      block.id
+    );
     pushIfI18n(
       result,
       block,
       "backButtonLabel",
       `blocks.${blockIdx}`,
       `${blockIdx + 1}`,
-      "Back Button Label"
+      "Back Button Label",
+      block.id
     );
 
     block.elements.forEach((element, elementIdx) => {
       const base = `blocks.${blockIdx}.elements.${elementIdx}`;
       const did = `${blockIdx + 1}.${elementIdx + 1}`;
+      const eid = element.id;
 
       // Common fields
-      pushIfI18n(result, element, "headline", base, did, "Headline");
-      pushIfI18n(result, element, "subheader", base, did, "Subheader");
+      pushIfI18n(result, element, "headline", base, did, "Headline", eid);
+      pushIfI18n(result, element, "subheader", base, did, "Subheader", eid);
 
       // Type-specific fields
       switch (element.type) {
         case TSurveyElementTypeEnum.OpenText:
-          pushIfI18n(result, element, "placeholder", base, did, "Placeholder");
+          pushIfI18n(result, element, "placeholder", base, did, "Placeholder", eid);
           break;
         case TSurveyElementTypeEnum.Consent:
-          pushIfI18n(result, element, "label", base, did, "Label");
+          pushIfI18n(result, element, "label", base, did, "Label", eid);
           break;
         case TSurveyElementTypeEnum.MultipleChoiceSingle:
         case TSurveyElementTypeEnum.MultipleChoiceMulti: {
@@ -103,22 +117,23 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 fieldLabel: `Choice ${ci + 1}`,
                 value: choice.label,
                 isRichText: false,
+                elementId: eid,
               });
             }
           });
-          pushIfI18n(result, element, "otherOptionPlaceholder", base, did, "Other Placeholder");
+          pushIfI18n(result, element, "otherOptionPlaceholder", base, did, "Other Placeholder", eid);
           break;
         }
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating:
-          pushIfI18n(result, element, "lowerLabel", base, did, "Lower Label");
-          pushIfI18n(result, element, "upperLabel", base, did, "Upper Label");
+          pushIfI18n(result, element, "lowerLabel", base, did, "Lower Label", eid);
+          pushIfI18n(result, element, "upperLabel", base, did, "Upper Label", eid);
           break;
         case TSurveyElementTypeEnum.CTA:
-          pushIfI18n(result, element, "ctaButtonLabel", base, did, "CTA Button Label");
+          pushIfI18n(result, element, "ctaButtonLabel", base, did, "CTA Button Label", eid);
           break;
         case TSurveyElementTypeEnum.Date:
-          pushIfI18n(result, element, "html", base, did, "HTML");
+          pushIfI18n(result, element, "html", base, did, "HTML", eid);
           break;
         case TSurveyElementTypeEnum.Matrix: {
           const matEl = element as {
@@ -133,6 +148,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 fieldLabel: `Row ${ri + 1}`,
                 value: row.label,
                 isRichText: false,
+                elementId: eid,
               });
             }
           });
@@ -144,6 +160,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 fieldLabel: `Column ${ci + 1}`,
                 value: col.label,
                 isRichText: false,
+                elementId: eid,
               });
             }
           });
@@ -160,6 +177,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 fieldLabel: `${f} Placeholder`,
                 value: sub.placeholder,
                 isRichText: false,
+                elementId: eid,
               });
             }
           });
@@ -176,6 +194,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 fieldLabel: `${f} Placeholder`,
                 value: sub.placeholder,
                 isRichText: false,
+                elementId: eid,
               });
             }
           });
@@ -194,10 +213,11 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 fieldLabel: `Choice ${ci + 1}`,
                 isRichText: false,
                 value: choice.label,
+                elementId: eid,
               });
             }
           });
-          pushIfI18n(result, element, "otherOptionPlaceholder", base, did, "Other Placeholder");
+          pushIfI18n(result, element, "otherOptionPlaceholder", base, did, "Other Placeholder", eid);
           break;
         }
       }
@@ -209,9 +229,10 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
     if (ending.type === "endScreen") {
       const base = `endings.${endingIdx}`;
       const did = `E${endingIdx + 1}`;
-      pushIfI18n(result, ending, "headline", base, did, "Headline");
-      pushIfI18n(result, ending, "subheader", base, did, "Subheader");
-      pushIfI18n(result, ending, "buttonLabel", base, did, "Button Label");
+      const eid = ending.id;
+      pushIfI18n(result, ending, "headline", base, did, "Headline", eid);
+      pushIfI18n(result, ending, "subheader", base, did, "Subheader", eid);
+      pushIfI18n(result, ending, "buttonLabel", base, did, "Button Label", eid);
     }
   });
 

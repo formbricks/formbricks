@@ -149,6 +149,8 @@ export const ManageTranslationsModal = ({
                   s={s}
                   value={draftTranslations[s.path] ?? ""}
                   onChange={handleDraftChange}
+                  localSurvey={localSurvey}
+                  languageCode={languageCode}
                 />
               ))}
             </tbody>
@@ -172,10 +174,14 @@ const TranslationRow = ({
   s,
   value,
   onChange,
+  localSurvey,
+  languageCode,
 }: {
   s: TranslatableString;
   value: string;
   onChange: (path: string, value: string) => void;
+  localSurvey: TSurvey;
+  languageCode: string;
 }) => {
   const isEmpty = !value.trim();
   return (
@@ -187,11 +193,26 @@ const TranslationRow = ({
         <div className="mt-0.5 text-[10px] text-slate-400">{s.fieldLabel}</div>
       </td>
       <td className="py-2 pr-2 align-top">
-        <div className="text-sm text-slate-700">{s.value.default || ""}</div>
+        {s.isRichText ? (
+          <div
+            className="text-sm text-slate-700"
+            dangerouslySetInnerHTML={{ __html: s.value.default || "" }}
+          />
+        ) : (
+          <div className="text-sm text-slate-700">{s.value.default || ""}</div>
+        )}
       </td>
       <td className="py-2 align-top">
         {s.isRichText ? (
-          <RichTextTranslationInput path={s.path} value={value} onChange={onChange} isEmpty={isEmpty} />
+          <RichTextTranslationInput
+            path={s.path}
+            value={value}
+            onChange={onChange}
+            isEmpty={isEmpty}
+            localSurvey={localSurvey}
+            languageCode={languageCode}
+            elementId={s.elementId}
+          />
         ) : (
           <Input
             className={cn("text-sm", isEmpty && "border-orange-400 focus:border-orange-500")}
@@ -210,11 +231,17 @@ const RichTextTranslationInput = ({
   value,
   onChange,
   isEmpty,
+  localSurvey,
+  languageCode,
+  elementId,
 }: {
   path: string;
   value: string;
   onChange: (path: string, value: string) => void;
   isEmpty: boolean;
+  localSurvey: TSurvey;
+  languageCode: string;
+  elementId: string;
 }) => {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -228,6 +255,9 @@ const RichTextTranslationInput = ({
         setFirstRender={setFirstRender}
         getText={() => md.render(value)}
         setText={(v: string) => onChange(path, v)}
+        localSurvey={localSurvey}
+        elementId={elementId}
+        selectedLanguageCode={languageCode}
       />
     </div>
   );
