@@ -1,9 +1,9 @@
 import { logger } from "@formbricks/logger";
 
-export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
+export const authorize = async (workspaceId: string, apiHost: string): Promise<string> => {
   const res = await fetch(`${apiHost}/api/v1/integrations/notion`, {
     method: "GET",
-    headers: { environmentId: environmentId },
+    headers: { workspaceId },
   });
 
   if (!res.ok) {

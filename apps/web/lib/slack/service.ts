@@ -4,7 +4,6 @@ import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 import { SLACK_MESSAGE_LIMIT } from "../constants";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
-import { getWorkspaceIdFromEnvironmentId } from "../utils/helper";
 import { truncateText } from "../utils/strings";
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
@@ -56,10 +55,9 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
   return channels;
 };
 
-export const getSlackChannels = async (environmentId: string): Promise<TIntegrationItem[]> => {
+export const getSlackChannels = async (workspaceId: string): Promise<TIntegrationItem[]> => {
   let channels: TIntegrationItem[] = [];
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const slackIntegration = (await getIntegrationByType(workspaceId, "slack")) as TIntegrationSlack;
     if (slackIntegration && slackIntegration.config?.key) {
       channels = await fetchChannels(slackIntegration);

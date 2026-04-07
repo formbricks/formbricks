@@ -32,7 +32,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   let airtableArray: TIntegrationItem[] = [];
   if (airtableIntegration?.config.key) {
-    airtableArray = await getAirtableTables(environment.id);
+    airtableArray = await getAirtableTables(workspace.id);
   }
   if (isReadOnly) {
     return redirect("./");
@@ -47,7 +47,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isEnabled={isEnabled}
           airtableIntegration={airtableIntegration}
           airtableArray={airtableArray}
-          environmentId={environment.id}
+          workspaceId={workspace.id}
           surveys={surveys}
           webAppUrl={WEBAPP_URL}
           locale={locale ?? DEFAULT_LOCALE}

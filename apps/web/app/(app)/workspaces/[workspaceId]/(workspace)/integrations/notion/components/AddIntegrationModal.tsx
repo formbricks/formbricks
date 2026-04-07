@@ -39,7 +39,7 @@ import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 
 interface AddIntegrationModalProps {
-  environmentId: string;
+  workspaceId: string;
   surveys: TSurvey[];
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -49,7 +49,7 @@ interface AddIntegrationModalProps {
 }
 
 export const AddIntegrationModal = ({
-  environmentId,
+  workspaceId,
   surveys,
   open,
   setOpen,
@@ -219,7 +219,7 @@ export const AddIntegrationModal = ({
       }
 
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: notionIntegrationData,
       });
       if (result?.serverError) {
@@ -245,7 +245,7 @@ export const AddIntegrationModal = ({
     try {
       setIsDeleting(true);
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: notionIntegrationData,
       });
       if (result?.serverError) {

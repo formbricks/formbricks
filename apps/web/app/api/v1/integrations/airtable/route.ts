@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
@@ -12,16 +12,16 @@ export const GET = withV1ApiWrapper({
       return { response: responses.notAuthenticatedResponse() };
     }
 
-    const environmentId = req.headers.get("environmentId");
+    const workspaceId = req.headers.get("workspaceId") ?? req.headers.get("environmentId");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("environmentId is missing"),
+        response: responses.badRequestResponse("workspaceId is missing"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
@@ -33,9 +33,7 @@ export const GET = withV1ApiWrapper({
       return {
         response: responses.internalServerErrorResponse("Airtable client id is missing"),
       };
-    const codeVerifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
-      "base64"
-    );
+    const codeVerifier = Buffer.from(workspaceId + authentication.user.id + workspaceId).toString("base64");
 
     const codeChallengeMethod = "S256";
     const codeChallenge = crypto
@@ -50,7 +48,7 @@ export const GET = withV1ApiWrapper({
 
     authUrl.searchParams.append("client_id", client_id);
     authUrl.searchParams.append("redirect_uri", redirect_uri);
-    authUrl.searchParams.append("state", environmentId);
+    authUrl.searchParams.append("state", workspaceId);
     authUrl.searchParams.append("scope", scope);
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("code_challenge_method", codeChallengeMethod);

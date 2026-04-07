@@ -13,7 +13,7 @@ vi.mock("@formbricks/logger", () => ({
 global.fetch = vi.fn();
 
 describe("authorize", () => {
-  const environmentId = "test-env-id";
+  const workspaceId = "test-env-id";
   const apiHost = "http://test.com";
   const expectedUrl = `${apiHost}/api/v1/integrations/slack`;
   const expectedAuthUrl = "http://slack.com/auth";
@@ -24,11 +24,11 @@ describe("authorize", () => {
       json: async () => ({ data: { authUrl: expectedAuthUrl } }),
     } as Response);
 
-    const authUrl = await authorize(environmentId, apiHost);
+    const authUrl = await authorize(workspaceId, apiHost);
 
     expect(fetch).toHaveBeenCalledWith(expectedUrl, {
       method: "GET",
-      headers: { environmentId },
+      headers: { workspaceId },
     });
     expect(authUrl).toBe(expectedAuthUrl);
   });
@@ -40,11 +40,11 @@ describe("authorize", () => {
       text: async () => errorText,
     } as Response);
 
-    await expect(authorize(environmentId, apiHost)).rejects.toThrow("Could not create response");
+    await expect(authorize(workspaceId, apiHost)).rejects.toThrow("Could not create response");
 
     expect(fetch).toHaveBeenCalledWith(expectedUrl, {
       method: "GET",
-      headers: { environmentId },
+      headers: { workspaceId },
     });
     expect(logger.error).toHaveBeenCalledWith({ errorText }, "authorize: Could not fetch slack config");
   });

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -18,7 +17,7 @@ import { AddIntegrationModal } from "./AddIntegrationModal";
 
 interface GoogleSheetWrapperProps {
   isEnabled: boolean;
-  environment: TEnvironment;
+  workspaceId: string;
   surveys: TSurvey[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
@@ -27,7 +26,7 @@ interface GoogleSheetWrapperProps {
 
 export const GoogleSheetWrapper = ({
   isEnabled,
-  environment,
+  workspaceId,
   surveys,
   googleSheetIntegration,
   webAppUrl,
@@ -44,18 +43,18 @@ export const GoogleSheetWrapper = ({
 
   const validateConnection = useCallback(async () => {
     if (!isConnected || !googleSheetIntegration) return;
-    const response = await validateGoogleSheetsConnectionAction({ environmentId: environment.id });
+    const response = await validateGoogleSheetsConnectionAction({ workspaceId });
     if (response?.serverError === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
       setShowReconnectButton(true);
     }
-  }, [environment.id, isConnected, googleSheetIntegration]);
+  }, [workspaceId, isConnected, googleSheetIntegration]);
 
   useEffect(() => {
     validateConnection();
   }, [validateConnection]);
 
   const handleGoogleAuthorization = async () => {
-    authorize(environment.id, webAppUrl).then((url: string) => {
+    authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }
@@ -67,7 +66,7 @@ export const GoogleSheetWrapper = ({
       {isConnected && googleSheetIntegration ? (
         <>
           <AddIntegrationModal
-            environmentId={environment.id}
+            workspaceId={workspaceId}
             surveys={surveys}
             open={isModalOpen}
             setOpen={setIsModalOpen}

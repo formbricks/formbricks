@@ -10,20 +10,18 @@ import { getSpreadsheetNameById, validateGoogleSheetsConnection } from "@/lib/go
 import { getIntegrationByType } from "@/lib/integration/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 const ZValidateGoogleSheetsConnectionAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const validateGoogleSheetsConnectionAction = authenticatedActionClient
   .inputSchema(ZValidateGoogleSheetsConnectionAction)
   .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
       access: [
         {
           type: "organization",
@@ -31,13 +29,13 @@ export const validateGoogleSheetsConnectionAction = authenticatedActionClient
         },
         {
           type: "workspaceTeam",
-          workspaceId,
+          workspaceId: parsedInput.workspaceId,
           minPermission: "readWrite",
         },
       ],
     });
 
-    const integration = await getIntegrationByType(workspaceId, "googleSheets");
+    const integration = await getIntegrationByType(parsedInput.workspaceId, "googleSheets");
     if (!integration) {
       return { data: false };
     }
@@ -48,17 +46,16 @@ export const validateGoogleSheetsConnectionAction = authenticatedActionClient
 
 const ZGetSpreadsheetNameByIdAction = z.object({
   googleSheetIntegration: ZIntegrationGoogleSheets,
-  environmentId: z.string(),
+  workspaceId: z.string(),
   spreadsheetId: z.string(),
 });
 
 export const getSpreadsheetNameByIdAction = authenticatedActionClient
   .inputSchema(ZGetSpreadsheetNameByIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
       access: [
         {
           type: "organization",
@@ -66,7 +63,7 @@ export const getSpreadsheetNameByIdAction = authenticatedActionClient
         },
         {
           type: "workspaceTeam",
-          workspaceId,
+          workspaceId: parsedInput.workspaceId,
           minPermission: "readWrite",
         },
       ],

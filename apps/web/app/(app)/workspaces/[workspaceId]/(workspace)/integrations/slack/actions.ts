@@ -5,19 +5,18 @@ import { ZId } from "@formbricks/types/common";
 import { getSlackChannels } from "@/lib/slack/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 const ZGetSlackChannelsAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const getSlackChannelsAction = authenticatedActionClient
   .inputSchema(ZGetSlackChannelsAction)
   .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
       access: [
         {
           type: "organization",
@@ -25,11 +24,11 @@ export const getSlackChannelsAction = authenticatedActionClient
         },
         {
           type: "workspaceTeam",
-          workspaceId,
+          workspaceId: parsedInput.workspaceId,
           minPermission: "readWrite",
         },
       ],
     });
 
-    return await getSlackChannels(parsedInput.environmentId);
+    return await getSlackChannels(parsedInput.workspaceId);
   });

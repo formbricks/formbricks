@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getEnvironmentIdFromWorkspaceId } from "@/lib/utils/helper";
 import { ITEMS_PER_PAGE } from "../constants";
 import {
   createOrUpdateIntegration,
@@ -14,7 +14,7 @@ import {
 } from "./service";
 
 vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
+  getEnvironmentIdFromWorkspaceId: vi.fn().mockResolvedValue("environment-id-mock"),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -32,7 +32,7 @@ vi.mock("@formbricks/database", () => ({
 describe("Integration Service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
+    vi.mocked(getEnvironmentIdFromWorkspaceId).mockResolvedValue("environment-id-mock");
   });
 
   afterEach(() => {
@@ -66,7 +66,7 @@ describe("Integration Service", () => {
   };
 
   describe("createOrUpdateIntegration", () => {
-    const mockEnvironmentId = "clg123456789012345678901234";
+    const mockWorkspaceId = "clg123456789012345678901234";
     const mockIntegrationData: TIntegrationInput = {
       type: "googleSheets",
       config: mockIntegrationConfig,
@@ -75,30 +75,30 @@ describe("Integration Service", () => {
     test("should create a new integration", async () => {
       const mockIntegration = {
         id: "int_123",
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         ...mockIntegrationData,
       };
 
       vi.mocked(prisma.integration.upsert).mockResolvedValue(mockIntegration);
 
-      const result = await createOrUpdateIntegration(mockEnvironmentId, mockIntegrationData);
+      const result = await createOrUpdateIntegration(mockWorkspaceId, mockIntegrationData);
 
       expect(prisma.integration.upsert).toHaveBeenCalledWith({
         where: {
-          type_environmentId: {
-            environmentId: mockEnvironmentId,
+          type_workspaceId: {
+            workspaceId: mockWorkspaceId,
             type: mockIntegrationData.type,
           },
         },
         update: {
           ...mockIntegrationData,
-          environment: { connect: { id: mockEnvironmentId } },
-          workspace: { connect: { id: "workspace-id-mock" } },
+          environment: { connect: { id: "environment-id-mock" } },
+          workspace: { connect: { id: mockWorkspaceId } },
         },
         create: {
           ...mockIntegrationData,
-          environment: { connect: { id: mockEnvironmentId } },
-          workspace: { connect: { id: "workspace-id-mock" } },
+          environment: { connect: { id: "environment-id-mock" } },
+          workspace: { connect: { id: mockWorkspaceId } },
         },
       });
 
@@ -113,7 +113,7 @@ describe("Integration Service", () => {
 
       vi.mocked(prisma.integration.upsert).mockRejectedValue(prismaError);
 
-      await expect(createOrUpdateIntegration(mockEnvironmentId, mockIntegrationData)).rejects.toThrow(
+      await expect(createOrUpdateIntegration(mockWorkspaceId, mockIntegrationData)).rejects.toThrow(
         DatabaseError
       );
     });

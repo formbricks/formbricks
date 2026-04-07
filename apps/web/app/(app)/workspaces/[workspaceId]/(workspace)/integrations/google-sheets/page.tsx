@@ -44,7 +44,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper
           isEnabled={isEnabled}
-          environment={environment}
+          workspaceId={workspace.id}
           surveys={surveys}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}

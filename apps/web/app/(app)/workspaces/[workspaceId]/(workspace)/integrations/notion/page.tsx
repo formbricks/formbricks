@@ -39,7 +39,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
-    databasesArray = (await getNotionDatabases(environment.id)) ?? [];
+    databasesArray = (await getNotionDatabases(workspace.id)) ?? [];
   }
 
   if (isReadOnly) {
@@ -53,7 +53,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}
-        environment={environment}
+        workspaceId={workspace.id}
         notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}

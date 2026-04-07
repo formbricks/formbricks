@@ -36,7 +36,7 @@ import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 
 interface AddChannelMappingModalProps {
-  environmentId: string;
+  workspaceId: string;
   surveys: TSurvey[];
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -46,7 +46,7 @@ interface AddChannelMappingModalProps {
 }
 
 export const AddChannelMappingModal = ({
-  environmentId,
+  workspaceId,
   surveys,
   open,
   setOpen,
@@ -146,7 +146,7 @@ export const AddChannelMappingModal = ({
         slackIntegrationData.config.data.push(integrationData);
       }
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: slackIntegrationData,
       });
       if (result?.serverError) {
@@ -190,7 +190,7 @@ export const AddChannelMappingModal = ({
     try {
       setIsDeleting(true);
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: slackIntegrationData,
       });
       if (result?.serverError) {

@@ -14,10 +14,10 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 describe("authorize", () => {
-  const environmentId = "test-env-id";
+  const workspaceId = "test-env-id";
   const apiHost = "http://test.com";
   const expectedUrl = `${apiHost}/api/google-sheet`;
-  const expectedHeaders = { environmentId: environmentId };
+  const expectedHeaders = { workspaceId: workspaceId };
 
   afterEach(() => {
     vi.clearAllMocks();
@@ -30,7 +30,7 @@ describe("authorize", () => {
       json: async () => ({ data: { authUrl: mockAuthUrl } }),
     });
 
-    const authUrl = await authorize(environmentId, apiHost);
+    const authUrl = await authorize(workspaceId, apiHost);
 
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl, {
       method: "GET",
@@ -47,7 +47,7 @@ describe("authorize", () => {
       text: async () => errorText,
     });
 
-    await expect(authorize(environmentId, apiHost)).rejects.toThrow("Could not create response");
+    await expect(authorize(workspaceId, apiHost)).rejects.toThrow("Could not create response");
 
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl, {
       method: "GET",

@@ -9,13 +9,12 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import {
   getOrganizationIdFromIntegrationId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromIntegrationId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateOrUpdateIntegrationAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   integrationData: ZIntegrationInput,
 });
 
@@ -23,8 +22,7 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
   .inputSchema(ZCreateOrUpdateIntegrationAction)
   .action(
     withAuditLogging("createdUpdated", "integration", async ({ ctx, parsedInput }) => {
-      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
-      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -37,13 +35,13 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
           {
             type: "workspaceTeam",
             minPermission: "readWrite",
-            workspaceId,
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const result = await createOrUpdateIntegration(parsedInput.environmentId, parsedInput.integrationData);
+      const result = await createOrUpdateIntegration(parsedInput.workspaceId, parsedInput.integrationData);
       ctx.auditLoggingCtx.integrationId = result.id;
       ctx.auditLoggingCtx.newObject = result;
       return result;

@@ -93,7 +93,7 @@ type EditModeProps =
 type AddIntegrationModalProps = {
   open: boolean;
   setOpenWithStates: (v: boolean) => void;
-  environmentId: string;
+  workspaceId: string;
   airtableArray: TIntegrationItem[];
   surveys: TSurvey[];
   airtableIntegration: TIntegrationAirtable;
@@ -172,7 +172,7 @@ const renderElementSelection = ({
 export const AddIntegrationModal = ({
   open,
   setOpenWithStates,
-  environmentId,
+  workspaceId,
   airtableArray,
   surveys,
   airtableIntegration,
@@ -270,7 +270,7 @@ export const AddIntegrationModal = ({
       }
 
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: airtableIntegrationData,
       });
       if (result?.serverError) {
@@ -289,7 +289,7 @@ export const AddIntegrationModal = ({
   };
 
   const handleTable = async (baseId: string) => {
-    const data = await fetchTables(environmentId, baseId);
+    const data = await fetchTables(workspaceId, baseId);
 
     if (data.tables) {
       setTables(data.tables);
@@ -312,7 +312,7 @@ export const AddIntegrationModal = ({
       const integrationData = structuredClone(airtableIntegrationData);
       integrationData.config.data.splice(index, 1);
 
-      const result = await createOrUpdateIntegrationAction({ environmentId, integrationData });
+      const result = await createOrUpdateIntegrationAction({ workspaceId, integrationData });
       if (result?.serverError) {
         toast.error(getFormattedErrorMessage(result));
         return;

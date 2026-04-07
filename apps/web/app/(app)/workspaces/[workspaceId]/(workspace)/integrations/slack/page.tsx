@@ -36,7 +36,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <div className="h-[75vh] w-full">
         <SlackWrapper
           isEnabled={isEnabled}
-          environment={environment}
+          workspaceId={workspace.id}
           surveys={surveys}
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}

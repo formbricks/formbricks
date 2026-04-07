@@ -11,7 +11,7 @@ import airtableLogo from "@/images/airtableLogo.svg";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 
 interface AirtableWrapperProps {
-  environmentId: string;
+  workspaceId: string;
   airtableArray: TIntegrationItem[];
   airtableIntegration?: TIntegrationAirtable;
   surveys: TSurvey[];
@@ -21,7 +21,7 @@ interface AirtableWrapperProps {
 }
 
 export const AirtableWrapper = ({
-  environmentId,
+  workspaceId,
   airtableArray,
   airtableIntegration,
   surveys,
@@ -34,7 +34,7 @@ export const AirtableWrapper = ({
   );
 
   const handleAirtableAuthorization = async () => {
-    authorize(environmentId, webAppUrl).then((url: string) => {
+    authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }
@@ -44,7 +44,7 @@ export const AirtableWrapper = ({
   return isConnected && airtableIntegration ? (
     <ManageIntegration
       airtableArray={airtableArray}
-      environmentId={environmentId}
+      workspaceId={workspaceId}
       airtableIntegration={airtableIntegration}
       setIsConnected={setIsConnected}
       surveys={surveys}

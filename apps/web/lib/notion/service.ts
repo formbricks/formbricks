@@ -6,7 +6,6 @@ import {
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { getIntegrationByType } from "../integration/service";
-import { getWorkspaceIdFromEnvironmentId } from "../utils/helper";
 
 const fetchPages = async (config: TIntegrationNotionConfig) => {
   try {
@@ -27,10 +26,9 @@ const fetchPages = async (config: TIntegrationNotionConfig) => {
   }
 };
 
-export const getNotionDatabases = async (environmentId: string): Promise<TIntegrationNotionDatabase[]> => {
+export const getNotionDatabases = async (workspaceId: string): Promise<TIntegrationNotionDatabase[]> => {
   let results: TIntegrationNotionDatabase[] = [];
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const notionIntegration = (await getIntegrationByType(workspaceId, "notion")) as TIntegrationNotion;
     if (notionIntegration && notionIntegration.config?.key.bot_id) {
       results = await fetchPages(notionIntegration.config);

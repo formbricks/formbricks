@@ -35,7 +35,7 @@ vi.mock("react", async (importOriginal) => {
   };
 });
 
-const environmentId = "test-environment-id";
+const workspaceId = "test-environment-id";
 // Use 'as any' to bypass complex type matching for mock data
 const mockPrismaSurveys = [
   { id: "survey1", name: "Survey 1", status: "inProgress", updatedAt: new Date() },
@@ -58,7 +58,7 @@ const mockTransformedSurveys: TSurvey[] = [
     welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
     hiddenFields: { enabled: false },
     type: "app", // Changed type to web to match original file
-    environmentId: environmentId,
+    workspaceId: workspaceId,
     createdAt: new Date(),
     updatedAt: new Date(),
     languages: [],
@@ -80,7 +80,7 @@ const mockTransformedSurveys: TSurvey[] = [
     welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
     hiddenFields: { enabled: false },
     type: "app",
-    environmentId: environmentId,
+    workspaceId: workspaceId,
     createdAt: new Date(),
     updatedAt: new Date(),
     languages: [],
@@ -98,14 +98,14 @@ describe("getSurveys", () => {
       return { ...found } as TSurvey;
     });
 
-    const surveys = await getSurveys(environmentId);
+    const surveys = await getSurveys(workspaceId);
 
     expect(surveys).toEqual(mockTransformedSurveys);
     // Use expect.any(ZId) for the Zod schema validation check
-    expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]); // Adjusted expectation
+    expect(validateInputs).toHaveBeenCalledWith([workspaceId, expect.any(Object)]); // Adjusted expectation
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId,
         status: {
           not: "completed",
         },
@@ -129,7 +129,7 @@ describe("getSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(prismaError);
 
-    await expect(getSurveys(environmentId)).rejects.toThrow(DatabaseError);
+    await expect(getSurveys(workspaceId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith({ error: prismaError }, "getSurveys: Could not fetch surveys");
     // React cache is already mocked globally - no need to check it here
   });
@@ -139,7 +139,7 @@ describe("getSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(genericError);
 
-    await expect(getSurveys(environmentId)).rejects.toThrow(genericError);
+    await expect(getSurveys(workspaceId)).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
     // React cache is already mocked globally - no need to check it here
   });

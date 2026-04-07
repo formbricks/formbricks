@@ -10,13 +10,13 @@ import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 
-export const getSurveys = reactCache(async (environmentId: string): Promise<TSurvey[]> => {
-  validateInputs([environmentId, ZId]);
+export const getSurveys = reactCache(async (workspaceId: string): Promise<TSurvey[]> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     const surveysPrisma = await prisma.survey.findMany({
       where: {
-        environmentId,
+        workspaceId,
         status: {
           not: "completed",
         },

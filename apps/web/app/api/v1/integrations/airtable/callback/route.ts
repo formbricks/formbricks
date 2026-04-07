@@ -6,7 +6,6 @@ import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -28,12 +27,12 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
     const code = queryParams.get("code");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid workspaceId"),
       };
     }
 
@@ -42,27 +41,19 @@ export const GET = withV1ApiWrapper({
         response: responses.badRequestResponse("`code` is missing"),
       };
     }
-    const workspace = await getWorkspaceByEnvironmentId(environmentId);
-    if (!workspace) {
-      return {
-        response: responses.notFoundResponse("Workspace", environmentId),
-      };
-    }
 
-    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspace.id);
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
     if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
-    const basePath = `/workspaces/${workspace.id}`;
+    const basePath = `/workspaces/${workspaceId}`;
 
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-    const code_verifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
-      "base64"
-    );
+    const code_verifier = Buffer.from(workspaceId + authentication.user.id + workspaceId).toString("base64");
 
     if (!client_id)
       return {
@@ -88,14 +79,13 @@ export const GET = withV1ApiWrapper({
 
       const airtableIntegrationInput = {
         type: "airtable" as "airtable",
-        environment: environmentId,
         config: {
           key,
           data: [],
           email,
         },
       };
-      await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
+      await createOrUpdateIntegration(workspaceId, airtableIntegrationInput);
       return {
         response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/airtable`),
       };

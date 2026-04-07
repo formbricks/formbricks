@@ -30,3 +30,13 @@ CREATE INDEX "ActionClass_workspaceId_created_at_idx" ON "ActionClass"("workspac
 CREATE INDEX "Integration_workspaceId_idx" ON "Integration"("workspaceId");
 CREATE INDEX "ApiKeyEnvironment_workspaceId_idx" ON "ApiKeyEnvironment"("workspaceId");
 CREATE INDEX "Segment_workspaceId_idx" ON "Segment"("workspaceId");
+
+-- Add appSetupCompleted to Workspace and backfill from production environment
+ALTER TABLE "Workspace" ADD COLUMN "appSetupCompleted" BOOLEAN NOT NULL DEFAULT false;
+
+UPDATE "Workspace" w
+SET "appSetupCompleted" = e."appSetupCompleted"
+FROM "Environment" e
+WHERE e."workspaceId" = w."id"
+  AND e."type" = 'production'
+  AND e."appSetupCompleted" = true;

@@ -1,3 +1,4 @@
+import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
@@ -192,6 +193,19 @@ export const getWorkspaceIdFromEnvironmentId = async (environmentId: string) => 
   }
 
   return environment.workspaceId;
+};
+
+export const getEnvironmentIdFromWorkspaceId = async (workspaceId: string): Promise<string> => {
+  const environment = await prisma.environment.findFirst({
+    where: { workspaceId, type: "production" },
+    select: { id: true },
+  });
+
+  if (!environment) {
+    throw new ResourceNotFoundError("environment", workspaceId);
+  }
+
+  return environment.id;
 };
 
 export const getWorkspaceIdFromSurveyId = async (surveyId: string) => {

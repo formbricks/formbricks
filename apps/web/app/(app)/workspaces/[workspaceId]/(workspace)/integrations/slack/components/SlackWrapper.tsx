@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -15,7 +14,7 @@ import { ConnectIntegration } from "@/modules/ui/components/connect-integration"
 
 interface SlackWrapperProps {
   isEnabled: boolean;
-  environment: TEnvironment;
+  workspaceId: string;
   surveys: TSurvey[];
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
@@ -24,7 +23,7 @@ interface SlackWrapperProps {
 
 export const SlackWrapper = ({
   isEnabled,
-  environment,
+  workspaceId,
   surveys,
   slackIntegration,
   webAppUrl,
@@ -39,7 +38,7 @@ export const SlackWrapper = ({
   >(null);
 
   const getSlackChannels = useCallback(async () => {
-    const getSlackChannelsResponse = await getSlackChannelsAction({ environmentId: environment.id });
+    const getSlackChannelsResponse = await getSlackChannelsAction({ workspaceId });
 
     if (
       getSlackChannelsResponse?.serverError &&
@@ -52,14 +51,14 @@ export const SlackWrapper = ({
     if (getSlackChannelsResponse?.data) {
       setSlackChannels(getSlackChannelsResponse.data);
     }
-  }, [environment.id]);
+  }, [workspaceId]);
 
   useEffect(() => {
     getSlackChannels();
   }, [getSlackChannels]);
 
   const handleSlackAuthorization = async () => {
-    authorize(environment.id, webAppUrl).then((url: string) => {
+    authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }
@@ -69,7 +68,7 @@ export const SlackWrapper = ({
   return isConnected && slackIntegration ? (
     <>
       <AddChannelMappingModal
-        environmentId={environment.id}
+        workspaceId={workspaceId}
         surveys={surveys}
         open={isModalOpen}
         setOpen={setIsModalOpen}

@@ -9,18 +9,16 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
   const url = new URL(req.url);
-  const environmentId = url.searchParams.get("state");
+  const workspaceId = url.searchParams.get("state");
   const code = url.searchParams.get("code");
 
-  if (!environmentId) {
-    return responses.badRequestResponse("Invalid environmentId");
+  if (!workspaceId) {
+    return responses.badRequestResponse("Invalid workspaceId");
   }
 
   const session = await getServerSession(authOptions);
@@ -28,17 +26,12 @@ export const GET = async (req: Request) => {
     return responses.notAuthenticatedResponse();
   }
 
-  const workspace = await getWorkspaceByEnvironmentId(environmentId);
-  if (!workspace) {
-    return responses.notFoundResponse("Workspace", environmentId);
-  }
-
-  const canUserAccessWorkspace = await hasUserWorkspaceAccess(session.user.id, workspace.id);
+  const canUserAccessWorkspace = await hasUserWorkspaceAccess(session.user.id, workspaceId);
   if (!canUserAccessWorkspace) {
     return responses.unauthorizedResponse();
   }
 
-  const basePath = `/workspaces/${workspace.id}`;
+  const basePath = `/workspaces/${workspaceId}`;
 
   if (code && typeof code !== "string") {
     return responses.badRequestResponse("`code` must be a string");
@@ -72,13 +65,11 @@ export const GET = async (req: Request) => {
   }
 
   const integrationType = "googleSheets" as const;
-  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
   const existingIntegration = await getIntegrationByType(workspaceId, integrationType);
   const existingConfig = existingIntegration?.config as TIntegrationGoogleSheetsConfig;
 
   const googleSheetIntegration = {
     type: integrationType,
-    environment: environmentId,
     config: {
       key,
       data: existingConfig?.data ?? [],
@@ -86,7 +77,7 @@ export const GET = async (req: Request) => {
     },
   };
 
-  const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
+  const result = await createOrUpdateIntegration(workspaceId, googleSheetIntegration);
   if (result) {
     return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
   }

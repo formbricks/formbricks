@@ -13,7 +13,7 @@ vi.mock("@formbricks/logger", () => ({
 // Mock fetch
 global.fetch = vi.fn();
 
-const environmentId = "test-env-id";
+const workspaceId = "test-env-id";
 const baseId = "test-base-id";
 const apiHost = "http://localhost:3000";
 
@@ -36,11 +36,11 @@ describe("Airtable Library", () => {
       };
       vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
 
-      const tables = await fetchTables(environmentId, baseId);
+      const tables = await fetchTables(workspaceId, baseId);
 
       expect(fetch).toHaveBeenCalledWith(`/api/v1/integrations/airtable/tables?baseId=${baseId}`, {
         method: "GET",
-        headers: { environmentId: environmentId },
+        headers: { workspaceId: workspaceId },
         cache: "no-store",
       });
       expect(tables).toEqual(mockTables);
@@ -56,11 +56,11 @@ describe("Airtable Library", () => {
       };
       vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
 
-      const authUrl = await authorize(environmentId, apiHost);
+      const authUrl = await authorize(workspaceId, apiHost);
 
       expect(fetch).toHaveBeenCalledWith(`${apiHost}/api/v1/integrations/airtable`, {
         method: "GET",
-        headers: { environmentId: environmentId },
+        headers: { workspaceId: workspaceId },
       });
       expect(authUrl).toBe(mockAuthUrl);
     });
@@ -73,11 +73,11 @@ describe("Airtable Library", () => {
       };
       vi.mocked(fetch).mockResolvedValue(mockResponse as Response);
 
-      await expect(authorize(environmentId, apiHost)).rejects.toThrow("Could not create response");
+      await expect(authorize(workspaceId, apiHost)).rejects.toThrow("Could not create response");
 
       expect(fetch).toHaveBeenCalledWith(`${apiHost}/api/v1/integrations/airtable`, {
         method: "GET",
-        headers: { environmentId: environmentId },
+        headers: { workspaceId: workspaceId },
       });
       expect(logger.error).toHaveBeenCalledWith({ errorText }, "authorize: Could not fetch airtable config");
     });

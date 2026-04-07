@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
@@ -18,7 +17,7 @@ import { authorize } from "../lib/notion";
 interface NotionWrapperProps {
   notionIntegration: TIntegrationNotion | undefined;
   enabled: boolean;
-  environment: TEnvironment;
+  workspaceId: string;
   webAppUrl: string;
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
@@ -28,7 +27,7 @@ interface NotionWrapperProps {
 export const NotionWrapper = ({
   notionIntegration,
   enabled,
-  environment,
+  workspaceId,
   webAppUrl,
   surveys,
   databasesArray,
@@ -43,7 +42,7 @@ export const NotionWrapper = ({
   >(null);
 
   const handleNotionAuthorization = async () => {
-    authorize(environment.id, webAppUrl).then((url: string) => {
+    authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }
@@ -55,7 +54,7 @@ export const NotionWrapper = ({
       {isConnected && notionIntegration ? (
         <>
           <AddIntegrationModal
-            environmentId={environment.id}
+            workspaceId={workspaceId}
             surveys={surveys}
             open={isModalOpen}
             setOpen={setIsModalOpen}

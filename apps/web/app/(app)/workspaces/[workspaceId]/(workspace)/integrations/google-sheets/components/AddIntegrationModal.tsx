@@ -44,7 +44,7 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface AddIntegrationModalProps {
-  environmentId: string;
+  workspaceId: string;
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
@@ -53,7 +53,7 @@ interface AddIntegrationModalProps {
 }
 
 export const AddIntegrationModal = ({
-  environmentId,
+  workspaceId,
   surveys,
   open,
   setOpen,
@@ -148,7 +148,7 @@ export const AddIntegrationModal = ({
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
       const spreadsheetNameResponse = await getSpreadsheetNameByIdAction({
         googleSheetIntegration,
-        environmentId,
+        workspaceId,
         spreadsheetId,
       });
 
@@ -180,7 +180,7 @@ export const AddIntegrationModal = ({
         googleSheetIntegrationData.config.data.push(integrationData);
       }
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: googleSheetIntegrationData,
       });
       if (result?.serverError) {
@@ -227,7 +227,7 @@ export const AddIntegrationModal = ({
     try {
       setIsDeleting(true);
       const result = await createOrUpdateIntegrationAction({
-        environmentId,
+        workspaceId,
         integrationData: googleSheetIntegrationData,
       });
       if (result?.serverError) {

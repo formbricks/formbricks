@@ -7,7 +7,7 @@ import {
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 const scopes = [
@@ -16,19 +16,19 @@ const scopes = [
 ];
 
 export const GET = async (req: NextRequest) => {
-  const environmentId = req.headers.get("environmentId");
+  const workspaceId = req.headers.get("workspaceId") ?? req.headers.get("environmentId");
   const session = await getServerSession(authOptions);
 
-  if (!environmentId) {
-    return responses.badRequestResponse("environmentId is missing");
+  if (!workspaceId) {
+    return responses.badRequestResponse("workspaceId is missing");
   }
 
   if (!session) {
     return responses.notAuthenticatedResponse();
   }
 
-  const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
-  if (!canUserAccessEnvironment) {
+  const canUserAccessWorkspace = await hasUserWorkspaceAccess(session?.user.id, workspaceId);
+  if (!canUserAccessWorkspace) {
     return responses.unauthorizedResponse();
   }
 
@@ -44,7 +44,7 @@ export const GET = async (req: NextRequest) => {
     access_type: "offline",
     scope: scopes,
     prompt: "consent",
-    state: environmentId!,
+    state: workspaceId,
   });
 
   return responses.successResponse({ authUrl });

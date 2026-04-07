@@ -19,7 +19,7 @@ import { IntegrationModalInputs } from "../lib/types";
 
 interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;
-  environmentId: string;
+  workspaceId: string;
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
@@ -27,7 +27,7 @@ interface ManageIntegrationProps {
 }
 
 export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const { airtableIntegration, environmentId, setIsConnected, surveys, airtableArray } = props;
+  const { airtableIntegration, workspaceId, setIsConnected, surveys, airtableArray } = props;
   const { t } = useTranslation();
 
   const tableHeaders = [
@@ -153,7 +153,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           airtableArray={airtableArray}
           open={isModalOpen}
           setOpenWithStates={handleModal}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
           surveys={surveys}
           airtableIntegration={airtableIntegration}
           {...data}
