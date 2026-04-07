@@ -26,6 +26,7 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   name: true,
   description: true,
   environmentId: true,
+  workspaceId: true,
 })
   .extend({
     dataType: ZContactAttributeKey.shape.dataType.optional(),
@@ -47,3 +48,31 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   });
 
 export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;
+
+// Route-level schema — both IDs are required; bodyTransform resolves the missing one before validation.
+export const ZContactAttributeKeyCreateInput = ZContactAttributeKey.pick({
+  key: true,
+  name: true,
+  description: true,
+})
+  .extend({
+    environmentId: z.cuid2(),
+    workspaceId: z.cuid2(),
+    dataType: ZContactAttributeKey.shape.dataType.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!isSafeIdentifier(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+        path: ["key"],
+      });
+    }
+  })
+  .meta({
+    id: "contactAttributeKeyCreateInput",
+    description: "Input data for creating a contact attribute key",
+  });
+
+export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;

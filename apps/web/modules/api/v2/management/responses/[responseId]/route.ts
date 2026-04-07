@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { getWorkspaceId } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteResponse,
   getResponse,
@@ -36,12 +35,12 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         });
       }
 
-      const environmentIdResult = await getEnvironmentId(params.responseId, true);
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error);
+      const workspaceIdResult = await getWorkspaceId(params.responseId, true);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "GET")) {
+      if (!hasPermission(authentication.environmentPermissions, workspaceIdResult.data.workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
         });
@@ -84,12 +83,14 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         );
       }
 
-      const environmentIdResult = await getEnvironmentId(params.responseId, true);
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error, auditLog);
+      const workspaceIdResult = await getWorkspaceId(params.responseId, true);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "DELETE")) {
+      if (
+        !hasPermission(authentication.environmentPermissions, workspaceIdResult.data.workspaceId, "DELETE")
+      ) {
         return handleApiError(
           request,
           {
@@ -137,12 +138,12 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         );
       }
 
-      const environmentIdResult = await getEnvironmentId(params.responseId, true);
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error, auditLog);
+      const workspaceIdResult = await getWorkspaceId(params.responseId, true);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "PUT")) {
+      if (!hasPermission(authentication.environmentPermissions, workspaceIdResult.data.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
@@ -225,12 +226,10 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       // Fetch updated response with relations for pipeline
       const updatedResponseForPipeline = await getResponseForPipeline(params.responseId);
       if (updatedResponseForPipeline.ok) {
-        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentIdResult.data);
-
         sendToPipeline({
           event: "responseUpdated",
-          environmentId: environmentIdResult.data,
-          workspaceId,
+          environmentId: workspaceIdResult.data.environmentId,
+          workspaceId: workspaceIdResult.data.workspaceId,
           surveyId: existingResponse.data.surveyId,
           response: updatedResponseForPipeline.data,
         });
@@ -238,8 +237,8 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         if (response.data.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId: environmentIdResult.data,
-            workspaceId,
+            environmentId: workspaceIdResult.data.environmentId,
+            workspaceId: workspaceIdResult.data.workspaceId,
             surveyId: existingResponse.data.surveyId,
             response: updatedResponseForPipeline.data,
           });

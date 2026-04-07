@@ -17,6 +17,7 @@ export const buildNoCodeAction = (data: TActionClassInput, environmentId: string
     name: data.name.trim(),
     description: data.description,
     environmentId,
+    workspaceId: data.workspaceId,
     type: "noCode" as const,
     noCodeConfig: data.noCodeConfig,
   };
@@ -46,6 +47,7 @@ export const buildCodeAction = (data: TActionClassInput, environmentId: string, 
     name: data.name.trim(),
     description: data.description,
     environmentId,
+    workspaceId: data.workspaceId,
     type: "code" as const,
     key: data.key,
   };

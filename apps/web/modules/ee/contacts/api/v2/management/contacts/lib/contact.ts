@@ -129,6 +129,7 @@ export const createContact = async (
       id: result.id,
       createdAt: result.createdAt,
       environmentId: result.environmentId,
+      workspaceId,
       attributes: flattenedAttributes,
     };
 

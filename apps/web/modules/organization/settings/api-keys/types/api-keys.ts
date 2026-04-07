@@ -57,12 +57,9 @@ const ZApiKeyEnvironmentWithWorkspace = z.object({
   apiKeyId: z.string(),
   environmentId: z.string(),
   workspaceId: z.string(),
-  workspaceName: z.string(),
-  environmentType: z.string(),
   permission: z.enum(ApiKeyPermission),
-  environment: ZEnvironment.extend({
-    workspace: ZWorkspace.pick({ id: true, name: true }),
-  }),
+  environment: ZEnvironment,
+  workspace: ZWorkspace.pick({ id: true, name: true }),
 });
 
 const ZApiKey = z.object({

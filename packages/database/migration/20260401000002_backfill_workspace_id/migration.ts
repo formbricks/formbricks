@@ -18,7 +18,7 @@ const TABLES_TO_BACKFILL = [
 export const backfillWorkspaceId: MigrationScript = {
   type: "data",
   id: "snae9apsx7e74yo9ncmhjl47",
-  name: "20260401000001_backfill_workspace_id",
+  name: "20260401000002_backfill_workspace_id",
   run: async ({ tx }) => {
     for (const table of TABLES_TO_BACKFILL) {
       logger.info(`Backfilling ${table}`);

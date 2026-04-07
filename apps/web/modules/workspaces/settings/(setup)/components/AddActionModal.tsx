@@ -16,6 +16,7 @@ import {
 
 interface AddActionModalProps {
   environmentId: string;
+  workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   open: boolean;
@@ -24,6 +25,7 @@ interface AddActionModalProps {
 
 export const AddActionModal = ({
   environmentId,
+  workspaceId,
   actionClasses,
   isReadOnly,
   open,
@@ -47,6 +49,7 @@ export const AddActionModal = ({
           <CreateNewActionTab
             actionClasses={newActionClasses}
             environmentId={environmentId}
+            workspaceId={workspaceId}
             isReadOnly={isReadOnly}
             setActionClasses={setNewActionClasses}
             setOpen={setOpen}

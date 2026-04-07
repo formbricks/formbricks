@@ -11,6 +11,7 @@ import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbrick
 import { getActionClasses } from "@/lib/actionClass/service";
 import {
   getOrganizationByEnvironmentId,
+  getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
@@ -44,6 +45,9 @@ vi.mock("@/lib/utils/helper", () => ({
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn().mockResolvedValue({
+    id: "org123",
+  }),
+  getOrganizationByWorkspaceId: vi.fn().mockResolvedValue({
     id: "org123",
   }),
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
@@ -535,6 +539,7 @@ describe("Tests for handleTriggerUpdates", () => {
 });
 
 describe("Tests for createSurvey", () => {
+  const mockWorkspaceId = "clxxxxxxxxxxxxxxxxxxxxxxxxx";
   const mockEnvironmentId = "env123";
   const mockUserId = "user123";
 
@@ -637,16 +642,17 @@ describe("Tests for createSurvey", () => {
 
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
+    prisma.environment.findFirst.mockResolvedValue({ id: mockEnvironmentId } as any);
   });
 
   describe("Happy Path", () => {
     test("creates a survey successfully", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
 
-      const result = await createSurvey(mockEnvironmentId, mockCreateSurveyInput);
+      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput);
 
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
@@ -654,7 +660,7 @@ describe("Tests for createSurvey", () => {
     });
 
     test("creates a private segment for app surveys", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
         type: "app",
@@ -670,7 +676,7 @@ describe("Tests for createSurvey", () => {
         updatedAt: new Date(),
       } as unknown as TSegment);
 
-      await createSurvey(mockEnvironmentId, {
+      await createSurvey(mockWorkspaceId, {
         ...mockCreateSurveyInput,
         type: "app",
       });
@@ -680,7 +686,7 @@ describe("Tests for createSurvey", () => {
     });
 
     test("creates survey with follow-ups", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       const followUp = {
         id: "followup1",
         name: "Follow up 1",
@@ -710,7 +716,7 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockEnvironmentId, surveyWithFollowUps);
+      await createSurvey(mockWorkspaceId, surveyWithFollowUps);
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -732,21 +738,21 @@ describe("Tests for createSurvey", () => {
     testInputValidation(createSurvey, "123#", mockCreateSurveyInput);
 
     test("throws ResourceNotFoundError if organization not found", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(null);
+      await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(
         ResourceNotFoundError
       );
     });
 
     test("throws DatabaseError if there is a Prisma error", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "1.0.0",
       });
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
-      await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
+      await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
     });
   });
 });

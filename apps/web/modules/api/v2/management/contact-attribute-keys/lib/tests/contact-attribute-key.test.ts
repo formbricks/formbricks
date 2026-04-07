@@ -8,10 +8,6 @@ import {
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "../contact-attribute-key";
 
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
-
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
@@ -68,6 +64,7 @@ describe("getContactAttributeKeys", () => {
 describe("createContactAttributeKey", () => {
   const inputContactAttributeKey: TContactAttributeKeyInput = {
     environmentId: "env1",
+    workspaceId: "workspace-1",
     name: "New Contact Attribute Key",
     key: "newKey",
     description: "Description for new key",
@@ -76,6 +73,7 @@ describe("createContactAttributeKey", () => {
   const createdContactAttributeKey: ContactAttributeKey = {
     id: "key100",
     environmentId: inputContactAttributeKey.environmentId,
+    workspaceId: inputContactAttributeKey.workspaceId,
     name: inputContactAttributeKey.name,
     key: inputContactAttributeKey.key,
     description: inputContactAttributeKey.description,

@@ -1,7 +1,7 @@
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 
 export const organizationId = "zo6u7apbattt8dquvzbgjjwb";
-export const environmentId = "oh5cq6yu418itha55vsuj47e";
+export const workspaceId = "oh5cq6yu418itha55vsuj47e";
 
 export const organizationBilling: TOrganizationBilling = {
   stripeCustomerId: "cus_P78901234567890123456789",
@@ -12,16 +12,15 @@ export const organizationBilling: TOrganizationBilling = {
   usageCycleAnchor: new Date(),
 };
 
-export const organizationEnvironments = {
+export const organizationWorkspaces = {
   workspaces: [
-    {
-      environments: [{ id: "w6pljnz4l9ljgmyl51xv8ah8" }, { id: "v5sfypq4ib6vjelccho23lmn" }],
-    },
-    { environments: [{ id: "ffbv7bmhs52yd8beebu6be2l" }] },
+    { id: "w6pljnz4l9ljgmyl51xv8ah8" },
+    { id: "v5sfypq4ib6vjelccho23lmn" },
+    { id: "ffbv7bmhs52yd8beebu6be2l" },
   ],
 };
 
-export const environmentIds = [
+export const workspaceIds = [
   "w6pljnz4l9ljgmyl51xv8ah8",
   "v5sfypq4ib6vjelccho23lmn",
   "ffbv7bmhs52yd8beebu6be2l",

@@ -8,7 +8,6 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -106,16 +105,12 @@ export const deleteActionClass = async (actionClassId: string): Promise<TActionC
   }
 };
 
-export const createActionClass = async (
-  environmentId: string,
-  actionClass: TActionClassInput
-): Promise<ActionClass> => {
-  validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
+export const createActionClass = async (actionClass: TActionClassInput): Promise<ActionClass> => {
+  validateInputs([actionClass, ZActionClassInput]);
 
-  const { environmentId: _, ...actionClassInput } = actionClass;
+  const { environmentId, workspaceId, ...actionClassInput } = actionClass;
 
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
@@ -149,13 +144,13 @@ export const createActionClass = async (
 };
 
 export const updateActionClass = async (
-  environmentId: string,
+  workspaceId: string,
   actionClassId: string,
-  inputActionClass: Partial<TActionClassInput>
+  inputActionClass: TActionClassInput
 ): Promise<TActionClass> => {
-  validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput]);
+  validateInputs([workspaceId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput]);
 
-  const { environmentId: _, ...actionClassInput } = inputActionClass;
+  const { environmentId: _, workspaceId: __, ...actionClassInput } = inputActionClass;
   try {
     const result = await prisma.actionClass.update({
       where: {
@@ -163,7 +158,6 @@ export const updateActionClass = async (
       },
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
           actionClassInput.type === "noCode"
