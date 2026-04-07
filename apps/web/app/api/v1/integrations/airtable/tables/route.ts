@@ -13,7 +13,7 @@ export const GET = withV1ApiWrapper({
     }
 
     const url = req.url;
-    const workspaceId = req.headers.get("workspaceId") ?? req.headers.get("environmentId");
+    const workspaceId = req.headers.get("workspaceId");
     const queryParams = new URLSearchParams(url.split("?")[1]);
     const baseId = z.string().safeParse(queryParams.get("baseId"));
 

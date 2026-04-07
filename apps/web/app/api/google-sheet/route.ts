@@ -16,7 +16,7 @@ const scopes = [
 ];
 
 export const GET = async (req: NextRequest) => {
-  const workspaceId = req.headers.get("workspaceId") ?? req.headers.get("environmentId");
+  const workspaceId = req.headers.get("workspaceId");
   const session = await getServerSession(authOptions);
 
   if (!workspaceId) {

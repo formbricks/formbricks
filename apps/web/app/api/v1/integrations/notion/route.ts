@@ -14,7 +14,7 @@ export const GET = withV1ApiWrapper({
       return { response: responses.notAuthenticatedResponse() };
     }
 
-    const workspaceId = req.headers.get("workspaceId") ?? req.headers.get("environmentId");
+    const workspaceId = req.headers.get("workspaceId");
 
     if (!workspaceId) {
       return {
