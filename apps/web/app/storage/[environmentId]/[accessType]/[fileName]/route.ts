@@ -42,7 +42,7 @@ export const GET = async (
   // Stream the file directly
   const streamResult = await getFileStreamForDownload(fileName, environmentId, accessType);
 
-  if (!streamResult.ok) {
+  if ("error" in streamResult) {
     const errorResponse = getErrorResponseFromStorageError(streamResult.error, { fileName });
     return errorResponse;
   }
@@ -117,7 +117,7 @@ export const DELETE = async (
 
   const deleteResult = await deleteFile(environmentId, accessType, decodeURIComponent(fileName));
 
-  if (!deleteResult.ok) {
+  if ("error" in deleteResult) {
     const { error } = deleteResult;
 
     logger.error({ error }, "Error deleting file");
