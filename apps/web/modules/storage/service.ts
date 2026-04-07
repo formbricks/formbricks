@@ -95,9 +95,13 @@ export const getFileStreamForDownload = async (
 };
 
 // We don't need to return or throw any errors, even if the file doesn't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFile function
-export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) =>
-  await deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+export const deleteFile = async (
+  environmentId: string,
+  accessType: TAccessType,
+  fileName: string
+): Promise<Result<void, StorageError>> => deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
 
 // We don't need to return or throw any errors, even if the files don't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFilesByPrefix function
-export const deleteFilesByEnvironmentId = async (environmentId: string) =>
-  await deleteFilesByPrefix(environmentId);
+export const deleteFilesByEnvironmentId = async (
+  environmentId: string
+): Promise<Result<void, StorageError>> => deleteFilesByPrefix(environmentId);
