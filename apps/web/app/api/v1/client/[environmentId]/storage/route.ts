@@ -109,7 +109,7 @@ export const POST = withV1ApiWrapper({
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
-      environmentId,
+      resolved.workspaceId,
       fileType,
       "private",
       maxFileUploadSize
