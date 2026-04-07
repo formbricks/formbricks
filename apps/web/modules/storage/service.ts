@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { logger } from "@formbricks/logger";
 import {
-  type FileStreamResult,
   type StorageError,
   StorageErrorCode,
   deleteFile as deleteFileFromS3,
@@ -12,6 +11,8 @@ import {
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
+
+type TGetFileStreamResult = Awaited<ReturnType<typeof getFileStream>>;
 
 export const getSignedUrlForUpload = async (
   fileName: string,
@@ -73,7 +74,7 @@ export const getFileStreamForDownload = async (
   fileName: string,
   environmentId: string,
   accessType: TAccessType
-): Promise<Result<FileStreamResult, StorageError>> => {
+): Promise<TGetFileStreamResult> => {
   try {
     const fileNameDecoded = decodeURIComponent(fileName);
     const fileKey = `${environmentId}/${accessType}/${fileNameDecoded}`;

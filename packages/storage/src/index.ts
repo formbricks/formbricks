@@ -4,6 +4,6 @@ export {
   getSignedUploadUrl,
   deleteFilesByPrefix,
   getFileStream,
-  type FileStreamResult,
 } from "./service";
+export type { FileStreamResult } from "./service";
 export { type StorageError, StorageErrorCode } from "./types/error";
