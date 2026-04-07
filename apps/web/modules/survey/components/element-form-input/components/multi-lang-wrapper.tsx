@@ -1,14 +1,9 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { ReactNode } from "react";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
-import { TUserLocale } from "@formbricks/types/user";
-import { getEnabledLanguages } from "@/lib/i18n/utils";
-import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
-import { LanguageIndicator } from "@/modules/survey/multi-language-surveys/components/language-indicator";
+import { headlineToRecall } from "@/lib/utils/recall";
 
 interface MultiLangWrapperRenderProps {
   value: TI18nString;
@@ -21,32 +16,22 @@ interface MultiLangWrapperProps {
   value: TI18nString;
   onChange: (value: TI18nString) => void;
   localSurvey: TSurvey;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (code: string) => void;
-  locale: TUserLocale;
+  selectedLanguageCode?: string;
+  setSelectedLanguageCode?: (code: string) => void;
+  locale?: string;
   render: (props: MultiLangWrapperRenderProps) => ReactNode;
 }
 
 export const MultiLangWrapper = ({
-  isTranslationIncomplete,
   value,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
+  selectedLanguageCode = "default",
   render,
   onChange,
 }: MultiLangWrapperProps) => {
-  const { t } = useTranslation();
-
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
-
-  const enabledLanguages = useMemo(
-    () => getEnabledLanguages(localSurvey.languages ?? []),
-    [localSurvey.languages]
-  );
 
   const handleChange = (
     newValue: string,
@@ -67,34 +52,9 @@ export const MultiLangWrapper = ({
         {render({
           value,
           onChange: handleChange,
-          children:
-            enabledLanguages.length > 1 ? (
-              <LanguageIndicator
-                selectedLanguageCode={usedLanguageCode}
-                surveyLanguages={localSurvey.languages}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
-              />
-            ) : null,
+          children: null,
         })}
       </div>
-
-      {enabledLanguages.length > 1 && (
-        <>
-          {usedLanguageCode !== "default" && value && typeof value["default"] !== "undefined" && (
-            <div className="mt-1 text-xs text-slate-500">
-              <strong>{t("environments.workspace.languages.translate")}:</strong>{" "}
-              {getTextContent(recallToHeadline(value, localSurvey, false, "default")["default"] ?? "")}
-            </div>
-          )}
-
-          {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
-            <div className="mt-1 text-xs text-red-400">
-              {t("environments.workspace.languages.incomplete_translations")}
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 };

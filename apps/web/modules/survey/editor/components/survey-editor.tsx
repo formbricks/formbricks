@@ -205,7 +205,6 @@ export const SurveyEditor = ({
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}

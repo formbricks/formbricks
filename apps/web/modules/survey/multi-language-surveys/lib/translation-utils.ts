@@ -8,6 +8,7 @@ export interface TranslatableString {
   displayId: string;
   fieldLabel: string;
   value: TI18nString;
+  isRichText: boolean;
 }
 
 export interface TranslationProgress {
@@ -24,6 +25,8 @@ export interface DeduplicatedString {
   duplicatePaths: string[];
 }
 
+const RICH_TEXT_FIELDS = new Set(["headline", "subheader", "html"]);
+
 const pushIfI18n = (
   result: TranslatableString[],
   obj: unknown,
@@ -34,7 +37,13 @@ const pushIfI18n = (
 ) => {
   const val = (obj as Record<string, unknown>)?.[field];
   if (val && isI18nObject(val)) {
-    result.push({ path: `${path}.${field}`, displayId, fieldLabel, value: val as TI18nString });
+    result.push({
+      path: `${path}.${field}`,
+      displayId,
+      fieldLabel,
+      value: val as TI18nString,
+      isRichText: RICH_TEXT_FIELDS.has(field),
+    });
   }
 };
 
@@ -93,6 +102,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 displayId: did,
                 fieldLabel: `Choice ${ci + 1}`,
                 value: choice.label,
+                isRichText: false,
               });
             }
           });
@@ -122,6 +132,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 displayId: did,
                 fieldLabel: `Row ${ri + 1}`,
                 value: row.label,
+                isRichText: false,
               });
             }
           });
@@ -132,6 +143,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 displayId: did,
                 fieldLabel: `Column ${ci + 1}`,
                 value: col.label,
+                isRichText: false,
               });
             }
           });
@@ -147,6 +159,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 displayId: did,
                 fieldLabel: `${f} Placeholder`,
                 value: sub.placeholder,
+                isRichText: false,
               });
             }
           });
@@ -162,6 +175,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 displayId: did,
                 fieldLabel: `${f} Placeholder`,
                 value: sub.placeholder,
+                isRichText: false,
               });
             }
           });
@@ -178,6 +192,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
                 path: `${base}.choices.${ci}.label`,
                 displayId: did,
                 fieldLabel: `Choice ${ci + 1}`,
+                isRichText: false,
                 value: choice.label,
               });
             }

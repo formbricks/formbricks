@@ -20,8 +20,6 @@ interface CTAElementFormProps {
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -35,8 +33,6 @@ export const CTAElementForm = ({
   lastElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -55,8 +51,6 @@ export const CTAElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -75,8 +69,6 @@ export const CTAElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -122,8 +114,6 @@ export const CTAElementForm = ({
               placeholder={lastElement ? t("common.finish") : t("common.next")}
               isInvalid={isInvalid}
               updateElement={updateElement}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
             />

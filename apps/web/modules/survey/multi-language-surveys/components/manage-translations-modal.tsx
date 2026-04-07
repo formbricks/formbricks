@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import { md } from "@/lib/markdownIt";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { Editor } from "@/modules/ui/components/editor";
 import { Input } from "@/modules/ui/components/input";
 import {
   type TranslatableString,
@@ -188,13 +190,45 @@ const TranslationRow = ({
         <div className="text-sm text-slate-700">{s.value.default || ""}</div>
       </td>
       <td className="py-2 align-top">
-        <Input
-          className={cn("text-sm", isEmpty && "border-orange-400 focus:border-orange-500")}
-          value={value}
-          onChange={(e) => onChange(s.path, e.target.value)}
-          placeholder=""
-        />
+        {s.isRichText ? (
+          <RichTextTranslationInput path={s.path} value={value} onChange={onChange} isEmpty={isEmpty} />
+        ) : (
+          <Input
+            className={cn("text-sm", isEmpty && "border-orange-400 focus:border-orange-500")}
+            value={value}
+            onChange={(e) => onChange(s.path, e.target.value)}
+            placeholder=""
+          />
+        )}
       </td>
     </tr>
+  );
+};
+
+const RichTextTranslationInput = ({
+  path,
+  value,
+  onChange,
+  isEmpty,
+}: {
+  path: string;
+  value: string;
+  onChange: (path: string, value: string) => void;
+  isEmpty: boolean;
+}) => {
+  const [firstRender, setFirstRender] = useState(true);
+
+  return (
+    <div className={cn("rounded-md", isEmpty && "ring-1 ring-orange-400")}>
+      <Editor
+        key={path}
+        disableLists
+        excludedToolbarItems={["blockType"]}
+        firstRender={firstRender}
+        setFirstRender={setFirstRender}
+        getText={() => md.render(value)}
+        setText={(v: string) => onChange(path, v)}
+      />
+    </div>
   );
 };

@@ -54,8 +54,8 @@ interface ElementFormInputProps {
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
+  selectedLanguageCode?: string;
+  setSelectedLanguageCode?: (languageCode: string) => void;
   label: string;
   maxLength?: number;
   placeholder?: string;
@@ -81,8 +81,7 @@ export const ElementFormInput = ({
   updateMatrixLabel,
   isInvalid,
   label,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
+  selectedLanguageCode = "default",
   maxLength,
   placeholder,
   onBlur,
@@ -455,7 +454,6 @@ export const ElementFormInput = ({
                 isInvalid={isInvalid}
                 updateElement={(isWelcomeCard || isEndingCard ? updateSurvey : updateElement)!}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 firstRender={firstRender}
                 setFirstRender={setFirstRender}
                 locale={locale}
@@ -537,21 +535,18 @@ export const ElementFormInput = ({
         value={text}
         localSurvey={localSurvey}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
         key={selectedLanguageCode}
         onChange={(updatedText) => {
           setText(updatedText);
           debouncedHandleUpdate(updatedText[usedLanguageCode]);
         }}
-        render={({ value, onChange, children: languageIndicator }) => {
+        render={({ value, onChange }) => {
           return (
             <RecallWrapper
               localSurvey={localSurvey}
               elementId={elementId}
               value={value[usedLanguageCode]}
               onChange={(value, recallItems, fallbacks) => {
-                // Pass all values to MultiLangWrapper's onChange
                 onChange(value, recallItems, fallbacks);
               }}
               onAddFallback={() => {
@@ -570,14 +565,11 @@ export const ElementFormInput = ({
                   <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
                     <div className="flex w-full items-center space-x-2">
                       <div className="group relative w-full">
-                        {languageIndicator}
                         {/* The highlight container is absolutely positioned behind the input */}
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
-                            localSurvey.languages?.length > 1 ? "pr-24" : ""
-                          }`}
+                          className="no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent"
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}
@@ -604,9 +596,7 @@ export const ElementFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          className={`absolute top-0 text-black caret-black ${
-                            localSurvey.languages?.length > 1 ? "pr-24" : ""
-                          } ${className}`}
+                          className={`absolute top-0 text-black caret-black ${className}`}
                           isInvalid={
                             isInvalid &&
                             text[usedLanguageCode]?.trim() === "" &&

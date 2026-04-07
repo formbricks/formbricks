@@ -33,8 +33,6 @@ interface EditEndingCardProps {
   setActiveElementId: (id: string | null) => void;
   activeElementId: string | null;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
@@ -50,8 +48,6 @@ export const EditEndingCard = ({
   setActiveElementId,
   activeElementId,
   isInvalid,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   addEndingCard,
   isFormbricksCloud,
   locale,
@@ -59,6 +55,7 @@ export const EditEndingCard = ({
   quotas,
   isExternalUrlsAllowed,
 }: EditEndingCardProps) => {
+  const selectedLanguageCode = "default";
   const { t } = useTranslation();
 
   const endingCard = useMemo(
@@ -298,7 +295,6 @@ export const EditEndingCard = ({
               endingCardIndex={endingCardIndex}
               isInvalid={isInvalid}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
               locale={locale}

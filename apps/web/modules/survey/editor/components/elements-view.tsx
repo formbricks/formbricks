@@ -64,7 +64,6 @@ interface ElementsViewProps {
   invalidElements: string[] | null;
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -83,7 +82,6 @@ export const ElementsView = ({
   project,
   invalidElements,
   setInvalidElements,
-  setSelectedLanguageCode,
   selectedLanguageCode,
   isFormbricksCloud,
   isCxMode,
@@ -847,8 +845,6 @@ export const ElementsView = ({
             setActiveElementId={setActiveElementId}
             activeElementId={activeElementId}
             isInvalid={invalidElements ? invalidElements.includes("start") : false}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            selectedLanguageCode={selectedLanguageCode}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -871,8 +867,6 @@ export const ElementsView = ({
           updateBlockLogicFallback={updateBlockLogicFallback}
           updateBlockButtonLabel={updateBlockButtonLabel}
           duplicateElement={duplicateElement}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           deleteElement={deleteElement}
           activeElementId={activeElementId}
           setActiveElementId={setActiveElementId}
@@ -912,8 +906,6 @@ export const ElementsView = ({
                   setActiveElementId={setActiveElementId}
                   activeElementId={activeElementId}
                   isInvalid={invalidElements ? invalidElements.includes(ending.id) : false}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  selectedLanguageCode={selectedLanguageCode}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
                   locale={locale}
