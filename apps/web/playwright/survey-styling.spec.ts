@@ -42,7 +42,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -175,7 +175,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -264,7 +264,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
