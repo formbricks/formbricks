@@ -21,7 +21,7 @@ async function fetchAndAuthorizeContactAttributeKey(
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (!hasPermission(environmentPermissions, attributeKey.environmentId, requiredPermission)) {
+  if (!hasPermission(environmentPermissions, attributeKey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 

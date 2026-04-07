@@ -31,7 +31,7 @@ async function fetchAndAuthorizeResponse(
     return { error: responses.notFoundResponse("Survey", response.surveyId, true) };
   }
 
-  if (!hasPermission(authentication.environmentPermissions, survey.environmentId, requiredPermission)) {
+  if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 

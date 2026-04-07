@@ -19,6 +19,7 @@ interface AddActionModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
+  workspaceId: string;
   actionClasses: ActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
   isReadOnly: boolean;
@@ -35,6 +36,7 @@ export const AddActionModal = ({
   setLocalSurvey,
   isReadOnly,
   environmentId,
+  workspaceId,
 }: AddActionModalProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
@@ -61,6 +63,7 @@ export const AddActionModal = ({
           isReadOnly={isReadOnly}
           setLocalSurvey={setLocalSurvey}
           environmentId={environmentId}
+          workspaceId={workspaceId}
         />
       ),
     },

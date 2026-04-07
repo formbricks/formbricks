@@ -5,7 +5,6 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { generateWebhookSecret } from "@/lib/crypto";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
@@ -15,7 +14,6 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
 
   try {
     const secret = generateWebhookSecret();
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(webhookInput.environmentId);
 
     const createdWebhook = await prisma.webhook.create({
       data: {
@@ -32,7 +30,7 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
         },
         workspace: {
           connect: {
-            id: workspaceId,
+            id: webhookInput.workspaceId,
           },
         },
       },
@@ -54,13 +52,13 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
   }
 };
 
-export const getWebhooks = async (environmentIds: string[], page?: number): Promise<Webhook[]> => {
-  validateInputs([environmentIds, ZId.array()], [page, ZOptionalNumber]);
+export const getWebhooks = async (workspaceIds: string[], page?: number): Promise<Webhook[]> => {
+  validateInputs([workspaceIds, ZId.array()], [page, ZOptionalNumber]);
 
   try {
     const webhooks = await prisma.webhook.findMany({
       where: {
-        environmentId: { in: environmentIds },
+        workspaceId: { in: workspaceIds },
       },
       take: page ? ITEMS_PER_PAGE : undefined,
       skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,

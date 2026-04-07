@@ -57,14 +57,11 @@ export const getApiKeyWithPermissions = reactCache(
       const includeQuery = {
         apiKeyEnvironments: {
           include: {
-            environment: {
-              include: {
-                workspace: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
+            environment: true,
+            workspace: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },
@@ -156,7 +153,11 @@ export const createApiKey = async (
   organizationId: string,
   userId: string,
   apiKeyData: TApiKeyCreateInput & {
-    environmentPermissions?: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    environmentPermissions?: Array<{
+      environmentId: string;
+      workspaceId: string;
+      permission: ApiKeyPermission;
+    }>;
     organizationAccess: TOrganizationAccess;
   }
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {

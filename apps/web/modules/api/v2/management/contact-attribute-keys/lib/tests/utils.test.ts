@@ -21,7 +21,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        environmentId: {
+        workspaceId: {
           in: environmentIds,
         },
       },
@@ -38,7 +38,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        environmentId: {
+        workspaceId: {
           in: environmentIds,
         },
       },
@@ -64,7 +64,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        environmentId: {
+        workspaceId: {
           in: environmentIds,
         },
         createdAt: {
@@ -92,7 +92,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        environmentId: {
+        workspaceId: {
           in: environmentIds,
         },
       },

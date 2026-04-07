@@ -79,6 +79,7 @@ export const SettingsView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
+        workspaceId={localSurvey.workspaceId}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
         workspacePermission={workspacePermission}

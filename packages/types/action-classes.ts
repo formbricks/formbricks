@@ -155,6 +155,9 @@ const ZActionClassInputBase = z.object({
   environmentId: ZId.min(1, {
     error: "Environment ID cannot be empty",
   }),
+  workspaceId: ZId.min(1, {
+    error: "Workspace ID cannot be empty",
+  }),
   type: ZActionClassType,
 });
 

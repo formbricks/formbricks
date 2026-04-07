@@ -7,9 +7,10 @@ import {
   getContactAttributeKeys,
 } from "@/modules/api/v2/management/contact-attribute-keys/lib/contact-attribute-key";
 import {
-  ZContactAttributeKeyInput,
+  ZContactAttributeKeyCreateInput,
   ZGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -22,20 +23,28 @@ export const GET = async (request: NextRequest) =>
     handler: async ({ authentication, parsedInput }) => {
       const { query } = parsedInput;
 
-      let environmentIds: string[] = [];
+      let workspaceIds: string[] = [];
 
       if (query.environmentId) {
-        if (!hasPermission(authentication.environmentPermissions, query.environmentId, "GET")) {
+        const permission = authentication.environmentPermissions.find(
+          (p) => p.environmentId === query.environmentId
+        );
+        if (
+          !permission ||
+          !hasPermission(authentication.environmentPermissions, permission.workspaceId, "GET")
+        ) {
           return handleApiError(request, {
             type: "unauthorized",
           });
         }
-        environmentIds = [query.environmentId];
+        workspaceIds = permission ? [permission.workspaceId] : [];
       } else {
-        environmentIds = authentication.environmentPermissions.map((permission) => permission.environmentId);
+        workspaceIds = [
+          ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ];
       }
 
-      const res = await getContactAttributeKeys(environmentIds, query);
+      const res = await getContactAttributeKeys(workspaceIds, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2);
@@ -49,23 +58,15 @@ export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     schemas: {
-      body: ZContactAttributeKeyInput,
+      body: ZContactAttributeKeyCreateInput,
     },
-    handler: async ({ authentication, parsedInput, auditLog }) => {
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
+    },
+    handler: async ({ parsedInput, auditLog }) => {
       const { body } = parsedInput;
-
-      if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
-        return handleApiError(
-          request,
-          {
-            type: "forbidden",
-            details: [
-              { field: "environmentId", issue: "does not have permission to create contact attribute key" },
-            ],
-          },
-          auditLog
-        );
-      }
 
       const createContactAttributeKeyResult = await createContactAttributeKey(body);
 

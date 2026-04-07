@@ -49,6 +49,7 @@ describe("createWebhook", () => {
       url: "https://example.com",
       source: "user",
       triggers: ["responseCreated"],
+      workspaceId: "workspace-id-mock",
       surveyIds: ["survey1", "survey2"],
     };
 
@@ -85,7 +86,7 @@ describe("createWebhook", () => {
         },
         workspace: {
           connect: {
-            id: "workspace-id-mock",
+            id: webhookInput.workspaceId,
           },
         },
       },
@@ -102,6 +103,7 @@ describe("createWebhook", () => {
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["survey1"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockResolvedValueOnce({} as any);
@@ -119,6 +121,7 @@ describe("createWebhook", () => {
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["survey1"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(validateWebhookUrl).mockRejectedValueOnce(
@@ -154,6 +157,7 @@ describe("createWebhook", () => {
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["survey1", "survey2"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(
@@ -174,6 +178,7 @@ describe("createWebhook", () => {
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["invalid-survey-id"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(new Error("Foreign key constraint violation"));
@@ -189,6 +194,7 @@ describe("createWebhook", () => {
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["survey1", "survey2"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(new DatabaseError("Invalid URL"));

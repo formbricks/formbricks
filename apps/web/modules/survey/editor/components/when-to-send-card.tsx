@@ -21,6 +21,7 @@ interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
+  workspaceId: string;
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
   workspacePermission: TTeamPermission | null;
@@ -28,6 +29,7 @@ interface WhenToSendCardProps {
 
 export const WhenToSendCard = ({
   environmentId,
+  workspaceId,
   localSurvey,
   setLocalSurvey,
   propActionClasses,
@@ -315,6 +317,7 @@ export const WhenToSendCard = ({
       </Collapsible.Root>
       <AddActionModal
         environmentId={environmentId}
+        workspaceId={workspaceId}
         open={isAddActionModalOpen}
         setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}

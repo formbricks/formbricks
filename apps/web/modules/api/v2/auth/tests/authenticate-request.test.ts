@@ -31,6 +31,7 @@ describe("authenticateRequest", () => {
       apiKeyEnvironments: [
         {
           environmentId: "env-id-1",
+          workspaceId: "workspace-id-1",
           permission: "manage",
           apiKeyId: "api-key-id",
           environment: {
@@ -40,14 +41,15 @@ describe("authenticateRequest", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             appSetupCompleted: false,
-            workspace: {
-              id: "workspace-id-1",
-              name: "Workspace 1",
-            },
+          },
+          workspace: {
+            id: "workspace-id-1",
+            name: "Workspace 1",
           },
         },
         {
           environmentId: "env-id-2",
+          workspaceId: "workspace-id-2",
           permission: "read",
           apiKeyId: "api-key-id",
           environment: {
@@ -57,10 +59,10 @@ describe("authenticateRequest", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             appSetupCompleted: false,
-            workspace: {
-              id: "workspace-id-2",
-              name: "Workspace 2",
-            },
+          },
+          workspace: {
+            id: "workspace-id-2",
+            name: "Workspace 2",
           },
         },
       ],

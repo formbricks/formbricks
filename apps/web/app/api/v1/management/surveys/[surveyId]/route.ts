@@ -16,7 +16,7 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -30,7 +30,7 @@ const fetchAndAuthorizeSurvey = async (
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", surveyId) };
   }
-  if (!hasPermission(authentication.environmentPermissions, survey.environmentId, requiredPermission)) {
+  if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -150,7 +150,7 @@ export const PUT = withV1ApiWrapper({
         auditLog.oldObject = result.survey;
       }
 
-      const organization = await getOrganizationByEnvironmentId(result.survey.environmentId);
+      const organization = await getOrganizationByWorkspaceId(result.survey.workspaceId);
       if (!organization) {
         return {
           response: responses.notFoundResponse("Organization", null),

@@ -9,6 +9,7 @@ import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
   getOrganizationByEnvironmentId,
+  getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -601,18 +602,25 @@ export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey
   return updateSurveyInternal(updatedSurvey, true);
 };
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyCreateInput
-): Promise<TSurvey> => {
-  const [parsedEnvironmentId, parsedSurveyBody] = validateInputs(
-    [environmentId, ZId],
+export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
+  const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
+    [workspaceId, ZId],
     [surveyBody, ZSurveyCreateInput]
   );
 
   try {
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
-    const actionClasses = await getActionClasses(parsedEnvironmentId);
+
+    const environment = await prisma.environment.findFirst({
+      where: { workspaceId: parsedWorkspaceId, type: "production" },
+      select: { id: true },
+    });
+    if (!environment) {
+      throw new ResourceNotFoundError("Environment", parsedWorkspaceId);
+    }
+    const environmentId = environment.id;
+
+    const actionClasses = await getActionClasses(parsedWorkspaceId);
 
     let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...restSurveyBody,
@@ -633,7 +641,7 @@ export const createSurvey = async (
       };
     }
 
-    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -660,18 +668,17 @@ export const createSurvey = async (
       data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedEnvironmentId);
     const survey = await prisma.survey.create({
       data: {
         ...data,
         environment: {
           connect: {
-            id: parsedEnvironmentId,
+            id: environmentId,
           },
         },
         workspace: {
           connect: {
-            id: workspaceId,
+            id: parsedWorkspaceId,
           },
         },
       },
@@ -687,12 +694,12 @@ export const createSurvey = async (
           isPrivate: true,
           environment: {
             connect: {
-              id: parsedEnvironmentId,
+              id: environmentId,
             },
           },
           workspace: {
             connect: {
-              id: workspaceId,
+              id: parsedWorkspaceId,
             },
           },
         },

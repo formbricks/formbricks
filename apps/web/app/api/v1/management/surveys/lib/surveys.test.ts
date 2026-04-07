@@ -98,7 +98,7 @@ describe("getSurveys (Management API)", () => {
       [offset, expect.any(Object)]
     );
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: [environmentId1] } },
+      where: { workspaceId: { in: [environmentId1] } },
       select: selectSurvey,
       orderBy: { updatedAt: "desc" },
       take: limit,
@@ -124,7 +124,7 @@ describe("getSurveys (Management API)", () => {
       [undefined, expect.any(Object)]
     );
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: [environmentId1, environmentId2] } },
+      where: { workspaceId: { in: [environmentId1, environmentId2] } },
       select: selectSurvey,
       orderBy: { updatedAt: "desc" },
       take: undefined,
