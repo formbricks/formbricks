@@ -596,7 +596,7 @@ describe("copySurveyToOtherEnvironment", () => {
                 actionClass: {
                   connectOrCreate: {
                     where: {
-                      key_environmentId: { key: "code_action_key", environmentId: targetEnvironmentId },
+                      key_workspaceId: { key: "code_action_key", workspaceId: targetWorkspaceId },
                     },
                     create: expect.objectContaining({ name: "Code Action", key: "code_action_key" }),
                   },
@@ -606,7 +606,7 @@ describe("copySurveyToOtherEnvironment", () => {
                 actionClass: {
                   connectOrCreate: {
                     where: {
-                      name_environmentId: { name: "No-Code Action", environmentId: targetEnvironmentId },
+                      name_workspaceId: { name: "No-Code Action", workspaceId: targetWorkspaceId },
                     },
                     create: expect.objectContaining({
                       name: "No-Code Action",

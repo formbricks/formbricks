@@ -127,7 +127,7 @@ describe("createDisplay", () => {
         attributes: {
           create: {
             attributeKey: {
-              connect: { key_environmentId: { key: "userId", environmentId } },
+              connect: { key_workspaceId: { key: "userId", workspaceId } },
             },
             value: userId,
           },

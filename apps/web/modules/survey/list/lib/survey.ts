@@ -394,9 +394,9 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    key_environmentId: {
+                    key_workspaceId: {
                       key: trigger.actionClass.key!,
-                      environmentId: targetEnvironmentId,
+                      workspaceId: targetWorkspace.id,
                     },
                   },
                   create: {
@@ -423,9 +423,9 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    name_environmentId: {
+                    name_workspaceId: {
                       name: trigger.actionClass.name,
-                      environmentId: targetEnvironmentId,
+                      workspaceId: targetWorkspace.id,
                     },
                   },
                   create: {

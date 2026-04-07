@@ -222,7 +222,7 @@ const contactAttributesInclude = {
 // Helper to create attribute objects for Prisma create operations with typed columns
 const createAttributeConnections = (
   record: Record<string, string>,
-  environmentId: string,
+  workspaceId: string,
   attributeTypeMap: Map<string, TAttributeTypeInfo>
 ) =>
   Object.entries(record).map(([key, value]) => {
@@ -231,7 +231,7 @@ const createAttributeConnections = (
 
     return {
       attributeKey: {
-        connect: { key_environmentId: { key, environmentId } },
+        connect: { key_workspaceId: { key, workspaceId } },
       },
       value: columns.value,
       valueNumber: columns.valueNumber,
@@ -465,6 +465,7 @@ type TCsvProcessingContext = {
   attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
   environmentId: string;
+  workspaceId: string;
 };
 
 /**
@@ -482,6 +483,7 @@ const processCsvRecord = async (
     attributeTypeMap,
     duplicateContactsAction,
     environmentId,
+    workspaceId,
   } = ctx;
   // Map CSV keys to actual DB keys (case-insensitive matching)
   const mappedRecord: Record<string, string> = {};
@@ -501,13 +503,12 @@ const processCsvRecord = async (
 
   if (!existingContact) {
     // Create new contact
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     return prisma.contact.create({
       data: {
         environmentId,
         workspaceId,
         attributes: {
-          create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
+          create: createAttributeConnections(mappedRecord, workspaceId, attributeTypeMap),
         },
       },
       include: contactAttributesInclude,
@@ -522,7 +523,7 @@ const processCsvRecord = async (
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
-    environmentId
+    workspaceId
   );
 };
 
@@ -536,7 +537,7 @@ const handleDuplicateContact = async (
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
   duplicateContactsAction: "skip" | "update" | "overwrite",
-  environmentId: string
+  workspaceId: string
 ): Promise<TContact | null> => {
   if (duplicateContactsAction === "skip") {
     return null;
@@ -591,7 +592,7 @@ const handleDuplicateContact = async (
     where: { id: existingContact.id },
     data: {
       attributes: {
-        create: createAttributeConnections(recordToProcess, environmentId, attributeTypeMap),
+        create: createAttributeConnections(recordToProcess, workspaceId, attributeTypeMap),
       },
     },
     include: contactAttributesInclude,
@@ -689,6 +690,7 @@ export const createContactsFromCSV = async (
       attributeTypeMap,
       duplicateContactsAction,
       environmentId,
+      workspaceId,
     };
 
     const CHUNK_SIZE = 50;

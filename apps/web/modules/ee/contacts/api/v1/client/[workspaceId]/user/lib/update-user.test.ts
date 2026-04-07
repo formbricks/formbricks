@@ -96,7 +96,7 @@ describe("updateUser", () => {
           create: [
             {
               attributeKey: {
-                connect: { key_environmentId: { key: "userId", environmentId: mockEnvironmentId } },
+                connect: { key_workspaceId: { key: "userId", workspaceId: "workspace-id-mock" } },
               },
               value: mockUserId,
             },

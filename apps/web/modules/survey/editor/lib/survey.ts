@@ -174,8 +174,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             segment: {
               connectOrCreate: {
                 where: {
-                  environmentId_title: {
-                    environmentId,
+                  workspaceId_title: {
+                    workspaceId,
                     title: surveyId,
                   },
                 },
