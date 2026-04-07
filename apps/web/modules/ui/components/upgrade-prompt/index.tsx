@@ -1,3 +1,5 @@
+"use client";
+
 import { KeyIcon } from "lucide-react";
 import Link from "next/link";
 import posthog from "posthog-js";
