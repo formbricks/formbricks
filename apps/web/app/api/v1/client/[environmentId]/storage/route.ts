@@ -4,8 +4,10 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
@@ -29,7 +31,16 @@ export const OPTIONS = async (): Promise<Response> => {
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
-    const { environmentId } = params;
+
+    // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
+    const resolved = await resolveClientApiIds(params.environmentId);
+    if (!resolved) {
+      return {
+        response: responses.notFoundResponse("Environment", params.environmentId),
+      };
+    }
+    const { environmentId, workspaceId } = resolved;
+
     let jsonInput: TUploadPrivateFileRequest;
 
     try {
@@ -44,6 +55,7 @@ export const POST = withV1ApiWrapper({
     const parsedInputResult = ZUploadPrivateFileRequest.safeParse({
       ...jsonInput,
       environmentId,
+      workspaceId,
     });
 
     if (!parsedInputResult.success) {
@@ -62,10 +74,11 @@ export const POST = withV1ApiWrapper({
 
     const { fileName, fileType, surveyId } = parsedInputResult.data;
 
-    const [survey, organization] = await Promise.all([
+    const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
-      getOrganizationByEnvironmentId(environmentId),
+      getOrganizationIdFromWorkspaceId(workspaceId),
     ]);
+    const organization = await getOrganization(organizationId);
 
     if (!survey) {
       return {
@@ -79,11 +92,11 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    if (survey.environmentId !== environmentId) {
+    if (survey.workspaceId !== workspaceId) {
       return {
         response: responses.badRequestResponse(
-          "Survey does not belong to the environment",
-          { surveyId, environmentId },
+          "Survey does not belong to the workspace",
+          { surveyId, workspaceId },
           true
         ),
       };

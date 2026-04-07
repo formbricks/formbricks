@@ -2,21 +2,19 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInput]);
 
-  const { environmentId, userId, surveyId } = displayInput;
+  const { environmentId, workspaceId, userId, surveyId } = displayInput;
 
   try {
     let contact: { id: string } | null = null;
     if (userId) {
-      contact = await getContactByUserId(environmentId, userId);
+      contact = await getContactByUserId(workspaceId, userId);
       if (!contact) {
-        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
         contact = await prisma.contact.create({
           data: {
             environment: { connect: { id: environmentId } },
@@ -37,7 +35,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
     const survey = await prisma.survey.findUnique({
       where: {
         id: surveyId,
-        environmentId,
+        workspaceId,
       },
     });
     if (!survey) {

@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
-import { resolveWorkspaceInBodyV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
+import { getWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookCreateInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 
@@ -43,7 +43,12 @@ export const POST = async (request: NextRequest) =>
     schemas: {
       body: ZWebhookCreateInput,
     },
-    handler: async ({ authentication, parsedInput, auditLog }) => {
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
+    },
+    handler: async ({ parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
       if (!body) {
@@ -58,23 +63,14 @@ export const POST = async (request: NextRequest) =>
       }
 
       if (body.surveyIds && body.surveyIds.length > 0) {
-        const environmentIdResult = await getEnvironmentIdFromSurveyIds(body.surveyIds);
+        const workspaceIdResult = await getWorkspaceIdFromSurveyIds(body.surveyIds);
 
-        if (!environmentIdResult.ok) {
-          return handleApiError(request, environmentIdResult.error, auditLog);
+        if (!workspaceIdResult.ok) {
+          return handleApiError(request, workspaceIdResult.error, auditLog);
         }
       }
 
-      // Resolve workspaceId → production environmentId when environmentId is not provided
-      const envResult = await resolveWorkspaceInBodyV2(body, authentication.environmentPermissions, "POST");
-      if (!envResult.ok) {
-        return handleApiError(request, envResult.error, auditLog);
-      }
-
-      const createWebhookResult = await createWebhook({
-        ...body,
-        environmentId: envResult.data,
-      });
+      const createWebhookResult = await createWebhook(body);
 
       if (!createWebhookResult.ok) {
         return handleApiError(request, createWebhookResult.error, auditLog);

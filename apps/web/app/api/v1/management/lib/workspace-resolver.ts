@@ -1,7 +1,8 @@
+import { prisma } from "@formbricks/database";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
-import { getProductionEnvironmentIdByWorkspaceId as resolveFromV2 } from "@/modules/api/v2/management/lib/helper";
-import { hasPermission, hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -11,25 +12,27 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export const getProductionEnvironmentIdByWorkspaceId = async (
   workspaceId: string
 ): Promise<string | null> => {
-  const result = await resolveFromV2(workspaceId);
-  return result.ok ? result.data : null;
+  const environment = await prisma.environment.findFirst({
+    where: { workspaceId, type: "production" },
+    select: { id: true },
+  });
+  return environment?.id ?? null;
 };
 
 /**
- * Given a raw request body that may contain workspaceId instead of environmentId,
- * resolves the environment, checks permissions, and returns a normalized body
- * with environmentId guaranteed to be present.
+ * Given a request body that contains either workspaceId or environmentId (but not both),
+ * resolves the missing identifier so the returned body is guaranteed to contain both.
  *
  * Returns `{ body, alreadyAuthorized: true }` when workspace-level auth was used,
  * or `{ body, alreadyAuthorized: false }` when the caller still needs to check env-level permission.
  * Returns an error response if authorization or resolution fails.
  */
-export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
+export const resolveBodyIds = async <T extends Record<string, unknown>>(
   body: T,
   permissions: TAPIKeyEnvironmentPermission[],
   method: HttpMethod
 ): Promise<
-  | { ok: true; body: T & { environmentId: string }; alreadyAuthorized: boolean }
+  | { ok: true; body: T & { environmentId: string; workspaceId: string }; alreadyAuthorized: boolean }
   | { ok: false; response: Response }
 > => {
   if (body.workspaceId && body.environmentId) {
@@ -56,31 +59,32 @@ export const resolveWorkspaceInBody = async <T extends Record<string, unknown>>(
 
     return {
       ok: true,
-      body: { ...body, environmentId: resolvedEnvId },
+      body: { ...body, environmentId: resolvedEnvId, workspaceId },
       alreadyAuthorized: true,
     };
   }
 
-  return {
-    ok: true,
-    body: body as T & { environmentId: string },
-    alreadyAuthorized: false,
-  };
-};
+  if (body.environmentId && !body.workspaceId) {
+    if (typeof body.environmentId !== "string") {
+      return { ok: false, response: responses.badRequestResponse("environmentId must be a string") };
+    }
 
-/**
- * Checks environment-level permission, but only if the request was not already
- * authorized at the workspace level.
- */
-export const checkEnvPermissionIfNeeded = (
-  alreadyAuthorized: boolean,
-  permissions: TAPIKeyEnvironmentPermission[],
-  environmentId: string,
-  method: HttpMethod
-): Response | null => {
-  if (alreadyAuthorized) return null;
-  if (!hasPermission(permissions, environmentId, method)) {
-    return responses.unauthorizedResponse();
+    let resolvedWorkspaceId: string;
+    try {
+      resolvedWorkspaceId = await getWorkspaceIdFromEnvironmentId(body.environmentId);
+    } catch {
+      return { ok: false, response: responses.notFoundResponse("Environment", body.environmentId) };
+    }
+
+    return {
+      ok: true,
+      body: { ...body, workspaceId: resolvedWorkspaceId, environmentId: body.environmentId },
+      alreadyAuthorized: false,
+    };
   }
-  return null;
+
+  return {
+    ok: false,
+    response: responses.badRequestResponse("Either environmentId or workspaceId must be provided"),
+  };
 };

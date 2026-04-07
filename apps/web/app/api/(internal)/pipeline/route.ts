@@ -15,7 +15,7 @@ import { getOrganization } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
-import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -53,9 +53,8 @@ export const POST = async (request: Request) => {
     );
   }
 
-  const { environmentId, surveyId, event, response } = inputValidation.data;
+  const { environmentId, workspaceId, surveyId, event, response } = inputValidation.data;
 
-  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   const organization = await getOrganization(organizationId);
   if (!organization) {
@@ -70,19 +69,19 @@ export const POST = async (request: Request) => {
     return responses.notFoundResponse("Survey", surveyId, true);
   }
 
-  if (survey.environmentId !== environmentId) {
+  if (survey.workspaceId !== workspaceId) {
     logger.error(
-      { url: request.url, surveyId, environmentId, surveyEnvironmentId: survey.environmentId },
-      `Survey ${surveyId} does not belong to environment ${environmentId}`
+      { url: request.url, surveyId, workspaceId, surveyWorkspaceId: survey.workspaceId },
+      `Survey ${surveyId} does not belong to workspace ${workspaceId}`
     );
-    return responses.badRequestResponse("Survey not found in this environment");
+    return responses.badRequestResponse("Survey not found in this workspace");
   }
 
   // Fetch webhooks
-  const getWebhooksForPipeline = async (environmentId: string, event: PipelineTriggers, surveyId: string) => {
+  const getWebhooksForPipeline = async (workspaceId: string, event: PipelineTriggers, surveyId: string) => {
     const webhooks = await prisma.webhook.findMany({
       where: {
-        environmentId,
+        workspaceId,
         triggers: { has: event },
         OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
       },
@@ -90,7 +89,7 @@ export const POST = async (request: Request) => {
     return webhooks;
   };
 
-  const webhooks: Webhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
+  const webhooks: Webhook[] = await getWebhooksForPipeline(workspaceId, event, surveyId);
   // Prepare webhook and email promises
 
   // Fetch with timeout of 5 seconds to prevent hanging
@@ -165,7 +164,6 @@ export const POST = async (request: Request) => {
     }
 
     // Fetch users with notifications in a single query
-    // TODO: add cache for this query. Not possible at the moment since we can't get the membership cache by environmentId
     const usersWithNotifications = await prisma.user.findMany({
       where: {
         memberships: {
@@ -173,9 +171,7 @@ export const POST = async (request: Request) => {
             organization: {
               workspaces: {
                 some: {
-                  environments: {
-                    some: { id: environmentId },
-                  },
+                  id: workspaceId,
                 },
               },
             },
@@ -198,11 +194,7 @@ export const POST = async (request: Request) => {
                   workspaceTeams: {
                     some: {
                       workspace: {
-                        environments: {
-                          some: {
-                            id: environmentId,
-                          },
-                        },
+                        id: workspaceId,
                       },
                     },
                   },

@@ -10,24 +10,24 @@ const methodPermissionMap = {
   DELETE: "manage", // Delete operations need manage permission
 };
 
-// Check if API key has sufficient permission for the requested environment and method
+// Check if API key has sufficient permission for the requested workspace and method
 export const hasPermission = (
   permissions: TAPIKeyEnvironmentPermission[],
-  environmentId: string,
+  workspaceId: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 ): boolean => {
   if (!permissions) return false;
 
-  // Find the environment permission entry for this environment
-  const environmentPermission = permissions.find((permission) => permission.environmentId === environmentId);
+  // Find the workspace permission entry for this workspace
+  const workspacePermission = permissions.find((permission) => permission.workspaceId === workspaceId);
 
-  if (!environmentPermission) return false;
+  if (!workspacePermission) return false;
 
   // Get required permission level for this method
   const requiredPermission = methodPermissionMap[method];
 
   // Check if the API key has sufficient permission
-  switch (environmentPermission.permission) {
+  switch (workspacePermission.permission) {
     case "manage":
       // Manage permission can do everything
       return true;

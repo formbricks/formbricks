@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { ZEnvironmentId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
@@ -11,7 +10,8 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -49,17 +49,18 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  const { environmentId } = params;
-  const environmentIdValidation = ZEnvironmentId.safeParse(environmentId);
-  const responseInputValidation = ZResponseInputV2.safeParse({ ...responseInput, environmentId });
-
-  if (!environmentIdValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(environmentIdValidation.error),
-      true
-    );
+  // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
+  const resolved = await resolveClientApiIds(params.environmentId);
+  if (!resolved) {
+    return responses.notFoundResponse("Environment", params.environmentId);
   }
+  const { environmentId, workspaceId } = resolved;
+
+  const responseInputValidation = ZResponseInputV2.safeParse({
+    ...responseInput,
+    environmentId,
+    workspaceId,
+  });
 
   if (!responseInputValidation.success) {
     return responses.badRequestResponse(
@@ -81,7 +82,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInputData = responseInputValidation.data;
 
   if (responseInputData.contactId) {
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
@@ -93,7 +94,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!survey) {
     return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
-  const surveyCheckResult = await checkSurveyValidity(survey, environmentId, responseInput);
+  const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInput);
   if (surveyCheckResult) return surveyCheckResult;
 
   // Validate response data for "other" options exceeding character limit
@@ -168,6 +169,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   sendToPipeline({
     event: "responseCreated",
     environmentId,
+    workspaceId,
     surveyId: responseData.surveyId,
     response: responseData,
   });
@@ -176,6 +178,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     sendToPipeline({
       event: "responseFinished",
       environmentId,
+      workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
     });

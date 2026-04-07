@@ -3,9 +3,9 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getProductionEnvironmentIdByWorkspaceId } from "@/app/api/v1/management/lib/workspace-resolver";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 
@@ -27,23 +27,25 @@ export const getContactAttributeKeys = reactCache(
 );
 
 export const createContactAttributeKey = async (
-  environmentId: string,
+  workspaceId: string,
   data: TContactAttributeKeyCreateInput
 ): Promise<TContactAttributeKey | null> => {
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
     where: {
-      environmentId,
+      workspaceId,
     },
   });
 
   if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
     throw new OperationNotAllowedError(
-      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for environment ${environmentId}`
+      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for workspace ${workspaceId}`
     );
   }
-
+  const environmentId = await getProductionEnvironmentIdByWorkspaceId(workspaceId);
+  if (!environmentId) {
+    throw new ResourceNotFoundError("Environment", null);
+  }
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,

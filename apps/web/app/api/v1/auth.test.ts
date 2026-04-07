@@ -81,25 +81,25 @@ describe("hasPermission", () => {
   ];
 
   test("returns true for manage permission with any method", () => {
-    expect(hasPermission(permissions, "env-1", "GET")).toBe(true);
-    expect(hasPermission(permissions, "env-1", "POST")).toBe(true);
-    expect(hasPermission(permissions, "env-1", "DELETE")).toBe(true);
+    expect(hasPermission(permissions, "workspace-1", "GET")).toBe(true);
+    expect(hasPermission(permissions, "workspace-1", "POST")).toBe(true);
+    expect(hasPermission(permissions, "workspace-1", "DELETE")).toBe(true);
   });
 
   test("handles write permission correctly", () => {
-    expect(hasPermission(permissions, "env-2", "GET")).toBe(true);
-    expect(hasPermission(permissions, "env-2", "POST")).toBe(true);
-    expect(hasPermission(permissions, "env-2", "DELETE")).toBe(false);
+    expect(hasPermission(permissions, "workspace-2", "GET")).toBe(true);
+    expect(hasPermission(permissions, "workspace-2", "POST")).toBe(true);
+    expect(hasPermission(permissions, "workspace-2", "DELETE")).toBe(false);
   });
 
   test("handles read permission correctly", () => {
-    expect(hasPermission(permissions, "env-3", "GET")).toBe(true);
-    expect(hasPermission(permissions, "env-3", "POST")).toBe(false);
-    expect(hasPermission(permissions, "env-3", "DELETE")).toBe(false);
+    expect(hasPermission(permissions, "workspace-3", "GET")).toBe(true);
+    expect(hasPermission(permissions, "workspace-3", "POST")).toBe(false);
+    expect(hasPermission(permissions, "workspace-3", "DELETE")).toBe(false);
   });
 
-  test("returns false for non-existent environment", () => {
-    expect(hasPermission(permissions, "env-4", "GET")).toBe(false);
+  test("returns false for non-existent workspace", () => {
+    expect(hasPermission(permissions, "workspace-4", "GET")).toBe(false);
   });
 });
 

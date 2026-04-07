@@ -3,14 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn((inputs: [unknown, unknown][]) =>
@@ -36,26 +31,29 @@ vi.mock("./contact", () => ({
   getContactByUserId: vi.fn(),
 }));
 
-const environmentId = "test-env-id";
-const surveyId = "test-survey-id";
+const environmentId = "scgavd0rtce5xgahiresk4p0";
+const workspaceId = "cqiu9au22kgzgqjossdlp5qh";
+const surveyId = "kf4w7x11wut39ttl4j5v9ccg";
 const userId = "test-user-id";
-const contactId = "test-contact-id";
-const displayId = "test-display-id";
+const contactId = "f9bufd72cffj19a7qj67z5fm";
+const displayId = "apbycx5war0mfsyztgpwb8wr";
 
 const displayInput: TDisplayCreateInput = {
   environmentId,
+  workspaceId,
   surveyId,
   userId,
 };
 
 const displayInputWithoutUserId: TDisplayCreateInput = {
   environmentId,
+  workspaceId,
   surveyId,
 };
 
 const mockContact = {
   id: contactId,
-  environmentId,
+  workspaceId,
   userId,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -88,7 +86,9 @@ const mockSurvey = {
 describe("createDisplay", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
+    vi.mocked(validateInputs).mockImplementation((inputs: [unknown, unknown][]) =>
+      inputs.map((input: [unknown, unknown]) => input[0])
+    );
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
   });
 
@@ -99,7 +99,7 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.contact.create).not.toHaveBeenCalled();
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
@@ -119,11 +119,11 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
         environment: { connect: { id: environmentId } },
-        workspace: { connect: { id: "workspace-id-mock" } },
+        workspace: { connect: { id: workspaceId } },
         attributes: {
           create: {
             attributeKey: {
@@ -177,9 +177,9 @@ describe("createDisplay", () => {
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
-      where: { id: surveyId, environmentId },
+      where: { id: surveyId, workspaceId },
     });
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
@@ -193,7 +193,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.display.create).mockRejectedValue(prismaError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(DatabaseError);
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.display.create).toHaveBeenCalled();
   });
 
@@ -203,7 +203,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.display.create).mockRejectedValue(genericError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(genericError);
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.display.create).toHaveBeenCalled();
   });
 
@@ -212,7 +212,7 @@ describe("createDisplay", () => {
     vi.mocked(getContactByUserId).mockRejectedValue(contactError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(contactError);
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
@@ -222,7 +222,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.contact.create).mockRejectedValue(contactCreateError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(contactCreateError);
-    expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.contact.create).toHaveBeenCalled();
     expect(prisma.display.create).not.toHaveBeenCalled();
   });

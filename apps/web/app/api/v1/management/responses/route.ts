@@ -1,10 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import {
-  checkEnvPermissionIfNeeded,
-  resolveWorkspaceInBody,
-} from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -36,7 +33,7 @@ export const GET = withV1ApiWrapper({
             response: responses.notFoundResponse("Survey", surveyId, true),
           };
         }
-        if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+        if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, "GET")) {
           return {
             response: responses.unauthorizedResponse(),
           };
@@ -66,18 +63,18 @@ export const GET = withV1ApiWrapper({
   },
 });
 
-const validateSurvey = async (responseInput: TResponseInput, environmentId: string) => {
+const validateSurvey = async (responseInput: TResponseInput, workspaceId: string) => {
   const survey = await getSurvey(responseInput.surveyId);
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", responseInput.surveyId, true) };
   }
-  if (survey.environmentId !== environmentId) {
+  if (survey.workspaceId !== workspaceId) {
     return {
       error: responses.badRequestResponse(
-        "Survey is part of another environment",
+        "Survey is part of another workspace",
         {
-          "survey.environmentId": survey.environmentId,
-          environmentId,
+          "survey.workspaceId": survey.workspaceId,
+          workspaceId,
         },
         true
       ),
@@ -104,7 +101,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveWorkspaceInBody(jsonInput, authentication.environmentPermissions, "POST");
+      const resolved = await resolveBodyIds(jsonInput, authentication.environmentPermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZResponseInput.safeParse(resolved.body);
@@ -119,17 +116,15 @@ export const POST = withV1ApiWrapper({
       }
 
       const responseInput = inputValidation.data;
-      const environmentId = responseInput.environmentId;
 
-      const permDenied = checkEnvPermissionIfNeeded(
-        resolved.alreadyAuthorized,
-        authentication.environmentPermissions,
-        environmentId,
-        "POST"
-      );
-      if (permDenied) return { response: permDenied };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.environmentPermissions, responseInput.workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
-      const surveyResult = await validateSurvey(responseInput, environmentId);
+      const surveyResult = await validateSurvey(responseInput, responseInput.workspaceId);
       if (surveyResult.error) {
         return {
           response: surveyResult.error,
@@ -174,6 +169,7 @@ export const POST = withV1ApiWrapper({
         sendToPipeline({
           event: "responseCreated",
           environmentId: surveyResult.survey.environmentId,
+          workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
         });
@@ -182,6 +178,7 @@ export const POST = withV1ApiWrapper({
           sendToPipeline({
             event: "responseFinished",
             environmentId: surveyResult.survey.environmentId,
+            workspaceId: surveyResult.survey.workspaceId,
             surveyId: response.surveyId,
             response: response,
           });

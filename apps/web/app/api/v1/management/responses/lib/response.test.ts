@@ -5,34 +5,25 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 import { createResponse, getResponsesByWorkspaceIds } from "./response";
 
 // Mock Data
 const environmentId = "test-environment-id";
-const organizationId = "test-organization-id";
+const workspaceId = "test-workspace-id";
 const mockUserId = "test-user-id";
 const surveyId = "test-survey-id";
 const displayId = "test-display-id";
 const responseId = "test-response-id";
 
-const mockOrganization = {
-  id: organizationId,
-  name: "Test Org",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  billing: {
-    stripeCustomerId: null,
-    limits: { workspaces: 3, monthly: { responses: null } },
-    usageCycleAnchor: new Date(),
-  } as TOrganizationBilling, // Default no limit
-} as unknown as Organization;
+const mockOrganization = "test-organization-id";
 
 const mockResponseInput: TResponseInput = {
+  workspaceId,
   environmentId,
   surveyId,
   displayId,
@@ -116,7 +107,7 @@ vi.mock("@/lib/constants", () => ({
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
 }));
-vi.mock("@/lib/organization/service");
+vi.mock("@/lib/utils/helper");
 vi.mock("@/lib/response/service");
 vi.mock("@/lib/response/utils");
 vi.mock("@/lib/utils/validate");
@@ -153,7 +144,7 @@ describe("Response Lib Tests", () => {
   describe("createResponse", () => {
     test("should create a response successfully with userId", async () => {
       const mockContact = { id: "contact1", attributes: { userId: mockUserId } };
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
       vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
       vi.mocked(mockTx.response.create).mockResolvedValue({
@@ -165,8 +156,8 @@ describe("Response Lib Tests", () => {
         mockTx as unknown as Prisma.TransactionClient
       );
 
-      expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
-      expect(getContactByUserId).toHaveBeenCalledWith(environmentId, mockUserId);
+      expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith(workspaceId);
+      expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, mockUserId);
       expect(mockTx.response.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -179,11 +170,11 @@ describe("Response Lib Tests", () => {
     });
 
     test("should throw ResourceNotFoundError if organization not found", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(null as unknown as string);
       await expect(
         createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
       ).rejects.toThrow(ResourceNotFoundError);
-      expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
+      expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith(workspaceId);
       expect(mockTx.response.create).not.toHaveBeenCalled();
     });
 
@@ -192,7 +183,7 @@ describe("Response Lib Tests", () => {
         code: "P2002",
         clientVersion: "2.0",
       });
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
       await expect(
@@ -206,7 +197,7 @@ describe("Response Lib Tests", () => {
         code: "P2025", // PrismaErrorType.RelatedRecordDoesNotExist
         clientVersion: "2.0",
       });
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
       await expect(
@@ -219,7 +210,7 @@ describe("Response Lib Tests", () => {
 
     test("should handle generic errors", async () => {
       const genericError = new Error("Something went wrong");
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
 
       await expect(

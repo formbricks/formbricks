@@ -3,18 +3,14 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 
-export const getOrganizationBillingByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TOrganizationBilling | null> => {
+export const getOrganizationBillingByWorkspaceId = reactCache(
+  async (workspaceId: string): Promise<TOrganizationBilling | null> => {
     try {
       const organization = await prisma.organization.findFirst({
         where: {
           workspaces: {
             some: {
-              environments: {
-                some: {
-                  id: environmentId,
-                },
-              },
+              id: workspaceId,
             },
           },
         },
@@ -43,7 +39,7 @@ export const getOrganizationBillingByEnvironmentId = reactCache(
           : { stripe: organization.billing.stripe as TOrganizationBilling["stripe"] }),
       };
     } catch (error) {
-      logger.error(error, "Failed to get organization billing by environment ID");
+      logger.error(error, "Failed to get organization billing by workspace ID");
       return null;
     }
   }

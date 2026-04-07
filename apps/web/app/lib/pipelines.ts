@@ -2,7 +2,13 @@ import { logger } from "@formbricks/logger";
 import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { CRON_SECRET, WEBAPP_URL } from "@/lib/constants";
 
-export const sendToPipeline = async ({ event, surveyId, environmentId, response }: TPipelineInput) => {
+export const sendToPipeline = async ({
+  event,
+  surveyId,
+  environmentId,
+  workspaceId,
+  response,
+}: TPipelineInput) => {
   if (!CRON_SECRET) {
     throw new Error("CRON_SECRET is not set");
   }
@@ -14,8 +20,9 @@ export const sendToPipeline = async ({ event, surveyId, environmentId, response 
       "x-api-key": CRON_SECRET,
     },
     body: JSON.stringify({
-      environmentId: environmentId,
-      surveyId: surveyId,
+      environmentId,
+      workspaceId,
+      surveyId,
       event,
       response,
     }),

@@ -18,7 +18,7 @@ const fetchAndAuthorizeContact = async (
     return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  if (!hasPermission(environmentPermissions, contact.environmentId, requiredPermission)) {
+  if (!hasPermission(environmentPermissions, contact.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 

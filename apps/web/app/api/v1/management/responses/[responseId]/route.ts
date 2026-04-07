@@ -31,7 +31,7 @@ async function fetchAndAuthorizeResponse(
     return { error: responses.notFoundResponse("Survey", response.surveyId, true) };
   }
 
-  if (!hasPermission(authentication.environmentPermissions, survey.environmentId, requiredPermission)) {
+  if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -172,6 +172,7 @@ export const PUT = withV1ApiWrapper({
       sendToPipeline({
         event: "responseUpdated",
         environmentId: result.survey.environmentId,
+        workspaceId: result.survey.workspaceId,
         surveyId: result.survey.id,
         response: updated,
       });
@@ -180,6 +181,7 @@ export const PUT = withV1ApiWrapper({
         sendToPipeline({
           event: "responseFinished",
           environmentId: result.survey.environmentId,
+          workspaceId: result.survey.workspaceId,
           surveyId: result.survey.id,
           response: updated,
         });

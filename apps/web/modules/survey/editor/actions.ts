@@ -290,7 +290,11 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+    const result = await createActionClass(
+      parsedInput.action.environmentId,
+      parsedInput.action.workspaceId,
+      parsedInput.action
+    );
     ctx.auditLoggingCtx.actionClassId = result.id;
     ctx.auditLoggingCtx.newObject = result;
     return result;
