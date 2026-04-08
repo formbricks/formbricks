@@ -195,6 +195,7 @@ export const MainNavigation = ({
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [hasInitializedProjects, setHasInitializedProjects] = useState(false);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
   const [workspaceLoadError, setWorkspaceLoadError] = useState<string | null>(null);
   const [organizationLoadError, setOrganizationLoadError] = useState<string | null>(null);
@@ -308,6 +309,7 @@ export const MainNavigation = ({
       );
     } finally {
       setIsLoadingProjects(false);
+      setHasInitializedProjects(true);
     }
   }, [organization.id, t]);
 
@@ -417,6 +419,10 @@ export const MainNavigation = ({
   };
 
   const handleProjectCreate = () => {
+    if (!hasInitializedProjects || isLoadingProjects) {
+      return;
+    }
+
     if (projects.length >= organizationProjectsLimit) {
       setOpenProjectLimitModal(true);
       return;
@@ -460,6 +466,7 @@ export const MainNavigation = ({
 
   const switcherIconClasses =
     "flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600";
+  const isInitialProjectsLoading = isWorkspaceDropdownOpen && !hasInitializedProjects && !workspaceLoadError;
 
   return (
     <>
@@ -569,12 +576,13 @@ export const MainNavigation = ({
                     <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
                     {t("common.change_workspace")}
                   </div>
-                  {isLoadingProjects && (
+                  {(isLoadingProjects || isInitialProjectsLoading) && (
                     <div className="flex items-center justify-center py-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   )}
                   {!isLoadingProjects &&
+                    !isInitialProjectsLoading &&
                     workspaceLoadError &&
                     renderSwitcherError(
                       workspaceLoadError,
@@ -584,7 +592,7 @@ export const MainNavigation = ({
                       },
                       t("common.try_again")
                     )}
-                  {!isLoadingProjects && !workspaceLoadError && (
+                  {!isLoadingProjects && !isInitialProjectsLoading && !workspaceLoadError && (
                     <>
                       <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
                         {projects.map((proj) => (
