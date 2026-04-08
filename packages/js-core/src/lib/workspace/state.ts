@@ -44,6 +44,7 @@ export const fetchWorkspaceState = async ({
       data: { workspace?: TWorkspaceState["data"]["settings"] };
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- server sends `workspace` but SDK type defines `settings`
     if (rawData.data.workspace && !rawData.data.settings) {
       rawData.data.settings = rawData.data.workspace;
       delete rawData.data.workspace;
