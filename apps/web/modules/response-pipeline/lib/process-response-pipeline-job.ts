@@ -160,7 +160,17 @@ const runResponseFinishedSideEffects = async ({
   ]);
 
   if (integrations.length > 0) {
-    await handleIntegrations(integrations, data, survey);
+    try {
+      await handleIntegrations(integrations, data, survey);
+    } catch (error) {
+      logger.error(
+        {
+          ...logContext,
+          err: error,
+        },
+        "Response pipeline integration handling failed"
+      );
+    }
   }
 
   const usersWithNotifications = await prisma.user.findMany({
@@ -311,7 +321,17 @@ const runResponseCreatedSideEffects = async ({
     );
   });
 
-  await sendTelemetryEvents();
+  try {
+    await sendTelemetryEvents();
+  } catch (error) {
+    logger.error(
+      {
+        ...logContext,
+        err: error,
+      },
+      "Response pipeline telemetry dispatch failed"
+    );
+  }
 };
 
 export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = async (data, context) => {

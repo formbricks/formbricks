@@ -72,6 +72,7 @@ const getResponseForUpdate = async (req: Request, responseId: string): Promise<R
 
 const getSurveyForResponseUpdate = async (
   req: Request,
+  environmentId: string,
   responseId: string,
   surveyId: string
 ): Promise<Response | TSurvey> => {
@@ -80,6 +81,17 @@ const getSurveyForResponseUpdate = async (
 
     if (!survey) {
       return responses.notFoundResponse("Survey", surveyId, true);
+    }
+
+    if (survey.environmentId !== environmentId) {
+      return responses.badRequestResponse(
+        "Survey is part of another environment",
+        {
+          "survey.environmentId": survey.environmentId,
+          environmentId,
+        },
+        true
+      );
     }
 
     return survey;
@@ -178,9 +190,11 @@ const updateResponseSafely = async (
 export const handleUpdateResponseRequest = async ({
   req,
   props,
-}: THandlerParams<{ params: Promise<{ responseId: string }> }>): Promise<{ response: Response }> => {
+}: THandlerParams<{ params: Promise<{ environmentId: string; responseId: string }> }>): Promise<{
+  response: Response;
+}> => {
   const params = await props.params;
-  const { responseId } = params;
+  const { environmentId, responseId } = params;
 
   if (!responseId) {
     return {
@@ -202,7 +216,7 @@ export const handleUpdateResponseRequest = async ({
     };
   }
 
-  const survey = await getSurveyForResponseUpdate(req, responseId, response.surveyId);
+  const survey = await getSurveyForResponseUpdate(req, environmentId, responseId, response.surveyId);
   if (survey instanceof Response) {
     return {
       response: survey,

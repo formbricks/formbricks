@@ -353,6 +353,47 @@ describe("processResponsePipelineJob", () => {
     );
   });
 
+  test("logs integration failures without failing the responseFinished job", async () => {
+    const integrationError = new Error("slack offline");
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+    mockHandleIntegrations.mockRejectedValue(integrationError);
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: integrationError,
+        event: "responseFinished",
+        jobId: "job_123",
+      }),
+      "Response pipeline integration handling failed"
+    );
+  });
+
+  test("logs telemetry failures without failing the responseCreated job", async () => {
+    const telemetryError = new Error("telemetry offline");
+    mockSendTelemetryEvents.mockRejectedValue(telemetryError);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: telemetryError,
+        event: "responseCreated",
+        jobId: "job_123",
+      }),
+      "Response pipeline telemetry dispatch failed"
+    );
+  });
+
   test("logs non-success webhook responses without failing the job", async () => {
     mockPrismaWebhookFindMany.mockResolvedValue([
       {

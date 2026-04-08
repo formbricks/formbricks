@@ -91,15 +91,16 @@ vi.mock("./lib/response", () => ({
 }));
 
 type PutHandler = (args: {
-  props: { params: Promise<{ responseId: string }> };
+  props: { params: Promise<{ environmentId: string; responseId: string }> };
   req: NextRequest;
 }) => Promise<{ response: Response }>;
 
+const environmentId = "cm9environment000108l4abcz12";
 const responseId = "cm9response000108l4abcz12";
 const surveyId = "cm9survey000108l4abcz12zz";
 
 const createRequest = (body: BodyInit) =>
-  new NextRequest(`http://localhost/api/v1/client/env/responses/${responseId}`, {
+  new NextRequest(`http://localhost/api/v1/client/${environmentId}/responses/${responseId}`, {
     body,
     headers: {
       "content-type": "application/json",
@@ -121,7 +122,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
     });
     mockGetSurvey.mockResolvedValue({
       blocks: [],
-      environmentId: "cm9environment000108l4abcz12",
+      environmentId,
       id: surveyId,
       questions: [],
     });
@@ -148,7 +149,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
 
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: {}, finished: false })),
     });
 
@@ -162,7 +163,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
   test("returns a bad request response when the request body fails validation", async () => {
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: 123, finished: false })),
     });
 
@@ -178,7 +179,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
 
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: { fileQuestion: ["invalid"] }, finished: false })),
     });
 
@@ -194,7 +195,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
 
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: { question_other: "value" }, finished: false })),
     });
 
@@ -211,7 +212,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
 
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: { question_1: "new" }, finished: false })),
     });
 
@@ -227,7 +228,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
 
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: { question_1: "new" }, finished: false })),
     });
 
@@ -236,15 +237,41 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
       message: "Something went wrong",
     });
     expect(mockLoggerError).toHaveBeenCalledWith(
-      { error: updateError, url: `http://localhost/api/v1/client/env/responses/${responseId}` },
+      { error: updateError, url: `http://localhost/api/v1/client/${environmentId}/responses/${responseId}` },
       "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
     );
+  });
+
+  test("returns a bad request response when the response survey belongs to another environment", async () => {
+    mockGetSurvey.mockResolvedValue({
+      blocks: [],
+      environmentId: "cm9differentenvironment000108",
+      id: surveyId,
+      questions: [],
+    });
+
+    const { PUT } = await import("./route");
+    const result = await (PUT as unknown as PutHandler)({
+      props: { params: Promise.resolve({ environmentId, responseId }) },
+      req: createRequest(JSON.stringify({ data: { question_1: "new" }, finished: false })),
+    });
+
+    expect(result.response.status).toBe(400);
+    await expect(result.response.json()).resolves.toMatchObject({
+      details: {
+        "survey.environmentId": "cm9differentenvironment000108",
+        environmentId,
+      },
+      message: "Survey is part of another environment",
+    });
+    expect(mockUpdateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+    expect(mockEnqueueResponsePipelineEvents).not.toHaveBeenCalled();
   });
 
   test("updates the response and enqueues BullMQ events", async () => {
     const { PUT } = await import("./route");
     const result = await (PUT as unknown as PutHandler)({
-      props: { params: Promise.resolve({ responseId }) },
+      props: { params: Promise.resolve({ environmentId, responseId }) },
       req: createRequest(JSON.stringify({ data: { question_1: "new" }, finished: true })),
     });
 
@@ -258,7 +285,7 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
       finished: true,
     });
     expect(mockEnqueueResponsePipelineEvents).toHaveBeenCalledWith({
-      environmentId: "cm9environment000108l4abcz12",
+      environmentId,
       events: ["responseUpdated", "responseFinished"],
       responseId,
       surveyId,
