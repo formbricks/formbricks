@@ -13,11 +13,11 @@ export const authenticateRequest = async (request: NextRequest): Promise<TAuthen
   if (!apiKeyData) return null;
 
   // In the route handlers, we'll do more specific permission checks
-  if (apiKeyData.apiKeyEnvironments.length === 0) return null;
+  if (apiKeyData.apiKeyWorkspaces.length === 0) return null;
 
   const authentication: TAuthenticationApiKey = {
     type: "apiKey",
-    workspacePermissions: apiKeyData.apiKeyEnvironments.map((env) => ({
+    workspacePermissions: apiKeyData.apiKeyWorkspaces.map((env) => ({
       permission: env.permission,
       workspaceId: env.workspaceId,
       workspaceName: env.workspace.name,

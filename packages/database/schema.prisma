@@ -622,7 +622,7 @@ model Workspace {
   tags                 Tag[]
   segments             Segment[]
   integrations         Integration[]
-  apiKeyEnvironments   ApiKeyEnvironment[]
+  apiKeyWorkspaces     ApiKeyWorkspace[]
 
   @@unique([organizationId, name])
 }
@@ -743,20 +743,20 @@ model Invite {
 /// @property organization - The organization this key belongs to
 /// @property createdBy - User ID who created this key
 /// @property lastUsedAt - Timestamp of last usage
-/// @property apiKeyEnvironments - Workspaces this key has access to
+/// @property apiKeyWorkspaces - Workspaces this key has access to
 model ApiKey {
-  id                 String              @id @default(cuid())
-  createdAt          DateTime            @default(now())
+  id                 String            @id @default(cuid())
+  createdAt          DateTime          @default(now())
   createdBy          String?
   lastUsedAt         DateTime?
   label              String
   hashedKey          String
-  lookupHash         String?             @unique
+  lookupHash         String?           @unique
   organizationId     String
-  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeyEnvironments ApiKeyEnvironment[]
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyWorkspaces   ApiKeyWorkspace[]
   /// [OrganizationAccess]
-  organizationAccess Json                @default("{}")
+  organizationAccess Json              @default("{}")
 
   @@index([organizationId])
 }
@@ -776,7 +776,7 @@ enum ApiKeyPermission {
 /// @property apiKey - The associated API key
 /// @property workspace - The workspace being accessed
 /// @property permission - Level of access granted
-model ApiKeyEnvironment {
+model ApiKeyWorkspace {
   id          String           @id @default(cuid())
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

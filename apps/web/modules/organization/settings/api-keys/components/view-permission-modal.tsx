@@ -97,13 +97,13 @@ export const ViewPermissionModal = ({
               </div>
               <div className="space-y-2">
                 <Label>{t("workspace.api_keys.permissions")}</Label>
-                {apiKey.apiKeyEnvironments?.length === 0 && (
+                {apiKey.apiKeyWorkspaces?.length === 0 && (
                   <div className="text-center text-sm">
                     {t("workspace.api_keys.no_env_permissions_found")}
                   </div>
                 )}
                 <div className="space-y-2">
-                  {apiKey.apiKeyEnvironments?.map((permission) => {
+                  {apiKey.apiKeyWorkspaces?.map((permission) => {
                     return (
                       <div key={permission.workspaceId} className="flex items-center gap-2">
                         {/* Workspace dropdown */}

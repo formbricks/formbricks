@@ -15,7 +15,7 @@ export const authenticateRequest = async (
 
   const authentication: TAuthenticationApiKey = {
     type: "apiKey",
-    workspacePermissions: apiKeyData.apiKeyEnvironments.map((env) => ({
+    workspacePermissions: apiKeyData.apiKeyWorkspaces.map((env) => ({
       permission: env.permission,
       workspaceId: env.workspaceId,
       workspaceName: env.workspace.name,

@@ -49,3 +49,11 @@ DROP TABLE IF EXISTS "Environment";
 
 -- Drop the EnvironmentType enum
 DROP TYPE IF EXISTS "EnvironmentType";
+
+-- Rename ApiKeyEnvironment table to ApiKeyWorkspace
+ALTER TABLE "ApiKeyEnvironment" RENAME TO "ApiKeyWorkspace";
+
+-- Rename indexes to match new table name
+ALTER INDEX "ApiKeyEnvironment_pkey" RENAME TO "ApiKeyWorkspace_pkey";
+ALTER INDEX "ApiKeyEnvironment_apiKeyId_workspaceId_key" RENAME TO "ApiKeyWorkspace_apiKeyId_workspaceId_key";
+ALTER INDEX "ApiKeyEnvironment_workspaceId_idx" RENAME TO "ApiKeyWorkspace_workspaceId_idx";

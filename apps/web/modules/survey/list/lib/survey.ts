@@ -14,8 +14,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesWorkspaceExist } from "@/modules/survey/list/lib/environment";
-import { getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
+import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
 import { TSurvey, TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { mapSurveyRowToSurvey, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
 

@@ -8,8 +8,8 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 
 interface LinkSurveyPageProps {

@@ -12,8 +12,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesWorkspaceExist } from "@/modules/survey/list/lib/environment";
-import { getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
+import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
 import { TSurvey, TWorkspaceWithLanguages } from "../types/surveys";
 // Import the module to be tested
 import {
@@ -53,11 +52,8 @@ vi.mock("@/modules/survey/lib/utils", () => ({
   buildWhereClause: vi.fn((filterCriteria) => (filterCriteria ? { name: filterCriteria.name } : {})),
 }));
 
-vi.mock("@/modules/survey/list/lib/environment", () => ({
-  doesWorkspaceExist: vi.fn(),
-}));
-
 vi.mock("@/modules/survey/list/lib/workspace", () => ({
+  doesWorkspaceExist: vi.fn(),
   getWorkspaceWithLanguages: vi.fn(),
 }));
 

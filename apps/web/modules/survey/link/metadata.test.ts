@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
@@ -9,7 +9,7 @@ vi.mock("@/modules/survey/link/lib/data", () => ({
   getSurveyWithMetadata: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/link/lib/environment", () => ({
+vi.mock("@/modules/survey/link/lib/workspace", () => ({
   getWorkspaceContextForLinkSurvey: vi.fn(),
 }));
 

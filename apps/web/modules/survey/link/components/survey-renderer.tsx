@@ -16,8 +16,8 @@ import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-cli
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
-import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
   survey: TSurvey;

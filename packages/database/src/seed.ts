@@ -88,7 +88,7 @@ async function deleteData(): Promise<void> {
     "contactAttribute",
     "contactAttributeKey",
     "contact",
-    "apiKeyEnvironment",
+    "apiKeyWorkspace",
     "apiKey",
     "segment",
     "webhook",

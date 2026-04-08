@@ -20,7 +20,7 @@ describe("getApiKeyWithPermissions", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
           workspaceId: "workspace-1",
           permission: "manage" as const,
@@ -102,7 +102,7 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
           workspaceId: "workspace-1",
           permission: "manage" as const,
@@ -160,7 +160,7 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [],
+      apiKeyWorkspaces: [],
     };
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);

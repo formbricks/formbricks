@@ -32,7 +32,7 @@ describe("authenticateRequest", () => {
           write: false,
         },
       },
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
           workspaceId: "workspace-id-1",
           permission: "manage",
@@ -107,7 +107,7 @@ describe("authenticateRequest", () => {
           write: true,
         },
       },
-      apiKeyEnvironments: [], // No workspace-specific permissions
+      apiKeyWorkspaces: [], // No workspace-specific permissions
     } as unknown as TApiKeyWithEnvironmentAndWorkspace;
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData);

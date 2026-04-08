@@ -44,10 +44,10 @@ export interface TApiKeyWithEnvironmentPermission extends Pick<
   ApiKey,
   "id" | "label" | "createdAt" | "organizationAccess"
 > {
-  apiKeyEnvironments: TApiKeyWorkspacePermission[];
+  apiKeyWorkspaces: TApiKeyWorkspacePermission[];
 }
 
-const ZApiKeyEnvironmentWithWorkspace = z.object({
+const ZApiKeyWorkspaceWithWorkspace = z.object({
   id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -71,7 +71,7 @@ const ZApiKey = z.object({
 });
 
 export const ZApiKeyWithEnvironmentAndWorkspace = ZApiKey.extend({
-  apiKeyEnvironments: z.array(ZApiKeyEnvironmentWithWorkspace),
+  apiKeyWorkspaces: z.array(ZApiKeyWorkspaceWithWorkspace),
 });
 
 export type TApiKeyWithEnvironmentAndWorkspace = z.infer<typeof ZApiKeyWithEnvironmentAndWorkspace>;

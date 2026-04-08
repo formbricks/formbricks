@@ -30,7 +30,7 @@ const mockApiKey: ApiKey = {
 
 const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
   ...mockApiKey,
-  apiKeyEnvironments: [
+  apiKeyWorkspaces: [
     {
       workspaceId: "workspace123",
       permission: ApiKeyPermission.manage,
@@ -109,7 +109,7 @@ describe("API Key Management", () => {
           organizationId: "clj28r6va000409j3ep7h8xzk",
         },
         select: {
-          apiKeyEnvironments: {
+          apiKeyWorkspaces: {
             select: {
               permission: true,
               workspaceId: true,
@@ -376,7 +376,7 @@ describe("API Key Management", () => {
 
     const mockApiKeyWithEnvironments = {
       ...mockApiKey,
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
           id: "env-perm-123",
           apiKeyId: "apikey123",
@@ -402,7 +402,7 @@ describe("API Key Management", () => {
           createdBy: "user123",
         }),
         include: {
-          apiKeyEnvironments: true,
+          apiKeyWorkspaces: true,
         },
       });
     });

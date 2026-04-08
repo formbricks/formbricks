@@ -8,13 +8,13 @@ import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
-import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import {
   getBasicSurveyMetadata,
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 
 interface ContactSurveyPageProps {

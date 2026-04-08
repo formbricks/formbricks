@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import {
   getBasicSurveyMetadata,
   getMetadataBrandColor,

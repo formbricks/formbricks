@@ -32,7 +32,7 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
           label: true,
           createdAt: true,
           organizationAccess: true,
-          apiKeyEnvironments: {
+          apiKeyWorkspaces: {
             select: {
               permission: true,
               workspaceId: true,
@@ -55,7 +55,7 @@ export const getApiKeyWithPermissions = reactCache(
   async (apiKey: string): Promise<TApiKeyWithEnvironmentAndWorkspace | null> => {
     try {
       const includeQuery = {
-        apiKeyEnvironments: {
+        apiKeyWorkspaces: {
           include: {
             workspace: {
               select: {
@@ -185,7 +185,7 @@ export const createApiKey = async (
         organizationAccess,
         ...(workspacePermissions && workspacePermissions.length > 0
           ? {
-              apiKeyEnvironments: {
+              apiKeyWorkspaces: {
                 create: workspacePermissions.map((wsPerm) => ({
                   permission: wsPerm.permission,
                   workspaceId: wsPerm.workspaceId,
@@ -195,7 +195,7 @@ export const createApiKey = async (
           : {}),
       },
       include: {
-        apiKeyEnvironments: true,
+        apiKeyWorkspaces: true,
       },
     });
 
