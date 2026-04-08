@@ -1,0 +1,260 @@
+{{- if .Values.envoy.enabled }}
+{{- if and (not .Values.envoy.formbricks.gatewayClass.create) (not .Values.envoy.formbricks.gatewayClass.name) -}}
+{{- fail "envoy.formbricks.gatewayClass.name is required when envoy.formbricks.gatewayClass.create=false" -}}
+{{- end -}}
+{{- $namespace := include "formbricks.namespace" . -}}
+{{- $gatewayName := include "formbricks.envoy.gatewayName" . -}}
+{{- $gatewayClassName := include "formbricks.envoy.gatewayClassName" . -}}
+{{- $proxyName := include "formbricks.envoy.proxyName" . -}}
+{{- $proxyServiceName := include "formbricks.envoy.proxyServiceName" . -}}
+{{- $appServiceName := include "formbricks.name" . -}}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: {{ $proxyName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        replicas: {{ .Values.envoy.formbricks.proxy.replicas }}
+      envoyService:
+        name: {{ $proxyServiceName }}
+        type: {{ .Values.envoy.formbricks.proxy.service.type }}
+        labels:
+          app.kubernetes.io/name: {{ $proxyServiceName }}
+          app.kubernetes.io/managed-by: {{ .Release.Service }}
+  logging:
+    level:
+      default: {{ .Values.envoy.formbricks.proxy.logging.defaultLevel | quote }}
+  telemetry:
+    metrics:
+      prometheus:
+        disable: {{ not .Values.envoy.formbricks.proxy.telemetry.prometheus.enabled }}
+    {{- if .Values.envoy.formbricks.proxy.telemetry.openTelemetry.enabled }}
+      sinks:
+        - type: OpenTelemetry
+          openTelemetry:
+            backendRefs:
+              {{- toYaml .Values.envoy.formbricks.proxy.telemetry.openTelemetry.backendRefs | nindent 14 }}
+            resourceAttributes:
+              service.name: {{ default $proxyServiceName .Values.envoy.formbricks.proxy.telemetry.openTelemetry.serviceName | quote }}
+              service.namespace: {{ default $namespace .Values.envoy.formbricks.proxy.telemetry.openTelemetry.serviceNamespace | quote }}
+              deployment.environment: {{ default "self-hosted" .Values.envoy.formbricks.proxy.telemetry.openTelemetry.deploymentEnvironment | quote }}
+    {{- end }}
+  preserveRouteOrder: true
+{{- if .Values.envoy.formbricks.gatewayClass.create }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: {{ $gatewayClassName }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  controllerName: {{ .Values.envoy.config.envoyGateway.gateway.controllerName | quote }}
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: {{ $proxyName }}
+    namespace: {{ $namespace }}
+{{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ $gatewayName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  gatewayClassName: {{ $gatewayClassName }}
+  listeners:
+    - name: {{ .Values.envoy.formbricks.gateway.listenerName }}
+      protocol: HTTP
+      port: {{ .Values.envoy.formbricks.gateway.port }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+{{- if .Values.envoy.formbricks.clientTrafficPolicy.enabled }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: {{ printf "%s-client-ip" $gatewayName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ $gatewayName }}
+  clientIPDetection:
+    xForwardedFor:
+      numTrustedHops: {{ .Values.envoy.formbricks.clientTrafficPolicy.numTrustedHops }}
+{{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-health" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /health
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- if .Values.envoy.formbricks.routes.authCallback }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-auth-callback" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/auth/callback
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- if .Values.envoy.formbricks.routes.v1Client }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-v1-client" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/client
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- if .Values.envoy.formbricks.routes.v2Client }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-v2-client" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v2/client
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- if .Values.envoy.formbricks.routes.v1Management }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-v1-management" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/management
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- if .Values.envoy.formbricks.routes.v1Webhooks }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-v1-webhooks" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/webhooks
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- if .Values.envoy.formbricks.routes.storage }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-storage" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /storage
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- end }}

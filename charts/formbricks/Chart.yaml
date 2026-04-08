@@ -31,3 +31,13 @@ dependencies:
     version: 20.11.2
     repository: "oci://registry-1.docker.io/bitnamicharts"
     condition: redis.enabled
+  - name: gateway-helm
+    alias: envoy
+    version: "v1.7.1"
+    repository: "oci://docker.io/envoyproxy"
+    condition: envoy.controller.enabled
+  - name: redis
+    alias: envoyRedis
+    version: 20.11.2
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: envoyRedis.enabled

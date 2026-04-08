@@ -18,6 +18,31 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | ---------------------------------------- | ---------- | ------- |
 | oci://registry-1.docker.io/bitnamicharts | postgresql | 16.4.16 |
 | oci://registry-1.docker.io/bitnamicharts | redis      | 20.11.2 |
+| oci://docker.io/envoyproxy               | gateway-helm | v1.7.1 |
+| oci://registry-1.docker.io/bitnamicharts | redis      | 20.11.2 |
+
+## Envoy bundle modes
+
+The chart can optionally deploy Formbricks behind Envoy Gateway with a dedicated Redis HA backend for Envoy global
+rate limiting.
+
+- `envoy.enabled=true` enables the app-bound Envoy resources such as `Gateway`, `HTTPRoute`, and rate-limit policies.
+- `envoy.controller.enabled=true` installs a bundled Envoy Gateway controller with the release.
+- `envoy.controller.enabled=false` keeps the chart in external-controller mode and assumes the cluster already has
+  Gateway API CRDs plus an Envoy Gateway controller compatible with
+  `envoy.config.envoyGateway.gateway.controllerName`.
+- `envoyRedis.enabled=true` deploys a dedicated Redis replication + Sentinel bundle for Envoy RLS. It is intentionally
+  separate from the existing app `redis` dependency.
+- The bundled controller reads its Redis backend from `envoy.config.envoyGateway.rateLimit.backend.redis.url`.
+  If you enable Redis authentication or override `envoyRedis.fullnameOverride`, set that URL explicitly so the
+  controller points at the correct backend.
+- When both the main app ingress and the Envoy API ingress are enabled, set `envoy.formbricks.ingress.host`
+  explicitly so the Envoy host choice is intentional.
+
+The intended defaults are:
+
+- self-hosted / single-tenant clusters: bundled controller mode
+- shared clusters with an existing platform controller: external-controller mode
 
 ## Values
 

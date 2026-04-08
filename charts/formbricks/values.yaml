@@ -303,6 +303,205 @@ ingress:
   annotations: {} # Ingress annotations
 
 ##########################################################
+# Envoy Gateway Bundle
+##########################################################
+envoy:
+  # Enable app-bound Envoy resources (Gateway, HTTPRoutes, policies, ingress)
+  enabled: false
+
+  # Install the Envoy Gateway controller from this chart when true.
+  # Leave disabled when the cluster already provides a compatible controller.
+  controller:
+    enabled: false
+
+  createNamespace: false
+
+  deployment:
+    replicas: 1
+    envoyGateway:
+      resources:
+        limits:
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      pod:
+        topologySpreadConstraints: []
+        tolerations: []
+        nodeSelector: {}
+    ports:
+      - name: grpc
+        port: 18000
+        targetPort: 18000
+      - name: ratelimit
+        port: 18001
+        targetPort: 18001
+      - name: wasm
+        port: 18002
+        targetPort: 18002
+      - name: metrics
+        port: 19001
+        targetPort: 19001
+
+  service:
+    type: ClusterIP
+    annotations: {}
+
+  config:
+    envoyGateway:
+      gateway:
+        controllerName: gateway.envoyproxy.io/formbricks-envoy-controller
+      provider:
+        type: Kubernetes
+        kubernetes:
+          deploy:
+            type: GatewayNamespace
+          rateLimitDeployment:
+            replicas: 1
+            container:
+              env:
+                - name: CACHE_KEY_PREFIX
+                  value: "formbricks:"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+      logging:
+        level:
+          default: info
+          global-ratelimit: info
+      rateLimit:
+        backend:
+          type: Redis
+          redis:
+            # Override this when enabling envoyRedis auth or changing envoyRedis.fullnameOverride.
+            url: "formbricks-envoy-redis-master:6379"
+        failClosed: false
+        telemetry:
+          metrics:
+            prometheus:
+              disable: false
+      envoyProxy:
+        logging:
+          level:
+            default: info
+        preserveRouteOrder: true
+
+  formbricks:
+    gatewayClass:
+      create: true
+      # Required when create=false so the Gateway can bind to an existing cluster-scoped GatewayClass.
+      name: ""
+    gateway:
+      name: ""
+      listenerName: http
+      port: 80
+    proxy:
+      name: ""
+      replicas: 1
+      service:
+        name: ""
+        type: ClusterIP
+      logging:
+        defaultLevel: info
+      telemetry:
+        prometheus:
+          enabled: true
+        openTelemetry:
+          enabled: false
+          serviceName: ""
+          serviceNamespace: ""
+          deploymentEnvironment: ""
+          backendRefs: []
+    clientTrafficPolicy:
+      enabled: true
+      numTrustedHops: 2
+    ingress:
+      enabled: false
+      ingressClassName: ""
+      # Set this explicitly when both the main app ingress and the Envoy API ingress are enabled.
+      host: ""
+      annotations: {}
+    routes:
+      authCallback: true
+      v1Client: true
+      v2Client: true
+      v1Management: true
+      v1Webhooks: true
+      storage: true
+    policies:
+      enabled: false
+      authCallback: true
+      v1Client: true
+      v2Client: true
+      v1Management: true
+      v1Webhooks: true
+      storage: true
+
+##########################################################
+# Dedicated Redis for Envoy Rate Limiting
+##########################################################
+envoyRedis:
+  enabled: false
+  fullnameOverride: "formbricks-envoy-redis"
+  architecture: replication
+  rbac:
+    create: true
+  serviceAccount:
+    create: true
+    automountServiceAccountToken: true
+  auth:
+    enabled: false
+  commonConfiguration: |-
+    appendonly yes
+    save ""
+  networkPolicy:
+    enabled: false
+  master:
+    resources: {}
+    podAntiAffinityPreset: soft
+    topologySpreadConstraints: []
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: ""
+    pdb:
+      create: true
+      maxUnavailable: 1
+  replica:
+    replicaCount: 2
+    automountServiceAccountToken: true
+    resources: {}
+    podAntiAffinityPreset: soft
+    topologySpreadConstraints: []
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: ""
+    pdb:
+      create: true
+      maxUnavailable: 1
+  sentinel:
+    enabled: true
+    quorum: 2
+    masterSet: formbricksenvoy
+    getMasterTimeout: 90
+    automateClusterRecovery: false
+    redisShutdownWaitFailover: true
+    resources: {}
+    persistence:
+      enabled: false
+    service:
+      type: ClusterIP
+    masterService:
+      enabled: true
+      type: ClusterIP
+  metrics:
+    enabled: false
+
+##########################################################
 # Redis Configuration
 ##########################################################
 redis:

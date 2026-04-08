@@ -1,0 +1,22 @@
+{{- if and .Values.envoy.controller.enabled (not .Values.envoy.enabled) -}}
+{{- fail "envoy.controller.enabled requires envoy.enabled=true" -}}
+{{- end -}}
+
+{{- $configuredRedisUrl := default "" .Values.envoy.config.envoyGateway.rateLimit.backend.redis.url | trim -}}
+{{- $defaultRedisUrl := include "formbricks.envoy.defaultRedisUrl" . -}}
+
+{{- if and .Values.envoy.controller.enabled (not .Values.envoyRedis.enabled) (eq $configuredRedisUrl $defaultRedisUrl) -}}
+{{- fail "envoy.controller.enabled requires envoyRedis.enabled=true or envoy.config.envoyGateway.rateLimit.backend.redis.url to point at an existing Redis backend" -}}
+{{- end -}}
+
+{{- if and .Values.envoy.controller.enabled .Values.envoyRedis.enabled .Values.envoyRedis.auth.enabled (eq $configuredRedisUrl $defaultRedisUrl) -}}
+{{- fail "envoyRedis.auth.enabled requires envoy.config.envoyGateway.rateLimit.backend.redis.url to include Redis authentication credentials" -}}
+{{- end -}}
+
+{{- if and .Values.envoy.controller.enabled .Values.envoyRedis.enabled (ne .Values.envoyRedis.fullnameOverride "formbricks-envoy-redis") (eq $configuredRedisUrl "formbricks-envoy-redis-master:6379") -}}
+{{- fail "When overriding envoyRedis.fullnameOverride, also set envoy.config.envoyGateway.rateLimit.backend.redis.url to match the Redis service name" -}}
+{{- end -}}
+
+{{- if and .Values.envoy.enabled .Values.envoy.formbricks.ingress.enabled (not (include "formbricks.envoy.ingressHost" .)) -}}
+{{- fail "envoy.formbricks.ingress.enabled requires envoy.formbricks.ingress.host or ingress.hosts[0].host" -}}
+{{- end -}}
