@@ -78,6 +78,18 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
       changed = true;
     }
 
+    // Migrate workspaceState.data.workspace → workspaceState.data.settings
+    // (applies to configs already in new format but with server's field name)
+    const wsState = (parsedConfig as unknown as TConfig).workspaceState;
+    if (wsState?.data) {
+      const wsData = wsState.data as unknown as Record<string, unknown>;
+      if (wsData.workspace && !wsData.settings) {
+        wsData.settings = wsData.workspace;
+        delete wsData.workspace;
+        changed = true;
+      }
+    }
+
     if (changed) {
       return { changed: true, newState: parsedConfig as unknown as TConfig };
     }

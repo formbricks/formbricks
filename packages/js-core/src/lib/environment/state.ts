@@ -38,7 +38,18 @@ export const fetchWorkspaceState = async ({
       });
     }
 
-    return ok(response.data);
+    // The server responds with `data.workspace` but SDK internals use `data.settings`
+    // to avoid `workspace.workspace` nesting. Map the field name here.
+    const rawData = response.data as TWorkspaceState & {
+      data: { workspace?: TWorkspaceState["data"]["settings"] };
+    };
+
+    if (rawData.data.workspace && !rawData.data.settings) {
+      rawData.data.settings = rawData.data.workspace;
+      delete rawData.data.workspace;
+    }
+
+    return ok(rawData);
   } catch (e: unknown) {
     const errorTyped = e as ApiErrorResponse;
     return err({
