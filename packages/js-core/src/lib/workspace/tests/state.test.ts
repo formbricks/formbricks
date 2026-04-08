@@ -151,7 +151,7 @@ describe("environment/state.ts", () => {
       mockJsConfig = vi.spyOn(Config, "getInstance");
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          workspaceState: {
+          workspace: {
             expiresAt: new Date(Date.now() + 60_000), // Not expired for now
           },
           user: {},
@@ -173,7 +173,7 @@ describe("environment/state.ts", () => {
     test("starts interval check and updates state when expired", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          workspaceState: {
+          workspace: {
             expiresAt: new Date(Date.now() - 1000).toISOString(), // expired
           },
           appUrl: "https://test.com",
@@ -223,7 +223,7 @@ describe("environment/state.ts", () => {
     test("extends expiry on error", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          workspaceState: {
+          workspace: {
             expiresAt: new Date(Date.now() - 1000).toISOString(),
           },
           appUrl: "https://test.com",
@@ -254,7 +254,7 @@ describe("environment/state.ts", () => {
       const futureDate = new Date(Date.now() + 1000 * 60 * 60); // 1 hour in future
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          workspaceState: {
+          workspace: {
             expiresAt: futureDate.toISOString(),
           },
           appUrl: "https://test.com",

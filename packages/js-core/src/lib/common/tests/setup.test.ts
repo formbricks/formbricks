@@ -208,7 +208,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           workspaceId: "env_123",
           appUrl: "https://my.url",
-          workspaceState: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } },
+          workspace: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } },
           user: { data: {}, expiresAt: null },
           status: { value: "success", expiresAt: null },
         }),
@@ -229,7 +229,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           workspaceId: "env_123",
           appUrl: "https://my.url",
-          workspaceState: {},
+          workspace: {},
           user: { data: {}, expiresAt: null },
           status: { value: "error", expiresAt: new Date(Date.now() + 10000) },
         }),
@@ -253,7 +253,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           workspaceId: "env_123",
           appUrl: "https://my.url",
-          workspaceState: {},
+          workspace: {},
           user: { data: {}, expiresAt: null },
           status: { value: "error", expiresAt: new Date(Date.now() + 10000) },
         }),
@@ -277,7 +277,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           workspaceId: "env_123",
           appUrl: "https://my.url",
-          workspaceState: { data: { surveys: [] }, expiresAt: new Date() },
+          workspace: { data: { surveys: [] }, expiresAt: new Date() },
           user: { data: {}, expiresAt: null },
           status: { value: "error", expiresAt: new Date(Date.now() - 10000) },
         }),
@@ -305,7 +305,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           workspaceId: "env_123",
           appUrl: "https://my.url",
-          workspaceState: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } }, // workspaceState expired
+          workspace: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } }, // workspace expired
           user: {
             data: { userId: "user_abc" },
             expiresAt: new Date(Date.now() - 5000), // also expired
@@ -341,7 +341,7 @@ describe("setup.ts", () => {
       const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
 
-      // workspaceState was fetched
+      // workspace was fetched
       expect(fetchWorkspaceState).toHaveBeenCalled();
       // user state was updated
       expect(sendUpdatesToBackend).toHaveBeenCalled();
@@ -394,7 +394,7 @@ describe("setup.ts", () => {
         appUrl: "https://urlX",
         workspaceId: "envX",
         user: DEFAULT_USER_STATE_NO_USER_ID,
-        workspaceState: {
+        workspace: {
           data: {
             surveys: [{ name: "SurveyA" }],
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- mock
@@ -429,7 +429,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           workspaceId: "env_abc",
           appUrl: "https://test.app",
-          workspaceState: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } }, // workspaceState expired
+          workspace: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } }, // workspace expired
           user: { data: {}, expiresAt: null },
           status: { value: "success", expiresAt: null },
         }),
@@ -449,7 +449,7 @@ describe("setup.ts", () => {
     test("resets user state to default", () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          workspaceState: { data: { surveys: [] } },
+          workspace: { data: { surveys: [] } },
           user: { data: { userId: "XYZ" } },
         }),
         update: vi.fn(),

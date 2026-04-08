@@ -152,7 +152,7 @@ describe("utils.ts", () => {
   // ---------------------------------------------------------------------------------
   describe("filterSurveys()", () => {
     // We'll create a minimal workspace state
-    let workspaceState: TWorkspaceState;
+    let workspace: TWorkspaceState;
     let user: TUserState;
     const baseSurvey: Partial<TWorkspaceStateSurvey> = {
       id: mockSurveyId,
@@ -163,7 +163,7 @@ describe("utils.ts", () => {
     };
 
     beforeEach(() => {
-      workspaceState = {
+      workspace = {
         expiresAt: new Date(),
         data: {
           settings: {
@@ -194,48 +194,48 @@ describe("utils.ts", () => {
 
     test("returns no surveys if user has no segments and userId is set", () => {
       user.data.userId = "user_abc";
-      // workspaceState has a single survey
-      workspaceState.data.surveys = [
+      // workspace has a single survey
+      workspace.data.surveys = [
         { ...baseSurvey, id: mockSurveyId1, segment: { id: mockSegmentId1 } } as TWorkspaceStateSurvey,
       ];
 
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toEqual([]); // no segments => none pass
     });
 
     test("returns surveys if user has no userId but displayOnce and no displays yet", () => {
       // userId is null => it won't segment filter
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TWorkspaceStateSurvey,
       ];
 
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(mockSurveyId1);
     });
 
     test("skips surveys that already displayed if displayOnce is used", () => {
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TWorkspaceStateSurvey,
       ];
       user.data.displays = [{ surveyId: mockSurveyId1, createdAt: new Date() }];
 
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toEqual([]);
     });
 
     test("skips surveys if user responded to them and displayOption=displayMultiple", () => {
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         { ...baseSurvey, id: mockSurveyId1, displayOption: "displayMultiple" } as TWorkspaceStateSurvey,
       ];
       user.data.responses = [mockSurveyId1];
 
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toEqual([]);
     });
 
     test("handles displaySome logic with displayLimit", () => {
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         {
           ...baseSurvey,
           id: mockSurveyId1,
@@ -247,19 +247,19 @@ describe("utils.ts", () => {
       user.data.displays = [{ surveyId: mockSurveyId1, createdAt: new Date() }];
 
       // No responses => so it's still allowed
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(1);
     });
 
     test("filters out surveys if recontactDays not met", () => {
       // Suppose survey uses workspace fallback (7 days)
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TWorkspaceStateSurvey,
       ];
       // user last displayAt is only 3 days ago
       user.data.lastDisplayAt = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(0);
     });
 
@@ -267,7 +267,7 @@ describe("utils.ts", () => {
       // user last displayAt is 8 days ago
       user.data.lastDisplayAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
 
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         {
           ...baseSurvey,
           id: mockSurveyId1,
@@ -275,14 +275,14 @@ describe("utils.ts", () => {
           recontactDays: null,
         } as TWorkspaceStateSurvey,
       ];
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(1);
     });
 
     test("filters by segment if userId is set and user has segments", () => {
       user.data.userId = "user_abc";
       user.data.segments = [mockSegmentId1];
-      workspaceState.data.surveys = [
+      workspace.data.surveys = [
         {
           ...baseSurvey,
           id: mockSurveyId1,
@@ -297,7 +297,7 @@ describe("utils.ts", () => {
         } as TWorkspaceStateSurvey,
       ];
 
-      const result = filterSurveys(workspaceState, user);
+      const result = filterSurveys(workspace, user);
       // only the one that matches user's segment
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(mockSurveyId1);

@@ -84,7 +84,7 @@ export const sendUpdates = async ({
     }
 
     const userState = updatesResponse.data.state;
-    const filteredSurveys = filterSurveys(config.get().workspaceState, userState);
+    const filteredSurveys = filterSurveys(config.get().workspace, userState);
 
     // messages => informational debug messages (e.g., "email already exists")
     // errors => error messages that should always be visible (e.g., invalid attribute keys)

@@ -32,10 +32,33 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
     let parsedConfig = JSON.parse(existingConfig) as TLegacyConfig;
     let changed = false;
 
-    // Migrate intermediate format: environmentId → workspaceId, environment → workspaceState
+    // Check if we need to migrate (if it has environmentState, it's old format)
+    if (parsedConfig.environmentState) {
+      const { apiHost, environmentState, personState, attributes, ...rest } = parsedConfig;
+
+      // Create new config structure
+      parsedConfig = {
+        ...rest,
+        ...(apiHost && { appUrl: apiHost }),
+        environment: environmentState,
+        ...(personState && {
+          user: {
+            ...personState,
+            data: {
+              ...personState.data,
+              // Copy over language from attributes if it exists
+              ...(attributes?.language && { language: attributes.language as string }),
+            },
+          },
+        }),
+      } as TLegacyConfig;
+      changed = true;
+    }
+
+    // Migrate intermediate format: environmentId → workspaceId, environment → workspace
     if (parsedConfig.environmentId ?? parsedConfig.environment) {
       const { environmentId, environment, ...rest } = parsedConfig;
-      const workspaceState = environment
+      const workspace = environment
         ? (() => {
             const envData = environment.data as unknown as Record<string, unknown>;
             const migratedData = { ...envData };
@@ -50,14 +73,14 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
       parsedConfig = {
         ...rest,
         workspaceId: environmentId ?? (rest as unknown as TConfig).workspaceId,
-        ...(workspaceState && { workspaceState }),
+        ...(workspace && { workspace }),
       } as TLegacyConfig;
       changed = true;
     }
 
-    // Migrate workspaceState.data.workspace → workspaceState.data.settings
+    // Migrate workspace.data.workspace → workspace.data.settings
     // (applies to configs already in new format but with server's field name)
-    const wsState = (parsedConfig as unknown as TConfig).workspaceState;
+    const wsState = (parsedConfig as unknown as TConfig).workspace;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be null since this is local storage
     if (wsState?.data) {
       const wsData = wsState.data as unknown as Record<string, unknown>;
@@ -165,7 +188,7 @@ export const setup = async (
   }
 
   if (
-    existingConfig?.workspaceState &&
+    existingConfig?.workspace &&
     existingConfig.workspaceId === effectiveId &&
     existingConfig.appUrl === configInput.appUrl
   ) {
@@ -173,9 +196,9 @@ export const setup = async (
     let isWorkspaceStateExpired = false;
     let isUserStateExpired = false;
 
-    const workspaceStateExpiresAt = new Date(existingConfig.workspaceState.expiresAt);
+    const workspaceExpiresAt = new Date(existingConfig.workspace.expiresAt);
 
-    if (isNowExpired(workspaceStateExpiresAt)) {
+    if (isNowExpired(workspaceExpiresAt)) {
       logger.debug("Workspace state expired. Syncing.");
       isWorkspaceStateExpired = true;
     }
@@ -187,7 +210,7 @@ export const setup = async (
 
     try {
       // fetch the workspace state (if expired)
-      let workspaceState: TWorkspaceState = existingConfig.workspaceState;
+      let workspace: TWorkspaceState = existingConfig.workspace;
       let userState: TUserState = existingConfig.user;
 
       if (isWorkspaceStateExpired || isDebug) {
@@ -195,24 +218,24 @@ export const setup = async (
           logger.debug("Debug mode is active, refetching workspace state");
         }
 
-        const workspaceStateResponse = await fetchWorkspaceState({
+        const workspaceResponse = await fetchWorkspaceState({
           appUrl: configInput.appUrl,
           workspaceId: effectiveId,
         });
 
-        if (workspaceStateResponse.ok) {
-          workspaceState = workspaceStateResponse.data;
-          logger.debug(`Fetched ${workspaceState.data.surveys.length.toString()} surveys from the backend`);
+        if (workspaceResponse.ok) {
+          workspace = workspaceResponse.data;
+          logger.debug(`Fetched ${workspace.data.surveys.length.toString()} surveys from the backend`);
         } else {
           logger.error(
-            `Error fetching workspace state: ${workspaceStateResponse.error.code} - ${workspaceStateResponse.error.responseMessage ?? ""}`
+            `Error fetching workspace state: ${workspaceResponse.error.code} - ${workspaceResponse.error.responseMessage ?? ""}`
           );
           return err({
             code: "network_error",
             message: "Error fetching workspace state",
             status: 500,
             url: new URL(`${configInput.appUrl}/api/v1/client/${effectiveId}/environment`),
-            responseMessage: workspaceStateResponse.error.message,
+            responseMessage: workspaceResponse.error.message,
           });
         }
       }
@@ -256,12 +279,12 @@ export const setup = async (
       }
 
       // filter the workspace state wrt the person state
-      const filteredSurveys = filterSurveys(workspaceState, userState);
+      const filteredSurveys = filterSurveys(workspace, userState);
 
       // update the appConfig with the new filtered surveys and person state
       config.update({
         ...existingConfig,
-        workspaceState,
+        workspace,
         user: userState,
         filteredSurveys,
       });
@@ -283,14 +306,14 @@ export const setup = async (
     // The person state will be fetched when the `setUserId` method is called.
 
     try {
-      const workspaceStateResponse = await fetchWorkspaceState({
+      const workspaceResponse = await fetchWorkspaceState({
         appUrl: configInput.appUrl,
         workspaceId: effectiveId,
       });
 
-      if (!workspaceStateResponse.ok) {
+      if (!workspaceResponse.ok) {
         // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is ApiErrorResponse
-        throw workspaceStateResponse.error;
+        throw workspaceResponse.error;
       }
 
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
@@ -314,15 +337,15 @@ export const setup = async (
         }
       }
 
-      const workspaceState = workspaceStateResponse.data;
-      logger.debug(`Fetched ${workspaceState.data.surveys.length.toString()} surveys from the backend`);
-      const filteredSurveys = filterSurveys(workspaceState, userState);
+      const workspace = workspaceResponse.data;
+      logger.debug(`Fetched ${workspace.data.surveys.length.toString()} surveys from the backend`);
+      const filteredSurveys = filterSurveys(workspace, userState);
 
       config.update({
         appUrl: configInput.appUrl,
         workspaceId: effectiveId,
         user: userState,
-        workspaceState,
+        workspace,
         filteredSurveys,
       });
 
@@ -352,8 +375,8 @@ export const tearDown = (): void => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
 
-  const { workspaceState } = appConfig.get();
-  const filteredSurveys = filterSurveys(workspaceState, DEFAULT_USER_STATE_NO_USER_ID);
+  const { workspace } = appConfig.get();
+  const filteredSurveys = filterSurveys(workspace, DEFAULT_USER_STATE_NO_USER_ID);
 
   logger.debug("Setting user state to default");
 

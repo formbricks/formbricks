@@ -65,7 +65,7 @@ export interface TUserState {
 export interface TConfig {
   workspaceId: string;
   appUrl: string;
-  workspaceState: TWorkspaceState;
+  workspace: TWorkspaceState;
   user: TUserState;
   filteredSurveys: TWorkspaceStateSurvey[];
   status: {

@@ -6,7 +6,7 @@ import { filterSurveys, getIsDebug } from "@/lib/common/utils";
 import type { TWorkspaceState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok } from "@/types/error";
 
-let workspaceStateSyncIntervalId: number | null = null;
+let workspaceSyncIntervalId: number | null = null;
 
 /**
  * Fetch the workspace state from the backend
@@ -71,9 +71,9 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
 
   const updateInterval = 1000 * 60; // every minute
 
-  if (typeof window !== "undefined" && workspaceStateSyncIntervalId === null) {
+  if (typeof window !== "undefined" && workspaceSyncIntervalId === null) {
     const intervalHandler = async (): Promise<void> => {
-      const expiresAt = appConfig.get().workspaceState.expiresAt;
+      const expiresAt = appConfig.get().workspace.expiresAt;
 
       try {
         // check if the environmentState has not expired yet
@@ -85,23 +85,23 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
         logger.debug("Workspace state has expired. Starting sync.");
 
         const userState = appConfig.get().user;
-        const workspaceState = await fetchWorkspaceState({
+        const workspace = await fetchWorkspaceState({
           appUrl: appConfig.get().appUrl,
           workspaceId: appConfig.get().workspaceId,
         });
 
-        if (workspaceState.ok) {
-          const { data: state } = workspaceState;
+        if (workspace.ok) {
+          const { data: state } = workspace;
           const filteredSurveys = filterSurveys(state, userState);
 
           appConfig.update({
             ...appConfig.get(),
-            workspaceState: state,
+            workspace: state,
             filteredSurveys,
           });
         } else {
           // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is an ApiErrorResponse
-          throw workspaceState.error;
+          throw workspace.error;
         }
       } catch (e) {
         console.error(`Error during expiry check: `, e);
@@ -109,15 +109,15 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
         const existingConfig = appConfig.get();
         appConfig.update({
           ...existingConfig,
-          workspaceState: {
-            ...existingConfig.workspaceState,
+          workspace: {
+            ...existingConfig.workspace,
             expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
           },
         });
       }
     };
 
-    workspaceStateSyncIntervalId = window.setInterval(
+    workspaceSyncIntervalId = window.setInterval(
       () => void intervalHandler(),
       updateInterval
     ) as unknown as number;
@@ -125,8 +125,8 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
 };
 
 export const clearWorkspaceStateExpiryCheckListener = (): void => {
-  if (workspaceStateSyncIntervalId) {
-    clearInterval(workspaceStateSyncIntervalId);
-    workspaceStateSyncIntervalId = null;
+  if (workspaceSyncIntervalId) {
+    clearInterval(workspaceSyncIntervalId);
+    workspaceSyncIntervalId = null;
   }
 };

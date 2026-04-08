@@ -55,17 +55,14 @@ export const wrapThrowsAsync =
 
 /**
  * Filters surveys based on the displayOption, recontactDays, and segments
- * @param workspaceState -  The workspace state
+ * @param workspace -  The workspace state
  * @param userState - The user state
  * @returns The filtered surveys
  */
 
 // takes the workspace and user state and returns the filtered surveys
-export const filterSurveys = (
-  workspaceState: TWorkspaceState,
-  userState: TUserState
-): TWorkspaceStateSurvey[] => {
-  const { settings, surveys } = workspaceState.data;
+export const filterSurveys = (workspace: TWorkspaceState, userState: TUserState): TWorkspaceStateSurvey[] => {
+  const { settings, surveys } = workspace.data;
   const { displays, responses, lastDisplayAt, segments, userId } = userState.data;
 
   // Function to filter surveys based on displayOption criteria

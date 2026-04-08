@@ -106,7 +106,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,
@@ -172,7 +172,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,
@@ -218,7 +218,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,
@@ -271,7 +271,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,
@@ -331,7 +331,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,
@@ -387,7 +387,7 @@ describe("widget-file", () => {
         return {
           appUrl: "https://fake.app",
           workspaceId: "env_123",
-          workspaceState: {
+          workspace: {
             data: {
               settings: {
                 clickOutsideClose: true,
@@ -471,7 +471,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,
@@ -682,7 +682,7 @@ describe("widget-file", () => {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
         workspaceId: "env_123",
-        workspaceState: {
+        workspace: {
           data: {
             settings: {
               clickOutsideClose: true,

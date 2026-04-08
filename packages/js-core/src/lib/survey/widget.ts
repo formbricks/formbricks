@@ -83,7 +83,7 @@ export const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay.toString()} seconds.`);
   }
 
-  const { settings } = config.get().workspaceState.data;
+  const { settings } = config.get().workspace.data;
   const { language } = config.get().user.data;
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
@@ -116,7 +116,7 @@ export const renderWidget = async (
     return;
   }
 
-  const recaptchaSiteKey = config.get().workspaceState.data.recaptchaSiteKey;
+  const recaptchaSiteKey = config.get().workspace.data.recaptchaSiteKey;
   const isSpamProtectionEnabled = Boolean(recaptchaSiteKey && survey.recaptcha?.enabled);
 
   const getRecaptchaToken = (): Promise<string | null> => {
@@ -160,11 +160,11 @@ export const renderWidget = async (
           },
         };
 
-        const filteredSurveys = filterSurveys(previousConfig.workspaceState, updatedUserState);
+        const filteredSurveys = filterSurveys(previousConfig.workspace, updatedUserState);
 
         config.update({
           ...previousConfig,
-          workspaceState: previousConfig.workspaceState,
+          workspace: previousConfig.workspace,
           user: updatedUserState,
           filteredSurveys,
         });
@@ -179,11 +179,11 @@ export const renderWidget = async (
           },
         };
 
-        const filteredSurveys = filterSurveys(config.get().workspaceState, newPersonState);
+        const filteredSurveys = filterSurveys(config.get().workspace, newPersonState);
 
         config.update({
           ...config.get(),
-          workspaceState: config.get().workspaceState,
+          workspace: config.get().workspace,
           user: newPersonState,
           filteredSurveys,
         });
@@ -204,12 +204,12 @@ export const closeSurvey = (): void => {
   // remove the survey modal container from DOM
   removeWidgetContainer();
 
-  const { workspaceState, user } = config.get();
-  const filteredSurveys = filterSurveys(workspaceState, user);
+  const { workspace, user } = config.get();
+  const filteredSurveys = filterSurveys(workspace, user);
 
   config.update({
     ...config.get(),
-    workspaceState,
+    workspace,
     user,
     filteredSurveys,
   });

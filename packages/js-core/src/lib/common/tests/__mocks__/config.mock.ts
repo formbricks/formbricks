@@ -10,7 +10,7 @@ export const mockActionClassId = "wypzu5qw7adgy66vq8s77tso";
 export const mockConfig: TConfig = {
   workspaceId: mockEnvironmentId,
   appUrl: "https://myapp.example",
-  workspaceState: {
+  workspace: {
     expiresAt: "2999-12-31T23:59:59Z",
     data: {
       surveys: [

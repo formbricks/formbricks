@@ -126,7 +126,7 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const timeoutStack = TimeoutStack.getInstance();
 
   logger.debug(`Checking page url: ${window.location.href}`);
-  const actionClasses = appConfig.get().workspaceState.data.actionClasses;
+  const actionClasses = appConfig.get().workspace.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
@@ -209,9 +209,9 @@ const checkClickMatch = async (event: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
-  const { workspaceState } = appConfig.get();
+  const { workspace } = appConfig.get();
 
-  const { actionClasses = [] } = workspaceState.data;
+  const { actionClasses = [] } = workspace.data;
 
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
@@ -249,8 +249,8 @@ const checkExitIntent = async (e: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
-  const { workspaceState } = appConfig.get();
-  const { actionClasses = [] } = workspaceState.data;
+  const { workspace } = appConfig.get();
+  const { actionClasses = [] } = workspace.data;
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
@@ -308,8 +308,8 @@ const checkScrollDepth = async (): Promise<void> => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
-    const { workspaceState } = appConfig.get();
-    const { actionClasses = [] } = workspaceState.data;
+    const { workspace } = appConfig.get();
+    const { actionClasses = [] } = workspace.data;
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"

@@ -129,7 +129,7 @@ describe("sendUpdates", () => {
       get: vi.fn().mockReturnValue({
         appUrl: mockAppUrl,
         workspaceId: mockEnvironmentId,
-        workspaceState: {
+        workspace: {
           data: {
             surveys: [],
           },
