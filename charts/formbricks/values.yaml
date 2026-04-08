@@ -411,9 +411,13 @@ envoy:
           enabled: true
         openTelemetry:
           enabled: false
+          # Prefer host/port when the collector Service lives in another namespace.
+          host: ""
+          port: 4317
           serviceName: ""
           serviceNamespace: ""
           deploymentEnvironment: ""
+          # Use backendRefs only when you intentionally want Service discovery through Gateway API refs.
           backendRefs: []
     clientTrafficPolicy:
       enabled: true
