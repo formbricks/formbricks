@@ -26,7 +26,7 @@ import { refetchWorkspaceAction } from "../actions";
 interface SurveyEditorProps {
   survey: TSurvey;
   workspace: Workspace;
-  environment: { id: string; appSetupCompleted: boolean };
+  appSetupCompleted: boolean;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -56,7 +56,7 @@ export const SurveyEditor = ({
   survey,
   workspace,
   workspaceLanguages,
-  environment,
+  appSetupCompleted,
   actionClasses,
   contactAttributeKeys,
   segments,
@@ -233,7 +233,6 @@ export const SurveyEditor = ({
 
           {activeView === "settings" && (
             <SettingsView
-              environment={environment}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               actionClasses={actionClasses}
@@ -270,7 +269,7 @@ export const SurveyEditor = ({
             survey={localSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}
-            environment={environment}
+            environment={{ appSetupCompleted }}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             isSpamProtectionAllowed={isSpamProtectionAllowed}

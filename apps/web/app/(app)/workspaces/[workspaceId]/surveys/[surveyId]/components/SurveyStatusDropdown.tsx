@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
@@ -17,16 +17,12 @@ import {
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 
 interface SurveyStatusDropdownProps {
-  environment: TEnvironment;
   updateLocalSurveyStatus?: (status: TSurvey["status"]) => void;
   survey: TSurvey;
 }
 
-export const SurveyStatusDropdown = ({
-  environment,
-  updateLocalSurveyStatus,
-  survey,
-}: SurveyStatusDropdownProps) => {
+export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: SurveyStatusDropdownProps) => {
+  const { workspace } = useWorkspaceContext();
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -72,7 +68,7 @@ export const SurveyStatusDropdown = ({
           <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
             <SelectValue>
               <div className="flex items-center">
-                {(survey.type === "link" || environment.appSetupCompleted) && (
+                {(survey.type === "link" || workspace.appSetupCompleted) && (
                   <SurveyStatusIndicator status={survey.status} />
                 )}
                 <span className="ml-2 text-sm text-slate-700">

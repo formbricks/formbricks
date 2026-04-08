@@ -138,7 +138,7 @@ export const getEmailHtmlAction = authenticatedActionClient
 const ZGeneratePersonalLinksAction = z.object({
   surveyId: ZId,
   segmentId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
   expirationDays: z.number().optional(),
 });
 
@@ -148,7 +148,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
-      throw new OperationNotAllowedError("Contacts are not enabled for this environment");
+      throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
     }
 
     await checkAuthorizationUpdated({
@@ -217,7 +217,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
 
 const ZUpdateSingleUseLinksAction = z.object({
   surveyId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
   isSingleUse: z.boolean(),
   isSingleUseEncryption: z.boolean(),
 });

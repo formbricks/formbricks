@@ -3,15 +3,14 @@
 import { AlertTriangleIcon, CheckIcon, RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 
 interface WidgetStatusIndicatorProps {
-  environment: TEnvironment;
+  workspace: { appSetupCompleted: boolean };
 }
 
-export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProps) => {
+export const WidgetStatusIndicator = ({ workspace }: WidgetStatusIndicatorProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const stati = {
@@ -29,7 +28,7 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
 
   let status: "notImplemented" | "running";
 
-  if (environment.appSetupCompleted) {
+  if (workspace.appSetupCompleted) {
     status = "running";
   } else {
     status = "notImplemented";

@@ -133,7 +133,6 @@ const Page = async (props: {
   searchParams: Promise<Record<string, string>>;
 }) => {
   const searchParams = await props.searchParams;
-  const params = await props.params;
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -157,7 +156,7 @@ const Page = async (props: {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar environmentId={params.workspaceId} activeId="notifications" />
+        <AccountSettingsNavbar activeId="notifications" />
       </PageHeader>
       <SettingsCard
         title={t("workspace.settings.notifications.email_alerts_surveys")}

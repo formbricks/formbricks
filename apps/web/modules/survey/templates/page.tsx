@@ -17,7 +17,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const params = await props.params;
   const workspaceId = params.workspaceId;
 
-  const { session, environment, isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const { session, isReadOnly } = await getWorkspaceAuth(workspaceId);
 
   const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
@@ -34,7 +34,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   return (
     <TemplateContainerWithPreview
       userId={session.user.id}
-      environment={environment}
+      appSetupCompleted={workspace.appSetupCompleted}
       workspace={workspace}
       publicDomain={publicDomain}
     />

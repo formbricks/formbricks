@@ -20,8 +20,6 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const params = await props.params;
   const t = await getTranslate();
-  const { workspaceId } = params;
-
   const { session } = await getWorkspaceAuth(params.workspaceId);
 
   const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(session.user.id);
@@ -37,7 +35,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar environmentId={workspaceId} activeId="profile" />
+        <AccountSettingsNavbar activeId="profile" />
       </PageHeader>
       {user && (
         <div>

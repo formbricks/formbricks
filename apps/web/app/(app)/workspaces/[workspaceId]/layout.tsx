@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { EnvironmentLayout } from "@/app/(app)/workspaces/[workspaceId]/components/EnvironmentLayout";
-import { EnvironmentContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { WorkspaceLayout as WorkspaceLayoutComponent } from "@/app/(app)/workspaces/[workspaceId]/components/WorkspaceLayout";
+import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getWorkspaceLayoutData } from "@/modules/workspaces/lib/utils";
 import WorkspaceStorageHandler from "./components/WorkspaceStorageHandler";
@@ -22,13 +22,10 @@ const WorkspaceLayout = async (props: {
 
   return (
     <>
-      <WorkspaceStorageHandler workspaceId={params.workspaceId} environmentId={layoutData.environment.id} />
-      <EnvironmentContextWrapper
-        environment={layoutData.environment}
-        workspace={layoutData.workspace}
-        organization={layoutData.organization}>
-        <EnvironmentLayout layoutData={layoutData}>{children}</EnvironmentLayout>
-      </EnvironmentContextWrapper>
+      <WorkspaceStorageHandler workspaceId={params.workspaceId} />
+      <WorkspaceContextWrapper workspace={layoutData.workspace} organization={layoutData.organization}>
+        <WorkspaceLayoutComponent layoutData={layoutData}>{children}</WorkspaceLayoutComponent>
+      </WorkspaceContextWrapper>
     </>
   );
 };

@@ -22,7 +22,7 @@ interface PreviewSurveyProps {
   elementId?: string | null;
   previewType?: TPreviewType;
   workspace: Workspace;
-  environment: { id: string; appSetupCompleted: boolean };
+  environment: { appSetupCompleted: boolean };
   languageCode: string;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;

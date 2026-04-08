@@ -3,7 +3,7 @@
 import { Unplug } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { Button } from "@/modules/ui/components/button";
 
 export const EmptyAppSurveys = () => {

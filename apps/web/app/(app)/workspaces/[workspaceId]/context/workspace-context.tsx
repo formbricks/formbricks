@@ -1,29 +1,27 @@
 "use client";
 
 import { createContext, useContext, useMemo } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TWorkspace } from "@formbricks/types/workspace";
 
-export interface EnvironmentContextType {
-  environment: TEnvironment;
+export interface WorkspaceContextType {
   workspace: TWorkspace;
   organization: TOrganization;
   organizationId: string;
 }
 
-const EnvironmentContext = createContext<EnvironmentContextType | null>(null);
+const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
-export const useEnvironment = () => {
-  const context = useContext(EnvironmentContext);
+export const useWorkspaceContext = () => {
+  const context = useContext(WorkspaceContext);
   if (!context) {
-    throw new Error("useEnvironment must be used within an EnvironmentProvider");
+    throw new Error("useWorkspaceContext must be used within a WorkspaceContextWrapper");
   }
   return context;
 };
 
 export const useWorkspace = () => {
-  const context = useContext(EnvironmentContext);
+  const context = useContext(WorkspaceContext);
   if (!context) {
     return { workspace: null };
   }
@@ -31,7 +29,7 @@ export const useWorkspace = () => {
 };
 
 export const useOrganization = () => {
-  const context = useContext(EnvironmentContext);
+  const context = useContext(WorkspaceContext);
   if (!context) {
     return { organization: null };
   }
@@ -39,30 +37,25 @@ export const useOrganization = () => {
 };
 
 // Client wrapper component to be used in server components
-interface EnvironmentContextWrapperProps {
-  environment: TEnvironment;
+interface WorkspaceContextWrapperProps {
   workspace: TWorkspace;
   organization: TOrganization;
   children: React.ReactNode;
 }
 
-export const EnvironmentContextWrapper = ({
-  environment,
+export const WorkspaceContextWrapper = ({
   workspace,
   organization,
   children,
-}: EnvironmentContextWrapperProps) => {
-  const environmentContextValue = useMemo(
+}: WorkspaceContextWrapperProps) => {
+  const workspaceContextValue = useMemo(
     () => ({
-      environment,
       workspace,
       organization,
       organizationId: workspace.organizationId,
     }),
-    [environment, workspace, organization]
+    [workspace, organization]
   );
 
-  return (
-    <EnvironmentContext.Provider value={environmentContextValue}>{children}</EnvironmentContext.Provider>
-  );
+  return <WorkspaceContext.Provider value={workspaceContextValue}>{children}</WorkspaceContext.Provider>;
 };

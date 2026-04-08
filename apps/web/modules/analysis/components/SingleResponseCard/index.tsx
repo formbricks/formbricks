@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -22,7 +21,6 @@ interface SingleResponseCardProps {
   response: TResponseWithQuotas;
   user?: TUser;
   environmentTags: TTag[];
-  environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
   updateResponseList?: (responseIds: string[]) => void;
   isReadOnly: boolean;
@@ -35,7 +33,6 @@ export const SingleResponseCard = ({
   response,
   user,
   environmentTags,
-  environment,
   updateResponse,
   updateResponseList,
   isReadOnly,
@@ -130,7 +127,6 @@ export const SingleResponseCard = ({
           pageType="response"
           response={response}
           survey={survey}
-          environment={environment}
           user={user}
           isReadOnly={isReadOnly}
           setDeleteDialogOpen={setDeleteDialogOpen}

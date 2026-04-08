@@ -5,15 +5,14 @@ import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/
 
 interface WorkspaceStorageHandlerProps {
   workspaceId: string;
-  environmentId: string;
 }
 
-const WorkspaceStorageHandler = ({ workspaceId, environmentId }: WorkspaceStorageHandlerProps) => {
+const WorkspaceStorageHandler = ({ workspaceId }: WorkspaceStorageHandlerProps) => {
   useEffect(() => {
     localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, workspaceId);
-    // Keep environment ID in sync for backward compatibility with old SDK clients
-    localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, environmentId);
-  }, [workspaceId, environmentId]);
+    // Keep legacy environment ID in sync for backward compatibility with old SDK clients
+    localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, workspaceId);
+  }, [workspaceId]);
 
   return null;
 };

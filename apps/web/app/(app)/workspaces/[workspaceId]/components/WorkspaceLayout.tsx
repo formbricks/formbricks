@@ -6,16 +6,16 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
-import { TEnvironmentLayoutData } from "@/modules/environments/types/environment-auth";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
+import { TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
-interface EnvironmentLayoutProps {
-  layoutData: TEnvironmentLayoutData;
+interface WorkspaceLayoutProps {
+  layoutData: TWorkspaceLayoutData;
   children?: React.ReactNode;
 }
 
-export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLayoutProps) => {
+export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutProps) => {
   const t = await getTranslate();
   const publicDomain = getPublicDomain();
 
@@ -25,7 +25,6 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
     organization,
     membership,
     workspace, // Current workspace details
-    environments, // All workspace environments (for environment switcher)
     isAccessControlAllowed,
     workspacePermission,
     license,
@@ -71,9 +70,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
-            environments={environments}
             currentOrganizationId={organization.id}
-            currentWorkspaceId={workspace.id}
             isMultiOrgEnabled={isMultiOrgEnabled}
             organizationWorkspacesLimit={organizationWorkspacesLimit}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}

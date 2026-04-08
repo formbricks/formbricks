@@ -15,7 +15,6 @@ import { TargetingLockedCard } from "@/modules/survey/editor/components/targetin
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 
 interface SettingsViewProps {
-  environment: { id: string; appSetupCompleted: boolean };
   localSurvey: TSurvey;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   actionClasses: ActionClass[];
@@ -32,7 +31,6 @@ interface SettingsViewProps {
 }
 
 export const SettingsView = ({
-  environment,
   localSurvey,
   setLocalSurvey,
   actionClasses,
@@ -51,7 +49,7 @@ export const SettingsView = ({
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
+      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       {localSurvey.type === "app" ? (
         <div>

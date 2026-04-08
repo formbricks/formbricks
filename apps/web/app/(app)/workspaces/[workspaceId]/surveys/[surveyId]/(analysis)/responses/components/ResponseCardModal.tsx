@@ -1,7 +1,6 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -22,7 +21,6 @@ interface ResponseCardModalProps {
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
   survey: TSurvey;
-  environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
@@ -38,7 +36,6 @@ export const ResponseCardModal = ({
   selectedResponseId,
   setSelectedResponseId,
   survey,
-  environment,
   user,
   environmentTags,
   updateResponse,
@@ -110,7 +107,6 @@ export const ResponseCardModal = ({
             survey={survey}
             response={responses[currentIndex]}
             user={user}
-            environment={environment}
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
             updateResponse={updateResponse}

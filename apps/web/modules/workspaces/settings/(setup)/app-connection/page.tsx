@@ -19,7 +19,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
   const t = await getTranslate();
   const { workspaceId } = await params;
 
-  const { environment, isReadOnly, session, workspace } = await getWorkspaceAuth(workspaceId);
+  const { isReadOnly, session, workspace } = await getWorkspaceAuth(workspaceId);
 
   const [actionClasses, locale] = await Promise.all([
     getActionClasses(workspace.id),
@@ -43,10 +43,10 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
         <SettingsCard
           title={t("workspace.app-connection.app_connection")}
           description={t("workspace.app-connection.app_connection_description")}>
-          {environment && (
+          {workspace && (
             <div className="space-y-4">
-              <WidgetStatusIndicator environment={environment} />
-              {!environment.appSetupCompleted ? (
+              <WidgetStatusIndicator workspace={workspace} />
+              {!workspace.appSetupCompleted ? (
                 <Alert variant="info">
                   <AlertTitle>{t("workspace.app-connection.setup_alert_title")}</AlertTitle>
                   <AlertDescription>{t("workspace.app-connection.setup_alert_description")}</AlertDescription>
@@ -71,10 +71,8 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
           )}
         </SettingsCard>
         <ActionSettingsCard
-          environment={environment}
-          otherEnvironment={environment}
           otherEnvActionClasses={[]}
-          environmentId={environment.id}
+          environmentId={workspace.id}
           workspaceId={workspace.id}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}

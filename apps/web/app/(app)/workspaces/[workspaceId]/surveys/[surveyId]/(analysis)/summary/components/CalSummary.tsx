@@ -8,7 +8,6 @@ import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface CalSummaryProps {
   elementSummary: TSurveyElementSummaryCal;
-  environmentId: string;
   survey: TSurvey;
 }
 

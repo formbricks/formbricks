@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 import { ActionActivityTab } from "./ActionActivityTab";
@@ -10,13 +9,11 @@ import { ActionSettingsTab } from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
   environmentId: string;
-  environment: TEnvironment;
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
-  otherEnvironment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
 }
 
@@ -26,10 +23,8 @@ export const ActionDetailModal = ({
   setOpen,
   actionClass,
   actionClasses,
-  environment,
   isReadOnly,
   otherEnvActionClasses,
-  otherEnvironment,
 }: ActionDetailModalProps) => {
   const { t } = useTranslation();
   const tabs = [
@@ -38,9 +33,7 @@ export const ActionDetailModal = ({
       children: (
         <ActionActivityTab
           otherEnvActionClasses={otherEnvActionClasses}
-          otherEnvironment={otherEnvironment}
           isReadOnly={isReadOnly}
-          environment={environment}
           actionClass={actionClass}
           environmentId={environmentId}
         />

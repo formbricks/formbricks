@@ -3,11 +3,10 @@
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
@@ -21,7 +20,6 @@ interface SingleResponseCardHeaderProps {
   pageType: "people" | "response";
   response: TResponse;
   survey: TSurvey;
-  environment: TEnvironment;
   user?: TUser;
   isReadOnly: boolean;
   setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
@@ -32,7 +30,6 @@ export const SingleResponseCardHeader = ({
   pageType,
   response,
   survey,
-  environment,
   user,
   isReadOnly,
   setDeleteDialogOpen,
@@ -87,7 +84,7 @@ export const SingleResponseCardHeader = ({
 
           {pageType === "people" && (
             <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-              {(survey.type === "link" || environment.appSetupCompleted) && (
+              {(survey.type === "link" || workspace?.appSetupCompleted) && (
                 <SurveyStatusIndicator status={survey.status} />
               )}
               <Link className="hover:underline" href={`${workspaceBasePath}/surveys/${survey.id}/summary`}>

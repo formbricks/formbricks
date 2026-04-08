@@ -24,14 +24,14 @@ import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { TEnvironmentAuth, TEnvironmentLayoutData } from "@/modules/environments/types/environment-auth";
+import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
 /**
  * Workspace-scoped equivalent of getEnvironmentAuth.
  * Accepts a workspaceId, resolves the production environment automatically,
  * and performs the same authorization checks as getEnvironmentAuth.
  */
-export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TEnvironmentAuth> => {
+export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
 
   const [workspace, session] = await Promise.all([getWorkspace(workspaceId), getServerSession(authOptions)]);
@@ -50,16 +50,6 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  // Synthesize a virtual environment from workspace data (Environment model removed)
-  const prodEnvironment = {
-    id: workspace.id,
-    type: "production" as const,
-    workspaceId: workspace.id,
-    appSetupCompleted: workspace.appSetupCompleted,
-    createdAt: workspace.createdAt,
-    updatedAt: workspace.updatedAt,
-  };
-
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!currentUserMembership) {
     throw new AuthorizationError(t("common.membership_not_found"));
@@ -74,7 +64,6 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
   const isReadOnly = isMember && hasReadAccess;
 
   return {
-    environment: prodEnvironment,
     workspace,
     organization,
     session,
@@ -224,8 +213,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         logo: data.logo,
         customHeadScripts: data.customHeadScripts,
         appSetupCompleted: data.appSetupCompleted,
-        // environments removed — Environment model no longer exists
-        environments: [],
       },
       organization: {
         id: data.organization.id,
@@ -236,7 +223,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         isAIEnabled: data.organization.isAIEnabled,
         whitelabel: data.organization.whitelabel,
       },
-      environments: [],
       membership: data.organization.memberships[0] || null,
     };
   } catch (error) {
@@ -253,7 +239,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
  * Resolves the production environment automatically.
  */
 export const getWorkspaceLayoutData = reactCache(
-  async (workspaceId: string, userId: string): Promise<TEnvironmentLayoutData> => {
+  async (workspaceId: string, userId: string): Promise<TWorkspaceLayoutData> => {
     validateInputs([workspaceId, ZId]);
     validateInputs([userId, ZId]);
 
@@ -283,7 +269,7 @@ export const getWorkspaceLayoutData = reactCache(
       throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
     }
 
-    const { workspace, organization, environments, membership } = relationData;
+    const { workspace, organization, membership } = relationData;
 
     if (!membership) {
       throw new AuthorizationError(t("common.membership_not_found"));
@@ -300,23 +286,11 @@ export const getWorkspaceLayoutData = reactCache(
       responseCount = await getMonthlyOrganizationResponseCount(organization.id);
     }
 
-    // environment is kept as a placeholder for type compatibility; Environment model removed
-    const environment = {
-      id: workspaceId,
-      type: "production" as const,
-      workspaceId,
-      appSetupCompleted: workspace.appSetupCompleted,
-      createdAt: workspace.createdAt,
-      updatedAt: workspace.updatedAt,
-    };
-
     return {
       session,
       user,
-      environment,
       workspace,
       organization,
-      environments,
       membership,
       isAccessControlAllowed,
       workspacePermission,

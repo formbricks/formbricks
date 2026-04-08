@@ -13,7 +13,7 @@ import { ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSegment } from "@formbricks/types/segment";
-import { useEnvironment } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { H4, InlineSmall, Small } from "@/modules/ui/components/typography";
@@ -88,7 +88,7 @@ const DisplayCriteriaItem = ({ icon, title, titleSuffix, description }: DisplayC
 
 export const AppTab = () => {
   const { t } = useTranslation();
-  const { environment, workspace } = useEnvironment();
+  const { workspace } = useWorkspaceContext();
   const { survey } = useSurvey();
 
   const documentationLinks = useMemo(() => createDocumentationLinks(t), [t]);
@@ -151,18 +151,18 @@ export const AppTab = () => {
   return (
     <div className="flex flex-col justify-between space-y-6 pb-4">
       <div className="flex flex-col space-y-6">
-        <Alert variant={environment.appSetupCompleted ? "success" : "warning"} size="default">
+        <Alert variant={workspace.appSetupCompleted ? "success" : "warning"} size="default">
           <AlertTitle>
-            {environment.appSetupCompleted
+            {workspace.appSetupCompleted
               ? t("workspace.surveys.summary.in_app.connection_title")
               : t("workspace.surveys.summary.in_app.no_connection_title")}
           </AlertTitle>
           <AlertDescription>
-            {environment.appSetupCompleted
+            {workspace.appSetupCompleted
               ? t("workspace.surveys.summary.in_app.connection_description")
               : t("workspace.surveys.summary.in_app.no_connection_description")}
           </AlertDescription>
-          {!environment.appSetupCompleted && (
+          {!workspace.appSetupCompleted && (
             <AlertButton asChild>
               <Link href={`/workspaces/${workspace?.id}/app-connection`}>
                 {t("common.connect_formbricks")}

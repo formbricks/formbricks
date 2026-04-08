@@ -2,11 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface AccountSettingsNavbarProps {
-  environmentId?: string;
   activeId: string;
   loading?: boolean;
 }

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TUserLocale } from "@formbricks/types/user";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ActionClassesTable } from "@/modules/workspaces/settings/(setup)/components/ActionClassesTable";
@@ -12,8 +11,6 @@ import { ActionTableHeading } from "@/modules/workspaces/settings/(setup)/compon
 import { AddActionModal } from "@/modules/workspaces/settings/(setup)/components/AddActionModal";
 
 interface ActionSettingsCardProps {
-  environment: TEnvironment;
-  otherEnvironment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
   environmentId: string;
   workspaceId: string;
@@ -22,8 +19,6 @@ interface ActionSettingsCardProps {
   locale: TUserLocale;
 }
 export const ActionSettingsCard = ({
-  environment,
-  otherEnvironment,
   otherEnvActionClasses,
   environmentId,
   workspaceId,
@@ -44,8 +39,6 @@ export const ActionSettingsCard = ({
           variant: "default",
         }}>
         <ActionClassesTable
-          environment={environment}
-          otherEnvironment={otherEnvironment}
           otherEnvActionClasses={otherEnvActionClasses}
           environmentId={environmentId}
           actionClasses={actionClasses}

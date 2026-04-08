@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 
 interface DynamicPopupTabProps {
-  environmentId: string;
   surveyId: string;
 }
 
-export const DynamicPopupTab = ({ environmentId: _environmentId, surveyId }: DynamicPopupTabProps) => {
+export const DynamicPopupTab = ({ surveyId }: DynamicPopupTabProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
 

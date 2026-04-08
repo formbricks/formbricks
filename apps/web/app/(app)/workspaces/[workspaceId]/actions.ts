@@ -88,7 +88,7 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
 );
 
 const ZGetOrganizationsForSwitcherAction = z.object({
-  organizationId: ZId, // Changed from environmentId to avoid extra query
+  organizationId: ZId, // Changed from workspaceId to avoid extra query
 });
 
 /**
@@ -113,7 +113,7 @@ export const getOrganizationsForSwitcherAction = authenticatedActionClient
   });
 
 const ZGetWorkspacesForSwitcherAction = z.object({
-  organizationId: ZId, // Changed from environmentId to avoid extra query
+  organizationId: ZId, // Changed from workspaceId to avoid extra query
 });
 
 /**

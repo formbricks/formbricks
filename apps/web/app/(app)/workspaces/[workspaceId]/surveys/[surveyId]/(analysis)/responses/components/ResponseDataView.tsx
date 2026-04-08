@@ -3,7 +3,6 @@
 import { TFunction } from "i18next";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -16,7 +15,6 @@ interface ResponseDataViewProps {
   survey: TSurvey;
   responses: TResponseWithQuotas[];
   user?: TUser;
-  environment: TEnvironment;
   environmentTags: TTag[];
   isReadOnly: boolean;
   fetchNextPage: () => void;
@@ -120,7 +118,6 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   survey,
   responses,
   user,
-  environment,
   environmentTags,
   isReadOnly,
   fetchNextPage,
@@ -148,7 +145,6 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         user={user}
         environmentTags={environmentTags}
         isReadOnly={isReadOnly}
-        environment={environment}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
         updateResponseList={updateResponseList}

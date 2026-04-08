@@ -42,7 +42,7 @@ export const DeleteAccountModal = ({
       await signOutWithAudit({
         reason: "account_deletion",
         redirect: false, // Prevent NextAuth automatic redirect
-        clearEnvironmentId: true,
+        clearWorkspaceId: true,
       });
 
       // Manual redirect after signOut completes

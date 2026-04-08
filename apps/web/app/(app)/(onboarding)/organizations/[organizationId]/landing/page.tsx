@@ -45,7 +45,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isOwnerOrManager={false}
               isAccessControlAllowed={false}
               isMember={isMember}
-              environments={[]}
             />
           </div>
           <div className="flex h-full flex-col items-center justify-center space-y-12">

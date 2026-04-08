@@ -3,11 +3,11 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -18,20 +18,13 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
-  environment: { id: string; appSetupCompleted: boolean };
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey }: HowToSendCardProps) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
-  const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const { t } = useTranslation();
-  useEffect(() => {
-    if (environment) {
-      setAppSetupCompleted(environment.appSetupCompleted);
-    }
-  }, [environment]);
 
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
@@ -89,7 +82,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       icon: MonitorIcon,
       description: t("workspace.surveys.edit.app_survey_description"),
       comingSoon: false,
-      alert: !appSetupCompleted,
+      alert: !workspace?.appSetupCompleted,
     },
   ];
 

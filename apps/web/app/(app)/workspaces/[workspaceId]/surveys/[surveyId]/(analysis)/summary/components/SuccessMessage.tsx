@@ -4,26 +4,26 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { Confetti } from "@/modules/ui/components/confetti";
 
 interface SummaryMetadataProps {
-  environment: TEnvironment;
   survey: TSurvey;
 }
 
-export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) => {
+export const SuccessMessage = ({ survey }: SummaryMetadataProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspaceContext();
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
 
   const isAppSurvey = survey.type === "app";
-  const appSetupCompleted = environment.appSetupCompleted;
+  const appSetupCompleted = workspace.appSetupCompleted;
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");
-    if (newSurveyParam && survey && environment) {
+    if (newSurveyParam && survey && workspace) {
       setConfetti(true);
       toast.success(
         isAppSurvey && !appSetupCompleted
@@ -47,7 +47,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
 
       window.history.replaceState({}, "", url.toString());
     }
-  }, [environment, isAppSurvey, searchParams, survey, appSetupCompleted, t]);
+  }, [workspace, isAppSurvey, searchParams, survey, appSetupCompleted, t]);
 
   return <>{confetti && <Confetti />}</>;
 };

@@ -18,7 +18,6 @@ import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -49,7 +48,6 @@ interface ResponseTableProps {
   data: TResponseTableData[];
   survey: TSurvey;
   responses: TResponseWithQuotas[] | null;
-  environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
   isReadOnly: boolean;
@@ -70,7 +68,6 @@ export const ResponseTable = ({
   survey,
   responses,
   user,
-  environment,
   environmentTags,
   isReadOnly,
   fetchNextPage,
@@ -310,7 +307,6 @@ export const ResponseTable = ({
             survey={survey}
             responses={responses}
             user={user}
-            environment={environment}
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
             updateResponse={updateResponse}

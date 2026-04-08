@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TDisplay } from "@formbricks/types/displays";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
 
 interface DisplayCardProps {

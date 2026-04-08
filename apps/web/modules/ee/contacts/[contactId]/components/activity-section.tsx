@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -15,16 +14,16 @@ import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { ActivityTimeline } from "./activity-timeline";
 
 interface ActivitySectionProps {
-  environment: TEnvironment;
+  workspaceId: string;
   contactId: string;
   environmentTags: TTag[];
 }
 
-export const ActivitySection = async ({ environment, contactId, environmentTags }: ActivitySectionProps) => {
+export const ActivitySection = async ({ workspaceId, contactId, environmentTags }: ActivitySectionProps) => {
   const [responses, displays, workspace] = await Promise.all([
     getResponsesByContactId(contactId),
     getDisplaysByContactId(contactId),
-    getWorkspace(environment.workspaceId),
+    getWorkspace(workspaceId),
   ]);
 
   if (!workspace) {
@@ -62,7 +61,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
       surveys={surveys}
       responses={responses}
       displays={displays}
-      environment={environment}
+      workspaceId={workspaceId}
       environmentTags={environmentTags}
       locale={locale}
       workspacePermission={workspacePermission}

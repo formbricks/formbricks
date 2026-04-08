@@ -4,13 +4,12 @@ import { debounce } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TEnvironment } from "@formbricks/types/environment";
 import { getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
 import { ContactsTable } from "./contacts-table";
 
 interface ContactDataViewProps {
-  environment: TEnvironment;
+  workspaceId: string;
   contactAttributeKeys: TContactAttributeKey[];
   initialContacts: TContactWithAttributes[];
   itemsPerPage: number;
@@ -20,7 +19,7 @@ interface ContactDataViewProps {
 }
 
 export const ContactDataView = ({
-  environment,
+  workspaceId,
   itemsPerPage,
   contactAttributeKeys,
   isReadOnly,
@@ -34,21 +33,21 @@ export const ContactDataView = ({
   const [searchValue, setSearchValue] = useState<string>("");
 
   const isFirstRender = useRef(true);
-  const prevEnvironmentId = useRef(environment.id);
+  const prevWorkspaceId = useRef(workspaceId);
   const isResettingSearch = useRef(false);
   const prevInitialContactsLength = useRef(initialContacts.length);
 
-  // Sync state with server data only when environment changes (real tab navigation)
+  // Sync state with server data only when workspace changes (real tab navigation)
   useEffect(() => {
-    if (prevEnvironmentId.current !== environment.id) {
-      prevEnvironmentId.current = environment.id;
+    if (prevWorkspaceId.current !== workspaceId) {
+      prevWorkspaceId.current = workspaceId;
       setContacts([...initialContacts]);
       setHasMore(initialHasMore);
       isResettingSearch.current = true;
       setSearchValue("");
       prevInitialContactsLength.current = initialContacts.length;
     }
-  }, [environment.id, initialContacts, initialHasMore]);
+  }, [workspaceId, initialContacts, initialHasMore]);
 
   // Sync state when initialContacts changes from server refresh (e.g., after CSV upload)
   // Only update if we're viewing the first page without search
@@ -56,13 +55,13 @@ export const ContactDataView = ({
     if (
       !searchValue &&
       initialContacts.length !== prevInitialContactsLength.current &&
-      prevEnvironmentId.current === environment.id
+      prevWorkspaceId.current === workspaceId
     ) {
       setContacts([...initialContacts]);
       setHasMore(initialHasMore);
       prevInitialContactsLength.current = initialContacts.length;
     }
-  }, [initialContacts, initialHasMore, searchValue, environment.id]);
+  }, [initialContacts, initialHasMore, searchValue, workspaceId]);
 
   const environmentAttributes = useMemo(() => {
     return contactAttributeKeys.filter(
@@ -75,7 +74,7 @@ export const ContactDataView = ({
     // Don't show loading state - fetch in background
     try {
       const contactsResponse = await getContactsAction({
-        workspaceId: environment.workspaceId,
+        workspaceId,
         offset: 0,
         searchValue,
       });
@@ -88,7 +87,7 @@ export const ContactDataView = ({
       console.error("Error fetching contacts:", error);
       toast.error("Error fetching contacts. Please try again.");
     }
-  }, [environment.id, itemsPerPage, searchValue]);
+  }, [workspaceId, itemsPerPage, searchValue]);
 
   // Only refetch when search value actually changes (debounced)
   useEffect(() => {
@@ -121,7 +120,7 @@ export const ContactDataView = ({
       setLoadingNextPage(true);
       try {
         const contactsResponse = await getContactsAction({
-          workspaceId: environment.workspaceId,
+          workspaceId,
           offset: contacts.length,
           searchValue,
         });
@@ -169,7 +168,7 @@ export const ContactDataView = ({
       hasMore={hasMore}
       isDataLoaded={true}
       updateContactList={updateContactList}
-      environmentId={environment.id}
+      environmentId={workspaceId}
       searchValue={searchValue}
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
