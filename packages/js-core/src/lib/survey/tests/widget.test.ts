@@ -154,7 +154,7 @@ describe("widget-file", () => {
       expect.objectContaining({
         survey: mockSurvey,
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        workspaceId: "env_123",
         contactId: "contact_abc",
       })
     );
@@ -609,7 +609,7 @@ describe("widget-file", () => {
       expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
         expect.objectContaining({
           appUrl: "https://fake.app",
-          environmentId: "env_123",
+          workspaceId: "env_123",
           contactId: "contact_abc",
         })
       );

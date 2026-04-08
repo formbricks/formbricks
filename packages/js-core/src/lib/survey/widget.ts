@@ -130,7 +130,7 @@ export const renderWidget = async (
   const timeoutId = setTimeout(() => {
     formbricksSurveys.renderSurvey({
       appUrl: config.get().appUrl,
-      environmentId: config.get().workspaceId,
+      workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
       // @ts-expect-error -- the types are not compatible because they come from different places (types package vs local types)
