@@ -376,6 +376,7 @@ envoy:
         backend:
           type: Redis
           redis:
+            # Override this when enabling envoyRedis auth or changing envoyRedis.fullnameOverride.
             url: "formbricks-envoy-redis-master:6379"
         failClosed: false
         telemetry:
@@ -391,6 +392,7 @@ envoy:
   formbricks:
     gatewayClass:
       create: true
+      # Required when create=false so the Gateway can bind to an existing cluster-scoped GatewayClass.
       name: ""
     gateway:
       name: ""
@@ -419,10 +421,9 @@ envoy:
     ingress:
       enabled: false
       ingressClassName: ""
+      # Set this explicitly when both the main app ingress and the Envoy API ingress are enabled.
       host: ""
       annotations: {}
-    ratelimit:
-      redisUrl: ""
     routes:
       authCallback: true
       v1Client: true

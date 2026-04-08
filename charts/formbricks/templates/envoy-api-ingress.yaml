@@ -1,4 +1,11 @@
 {{- if and .Values.envoy.enabled .Values.envoy.formbricks.ingress.enabled }}
+{{- $explicitHost := "" -}}
+{{- if .Values.envoy.formbricks.ingress.host -}}
+{{- $explicitHost = tpl .Values.envoy.formbricks.ingress.host $ | trim -}}
+{{- end -}}
+{{- if and .Values.ingress.enabled .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) (not $explicitHost) -}}
+{{- fail "envoy.formbricks.ingress.host must be set explicitly when ingress.enabled and envoy.formbricks.ingress.enabled are both true" -}}
+{{- end -}}
 {{- $host := include "formbricks.envoy.ingressHost" . -}}
 {{- $proxyServiceName := include "formbricks.envoy.proxyServiceName" . -}}
 ---

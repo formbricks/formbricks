@@ -1,4 +1,7 @@
 {{- if .Values.envoy.enabled }}
+{{- if and (not .Values.envoy.formbricks.gatewayClass.create) (not .Values.envoy.formbricks.gatewayClass.name) -}}
+{{- fail "envoy.formbricks.gatewayClass.name is required when envoy.formbricks.gatewayClass.create=false" -}}
+{{- end -}}
 {{- $namespace := include "formbricks.namespace" . -}}
 {{- $gatewayName := include "formbricks.envoy.gatewayName" . -}}
 {{- $gatewayClassName := include "formbricks.envoy.gatewayClassName" . -}}

@@ -174,16 +174,12 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 
 {{- define "formbricks.envoy.ingressHost" -}}
 {{- if .Values.envoy.formbricks.ingress.host -}}
-{{- .Values.envoy.formbricks.ingress.host -}}
+{{- tpl .Values.envoy.formbricks.ingress.host $ -}}
 {{- else if and .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) -}}
-{{- (index .Values.ingress.hosts 0).host -}}
+{{- tpl (index .Values.ingress.hosts 0).host $ -}}
 {{- end -}}
 {{- end }}
 
-{{- define "formbricks.envoy.redisUrl" -}}
-{{- if .Values.envoy.formbricks.ratelimit.redisUrl -}}
-{{- .Values.envoy.formbricks.ratelimit.redisUrl -}}
-{{- else -}}
+{{- define "formbricks.envoy.defaultRedisUrl" -}}
 {{- printf "%s-master:6379" .Values.envoyRedis.fullnameOverride -}}
-{{- end -}}
 {{- end }}

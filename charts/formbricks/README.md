@@ -33,8 +33,11 @@ rate limiting.
   `envoy.config.envoyGateway.gateway.controllerName`.
 - `envoyRedis.enabled=true` deploys a dedicated Redis replication + Sentinel bundle for Envoy RLS. It is intentionally
   separate from the existing app `redis` dependency.
-- If you enable Redis authentication for the dedicated Envoy Redis bundle, also set
-  `envoy.formbricks.ratelimit.redisUrl` explicitly so the controller can authenticate to the backend.
+- The bundled controller reads its Redis backend from `envoy.config.envoyGateway.rateLimit.backend.redis.url`.
+  If you enable Redis authentication or override `envoyRedis.fullnameOverride`, set that URL explicitly so the
+  controller points at the correct backend.
+- When both the main app ingress and the Envoy API ingress are enabled, set `envoy.formbricks.ingress.host`
+  explicitly so the Envoy host choice is intentional.
 
 The intended defaults are:
 
