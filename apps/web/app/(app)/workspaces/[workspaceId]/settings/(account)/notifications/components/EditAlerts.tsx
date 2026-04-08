@@ -12,7 +12,6 @@ import { NotificationSwitch } from "./NotificationSwitch";
 interface EditAlertsProps {
   memberships: Membership[];
   user: TUser;
-  environmentId: string;
   autoDisableNotificationType: string;
   autoDisableNotificationElementId: string;
 }
@@ -20,7 +19,6 @@ interface EditAlertsProps {
 export const EditAlerts = ({
   memberships,
   user,
-  environmentId: _environmentId,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: EditAlertsProps) => {

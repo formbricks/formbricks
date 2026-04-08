@@ -4,11 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
 import { SlackIcon } from "@/modules/ui/components/icons";
 
-interface IntegrationsTipProps {
-  environmentId: string;
-}
-
-export const IntegrationsTip = ({ environmentId: _environmentId }: IntegrationsTipProps) => {
+export const IntegrationsTip = () => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   return (

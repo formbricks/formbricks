@@ -26,10 +26,6 @@ interface PrettyUrlsTableProps {
 export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
   const { t } = useTranslation();
 
-  const getEnvironmentBadgeColor = () => {
-    return "bg-green-100 text-green-800";
-  };
-
   const tableHeaders = [
     {
       label: t("workspace.settings.domain.survey_name"),
@@ -42,10 +38,6 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
     {
       label: t("workspace.settings.domain.pretty_url"),
       key: "slug",
-    },
-    {
-      label: t("common.environment"),
-      key: "environment",
     },
   ];
 
@@ -64,7 +56,7 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
         <TableBody className="[&_tr:last-child]:border-b">
           {surveys.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={4} className="text-center text-slate-500">
+              <TableCell colSpan={3} className="text-center text-slate-500">
                 {t("workspace.settings.domain.no_pretty_urls")}
               </TableCell>
             </TableRow>
@@ -81,11 +73,6 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
               <TableCell>{survey.workspace.name}</TableCell>
               <TableCell>
                 <IdBadge id={survey.slug ?? ""} />
-              </TableCell>
-              <TableCell>
-                <span className={`rounded px-2 py-1 text-xs font-medium ${getEnvironmentBadgeColor()}`}>
-                  {t("common.production")}
-                </span>
               </TableCell>
             </TableRow>
           ))}

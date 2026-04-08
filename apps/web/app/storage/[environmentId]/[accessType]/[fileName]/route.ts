@@ -100,11 +100,11 @@ export const DELETE = async (
   const resolved = await resolveClientApiIds(idParam);
   if (!resolved) {
     await logFileDeletion({
-      failureReason: "Environment or workspace not found",
+      failureReason: "Workspace not found",
       workspaceId: idParam,
       apiUrl: request.url,
     });
-    return responses.notFoundResponse("Environment", idParam);
+    return responses.notFoundResponse("Workspace", idParam);
   }
 
   const session = await getServerSession(authOptions);
@@ -114,7 +114,7 @@ export const DELETE = async (
   if (!authResult.ok) {
     await logFileDeletion({
       failureReason: authResult.error.unauthorized
-        ? "User not authorized to access environment"
+        ? "User not authorized to access workspace"
         : "User not authenticated",
       accessType,
       workspaceId: resolved.workspaceId,

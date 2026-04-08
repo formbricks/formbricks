@@ -7,20 +7,13 @@ export type TResolvedClientIds = {
 };
 
 /**
- * Finds a workspace by its primary id or by legacyEnvironmentId.
+ * Finds a workspace by its primary id or by legacyEnvironmentId in a single query.
+ * Both columns have unique indexes so the query planner will use index scans.
  * Returns the workspace id if found, null otherwise.
  */
 export const findWorkspaceByIdOrLegacyEnvId = async (id: string): Promise<{ id: string } | null> => {
-  const workspace = await prisma.workspace.findUnique({
-    where: { id },
-    select: { id: true },
-  });
-
-  if (workspace) return workspace;
-
-  // Fallback: the id may be a legacy environmentId
-  return await prisma.workspace.findUnique({
-    where: { legacyEnvironmentId: id },
+  return await prisma.workspace.findFirst({
+    where: { OR: [{ id }, { legacyEnvironmentId: id }] },
     select: { id: true },
   });
 };

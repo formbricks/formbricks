@@ -165,12 +165,11 @@ const Page = async (props: {
         <EditAlerts
           memberships={memberships}
           user={user}
-          environmentId={params.workspaceId}
           autoDisableNotificationType={autoDisableNotificationType}
           autoDisableNotificationElementId={autoDisableNotificationElementId}
         />
       </SettingsCard>
-      <IntegrationsTip environmentId={params.workspaceId} />
+      <IntegrationsTip />
     </PageContentWrapper>
   );
 };
