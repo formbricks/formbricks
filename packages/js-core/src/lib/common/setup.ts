@@ -39,6 +39,12 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
         ? (() => {
             const envData = environment.data as unknown as Record<string, unknown>;
             const migratedData = { ...envData };
+
+            if (migratedData.project) {
+              migratedData.settings = migratedData.project;
+              delete migratedData.project;
+            }
+
             if (migratedData.workspace) {
               migratedData.settings = migratedData.workspace;
               delete migratedData.workspace;
@@ -53,19 +59,6 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
         ...(workspace && { workspace }),
       } as TLegacyConfig;
       changed = true;
-    }
-
-    // Migrate workspace.data.workspace → workspace.data.settings
-    // (applies to configs already in new format but with server's field name)
-    const wsState = (parsedConfig as unknown as TConfig).workspace;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be null since this is local storage
-    if (wsState?.data) {
-      const wsData = wsState.data as unknown as Record<string, unknown>;
-      if (wsData.workspace && !wsData.settings) {
-        wsData.settings = wsData.workspace;
-        delete wsData.workspace;
-        changed = true;
-      }
     }
 
     if (changed) {
