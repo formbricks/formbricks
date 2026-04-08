@@ -20,7 +20,7 @@ import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { type TResponseInputV2, ZResponseInputV2 } from "../types/response";
 import { createResponseWithQuotaEvaluation } from "./response";
 
-const createValidationResponse = (details: unknown): Response =>
+const createValidationResponse = (details: { [key: string]: string }): Response =>
   responses.badRequestResponse("Fields are missing or incorrectly formatted", details, true);
 
 const isInvalidInputError = (error: unknown): error is InvalidInputError =>
