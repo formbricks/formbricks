@@ -4,12 +4,16 @@ const mockStartJobsRuntime = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
+const mockProcessResponsePipelineJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 const slowTest = (name: string, fn: () => Promise<void>): void => {
   test(name, fn, TEST_TIMEOUT_MS);
 };
 
 vi.mock("@formbricks/jobs", () => ({
+  JOB_NAMES: {
+    responsePipeline: "response-pipeline.process",
+  },
   startJobsRuntime: mockStartJobsRuntime,
 }));
 
@@ -24,6 +28,10 @@ vi.mock("@formbricks/logger", () => ({
     info: vi.fn(),
     warn: vi.fn(),
   },
+}));
+
+vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => ({
+  processResponsePipelineJob: mockProcessResponsePipelineJob,
 }));
 
 describe("instrumentation-jobs", () => {
@@ -76,6 +84,9 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(1);
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
       concurrency: 4,
+      jobHandlerOverrides: {
+        "response-pipeline.process": mockProcessResponsePipelineJob,
+      },
       redisUrl: "redis://localhost:6379",
       workerCount: 2,
     });

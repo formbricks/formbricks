@@ -186,6 +186,28 @@ describe("queueAuditEventBackground", () => {
   });
 });
 
+describe("queueAuditEventWithoutRequest", () => {
+  beforeEach(() => {
+    clearAllMockHandles();
+  });
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  test("logs audit events without reading request headers", async () => {
+    await OriginalHandler.queueAuditEventWithoutRequest({
+      ...baseEventParams,
+      ipAddress: "worker-ip",
+    });
+
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ipAddress: "worker-ip",
+      })
+    );
+  });
+});
+
 describe("withAuditLogging", () => {
   beforeEach(() => {
     clearAllMockHandles();

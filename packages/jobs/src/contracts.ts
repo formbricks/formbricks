@@ -26,6 +26,8 @@ export interface UpsertedRecurringJobSchedule extends EnqueuedJob {
 
 export type JobHandler<TData> = (data: TData, context: JobExecutionContext) => Promise<void>;
 
+export type JobHandlerOverrides = Partial<Record<string, JobHandler<unknown>>>;
+
 export interface BackgroundJobDefinition<TData> {
   handle: JobHandler<TData>;
   name: string;

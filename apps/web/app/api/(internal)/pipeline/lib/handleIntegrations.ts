@@ -9,7 +9,7 @@ import { TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
+import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
 import { writeData } from "@/lib/googleSheet/service";

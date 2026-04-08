@@ -3,6 +3,7 @@ import type IORedis from "ioredis";
 import { logger } from "@formbricks/logger";
 import { closeRedisConnection, createProducerConnection, createWorkerConnection } from "@/src/connection";
 import { JOBS_PREFIX, JOBS_QUEUE_NAME } from "@/src/constants";
+import type { JobHandlerOverrides } from "@/src/contracts";
 import { processJob } from "@/src/processors/registry";
 import { createJobsQueue } from "@/src/queue";
 
@@ -14,6 +15,7 @@ export interface JobsRuntimeOptions {
   prefix?: string;
   concurrency?: number;
   workerCount?: number;
+  jobHandlerOverrides?: JobHandlerOverrides;
 }
 
 export interface JobsRuntimeHandle {
@@ -74,6 +76,7 @@ export const startJobsRuntime = async ({
   prefix = JOBS_PREFIX,
   concurrency = DEFAULT_WORKER_CONCURRENCY,
   workerCount = DEFAULT_WORKER_COUNT,
+  jobHandlerOverrides,
 }: JobsRuntimeOptions): Promise<JobsRuntimeHandle> => {
   const resolvedConcurrency = getPositiveInteger(concurrency, "BullMQ worker concurrency");
   const resolvedWorkerCount = getPositiveInteger(workerCount, "BullMQ worker count");
@@ -144,7 +147,7 @@ export const startJobsRuntime = async ({
       const worker = new Worker(
         JOBS_QUEUE_NAME,
         async (job: Job) => {
-          await processJob(job);
+          await processJob(job, jobHandlerOverrides);
         },
         {
           connection: workerConnection,

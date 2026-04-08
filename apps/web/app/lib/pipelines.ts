@@ -1,25 +1,108 @@
+import "server-only";
+import { type TResponsePipelineEvent, getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import { TPipelineInput } from "@/app/lib/types/pipelines";
-import { CRON_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { getJobsQueueingConfig } from "@/lib/jobs/config";
+import { getResponseSnapshotForPipeline } from "@/lib/response/service";
 
-export const sendToPipeline = async ({ event, surveyId, environmentId, response }: TPipelineInput) => {
-  if (!CRON_SECRET) {
-    throw new Error("CRON_SECRET is not set");
+export interface EnqueueResponsePipelineEventsInput {
+  environmentId: string;
+  surveyId: string;
+  responseId: string;
+  events: TResponsePipelineEvent[];
+}
+
+export const enqueueResponsePipelineEvents = async ({
+  environmentId,
+  surveyId,
+  responseId,
+  events,
+}: EnqueueResponsePipelineEventsInput): Promise<void> => {
+  const uniqueEvents = [...new Set(events)];
+
+  if (uniqueEvents.length === 0) {
+    return;
   }
 
-  return fetch(`${WEBAPP_URL}/api/pipeline`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": CRON_SECRET,
-    },
-    body: JSON.stringify({
-      environmentId: environmentId,
-      surveyId: surveyId,
-      event,
-      response,
-    }),
-  }).catch((error) => {
-    logger.error(error, "Error sending event to pipeline");
+  const queueingConfig = getJobsQueueingConfig();
+
+  if (!queueingConfig.enabled) {
+    logger.debug(
+      {
+        environmentId,
+        events: uniqueEvents,
+        responseId,
+        surveyId,
+      },
+      "BullMQ response pipeline enqueue skipped"
+    );
+    return;
+  }
+
+  let response;
+  try {
+    response = await getResponseSnapshotForPipeline(responseId);
+  } catch (error) {
+    logger.error(
+      {
+        environmentId,
+        err: error,
+        events: uniqueEvents,
+        responseId,
+        surveyId,
+      },
+      "Failed to hydrate response snapshot for BullMQ response pipeline"
+    );
+    return;
+  }
+
+  if (!response) {
+    logger.warn(
+      {
+        environmentId,
+        events: uniqueEvents,
+        responseId,
+        surveyId,
+      },
+      "BullMQ response pipeline enqueue skipped because the response snapshot was not found"
+    );
+    return;
+  }
+
+  const producer = getBackgroundJobProducer();
+  const enqueueResults = await Promise.allSettled(
+    uniqueEvents.map(async (event) => {
+      const job = await producer.enqueueResponsePipeline({
+        environmentId,
+        event,
+        response,
+        surveyId,
+      });
+
+      logger.debug(
+        {
+          environmentId,
+          event,
+          jobId: job.jobId,
+          responseId,
+          surveyId,
+        },
+        "BullMQ response pipeline job enqueued"
+      );
+    })
+  );
+
+  enqueueResults.forEach((result, index) => {
+    if (result.status === "rejected") {
+      logger.error(
+        {
+          environmentId,
+          err: result.reason,
+          event: uniqueEvents[index],
+          responseId,
+          surveyId,
+        },
+        "Failed to enqueue BullMQ response pipeline job"
+      );
+    }
   });
 };

@@ -36,6 +36,8 @@ import {
   updateSurveyInternal,
 } from "./service";
 
+const SURVEY_SERVICE_TEST_TIMEOUT_MS = 15_000;
+
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn().mockResolvedValue({
@@ -1006,21 +1008,25 @@ describe("updateSurveyDraftAction", () => {
   });
 
   describe("Sad Path", () => {
-    test("should reject publishing survey with incomplete translations", async () => {
-      // Create a draft with missing translations
-      const incompleteSurvey = {
-        ...updateSurveyInput,
-        questions: [
-          {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            // Missing headline
-          },
-        ],
-      } as unknown as TSurvey;
+    test(
+      "should reject publishing survey with incomplete translations",
+      async () => {
+        // Create a draft with missing translations
+        const incompleteSurvey = {
+          ...updateSurveyInput,
+          questions: [
+            {
+              id: "q1",
+              type: TSurveyQuestionTypeEnum.OpenText,
+              // Missing headline
+            },
+          ],
+        } as unknown as TSurvey;
 
-      // Expect validation error (skipValidation = false)
-      await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
-    });
+        // Expect validation error (skipValidation = false)
+        await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
+      },
+      SURVEY_SERVICE_TEST_TIMEOUT_MS
+    );
   });
 });

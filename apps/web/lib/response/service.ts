@@ -220,6 +220,8 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
   }
 });
 
+export const getResponseSnapshotForPipeline = getResponse;
+
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 

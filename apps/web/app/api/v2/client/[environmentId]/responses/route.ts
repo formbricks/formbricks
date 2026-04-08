@@ -7,7 +7,7 @@ import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { sendToPipeline } from "@/app/lib/pipelines";
+import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -165,21 +165,12 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
   const { quotaFull, ...responseData } = response;
 
-  sendToPipeline({
-    event: "responseCreated",
+  void enqueueResponsePipelineEvents({
     environmentId,
+    events: responseData.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
+    responseId: responseData.id,
     surveyId: responseData.surveyId,
-    response: responseData,
   });
-
-  if (responseData.finished) {
-    sendToPipeline({
-      event: "responseFinished",
-      environmentId,
-      surveyId: responseData.surveyId,
-      response: responseData,
-    });
-  }
 
   const quotaObj = createQuotaFullObject(quotaFull);
 

@@ -9,7 +9,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { sendToPipeline } from "@/app/lib/pipelines";
+import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -187,21 +187,12 @@ export const POST = withV1ApiWrapper({
 
     const { quotaFull, ...responseData } = response;
 
-    sendToPipeline({
-      event: "responseCreated",
+    void enqueueResponsePipelineEvents({
       environmentId: survey.environmentId,
+      events: responseInput.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
+      responseId: responseData.id,
       surveyId: responseData.surveyId,
-      response: responseData,
     });
-
-    if (responseInput.finished) {
-      sendToPipeline({
-        event: "responseFinished",
-        environmentId: survey.environmentId,
-        surveyId: responseData.surveyId,
-        response: responseData,
-      });
-    }
 
     const quotaObj = createQuotaFullObject(quotaFull);
 

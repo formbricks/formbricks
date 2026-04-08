@@ -10,6 +10,7 @@ export type {
   BackgroundJobDefinition,
   BackgroundJobProducer,
   EnqueuedJob,
+  JobHandlerOverrides,
   JobExecutionContext,
   JobHandler,
   UpsertedRecurringJobSchedule,

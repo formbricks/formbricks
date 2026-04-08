@@ -6,7 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { sendToPipeline } from "@/app/lib/pipelines";
+import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
@@ -201,25 +201,12 @@ export const PUT = withV1ApiWrapper({
 
     const { quotaFull, ...responseData } = updatedResponse;
 
-    // send response update to pipeline
-    // don't await to not block the response
-    sendToPipeline({
-      event: "responseUpdated",
+    void enqueueResponsePipelineEvents({
       environmentId: survey.environmentId,
+      events: updatedResponse.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
+      responseId: responseData.id,
       surveyId: survey.id,
-      response: responseData,
     });
-
-    if (updatedResponse.finished) {
-      // send response to pipeline
-      // don't await to not block the response
-      sendToPipeline({
-        event: "responseFinished",
-        environmentId: survey.environmentId,
-        surveyId: survey.id,
-        response: responseData,
-      });
-    }
 
     const quotaObj = createQuotaFullObject(quotaFull);
 

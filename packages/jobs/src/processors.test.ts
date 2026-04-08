@@ -77,7 +77,7 @@ describe("@formbricks/jobs processor registry", () => {
         name: JOB_NAMES.responsePipeline,
         queueName: "background-jobs",
       } as never)
-    ).rejects.toThrow("Unimplemented response pipeline processor");
+    ).rejects.toThrow("BullMQ response pipeline processor override missing");
 
     expect(mockError).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -86,7 +86,58 @@ describe("@formbricks/jobs processor registry", () => {
         jobName: JOB_NAMES.responsePipeline,
         surveyId: "survey_123",
       }),
-      "Unimplemented response pipeline processor"
+      "BullMQ response pipeline processor override is not registered"
+    );
+  });
+
+  test("uses registered handler overrides when provided", async () => {
+    const overrideHandler = vi.fn().mockResolvedValue(undefined);
+    const job = {
+      attemptsMade: 0,
+      data: {
+        environmentId: "env_123",
+        event: "responseCreated",
+        response: {
+          contact: null,
+          contactAttributes: null,
+          createdAt: new Date("2026-04-07T10:00:00.000Z"),
+          data: {},
+          displayId: null,
+          endingId: null,
+          finished: false,
+          id: "cm8cmpnjj000108jfdr9dfqe6",
+          language: null,
+          meta: {},
+          singleUseId: null,
+          surveyId: "cm8cmpnjj000108jfdr9dfqe7",
+          tags: [],
+          updatedAt: new Date("2026-04-07T10:00:00.000Z"),
+          variables: {},
+        },
+        surveyId: "survey_123",
+      },
+      id: "job-override",
+      name: JOB_NAMES.responsePipeline,
+      queueName: "background-jobs",
+    } as never;
+
+    await expect(
+      processJob(job, {
+        [JOB_NAMES.responsePipeline]: overrideHandler,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(overrideHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        environmentId: "env_123",
+        surveyId: "survey_123",
+      }),
+      {
+        attempt: 1,
+        jobId: "job-override",
+        jobName: JOB_NAMES.responsePipeline,
+        queueName: "background-jobs",
+      }
     );
   });
 

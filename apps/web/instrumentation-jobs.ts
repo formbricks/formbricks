@@ -1,7 +1,7 @@
-import type { JobsRuntimeHandle } from "@formbricks/jobs";
-import { startJobsRuntime } from "@formbricks/jobs";
+import { JOB_NAMES, type JobsRuntimeHandle, startJobsRuntime } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
+import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 
 type TJobsRuntimeGlobal = typeof globalThis & {
   formbricksJobsRuntime: JobsRuntimeHandle | undefined;
@@ -26,9 +26,12 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     return await globalForJobsRuntime.formbricksJobsRuntimeInitializing;
   }
 
-  globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime(
-    jobsWorkerBootstrapConfig.runtimeOptions
-  ).then((runtime) => {
+  globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime({
+    ...jobsWorkerBootstrapConfig.runtimeOptions,
+    jobHandlerOverrides: {
+      [JOB_NAMES.responsePipeline]: processResponsePipelineJob,
+    },
+  }).then((runtime) => {
     globalForJobsRuntime.formbricksJobsRuntime = runtime;
     globalForJobsRuntime.formbricksJobsRuntimeInitializing = undefined;
     return runtime;
