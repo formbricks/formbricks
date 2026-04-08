@@ -6,7 +6,7 @@ import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
-import { type TEnvironmentStateActionClass } from "@/types/config";
+import { type TWorkspaceStateActionClass } from "@/types/config";
 import { type Result } from "@/types/error";
 
 // Factory for creating context-specific tracking handlers
@@ -56,7 +56,7 @@ export const setIsHistoryPatched = (value: boolean): void => {
   isHistoryPatched = value;
 };
 
-const checkTimeOnPage = (actionClasses: TEnvironmentStateActionClass[]): void => {
+const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
   const queue = CommandQueue.getInstance();
   const logger = Logger.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
@@ -126,7 +126,7 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const timeoutStack = TimeoutStack.getInstance();
 
   logger.debug(`Checking page url: ${window.location.href}`);
-  const actionClasses = appConfig.get().environment.data.actionClasses;
+  const actionClasses = appConfig.get().workspaceState.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
@@ -209,9 +209,9 @@ const checkClickMatch = async (event: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
-  const { environment } = appConfig.get();
+  const { workspaceState } = appConfig.get();
 
-  const { actionClasses = [] } = environment.data;
+  const { actionClasses = [] } = workspaceState.data;
 
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
@@ -249,8 +249,8 @@ const checkExitIntent = async (e: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
-  const { environment } = appConfig.get();
-  const { actionClasses = [] } = environment.data;
+  const { workspaceState } = appConfig.get();
+  const { actionClasses = [] } = workspaceState.data;
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
@@ -308,8 +308,8 @@ const checkScrollDepth = async (): Promise<void> => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
-    const { environment } = appConfig.get();
-    const { actionClasses = [] } = environment.data;
+    const { workspaceState } = appConfig.get();
+    const { actionClasses = [] } = workspaceState.data;
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"

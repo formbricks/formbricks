@@ -8,9 +8,9 @@ export const mockSurveyId = "lz5m554yqh1i3moa3y230wei";
 export const mockActionClassId = "wypzu5qw7adgy66vq8s77tso";
 
 export const mockConfig: TConfig = {
-  environmentId: mockEnvironmentId,
+  workspaceId: mockEnvironmentId,
   appUrl: "https://myapp.example",
-  environment: {
+  workspaceState: {
     expiresAt: "2999-12-31T23:59:59Z",
     data: {
       surveys: [
@@ -82,7 +82,7 @@ export const mockConfig: TConfig = {
           noCodeConfig: {},
         },
       ],
-      workspace: {
+      settings: {
         id: mockWorkspaceId,
         recontactDays: 14,
         clickOutsideClose: true,

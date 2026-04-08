@@ -5,16 +5,16 @@ import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
-import { fetchEnvironmentState } from "@/lib/environment/state";
+import { fetchWorkspaceState } from "@/lib/environment/state";
 import { closeSurvey, preloadSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import {
   type TConfig,
   type TConfigInput,
-  type TEnvironmentState,
   type TLegacyConfig,
   type TUserState,
+  type TWorkspaceState,
 } from "@/types/config";
 import {
   type MissingFieldError,
@@ -29,14 +29,15 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
   if (existingConfig) {
-    const parsedConfig = JSON.parse(existingConfig) as TLegacyConfig;
+    let parsedConfig = JSON.parse(existingConfig) as TLegacyConfig;
+    let changed = false;
 
     // Check if we need to migrate (if it has environmentState, it's old format)
     if (parsedConfig.environmentState) {
       const { apiHost, environmentState, personState, attributes, ...rest } = parsedConfig;
 
       // Create new config structure
-      const newLocalStorageConfig: TConfig = {
+      parsedConfig = {
         ...rest,
         ...(apiHost && { appUrl: apiHost }),
         environment: environmentState,
@@ -50,12 +51,35 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
             },
           },
         }),
-      };
+      } as TLegacyConfig;
+      changed = true;
+    }
 
-      return {
-        changed: true,
-        newState: newLocalStorageConfig,
-      };
+    // Migrate intermediate format: environmentId → workspaceId, environment → workspaceState
+    if (parsedConfig.environmentId ?? parsedConfig.environment) {
+      const { environmentId, environment, ...rest } = parsedConfig;
+      const workspaceState = environment
+        ? (() => {
+            const envData = environment.data as unknown as Record<string, unknown>;
+            const migratedData = { ...envData };
+            if (migratedData.workspace) {
+              migratedData.settings = migratedData.workspace;
+              delete migratedData.workspace;
+            }
+            return { ...environment, data: migratedData };
+          })()
+        : undefined;
+
+      parsedConfig = {
+        ...rest,
+        workspaceId: environmentId ?? (rest as unknown as TConfig).workspaceId,
+        ...(workspaceState && { workspaceState }),
+      } as TLegacyConfig;
+      changed = true;
+    }
+
+    if (changed) {
+      return { changed: true, newState: parsedConfig as unknown as TConfig };
     }
   }
 
@@ -151,19 +175,19 @@ export const setup = async (
   }
 
   if (
-    existingConfig?.environment &&
-    existingConfig.environmentId === effectiveId &&
+    existingConfig?.workspaceState &&
+    existingConfig.workspaceId === effectiveId &&
     existingConfig.appUrl === configInput.appUrl
   ) {
     logger.debug("Configuration fits setup parameters.");
-    let isEnvironmentStateExpired = false;
+    let isWorkspaceStateExpired = false;
     let isUserStateExpired = false;
 
-    const environmentStateExpiresAt = new Date(existingConfig.environment.expiresAt);
+    const workspaceStateExpiresAt = new Date(existingConfig.workspaceState.expiresAt);
 
-    if (isNowExpired(environmentStateExpiresAt)) {
-      logger.debug("Environment state expired. Syncing.");
-      isEnvironmentStateExpired = true;
+    if (isNowExpired(workspaceStateExpiresAt)) {
+      logger.debug("Workspace state expired. Syncing.");
+      isWorkspaceStateExpired = true;
     }
 
     if (existingConfig.user.expiresAt && isNowExpired(new Date(existingConfig.user.expiresAt))) {
@@ -172,33 +196,33 @@ export const setup = async (
     }
 
     try {
-      // fetch the environment state (if expired)
-      let environmentState: TEnvironmentState = existingConfig.environment;
+      // fetch the workspace state (if expired)
+      let workspaceState: TWorkspaceState = existingConfig.workspaceState;
       let userState: TUserState = existingConfig.user;
 
-      if (isEnvironmentStateExpired || isDebug) {
+      if (isWorkspaceStateExpired || isDebug) {
         if (isDebug) {
-          logger.debug("Debug mode is active, refetching environment state");
+          logger.debug("Debug mode is active, refetching workspace state");
         }
 
-        const environmentStateResponse = await fetchEnvironmentState({
+        const workspaceStateResponse = await fetchWorkspaceState({
           appUrl: configInput.appUrl,
-          environmentId: effectiveId,
+          workspaceId: effectiveId,
         });
 
-        if (environmentStateResponse.ok) {
-          environmentState = environmentStateResponse.data;
-          logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
+        if (workspaceStateResponse.ok) {
+          workspaceState = workspaceStateResponse.data;
+          logger.debug(`Fetched ${workspaceState.data.surveys.length.toString()} surveys from the backend`);
         } else {
           logger.error(
-            `Error fetching environment state: ${environmentStateResponse.error.code} - ${environmentStateResponse.error.responseMessage ?? ""}`
+            `Error fetching workspace state: ${workspaceStateResponse.error.code} - ${workspaceStateResponse.error.responseMessage ?? ""}`
           );
           return err({
             code: "network_error",
-            message: "Error fetching environment state",
+            message: "Error fetching workspace state",
             status: 500,
             url: new URL(`${configInput.appUrl}/api/v1/client/${effectiveId}/environment`),
-            responseMessage: environmentStateResponse.error.message,
+            responseMessage: workspaceStateResponse.error.message,
           });
         }
       }
@@ -214,7 +238,7 @@ export const setup = async (
         if (userState.data.userId) {
           const updatesResponse = await sendUpdatesToBackend({
             appUrl: configInput.appUrl,
-            environmentId: effectiveId,
+            workspaceId: effectiveId,
             updates: {
               userId: userState.data.userId,
             },
@@ -241,13 +265,13 @@ export const setup = async (
         }
       }
 
-      // filter the environment state wrt the person state
-      const filteredSurveys = filterSurveys(environmentState, userState);
+      // filter the workspace state wrt the person state
+      const filteredSurveys = filterSurveys(workspaceState, userState);
 
       // update the appConfig with the new filtered surveys and person state
       config.update({
         ...existingConfig,
-        environment: environmentState,
+        workspaceState,
         user: userState,
         filteredSurveys,
       });
@@ -264,19 +288,19 @@ export const setup = async (
     config.resetConfig();
     logger.debug("Syncing.");
 
-    // During setup, if we don't have a valid config, we need to fetch the environment state
+    // During setup, if we don't have a valid config, we need to fetch the workspace state
     // but not the person state, we can set it to the default value.
     // The person state will be fetched when the `setUserId` method is called.
 
     try {
-      const environmentStateResponse = await fetchEnvironmentState({
+      const workspaceStateResponse = await fetchWorkspaceState({
         appUrl: configInput.appUrl,
-        environmentId: effectiveId,
+        workspaceId: effectiveId,
       });
 
-      if (!environmentStateResponse.ok) {
+      if (!workspaceStateResponse.ok) {
         // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is ApiErrorResponse
-        throw environmentStateResponse.error;
+        throw workspaceStateResponse.error;
       }
 
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
@@ -284,7 +308,7 @@ export const setup = async (
       if ("userId" in configInput && configInput.userId) {
         const updatesResponse = await sendUpdatesToBackend({
           appUrl: configInput.appUrl,
-          environmentId: effectiveId,
+          workspaceId: effectiveId,
           updates: {
             userId: configInput.userId,
             attributes: configInput.attributes,
@@ -300,15 +324,15 @@ export const setup = async (
         }
       }
 
-      const environmentState = environmentStateResponse.data;
-      logger.debug(`Fetched ${environmentState.data.surveys.length.toString()} surveys from the backend`);
-      const filteredSurveys = filterSurveys(environmentState, userState);
+      const workspaceState = workspaceStateResponse.data;
+      logger.debug(`Fetched ${workspaceState.data.surveys.length.toString()} surveys from the backend`);
+      const filteredSurveys = filterSurveys(workspaceState, userState);
 
       config.update({
         appUrl: configInput.appUrl,
-        environmentId: effectiveId,
+        workspaceId: effectiveId,
         user: userState,
-        environment: environmentState,
+        workspaceState,
         filteredSurveys,
       });
 
@@ -338,8 +362,8 @@ export const tearDown = (): void => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
 
-  const { environment } = appConfig.get();
-  const filteredSurveys = filterSurveys(environment, DEFAULT_USER_STATE_NO_USER_ID);
+  const { workspaceState } = appConfig.get();
+  const filteredSurveys = filterSurveys(workspaceState, DEFAULT_USER_STATE_NO_USER_ID);
 
   logger.debug("Setting user state to default");
 

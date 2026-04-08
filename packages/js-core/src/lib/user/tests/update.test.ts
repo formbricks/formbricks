@@ -65,7 +65,7 @@ describe("sendUpdatesToBackend", () => {
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockEnvironmentId,
       updates: { userId: mockUserId, attributes: mockAttributes },
     });
 
@@ -89,7 +89,7 @@ describe("sendUpdatesToBackend", () => {
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockEnvironmentId,
       updates: mockUpdates,
     });
 
@@ -111,7 +111,7 @@ describe("sendUpdatesToBackend", () => {
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockEnvironmentId,
       updates: mockUpdates,
     });
 
@@ -128,8 +128,8 @@ describe("sendUpdates", () => {
     (Config.getInstance as Mock).mockImplementation(() => ({
       get: vi.fn().mockReturnValue({
         appUrl: mockAppUrl,
-        environmentId: mockEnvironmentId,
-        environment: {
+        workspaceId: mockEnvironmentId,
+        workspaceState: {
           data: {
             surveys: [],
           },

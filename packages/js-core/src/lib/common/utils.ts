@@ -1,11 +1,11 @@
 import { Logger } from "@/lib/common/logger";
 import type {
-  TEnvironmentState,
-  TEnvironmentStateActionClass,
-  TEnvironmentStateSurvey,
-  TEnvironmentStateWorkspace,
   TSurveyStyling,
   TUserState,
+  TWorkspaceState,
+  TWorkspaceStateActionClass,
+  TWorkspaceStateSettings,
+  TWorkspaceStateSurvey,
   TWorkspaceStyling,
 } from "@/types/config";
 import type { Result } from "@/types/error";
@@ -55,21 +55,21 @@ export const wrapThrowsAsync =
 
 /**
  * Filters surveys based on the displayOption, recontactDays, and segments
- * @param environmentSate -  The environment state
+ * @param workspaceState -  The workspace state
  * @param userState - The user state
  * @returns The filtered surveys
  */
 
-// takes the environment and user state and returns the filtered surveys
+// takes the workspace and user state and returns the filtered surveys
 export const filterSurveys = (
-  environmentState: TEnvironmentState,
+  workspaceState: TWorkspaceState,
   userState: TUserState
-): TEnvironmentStateSurvey[] => {
-  const { workspace, surveys } = environmentState.data;
+): TWorkspaceStateSurvey[] => {
+  const { settings, surveys } = workspaceState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = userState.data;
 
   // Function to filter surveys based on displayOption criteria
-  let filteredSurveys = surveys.filter((survey: TEnvironmentStateSurvey) => {
+  let filteredSurveys = surveys.filter((survey: TWorkspaceStateSurvey) => {
     switch (survey.displayOption) {
       case "respondMultiple":
         return true;
@@ -111,8 +111,8 @@ export const filterSurveys = (
     }
 
     // use recontactDays of the workspace if survey does not have recontactDays
-    if (workspace.recontactDays) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= workspace.recontactDays;
+    if (settings.recontactDays) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= settings.recontactDays;
     }
 
     // if no recontactDays is set, show the survey
@@ -139,14 +139,14 @@ export const filterSurveys = (
 };
 
 export const getStyling = (
-  workspace: TEnvironmentStateWorkspace,
-  survey: TEnvironmentStateSurvey
+  settings: TWorkspaceStateSettings,
+  survey: TWorkspaceStateSurvey
 ): TWorkspaceStyling | TSurveyStyling => {
   // allow style overwrite is enabled from the workspace
-  if (workspace.styling.allowStyleOverwrite) {
+  if (settings.styling.allowStyleOverwrite) {
     // survey style overwrite is disabled
     if (!survey.styling?.overwriteThemeStyling) {
-      return workspace.styling;
+      return settings.styling;
     }
 
     // survey style overwrite is enabled
@@ -154,17 +154,17 @@ export const getStyling = (
   }
 
   // allow style overwrite is disabled from the workspace
-  return workspace.styling;
+  return settings.styling;
 };
 
-export const getDefaultLanguageCode = (survey: TEnvironmentStateSurvey): string | undefined => {
+export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | undefined => {
   const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
     return surveyLanguage.default;
   });
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: string): string | undefined => {
+export const getLanguageCode = (survey: TWorkspaceStateSurvey, language?: string): string | undefined => {
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
 
@@ -261,7 +261,7 @@ export const handleUrlFilters = (
 };
 
 export const handleHiddenFields = (
-  hiddenFieldsConfig: TEnvironmentStateSurvey["hiddenFields"],
+  hiddenFieldsConfig: TWorkspaceStateSurvey["hiddenFields"],
   hiddenFields?: TTrackProperties["hiddenFields"]
 ): TTrackProperties["hiddenFields"] => {
   const logger = Logger.getInstance();
@@ -294,7 +294,7 @@ export const handleHiddenFields = (
 
 export const evaluateNoCodeConfigClick = (
   targetElement: HTMLElement,
-  action: TEnvironmentStateActionClass
+  action: TWorkspaceStateActionClass
 ): boolean => {
   if (action.noCodeConfig?.type !== "click") return false;
 

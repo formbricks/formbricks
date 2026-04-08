@@ -1,7 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
 import type { ActionClass, Language, Segment, Survey, SurveyLanguage, Workspace } from "@prisma/client";
 
-export type TEnvironmentStateSurvey = Pick<
+export type TWorkspaceStateSurvey = Pick<
   Survey,
   | "id"
   | "name"
@@ -30,21 +30,21 @@ export type TEnvironmentStateSurvey = Pick<
   styling?: TSurveyStyling;
 };
 
-export type TEnvironmentStateWorkspace = Pick<
+export type TWorkspaceStateSettings = Pick<
   Workspace,
   "id" | "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
 > & {
   styling: TWorkspaceStyling;
 };
 
-export type TEnvironmentStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
+export type TWorkspaceStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
 
-export interface TEnvironmentState {
+export interface TWorkspaceState {
   expiresAt: Date;
   data: {
-    surveys: TEnvironmentStateSurvey[];
-    actionClasses: TEnvironmentStateActionClass[];
-    workspace: TEnvironmentStateWorkspace;
+    surveys: TWorkspaceStateSurvey[];
+    actionClasses: TWorkspaceStateActionClass[];
+    settings: TWorkspaceStateSettings;
     recaptchaSiteKey?: string;
   };
 }
@@ -63,11 +63,11 @@ export interface TUserState {
 }
 
 export interface TConfig {
-  environmentId: string;
+  workspaceId: string;
   appUrl: string;
-  environment: TEnvironmentState;
+  workspaceState: TWorkspaceState;
   user: TUserState;
-  filteredSurveys: TEnvironmentStateSurvey[];
+  filteredSurveys: TWorkspaceStateSurvey[];
   status: {
     value: "success" | "error";
     expiresAt: Date | null;
@@ -140,7 +140,10 @@ export interface TLegacyConfigInput {
 
 export type TLegacyConfig = TConfig & {
   apiHost?: string;
-  environmentState?: TEnvironmentState;
+  environmentState?: TWorkspaceState;
   personState?: TUserState;
   attributes?: TAttributes;
+  // Intermediate format fields (pre-workspace rename)
+  environmentId?: string;
+  environment?: TWorkspaceState;
 };
