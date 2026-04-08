@@ -19,8 +19,13 @@ export const createSurvey = async (
   try {
     const { createdBy, ...restSurveyBody } = surveyBody;
 
-    // empty languages array
-    if (!restSurveyBody.languages?.length) {
+    const hasLanguages = Array.isArray(restSurveyBody.languages)
+      ? restSurveyBody.languages.length > 0
+      : restSurveyBody.languages &&
+        typeof restSurveyBody.languages === "object" &&
+        "create" in restSurveyBody.languages;
+
+    if (!hasLanguages) {
       delete restSurveyBody.languages;
     }
 
