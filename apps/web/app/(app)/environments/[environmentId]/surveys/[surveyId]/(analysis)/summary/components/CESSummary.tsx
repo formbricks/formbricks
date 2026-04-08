@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyElementSummaryRating } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryCes } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
@@ -16,8 +16,8 @@ import { ClickableBarSegment } from "./ClickableBarSegment";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { RatingScaleLegend } from "./RatingScaleLegend";
 
-interface RatingSummaryProps {
-  elementSummary: TSurveyElementSummaryRating;
+interface CESSummaryProps {
+  elementSummary: TSurveyElementSummaryCes;
   survey: TSurvey;
   setFilter: (
     elementId: string,
@@ -28,7 +28,7 @@ interface RatingSummaryProps {
   ) => void;
 }
 
-export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSummaryProps) => {
+export const CESSummary = ({ elementSummary, survey, setFilter }: CESSummaryProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
 
@@ -49,7 +49,8 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
               {getIconBasedOnScale}
               <div>
-                {t("environments.surveys.summary.overall")}: {elementSummary.average.toFixed(2)}
+                {t("environments.surveys.summary.effort_score")}: {elementSummary.average.toFixed(2)} /{" "}
+                {elementSummary.element.range}
               </div>
             </div>
           </div>

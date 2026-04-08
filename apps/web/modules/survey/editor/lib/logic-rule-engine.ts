@@ -253,6 +253,78 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
+      [TSurveyElementTypeEnum.CSAT]: {
+        options: [
+          {
+            label: "=",
+            value: ZSurveyLogicConditionsOperator.enum.equals,
+          },
+          {
+            label: "!=",
+            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+          },
+          {
+            label: ">",
+            value: ZSurveyLogicConditionsOperator.enum.isGreaterThan,
+          },
+          {
+            label: "<",
+            value: ZSurveyLogicConditionsOperator.enum.isLessThan,
+          },
+          {
+            label: ">=",
+            value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual,
+          },
+          {
+            label: "<=",
+            value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual,
+          },
+          {
+            label: t("environments.surveys.edit.is_submitted"),
+            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
+          },
+          {
+            label: t("environments.surveys.edit.is_skipped"),
+            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
+          },
+        ],
+      },
+      [TSurveyElementTypeEnum.CES]: {
+        options: [
+          {
+            label: "=",
+            value: ZSurveyLogicConditionsOperator.enum.equals,
+          },
+          {
+            label: "!=",
+            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+          },
+          {
+            label: ">",
+            value: ZSurveyLogicConditionsOperator.enum.isGreaterThan,
+          },
+          {
+            label: "<",
+            value: ZSurveyLogicConditionsOperator.enum.isLessThan,
+          },
+          {
+            label: ">=",
+            value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual,
+          },
+          {
+            label: "<=",
+            value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual,
+          },
+          {
+            label: t("environments.surveys.edit.is_submitted"),
+            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
+          },
+          {
+            label: t("environments.surveys.edit.is_skipped"),
+            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
+          },
+        ],
+      },
       [TSurveyElementTypeEnum.CTA]: {
         options: [
           {

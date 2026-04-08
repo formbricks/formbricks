@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyElementSummaryRating } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryCsat } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
@@ -15,9 +15,10 @@ import { TooltipProvider } from "@/modules/ui/components/tooltip";
 import { ClickableBarSegment } from "./ClickableBarSegment";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { RatingScaleLegend } from "./RatingScaleLegend";
+import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
-interface RatingSummaryProps {
-  elementSummary: TSurveyElementSummaryRating;
+interface CSATSummaryProps {
+  elementSummary: TSurveyElementSummaryCsat;
   survey: TSurvey;
   setFilter: (
     elementId: string,
@@ -28,7 +29,7 @@ interface RatingSummaryProps {
   ) => void;
 }
 
-export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSummaryProps) => {
+export const CSATSummary = ({ elementSummary, survey, setFilter }: CSATSummaryProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
 
@@ -50,6 +51,13 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
               {getIconBasedOnScale}
               <div>
                 {t("environments.surveys.summary.overall")}: {elementSummary.average.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+              <SatisfactionIndicator percentage={elementSummary.csat.satisfiedPercentage} />
+              <div>
+                CSAT: {elementSummary.csat.satisfiedPercentage}% {t("environments.surveys.summary.satisfied")}
               </div>
             </div>
           </div>

@@ -7,8 +7,10 @@ import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/type
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { AddressElement } from "@/components/elements/address-element";
 import { CalElement } from "@/components/elements/cal-element";
+import { CesElement } from "@/components/elements/ces-element";
 import { ConsentElement } from "@/components/elements/consent-element";
 import { ContactInfoElement } from "@/components/elements/contact-info-element";
+import { CsatElement } from "@/components/elements/csat-element";
 import { CTAElement } from "@/components/elements/cta-element";
 import { DateElement } from "@/components/elements/date-element";
 import { FileUploadElement } from "@/components/elements/file-upload-element";
@@ -328,6 +330,36 @@ export function ElementConditional({
             setTtc={wrappedSetTtc}
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
+            errorMessage={errorMessage}
+          />
+        );
+      case TSurveyElementTypeEnum.CSAT:
+        return (
+          <CsatElement
+            key={element.id}
+            element={element}
+            value={typeof value === "number" ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={wrappedSetTtc}
+            currentElementId={currentElementId}
+            dir={dir}
+            errorMessage={errorMessage}
+          />
+        );
+      case TSurveyElementTypeEnum.CES:
+        return (
+          <CesElement
+            key={element.id}
+            element={element}
+            value={typeof value === "number" ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={wrappedSetTtc}
+            currentElementId={currentElementId}
+            dir={dir}
             errorMessage={errorMessage}
           />
         );

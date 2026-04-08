@@ -22,8 +22,10 @@ import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-se
 import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
 import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
 import { CalElementForm } from "@/modules/survey/editor/components/cal-element-form";
+import { CESElementForm } from "@/modules/survey/editor/components/ces-element-form";
 import { ConsentElementForm } from "@/modules/survey/editor/components/consent-element-form";
 import { ContactInfoElementForm } from "@/modules/survey/editor/components/contact-info-element-form";
+import { CSATElementForm } from "@/modules/survey/editor/components/csat-element-form";
 import { CTAElementForm } from "@/modules/survey/editor/components/cta-element-form";
 import { DateElementForm } from "@/modules/survey/editor/components/date-element-form";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
@@ -156,6 +158,8 @@ export const BlockCard = ({
         TSurveyElementTypeEnum.PictureSelection,
         TSurveyElementTypeEnum.Rating,
         TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
         TSurveyElementTypeEnum.Ranking,
         TSurveyElementTypeEnum.Matrix,
       ].includes(elementType)
@@ -184,6 +188,8 @@ export const BlockCard = ({
     [TSurveyElementTypeEnum.NPS]: NPSElementForm,
     [TSurveyElementTypeEnum.CTA]: CTAElementForm,
     [TSurveyElementTypeEnum.Rating]: RatingElementForm,
+    [TSurveyElementTypeEnum.CSAT]: CSATElementForm,
+    [TSurveyElementTypeEnum.CES]: CESElementForm,
     [TSurveyElementTypeEnum.Consent]: ConsentElementForm,
     [TSurveyElementTypeEnum.Date]: DateElementForm,
     [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
@@ -200,6 +206,8 @@ export const BlockCard = ({
     TSurveyElementTypeEnum.OpenText,
     TSurveyElementTypeEnum.CTA,
     TSurveyElementTypeEnum.Rating,
+    TSurveyElementTypeEnum.CSAT,
+    TSurveyElementTypeEnum.CES,
     TSurveyElementTypeEnum.Cal,
     TSurveyElementTypeEnum.ContactInfo,
   ]);
