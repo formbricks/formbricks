@@ -32,7 +32,7 @@ export type TWorkspaceStateSurvey = Pick<
 
 export type TWorkspaceStateSettings = Pick<
   Workspace,
-  "id" | "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
+  "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
 > & {
   styling: TWorkspaceStyling;
 };

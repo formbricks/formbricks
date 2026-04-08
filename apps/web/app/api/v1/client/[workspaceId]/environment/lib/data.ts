@@ -144,7 +144,6 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         id: workspaceData.id,
         appSetupCompleted: workspaceData.appSetupCompleted,
         workspaceSettings: {
-          id: workspaceData.id,
           recontactDays: workspaceData.recontactDays,
           clickOutsideClose: workspaceData.clickOutsideClose,
           overlay: workspaceData.overlay,

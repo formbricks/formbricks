@@ -47,7 +47,6 @@ export const ZJsWorkspaceStateActionClass = ZActionClass.pick({
 export type TJsWorkspaceStateActionClass = z.infer<typeof ZJsWorkspaceStateActionClass>;
 
 export const ZJsWorkspaceStateWorkspaceSetting = ZWorkspace.pick({
-  id: true,
   recontactDays: true,
   clickOutsideClose: true,
   overlay: true,

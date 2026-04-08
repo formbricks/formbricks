@@ -259,7 +259,6 @@ describe("api.ts", () => {
           surveys: [],
           actionClasses: [],
           settings: {
-            id: "workspace123",
             recontactDays: 30,
             clickOutsideClose: true,
             overlay: "none",

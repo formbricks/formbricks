@@ -1,6 +1,6 @@
 // utils.test.ts
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { mockSurveyId, mockWorkspaceId } from "@/lib/common/tests/__mocks__/config.mock";
+import { mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
   diffInDays,
@@ -167,7 +167,6 @@ describe("utils.ts", () => {
         expiresAt: new Date(),
         data: {
           settings: {
-            id: mockWorkspaceId,
             recontactDays: 7, // fallback if survey doesn't have it
             clickOutsideClose: false,
             overlay: "none",
@@ -310,7 +309,6 @@ describe("utils.ts", () => {
   describe("getStyling()", () => {
     test("returns workspace styling if allowStyleOverwrite=false", () => {
       const settings = {
-        id: "p1",
         styling: { allowStyleOverwrite: false, brandColor: { light: "#fff" } },
       } as TWorkspaceStateSettings;
       const survey = {
@@ -327,7 +325,6 @@ describe("utils.ts", () => {
 
     test("returns workspace styling if allowStyleOverwrite=true but survey overwriteThemeStyling=false", () => {
       const settings = {
-        id: "p1",
         styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
       } as TWorkspaceStateSettings;
       const survey = {
@@ -344,7 +341,6 @@ describe("utils.ts", () => {
 
     test("returns survey styling if allowStyleOverwrite=true and survey overwriteThemeStyling=true", () => {
       const settings = {
-        id: "p1",
         styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
       } as TWorkspaceStateSettings;
       const survey = {

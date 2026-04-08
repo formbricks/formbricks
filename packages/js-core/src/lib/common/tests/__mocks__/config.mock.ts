@@ -83,7 +83,6 @@ export const mockConfig: TConfig = {
         },
       ],
       settings: {
-        id: mockWorkspaceId,
         recontactDays: 14,
         clickOutsideClose: true,
         overlay: "none",
