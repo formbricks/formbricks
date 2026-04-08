@@ -12,12 +12,16 @@ export interface JobsWorkerBootstrapConfig {
 
 export const BULLMQ_WORKER_CONCURRENCY = env.BULLMQ_WORKER_CONCURRENCY ?? DEFAULT_BULLMQ_WORKER_CONCURRENCY;
 export const BULLMQ_WORKER_COUNT = env.BULLMQ_WORKER_COUNT ?? DEFAULT_BULLMQ_WORKER_COUNT;
-export const BULLMQ_WORKER_ENABLED =
-  env.BULLMQ_WORKER_ENABLED !== undefined
-    ? env.BULLMQ_WORKER_ENABLED === "1"
-    : env.NODE_ENV === "test"
-      ? false
-      : true;
+
+const getBullMqWorkerEnabled = (): boolean => {
+  if (env.BULLMQ_WORKER_ENABLED !== undefined) {
+    return env.BULLMQ_WORKER_ENABLED === "1";
+  }
+
+  return env.NODE_ENV !== "test";
+};
+
+export const BULLMQ_WORKER_ENABLED = getBullMqWorkerEnabled();
 
 export const getJobsWorkerBootstrapConfig = (): JobsWorkerBootstrapConfig => {
   if (!BULLMQ_WORKER_ENABLED) {
