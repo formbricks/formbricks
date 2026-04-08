@@ -45,7 +45,7 @@ vi.mock("@/lib/common/event-listeners", () => ({
 }));
 
 // 5) Mock fetchWorkspaceState
-vi.mock("@/lib/environment/state", () => ({
+vi.mock("@/lib/workspace/state", () => ({
   fetchWorkspaceState: vi.fn(),
 }));
 

@@ -12,7 +12,7 @@ import * as workspaceStateModule from "@/lib/workspace/state";
 
 // 1) Mock all the imported dependencies
 
-vi.mock("@/lib/environment/state", () => ({
+vi.mock("@/lib/workspace/state", () => ({
   addWorkspaceStateExpiryCheckListener: vi.fn(),
   clearWorkspaceStateExpiryCheckListener: vi.fn(),
 }));
@@ -55,7 +55,7 @@ describe("event-listeners file", () => {
   // ---------------------------------------------------------------------------
   test("addEventListeners calls each imported add* function", () => {
     // Ensure the mocks are set up before calling the functions
-    const mockWorkspaceAdd = vi.spyOn(workspaceModule, "addWorkspaceStateExpiryCheckListener");
+    const mockWorkspaceAdd = vi.spyOn(workspaceStateModule, "addWorkspaceStateExpiryCheckListener");
     const mockUserAdd = vi.spyOn(userState, "addUserStateExpiryCheckListener");
     const mockPageUrlAdd = vi.spyOn(pageUrlEventListeners, "addPageUrlEventListeners");
     const mockClickAdd = vi.spyOn(pageUrlEventListeners, "addClickEventListener");
@@ -116,7 +116,7 @@ describe("event-listeners file", () => {
   // ---------------------------------------------------------------------------
   test("removeAllEventListeners calls all the remove/clear functions", () => {
     // Ensure the mocks are set up before calling the function
-    const mockWorkspaceClear = vi.spyOn(workspaceModule, "clearWorkspaceStateExpiryCheckListener");
+    const mockWorkspaceClear = vi.spyOn(workspaceStateModule, "clearWorkspaceStateExpiryCheckListener");
     const mockUserClear = vi.spyOn(userState, "clearUserStateExpiryCheckListener");
     const mockPageUrlRemove = vi.spyOn(pageUrlEventListeners, "removePageUrlEventListeners");
     const mockClickRemove = vi.spyOn(pageUrlEventListeners, "removeClickEventListener");
