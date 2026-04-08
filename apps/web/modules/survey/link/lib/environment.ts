@@ -21,7 +21,7 @@ type TWorkspaceForLinkSurvey = Pick<
   "id" | "name" | "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts"
 >;
 
-export interface TEnvironmentContextForLinkSurvey {
+export interface TWorkspaceContextForLinkSurvey {
   workspace: TWorkspaceForLinkSurvey;
   organizationId: string;
   organizationBilling: TOrganizationBilling;
@@ -38,8 +38,8 @@ export interface TEnvironmentContextForLinkSurvey {
  * @throws ResourceNotFoundError if workspace or organization not found
  * @throws DatabaseError if database query fails
  */
-export const getEnvironmentContextForLinkSurvey = reactCache(
-  async (workspaceId: string): Promise<TEnvironmentContextForLinkSurvey> => {
+export const getWorkspaceContextForLinkSurvey = reactCache(
+  async (workspaceId: string): Promise<TWorkspaceContextForLinkSurvey> => {
     validateInputs([workspaceId, ZId]);
 
     try {

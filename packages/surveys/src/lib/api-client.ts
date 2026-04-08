@@ -34,7 +34,7 @@ export class ApiClient {
   }
 
   async createDisplay(
-    displayInput: Omit<TDisplayCreateInput, "workspaceId" | "workspaceId"> & { contactId?: string }
+    displayInput: Omit<TDisplayCreateInput, "workspaceId"> & { contactId?: string }
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
     const fromV1 = !!displayInput.userId;
 
@@ -47,7 +47,7 @@ export class ApiClient {
   }
 
   async createResponse(
-    responseInput: Omit<TResponseInput, "workspaceId" | "workspaceId"> & {
+    responseInput: Omit<TResponseInput, "workspaceId"> & {
       contactId: string | null;
       recaptchaToken?: string;
     }

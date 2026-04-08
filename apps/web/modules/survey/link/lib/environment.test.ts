@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { getEnvironmentContextForLinkSurvey } from "./environment";
+import { getWorkspaceContextForLinkSurvey } from "./environment";
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -19,7 +19,7 @@ vi.mock("react", () => ({
   cache: vi.fn((fn) => fn),
 }));
 
-describe("getEnvironmentContextForLinkSurvey", () => {
+describe("getWorkspaceContextForLinkSurvey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -53,7 +53,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
 
-    const result = await getEnvironmentContextForLinkSurvey(mockWorkspaceId);
+    const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
 
     expect(result).toEqual({
       workspace: {
@@ -107,7 +107,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
   test("should throw ValidationError for invalid workspace ID", async () => {
     const invalidId = "invalid-id";
 
-    await expect(getEnvironmentContextForLinkSurvey(invalidId)).rejects.toThrow(ValidationError);
+    await expect(getWorkspaceContextForLinkSurvey(invalidId)).rejects.toThrow(ValidationError);
   });
 
   test("should throw ResourceNotFoundError when workspace is not found", async () => {
@@ -115,8 +115,8 @@ describe("getEnvironmentContextForLinkSurvey", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Workspace");
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Workspace");
   });
 
   test("should throw ResourceNotFoundError when workspace has no organization", async () => {
@@ -134,8 +134,8 @@ describe("getEnvironmentContextForLinkSurvey", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Organization");
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Organization");
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
@@ -147,8 +147,8 @@ describe("getEnvironmentContextForLinkSurvey", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(DatabaseError);
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Database error");
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Database error");
   });
 
   test("should rethrow non-Prisma errors", async () => {
@@ -157,7 +157,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockRejectedValue(genericError);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(genericError);
+    await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(genericError);
   });
 
   test("should handle workspace with minimal data", async () => {
@@ -189,7 +189,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
 
-    const result = await getEnvironmentContextForLinkSurvey(mockWorkspaceId);
+    const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
 
     expect(result).toEqual({
       workspace: {

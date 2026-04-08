@@ -8,7 +8,7 @@ import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import {
   getBasicSurveyMetadata,
@@ -49,10 +49,10 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     }
 
     // Fetch organization whitelabel data for custom favicon
-    const environmentContext = await getEnvironmentContextForLinkSurvey(survey.workspaceId);
-    const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
+    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    const customFaviconUrl = workspaceContext.organizationWhitelabel?.faviconUrl;
 
-    const brandColor = getMetadataBrandColor(environmentContext.workspace.styling, survey.styling);
+    const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
     const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
     // Override with the custom image URL
@@ -129,16 +129,16 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.workspaceId);
-      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
+      const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+      return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
     }
 
     singleUseId = validatedSingleUseId;
   }
 
   // Parallel fetch of environment context and locale
-  const [environmentContext, locale, singleUseResponse] = await Promise.all([
-    getEnvironmentContextForLinkSurvey(survey.workspaceId),
+  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+    getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Fetch existing response for this contact
     getExistingContactResponse(survey.id, contactId)(),
@@ -156,7 +156,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     isPreview,
     singleUseId,
     singleUseResponse,
-    environmentContext,
+    workspaceContext,
     locale,
     responseCount,
   });

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
@@ -10,7 +10,7 @@ vi.mock("@/modules/survey/link/lib/data", () => ({
 }));
 
 vi.mock("@/modules/survey/link/lib/environment", () => ({
-  getEnvironmentContextForLinkSurvey: vi.fn(),
+  getWorkspaceContextForLinkSurvey: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -53,7 +53,7 @@ describe("getMetadataForLinkSurvey", () => {
         description: "Thanks a lot for your time 🙏",
       },
     });
-    vi.mocked(getEnvironmentContextForLinkSurvey).mockResolvedValue({
+    vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({
       workspace: {
         id: "workspace-123",
         name: "Test Workspace",
