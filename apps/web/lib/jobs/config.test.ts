@@ -88,4 +88,20 @@ describe("jobs runtime config", () => {
       runtimeOptions: null,
     });
   });
+
+  test("throws when the worker is enabled without a redis url", async () => {
+    vi.doMock("@/lib/env", () => ({
+      env: {
+        BULLMQ_WORKER_CONCURRENCY: 2,
+        BULLMQ_WORKER_COUNT: 1,
+        BULLMQ_WORKER_ENABLED: "1",
+        NODE_ENV: "production",
+        REDIS_URL: undefined,
+      },
+    }));
+
+    const { getJobsWorkerBootstrapConfig } = await import("./config");
+
+    expect(() => getJobsWorkerBootstrapConfig()).toThrow("REDIS_URL is required to start the BullMQ worker");
+  });
 });

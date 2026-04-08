@@ -26,7 +26,7 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ["text", "json", "html", "lcov"],
-      exclude: ["src/index.ts", "src/types/**"],
+      exclude: ["src/types/**"],
       include: ["src/**/*.ts"],
     },
   },

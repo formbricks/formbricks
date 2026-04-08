@@ -1,4 +1,3 @@
-/* v8 ignore start */
 export {
   deleteFile,
   getSignedDownloadUrl,
@@ -9,4 +8,3 @@ export {
 export type { FileStreamResult } from "./service";
 export { StorageErrorCode } from "./types/error";
 export type { StorageError } from "./types/error";
-/* v8 ignore stop */
