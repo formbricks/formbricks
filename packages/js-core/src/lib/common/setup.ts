@@ -32,29 +32,6 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
     let parsedConfig = JSON.parse(existingConfig) as TLegacyConfig;
     let changed = false;
 
-    // Check if we need to migrate (if it has environmentState, it's old format)
-    if (parsedConfig.environmentState) {
-      const { apiHost, environmentState, personState, attributes, ...rest } = parsedConfig;
-
-      // Create new config structure
-      parsedConfig = {
-        ...rest,
-        ...(apiHost && { appUrl: apiHost }),
-        environment: environmentState,
-        ...(personState && {
-          user: {
-            ...personState,
-            data: {
-              ...personState.data,
-              // Copy over language from attributes if it exists
-              ...(attributes?.language && { language: attributes.language as string }),
-            },
-          },
-        }),
-      } as TLegacyConfig;
-      changed = true;
-    }
-
     // Migrate intermediate format: environmentId → workspaceId, environment → workspace
     if (parsedConfig.environmentId ?? parsedConfig.environment) {
       const { environmentId, environment, ...rest } = parsedConfig;
