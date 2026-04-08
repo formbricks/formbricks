@@ -8,6 +8,7 @@ describe("@formbricks/jobs public API", () => {
     expect(jobs.getBackgroundJobProducer).toBeTypeOf("function");
     expect(jobs.startJobsRuntime).toBeTypeOf("function");
     expect(jobs.getBackgroundJobDefinition).toBeTypeOf("function");
+    expect(jobs.ZResponsePipelineEvent).toBeDefined();
     expect(jobs.ZResponsePipelineJobData).toBeDefined();
     expect(jobs.ZTestLogJobData).toBeDefined();
     expect("getJobProcessor" in jobs).toBe(false);

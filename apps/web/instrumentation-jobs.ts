@@ -1,5 +1,6 @@
 import { JOB_NAMES, type JobsRuntimeHandle, startJobsRuntime } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import type { TResponsePipelineJobData } from "@formbricks/types/jobs";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 
@@ -29,7 +30,9 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime({
     ...jobsWorkerBootstrapConfig.runtimeOptions,
     jobHandlerOverrides: {
-      [JOB_NAMES.responsePipeline]: processResponsePipelineJob,
+      [JOB_NAMES.responsePipeline]: async (data, context) => {
+        await processResponsePipelineJob(data as TResponsePipelineJobData, context);
+      },
     },
   }).then((runtime) => {
     globalForJobsRuntime.formbricksJobsRuntime = runtime;

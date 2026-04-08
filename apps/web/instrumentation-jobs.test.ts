@@ -85,11 +85,36 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
       concurrency: 4,
       jobHandlerOverrides: {
-        "response-pipeline.process": mockProcessResponsePipelineJob,
+        "response-pipeline.process": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",
       workerCount: 2,
     });
+
+    const overrides = mockStartJobsRuntime.mock.calls[0]?.[0]?.jobHandlerOverrides;
+    const responsePipelineOverride = overrides?.["response-pipeline.process"];
+
+    expect(responsePipelineOverride).toBeTypeOf("function");
+
+    await responsePipelineOverride?.(
+      {
+        environmentId: "env_123",
+        event: "responseCreated",
+        response: { id: "res_123" },
+        surveyId: "survey_123",
+      },
+      { attempt: 1, jobId: "job_123", jobName: "response-pipeline.process", queueName: "background-jobs" }
+    );
+
+    expect(mockProcessResponsePipelineJob).toHaveBeenCalledWith(
+      {
+        environmentId: "env_123",
+        event: "responseCreated",
+        response: { id: "res_123" },
+        surveyId: "survey_123",
+      },
+      { attempt: 1, jobId: "job_123", jobName: "response-pipeline.process", queueName: "background-jobs" }
+    );
   });
 
   slowTest("reuses the in-flight startup promise", async () => {

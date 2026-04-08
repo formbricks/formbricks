@@ -51,6 +51,6 @@ export type {
   TRecurringBackgroundJobSchedule,
   TRunAtBackgroundJobSchedule,
 } from "./schedules";
-export { ZResponsePipelineJobData, ZTestLogJobData } from "./types";
-export type { TResponsePipelineJobData, TTestLogJobData } from "./types";
+export { ZResponsePipelineEvent, ZResponsePipelineJobData, ZTestLogJobData } from "./types";
+export type { TResponsePipelineEvent, TResponsePipelineJobData, TTestLogJobData } from "./types";
 /* v8 ignore stop */
