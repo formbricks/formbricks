@@ -103,7 +103,6 @@ describe("getWorkspaceStateData", () => {
         id: workspaceId,
         appSetupCompleted: true,
         workspaceSettings: {
-          id: workspaceId,
           recontactDays: 30,
           clickOutsideClose: true,
           overlay: "none",
@@ -212,7 +211,6 @@ describe("getWorkspaceStateData", () => {
     const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.workspace.workspaceSettings).toEqual({
-      id: workspaceId,
       recontactDays: 14,
       clickOutsideClose: false,
       overlay: "dark",
