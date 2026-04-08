@@ -46,6 +46,7 @@ export interface SurveyModalProps extends SurveyBaseProps {
 
 export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
   appUrl?: string;
+  workspaceId?: string;
   isPreviewMode?: boolean;
   userId?: string;
   contactId?: string;

@@ -131,7 +131,14 @@ export const getWorkspace = reactCache(
         },
         select: { organizationId: true },
       });
-      return workspacePrisma;
+
+      if (workspacePrisma) return workspacePrisma;
+
+      // Fallback: the id may be a legacy environmentId
+      return await prisma.workspace.findUnique({
+        where: { legacyEnvironmentId: workspaceId },
+        select: { organizationId: true },
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

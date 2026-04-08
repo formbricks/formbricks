@@ -1,5 +1,6 @@
 import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -8,22 +9,33 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 /**
  * Resolves workspaceId for v2 management routes, checking permissions accordingly.
  *
- * - If `workspaceId` is provided: checks workspace permission.
+ * - Accepts `workspaceId` or `environmentId` (legacy alias).
+ * - Resolves legacy environment IDs to canonical workspace IDs.
  * - If not provided: returns an error.
  *
  * On success, returns the resolved `workspaceId`.
  */
 export const resolveBodyIdsV2 = async (
-  body: { workspaceId?: string },
+  body: { workspaceId?: string; environmentId?: string },
   permissions: TAPIKeyWorkspacePermission[],
   method: HttpMethod
 ): Promise<Result<{ workspaceId: string }, ApiErrorResponseV2>> => {
-  if (body.workspaceId) {
-    if (!hasPermission(permissions, body.workspaceId, method)) {
+  const rawId = body.workspaceId ?? body.environmentId;
+
+  if (rawId) {
+    const workspace = await findWorkspaceByIdOrLegacyEnvId(rawId);
+    if (!workspace) {
+      return err({
+        type: "not_found",
+        details: [{ field: "workspaceId", issue: "workspace not found" }],
+      });
+    }
+
+    if (!hasPermission(permissions, workspace.id, method)) {
       return err({ type: "forbidden" });
     }
 
-    return ok({ workspaceId: body.workspaceId });
+    return ok({ workspaceId: workspace.id });
   }
 
   return err({

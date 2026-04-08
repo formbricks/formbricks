@@ -1,5 +1,5 @@
 import { Result, ok } from "@formbricks/types/error-handlers";
-import { ApiErrorResponseV2 } from "../types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { fetchWorkspaceId, fetchWorkspaceIdFromSurveyIds } from "./services";
 
 export const getWorkspaceId = async (

@@ -267,6 +267,21 @@ describe("Service Functions", () => {
       expect(result).toEqual(mockWorkspace);
     });
 
+    test("falls back to legacyEnvironmentId when primary lookup returns null", async () => {
+      const mockWorkspace = { organizationId: "org123" } as unknown as Workspace;
+      vi.mocked(prisma.workspace.findUnique)
+        .mockResolvedValueOnce(null) // primary lookup
+        .mockResolvedValueOnce(mockWorkspace); // legacy lookup
+
+      const result = await getWorkspace("env-old-123");
+      expect(prisma.workspace.findUnique).toHaveBeenCalledTimes(2);
+      expect(prisma.workspace.findUnique).toHaveBeenNthCalledWith(2, {
+        where: { legacyEnvironmentId: "env-old-123" },
+        select: { organizationId: true },
+      });
+      expect(result).toEqual(mockWorkspace);
+    });
+
     test("throws DatabaseError when database operation fails", async () => {
       vi.mocked(prisma.workspace.findUnique).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Error", {

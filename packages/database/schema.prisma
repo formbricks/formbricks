@@ -593,6 +593,7 @@ model Workspace {
   createdAt                         DateTime                           @default(now()) @map(name: "created_at")
   updatedAt                         DateTime                           @updatedAt @map(name: "updated_at")
   name                              String
+  legacyEnvironmentId               String?                            @unique
   organization                      Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId                    String
   /// [Styling]

@@ -9,7 +9,7 @@ import { SurveyState } from "./survey-state";
 
 interface QueueConfig {
   appUrl: string;
-  environmentId: string;
+  workspaceId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate, errorCode?: TResponseErrorCodesEnum) => void;
   onResponseSendingFinished?: () => void;
@@ -36,7 +36,7 @@ export class ResponseQueue {
     this.surveyState = surveyState;
     this.api = new ApiClient({
       appUrl: config.appUrl,
-      environmentId: config.environmentId,
+      workspaceId: config.workspaceId,
     });
   }
 
