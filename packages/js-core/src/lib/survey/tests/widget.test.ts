@@ -105,7 +105,7 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {
@@ -154,7 +154,7 @@ describe("widget-file", () => {
       expect.objectContaining({
         survey: mockSurvey,
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        workspaceId: "ws_123",
         contactId: "contact_abc",
       })
     );
@@ -171,7 +171,7 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {
@@ -217,7 +217,7 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {
@@ -270,7 +270,7 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {
@@ -330,7 +330,7 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {
@@ -386,7 +386,7 @@ describe("widget-file", () => {
         callCount++;
         return {
           appUrl: "https://fake.app",
-          environmentId: "env_123",
+          environmentId: "ws_123",
           environment: {
             data: {
               workspace: {
@@ -470,7 +470,7 @@ describe("widget-file", () => {
     const scriptLoadMockConfig = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {
@@ -609,7 +609,7 @@ describe("widget-file", () => {
       expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
         expect.objectContaining({
           appUrl: "https://fake.app",
-          environmentId: "env_123",
+          workspaceId: "ws_123",
           contactId: "contact_abc",
         })
       );
@@ -681,7 +681,7 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        environmentId: "ws_123",
         environment: {
           data: {
             workspace: {

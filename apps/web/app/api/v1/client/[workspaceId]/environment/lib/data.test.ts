@@ -5,10 +5,12 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEnvironmentStateData } from "./data";
 
+vi.mock("server-only", () => ({}));
+
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    environment: {
+    workspace: {
       findUnique: vi.fn(),
     },
   },
@@ -20,25 +22,29 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
+
+vi.mock("@/modules/storage/utils", () => ({
+  resolveStorageUrlsInObject: vi.fn((obj) => obj),
+}));
+
 vi.mock("@/modules/survey/lib/utils", () => ({
   transformPrismaSurvey: vi.fn((survey) => survey),
 }));
 
-const environmentId = "cjld2cjxh0000qzrmn831i7rn";
+const workspaceId = "cjld2cjxh0000qzrmn831i7rn";
 
-const mockEnvironmentData = {
-  id: environmentId,
-  type: "production",
+const mockWorkspaceData = {
+  id: workspaceId,
   appSetupCompleted: true,
-  workspace: {
-    id: "workspace-123",
-    recontactDays: 30,
-    clickOutsideClose: true,
-    overlay: "none",
-    placement: "bottomRight",
-    inAppSurveyBranding: true,
-    styling: { allowStyleOverwrite: false },
-  },
+  recontactDays: 30,
+  clickOutsideClose: true,
+  overlay: "none",
+  placement: "bottomRight",
+  inAppSurveyBranding: true,
+  styling: { allowStyleOverwrite: false },
   actionClasses: [
     {
       id: "action-1",
@@ -87,18 +93,17 @@ describe("getEnvironmentStateData", () => {
     vi.resetAllMocks();
   });
 
-  test("should return environment state data when environment exists", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironmentData as never);
+  test("should return environment state data when workspace exists", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
     expect(result).toEqual({
-      environment: {
-        id: environmentId,
-        type: "production",
+      workspace: {
+        id: workspaceId,
         appSetupCompleted: true,
-        workspace: {
-          id: "workspace-123",
+        workspaceSettings: {
+          id: workspaceId,
           recontactDays: 30,
           clickOutsideClose: true,
           overlay: "none",
@@ -107,37 +112,27 @@ describe("getEnvironmentStateData", () => {
           styling: { allowStyleOverwrite: false },
         },
       },
-      surveys: mockEnvironmentData.surveys,
-      actionClasses: mockEnvironmentData.actionClasses,
+      surveys: mockWorkspaceData.surveys,
+      actionClasses: mockWorkspaceData.actionClasses,
     });
 
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: environmentId },
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: workspaceId },
       select: expect.objectContaining({
         id: true,
-        type: true,
         appSetupCompleted: true,
-        workspace: expect.any(Object),
+        recontactDays: true,
         actionClasses: expect.any(Object),
         surveys: expect.any(Object),
       }),
     });
   });
 
-  test("should throw ResourceNotFoundError when environment is not found", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-
-    await expect(getEnvironmentStateData(environmentId)).rejects.toThrow(ResourceNotFoundError);
-    await expect(getEnvironmentStateData(environmentId)).rejects.toThrow("environment");
-  });
-
   test("should throw ResourceNotFoundError when workspace is not found", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
-      workspace: null,
-    } as never);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    await expect(getEnvironmentStateData(environmentId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow("workspace");
   });
 
   test("should throw DatabaseError on Prisma database errors", async () => {
@@ -145,65 +140,65 @@ describe("getEnvironmentStateData", () => {
       code: "P2024",
       clientVersion: "5.0.0",
     });
-    vi.mocked(prisma.environment.findUnique).mockRejectedValue(prismaError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
 
-    await expect(getEnvironmentStateData(environmentId)).rejects.toThrow(DatabaseError);
+    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalled();
   });
 
   test("should rethrow unexpected errors", async () => {
     const unexpectedError = new Error("Unexpected error");
-    vi.mocked(prisma.environment.findUnique).mockRejectedValue(unexpectedError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(unexpectedError);
 
-    await expect(getEnvironmentStateData(environmentId)).rejects.toThrow("Unexpected error");
+    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow("Unexpected error");
     expect(logger.error).toHaveBeenCalled();
   });
 
   test("should handle empty surveys array", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
       surveys: [],
     } as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
     expect(result.surveys).toEqual([]);
   });
 
   test("should handle empty actionClasses array", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
       actionClasses: [],
     } as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
     expect(result.actionClasses).toEqual([]);
   });
 
   test("should transform surveys using transformPrismaSurvey", async () => {
     const multipleSurveys = [
-      ...mockEnvironmentData.surveys,
+      ...mockWorkspaceData.surveys,
       {
-        ...mockEnvironmentData.surveys[0],
+        ...mockWorkspaceData.surveys[0],
         id: "survey-2",
         name: "Second Survey",
       },
     ];
 
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
       surveys: multipleSurveys,
     } as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
     expect(result.surveys).toHaveLength(2);
   });
 
-  test("should correctly map workspace properties to environment.workspace", async () => {
+  test("should correctly map workspace properties to workspaceSettings", async () => {
     const customWorkspace = {
-      ...mockEnvironmentData.workspace,
+      ...mockWorkspaceData,
       recontactDays: 14,
       clickOutsideClose: false,
       overlay: "dark",
@@ -212,15 +207,12 @@ describe("getEnvironmentStateData", () => {
       styling: { allowStyleOverwrite: true, brandColor: "#ff0000" },
     };
 
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
-      workspace: customWorkspace,
-    } as never);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(customWorkspace as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
-    expect(result.environment.workspace).toEqual({
-      id: "workspace-123",
+    expect(result.workspace.workspaceSettings).toEqual({
+      id: workspaceId,
       recontactDays: 14,
       clickOutsideClose: false,
       overlay: "dark",
@@ -230,37 +222,26 @@ describe("getEnvironmentStateData", () => {
     });
   });
 
-  test("should validate environmentId input", async () => {
+  test("should validate workspaceId input", async () => {
     // Invalid CUID should throw validation error
     await expect(getEnvironmentStateData("invalid-id")).rejects.toThrow();
   });
 
-  test("should handle production environment type", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
-      type: "production",
-    } as never);
-
-    const result = await getEnvironmentStateData(environmentId);
-
-    expect(result.environment.type).toBe("production");
-  });
-
   test("should handle appSetupCompleted false", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      ...mockEnvironmentData,
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
       appSetupCompleted: false,
     } as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
-    expect(result.environment.appSetupCompleted).toBe(false);
+    expect(result.workspace.appSetupCompleted).toBe(false);
   });
 
   test("should not include organization in result", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironmentData as never);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
 
-    const result = await getEnvironmentStateData(environmentId);
+    const result = await getEnvironmentStateData(workspaceId);
 
     expect(result).not.toHaveProperty("organization");
   });
