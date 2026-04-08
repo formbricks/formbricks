@@ -1,6 +1,10 @@
-import { JOB_NAMES, type JobsRuntimeHandle, startJobsRuntime } from "@formbricks/jobs";
+import {
+  JOB_NAMES,
+  type JobsRuntimeHandle,
+  type TResponsePipelineJobData,
+  startJobsRuntime,
+} from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import type { TResponsePipelineJobData } from "@formbricks/types/jobs";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 
