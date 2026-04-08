@@ -149,14 +149,22 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
 
     if (result.status !== "draft") {
       const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
-      capturePostHogEvent(ctx.user.id, isPublish ? "survey_published" : "survey_updated", {
+
+      const posthogEventMetadata = {
         survey_id: result.id,
         survey_type: result.type,
         question_count: getElementsFromBlocks(result.blocks).length,
         organization_id: organizationId,
         has_targeting: result.segment ? !result.segment.isPrivate : false,
         language_count: result.languages?.length ?? 0,
-      });
+      };
+
+      if (isPublish) {
+        capturePostHogEvent(ctx.user.id, "survey_published", posthogEventMetadata);
+        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+      } else {
+        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+      }
     }
 
     revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);

@@ -3,6 +3,7 @@ import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 // Import mocked rate limiting functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -35,8 +36,19 @@ vi.mock("@/lib/encryption", () => ({
   symmetricDecrypt: vi.fn((value: string) => value.replace("encrypted_", "")),
 }));
 
+vi.mock("@/lib/crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/crypto")>();
+  return {
+    ...actual,
+    symmetricEncrypt: vi.fn((value: string) => `encrypted_${value}`),
+    symmetricDecrypt: vi.fn((value: string) => value.replace("encrypted_", "")),
+  };
+});
+
 // Mock JWT
-vi.mock("@/lib/jwt");
+vi.mock("@/lib/jwt", () => ({
+  verifyToken: vi.fn(),
+}));
 
 // Mock rate limiting dependencies
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -70,6 +82,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     BREVO_API_KEY: undefined,
     RATE_LIMITING_DISABLED: false,
     CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+    POSTHOG_KEY: "phc_test_key",
   };
 });
 
@@ -105,7 +118,19 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
+    membership: {
+      count: vi.fn(),
+    },
   },
+}));
+
+vi.mock("@/modules/auth/lib/user", () => ({
+  updateUser: vi.fn(),
+  updateUserLastLoginAt: vi.fn(),
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 // Helper to get the provider by id from authOptions.providers.
@@ -345,6 +370,66 @@ describe("authOptions", () => {
           await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
             "Email Verification is Pending"
           );
+        }
+      });
+
+      test("should capture user_signed_in PostHog event on successful credentials sign-in", async () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const user = { ...mockUser, emailVerified: new Date() };
+        const account = { provider: "credentials" } as any;
+
+        vi.mocked(prisma.membership.count).mockResolvedValue(2);
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({ lastLoginAt: yesterday } as any);
+
+        if (authOptions.callbacks?.signIn) {
+          const result = await authOptions.callbacks.signIn({ user, account });
+          expect(result).toBe(true);
+
+          // Allow the fire-and-forget captureSignIn to resolve
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          expect(capturePostHogEvent).toHaveBeenCalledWith(user.id, "user_signed_in", {
+            auth_provider: "credentials",
+            organization_count: 2,
+            is_first_login_today: true,
+          });
+        }
+      });
+
+      test("should set is_first_login_today to false when user already logged in today", async () => {
+        const user = { ...mockUser, emailVerified: new Date() };
+        const account = { provider: "credentials" } as any;
+
+        vi.mocked(prisma.membership.count).mockResolvedValue(1);
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({ lastLoginAt: new Date() } as any);
+
+        if (authOptions.callbacks?.signIn) {
+          await authOptions.callbacks.signIn({ user, account });
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          expect(capturePostHogEvent).toHaveBeenCalledWith(
+            user.id,
+            "user_signed_in",
+            expect.objectContaining({ is_first_login_today: false })
+          );
+        }
+      });
+
+      test("should not throw if captureSignIn prisma query fails", async () => {
+        const user = { ...mockUser, emailVerified: new Date() };
+        const account = { provider: "credentials" } as any;
+
+        vi.mocked(prisma.membership.count).mockRejectedValue(new Error("DB error"));
+
+        if (authOptions.callbacks?.signIn) {
+          const result = await authOptions.callbacks.signIn({ user, account });
+          expect(result).toBe(true);
+
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          expect(capturePostHogEvent).not.toHaveBeenCalled();
         }
       });
     });
