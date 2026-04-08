@@ -140,8 +140,6 @@ export interface TLegacyConfigInput {
 
 export type TLegacyConfig = TConfig & {
   apiHost?: string;
-  environmentState?: TWorkspaceState;
-  personState?: TUserState;
   attributes?: TAttributes;
   // Intermediate format fields (pre-workspace rename)
   environmentId?: string;

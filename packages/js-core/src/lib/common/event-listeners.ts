@@ -1,8 +1,4 @@
 import {
-  addWorkspaceStateExpiryCheckListener,
-  clearWorkspaceStateExpiryCheckListener,
-} from "@/lib/environment/state";
-import {
   addClickEventListener,
   addExitIntentListener,
   addPageUrlEventListeners,
@@ -14,6 +10,10 @@ import {
   removeScrollDepthListener,
 } from "@/lib/survey/no-code-action";
 import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } from "@/lib/user/state";
+import {
+  addWorkspaceStateExpiryCheckListener,
+  clearWorkspaceStateExpiryCheckListener,
+} from "@/lib/workspace/state";
 
 let areRemoveEventListenersAdded = false;
 

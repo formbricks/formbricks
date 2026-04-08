@@ -8,7 +8,7 @@ import {
   addWorkspaceStateExpiryCheckListener,
   clearWorkspaceStateExpiryCheckListener,
   fetchWorkspaceState,
-} from "@/lib/environment/state";
+} from "@/lib/workspace/state";
 import type { TWorkspaceState } from "@/types/config";
 
 // Mock the ApiClient so we can control workspace.getWorkspaceState

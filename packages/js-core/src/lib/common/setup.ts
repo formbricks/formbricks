@@ -5,10 +5,10 @@ import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
-import { fetchWorkspaceState } from "@/lib/environment/state";
 import { closeSurvey, preloadSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
+import { fetchWorkspaceState } from "@/lib/workspace/state";
 import {
   type TConfig,
   type TConfigInput,
@@ -31,29 +31,6 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
   if (existingConfig) {
     let parsedConfig = JSON.parse(existingConfig) as TLegacyConfig;
     let changed = false;
-
-    // Check if we need to migrate (if it has environmentState, it's old format)
-    if (parsedConfig.environmentState) {
-      const { apiHost, environmentState, personState, attributes, ...rest } = parsedConfig;
-
-      // Create new config structure
-      parsedConfig = {
-        ...rest,
-        ...(apiHost && { appUrl: apiHost }),
-        environment: environmentState,
-        ...(personState && {
-          user: {
-            ...personState,
-            data: {
-              ...personState.data,
-              // Copy over language from attributes if it exists
-              ...(attributes?.language && { language: attributes.language as string }),
-            },
-          },
-        }),
-      } as TLegacyConfig;
-      changed = true;
-    }
 
     // Migrate intermediate format: environmentId → workspaceId, environment → workspaceState
     if (parsedConfig.environmentId ?? parsedConfig.environment) {
@@ -81,6 +58,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
     // Migrate workspaceState.data.workspace → workspaceState.data.settings
     // (applies to configs already in new format but with server's field name)
     const wsState = (parsedConfig as unknown as TConfig).workspaceState;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be null since this is local storage
     if (wsState?.data) {
       const wsData = wsState.data as unknown as Record<string, unknown>;
       if (wsData.workspace && !wsData.settings) {

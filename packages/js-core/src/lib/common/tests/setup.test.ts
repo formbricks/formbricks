@@ -8,9 +8,9 @@ import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
 import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired } from "@/lib/common/utils";
 import type * as Utils from "@/lib/common/utils";
-import { fetchWorkspaceState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
+import { fetchWorkspaceState } from "@/lib/workspace/state";
 
 const setItemMock = localStorage.setItem as unknown as Mock;
 

@@ -6,9 +6,9 @@ import {
   removeAllEventListeners,
   removeCleanupEventListeners,
 } from "@/lib/common/event-listeners";
-import * as workspaceStateModule from "@/lib/environment/state";
 import * as pageUrlEventListeners from "@/lib/survey/no-code-action";
 import * as userState from "@/lib/user/state";
+import * as workspaceStateModule from "@/lib/workspace/state";
 
 // 1) Mock all the imported dependencies
 
