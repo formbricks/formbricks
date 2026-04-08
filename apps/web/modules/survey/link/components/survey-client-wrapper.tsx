@@ -150,7 +150,7 @@ export const SurveyClientWrapper = ({
         dir={logoDir}>
         <SurveyInline
           appUrl={publicDomain}
-          workspaceId={survey.environmentId}
+          workspaceId={survey.workspaceId}
           isPreviewMode={isPreview}
           survey={survey}
           styling={styling}

@@ -1,11 +1,11 @@
-import type { TJsEnvironmentStateSurvey, TJsFileUploadParams } from "./js";
+import type { TJsFileUploadParams, TJsWorkspaceStateSurvey } from "./js";
 import type { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "./responses";
 import type { TUploadFileConfig } from "./storage";
 import type { TSurveyStyling } from "./surveys/types";
 import type { TWorkspaceStyling } from "./workspace";
 
 export interface SurveyBaseProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   styling: TSurveyStyling | TWorkspaceStyling;
   isBrandingEnabled: boolean;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;

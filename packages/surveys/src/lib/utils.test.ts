@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import type { TJsEnvironmentStateSurvey } from "../../../types/js";
+import type { TJsWorkspaceStateSurvey } from "../../../types/js";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
 import type { TSurveyLanguage } from "../../../types/surveys/types";
 import {
@@ -29,8 +29,8 @@ describe("getMimeType", () => {
   });
 });
 
-// Base mock for TJsEnvironmentStateSurvey to satisfy stricter type checks
-const baseMockSurvey: TJsEnvironmentStateSurvey = {
+// Base mock for TJsWorkspaceStateSurvey to satisfy stricter type checks
+const baseMockSurvey: TJsWorkspaceStateSurvey = {
   id: "survey1",
   name: "Test Survey",
   type: "link",
@@ -50,7 +50,7 @@ const baseMockSurvey: TJsEnvironmentStateSurvey = {
   workspaceOverwrites: null,
   triggers: [],
   displayOption: "displayOnce",
-} as unknown as TJsEnvironmentStateSurvey;
+} as unknown as TJsWorkspaceStateSurvey;
 
 describe("getDefaultLanguageCode", () => {
   const mockSurveyLanguageEn: TSurveyLanguage = {
@@ -79,26 +79,26 @@ describe("getDefaultLanguageCode", () => {
   };
 
   test("should return the code of the default language", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [mockSurveyLanguageEs, mockSurveyLanguageEn],
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
     expect(getDefaultLanguageCode(survey)).toBe("en");
   });
 
   test("should return undefined if no default language", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [{ ...mockSurveyLanguageEs, default: false }], // Ensure 'default' is explicitly false
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
   });
 
   test("should return undefined if languages array is empty", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [],
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
   });
 });
@@ -286,7 +286,7 @@ describe("getShuffledChoicesIds", () => {
 });
 describe("getQuestionsFromSurvey", () => {
   test("should return elements from blocks", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       blocks: [
         {
@@ -339,13 +339,13 @@ describe("getQuestionsFromSurvey", () => {
     const survey = {
       ...baseMockSurvey,
       blocks: [],
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
 
     expect(getElementsFromSurveyBlocks(survey.blocks)).toEqual([]);
   });
 
   test("should handle blocks with no elements", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       blocks: [
         { id: "block1", name: "Block 1", elements: [] },
@@ -373,7 +373,7 @@ describe("getQuestionsFromSurvey", () => {
 });
 
 describe("findBlockByElementId", () => {
-  const survey: TJsEnvironmentStateSurvey = {
+  const survey: TJsWorkspaceStateSurvey = {
     ...baseMockSurvey,
     blocks: [
       {
@@ -445,7 +445,7 @@ describe("isRTL", () => {
 
 describe("isRTLLanguage", () => {
   test("returns true for RTL language codes when multi-language enabled", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [
         {
@@ -461,13 +461,13 @@ describe("isRTLLanguage", () => {
           enabled: true,
         },
       ],
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
     expect(isRTLLanguage(survey, "ar")).toBe(true);
     expect(isRTLLanguage(survey, "he")).toBe(true);
   });
 
   test("returns false for LTR language codes", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [
         {
@@ -483,12 +483,12 @@ describe("isRTLLanguage", () => {
           enabled: true,
         },
       ],
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
     expect(isRTLLanguage(survey, "en")).toBe(false);
   });
 
   test("checks survey content when no languages configured", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       blocks: [
         {
@@ -506,7 +506,7 @@ describe("isRTLLanguage", () => {
           ],
         },
       ],
-    } as TJsEnvironmentStateSurvey;
+    } as TJsWorkspaceStateSurvey;
     expect(isRTLLanguage(survey, "default")).toBe(true);
   });
 });

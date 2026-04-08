@@ -5,7 +5,7 @@ import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
 import { ZWorkspace } from "./workspace";
 
-export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
+export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   id: true,
   name: true,
   welcomeCard: true,
@@ -34,9 +34,9 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
 });
 
-export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
+export type TJsWorkspaceStateSurvey = z.infer<typeof ZJsWorkspaceStateSurvey>;
 
-export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
+export const ZJsWorkspaceStateActionClass = ZActionClass.pick({
   id: true,
   key: true,
   type: true,
@@ -44,9 +44,9 @@ export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
   noCodeConfig: true,
 });
 
-export type TJsEnvironmentStateActionClass = z.infer<typeof ZJsEnvironmentStateActionClass>;
+export type TJsWorkspaceStateActionClass = z.infer<typeof ZJsWorkspaceStateActionClass>;
 
-export const ZJsEnvironmentStateWorkspace = ZWorkspace.pick({
+export const ZJsWorkspaceStateWorkspaceSetting = ZWorkspace.pick({
   id: true,
   recontactDays: true,
   clickOutsideClose: true,
@@ -56,19 +56,19 @@ export const ZJsEnvironmentStateWorkspace = ZWorkspace.pick({
   styling: true,
 });
 
-export type TJsEnvironmentStateWorkspace = z.infer<typeof ZJsEnvironmentStateWorkspace>;
+export type TJsWorkspaceStateWorkspaceSetting = z.infer<typeof ZJsWorkspaceStateWorkspaceSetting>;
 
-export const ZJsEnvironmentState = z.object({
+export const ZJsWorkspaceState = z.object({
   expiresAt: z.date(),
   data: z.object({
-    surveys: z.array(ZJsEnvironmentStateSurvey),
-    actionClasses: z.array(ZJsEnvironmentStateActionClass),
-    workspace: ZJsEnvironmentStateWorkspace,
+    surveys: z.array(ZJsWorkspaceStateSurvey),
+    actionClasses: z.array(ZJsWorkspaceStateActionClass),
+    workspace: ZJsWorkspaceStateWorkspaceSetting,
     recaptchaSiteKey: z.string().optional(),
   }),
 });
 
-export type TJsEnvironmentState = z.infer<typeof ZJsEnvironmentState>;
+export type TJsWorkspaceState = z.infer<typeof ZJsWorkspaceState>;
 
 export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),

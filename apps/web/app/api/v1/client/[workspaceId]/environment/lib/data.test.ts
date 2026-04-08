@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getEnvironmentStateData } from "./data";
+import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
 
@@ -84,7 +84,7 @@ const mockWorkspaceData = {
   ],
 };
 
-describe("getEnvironmentStateData", () => {
+describe("getWorkspaceStateData", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -96,7 +96,7 @@ describe("getEnvironmentStateData", () => {
   test("should return environment state data when workspace exists", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result).toEqual({
       workspace: {
@@ -131,8 +131,8 @@ describe("getEnvironmentStateData", () => {
   test("should throw ResourceNotFoundError when workspace is not found", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow(ResourceNotFoundError);
-    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow("workspace");
+    await expect(getWorkspaceStateData(workspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getWorkspaceStateData(workspaceId)).rejects.toThrow("workspace");
   });
 
   test("should throw DatabaseError on Prisma database errors", async () => {
@@ -142,7 +142,7 @@ describe("getEnvironmentStateData", () => {
     });
     vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
 
-    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getWorkspaceStateData(workspaceId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalled();
   });
 
@@ -150,7 +150,7 @@ describe("getEnvironmentStateData", () => {
     const unexpectedError = new Error("Unexpected error");
     vi.mocked(prisma.workspace.findUnique).mockRejectedValue(unexpectedError);
 
-    await expect(getEnvironmentStateData(workspaceId)).rejects.toThrow("Unexpected error");
+    await expect(getWorkspaceStateData(workspaceId)).rejects.toThrow("Unexpected error");
     expect(logger.error).toHaveBeenCalled();
   });
 
@@ -160,7 +160,7 @@ describe("getEnvironmentStateData", () => {
       surveys: [],
     } as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.surveys).toEqual([]);
   });
@@ -171,7 +171,7 @@ describe("getEnvironmentStateData", () => {
       actionClasses: [],
     } as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.actionClasses).toEqual([]);
   });
@@ -191,7 +191,7 @@ describe("getEnvironmentStateData", () => {
       surveys: multipleSurveys,
     } as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.surveys).toHaveLength(2);
   });
@@ -209,7 +209,7 @@ describe("getEnvironmentStateData", () => {
 
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(customWorkspace as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.workspace.workspaceSettings).toEqual({
       id: workspaceId,
@@ -224,7 +224,7 @@ describe("getEnvironmentStateData", () => {
 
   test("should validate workspaceId input", async () => {
     // Invalid CUID should throw validation error
-    await expect(getEnvironmentStateData("invalid-id")).rejects.toThrow();
+    await expect(getWorkspaceStateData("invalid-id")).rejects.toThrow();
   });
 
   test("should handle appSetupCompleted false", async () => {
@@ -233,7 +233,7 @@ describe("getEnvironmentStateData", () => {
       appSetupCompleted: false,
     } as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.workspace.appSetupCompleted).toBe(false);
   });
@@ -241,7 +241,7 @@ describe("getEnvironmentStateData", () => {
   test("should not include organization in result", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
 
-    const result = await getEnvironmentStateData(workspaceId);
+    const result = await getWorkspaceStateData(workspaceId);
 
     expect(result).not.toHaveProperty("organization");
   });
