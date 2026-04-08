@@ -13,12 +13,6 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
       throw new Error("Unable to parse workspaceId from URL");
     })();
 
-  const environmentId =
-    user.workspaceId ??
-    (() => {
-      throw new Error("Unable to get workspaceId from user fixture");
-    })();
-
   await page.goto(`/workspaces/${workspaceId}/settings/api-keys`, { waitUntil: "domcontentloaded" });
 
   await page.getByRole("button", { name: "Add API Key" }).waitFor({ state: "visible", timeout: 15000 });
@@ -45,5 +39,5 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
 
   const apiKey = (await page.evaluate("navigator.clipboard.readText()")) as string;
 
-  return { environmentId, workspaceId, apiKey };
+  return { workspaceId, apiKey };
 }
