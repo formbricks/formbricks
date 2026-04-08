@@ -825,7 +825,6 @@ export const ZSurveyBase = z.object({
   updatedAt: z.date(),
   name: z.string(),
   type: ZSurveyType,
-  environmentId: z.string(),
   workspaceId: z.cuid2(),
   createdBy: z.string().nullable(),
   status: ZSurveyStatus,
@@ -3837,7 +3836,6 @@ export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
   })
   .extend({
     name: z.string(), // Keep name required
-    environmentId: z.string(),
     workspaceId: z.string(),
     questions: ZSurveyBase.shape.questions,
     blocks: ZSurveyBase.shape.blocks,

@@ -23,7 +23,7 @@ export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ 
   const initialContacts = await getContacts(workspace.id, 0);
 
   const AddContactsButton = (
-    <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />
+    <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
   );
 
   return (

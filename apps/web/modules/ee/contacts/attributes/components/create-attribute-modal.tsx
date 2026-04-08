@@ -29,10 +29,10 @@ import {
 import { createContactAttributeKeyAction } from "../actions";
 
 interface CreateAttributeModalProps {
-  environmentId: string;
+  workspaceId: string;
 }
 
-export function CreateAttributeModal({ environmentId }: Readonly<CreateAttributeModalProps>) {
+export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeModalProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -109,7 +109,7 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
 
     try {
       const createContactAttributeKeyResponse = await createContactAttributeKeyAction({
-        environmentId,
+        workspaceId,
         key: formData.key,
         name: formData.name || formatSnakeCaseToTitleCase(formData.key),
         description: formData.description || undefined,

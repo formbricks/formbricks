@@ -12,7 +12,7 @@ const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
     updatedAt: new Date(),
     name: "Test",
     type: "link",
-    environmentId: "env-1",
+    workspaceId: "ws-1",
     createdBy: null,
     status: "draft",
     displayOption: "displayOnce",
@@ -117,7 +117,7 @@ describe("isRTLLanguage", () => {
       updatedAt: new Date(),
       name: "Test",
       type: "link",
-      environmentId: "env-1",
+      workspaceId: "ws-1",
       welcomeCard: {
         enabled: false,
         headline: { default: "Welcome" },

@@ -15,32 +15,30 @@ type PrismaSurveyFindFirst = Awaited<ReturnType<typeof prisma.survey.findFirst>>
 type PrismaSurveyFindMany = Awaited<ReturnType<typeof prisma.survey.findMany>>;
 
 describe("Services", () => {
-  describe("getSurveyAndEnvironmentId", () => {
-    test("should return workspaceId and environmentId for responseId", async () => {
+  describe("fetchWorkspaceId", () => {
+    test("should return workspaceId for responseId", async () => {
       vi.mocked(prisma.survey.findFirst).mockResolvedValue({
         workspaceId: "workspace-id",
-        environmentId: "env-id",
         responses: [{ surveyId: "survey-id" }],
       } as unknown as PrismaSurveyFindFirst);
 
       const result = await fetchWorkspaceId("response-id", true);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data).toEqual({ workspaceId: "workspace-id", environmentId: "env-id" });
+        expect(result.data).toEqual({ workspaceId: "workspace-id" });
       }
     });
 
-    test("should return workspaceId and environmentId for surveyId", async () => {
+    test("should return workspaceId for surveyId", async () => {
       vi.mocked(prisma.survey.findFirst).mockResolvedValue({
         id: "survey-id",
         workspaceId: "workspace-id",
-        environmentId: "env-id",
       } as unknown as PrismaSurveyFindFirst);
 
       const result = await fetchWorkspaceId("survey-id", false);
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data).toEqual({ workspaceId: "workspace-id", environmentId: "env-id" });
+        expect(result.data).toEqual({ workspaceId: "workspace-id" });
       }
     });
 

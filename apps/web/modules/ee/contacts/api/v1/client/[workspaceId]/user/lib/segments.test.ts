@@ -3,14 +3,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getPersonSegmentIds, getSegments } from "./segments";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 vi.mock("@/lib/cache", () => ({
   cache: {
@@ -46,7 +41,7 @@ vi.mock("react", async () => {
   };
 });
 
-const mockEnvironmentId = "test-environment-id";
+const mockWorkspaceId = "workspace-id-mock";
 const mockContactId = "test-contact-id";
 const mockContactUserId = "test-contact-user-id";
 const mockDeviceType = "desktop" as const;
@@ -59,7 +54,6 @@ const mockSegmentsData = [
 describe("segments lib", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   afterEach(() => {
@@ -102,7 +96,7 @@ describe("segments lib", () => {
   });
 
   describe("getPersonSegmentIds", () => {
-    const mockWhereClause = { AND: [{ environmentId: mockEnvironmentId }, {}] };
+    const mockWhereClause = { AND: [{ workspaceId: mockWorkspaceId }, {}] };
 
     beforeEach(() => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue(
@@ -118,7 +112,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }, { id: mockContactId }]);
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType
@@ -139,7 +133,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType
@@ -154,7 +148,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([null, null]);
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType
@@ -168,9 +162,9 @@ describe("segments lib", () => {
     test("should call validateInputs with correct parameters", async () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }, { id: mockContactId }]);
 
-      await getPersonSegmentIds(mockEnvironmentId, mockContactId, mockContactUserId, mockDeviceType);
+      await getPersonSegmentIds(mockWorkspaceId, mockContactId, mockContactUserId, mockDeviceType);
       expect(validateInputs).toHaveBeenCalledWith(
-        [mockEnvironmentId, expect.anything()],
+        [mockWorkspaceId, expect.anything()],
         [mockContactId, expect.anything()],
         [mockContactUserId, expect.anything()]
       );
@@ -180,7 +174,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }, null]);
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType
@@ -202,7 +196,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType
@@ -227,7 +221,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType
@@ -241,7 +235,7 @@ describe("segments lib", () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("Unexpected"));
 
       const result = await getPersonSegmentIds(
-        mockEnvironmentId,
+        mockWorkspaceId,
         mockContactId,
         mockContactUserId,
         mockDeviceType

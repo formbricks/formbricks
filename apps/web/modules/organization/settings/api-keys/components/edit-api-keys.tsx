@@ -69,8 +69,7 @@ export const EditAPIKeys = ({
 
   const handleAddAPIKey = async (data: {
     label: string;
-    environmentPermissions: Array<{
-      environmentId: string;
+    workspacePermissions: Array<{
       permission: ApiKeyPermission;
       workspaceId: string;
     }>;
@@ -81,7 +80,7 @@ export const EditAPIKeys = ({
       organizationId: organizationId,
       apiKeyData: {
         label: data.label,
-        environmentPermissions: data.environmentPermissions,
+        workspacePermissions: data.workspacePermissions,
         organizationAccess: data.organizationAccess,
       },
     });

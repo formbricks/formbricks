@@ -92,7 +92,7 @@ export const ActionSettingsTab = ({
     try {
       setIsUpdatingAction(true);
       validatePermissions(isReadOnly, t);
-      const updatedAction = buildActionObject(data, actionClass.environmentId, t);
+      const updatedAction = buildActionObject(data, actionClass.workspaceId, t);
 
       const result = await updateActionClassAction({
         actionClassId: actionClass.id,

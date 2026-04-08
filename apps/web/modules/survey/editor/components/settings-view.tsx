@@ -1,4 +1,4 @@
-import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { ActionClass, OrganizationRole } from "@prisma/client";
 import { type Dispatch, type SetStateAction } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -15,7 +15,7 @@ import { TargetingLockedCard } from "@/modules/survey/editor/components/targetin
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 
 interface SettingsViewProps {
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  environment: { id: string; appSetupCompleted: boolean };
   localSurvey: TSurvey;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   actionClasses: ActionClass[];
@@ -62,7 +62,7 @@ export const SettingsView = ({
                   key={localSurvey.segment?.id}
                   localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
-                  environmentId={environment.id}
+                  workspaceId={localSurvey.workspaceId}
                   contactAttributeKeys={contactAttributeKeys}
                   segments={segments}
                   initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
@@ -78,7 +78,6 @@ export const SettingsView = ({
       <WhenToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environment.id}
         workspaceId={localSurvey.workspaceId}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}

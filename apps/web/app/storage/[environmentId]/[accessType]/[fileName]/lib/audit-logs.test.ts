@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn(),
-  getWorkspaceIdFromEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -16,24 +15,22 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 describe("audit-logs lib", () => {
-  const envId = "env-123";
-  const apiUrl = "/storage/env-123/public/file.txt";
+  const workspaceId = "ws-123";
+  const apiUrl = "/storage/ws-123/public/file.txt";
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("logs file deletion success with provided data", async () => {
-    const { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } =
-      await import("@/lib/utils/helper");
+    const { getOrganizationIdFromWorkspaceId } = await import("@/lib/utils/helper");
     const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
     const { logFileDeletion } = await import("./audit-logs");
 
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValueOnce("workspace-1");
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org-1");
 
     await logFileDeletion({
-      environmentId: envId,
+      workspaceId,
       accessType: "public",
       userId: "user-1",
       status: "success",
@@ -47,28 +44,26 @@ describe("audit-logs lib", () => {
         targetType: "file",
         userId: "user-1",
         userType: "user",
-        targetId: `${envId}:public`,
+        targetId: `${workspaceId}:public`,
         organizationId: "org-1",
         status: "success",
         oldObject: { key: "value" },
         apiUrl,
-        newObject: expect.objectContaining({ environmentId: envId, accessType: "public" }),
+        newObject: expect.objectContaining({ workspaceId, accessType: "public" }),
       })
     );
   });
 
   test("logs with UNKNOWN_DATA userId when missing and includes failureReason", async () => {
-    const { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } =
-      await import("@/lib/utils/helper");
+    const { getOrganizationIdFromWorkspaceId } = await import("@/lib/utils/helper");
     const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
     const { UNKNOWN_DATA } = await import("@/modules/ee/audit-logs/types/audit-log");
     const { logFileDeletion } = await import("./audit-logs");
 
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValueOnce("workspace-2");
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org-2");
 
     await logFileDeletion({
-      environmentId: envId,
+      workspaceId,
       accessType: "private",
       status: "failure",
       failureReason: "S3 error",
@@ -86,15 +81,15 @@ describe("audit-logs lib", () => {
   });
 
   test("falls back to UNKNOWN_DATA organizationId when lookup fails", async () => {
-    const { getWorkspaceIdFromEnvironmentId } = await import("@/lib/utils/helper");
+    const { getOrganizationIdFromWorkspaceId } = await import("@/lib/utils/helper");
     const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
     const { UNKNOWN_DATA } = await import("@/modules/ee/audit-logs/types/audit-log");
     const { logFileDeletion } = await import("./audit-logs");
 
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockRejectedValueOnce(new Error("fail"));
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockRejectedValueOnce(new Error("fail"));
 
     await logFileDeletion({
-      environmentId: envId,
+      workspaceId,
       accessType: "public",
       apiUrl,
     });
@@ -103,17 +98,15 @@ describe("audit-logs lib", () => {
   });
 
   test("swallows errors from queueAuditEvent and logs", async () => {
-    const { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } =
-      await import("@/lib/utils/helper");
+    const { getOrganizationIdFromWorkspaceId } = await import("@/lib/utils/helper");
     const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
     const { logger } = await import("@formbricks/logger");
     const { logFileDeletion } = await import("./audit-logs");
 
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValueOnce("workspace-3");
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org-3");
     vi.mocked(queueAuditEvent).mockRejectedValueOnce(new Error("audit fail"));
 
-    await logFileDeletion({ environmentId: envId, apiUrl });
+    await logFileDeletion({ workspaceId, apiUrl });
 
     expect(logger.error).toHaveBeenCalled();
   });

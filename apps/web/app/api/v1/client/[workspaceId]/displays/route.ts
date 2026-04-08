@@ -30,12 +30,11 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Workspace", params.workspaceId),
       };
     }
-    const { environmentId, workspaceId } = resolved;
+    const { workspaceId } = resolved;
 
     const jsonInput = await req.json();
     const inputValidation = ZDisplayCreateInput.safeParse({
       ...jsonInput,
-      environmentId,
       workspaceId,
     });
 

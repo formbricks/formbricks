@@ -319,7 +319,7 @@ describe("handleSsoCallback", () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization as any);
       vi.mocked(getAccessControlPermission).mockResolvedValue(false);
 
       const result = await handleSsoCallback({

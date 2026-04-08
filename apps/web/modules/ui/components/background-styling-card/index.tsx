@@ -19,7 +19,7 @@ interface BackgroundStylingCardProps {
   colors: string[];
   isSettingsPage?: boolean;
   disabled?: boolean;
-  environmentId: string;
+  workspaceId: string;
   isUnsplashConfigured: boolean;
   form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   isStorageConfigured: boolean;
@@ -31,7 +31,7 @@ export const BackgroundStylingCard = ({
   colors,
   isSettingsPage = false,
   disabled,
-  environmentId,
+  workspaceId,
   isUnsplashConfigured,
   form,
   isStorageConfigured = true,
@@ -108,7 +108,7 @@ export const BackgroundStylingCard = ({
                     }}
                     colors={colors}
                     bgType={field.value?.bgType ?? "color"}
-                    environmentId={environmentId}
+                    workspaceId={workspaceId}
                     isUnsplashConfigured={isUnsplashConfigured}
                     isStorageConfigured={isStorageConfigured}
                   />

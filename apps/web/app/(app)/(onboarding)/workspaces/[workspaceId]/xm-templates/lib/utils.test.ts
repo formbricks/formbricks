@@ -28,7 +28,6 @@ const mockWorkspace: TWorkspace = {
   clickOutsideClose: true,
   overlay: "none",
   appSetupCompleted: false,
-  environments: [],
   languages: [],
   logo: null,
 };

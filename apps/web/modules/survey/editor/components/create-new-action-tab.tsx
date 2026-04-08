@@ -25,7 +25,6 @@ interface CreateNewActionTabProps {
   isReadOnly: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  environmentId: string;
   workspaceId: string;
 }
 
@@ -35,7 +34,6 @@ export const CreateNewActionTab = ({
   setOpen,
   isReadOnly,
   setLocalSurvey,
-  environmentId,
   workspaceId,
 }: CreateNewActionTabProps) => {
   const { t } = useTranslation();
@@ -51,7 +49,6 @@ export const CreateNewActionTab = ({
     defaultValues: {
       name: "",
       description: "",
-      environmentId,
       workspaceId,
       type: "noCode",
       noCodeConfig: {
@@ -73,7 +70,7 @@ export const CreateNewActionTab = ({
   const submitHandler = async (data: TActionClassInput) => {
     try {
       validatePermissions(isReadOnly, t);
-      const updatedAction = buildActionObject(data, environmentId, t);
+      const updatedAction = buildActionObject(data, workspaceId, t);
       await createAndHandleAction(updatedAction);
     } catch (e: any) {
       toast.error(e.message);

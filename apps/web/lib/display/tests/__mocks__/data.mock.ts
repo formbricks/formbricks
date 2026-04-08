@@ -1,5 +1,3 @@
-import { TEnvironment } from "@formbricks/types/environment";
-
 export const mockEnvironmentId = "clqkr5961000108jyfnjmbjhi";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
 export const mockSurveyId = "clqkr8dlv000308jybb08evgr";
@@ -31,7 +29,6 @@ export const mockDisplayWithResponseId = createMockDisplay({
 });
 
 export const mockDisplayInput = {
-  environmentId: mockEnvironmentId,
   workspaceId: mockId,
   surveyId: mockSurveyId,
 };
@@ -45,16 +42,6 @@ export const mockDisplayInputWithResponseId = {
 };
 
 export const mockDisplayUpdate = {
-  environmentId: mockEnvironmentId,
   userId: mockUserId,
   responseId: mockResponseId,
-};
-
-export const mockEnvironment: TEnvironment = {
-  id: mockId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  type: "production",
-  workspaceId: mockId,
-  appSetupCompleted: false,
 };

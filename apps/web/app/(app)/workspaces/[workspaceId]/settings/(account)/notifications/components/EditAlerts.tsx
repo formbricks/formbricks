@@ -68,33 +68,27 @@ export const EditAlerts = ({
               </TooltipProvider>
             </div>
 
-            {membership.organization.workspaces.some((workspace) =>
-              workspace.environments.some((environment) => environment.surveys.length > 0)
-            ) ? (
+            {membership.organization.workspaces.some((workspace) => workspace.surveys.length > 0) ? (
               <div className="grid-cols-8 space-y-1 p-2">
                 {membership.organization.workspaces.map((workspace) => (
                   <div key={workspace.id}>
-                    {workspace.environments.map((environment) => (
-                      <div key={environment.id}>
-                        {environment.surveys.map((survey) => (
-                          <div
-                            className="grid h-auto w-full cursor-pointer grid-cols-3 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
-                            key={survey.name}>
-                            <div className="col-span-2 text-left">
-                              <div className="font-medium text-slate-900">{survey.name}</div>
-                              <div className="text-xs text-slate-400">{workspace.name}</div>
-                            </div>
-                            <div className="col-span-1 text-center">
-                              <NotificationSwitch
-                                surveyOrWorkspaceOrOrganizationId={survey.id}
-                                notificationSettings={user.notificationSettings!}
-                                notificationType={"alert"}
-                                autoDisableNotificationType={autoDisableNotificationType}
-                                autoDisableNotificationElementId={autoDisableNotificationElementId}
-                              />
-                            </div>
-                          </div>
-                        ))}
+                    {workspace.surveys.map((survey) => (
+                      <div
+                        className="grid h-auto w-full cursor-pointer grid-cols-3 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
+                        key={survey.name}>
+                        <div className="col-span-2 text-left">
+                          <div className="font-medium text-slate-900">{survey.name}</div>
+                          <div className="text-xs text-slate-400">{workspace.name}</div>
+                        </div>
+                        <div className="col-span-1 text-center">
+                          <NotificationSwitch
+                            surveyOrWorkspaceOrOrganizationId={survey.id}
+                            notificationSettings={user.notificationSettings!}
+                            notificationType={"alert"}
+                            autoDisableNotificationType={autoDisableNotificationType}
+                            autoDisableNotificationElementId={autoDisableNotificationElementId}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -15,7 +15,6 @@ import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
   survey: TSurvey;
-  environmentId: string;
   isReadOnly: boolean;
   publicDomain: string;
   deleteSurvey: (surveyId: string) => void;
@@ -24,7 +23,6 @@ interface SurveyCardProps {
 }
 export const SurveyCard = ({
   survey,
-  environmentId,
   isReadOnly,
   publicDomain,
   deleteSurvey,
@@ -99,7 +97,6 @@ export const SurveyCard = ({
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
-          environmentId={environmentId}
           publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}

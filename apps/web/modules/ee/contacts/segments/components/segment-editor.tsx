@@ -28,7 +28,7 @@ import { SegmentFilter } from "./segment-filter";
 
 interface TSegmentEditorProps {
   group: TBaseFilters;
-  environmentId: string;
+  workspaceId: string;
   segment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
@@ -38,7 +38,7 @@ interface TSegmentEditorProps {
 
 export function SegmentEditor({
   group,
-  environmentId,
+  workspaceId,
   setSegment,
   segment,
   contactAttributeKeys,
@@ -125,7 +125,7 @@ export function SegmentEditor({
             <SegmentFilter
               contactAttributeKeys={contactAttributeKeys}
               connector={connector}
-              environmentId={environmentId}
+              workspaceId={workspaceId}
               handleAddFilterBelow={handleAddFilterBelow}
               key={groupId}
               onCreateGroup={(filterId: string) => {
@@ -166,7 +166,7 @@ export function SegmentEditor({
               <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
                 <SegmentEditor
                   contactAttributeKeys={contactAttributeKeys}
-                  environmentId={environmentId}
+                  workspaceId={workspaceId}
                   group={resource}
                   segment={segment}
                   segments={segments}

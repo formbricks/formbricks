@@ -75,7 +75,7 @@ export const ContactDataView = ({
     // Don't show loading state - fetch in background
     try {
       const contactsResponse = await getContactsAction({
-        environmentId: environment.id,
+        workspaceId: environment.workspaceId,
         offset: 0,
         searchValue,
       });
@@ -121,7 +121,7 @@ export const ContactDataView = ({
       setLoadingNextPage(true);
       try {
         const contactsResponse = await getContactsAction({
-          environmentId: environment.id,
+          workspaceId: environment.workspaceId,
           offset: contacts.length,
           searchValue,
         });

@@ -32,7 +32,7 @@ export const GET = async (request: NextRequest) =>
       }
 
       const workspaceIds = [
-        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
       const workspaceResponses: Response[] = [];
@@ -76,9 +76,9 @@ export const POST = async (request: Request) =>
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      const { environmentId, workspaceId } = workspaceIdResult.data;
+      const { workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.environmentPermissions, workspaceId, "POST")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceId, "POST")) {
         return handleApiError(
           request,
           {
@@ -160,7 +160,6 @@ export const POST = async (request: Request) =>
       if (createdResponseForPipeline.ok) {
         sendToPipeline({
           event: "responseCreated",
-          environmentId,
           workspaceId,
           surveyId: body.surveyId,
           response: createdResponseForPipeline.data,
@@ -169,7 +168,6 @@ export const POST = async (request: Request) =>
         if (createResponseResult.data.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId,
             workspaceId,
             surveyId: body.surveyId,
             response: createdResponseForPipeline.data,

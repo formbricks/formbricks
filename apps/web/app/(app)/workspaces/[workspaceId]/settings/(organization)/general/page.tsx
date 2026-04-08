@@ -62,7 +62,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <EmailCustomizationSettings
         organization={organization}
         hasWhiteLabelPermission={hasWhiteLabelPermission}
-        environmentId={params.workspaceId}
+        workspaceId={params.workspaceId}
         isReadOnly={!isOwnerOrManager}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         fbLogoUrl={FB_LOGO_URL}

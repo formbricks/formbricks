@@ -81,6 +81,7 @@ const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
   licenseStatus: "active",
   licenseFeatures: defaultFeatures,
   stripeCustomerId: "cus_123",
+  subscriptionStatus: null,
   usageCycleAnchor: new Date(),
 };
 

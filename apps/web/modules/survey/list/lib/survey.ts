@@ -7,15 +7,15 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getWorkspaceWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/workspace";
+import { doesWorkspaceExist } from "@/modules/survey/list/lib/environment";
+import { getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
 import { TSurvey, TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { mapSurveyRowToSurvey, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
 
@@ -153,7 +153,6 @@ export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
       },
       select: {
         id: true,
-        environmentId: true,
         segment: {
           select: {
             id: true,
@@ -233,7 +232,6 @@ const getExistingSurvey = async (surveyId: string) => {
             select: {
               id: true,
               name: true,
-              environmentId: true,
               description: true,
               type: true,
               key: true,
@@ -246,50 +244,47 @@ const getExistingSurvey = async (surveyId: string) => {
   });
 };
 
-export const copySurveyToOtherEnvironment = async (
-  environmentId: string,
+export const copySurveyToOtherWorkspace = async (
+  workspaceId: string,
   surveyId: string,
-  targetEnvironmentId: string,
+  targetWorkspaceId: string,
   userId: string
 ) => {
   try {
-    const isSameEnvironment = environmentId === targetEnvironmentId;
+    const isSameWorkspace = workspaceId === targetWorkspaceId;
 
     // Fetch required resources
-    const [existingEnvironment, existingWorkspace, existingSurvey, existingQuotas, organization] =
+    const [existingWorkspaceCheck, existingWorkspace, existingSurvey, existingQuotas, organization] =
       await Promise.all([
-        doesEnvironmentExist(environmentId),
-        getWorkspaceWithLanguagesByEnvironmentId(environmentId),
+        doesWorkspaceExist(workspaceId),
+        getWorkspaceWithLanguages(workspaceId),
         getExistingSurvey(surveyId),
         getQuotas(surveyId),
-        getOrganizationByEnvironmentId(environmentId),
+        getOrganizationByWorkspaceId(workspaceId),
       ]);
 
-    if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
-    if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", environmentId);
+    if (!existingWorkspaceCheck) throw new ResourceNotFoundError("Workspace", workspaceId);
+    if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", workspaceId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
-    if (!organization) throw new ResourceNotFoundError("Organization", environmentId);
+    if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
 
     const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-    let targetEnvironment: string | null = null;
     let targetWorkspace: TWorkspaceWithLanguages | null = null;
 
-    if (isSameEnvironment) {
-      targetEnvironment = existingEnvironment;
+    if (isSameWorkspace) {
       targetWorkspace = existingWorkspace;
     } else {
-      [targetEnvironment, targetWorkspace] = await Promise.all([
-        doesEnvironmentExist(targetEnvironmentId),
-        getWorkspaceWithLanguagesByEnvironmentId(targetEnvironmentId),
+      [, targetWorkspace] = await Promise.all([
+        doesWorkspaceExist(targetWorkspaceId),
+        getWorkspaceWithLanguages(targetWorkspaceId),
       ]);
 
-      if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
-      if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetEnvironmentId);
+      if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetWorkspaceId);
     }
 
     // Fetch existing action classes in target workspace for name conflict checks
-    const existingActionClasses = !isSameEnvironment
+    const existingActionClasses = !isSameWorkspace
       ? await prisma.actionClass.findMany({
           where: { workspaceId: targetWorkspace.id },
           select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
@@ -360,8 +355,7 @@ export const copySurveyToOtherEnvironment = async (
           const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
 
           // Check if an action class with the same name but different type already exists
-          const hasNameConflict =
-            !isSameEnvironment && existingActionClassNames.has(trigger.actionClass.name);
+          const hasNameConflict = !isSameWorkspace && existingActionClassNames.has(trigger.actionClass.name);
 
           let modifiedName = trigger.actionClass.name;
           if (hasNameConflict) {
@@ -379,13 +373,12 @@ export const copySurveyToOtherEnvironment = async (
 
           const baseActionClassData = {
             name: modifiedName,
-            environment: { connect: { id: targetEnvironmentId } },
             workspace: { connect: { id: targetWorkspace.id } },
             description: trigger.actionClass.description,
             type: trigger.actionClass.type,
           };
 
-          if (isSameEnvironment) {
+          if (isSameWorkspace) {
             return {
               actionClass: { connect: { id: trigger.actionClass.id } },
             };
@@ -440,11 +433,6 @@ export const copySurveyToOtherEnvironment = async (
           }
         }),
       },
-      environment: {
-        connect: {
-          id: targetEnvironmentId,
-        },
-      },
       workspace: {
         connect: {
           id: targetWorkspace!.id,
@@ -498,11 +486,10 @@ export const copySurveyToOtherEnvironment = async (
             title: surveyData.id!,
             isPrivate: true,
             filters: existingSurvey.segment.filters,
-            environment: { connect: { id: targetEnvironmentId } },
             workspace: { connect: { id: targetWorkspace!.id } },
           },
         };
-      } else if (isSameEnvironment) {
+      } else if (isSameWorkspace) {
         surveyData.segment = { connect: { id: existingSurvey.segment.id } };
       } else {
         const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
@@ -520,7 +507,6 @@ export const copySurveyToOtherEnvironment = async (
               : existingSurvey.segment.title,
             isPrivate: false,
             filters: existingSurvey.segment.filters,
-            environment: { connect: { id: targetEnvironmentId } },
             workspace: { connect: { id: targetWorkspace!.id } },
           },
         };
@@ -538,7 +524,7 @@ export const copySurveyToOtherEnvironment = async (
       data: surveyData,
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         segment: {
           select: {
             id: true,
@@ -550,7 +536,7 @@ export const copySurveyToOtherEnvironment = async (
               select: {
                 id: true,
                 name: true,
-                environmentId: true,
+                workspaceId: true,
               },
             },
           },
@@ -570,7 +556,7 @@ export const copySurveyToOtherEnvironment = async (
     return newSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error copying survey to other environment");
+      logger.error(error, "Error copying survey to other workspace");
       throw new DatabaseError(error.message);
     }
     throw error;

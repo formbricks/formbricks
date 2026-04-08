@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { XMTemplateList } from "@/app/(app)/(onboarding)/workspaces/[workspaceId]/xm-templates/components/XMTemplateList";
-import { getEnvironments } from "@/lib/environment/service";
 import { getUser } from "@/lib/user/service";
 import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -36,23 +35,12 @@ const Page = async (props: XMTemplatePageProps) => {
     throw new ResourceNotFoundError(t("common.workspace"), params.workspaceId);
   }
 
-  const environments = await getEnvironments(params.workspaceId);
-  const environment = environments[0];
-  if (!environment) {
-    throw new ResourceNotFoundError(t("common.environment"), null);
-  }
-
   const workspaces = await getUserWorkspaces(session.user.id, workspace.organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header title={t("workspace.xm-templates.headline")} />
-      <XMTemplateList
-        workspace={workspace}
-        user={user}
-        environmentId={environment.id}
-        workspaceId={params.workspaceId}
-      />
+      <XMTemplateList workspace={workspace} user={user} workspaceId={params.workspaceId} />
       {workspaces.length >= 2 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"

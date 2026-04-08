@@ -58,8 +58,8 @@ const mockSurvey: TSurvey = {
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Test Survey",
-  environmentId: "env-1",
   type: "link",
+  workspaceId: "ws-1",
   status: "inProgress",
   questions: [],
   displayOption: "displayOnce",
@@ -96,7 +96,6 @@ const mockSurvey: TSurvey = {
 
 const mockResponseInput: TResponseInputV2 = {
   surveyId: "survey-1",
-  environmentId: "env-1",
   workspaceId: "ws-1",
   data: {},
   finished: false,

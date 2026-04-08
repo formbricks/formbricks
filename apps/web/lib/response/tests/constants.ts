@@ -1,5 +1,3 @@
-import { TEnvironment } from "@formbricks/types/environment";
-
 export const mockId = "ars2tjk8hsi8oqk1uac00mo8";
 
 export const constantsForTests = {
@@ -9,13 +7,4 @@ export const constantsForTests = {
   boolean: true,
   text: "Abc12345",
   fullName: "Pavitr Prabhakar",
-};
-
-export const mockEnvironment: TEnvironment = {
-  id: mockId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  type: "production",
-  workspaceId: mockId,
-  appSetupCompleted: false,
 };

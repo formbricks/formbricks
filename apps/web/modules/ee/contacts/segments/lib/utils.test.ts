@@ -634,7 +634,7 @@ describe("Segment Utils", () => {
       title: "Test Segment",
       description: "Desc",
       isPrivate: false,
-      environmentId: "env1",
+      workspaceId: "workspace1",
       surveys: ["survey1"],
       filters: [],
       createdAt: dateString as any, // Cast to any to simulate string input

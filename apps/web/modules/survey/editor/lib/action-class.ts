@@ -5,17 +5,15 @@ import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const createActionClass = async (
-  environmentId: string,
   workspaceId: string,
   actionClass: TActionClassInput
 ): Promise<ActionClass> => {
-  const { environmentId: _, workspaceId: __, ...actionClassInput } = actionClass;
+  const { workspaceId: _, ...actionClassInput } = actionClass;
 
   try {
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
         workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
@@ -39,6 +37,6 @@ export const createActionClass = async (
       );
     }
 
-    throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
+    throw new DatabaseError(`Database error when creating an action for workspace ${workspaceId}`);
   }
 };

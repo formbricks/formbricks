@@ -6,7 +6,6 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
-import { getEnvironmentIdFromWorkspaceId } from "@/lib/utils/helper";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -30,7 +29,6 @@ export const createOrUpdateIntegration = async (
   validateInputs([workspaceId, ZId]);
 
   try {
-    const environmentId = await getEnvironmentIdFromWorkspaceId(workspaceId);
     const integration = await prisma.integration.upsert({
       where: {
         type_workspaceId: {
@@ -40,12 +38,10 @@ export const createOrUpdateIntegration = async (
       },
       update: {
         ...integrationData,
-        environment: { connect: { id: environmentId } },
         workspace: { connect: { id: workspaceId } },
       },
       create: {
         ...integrationData,
-        environment: { connect: { id: environmentId } },
         workspace: { connect: { id: workspaceId } },
       },
     });

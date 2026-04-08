@@ -1,14 +1,10 @@
 import { logger } from "@formbricks/logger";
 import { ZUploadPublicFileRequest } from "@formbricks/types/storage";
-import {
-  getProductionEnvironmentIdByWorkspaceId,
-  resolveBodyIds,
-} from "@/app/api/v1/management/lib/workspace-resolver";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
@@ -31,33 +27,14 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    // Accept workspaceId as alternative to environmentId
+    // Accept workspaceId
     if (authentication && "apiKeyId" in authentication) {
       // API key auth: resolveBodyIds handles resolution + permission check
-      const resolved = await resolveBodyIds(storageInput, authentication.environmentPermissions, "POST");
+      const resolved = await resolveBodyIds(storageInput, authentication.workspacePermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
       storageInput = resolved.body;
-    } else if (storageInput.workspaceId && !storageInput.environmentId) {
-      // Session auth with workspaceId only: resolve environmentId
-      if (typeof storageInput.workspaceId !== "string") {
-        return { response: responses.badRequestResponse("workspaceId must be a string") };
-      }
-      const envId = await getProductionEnvironmentIdByWorkspaceId(storageInput.workspaceId);
-      if (!envId) {
-        return { response: responses.notFoundResponse("Workspace", storageInput.workspaceId) };
-      }
-      storageInput = { ...storageInput, environmentId: envId };
-    } else if (storageInput.environmentId && !storageInput.workspaceId) {
-      // Session auth with environmentId only (current UI): resolve workspaceId
-      if (typeof storageInput.environmentId !== "string") {
-        return { response: responses.badRequestResponse("environmentId must be a string") };
-      }
-      try {
-        const wsId = await getWorkspaceIdFromEnvironmentId(storageInput.environmentId);
-        storageInput = { ...storageInput, workspaceId: wsId };
-      } catch {
-        return { response: responses.notFoundResponse("Environment", storageInput.environmentId) };
-      }
+    } else if (!storageInput.workspaceId) {
+      return { response: responses.badRequestResponse("workspaceId must be provided") };
     }
 
     const parsedInputResult = ZUploadPublicFileRequest.safeParse(storageInput);
@@ -76,9 +53,9 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, environmentId, workspaceId } = parsedInputResult.data;
+    const { fileName, fileType, workspaceId } = parsedInputResult.data;
 
-    const authResponse = await checkAuth(authentication, environmentId);
+    const authResponse = await checkAuth(authentication, workspaceId);
     if (authResponse) {
       return {
         response: authResponse,

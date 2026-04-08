@@ -45,7 +45,7 @@ export const SingleResponseCard = ({
   const hasQuotas = (response?.quotas && response.quotas.length > 0) ?? false;
   const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
   const { t } = useTranslation();
-  const environmentId = survey.environmentId;
+  const workspaceId = survey.workspaceId;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -146,7 +146,7 @@ export const SingleResponseCard = ({
 
         <ResponseTagsWrapper
           key={response.id}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
           responseId={response.id}
           tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           environmentTags={environmentTags}

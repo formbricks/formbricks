@@ -24,14 +24,12 @@ const setCompleteNotificationSettings = (
   for (const membership of memberships) {
     for (const workspace of membership.organization.workspaces) {
       // set default values for alerts
-      for (const environment of workspace.environments) {
-        for (const survey of environment.surveys) {
-          newNotificationSettings.alert[survey.id] =
-            (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
-              ?.responseFinished ||
-            (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
-            false; // check for legacy notification settings w/o "alerts" key
-        }
+      for (const survey of workspace.surveys) {
+        newNotificationSettings.alert[survey.id] =
+          (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
+            ?.responseFinished ||
+          (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
+          false; // check for legacy notification settings w/o "alerts" key
       }
     }
   }
@@ -115,18 +113,10 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
             select: {
               id: true,
               name: true,
-              environments: {
-                where: {
-                  type: "production",
-                },
+              surveys: {
                 select: {
                   id: true,
-                  surveys: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
+                  name: true,
                 },
               },
             },

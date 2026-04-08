@@ -19,7 +19,7 @@ interface ResponseTagsWrapperProps {
     tagId: string;
     tagName: string;
   }[];
-  environmentId: string;
+  workspaceId: string;
   responseId: string;
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
@@ -30,7 +30,7 @@ interface ResponseTagsWrapperProps {
 
 export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
-  environmentId,
+  workspaceId,
   responseId,
   environmentTags,
   updateFetchedResponses,
@@ -70,7 +70,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const handleCreateTag = async (tagName: string) => {
     setIsLoadingTagOperation(true);
-    const newTagResponse = await createTagAction({ environmentId, tagName });
+    const newTagResponse = await createTagAction({ workspaceId, tagName });
 
     if (!newTagResponse?.data) {
       toast.error(t("workspace.surveys.responses.an_error_occurred_creating_the_tag"));

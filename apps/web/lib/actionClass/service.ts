@@ -20,7 +20,6 @@ const selectActionClass = {
   type: true,
   key: true,
   noCodeConfig: true,
-  environmentId: true,
   workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
@@ -108,13 +107,12 @@ export const deleteActionClass = async (actionClassId: string): Promise<TActionC
 export const createActionClass = async (actionClass: TActionClassInput): Promise<ActionClass> => {
   validateInputs([actionClass, ZActionClassInput]);
 
-  const { environmentId, workspaceId, ...actionClassInput } = actionClass;
+  const { workspaceId, ...actionClassInput } = actionClass;
 
   try {
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
         workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
@@ -139,7 +137,7 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
       );
     }
 
-    throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
+    throw new DatabaseError(`Database error when creating an action for workspace ${workspaceId}`);
   }
 };
 
@@ -150,7 +148,7 @@ export const updateActionClass = async (
 ): Promise<TActionClass> => {
   validateInputs([workspaceId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput]);
 
-  const { environmentId: _, workspaceId: __, ...actionClassInput } = inputActionClass;
+  const { workspaceId: __, ...actionClassInput } = inputActionClass;
   try {
     const result = await prisma.actionClass.update({
       where: {

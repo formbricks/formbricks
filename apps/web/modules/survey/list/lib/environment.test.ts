@@ -1,18 +1,15 @@
-// Retain only vitest import here
-// Import modules after mocks
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { validateInputs } from "@/lib/utils/validate";
-import { doesEnvironmentExist, getEnvironment, getWorkspaceIdIfEnvironmentExists } from "./environment";
+import { doesWorkspaceExist, getWorkspace } from "./environment";
 
 vi.mock("@/lib/utils/validate");
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    environment: {
+    workspace: {
       findUnique: vi.fn(),
     },
   },
@@ -32,125 +29,85 @@ vi.mock("react", async () => {
   };
 });
 
-const mockEnvironmentId = "clxko31qs000008jya8v4ah0a";
 const mockWorkspaceId = "clxko31qt000108jyd64v5688";
 
-describe("doesEnvironmentExist", () => {
+describe("doesWorkspaceExist", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  test("should return environmentId if environment exists", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ id: mockEnvironmentId } as Awaited<
-      ReturnType<typeof prisma.environment.findUnique>
+  test("should return workspaceId if workspace exists", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ id: mockWorkspaceId } as Awaited<
+      ReturnType<typeof prisma.workspace.findUnique>
     >);
 
-    const result = await doesEnvironmentExist(mockEnvironmentId);
-
-    expect(result).toBe(mockEnvironmentId);
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
-      select: { id: true },
-    });
-  });
-
-  test("should throw ResourceNotFoundError if environment does not exist", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-
-    await expect(doesEnvironmentExist(mockEnvironmentId)).rejects.toThrow(ResourceNotFoundError);
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
-      select: { id: true },
-    });
-  });
-});
-
-describe("getWorkspaceIdIfEnvironmentExists", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
-  test("should return workspaceId if environment exists", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ workspaceId: mockWorkspaceId } as Awaited<
-      ReturnType<typeof prisma.environment.findUnique>
-    >); // Ensure correct mock value
-
-    const result = await getWorkspaceIdIfEnvironmentExists(mockEnvironmentId);
+    const result = await doesWorkspaceExist(mockWorkspaceId);
 
     expect(result).toBe(mockWorkspaceId);
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
-      select: { workspaceId: true },
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      select: { id: true },
     });
   });
 
-  test("should throw ResourceNotFoundError if environment does not exist", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
+  test("should throw ResourceNotFoundError if workspace does not exist", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    await expect(getWorkspaceIdIfEnvironmentExists(mockEnvironmentId)).rejects.toThrow(ResourceNotFoundError);
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
-      select: { workspaceId: true },
+    await expect(doesWorkspaceExist(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      select: { id: true },
     });
   });
 });
 
-describe("getEnvironment", () => {
+describe("getWorkspace", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  test("should return environment if it exists", async () => {
-    const mockEnvData = { id: mockEnvironmentId, type: "production" as const };
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(
-      mockEnvData as Awaited<ReturnType<typeof prisma.environment.findUnique>>
+  test("should return workspace if it exists", async () => {
+    const mockData = { id: mockWorkspaceId };
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(
+      mockData as Awaited<ReturnType<typeof prisma.workspace.findUnique>>
     );
 
-    const result = await getEnvironment(mockEnvironmentId);
+    const result = await getWorkspace(mockWorkspaceId);
 
-    expect(result).toEqual(mockEnvData);
-    expect(validateInputs).toHaveBeenCalledWith([mockEnvironmentId, expect.any(Object)]);
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
-      select: { id: true, type: true },
+    expect(result).toEqual(mockData);
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      select: { id: true },
     });
   });
 
-  test("should return null if environment does not exist (as per select, though findUnique would return null directly)", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
+  test("should return null if workspace does not exist", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    const result = await getEnvironment(mockEnvironmentId);
+    const result = await getWorkspace(mockWorkspaceId);
     expect(result).toBeNull();
-    expect(validateInputs).toHaveBeenCalledWith([mockEnvironmentId, expect.any(Object)]);
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
-      select: { id: true, type: true },
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      select: { id: true },
     });
   });
 
   test("should throw DatabaseError if PrismaClientKnownRequestError occurs", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
       code: "P2001",
-      clientVersion: "2.0.0", // Ensure clientVersion is a string
+      clientVersion: "2.0.0",
     });
-    vi.mocked(prisma.environment.findUnique).mockRejectedValue(prismaError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
 
-    await expect(getEnvironment(mockEnvironmentId)).rejects.toThrow(DatabaseError);
-    expect(validateInputs).toHaveBeenCalledWith([mockEnvironmentId, expect.any(Object)]);
-    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error fetching environment");
+    await expect(getWorkspace(mockWorkspaceId)).rejects.toThrow(DatabaseError);
+    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error fetching workspace");
   });
 
   test("should re-throw error if a generic error occurs", async () => {
     const genericError = new Error("Test Generic Error");
-    vi.mocked(prisma.environment.findUnique).mockRejectedValue(genericError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(genericError);
 
-    await expect(getEnvironment(mockEnvironmentId)).rejects.toThrow(genericError);
-    expect(validateInputs).toHaveBeenCalledWith([mockEnvironmentId, expect.any(Object)]);
+    await expect(getWorkspace(mockWorkspaceId)).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
   });
 });
-
-// Remove the global afterEach if it was only for vi.useRealTimers() and no fake timers are used.
-// vi.resetAllMocks() in beforeEach is generally the preferred way to ensure test isolation for mocks.
-// The specific afterEach(() => { vi.clearAllMocks(); }) inside each describe block can also be removed.
-// For consistency, I'll remove the afterEach blocks from the describe suites.

@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { TApiKeyWithEnvironmentAndWorkspace } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { authenticateRequest } from "../authenticate-request";
@@ -9,7 +9,11 @@ vi.mock("@/modules/organization/settings/api-keys/lib/api-key", () => ({
 }));
 
 describe("authenticateRequest", () => {
-  test("should return authentication data if apiKey is valid with environment permissions", async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should return authentication data if apiKey is valid with workspace permissions", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "fbk_validApiKeySecret123" },
     });
@@ -30,36 +34,18 @@ describe("authenticateRequest", () => {
       },
       apiKeyEnvironments: [
         {
-          environmentId: "env-id-1",
           workspaceId: "workspace-id-1",
           permission: "manage",
           apiKeyId: "api-key-id",
-          environment: {
-            id: "env-id-1",
-            workspaceId: "workspace-id-1",
-            type: "production",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            appSetupCompleted: false,
-          },
           workspace: {
             id: "workspace-id-1",
             name: "Workspace 1",
           },
         },
         {
-          environmentId: "env-id-2",
           workspaceId: "workspace-id-2",
           permission: "read",
           apiKeyId: "api-key-id",
-          environment: {
-            id: "env-id-2",
-            workspaceId: "workspace-id-2",
-            type: "production",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            appSetupCompleted: false,
-          },
           workspace: {
             id: "workspace-id-2",
             name: "Workspace 2",
@@ -76,18 +62,14 @@ describe("authenticateRequest", () => {
     if (result.ok) {
       expect(result.data).toEqual({
         type: "apiKey",
-        environmentPermissions: [
+        workspacePermissions: [
           {
-            environmentId: "env-id-1",
             permission: "manage",
-            environmentType: "production",
             workspaceId: "workspace-id-1",
             workspaceName: "Workspace 1",
           },
           {
-            environmentId: "env-id-2",
             permission: "read",
-            environmentType: "production",
             workspaceId: "workspace-id-2",
             workspaceName: "Workspace 2",
           },
@@ -125,7 +107,7 @@ describe("authenticateRequest", () => {
           write: true,
         },
       },
-      apiKeyEnvironments: [], // No environment-specific permissions
+      apiKeyEnvironments: [], // No workspace-specific permissions
     } as unknown as TApiKeyWithEnvironmentAndWorkspace;
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData);
@@ -136,7 +118,7 @@ describe("authenticateRequest", () => {
     if (result.ok) {
       expect(result.data).toEqual({
         type: "apiKey",
-        environmentPermissions: [],
+        workspacePermissions: [],
         apiKeyId: "org-api-key-id",
         organizationId: "org-id",
         organizationAccess: {

@@ -8,7 +8,7 @@ import { getDisplaysByContactId } from "@/lib/display/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -24,7 +24,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
   const [responses, displays, workspace] = await Promise.all([
     getResponsesByContactId(contactId),
     getDisplaysByContactId(contactId),
-    getWorkspaceByEnvironmentId(environment.id),
+    getWorkspace(environment.workspaceId),
   ]);
 
   if (!workspace) {

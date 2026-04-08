@@ -12,7 +12,6 @@ import {
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -23,26 +22,9 @@ export const GET = async (request: NextRequest) =>
     handler: async ({ authentication, parsedInput }) => {
       const { query } = parsedInput;
 
-      let workspaceIds: string[] = [];
-
-      if (query.environmentId) {
-        const permission = authentication.environmentPermissions.find(
-          (p) => p.environmentId === query.environmentId
-        );
-        if (
-          !permission ||
-          !hasPermission(authentication.environmentPermissions, permission.workspaceId, "GET")
-        ) {
-          return handleApiError(request, {
-            type: "unauthorized",
-          });
-        }
-        workspaceIds = permission ? [permission.workspaceId] : [];
-      } else {
-        workspaceIds = [
-          ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
-        ];
-      }
+      const workspaceIds = [
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+      ];
 
       const res = await getContactAttributeKeys(workspaceIds, query);
 
@@ -61,7 +43,7 @@ export const POST = async (request: NextRequest) =>
       body: ZContactAttributeKeyCreateInput,
     },
     bodyTransform: async (body, auth) => {
-      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "POST");
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },

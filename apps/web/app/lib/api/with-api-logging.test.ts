@@ -103,7 +103,7 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
 
 const mockApiAuthentication = {
   type: "apiKey" as const,
-  environmentPermissions: [],
+  workspacePermissions: [],
   apiKeyId: "api-key-1",
   organizationId: "org-1",
   organizationAccess: "all" as const,
@@ -378,7 +378,7 @@ describe("withV1ApiWrapper", () => {
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.successResponse({ data: "test" }),

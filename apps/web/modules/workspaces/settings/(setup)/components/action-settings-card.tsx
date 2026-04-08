@@ -57,7 +57,6 @@ export const ActionSettingsCard = ({
         </ActionClassesTable>
       </SettingsCard>
       <AddActionModal
-        environmentId={environmentId}
         workspaceId={workspaceId}
         actionClasses={actionClasses}
         isReadOnly={isReadOnly}

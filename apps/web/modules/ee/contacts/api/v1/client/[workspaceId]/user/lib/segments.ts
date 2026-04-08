@@ -7,7 +7,6 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 
@@ -39,15 +38,14 @@ export const getSegments = reactCache(
 );
 
 export const getPersonSegmentIds = async (
-  environmentId: string,
+  workspaceId: string,
   contactId: string,
   contactUserId: string,
   deviceType: "phone" | "desktop"
 ): Promise<string[]> => {
   try {
-    validateInputs([environmentId, ZId], [contactId, ZId], [contactUserId, ZString]);
+    validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const segments = await getSegments(workspaceId);
 
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
@@ -68,11 +66,11 @@ export const getPersonSegmentIds = async (
         continue;
       }
 
-      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, environmentId, deviceType);
+      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, workspaceId, deviceType);
 
       if (!queryResult.ok) {
         logger.warn(
-          { segmentId: segment.id, environmentId, error: queryResult.error },
+          { segmentId: segment.id, workspaceId, error: queryResult.error },
           "Failed to build Prisma query for segment, skipping"
         );
         continue;
@@ -100,10 +98,7 @@ export const getPersonSegmentIds = async (
 
     return [...alwaysMatchIds, ...matchedIds];
   } catch (error) {
-    logger.warn(
-      { environmentId, contactId, error },
-      "Failed to get person segment IDs, returning empty array"
-    );
+    logger.warn({ workspaceId, contactId, error }, "Failed to get person segment IDs, returning empty array");
     return [];
   }
 };

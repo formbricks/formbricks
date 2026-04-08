@@ -1,6 +1,6 @@
 "use client";
 
-import { Environment, Workspace } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +22,7 @@ interface PreviewSurveyProps {
   elementId?: string | null;
   previewType?: TPreviewType;
   workspace: Workspace;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  environment: { id: string; appSetupCompleted: boolean };
   languageCode: string;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;

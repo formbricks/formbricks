@@ -7,25 +7,21 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
-export const getWorkspaceByEnvironmentId = reactCache(
+export const getWorkspaceById = reactCache(
   async (
-    environmentId: string
+    workspaceId: string
   ): Promise<Pick<
     Workspace,
     "styling" | "logo" | "linkSurveyBranding" | "name" | "customHeadScripts"
   > | null> => {
-    validateInputs([environmentId, ZId]);
+    validateInputs([workspaceId, ZId]);
 
     let workspacePrisma;
 
     try {
-      workspacePrisma = await prisma.workspace.findFirst({
+      workspacePrisma = await prisma.workspace.findUnique({
         where: {
-          environments: {
-            some: {
-              id: environmentId,
-            },
-          },
+          id: workspaceId,
         },
         select: {
           styling: true,
@@ -39,7 +35,7 @@ export const getWorkspaceByEnvironmentId = reactCache(
       return workspacePrisma;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error fetching workspace by environment id");
+        logger.error(error, "Error fetching workspace by id");
         throw new DatabaseError(error.message);
       }
       throw error;

@@ -9,12 +9,9 @@ import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getEnvironmentIdFromSegmentId,
-  getEnvironmentIdFromSurveyId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
@@ -48,14 +45,14 @@ const checkAdvancedTargetingPermission = async (organizationId: string) => {
 export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmentCreateInput).action(
   withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
     if (parsedInput.surveyId) {
-      const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+      const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      if (surveyEnvironmentId !== parsedInput.environmentId) {
-        throw new Error("Survey and segment are not in the same environment");
+      if (surveyWorkspaceId !== parsedInput.workspaceId) {
+        throw new Error("Survey and segment are not in the same workspace");
       }
     }
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = parsedInput.workspaceId;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     // Set the organizationId in the context to be used in the audit log
@@ -156,11 +153,11 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient
   .inputSchema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+    const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
-    if (surveyEnvironmentId !== segmentEnvironmentId) {
-      throw new Error("Segment and survey are not in the same environment");
+    if (surveyWorkspaceId !== segmentWorkspaceId) {
+      throw new Error("Segment and survey are not in the same workspace");
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
@@ -175,7 +172,7 @@ export const loadNewSegmentAction = authenticatedActionClient
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(surveyEnvironmentId),
+          workspaceId: surveyWorkspaceId,
         },
       ],
     });
@@ -192,11 +189,11 @@ const ZCloneSegmentAction = z.object({
 
 export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSegmentAction).action(
   withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
-    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+    const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
-    if (surveyEnvironmentId !== segmentEnvironmentId) {
-      throw new Error("Segment and survey are not in the same environment");
+    if (surveyWorkspaceId !== segmentWorkspaceId) {
+      throw new Error("Segment and survey are not in the same workspace");
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
@@ -212,7 +209,7 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(surveyEnvironmentId),
+          workspaceId: surveyWorkspaceId,
         },
       ],
     });
@@ -302,14 +299,14 @@ export const resetSegmentFiltersAction = authenticatedActionClient
   );
 
 const ZGetDistinctAttributeValuesAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   attributeKeyId: ZId,
 });
 
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = parsedInput.workspaceId;
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),

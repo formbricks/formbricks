@@ -28,17 +28,18 @@ export const GET = async (
     );
   }
 
-  const { environmentId: idParam, accessType, fileName } = paramValidation.data;
+  const { accessType, fileName } = paramValidation.data;
+  const idParam = params.environmentId;
 
   // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
   const resolved = await resolveClientApiIds(idParam);
   if (!resolved) {
-    return responses.notFoundResponse("Environment", idParam);
+    return responses.notFoundResponse("Workspace", idParam);
   }
 
-  // check auth (always uses environmentId)
+  // check auth
   if (accessType === "private") {
-    const authResult = await authorizePrivateDownload(request, resolved.environmentId, "GET");
+    const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "GET");
     if (!authResult.ok) {
       return authResult.error.unauthorized
         ? responses.unauthorizedResponse()
@@ -51,7 +52,7 @@ export const GET = async (
     fileName,
     resolved.workspaceId,
     accessType,
-    resolved.environmentId
+    resolved.workspaceId
   );
 
   if (!streamResult.ok) {
@@ -85,21 +86,22 @@ export const DELETE = async (
 
     await logFileDeletion({
       failureReason: "Parameter validation failed",
-      environmentId: params.environmentId,
+      workspaceId: params.environmentId,
       apiUrl: request.url,
     });
 
     return responses.badRequestResponse("Fields are missing or incorrectly formatted", errorDetails, true);
   }
 
-  const { environmentId: idParam, accessType, fileName } = paramValidation.data;
+  const { accessType, fileName } = paramValidation.data;
+  const idParam = params.environmentId;
 
   // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
   const resolved = await resolveClientApiIds(idParam);
   if (!resolved) {
     await logFileDeletion({
       failureReason: "Environment or workspace not found",
-      environmentId: idParam,
+      workspaceId: idParam,
       apiUrl: request.url,
     });
     return responses.notFoundResponse("Environment", idParam);
@@ -107,7 +109,7 @@ export const DELETE = async (
 
   const session = await getServerSession(authOptions);
 
-  const authResult = await authorizePrivateDownload(request, resolved.environmentId, "DELETE");
+  const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "DELETE");
 
   if (!authResult.ok) {
     await logFileDeletion({
@@ -115,7 +117,7 @@ export const DELETE = async (
         ? "User not authorized to access environment"
         : "User not authenticated",
       accessType,
-      environmentId: resolved.environmentId,
+      workspaceId: resolved.workspaceId,
       apiUrl: request.url,
     });
 
@@ -142,7 +144,7 @@ export const DELETE = async (
     resolved.workspaceId,
     accessType,
     decodeURIComponent(fileName),
-    resolved.environmentId
+    resolved.workspaceId
   );
 
   const isSuccess = deleteResult.ok;
@@ -154,7 +156,7 @@ export const DELETE = async (
       failureReason: deleteResult.error.code,
       accessType,
       userId: session?.user?.id,
-      environmentId: resolved.environmentId,
+      workspaceId: resolved.workspaceId,
       apiUrl: request.url,
     });
 
@@ -166,7 +168,7 @@ export const DELETE = async (
     status: "success",
     accessType,
     userId: session?.user?.id,
-    environmentId: resolved.environmentId,
+    workspaceId: resolved.workspaceId,
     apiUrl: request.url,
   });
 

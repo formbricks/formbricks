@@ -1,17 +1,12 @@
 import { Prisma, WebhookSource } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { createWebhook } from "./webhook";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -34,17 +29,12 @@ vi.mock("@/lib/utils/validate-webhook-url", () => ({
 }));
 
 describe("createWebhook", () => {
-  beforeEach(() => {
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
-  });
-
   afterEach(() => {
     cleanup();
   });
 
   test("should create a webhook", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
@@ -55,7 +45,7 @@ describe("createWebhook", () => {
 
     const createdWebhook = {
       id: "webhook-id",
-      environmentId: "test-env-id",
+
       name: "Test Webhook",
       url: "https://example.com",
       source: "user" as WebhookSource,
@@ -79,16 +69,7 @@ describe("createWebhook", () => {
         surveyIds: webhookInput.surveyIds,
         triggers: webhookInput.triggers,
         secret: "whsec_test_secret_1234567890",
-        environment: {
-          connect: {
-            id: webhookInput.environmentId,
-          },
-        },
-        workspace: {
-          connect: {
-            id: webhookInput.workspaceId,
-          },
-        },
+        workspaceId: webhookInput.workspaceId,
       },
     });
 
@@ -97,7 +78,6 @@ describe("createWebhook", () => {
 
   test("should call validateWebhookUrl with the provided URL", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
@@ -115,7 +95,6 @@ describe("createWebhook", () => {
 
   test("should throw InvalidInputError and skip Prisma create when URL fails SSRF validation", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "http://169.254.169.254/latest/meta-data/",
       source: "user",
@@ -134,7 +113,6 @@ describe("createWebhook", () => {
 
   test("should throw a ValidationError if the input data does not match the ZWebhookInput schema", async () => {
     const invalidWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: 123, // Invalid URL
       source: "user" as WebhookSource,
@@ -151,7 +129,6 @@ describe("createWebhook", () => {
 
   test("should throw a DatabaseError if a PrismaClientKnownRequestError occurs", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
@@ -172,7 +149,6 @@ describe("createWebhook", () => {
 
   test("should throw a DatabaseError when provided with invalid surveyIds", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
@@ -188,7 +164,6 @@ describe("createWebhook", () => {
 
   test("should handle edge case URLs that are technically valid but problematic", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "http://localhost:3000", // Example of a potentially problematic URL
       source: "user",
@@ -210,16 +185,7 @@ describe("createWebhook", () => {
         surveyIds: webhookInput.surveyIds,
         triggers: webhookInput.triggers,
         secret: "whsec_test_secret_1234567890",
-        environment: {
-          connect: {
-            id: webhookInput.environmentId,
-          },
-        },
-        workspace: {
-          connect: {
-            id: "workspace-id-mock",
-          },
-        },
+        workspaceId: webhookInput.workspaceId,
       },
     });
   });

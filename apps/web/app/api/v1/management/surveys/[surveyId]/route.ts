@@ -30,7 +30,7 @@ const fetchAndAuthorizeSurvey = async (
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", surveyId) };
   }
-  if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, requiredPermission)) {
+  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 

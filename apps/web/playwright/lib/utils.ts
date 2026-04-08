@@ -14,9 +14,9 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
     })();
 
   const environmentId =
-    user.environmentId ??
+    user.workspaceId ??
     (() => {
-      throw new Error("Unable to get environmentId from user fixture");
+      throw new Error("Unable to get workspaceId from user fixture");
     })();
 
   await page.goto(`/workspaces/${workspaceId}/settings/api-keys`, { waitUntil: "domcontentloaded" });

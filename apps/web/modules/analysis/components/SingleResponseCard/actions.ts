@@ -9,24 +9,21 @@ import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/servic
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getEnvironmentIdFromResponseId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromResponseId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateTagAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   tagName: z.string(),
 });
 
 export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagAction).action(
   withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -38,13 +35,13 @@ export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagA
         },
         {
           type: "workspaceTeam",
-          workspaceId,
+          workspaceId: parsedInput.workspaceId,
           minPermission: "readWrite",
         },
       ],
     });
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createTag(parsedInput.environmentId, parsedInput.tagName);
+    const result = await createTag(parsedInput.workspaceId, parsedInput.tagName);
 
     if (result.ok) {
       ctx.auditLoggingCtx.tagId = result.data.id;
@@ -66,18 +63,17 @@ export const createTagToResponseAction = authenticatedActionClient
   .inputSchema(ZCreateTagToResponseAction)
   .action(
     withAuditLogging("addedToResponse", "tag", async ({ parsedInput, ctx }) => {
-      const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
-      const tagEnvironment = await getTag(parsedInput.tagId);
+      const responseWorkspaceId = await getWorkspaceIdFromResponseId(parsedInput.responseId);
+      const tag = await getTag(parsedInput.tagId);
 
-      if (!responseEnvironmentId || !tagEnvironment) {
-        throw new ResourceNotFoundError("Environment", null);
+      if (!responseWorkspaceId || !tag) {
+        throw new ResourceNotFoundError("Workspace", null);
       }
 
-      if (responseEnvironmentId !== tagEnvironment.environmentId) {
-        throw new Error("Response and tag are not in the same environment");
+      if (responseWorkspaceId !== tag.workspaceId) {
+        throw new Error("Response and tag are not in the same workspace");
       }
 
-      const responseWorkspaceId = await getWorkspaceIdFromEnvironmentId(responseEnvironmentId);
       const organizationId = await getOrganizationIdFromWorkspaceId(responseWorkspaceId);
 
       await checkAuthorizationUpdated({
@@ -112,15 +108,15 @@ export const deleteTagOnResponseAction = authenticatedActionClient
   .inputSchema(ZDeleteTagOnResponseAction)
   .action(
     withAuditLogging("removedFromResponse", "tag", async ({ parsedInput, ctx }) => {
-      const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
-      const tagEnvironment = await getTag(parsedInput.tagId);
+      const responseWorkspaceId = await getWorkspaceIdFromResponseId(parsedInput.responseId);
+      const tag = await getTag(parsedInput.tagId);
       const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
-      if (!responseEnvironmentId || !tagEnvironment) {
-        throw new ResourceNotFoundError("Environment", null);
+      if (!responseWorkspaceId || !tag) {
+        throw new ResourceNotFoundError("Workspace", null);
       }
 
-      if (responseEnvironmentId !== tagEnvironment.environmentId) {
-        throw new Error("Response and tag are not in the same environment");
+      if (responseWorkspaceId !== tag.workspaceId) {
+        throw new Error("Response and tag are not in the same workspace");
       }
 
       await checkAuthorizationUpdated({
@@ -133,7 +129,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
           },
           {
             type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(responseEnvironmentId),
+            workspaceId: responseWorkspaceId,
             minPermission: "readWrite",
           },
         ],

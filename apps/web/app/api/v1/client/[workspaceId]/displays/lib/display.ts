@@ -8,7 +8,7 @@ import { getContactByUserId } from "./contact";
 export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInput]);
 
-  const { environmentId, workspaceId, userId, surveyId } = displayInput;
+  const { workspaceId, userId, surveyId } = displayInput;
 
   try {
     let contact: { id: string } | null = null;
@@ -17,8 +17,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       if (!contact) {
         contact = await prisma.contact.create({
           data: {
-            environment: { connect: { id: environmentId } },
-            workspace: { connect: { id: workspaceId } },
+            workspaceId,
             attributes: {
               create: {
                 attributeKey: {

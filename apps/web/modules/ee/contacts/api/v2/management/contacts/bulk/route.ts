@@ -14,7 +14,7 @@ export const PUT = async (request: Request) =>
       body: ZContactBulkUploadRequest,
     },
     bodyTransform: async (body, auth) => {
-      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "PUT");
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "PUT");
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },
@@ -46,8 +46,8 @@ export const PUT = async (request: Request) =>
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
-      const perm = authentication.environmentPermissions.find((p) => p.workspaceId === workspaceId);
-      if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "PUT")) {
+      const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
+      if (!perm || !hasPermission(authentication.workspacePermissions, perm.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {

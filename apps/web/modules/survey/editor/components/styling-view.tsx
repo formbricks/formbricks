@@ -33,7 +33,7 @@ import {
 import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
-  environmentId: string;
+  workspaceId: string;
   workspace: Workspace;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
@@ -49,7 +49,7 @@ interface StylingViewProps {
 
 export const StylingView = ({
   colors,
-  environmentId,
+  workspaceId,
   workspace,
   localSurvey,
   setLocalSurvey,
@@ -279,7 +279,7 @@ export const StylingView = ({
               <BackgroundStylingCard
                 open={stylingOpen}
                 setOpen={setStylingOpen}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 colors={colors}
                 disabled={!overwriteThemeStyling}
                 isUnsplashConfigured={isUnsplashConfigured}
@@ -291,7 +291,7 @@ export const StylingView = ({
                 open={logoSettingsOpen}
                 setOpen={setLogoSettingsOpen}
                 disabled={!overwriteThemeStyling}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                 isStorageConfigured={isStorageConfigured}
               />

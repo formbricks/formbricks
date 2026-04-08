@@ -24,7 +24,7 @@ vi.mock("react", async () => {
 });
 
 const mockContactId = "test-contact-id";
-const mockEnvironmentId = "test-env-id";
+const mockWorkspaceId = "test-env-id";
 const mockUserId = "test-user-id";
 
 describe("Contact API Lib", () => {
@@ -36,11 +36,11 @@ describe("Contact API Lib", () => {
     test("should return contact if found", async () => {
       const mockContactData = {
         id: mockContactId,
+        workspaceId: mockWorkspaceId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: mockEnvironmentId,
       };
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData);
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData as any);
 
       const contact = await getContact(mockContactId);
 
@@ -82,19 +82,17 @@ describe("Contact API Lib", () => {
     test("should return contact with formatted attributes if found", async () => {
       const mockContactData = {
         id: mockContactId,
+        workspaceId: mockWorkspaceId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: mockEnvironmentId,
         attributes: [
           { attributeKey: { key: "userId" }, value: mockUserId },
           { attributeKey: { key: "email" }, value: "test@example.com" },
         ],
       };
-      vi.mocked(prisma.contact.findFirst).mockResolvedValue(
-        mockContactData as Awaited<ReturnType<typeof prisma.contact.findFirst>>
-      );
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
 
-      const contact = await getContactByUserId(mockEnvironmentId, mockUserId);
+      const contact = await getContactByUserId(mockWorkspaceId, mockUserId);
 
       expect(prisma.contact.findFirst).toHaveBeenCalledWith({
         where: {
@@ -102,7 +100,7 @@ describe("Contact API Lib", () => {
             some: {
               attributeKey: {
                 key: "userId",
-                workspaceId: mockEnvironmentId,
+                workspaceId: mockWorkspaceId,
               },
               value: mockUserId,
             },
@@ -130,7 +128,7 @@ describe("Contact API Lib", () => {
     test("should return null if contact not found by userId", async () => {
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
-      const contact = await getContactByUserId(mockEnvironmentId, mockUserId);
+      const contact = await getContactByUserId(mockWorkspaceId, mockUserId);
 
       expect(prisma.contact.findFirst).toHaveBeenCalledWith({
         where: {
@@ -138,7 +136,7 @@ describe("Contact API Lib", () => {
             some: {
               attributeKey: {
                 key: "userId",
-                workspaceId: mockEnvironmentId,
+                workspaceId: mockWorkspaceId,
               },
               value: mockUserId,
             },

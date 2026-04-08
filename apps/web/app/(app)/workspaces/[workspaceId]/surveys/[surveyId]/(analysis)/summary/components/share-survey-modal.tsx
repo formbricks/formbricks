@@ -70,7 +70,7 @@ export const ShareSurveyModal = ({
   isStorageConfigured,
   workspaceCustomScripts,
 }: ShareSurveyModalProps) => {
-  const environmentId = survey.environmentId;
+  const environmentId = survey.workspaceId;
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;

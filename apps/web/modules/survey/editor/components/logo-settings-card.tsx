@@ -24,7 +24,7 @@ import { Switch } from "@/modules/ui/components/switch";
 type LogoSettingsCardProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  environmentId: string;
+  workspaceId: string;
   form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   disabled?: boolean;
   isStorageConfigured: boolean;
@@ -33,7 +33,7 @@ type LogoSettingsCardProps = {
 export const LogoSettingsCard = ({
   open,
   setOpen,
-  environmentId,
+  workspaceId,
   form,
   disabled = false,
   isStorageConfigured,
@@ -79,7 +79,7 @@ export const LogoSettingsCard = ({
 
     setIsLoading(true);
     try {
-      const uploadResult = await handleFileUpload(file, environmentId);
+      const uploadResult = await handleFileUpload(file, workspaceId);
       if (uploadResult.error) {
         toast.error(t("common.upload_failed"));
         return;
@@ -244,7 +244,7 @@ export const LogoSettingsCard = ({
                 <FileInput
                   id="survey-logo-input"
                   allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-                  environmentId={environmentId}
+                  workspaceId={workspaceId}
                   onFileUpload={handleFileInputChange}
                   disabled={disabled}
                   maxSizeInMB={5}

@@ -58,7 +58,6 @@ vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: vi.fn(),
 }));
 
-const environmentId = "test-environment-id";
 const workspaceId = "test-workspace-id";
 const surveyId = "test-survey-id";
 const organizationId = "test-organization-id";
@@ -73,7 +72,6 @@ const mockOrganization = {
 };
 
 const mockResponseInput: TResponseInput = {
-  environmentId,
   workspaceId,
   surveyId,
   userId: null,

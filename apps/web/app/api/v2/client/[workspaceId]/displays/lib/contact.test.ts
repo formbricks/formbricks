@@ -32,8 +32,7 @@ describe("doesContactExist", () => {
       id: contactId,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "test-env",
-    });
+    } as any);
 
     const result = await doesContactExist(contactId);
 

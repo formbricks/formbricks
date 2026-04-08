@@ -15,7 +15,7 @@ export const AttributesPage = async ({
   const params = await paramsProps;
   const locale = await getLocale();
   const t = await getTranslate();
-  const { isReadOnly, organization, workspace, environment } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
 
@@ -28,7 +28,7 @@ export const AttributesPage = async ({
       workspaceId={params.workspaceId}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
-      cta={<CreateAttributeModal environmentId={environment.id} />}>
+      cta={<CreateAttributeModal workspaceId={workspace.id} />}>
       <AttributesTable
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}

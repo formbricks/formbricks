@@ -32,12 +32,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!resolved) {
     return responses.notFoundResponse("Workspace", params.workspaceId);
   }
-  const { environmentId, workspaceId } = resolved;
+  const { workspaceId } = resolved;
 
   const jsonInput = await request.json();
   const inputValidation = ZDisplayCreateInputV2.safeParse({
     ...jsonInput,
-    environmentId,
     workspaceId,
   });
 

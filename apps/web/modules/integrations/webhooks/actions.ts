@@ -9,7 +9,6 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import {
   getOrganizationIdFromWebhookId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromWebhookId,
 } from "@/lib/utils/helper";
 import { getWebhook } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
@@ -23,15 +22,14 @@ import {
 import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
 
 const ZCreateWebhookAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   webhookInput: ZWebhookInput,
   webhookSecret: z.string().optional(),
 });
 
 export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreateWebhookAction).action(
   withAuditLogging("created", "webhook", async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -43,12 +41,12 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
         {
           type: "workspaceTeam",
           minPermission: "read",
-          workspaceId,
+          workspaceId: parsedInput.workspaceId,
         },
       ],
     });
     const webhook = await createWebhook(
-      parsedInput.environmentId,
+      parsedInput.workspaceId,
       parsedInput.webhookInput,
       parsedInput.webhookSecret
     );

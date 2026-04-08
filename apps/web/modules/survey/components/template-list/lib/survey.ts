@@ -5,15 +5,12 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
-import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyCreateInput
-): Promise<TSurvey> => {
+export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   try {
     const { createdBy, ...restSurveyBody } = surveyBody;
 
@@ -22,7 +19,6 @@ export const createSurvey = async (
       delete restSurveyBody.languages;
     }
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const [organizationId, actionClasses] = await Promise.all([
       getOrganizationIdFromWorkspaceId(workspaceId),
       getActionClasses(workspaceId),
@@ -71,11 +67,6 @@ export const createSurvey = async (
     const survey = await prisma.survey.create({
       data: {
         ...data,
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
         workspace: {
           connect: {
             id: workspaceId,
@@ -92,11 +83,6 @@ export const createSurvey = async (
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
-            connect: {
-              id: environmentId,
-            },
-          },
           workspace: {
             connect: {
               id: workspaceId,

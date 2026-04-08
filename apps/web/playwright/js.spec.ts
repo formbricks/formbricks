@@ -55,11 +55,11 @@ test.describe("JS Package Test", async () => {
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
-    // Get the environmentId from the fixture (needed for SDK setup)
+    // Get the workspaceId from the fixture (needed for SDK setup)
     environmentId =
-      user.environmentId ??
+      user.workspaceId ??
       (() => {
-        throw new Error("Unable to get environmentId from user fixture");
+        throw new Error("Unable to get workspaceId from user fixture");
       })();
 
     // Create survey from template

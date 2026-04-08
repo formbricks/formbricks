@@ -70,7 +70,7 @@ export const AnonymousLinksTab = ({
     try {
       const updatedSurveyResponse = await updateSingleUseLinksAction({
         surveyId: survey.id,
-        environmentId: survey.environmentId,
+        environmentId: survey.workspaceId,
         isSingleUse,
         isSingleUseEncryption,
       });

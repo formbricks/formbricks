@@ -16,7 +16,7 @@ import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surve
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
-import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
+import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
@@ -93,9 +93,9 @@ export const SurveyAnalysisCTA = ({
 
   const duplicateSurveyAndRoute = async (surveyId: string) => {
     setLoading(true);
-    const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+    const duplicatedSurveyResponse = await copySurveyToOtherWorkspaceAction({
       surveyId: surveyId,
-      targetEnvironmentId: environment.id,
+      targetWorkspaceId: environment.workspaceId,
     });
     if (duplicatedSurveyResponse?.data) {
       toast.success(t("workspace.surveys.survey_duplicated_successfully"));

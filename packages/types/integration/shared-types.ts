@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const ZIntegrationBase = z.object({
   id: z.string(),
-  environmentId: z.string(),
   workspaceId: z.cuid2(),
 });
 

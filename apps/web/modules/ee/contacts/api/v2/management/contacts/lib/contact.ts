@@ -1,6 +1,5 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
 import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
@@ -8,7 +7,7 @@ import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/t
 export const createContact = async (
   contactData: TContactCreateRequest
 ): Promise<Result<TContactResponse, ApiErrorResponseV2>> => {
-  const { environmentId, attributes } = contactData;
+  const { workspaceId, attributes } = contactData;
 
   try {
     const emailValue = attributes.email;
@@ -25,7 +24,7 @@ export const createContact = async (
     // Check for existing contact with same email
     const existingContactByEmail = await prisma.contact.findFirst({
       where: {
-        environmentId,
+        workspaceId,
         attributes: {
           some: {
             attributeKey: { key: "email" },
@@ -46,7 +45,7 @@ export const createContact = async (
     if (userId) {
       const existingContactByUserId = await prisma.contact.findFirst({
         where: {
-          environmentId,
+          workspaceId,
           attributes: {
             some: {
               attributeKey: { key: "userId" },
@@ -67,10 +66,10 @@ export const createContact = async (
     // Get all attribute keys that need to exist
     const attributeKeys = Object.keys(attributes);
 
-    // Check which attribute keys exist in the environment
+    // Check which attribute keys exist in the workspace
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
       where: {
-        environmentId,
+        workspaceId,
         key: { in: attributeKeys },
       },
     });
@@ -96,10 +95,8 @@ export const createContact = async (
       };
     });
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     const result = await prisma.contact.create({
       data: {
-        environmentId,
         workspaceId,
         attributes: {
           createMany: {
@@ -110,7 +107,6 @@ export const createContact = async (
       select: {
         id: true,
         createdAt: true,
-        environmentId: true,
         attributes: {
           include: {
             attributeKey: true,
@@ -128,7 +124,6 @@ export const createContact = async (
     const response: TContactResponse = {
       id: result.id,
       createdAt: result.createdAt,
-      environmentId: result.environmentId,
       workspaceId,
       attributes: flattenedAttributes,
     };

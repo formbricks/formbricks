@@ -41,7 +41,7 @@ describe("ActionClass Service", () => {
           type: "code",
           key: "key1",
           noCodeConfig: null,
-          environmentId: "env1",
+          workspaceId: "env1",
         },
       ];
       vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
@@ -78,7 +78,7 @@ describe("ActionClass Service", () => {
           elementSelector: { cssSelector: "button" },
           urlFilters: [],
         },
-        environmentId: "env2",
+        workspaceId: "env2",
       };
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(mockActionClass);
@@ -116,7 +116,7 @@ describe("ActionClass Service", () => {
         type: "code",
         key: "key3",
         noCodeConfig: null,
-        environmentId: "env3",
+        workspaceId: "env3",
       };
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(mockActionClass);
@@ -153,7 +153,7 @@ describe("ActionClass Service", () => {
         type: "code",
         key: "key4",
         noCodeConfig: null,
-        environmentId: "env4",
+        workspaceId: "env4",
       };
       if (!prisma.actionClass.delete) prisma.actionClass.delete = vi.fn();
       vi.mocked(prisma.actionClass.delete).mockResolvedValue(mockActionClass);

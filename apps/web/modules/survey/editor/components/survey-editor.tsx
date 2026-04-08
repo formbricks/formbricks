@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionClass, Environment, Language, OrganizationRole, Workspace } from "@prisma/client";
+import { ActionClass, Language, OrganizationRole, Workspace } from "@prisma/client";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -26,7 +26,7 @@ import { refetchWorkspaceAction } from "../actions";
 interface SurveyEditorProps {
   survey: TSurvey;
   workspace: Workspace;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  environment: { id: string; appSetupCompleted: boolean };
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -217,7 +217,7 @@ export const SurveyEditor = ({
           {activeView === "styling" && workspace.styling.allowStyleOverwrite && (
             <StylingView
               colors={colors}
-              environmentId={environment.id}
+              workspaceId={workspace.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               workspace={localWorkspace}

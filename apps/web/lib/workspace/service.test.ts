@@ -4,13 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
-import {
-  getUserWorkspaceEnvironmentsByOrganizationIds,
-  getUserWorkspaces,
-  getWorkspace,
-  getWorkspaceByEnvironmentId,
-  getWorkspaces,
-} from "./service";
+import { getUserWorkspaces, getWorkspace, getWorkspaces } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -49,7 +43,6 @@ describe("Workspace Service", () => {
       placement: WidgetPlacement.bottomRight,
       clickOutsideClose: true,
       overlay: "none",
-      environments: [],
       styling: {
         allowStyleOverwrite: true,
       },
@@ -89,68 +82,6 @@ describe("Workspace Service", () => {
     await expect(getWorkspace(createId())).rejects.toThrow(DatabaseError);
   });
 
-  test("getWorkspaceByEnvironmentId should return a workspace when it exists", async () => {
-    const mockWorkspace = {
-      id: createId(),
-      name: "Test Workspace",
-      organizationId: createId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      languages: ["en"],
-      recontactDays: 0,
-      linkSurveyBranding: true,
-      inAppSurveyBranding: true,
-      config: {
-        channel: null,
-        industry: null,
-      },
-      placement: WidgetPlacement.bottomRight,
-      clickOutsideClose: true,
-      overlay: "none",
-      environments: [],
-      styling: {
-        allowStyleOverwrite: true,
-      },
-      logo: null,
-      brandColor: null,
-      highlightBorderColor: null,
-    };
-
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue(mockWorkspace as unknown as Workspace);
-
-    const result = await getWorkspaceByEnvironmentId(createId());
-
-    expect(result).toEqual(mockWorkspace);
-    expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
-      where: {
-        environments: {
-          some: {
-            id: expect.any(String),
-          },
-        },
-      },
-      select: expect.any(Object),
-    });
-  });
-
-  test("getWorkspaceByEnvironmentId should return null when workspace does not exist", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue(null);
-
-    const result = await getWorkspaceByEnvironmentId(createId());
-
-    expect(result).toBeNull();
-  });
-
-  test("getWorkspaceByEnvironmentId should throw DatabaseError when prisma throws", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-      code: "P2002",
-      clientVersion: "5.0.0",
-    });
-    vi.mocked(prisma.workspace.findFirst).mockRejectedValue(prismaError);
-
-    await expect(getWorkspaceByEnvironmentId(createId())).rejects.toThrow(DatabaseError);
-  });
-
   test("getUserWorkspaces should return workspaces for admin user", async () => {
     const userId = createId();
     const organizationId = createId();
@@ -172,7 +103,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -197,7 +127,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -250,7 +179,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -323,7 +251,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -376,7 +303,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -401,7 +327,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -446,7 +371,6 @@ describe("Workspace Service", () => {
         placement: WidgetPlacement.bottomRight,
         clickOutsideClose: true,
         overlay: "none",
-        environments: [],
         styling: {
           allowStyleOverwrite: true,
         },
@@ -481,194 +405,5 @@ describe("Workspace Service", () => {
     vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
 
     await expect(getWorkspaces(organizationId)).rejects.toThrow(DatabaseError);
-  });
-
-  test("getWorkspacesByOrganizationIds should return workspaces for given organization IDs", async () => {
-    const organizationId1 = createId();
-    const organizationId2 = createId();
-    const userId = createId();
-    const mockWorkspaces = [
-      {
-        environments: [],
-      },
-      {
-        environments: [],
-      },
-    ];
-
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      {
-        userId,
-        organizationId: organizationId1,
-        role: "owner" as any,
-        accepted: true,
-      },
-      {
-        userId,
-        organizationId: organizationId2,
-        role: "owner" as any,
-        accepted: true,
-      },
-    ]);
-
-    vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
-
-    const result = await getUserWorkspaceEnvironmentsByOrganizationIds(
-      [organizationId1, organizationId2],
-      userId
-    );
-
-    expect(result).toEqual(mockWorkspaces);
-    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
-      where: {
-        OR: [{ organizationId: organizationId1 }, { organizationId: organizationId2 }],
-      },
-      select: { environments: true },
-    });
-  });
-
-  test("getWorkspacesByOrganizationIds should return empty array when no workspaces are found", async () => {
-    const organizationId1 = createId();
-    const organizationId2 = createId();
-    const userId = createId();
-
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      {
-        userId,
-        organizationId: organizationId1,
-        role: "owner" as any,
-        accepted: true,
-      },
-      {
-        userId,
-        organizationId: organizationId2,
-        role: "owner" as any,
-        accepted: true,
-      },
-    ]);
-
-    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
-
-    const result = await getUserWorkspaceEnvironmentsByOrganizationIds(
-      [organizationId1, organizationId2],
-      userId
-    );
-
-    expect(result).toEqual([]);
-    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
-      where: {
-        OR: [{ organizationId: organizationId1 }, { organizationId: organizationId2 }],
-      },
-      select: { environments: true },
-    });
-  });
-
-  test("getWorkspacesByOrganizationIds should throw DatabaseError when prisma throws", async () => {
-    const organizationId1 = createId();
-    const organizationId2 = createId();
-    const userId = createId();
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-      code: "P2002",
-      clientVersion: "5.0.0",
-    });
-
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      {
-        userId,
-        organizationId: organizationId1,
-        role: "owner" as any,
-        accepted: true,
-      },
-    ]);
-
-    vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
-
-    await expect(
-      getUserWorkspaceEnvironmentsByOrganizationIds([organizationId1, organizationId2], userId)
-    ).rejects.toThrow(DatabaseError);
-  });
-
-  test("getWorkspacesByOrganizationIds should throw ValidationError with wrong input", async () => {
-    const userId = createId();
-    await expect(getUserWorkspaceEnvironmentsByOrganizationIds(["wrong-id"], userId)).rejects.toThrow(
-      ValidationError
-    );
-  });
-
-  test("getWorkspacesByOrganizationIds should return empty array when user has no memberships", async () => {
-    const organizationId1 = createId();
-    const organizationId2 = createId();
-    const userId = createId();
-
-    // Mock no memberships found
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
-
-    const result = await getUserWorkspaceEnvironmentsByOrganizationIds(
-      [organizationId1, organizationId2],
-      userId
-    );
-
-    expect(result).toEqual([]);
-    expect(prisma.membership.findMany).toHaveBeenCalledWith({
-      where: {
-        userId,
-        organizationId: {
-          in: [organizationId1, organizationId2],
-        },
-      },
-    });
-    // Should not call workspace.findMany when no memberships
-    expect(prisma.workspace.findMany).not.toHaveBeenCalled();
-  });
-
-  test("getWorkspacesByOrganizationIds should handle member role with team access", async () => {
-    const organizationId1 = createId();
-    const organizationId2 = createId();
-    const userId = createId();
-    const mockWorkspaces = [
-      {
-        environments: [],
-      },
-    ];
-
-    // Mock membership where user is a member
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      {
-        userId,
-        organizationId: organizationId1,
-        role: "member" as any,
-        accepted: true,
-      },
-    ]);
-
-    vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
-
-    const result = await getUserWorkspaceEnvironmentsByOrganizationIds(
-      [organizationId1, organizationId2],
-      userId
-    );
-
-    expect(result).toEqual(mockWorkspaces);
-    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
-      where: {
-        OR: [
-          {
-            organizationId: organizationId1,
-            workspaceTeams: {
-              some: {
-                team: {
-                  teamUsers: {
-                    some: {
-                      userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        ],
-      },
-      select: { environments: true },
-    });
   });
 });

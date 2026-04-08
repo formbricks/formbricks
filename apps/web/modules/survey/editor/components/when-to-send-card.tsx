@@ -20,7 +20,6 @@ import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/a
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  environmentId: string;
   workspaceId: string;
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
@@ -28,7 +27,6 @@ interface WhenToSendCardProps {
 }
 
 export const WhenToSendCard = ({
-  environmentId,
   workspaceId,
   localSurvey,
   setLocalSurvey,
@@ -314,7 +312,6 @@ export const WhenToSendCard = ({
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
       <AddActionModal
-        environmentId={environmentId}
         workspaceId={workspaceId}
         open={isAddActionModalOpen}
         setOpen={setAddActionModalOpen}

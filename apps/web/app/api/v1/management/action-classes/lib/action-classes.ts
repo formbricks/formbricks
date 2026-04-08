@@ -18,7 +18,6 @@ const selectActionClass = {
   type: true,
   key: true,
   noCodeConfig: true,
-  environmentId: true,
   workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 

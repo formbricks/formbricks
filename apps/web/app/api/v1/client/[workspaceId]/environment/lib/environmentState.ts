@@ -15,23 +15,23 @@ import { getEnvironmentStateData } from "./data";
  * Uses withCache for Redis-backed caching with graceful fallback
  * Single database query via optimized data service
  *
- * @param environmentId - The environment ID to fetch state for
+ * @param workspaceId - The workspace ID to fetch state for
  * @returns The environment state
- * @throws ResourceNotFoundError if environment, organization, or workspace not found
+ * @throws ResourceNotFoundError if workspace not found
  */
 export const getEnvironmentState = async (
-  environmentId: string
+  workspaceId: string
 ): Promise<{ data: TJsEnvironmentState["data"] }> => {
   return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
-      const { environment, surveys, actionClasses } = await getEnvironmentStateData(environmentId);
+      const { workspace, surveys, actionClasses } = await getEnvironmentStateData(workspaceId);
 
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
-      if (!environment.appSetupCompleted) {
-        await prisma.environment.update({
-          where: { id: environmentId },
+      if (!workspace.appSetupCompleted) {
+        await prisma.workspace.update({
+          where: { id: workspaceId },
           data: { appSetupCompleted: true },
         });
       }
@@ -42,13 +42,13 @@ export const getEnvironmentState = async (
       const data = addLegacyProjectToEnvironmentState({
         surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
-        workspace: environment.workspace,
+        workspace,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       } as TJsEnvironmentState["data"]);
 
       return { data };
     },
-    createCacheKey.environment.state(environmentId),
+    createCacheKey.environment.state(workspaceId),
     60 * 1000 // 1 minute in milliseconds
   );
 };

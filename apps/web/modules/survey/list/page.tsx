@@ -82,7 +82,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       <>
         <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
         <SurveysList
-          environmentId={environment.id}
+          workspaceId={workspace.id}
           isReadOnly={isReadOnly}
           publicDomain={publicDomain}
           userId={session.user.id}

@@ -3,9 +3,7 @@ import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
-export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({
-  environmentId: z.cuid2().optional().describe("The environment ID to filter by"),
-})
+export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({})
   .refine(
     (data) => {
       if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -25,7 +23,6 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
   name: true,
   description: true,
-  environmentId: true,
   workspaceId: true,
 })
   .extend({
@@ -56,7 +53,6 @@ export const ZContactAttributeKeyCreateInput = ZContactAttributeKey.pick({
   description: true,
 })
   .extend({
-    environmentId: z.cuid2(),
     workspaceId: z.cuid2(),
     dataType: ZContactAttributeKey.shape.dataType.optional(),
   })

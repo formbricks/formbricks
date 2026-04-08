@@ -67,9 +67,8 @@ export const ViewPermissionModal = ({
   const { t } = useTranslation();
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
 
-  const getWorkspaceName = (environmentId: string) => {
-    return workspaces.find((workspace) => workspace.environments.find((env) => env.id === environmentId))
-      ?.name;
+  const getWorkspaceName = (workspaceId: string) => {
+    return workspaces.find((workspace) => workspace.id === workspaceId)?.name;
   };
 
   const updateApiKey = async () => {
@@ -106,7 +105,7 @@ export const ViewPermissionModal = ({
                 <div className="space-y-2">
                   {apiKey.apiKeyEnvironments?.map((permission) => {
                     return (
-                      <div key={permission.environmentId} className="flex items-center gap-2">
+                      <div key={permission.workspaceId} className="flex items-center gap-2">
                         {/* Workspace dropdown */}
                         <div className="w-1/2">
                           <DropdownMenu>
@@ -116,7 +115,7 @@ export const ViewPermissionModal = ({
                                 className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left">
-                                    {getWorkspaceName(permission.environmentId)}
+                                    {getWorkspaceName(permission.workspaceId)}
                                   </span>
                                 </span>
                               </button>

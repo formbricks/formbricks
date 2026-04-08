@@ -1,5 +1,5 @@
 /**
- * V3 API auth — session (browser) or API key with environment-scoped access.
+ * V3 API auth — session (browser) or API key with workspace-scoped access.
  */
 import { ApiKeyPermission } from "@prisma/client";
 import { logger } from "@formbricks/logger";
@@ -30,7 +30,7 @@ function apiKeyPermissionAllows(permission: ApiKeyPermission, minPermission: TTe
 /**
  * Require session and workspace access. workspaceId is resolved via the V3 workspace-context layer.
  * Returns a Response (401 or 403) on failure, or the resolved workspace context on success so callers
- * use internal IDs (environmentId, workspaceId, organizationId) without resolving again.
+ * use internal IDs (workspaceId, organizationId) without resolving again.
  * We use 403 (not 404) when the workspace is not found to avoid leaking resource existence.
  */
 export async function requireSessionWorkspaceAccess(
@@ -52,7 +52,7 @@ export async function requireSessionWorkspaceAccess(
   const log = logger.withContext({ requestId, workspaceId });
 
   try {
-    // Resolve workspaceId → environmentId, workspaceId, organizationId (single place to change when Workspace exists).
+    // Resolve workspaceId → workspaceId, organizationId (single place to change when Workspace exists).
     const context = await resolveV3WorkspaceContext(workspaceId);
 
     // Org + workspace-team access; we use internal IDs from context.
@@ -93,13 +93,13 @@ export async function requireV3WorkspaceAccess(
   }
 
   const keyAuth = authentication as TAuthenticationApiKey;
-  if (keyAuth.apiKeyId && Array.isArray(keyAuth.environmentPermissions)) {
+  if (keyAuth.apiKeyId && Array.isArray(keyAuth.workspacePermissions)) {
     const log = logger.withContext({ requestId, workspaceId, apiKeyId: keyAuth.apiKeyId });
 
     try {
       const context = await resolveV3WorkspaceContext(workspaceId);
-      const permission = keyAuth.environmentPermissions.find(
-        (environmentPermission) => environmentPermission.environmentId === context.environmentId
+      const permission = keyAuth.workspacePermissions.find(
+        (workspacePermission) => workspacePermission.workspaceId === context.workspaceId
       );
 
       if (!permission || !apiKeyPermissionAllows(permission.permission, minPermission)) {

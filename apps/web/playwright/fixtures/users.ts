@@ -29,14 +29,13 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
 export const createUserFixture = (
   user: Prisma.UserGetPayload<{ include: { memberships: true } }>,
   page: Page,
-  ids?: { workspaceId: string; environmentId: string }
+  ids?: { workspaceId: string }
 ) => {
   return {
     login: async () => {
       await login(user, page);
     },
     workspaceId: ids?.workspaceId,
-    environmentId: ids?.environmentId,
   };
 };
 
@@ -93,9 +92,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                     workspaces: {
                       create: {
                         name: params?.workspaceName ?? "My Workspace",
-                        environments: {
-                          create: [{ type: "production" }],
-                        },
                       },
                     },
                   }),
@@ -108,12 +104,11 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
         include: { memberships: true },
       });
 
-      // Create default attribute keys for each environment and collect IDs for tests
-      let ids: { workspaceId: string; environmentId: string } | undefined;
+      // Collect workspace ID for tests
+      let ids: { workspaceId: string } | undefined;
       if (!params?.withoutWorkspace) {
         const workspace = await prisma.workspace.findFirst({
           where: { organizationId: user.memberships[0].organizationId },
-          include: { environments: true },
         });
 
         if (workspace) {
@@ -124,19 +119,14 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
             { name: "userId", key: "userId", isUnique: true, type: "default" as const },
           ];
 
-          for (const env of workspace.environments) {
-            await prisma.contactAttributeKey.createMany({
-              data: defaultKeys.map((k) => ({
-                ...k,
-                environmentId: env.id,
-                workspaceId: workspace.id,
-              })),
-            });
-          }
+          await prisma.contactAttributeKey.createMany({
+            data: defaultKeys.map((k) => ({
+              ...k,
+              workspaceId: workspace.id,
+            })),
+          });
 
-          if (workspace.environments[0]) {
-            ids = { workspaceId: workspace.id, environmentId: workspace.environments[0].id };
-          }
+          ids = { workspaceId: workspace.id };
         }
       }
 

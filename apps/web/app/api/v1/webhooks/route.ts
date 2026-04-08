@@ -15,7 +15,7 @@ export const GET = withV1ApiWrapper({
 
     try {
       const workspaceIds = [
-        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
       const webhooks = await getWebhooks(workspaceIds);
       return {
@@ -48,7 +48,7 @@ export const POST = withV1ApiWrapper({
     }
 
     // Accept workspaceId as alternative to environmentId
-    const resolved = await resolveBodyIds(webhookInput, authentication.environmentPermissions, "POST");
+    const resolved = await resolveBodyIds(webhookInput, authentication.workspacePermissions, "POST");
     if (!resolved.ok) return { response: resolved.response };
     webhookInput = resolved.body;
 
@@ -68,7 +68,7 @@ export const POST = withV1ApiWrapper({
 
     if (
       !resolved.alreadyAuthorized &&
-      !hasPermission(authentication.environmentPermissions, workspaceId, "POST")
+      !hasPermission(authentication.workspacePermissions, workspaceId, "POST")
     ) {
       return {
         response: responses.unauthorizedResponse(),

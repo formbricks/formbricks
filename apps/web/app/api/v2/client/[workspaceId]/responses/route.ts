@@ -54,11 +54,10 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (!resolved) {
     return responses.notFoundResponse("Workspace", params.workspaceId);
   }
-  const { environmentId, workspaceId } = resolved;
+  const { workspaceId } = resolved;
 
   const responseInputValidation = ZResponseInputV2.safeParse({
     ...responseInput,
-    environmentId,
     workspaceId,
   });
 
@@ -168,7 +167,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   sendToPipeline({
     event: "responseCreated",
-    environmentId,
     workspaceId,
     surveyId: responseData.surveyId,
     response: responseData,
@@ -177,7 +175,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (responseData.finished) {
     sendToPipeline({
       event: "responseFinished",
-      environmentId,
       workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,

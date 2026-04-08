@@ -1,14 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
+import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import { hasPermission, hasWorkspacePermission } from "./utils";
 
 describe("hasPermission", () => {
   const wsId = "workspace1";
   test("returns true for manage permission (all methods)", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "manage",
@@ -22,10 +20,8 @@ describe("hasPermission", () => {
   });
 
   test("returns true for write permission (read/write), false for delete", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "write",
@@ -39,10 +35,8 @@ describe("hasPermission", () => {
   });
 
   test("returns true for read permission (GET), false for others", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "read",
@@ -56,10 +50,8 @@ describe("hasPermission", () => {
   });
 
   test("returns false if no permissions or workspace entry", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: "other-workspace",
         workspaceName: "Other",
         permission: "manage",
@@ -71,10 +63,8 @@ describe("hasPermission", () => {
   });
 
   test("returns false for unknown permission", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "unknown" as any,
@@ -88,10 +78,8 @@ describe("hasWorkspacePermission", () => {
   const wsId = "workspace1";
 
   test("returns true for manage permission (all methods)", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "manage",
@@ -105,10 +93,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns true for write permission (read/write), false for delete", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "write",
@@ -122,10 +108,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns true for read permission (GET only)", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "read",
@@ -136,11 +120,9 @@ describe("hasWorkspacePermission", () => {
     expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(false);
   });
 
-  test("uses production environment permission", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+  test("uses workspace permission", () => {
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "read",
@@ -152,10 +134,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns false if no permissions for the workspace", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: "other-workspace",
         workspaceName: "Other",
         permission: "manage",
@@ -170,10 +150,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns false for unknown permission value", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "unknown" as any,
@@ -187,10 +165,8 @@ describe("hasWorkspacePermission", () => {
   const wsId = "workspace1";
 
   test("returns true for manage permission (all methods)", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "manage",
@@ -204,10 +180,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns true for write permission (read/write), false for delete", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "write",
@@ -221,10 +195,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns true for read permission (GET only)", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "read",
@@ -235,11 +207,9 @@ describe("hasWorkspacePermission", () => {
     expect(hasWorkspacePermission(permissions, wsId, "DELETE")).toBe(false);
   });
 
-  test("uses production environment permission", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+  test("uses workspace permission", () => {
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "read",
@@ -251,10 +221,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns false if no permissions for the workspace", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: "other-workspace",
         workspaceName: "Other",
         permission: "manage",
@@ -269,10 +237,8 @@ describe("hasWorkspacePermission", () => {
   });
 
   test("returns false for unknown permission value", () => {
-    const permissions: TAPIKeyEnvironmentPermission[] = [
+    const permissions: TAPIKeyWorkspacePermission[] = [
       {
-        environmentId: "env1",
-        environmentType: "production",
         workspaceId: wsId,
         workspaceName: "Workspace One",
         permission: "unknown" as any,

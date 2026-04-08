@@ -13,7 +13,7 @@ interface SurveyBgSelectorTabProps {
   handleBgChange: (bg: string, bgType: string) => void;
   colors: string[];
   bgType: string | null | undefined;
-  environmentId: string;
+  workspaceId: string;
   isUnsplashConfigured: boolean;
   bg: string;
   isStorageConfigured: boolean;
@@ -24,7 +24,7 @@ export const SurveyBgSelectorTab = ({
   colors,
   bgType,
   bg,
-  environmentId,
+  workspaceId,
   isUnsplashConfigured,
   isStorageConfigured = true,
 }: SurveyBgSelectorTabProps) => {
@@ -77,7 +77,7 @@ export const SurveyBgSelectorTab = ({
       case "upload":
         return (
           <UploadImageSurveyBg
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             handleBgChange={handleBgChange}
             background={uploadBackground}
             isStorageConfigured={isStorageConfigured}

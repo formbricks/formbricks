@@ -56,10 +56,10 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const { environmentId } = resolved;
+      const { workspaceId } = resolved;
 
       // Use optimized environment state fetcher with new caching approach
-      const environmentState = await getEnvironmentState(environmentId);
+      const environmentState = await getEnvironmentState(workspaceId);
       const { data } = environmentState;
 
       return {

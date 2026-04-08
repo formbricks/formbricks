@@ -94,7 +94,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
       // Need to fetch workspace for error page - fetch environmentContext for it
-      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.workspaceId);
       return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
     }
     singleUseId = validatedSingleUseId;
@@ -102,7 +102,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
 
   // Stage 2: Parallel fetch of all remaining data
   const [environmentContext, locale, singleUseResponse] = await Promise.all([
-    getEnvironmentContextForLinkSurvey(survey.environmentId),
+    getEnvironmentContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Only fetch single-use response if we have a validated ID
     isSingleUseSurvey && singleUseId

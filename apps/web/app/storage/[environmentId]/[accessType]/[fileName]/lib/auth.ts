@@ -2,13 +2,13 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const authorizePrivateDownload = async (
   request: NextRequest,
-  environmentId: string,
+  workspaceId: string,
   action: "GET" | "DELETE"
 ): Promise<
   Result<
@@ -21,7 +21,7 @@ export const authorizePrivateDownload = async (
   const session = await getServerSession(authOptions);
 
   if (session?.user) {
-    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+    const isUserAuthorized = await hasUserWorkspaceAccess(session.user.id, workspaceId);
     if (!isUserAuthorized) {
       return err({
         unauthorized: true,
@@ -41,8 +41,7 @@ export const authorizePrivateDownload = async (
     });
   }
 
-  const perm = auth.environmentPermissions.find((p) => p.environmentId === environmentId);
-  if (!perm || !hasPermission(auth.environmentPermissions, perm.workspaceId, action)) {
+  if (!hasPermission(auth.workspacePermissions, workspaceId, action)) {
     return err({
       unauthorized: true,
     });

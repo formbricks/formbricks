@@ -4,12 +4,13 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
-import { getUserWorkspaces, getWorkspaceWithLanguagesByEnvironmentId } from "./workspace";
+import { getUserWorkspaces, getWorkspaceWithLanguages } from "./workspace";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workspace: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       findMany: vi.fn(),
     },
     membership: {
@@ -23,25 +24,21 @@ describe("Workspace module", () => {
     vi.resetAllMocks();
   });
 
-  describe("getWorkspaceWithLanguagesByEnvironmentId", () => {
+  describe("getWorkspaceWithLanguages", () => {
     test("should return workspace with languages when successful", async () => {
       const mockWorkspace: TWorkspaceWithLanguages = {
         id: "workspace-id",
         languages: [{ language: { id: "lang-1", code: "en" } }],
       } as any;
 
-      vi.mocked(prisma.workspace.findFirst).mockResolvedValueOnce(mockWorkspace as any);
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(mockWorkspace as any);
 
-      const result = await getWorkspaceWithLanguagesByEnvironmentId("env-id");
+      const result = await getWorkspaceWithLanguages("workspace-id");
 
       expect(result).toEqual(mockWorkspace);
-      expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
+      expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
         where: {
-          environments: {
-            some: {
-              id: "env-id",
-            },
-          },
+          id: "workspace-id",
         },
         select: {
           id: true,
@@ -51,9 +48,9 @@ describe("Workspace module", () => {
     });
 
     test("should return null when no workspace is found", async () => {
-      vi.mocked(prisma.workspace.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(null);
 
-      const result = await getWorkspaceWithLanguagesByEnvironmentId("env-id");
+      const result = await getWorkspaceWithLanguages("workspace-id");
 
       expect(result).toBeNull();
     });
@@ -64,17 +61,17 @@ describe("Workspace module", () => {
         code: "P2002",
       });
 
-      vi.mocked(prisma.workspace.findFirst).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.workspace.findUnique).mockRejectedValueOnce(prismaError);
 
-      await expect(getWorkspaceWithLanguagesByEnvironmentId("env-id")).rejects.toThrow(DatabaseError);
+      await expect(getWorkspaceWithLanguages("workspace-id")).rejects.toThrow(DatabaseError);
     });
 
     test("should rethrow unknown errors", async () => {
       const error = new Error("Unknown error");
 
-      vi.mocked(prisma.workspace.findFirst).mockRejectedValueOnce(error);
+      vi.mocked(prisma.workspace.findUnique).mockRejectedValueOnce(error);
 
-      await expect(getWorkspaceWithLanguagesByEnvironmentId("env-id")).rejects.toThrow("Unknown error");
+      await expect(getWorkspaceWithLanguages("workspace-id")).rejects.toThrow("Unknown error");
     });
   });
 
@@ -110,12 +107,6 @@ describe("Workspace module", () => {
         select: {
           id: true,
           name: true,
-          environments: {
-            select: {
-              id: true,
-              type: true,
-            },
-          },
         },
       });
     });
@@ -156,12 +147,6 @@ describe("Workspace module", () => {
         select: {
           id: true,
           name: true,
-          environments: {
-            select: {
-              id: true,
-              type: true,
-            },
-          },
         },
       });
     });

@@ -39,7 +39,7 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Workspace", params.workspaceId),
       };
     }
-    const { environmentId, workspaceId } = resolved;
+    const { workspaceId } = resolved;
 
     let jsonInput: TUploadPrivateFileRequest;
 
@@ -54,7 +54,6 @@ export const POST = withV1ApiWrapper({
 
     const parsedInputResult = ZUploadPrivateFileRequest.safeParse({
       ...jsonInput,
-      environmentId,
       workspaceId,
     });
 
@@ -88,7 +87,7 @@ export const POST = withV1ApiWrapper({
 
     if (!organization) {
       return {
-        response: responses.notFoundResponse("OrganizationByEnvironmentId", environmentId),
+        response: responses.notFoundResponse("OrganizationByWorkspaceId", workspaceId),
       };
     }
 

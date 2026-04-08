@@ -15,7 +15,6 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface AddActionModalProps {
-  environmentId: string;
   workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
@@ -24,7 +23,6 @@ interface AddActionModalProps {
 }
 
 export const AddActionModal = ({
-  environmentId,
   workspaceId,
   actionClasses,
   isReadOnly,
@@ -48,7 +46,6 @@ export const AddActionModal = ({
         <DialogBody>
           <CreateNewActionTab
             actionClasses={newActionClasses}
-            environmentId={environmentId}
             workspaceId={workspaceId}
             isReadOnly={isReadOnly}
             setActionClasses={setNewActionClasses}

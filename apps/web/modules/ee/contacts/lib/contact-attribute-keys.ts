@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 
 export const getContactAttributeKeys = reactCache(
@@ -16,31 +15,29 @@ export const getContactAttributeKeys = reactCache(
 
 export const getContactAttributeKeyById = async (
   id: string
-): Promise<Pick<TContactAttributeKey, "id" | "environmentId" | "type" | "name" | "description"> | null> => {
+): Promise<Pick<TContactAttributeKey, "id" | "workspaceId" | "type" | "name" | "description"> | null> => {
   const key = await prisma.contactAttributeKey.findUnique({
     where: { id },
-    select: { id: true, environmentId: true, type: true, name: true, description: true },
+    select: { id: true, workspaceId: true, type: true, name: true, description: true },
   });
 
   return key;
 };
 
 export const createContactAttributeKey = async (data: {
-  environmentId: string;
+  workspaceId: string;
   key: string;
   name?: string;
   description?: string;
   dataType?: TContactAttributeDataType;
 }): Promise<TContactAttributeKey> => {
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(data.environmentId);
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,
         name: data.name ?? formatSnakeCaseToTitleCase(data.key),
         description: data.description ?? null,
-        environmentId: data.environmentId,
-        workspaceId,
+        workspaceId: data.workspaceId,
         type: "custom",
         ...(data.dataType && { dataType: data.dataType }),
       },

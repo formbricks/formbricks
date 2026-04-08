@@ -6,7 +6,7 @@ import { ResourceNotFoundError, ValidationError } from "@formbricks/types/errors
 import { TJsPersonState } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
@@ -64,14 +64,14 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
+      // Resolve: accepts a workspaceId
       const resolved = await resolveClientApiIds(idParam);
       if (!resolved) {
         return {
-          response: responses.notFoundResponse("Environment", idParam),
+          response: responses.notFoundResponse("Workspace", idParam),
         };
       }
-      const { environmentId } = resolved;
+      const { workspaceId } = resolved;
 
       const jsonInput = await req.json();
 
@@ -99,7 +99,7 @@ export const POST = withV1ApiWrapper({
 
       const { userId, attributes } = jsonInput;
 
-      const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
         return {
@@ -124,7 +124,7 @@ export const POST = withV1ApiWrapper({
         state: userState,
         messages,
         errors,
-      } = await updateUser(environmentId, userId, deviceType, attributeUpdatesToSend ?? undefined);
+      } = await updateUser(workspaceId, userId, deviceType, attributeUpdatesToSend ?? undefined);
 
       // Build response (simplified structure)
       const responseJson: { state: TJsPersonState; messages?: string[]; errors?: string[] } = {

@@ -3,7 +3,6 @@ import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/cont
 import { getContactAttributeKeysQuery } from "../utils";
 
 describe("getContactAttributeKeysQuery", () => {
-  const environmentId = "env-123";
   const baseParams: TGetContactAttributeKeysFilter = {
     limit: 10,
     skip: 0,
@@ -15,7 +14,7 @@ describe("getContactAttributeKeysQuery", () => {
     vi.clearAllMocks();
   });
 
-  test("returns query with environmentId in array when no params are provided", () => {
+  test("returns query with workspaceId in array when no params are provided", () => {
     const environmentIds = ["env-1", "env-2"];
     const result = getContactAttributeKeysQuery(environmentIds);
 
@@ -32,7 +31,6 @@ describe("getContactAttributeKeysQuery", () => {
     const environmentIds = ["env-1", "env-2"];
     const params: TGetContactAttributeKeysFilter = {
       ...baseParams,
-      environmentId,
     };
     const result = getContactAttributeKeysQuery(environmentIds, params);
 
@@ -56,7 +54,6 @@ describe("getContactAttributeKeysQuery", () => {
 
     const params: TGetContactAttributeKeysFilter = {
       ...baseParams,
-      environmentId,
       startDate,
       endDate,
     };
@@ -82,7 +79,6 @@ describe("getContactAttributeKeysQuery", () => {
   test("handles multiple filter parameters correctly", () => {
     const environmentIds = ["env-1", "env-2"];
     const params: TGetContactAttributeKeysFilter = {
-      environmentId,
       limit: 5,
       skip: 10,
       sortBy: "updatedAt",

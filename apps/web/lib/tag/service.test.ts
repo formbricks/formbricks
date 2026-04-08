@@ -3,12 +3,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TTag } from "@formbricks/types/tags";
-import { TagError } from "@/modules/workspaces/settings/types/tag";
+import { TagError } from "../../modules/workspaces/settings/types/tag";
 import { createTag, getTag, getTagsByWorkspaceId } from "./service";
 
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
+vi.mock("server-only", () => ({}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -18,6 +16,10 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
     },
   },
+}));
+
+vi.mock("../utils/validate", () => ({
+  validateInputs: vi.fn(),
 }));
 
 describe("Tag Service", () => {
@@ -31,7 +33,7 @@ describe("Tag Service", () => {
         {
           id: "tag1",
           name: "Tag 1",
-          environmentId: "env1",
+          workspaceId: "env1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -55,7 +57,7 @@ describe("Tag Service", () => {
         {
           id: "tag1",
           name: "Tag 1",
-          environmentId: "env1",
+          workspaceId: "env1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -80,7 +82,7 @@ describe("Tag Service", () => {
       const mockTag: TTag = {
         id: "tag1",
         name: "Tag 1",
-        environmentId: "env1",
+        workspaceId: "env1",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -109,19 +111,19 @@ describe("Tag Service", () => {
       const mockTag: TTag = {
         id: "tag1",
         name: "New Tag",
-        environmentId: "env1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        workspaceId: "workspace-id-mock",
       };
 
       vi.mocked(prisma.tag.create).mockResolvedValue(mockTag);
 
-      const result = await createTag("env1", "New Tag");
+      const result = await createTag("workspace-id-mock", "New Tag");
       expect(result).toEqual({ ok: true, data: mockTag });
       expect(prisma.tag.create).toHaveBeenCalledWith({
         data: {
           name: "New Tag",
-          environmentId: "env1",
+          workspaceId: "workspace-id-mock",
         },
       });
     });

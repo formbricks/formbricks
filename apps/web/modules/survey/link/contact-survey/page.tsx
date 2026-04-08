@@ -15,7 +15,7 @@ import {
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
-import { getWorkspaceByEnvironmentId } from "@/modules/survey/link/lib/workspace";
+import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -49,7 +49,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     }
 
     // Fetch organization whitelabel data for custom favicon
-    const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+    const environmentContext = await getEnvironmentContextForLinkSurvey(survey.workspaceId);
     const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
     const brandColor = getMetadataBrandColor(environmentContext.workspace.styling, survey.styling);
@@ -108,7 +108,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (existingResponse) {
     const survey = await getSurvey(surveyId);
     if (survey) {
-      const workspace = await getWorkspaceByEnvironmentId(survey.environmentId);
+      const workspace = await getWorkspaceById(survey.workspaceId);
       return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
     }
     return <SurveyInactive status="response submitted" />;
@@ -129,7 +129,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.workspaceId);
       return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
     }
 
@@ -138,7 +138,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   // Parallel fetch of environment context and locale
   const [environmentContext, locale, singleUseResponse] = await Promise.all([
-    getEnvironmentContextForLinkSurvey(survey.environmentId),
+    getEnvironmentContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Fetch existing response for this contact
     getExistingContactResponse(survey.id, contactId)(),

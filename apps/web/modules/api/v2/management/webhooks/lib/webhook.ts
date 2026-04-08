@@ -51,7 +51,7 @@ export const getWebhooks = async (
 };
 
 export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webhook, ApiErrorResponseV2>> => {
-  const { environmentId, workspaceId, name, url, source, triggers, surveyIds } = webhook;
+  const { workspaceId, name, url, source, triggers, surveyIds } = webhook;
 
   try {
     await validateWebhookUrl(url);
@@ -72,11 +72,6 @@ export const createWebhook = async (webhook: TWebhookInput): Promise<Result<Webh
     const secret = generateWebhookSecret();
 
     const prismaData: Prisma.WebhookCreateInput = {
-      environment: {
-        connect: {
-          id: environmentId,
-        },
-      },
       workspace: {
         connect: {
           id: workspaceId,

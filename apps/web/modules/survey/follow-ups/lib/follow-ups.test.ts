@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -13,7 +13,7 @@ import { getSurveyFollowUpsPermission } from "./utils";
 
 // Mock all dependencies
 vi.mock("@/lib/organization/service", () => ({
-  getOrganizationByEnvironmentId: vi.fn(),
+  getOrganizationByWorkspaceId: vi.fn(),
 }));
 
 vi.mock("@/lib/response/service", () => ({
@@ -49,7 +49,7 @@ describe("Follow-ups", () => {
 
   const mockSurvey = {
     id: "survey1",
-    environmentId: "env1",
+    workspaceId: "ws1",
     followUps: [
       {
         id: "followup1",
@@ -90,10 +90,10 @@ describe("Follow-ups", () => {
     vi.clearAllMocks();
     vi.mocked(getResponse).mockResolvedValue(mockResponse);
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(mockOrganization);
     vi.mocked(getSurveyFollowUpsPermission).mockResolvedValue(true);
     vi.mocked(sendFollowUpEmail).mockResolvedValue(undefined);
-    vi.mocked(applyRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
   });
 
   afterEach(() => {
@@ -154,7 +154,7 @@ describe("Follow-ups", () => {
     });
 
     test("should return error when organization is not found", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(null);
 
       const result = await sendFollowUpsForResponse("response1");
 
@@ -163,7 +163,7 @@ describe("Follow-ups", () => {
         expect(result.error).toEqual({
           code: FollowUpSendError.ORG_NOT_FOUND,
           message: "Organization not found",
-          meta: { responseId: "response1", surveyId: "survey1", environmentId: "env1" },
+          meta: { responseId: "response1", surveyId: "survey1", workspaceId: "ws1" },
         });
       }
     });

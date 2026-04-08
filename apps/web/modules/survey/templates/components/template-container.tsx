@@ -1,6 +1,6 @@
 "use client";
 
-import type { Environment, Workspace } from "@prisma/client";
+import type { Workspace } from "@prisma/client";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TTemplate } from "@formbricks/types/templates";
@@ -13,7 +13,7 @@ import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  environment: { id: string; appSetupCompleted: boolean };
   userId: string;
   isTemplatePage?: boolean;
   publicDomain: string;
@@ -55,7 +55,7 @@ export const TemplateContainerWithPreview = ({
             </div>
           </div>
           <TemplateList
-            environmentId={environment.id}
+            workspaceId={workspace.id}
             workspace={workspace}
             userId={userId}
             templateSearch={templateSearch ?? ""}

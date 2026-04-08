@@ -1,38 +1,37 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
-import { fetchWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/services";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "../../types/api-error";
 import { getWorkspaceId, getWorkspaceIdFromSurveyIds } from "../helper";
-import { fetchWorkspaceId } from "../services";
+import { fetchWorkspaceId, fetchWorkspaceIdFromSurveyIds } from "../services";
 
 vi.mock("../services", () => ({
   fetchWorkspaceId: vi.fn(),
   fetchWorkspaceIdFromSurveyIds: vi.fn(),
 }));
 
-describe("Tests for getEnvironmentId", () => {
-  test("should return environmentId and workspaceId for surveyId", async () => {
-    vi.mocked(fetchWorkspaceId).mockResolvedValue(ok({ environmentId: "env-id", workspaceId: "ws-id" }));
+describe("Tests for getWorkspaceId", () => {
+  test("should return workspaceId for surveyId", async () => {
+    vi.mocked(fetchWorkspaceId).mockResolvedValue(ok({ workspaceId: "ws-id" }));
 
     const result = await getWorkspaceId("survey-id", false);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data).toEqual({ environmentId: "env-id", workspaceId: "ws-id" });
+      expect(result.data).toEqual({ workspaceId: "ws-id" });
     }
   });
 
-  test("should return environmentId and workspaceId for responseId", async () => {
-    vi.mocked(fetchWorkspaceId).mockResolvedValue(ok({ environmentId: "env-id", workspaceId: "ws-id" }));
+  test("should return workspaceId for responseId", async () => {
+    vi.mocked(fetchWorkspaceId).mockResolvedValue(ok({ workspaceId: "ws-id" }));
 
     const result = await getWorkspaceId("response-id", true);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data).toEqual({ environmentId: "env-id", workspaceId: "ws-id" });
+      expect(result.data).toEqual({ workspaceId: "ws-id" });
     }
   });
 
-  test("should return error if getSurveyAndEnvironmentId fails", async () => {
+  test("should return error if fetchWorkspaceId fails", async () => {
     vi.mocked(fetchWorkspaceId).mockResolvedValue(
       err({ type: "not_found" } as unknown as ApiErrorResponseV2)
     );

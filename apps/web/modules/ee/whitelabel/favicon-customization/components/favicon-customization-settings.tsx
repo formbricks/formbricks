@@ -32,7 +32,7 @@ const MAX_FAVICON_SIZE_MB = 0.1; // 100KB
 interface FaviconCustomizationSettingsProps {
   organization: TOrganization;
   hasWhiteLabelPermission: boolean;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
 }
@@ -40,7 +40,7 @@ interface FaviconCustomizationSettingsProps {
 export const FaviconCustomizationSettings = ({
   organization,
   hasWhiteLabelPermission,
-  environmentId,
+  workspaceId,
   isReadOnly,
   isStorageConfigured,
 }: FaviconCustomizationSettingsProps) => {
@@ -59,7 +59,7 @@ export const FaviconCustomizationSettings = ({
   const handleImageUpload = async (file: File) => {
     setIsLoading(true);
     try {
-      const uploadResult = await handleFileUpload(file, environmentId, allowedFileExtensions);
+      const uploadResult = await handleFileUpload(file, workspaceId, allowedFileExtensions);
       if (uploadResult.error) {
         toast.error(uploadResult.error);
         return;
@@ -179,7 +179,7 @@ export const FaviconCustomizationSettings = ({
             <FileInput
               id="favicon-input"
               allowedFileExtensions={allowedFileExtensions}
-              environmentId={environmentId}
+              workspaceId={workspaceId}
               onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
                 if (files?.[0]) {
                   setFaviconUrl(files[0]);

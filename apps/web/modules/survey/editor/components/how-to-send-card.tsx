@@ -1,7 +1,6 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  environment: { id: string; appSetupCompleted: boolean };
 }
 
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
@@ -51,7 +50,6 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         id: "temp",
         isPrivate: true,
         title: localSurvey.id,
-        environmentId: environment.id,
         workspaceId: localSurvey.workspaceId,
         surveys: [localSurvey.id],
         filters: [],

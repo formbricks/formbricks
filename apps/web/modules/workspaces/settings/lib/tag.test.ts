@@ -12,7 +12,7 @@ const baseTag: TTag = {
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Tag1",
-  environmentId: "clenv1234567890",
+  workspaceId: "clwsp1234567890",
 };
 
 const newTag: TTag = {

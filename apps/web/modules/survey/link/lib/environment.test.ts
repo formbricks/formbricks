@@ -8,7 +8,7 @@ import { getEnvironmentContextForLinkSurvey } from "./environment";
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    environment: {
+    workspace: {
       findUnique: vi.fn(),
     },
   },
@@ -24,41 +24,40 @@ describe("getEnvironmentContextForLinkSurvey", () => {
     vi.resetAllMocks();
   });
 
-  test("should successfully fetch environment context with all required data", async () => {
-    const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9i";
+  test("should successfully fetch workspace context with all required data", async () => {
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9j";
     const mockData = {
-      workspace: {
-        id: "clh1a2b3c4d5e6f7g8h9j",
-        name: "Test Workspace",
-        styling: { primaryColor: "#000000" },
-        logo: { url: "https://example.com/logo.png" },
-        linkSurveyBranding: true,
-        customHeadScripts: null,
-        organizationId: "clh1a2b3c4d5e6f7g8h9k",
-        organization: {
-          id: "clh1a2b3c4d5e6f7g8h9k",
-          billing: {
-            stripeCustomerId: null,
-            limits: {
-              monthly: {
-                responses: 100,
-              },
-              workspaces: 3,
+      id: mockWorkspaceId,
+      name: "Test Workspace",
+      styling: { primaryColor: "#000000" },
+      logo: { url: "https://example.com/logo.png" },
+      linkSurveyBranding: true,
+      customHeadScripts: null,
+      organizationId: "clh1a2b3c4d5e6f7g8h9k",
+      organization: {
+        id: "clh1a2b3c4d5e6f7g8h9k",
+        billing: {
+          stripeCustomerId: null,
+          limits: {
+            monthly: {
+              responses: 100,
             },
-            usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+            workspaces: 3,
           },
-          whitelabel: null,
+          usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+          stripe: null,
         },
+        whitelabel: null,
       },
     };
 
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockData as any);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
 
-    const result = await getEnvironmentContextForLinkSurvey(mockEnvironmentId);
+    const result = await getEnvironmentContextForLinkSurvey(mockWorkspaceId);
 
     expect(result).toEqual({
       workspace: {
-        id: "clh1a2b3c4d5e6f7g8h9j",
+        id: mockWorkspaceId,
         name: "Test Workspace",
         styling: { primaryColor: "#000000" },
         logo: { url: "https://example.com/logo.png" },
@@ -66,150 +65,135 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         customHeadScripts: null,
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9k",
-      organizationBilling: mockData.workspace.organization.billing,
+      organizationBilling: {
+        stripeCustomerId: null,
+        limits: {
+          monthly: { responses: 100 },
+          workspaces: 3,
+        },
+        usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+      },
       organizationWhitelabel: null,
     });
 
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: mockEnvironmentId },
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
       select: {
-        workspace: {
+        id: true,
+        name: true,
+        styling: true,
+        logo: true,
+        linkSurveyBranding: true,
+        customHeadScripts: true,
+        organizationId: true,
+        organization: {
           select: {
             id: true,
-            name: true,
-            styling: true,
-            logo: true,
-            linkSurveyBranding: true,
-            customHeadScripts: true,
-            organizationId: true,
-            organization: {
+            billing: {
               select: {
-                id: true,
-                billing: {
-                  select: {
-                    stripeCustomerId: true,
-                    limits: true,
-                    usageCycleAnchor: true,
-                    stripe: true,
-                  },
-                },
-                whitelabel: true,
+                stripeCustomerId: true,
+                limits: true,
+                usageCycleAnchor: true,
+                stripe: true,
               },
             },
+            whitelabel: true,
           },
         },
       },
     });
   });
 
-  test("should throw ValidationError for invalid environment ID", async () => {
+  test("should throw ValidationError for invalid workspace ID", async () => {
     const invalidId = "invalid-id";
 
     await expect(getEnvironmentContextForLinkSurvey(invalidId)).rejects.toThrow(ValidationError);
   });
 
-  test("should throw ResourceNotFoundError when environment has no workspace", async () => {
-    const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9m";
+  test("should throw ResourceNotFoundError when workspace is not found", async () => {
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9m";
 
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      workspace: null,
-    } as any);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(
-      ResourceNotFoundError
-    );
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow("Workspace");
-  });
-
-  test("should throw ResourceNotFoundError when environment is not found", async () => {
-    const mockEnvironmentId = "cuid123456789012345";
-
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(
-      ResourceNotFoundError
-    );
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Workspace");
   });
 
   test("should throw ResourceNotFoundError when workspace has no organization", async () => {
-    const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9n";
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9n";
     const mockData = {
-      workspace: {
-        id: "clh1a2b3c4d5e6f7g8h9o",
-        name: "Test Workspace",
-        styling: {},
-        logo: null,
-        linkSurveyBranding: true,
-        organizationId: "clh1a2b3c4d5e6f7g8h9p",
-        organization: null,
-      },
+      id: mockWorkspaceId,
+      name: "Test Workspace",
+      styling: {},
+      logo: null,
+      linkSurveyBranding: true,
+      customHeadScripts: null,
+      organizationId: "clh1a2b3c4d5e6f7g8h9p",
+      organization: null,
     };
 
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockData as any);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(
-      ResourceNotFoundError
-    );
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow("Organization");
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Organization");
   });
 
   test("should throw DatabaseError on Prisma error", async () => {
-    const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9q";
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9q";
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
       code: "P2025",
       clientVersion: "5.0.0",
     });
 
-    vi.mocked(prisma.environment.findUnique).mockRejectedValue(prismaError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(DatabaseError);
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow("Database error");
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Database error");
   });
 
   test("should rethrow non-Prisma errors", async () => {
-    const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9r";
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9r";
     const genericError = new Error("Generic error");
 
-    vi.mocked(prisma.environment.findUnique).mockRejectedValue(genericError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(genericError);
 
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(genericError);
+    await expect(getEnvironmentContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(genericError);
   });
 
   test("should handle workspace with minimal data", async () => {
-    const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9s";
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9s";
     const mockData = {
-      workspace: {
-        id: "clh1a2b3c4d5e6f7g8h9t",
-        name: "Minimal Workspace",
-        styling: null,
-        logo: null,
-        linkSurveyBranding: false,
-        customHeadScripts: null,
-        organizationId: "clh1a2b3c4d5e6f7g8h9u",
-        organization: {
-          id: "clh1a2b3c4d5e6f7g8h9u",
-          billing: {
-            stripeCustomerId: null,
-            limits: {
-              monthly: {
-                responses: 100,
-              },
-              workspaces: 3,
+      id: mockWorkspaceId,
+      name: "Minimal Workspace",
+      styling: null,
+      logo: null,
+      linkSurveyBranding: false,
+      customHeadScripts: null,
+      organizationId: "clh1a2b3c4d5e6f7g8h9u",
+      organization: {
+        id: "clh1a2b3c4d5e6f7g8h9u",
+        billing: {
+          stripeCustomerId: null,
+          limits: {
+            monthly: {
+              responses: 100,
             },
-            usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+            workspaces: 3,
           },
-          whitelabel: null,
+          usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+          stripe: null,
         },
+        whitelabel: null,
       },
     };
 
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockData as any);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
 
-    const result = await getEnvironmentContextForLinkSurvey(mockEnvironmentId);
+    const result = await getEnvironmentContextForLinkSurvey(mockWorkspaceId);
 
     expect(result).toEqual({
       workspace: {
-        id: "clh1a2b3c4d5e6f7g8h9t",
+        id: mockWorkspaceId,
         name: "Minimal Workspace",
         styling: null,
         logo: null,
@@ -217,7 +201,14 @@ describe("getEnvironmentContextForLinkSurvey", () => {
         customHeadScripts: null,
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9u",
-      organizationBilling: mockData.workspace.organization.billing,
+      organizationBilling: {
+        stripeCustomerId: null,
+        limits: {
+          monthly: { responses: 100 },
+          workspaces: 3,
+        },
+        usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+      },
       organizationWhitelabel: null,
     });
   });

@@ -11,7 +11,6 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -269,7 +268,7 @@ const ZCreateActionClassAction = z.object({
 
 export const createActionClassAction = authenticatedActionClient.inputSchema(ZCreateActionClassAction).action(
   withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.action.environmentId);
+    const workspaceId = parsedInput.action.workspaceId;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -288,11 +287,7 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createActionClass(
-      parsedInput.action.environmentId,
-      parsedInput.action.workspaceId,
-      parsedInput.action
-    );
+    const result = await createActionClass(workspaceId, parsedInput.action);
     ctx.auditLoggingCtx.actionClassId = result.id;
     ctx.auditLoggingCtx.newObject = result;
     return result;

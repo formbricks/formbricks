@@ -343,7 +343,6 @@ export const ZSegment = z.object({
   description: z.string().nullable(),
   isPrivate: z.boolean().prefault(true),
   filters: ZSegmentFilters,
-  environmentId: z.string(),
   workspaceId: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -351,7 +350,7 @@ export const ZSegment = z.object({
 });
 
 export const ZSegmentCreateInput = z.object({
-  environmentId: z.string(),
+  workspaceId: z.string(),
   title: z.string(),
   description: z.string().optional(),
   isPrivate: z.boolean().prefault(true),
@@ -389,7 +388,6 @@ export type TEvaluateSegmentUserAttributeData = Record<string, string | number>;
 export interface TEvaluateSegmentUserData {
   contactId: string;
   userId: string;
-  environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   deviceType: "phone" | "desktop";
 }

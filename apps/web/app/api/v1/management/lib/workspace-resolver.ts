@@ -1,90 +1,44 @@
-import { prisma } from "@formbricks/database";
-import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
+import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
-import { hasWorkspacePermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /**
- * Resolves a workspaceId to its production environment's ID (simple wrapper for v1 routes).
- */
-export const getProductionEnvironmentIdByWorkspaceId = async (
-  workspaceId: string
-): Promise<string | null> => {
-  const environment = await prisma.environment.findFirst({
-    where: { workspaceId, type: "production" },
-    select: { id: true },
-  });
-  return environment?.id ?? null;
-};
-
-/**
- * Given a request body that contains either workspaceId or environmentId (but not both),
- * resolves the missing identifier so the returned body is guaranteed to contain both.
+ * Given a request body that must contain workspaceId,
+ * validates workspace-level permission and returns the authorized body.
  *
- * Returns `{ body, alreadyAuthorized: true }` when workspace-level auth was used,
- * or `{ body, alreadyAuthorized: false }` when the caller still needs to check env-level permission.
- * Returns an error response if authorization or resolution fails.
+ * Returns `{ body, alreadyAuthorized: true }` when workspace-level auth was used.
+ * Returns an error response if authorization fails.
  */
 export const resolveBodyIds = async <T extends Record<string, unknown>>(
   body: T,
-  permissions: TAPIKeyEnvironmentPermission[],
+  permissions: TAPIKeyWorkspacePermission[],
   method: HttpMethod
 ): Promise<
-  | { ok: true; body: T & { environmentId: string; workspaceId: string }; alreadyAuthorized: boolean }
+  | { ok: true; body: T & { workspaceId: string }; alreadyAuthorized: boolean }
   | { ok: false; response: Response }
 > => {
-  if (body.workspaceId && body.environmentId) {
+  if (!body.workspaceId) {
     return {
       ok: false,
-      response: responses.badRequestResponse("Provide either environmentId or workspaceId, not both"),
+      response: responses.badRequestResponse("workspaceId must be provided"),
     };
   }
 
-  if (body.workspaceId && !body.environmentId) {
-    if (typeof body.workspaceId !== "string") {
-      return { ok: false, response: responses.badRequestResponse("workspaceId must be a string") };
-    }
-    const workspaceId = body.workspaceId;
-
-    if (!hasWorkspacePermission(permissions, workspaceId, method)) {
-      return { ok: false, response: responses.unauthorizedResponse() };
-    }
-
-    const resolvedEnvId = await getProductionEnvironmentIdByWorkspaceId(workspaceId);
-    if (!resolvedEnvId) {
-      return { ok: false, response: responses.notFoundResponse("Workspace", workspaceId) };
-    }
-
-    return {
-      ok: true,
-      body: { ...body, environmentId: resolvedEnvId, workspaceId },
-      alreadyAuthorized: true,
-    };
+  if (typeof body.workspaceId !== "string") {
+    return { ok: false, response: responses.badRequestResponse("workspaceId must be a string") };
   }
 
-  if (body.environmentId && !body.workspaceId) {
-    if (typeof body.environmentId !== "string") {
-      return { ok: false, response: responses.badRequestResponse("environmentId must be a string") };
-    }
+  const workspaceId = body.workspaceId;
 
-    let resolvedWorkspaceId: string;
-    try {
-      resolvedWorkspaceId = await getWorkspaceIdFromEnvironmentId(body.environmentId);
-    } catch {
-      return { ok: false, response: responses.notFoundResponse("Environment", body.environmentId) };
-    }
-
-    return {
-      ok: true,
-      body: { ...body, workspaceId: resolvedWorkspaceId, environmentId: body.environmentId },
-      alreadyAuthorized: false,
-    };
+  if (!hasPermission(permissions, workspaceId, method)) {
+    return { ok: false, response: responses.unauthorizedResponse() };
   }
 
   return {
-    ok: false,
-    response: responses.badRequestResponse("Either environmentId or workspaceId must be provided"),
+    ok: true,
+    body: { ...body, workspaceId },
+    alreadyAuthorized: true,
   };
 };

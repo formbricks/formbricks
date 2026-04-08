@@ -57,7 +57,6 @@ export const getResponseForPipeline = async (
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                environmentId: true,
                 workspaceId: true,
               },
             },

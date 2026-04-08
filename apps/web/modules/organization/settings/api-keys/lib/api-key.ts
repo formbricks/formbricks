@@ -34,8 +34,8 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
           organizationAccess: true,
           apiKeyEnvironments: {
             select: {
-              environmentId: true,
               permission: true,
+              workspaceId: true,
             },
           },
         },
@@ -57,7 +57,6 @@ export const getApiKeyWithPermissions = reactCache(
       const includeQuery = {
         apiKeyEnvironments: {
           include: {
-            environment: true,
             workspace: {
               select: {
                 id: true,
@@ -153,8 +152,7 @@ export const createApiKey = async (
   organizationId: string,
   userId: string,
   apiKeyData: TApiKeyCreateInput & {
-    environmentPermissions?: Array<{
-      environmentId: string;
+    workspacePermissions?: Array<{
       workspaceId: string;
       permission: ApiKeyPermission;
     }>;
@@ -173,8 +171,8 @@ export const createApiKey = async (
     // 2. bcrypt hash
     const hashedKey = await hashSecret(secret, 12);
 
-    // Extract environmentPermissions from apiKeyData
-    const { environmentPermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
+    // Extract workspacePermissions from apiKeyData
+    const { workspacePermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
 
     // Create the API key
     const result = await prisma.apiKey.create({
@@ -185,13 +183,12 @@ export const createApiKey = async (
         createdBy: userId,
         organization: { connect: { id: organizationId } },
         organizationAccess,
-        ...(environmentPermissions && environmentPermissions.length > 0
+        ...(workspacePermissions && workspacePermissions.length > 0
           ? {
               apiKeyEnvironments: {
-                create: environmentPermissions.map((envPerm) => ({
-                  environmentId: envPerm.environmentId,
-                  permission: envPerm.permission,
-                  workspaceId: envPerm.workspaceId,
+                create: workspacePermissions.map((wsPerm) => ({
+                  permission: wsPerm.permission,
+                  workspaceId: wsPerm.workspaceId,
                 })),
               },
             }

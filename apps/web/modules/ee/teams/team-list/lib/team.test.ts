@@ -29,7 +29,6 @@ vi.mock("@formbricks/database", () => ({
     },
     membership: { findUnique: vi.fn(), count: vi.fn() },
     workspace: { count: vi.fn() },
-    environment: { findMany: vi.fn() },
   },
 }));
 
@@ -275,16 +274,6 @@ describe("updateTeamDetails", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.environment.findMany).mockResolvedValueOnce([
-      {
-        id: "env1",
-        type: "production" as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        workspaceId: "p1",
-        appSetupCompleted: false,
-      },
-    ]);
     const result = await updateTeamDetails("t1", data);
     expect(result).toBe(true);
   });

@@ -15,7 +15,7 @@ export const POST = async (request: NextRequest) =>
       body: ZContactCreateRequest,
     },
     bodyTransform: async (body, auth) => {
-      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "POST");
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },
@@ -34,18 +34,18 @@ export const POST = async (request: NextRequest) =>
         );
       }
 
-      const { environmentId } = body;
+      const { workspaceId } = body;
 
-      const perm = authentication.environmentPermissions.find((p) => p.environmentId === environmentId);
-      if (!perm || !hasPermission(authentication.environmentPermissions, perm.workspaceId, "POST")) {
+      const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
+      if (!perm || !hasPermission(authentication.workspacePermissions, perm.workspaceId, "POST")) {
         return handleApiError(
           request,
           {
             type: "forbidden",
             details: [
               {
-                field: "environmentId",
-                issue: "insufficient permissions to create contact in this environment",
+                field: "workspaceId",
+                issue: "insufficient permissions to create contact in this workspace",
               },
             ],
           },

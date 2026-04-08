@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
-import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
+import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { authenticateRequest } from "./auth";
@@ -22,17 +22,8 @@ describe("getApiKeyWithPermissions", () => {
       label: "Test API Key",
       apiKeyEnvironments: [
         {
-          environmentId: "env-1",
           workspaceId: "workspace-1",
           permission: "manage" as const,
-          environment: {
-            id: "env-1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            type: "production" as const,
-            workspaceId: "workspace-1",
-            appSetupCompleted: true,
-          },
           workspace: { id: "workspace-1", name: "Workspace 1" },
         },
       ],
@@ -56,25 +47,19 @@ describe("getApiKeyWithPermissions", () => {
 });
 
 describe("hasPermission", () => {
-  const permissions: TAPIKeyEnvironmentPermission[] = [
+  const permissions: TAPIKeyWorkspacePermission[] = [
     {
-      environmentId: "env-1",
       permission: "manage",
-      environmentType: "production",
       workspaceId: "workspace-1",
       workspaceName: "Workspace 1",
     },
     {
-      environmentId: "env-2",
       permission: "write",
-      environmentType: "production",
       workspaceId: "workspace-2",
       workspaceName: "Workspace 2",
     },
     {
-      environmentId: "env-3",
       permission: "read",
-      environmentType: "production",
       workspaceId: "workspace-3",
       workspaceName: "Workspace 3",
     },
@@ -119,17 +104,8 @@ describe("authenticateRequest", () => {
       label: "Test API Key",
       apiKeyEnvironments: [
         {
-          environmentId: "env-1",
           workspaceId: "workspace-1",
           permission: "manage" as const,
-          environment: {
-            id: "env-1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            type: "production" as const,
-            workspaceId: "workspace-1",
-            appSetupCompleted: true,
-          },
           workspace: { id: "workspace-1", name: "Workspace 1" },
         },
       ],
@@ -140,11 +116,9 @@ describe("authenticateRequest", () => {
 
     expect(result).toEqual({
       type: "apiKey",
-      environmentPermissions: [
+      workspacePermissions: [
         {
-          environmentId: "env-1",
           permission: "manage",
-          environmentType: "production",
           workspaceId: "workspace-1",
           workspaceName: "Workspace 1",
         },
@@ -173,7 +147,7 @@ describe("authenticateRequest", () => {
     expect(result).toBeNull();
   });
 
-  test("returns null when API key has no environment permissions", async () => {
+  test("returns null when API key has no workspace permissions", async () => {
     const request = new NextRequest("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });

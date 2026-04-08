@@ -1,38 +1,20 @@
-import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
-import { cache } from "@/lib/cache";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
-
-/**
- * Cached environment lookup - environments rarely change
- */
-const getEnvironment = async (environmentId: string) =>
-  await cache.withCache(
-    async () => {
-      return prisma.environment.findUnique({
-        where: { id: environmentId },
-        select: { id: true, type: true, workspaceId: true },
-      });
-    },
-    createCacheKey.environment.config(environmentId),
-    60 * 60 * 1000 // 1 hour TTL in milliseconds - environments rarely change
-  );
 
 /**
  * Comprehensive contact data fetcher - gets everything needed in one query
  * Eliminates redundant queries by fetching contact + user state data together
  */
-const getContactWithFullData = async (environmentId: string, userId: string) => {
+const getContactWithFullData = async (workspaceId: string, userId: string) => {
   return prisma.contact.findFirst({
     where: {
-      environmentId,
+      workspaceId,
       attributes: {
         some: {
-          attributeKey: { key: "userId", environmentId },
+          attributeKey: { key: "userId", workspaceId },
           value: userId,
         },
       },
@@ -63,12 +45,9 @@ const getContactWithFullData = async (environmentId: string, userId: string) => 
 /**
  * Creates contact with comprehensive data structure
  */
-const createContact = async (environmentId: string, userId: string, workspaceId: string) => {
+const createContact = async (workspaceId: string, userId: string) => {
   return prisma.contact.create({
     data: {
-      environment: {
-        connect: { id: environmentId },
-      },
       workspace: {
         connect: { id: workspaceId },
       },
@@ -112,7 +91,7 @@ const createContact = async (environmentId: string, userId: string, workspaceId:
  */
 const buildUserStateFromContact = async (
   contactData: NonNullable<Awaited<ReturnType<typeof getContactWithFullData>>>,
-  environmentId: string,
+  workspaceId: string,
   userId: string,
   device: "phone" | "desktop"
 ) => {
@@ -120,7 +99,7 @@ const buildUserStateFromContact = async (
   // Ensure segments is always an array to prevent "segments is not iterable" error
   let segments: string[] = [];
   try {
-    segments = await getPersonSegmentIds(environmentId, contactData.id, userId, device);
+    segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device);
     // Double-check that segments is actually an array
     if (!Array.isArray(segments)) {
       segments = [];
@@ -151,23 +130,17 @@ const buildUserStateFromContact = async (
 };
 
 export const updateUser = async (
-  environmentId: string,
+  workspaceId: string,
   userId: string,
   device: "phone" | "desktop",
   attributes?: TContactAttributesInput
 ): Promise<{ state: TJsPersonState; messages?: string[]; errors?: string[] }> => {
-  // Cached environment validation (rarely changes)
-  const environment = await getEnvironment(environmentId);
-  if (!environment) {
-    throw new ResourceNotFoundError(`environment`, environmentId);
-  }
-
   // Single comprehensive query - gets contact + user state data
-  let contactData = await getContactWithFullData(environmentId, userId);
+  let contactData = await getContactWithFullData(workspaceId, userId);
 
   // Create contact if doesn't exist
   if (!contactData) {
-    contactData = await createContact(environmentId, userId, environment.workspaceId);
+    contactData = await createContact(workspaceId, userId);
   }
 
   // Process contact attributes efficiently (single pass)
@@ -193,7 +166,7 @@ export const updateUser = async (
         success,
         messages: updateAttrMessages,
         errors: updateAttrErrors,
-      } = await updateAttributes(contactData.id, userId, environmentId, attributes);
+      } = await updateAttributes(contactData.id, userId, workspaceId, attributes);
 
       messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
       errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
@@ -206,7 +179,7 @@ export const updateUser = async (
   }
 
   // Build user state from already-fetched data (no additional query needed)
-  const userStateData = await buildUserStateFromContact(contactData, environmentId, userId, device);
+  const userStateData = await buildUserStateFromContact(contactData, workspaceId, userId, device);
 
   return {
     state: {

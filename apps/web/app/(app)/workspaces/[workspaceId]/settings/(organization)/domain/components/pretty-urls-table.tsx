@@ -11,13 +11,10 @@ interface SurveyWithSlug {
   name: string;
   slug: string | null;
   status: TSurveyStatus;
-  environment: {
+  workspace: {
     id: string;
-    type: "production" | "development";
-    workspace: {
-      id: string;
-      name: string;
-    };
+    name: string;
+    organizationId: string;
   };
   createdAt: Date;
 }
@@ -76,12 +73,12 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
             <TableRow key={survey.id} className="border-slate-200 hover:bg-transparent">
               <TableCell className="font-medium">
                 <Link
-                  href={`/workspaces/${survey.environment.workspace.id}/surveys/${survey.id}/summary`}
+                  href={`/workspaces/${survey.workspace.id}/surveys/${survey.id}/summary`}
                   className="text-slate-900 hover:text-slate-700 hover:underline">
                   {survey.name}
                 </Link>
               </TableCell>
-              <TableCell>{survey.environment.workspace.name}</TableCell>
+              <TableCell>{survey.workspace.name}</TableCell>
               <TableCell>
                 <IdBadge id={survey.slug ?? ""} />
               </TableCell>

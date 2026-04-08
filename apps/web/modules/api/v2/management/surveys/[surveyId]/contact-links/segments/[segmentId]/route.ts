@@ -55,7 +55,7 @@ export const GET = async (
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.environmentPermissions, workspaceId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
         });

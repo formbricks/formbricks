@@ -39,7 +39,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error as ApiErrorResponseV2);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, webhook.data.workspaceId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, webhook.data.workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "webhook", issue: "unauthorized" }],
@@ -90,7 +90,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, webhook.data.workspaceId, "PUT")) {
+      if (!hasPermission(authentication.workspacePermissions, webhook.data.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
@@ -162,7 +162,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, webhook.data.workspaceId, "DELETE")) {
+      if (!hasPermission(authentication.workspacePermissions, webhook.data.workspaceId, "DELETE")) {
         return handleApiError(
           request,
           {

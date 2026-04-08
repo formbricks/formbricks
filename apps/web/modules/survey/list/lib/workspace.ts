@@ -7,16 +7,12 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
 
-export const getWorkspaceWithLanguagesByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TWorkspaceWithLanguages | null> => {
+export const getWorkspaceWithLanguages = reactCache(
+  async (workspaceId: string): Promise<TWorkspaceWithLanguages | null> => {
     try {
-      const workspacePrisma = await prisma.workspace.findFirst({
+      const workspacePrisma = await prisma.workspace.findUnique({
         where: {
-          environments: {
-            some: {
-              id: environmentId,
-            },
-          },
+          id: workspaceId,
         },
         select: {
           id: true,
@@ -27,7 +23,7 @@ export const getWorkspaceWithLanguagesByEnvironmentId = reactCache(
       return workspacePrisma;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting workspace with languages by environment id");
+        logger.error(error, "Error getting workspace with languages");
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -75,12 +71,6 @@ export const getUserWorkspaces = reactCache(
         select: {
           id: true,
           name: true,
-          environments: {
-            select: {
-              id: true,
-              type: true,
-            },
-          },
         },
       });
 

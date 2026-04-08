@@ -13,7 +13,6 @@ export const getWorkspacesByOrganizationId = reactCache(
         },
         select: {
           id: true,
-          environments: true,
           name: true,
         },
       });

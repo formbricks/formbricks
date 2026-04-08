@@ -28,21 +28,18 @@ vi.mock("./contact", () => ({
   doesContactExist: vi.fn(),
 }));
 
-const environmentId = "test-env-id";
 const workspaceId = "workspace-id-mock";
 const surveyId = "test-survey-id";
 const contactId = "test-contact-id";
 const displayId = "test-display-id";
 
 const displayInput: TDisplayCreateInputV2 = {
-  environmentId,
   workspaceId,
   surveyId,
   contactId,
 };
 
 const displayInputWithoutContact: TDisplayCreateInputV2 = {
-  environmentId,
   workspaceId,
   surveyId,
 };
@@ -68,7 +65,7 @@ const mockDisplayWithoutContact = {
 const mockSurvey = {
   id: surveyId,
   name: "Test Survey",
-  environmentId,
+  workspaceId,
 } as any;
 
 describe("createDisplay", () => {

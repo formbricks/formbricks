@@ -21,7 +21,7 @@ import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
   activitySummary: TSegmentActivitySummary;
-  environmentId: string;
+  workspaceId: string;
   setOpen: (open: boolean) => void;
   initialSegment: TSegmentWithSurveyRefs;
   segments: TSegment[];
@@ -31,7 +31,7 @@ interface TSegmentSettingsTabProps {
 
 export function SegmentSettings({
   activitySummary,
-  environmentId,
+  workspaceId,
   initialSegment,
   setOpen,
   contactAttributeKeys,
@@ -205,7 +205,7 @@ export function SegmentSettings({
 
               <SegmentEditor
                 contactAttributeKeys={contactAttributeKeys}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 group={segment.filters}
                 segment={segment}
                 segments={segments}

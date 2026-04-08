@@ -31,7 +31,7 @@ const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "w
 interface EmailCustomizationSettingsProps {
   organization: TOrganization;
   hasWhiteLabelPermission: boolean;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   isFormbricksCloud: boolean;
   user: TUser | null;
@@ -42,7 +42,7 @@ interface EmailCustomizationSettingsProps {
 export const EmailCustomizationSettings = ({
   organization,
   hasWhiteLabelPermission,
-  environmentId,
+  workspaceId,
   isReadOnly,
   isFormbricksCloud,
   user,
@@ -136,7 +136,7 @@ export const EmailCustomizationSettings = ({
   const handleSave = async () => {
     if (!logoFile) return;
     setIsSaving(true);
-    const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
+    const { url, error } = await handleFileUpload(logoFile, workspaceId, allowedFileExtensions);
 
     if (error) {
       toast.error(error);

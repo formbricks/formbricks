@@ -21,7 +21,7 @@ export const getMetadataForLinkSurvey = async (
   const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode, survey);
 
   // Fetch organization whitelabel data for custom favicon
-  const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+  const environmentContext = await getEnvironmentContextForLinkSurvey(survey.workspaceId);
   const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
   // Use the shared function for creating the base metadata but override with custom data

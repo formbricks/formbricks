@@ -78,8 +78,6 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;
 export const getOrganizationsByUserIdCacheTag = (userId: string) => `users-${userId}-organizations`;
-export const getOrganizationByEnvironmentIdCacheTag = (environmentId: string) =>
-  `environments-${environmentId}-organization`;
 
 export const getOrganizationsByUserId = reactCache(
   async (userId: string, page?: number): Promise<TOrganization[]> => {
@@ -104,38 +102,6 @@ export const getOrganizationsByUserId = reactCache(
       return organizations.map(mapOrganization);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
-export const getOrganizationByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TOrganization | null> => {
-    validateInputs([environmentId, ZId]);
-
-    try {
-      const organization = await prisma.organization.findFirst({
-        where: {
-          workspaces: {
-            some: {
-              environments: {
-                some: {
-                  id: environmentId,
-                },
-              },
-            },
-          },
-        },
-        select: { ...select, memberships: true }, // include memberships
-      });
-
-      return organization ? mapOrganization(organization) : null;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting organization by environment id");
         throw new DatabaseError(error.message);
       }
 
@@ -275,7 +241,7 @@ export const updateOrganization = async (
         where: {
           id: organizationId,
         },
-        select: { ...select, memberships: true, workspaces: { select: { environments: true } } }, // include memberships & environments
+        select: { ...select, memberships: true, workspaces: { select: { id: true } } }, // include memberships & workspaces
       });
     });
 
@@ -324,11 +290,6 @@ export const deleteOrganization = async (organizationId: string) => {
         workspaces: {
           select: {
             id: true,
-            environments: {
-              select: {
-                id: true,
-              },
-            },
           },
         },
       },
@@ -359,18 +320,18 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
-      // Get all environment IDs for the organization
+      // Get all workspace IDs for the organization
       const workspaces = await getWorkspaces(organizationId);
-      const environmentIds = workspaces.flatMap((workspace) => workspace.environments.map((env) => env.id));
+      const workspaceIds = workspaces.map((workspace) => workspace.id);
 
-      // Use Prisma's aggregate to count responses for all environments
+      // Use Prisma's aggregate to count responses for all workspaces
       const responseAggregations = await prisma.response.aggregate({
         _count: {
           id: true,
         },
         where: {
           AND: [
-            { survey: { environmentId: { in: environmentIds } } },
+            { survey: { workspaceId: { in: workspaceIds } } },
             { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
           ],
         },

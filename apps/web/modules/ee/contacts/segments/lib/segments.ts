@@ -32,7 +32,6 @@ import {
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
@@ -55,7 +54,6 @@ export const selectSegment = {
   updatedAt: true,
   title: true,
   description: true,
-  environmentId: true,
   workspaceId: true,
   filters: true,
   isPrivate: true,
@@ -136,15 +134,14 @@ export const getSegments = reactCache(async (workspaceId: string): Promise<TSegm
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
-  const { description, environmentId, filters, isPrivate, surveyId, title } = segmentCreateInput;
+  const { description, filters, isPrivate, surveyId, title, workspaceId } = segmentCreateInput;
 
   const surveyConnect = surveyId ? { surveys: { connect: { id: surveyId } } } : {};
 
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     // Private segments use upsert because auto-save may have already created a
     // default (empty-filter) segment via connectOrCreate before the user publishes.
-    // Without upsert the second create hits the (environmentId, title) unique constraint.
+    // Without upsert the second create hits the (workspaceId, title) unique constraint.
     if (isPrivate) {
       const segment = await prisma.segment.upsert({
         where: {
@@ -154,7 +151,6 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
           },
         },
         create: {
-          environmentId,
           workspaceId,
           title,
           description,
@@ -175,7 +171,6 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
     const segment = await prisma.segment.create({
       data: {
-        environmentId,
         workspaceId,
         title,
         description,
@@ -235,14 +230,12 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ValidationError("Invalid filters");
     }
 
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(segment.environmentId);
     const clonedSegment = await prisma.segment.create({
       data: {
         title: clonedTitle,
         description: segment.description,
         isPrivate: segment.isPrivate,
-        environmentId: segment.environmentId,
-        workspaceId,
+        workspaceId: segment.workspaceId,
         filters: segment.filters,
         surveys: {
           connect: {
@@ -332,15 +325,13 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
         // should always exist. But, handling it just in case.
 
         // if a private segment does not exist, create one
-        const workspaceId = await getWorkspaceIdFromEnvironmentId(survey.environmentId);
         const newPrivateSegment = await tx.segment.create({
           data: {
             title: `${surveyId}`,
             isPrivate: true,
             filters: [],
             surveys: { connect: { id: surveyId } },
-            environment: { connect: { id: survey?.environmentId } },
-            workspace: { connect: { id: workspaceId } },
+            workspaceId: survey.workspaceId,
           },
           select: selectSegment,
         });

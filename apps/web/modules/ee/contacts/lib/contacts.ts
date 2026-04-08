@@ -7,7 +7,6 @@ import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common"
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -35,7 +34,7 @@ export const getContactsInSegment = reactCache(async (segmentId: string) => {
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
       segment.id,
       segment.filters,
-      segment.environmentId
+      segment.workspaceId
     );
 
     if (!segmentFilterToPrismaQueryResult.ok) {
@@ -98,7 +97,6 @@ const selectContact = {
   id: true,
   createdAt: true,
   updatedAt: true,
-  environmentId: true,
   workspaceId: true,
   attributes: {
     select: {
@@ -400,7 +398,7 @@ const createMissingAttributeKeys = async (
   lowercaseToActualKeyMap: Map<string, string>,
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  environmentId: string
+  workspaceId: string
 ): Promise<void> => {
   const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
 
@@ -423,13 +421,11 @@ const createMissingAttributeKeys = async (
     }
   }
 
-  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
   await prisma.contactAttributeKey.createMany({
     data: Array.from(uniqueMissingKeys.values()).map((key) => ({
       key,
       name: formatSnakeCaseToTitleCase(key),
       dataType: attributeTypeMap.get(key)?.dataType ?? "string",
-      environmentId,
       workspaceId,
     })),
     skipDuplicates: true,
@@ -439,7 +435,7 @@ const createMissingAttributeKeys = async (
   const newAttributeKeys = await prisma.contactAttributeKey.findMany({
     where: {
       key: { in: Array.from(uniqueMissingKeys.values()) },
-      environmentId,
+      workspaceId,
     },
     select: { key: true, id: true, dataType: true },
   });
@@ -464,7 +460,6 @@ type TCsvProcessingContext = {
   attributeKeyMap: Map<string, string>;
   attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
-  environmentId: string;
   workspaceId: string;
 };
 
@@ -482,7 +477,6 @@ const processCsvRecord = async (
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
-    environmentId,
     workspaceId,
   } = ctx;
   // Map CSV keys to actual DB keys (case-insensitive matching)
@@ -505,7 +499,6 @@ const processCsvRecord = async (
     // Create new contact
     return prisma.contact.create({
       data: {
-        environmentId,
         workspaceId,
         attributes: {
           create: createAttributeConnections(mappedRecord, workspaceId, attributeTypeMap),
@@ -605,21 +598,18 @@ export type TCreateContactsFromCSVResult =
 
 export const createContactsFromCSV = async (
   csvData: Record<string, string>[],
-  environmentId: string,
+  workspaceId: string,
   duplicateContactsAction: "skip" | "update" | "overwrite",
   attributeMap: Record<string, string>
 ): Promise<TCreateContactsFromCSVResult> => {
   validateInputs(
     [csvData, ZContactCSVUploadResponse],
-    [environmentId, ZId],
+    [workspaceId, ZId],
     [duplicateContactsAction, ZContactCSVDuplicateAction],
     [attributeMap, ZContactCSVAttributeMap]
   );
 
   try {
-    // Step 1: Get workspace ID from environment
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
-
     // Step 2: Extract metadata from CSV data
     const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
 
@@ -678,7 +668,7 @@ export const createContactsFromCSV = async (
       lowercaseToActualKeyMap,
       attributeKeyMap,
       attributeTypeMap,
-      environmentId
+      workspaceId
     );
 
     // Step 6: Process each CSV record
@@ -689,7 +679,6 @@ export const createContactsFromCSV = async (
       attributeKeyMap,
       attributeTypeMap,
       duplicateContactsAction,
-      environmentId,
       workspaceId,
     };
 

@@ -1,9 +1,8 @@
-import { Organization, Prisma, Response as ResponsePrisma } from "@prisma/client";
+import { Prisma, Response as ResponsePrisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
@@ -13,7 +12,6 @@ import { getContactByUserId } from "./contact";
 import { createResponse, getResponsesByWorkspaceIds } from "./response";
 
 // Mock Data
-const environmentId = "test-environment-id";
 const workspaceId = "test-workspace-id";
 const mockUserId = "test-user-id";
 const surveyId = "test-survey-id";
@@ -24,7 +22,6 @@ const mockOrganization = "test-organization-id";
 
 const mockResponseInput: TResponseInput = {
   workspaceId,
-  environmentId,
   surveyId,
   displayId,
   finished: true,

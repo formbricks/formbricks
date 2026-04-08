@@ -44,7 +44,6 @@ describe("pipelines", () => {
     const testData: TPipelineInput = {
       event: PipelineTriggers.responseCreated,
       surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
       workspaceId: "cm8cnq2hp000008jf7l570abc",
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };
@@ -61,7 +60,6 @@ describe("pipelines", () => {
         "x-api-key": "mocked-cron-secret",
       },
       body: JSON.stringify({
-        environmentId: testData.environmentId,
         workspaceId: testData.workspaceId,
         surveyId: testData.surveyId,
         event: testData.event,
@@ -79,7 +77,6 @@ describe("pipelines", () => {
     const testData: TPipelineInput = {
       event: PipelineTriggers.responseCreated,
       surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
       workspaceId: "cm8cnq2hp000008jf7l570abc",
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };
@@ -106,7 +103,6 @@ describe("pipelines", () => {
     const testData: TPipelineInput = {
       event: PipelineTriggers.responseCreated,
       surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
       workspaceId: "cm8cnq2hp000008jf7l570abc",
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };

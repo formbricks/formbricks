@@ -3,17 +3,16 @@
 import { Webhook } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@/modules/ui/components/button";
 import { AddWebhookModal } from "./add-webhook-modal";
 
 interface AddWebhookButtonProps {
-  environment: TEnvironment;
+  workspaceId: string;
   surveys: TSurvey[];
 }
 
-export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps) => {
+export const AddWebhookButton = ({ workspaceId, surveys }: AddWebhookButtonProps) => {
   const { t } = useTranslation();
   const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
   return (
@@ -27,7 +26,7 @@ export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps
         {t("workspace.integrations.webhooks.add_webhook")}
       </Button>
       <AddWebhookModal
-        environmentId={environment.id}
+        workspaceId={workspaceId}
         surveys={surveys}
         open={isAddWebhookModalOpen}
         setOpen={setAddWebhookModalOpen}
