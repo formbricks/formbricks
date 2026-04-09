@@ -4,6 +4,7 @@ import {
   addPendingResponse,
   clearPendingResponses,
   clearSurveyProgress,
+  countPendingResponses,
   getPendingResponses,
   getSurveyProgress,
   removePendingResponse,
@@ -127,6 +128,35 @@ describe.skipIf(!indexedDBAvailable)("offline-storage (IndexedDB)", () => {
       expect(results[0].responseUpdate.data.q1).toBe("keep");
     });
 
+    test("countPendingResponses returns correct count", async () => {
+      expect(await countPendingResponses("survey-1")).toBe(0);
+
+      await addPendingResponse({
+        surveyId: "survey-1",
+        responseUpdate: makeResponseUpdate(),
+        surveyStateSnapshot: makeSurveyStateSnapshot(),
+        createdAt: Date.now(),
+      });
+
+      await addPendingResponse({
+        surveyId: "survey-1",
+        responseUpdate: makeResponseUpdate({ q2: "a2" }),
+        surveyStateSnapshot: makeSurveyStateSnapshot(),
+        createdAt: Date.now(),
+      });
+
+      await addPendingResponse({
+        surveyId: "survey-other",
+        responseUpdate: makeResponseUpdate(),
+        surveyStateSnapshot: makeSurveyStateSnapshot({ surveyId: "survey-other" }),
+        createdAt: Date.now(),
+      });
+
+      expect(await countPendingResponses("survey-1")).toBe(2);
+      expect(await countPendingResponses("survey-other")).toBe(1);
+      expect(await countPendingResponses("non-existent")).toBe(0);
+    });
+
     test("clearPendingResponses removes all entries for a surveyId", async () => {
       await addPendingResponse({
         surveyId: "survey-1",
@@ -242,6 +272,19 @@ describe("offline-storage graceful degradation", () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const results = await getPendingResponses("survey-1");
     expect(results).toEqual([]);
+
+    consoleSpy.mockRestore();
+    globalThis.indexedDB = originalIndexedDB;
+  });
+
+  test("countPendingResponses returns 0 when IndexedDB is unavailable", async () => {
+    const originalIndexedDB = globalThis.indexedDB;
+    // @ts-expect-error -- intentionally removing indexedDB for test
+    delete globalThis.indexedDB;
+
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const count = await countPendingResponses("survey-1");
+    expect(count).toBe(0);
 
     consoleSpy.mockRestore();
     globalThis.indexedDB = originalIndexedDB;
