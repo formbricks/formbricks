@@ -41,7 +41,7 @@ export const enqueueResponsePipelineEvents = async ({
     return;
   }
 
-  let response = providedResponse;
+  let response: TResponse | null | undefined = providedResponse;
 
   if (response && response.id !== responseId) {
     logger.warn(
