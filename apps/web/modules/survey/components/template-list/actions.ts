@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -15,6 +16,7 @@ import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 const ZCreateSurveyAction = z.object({
   environmentId: z.cuid2(),
   surveyBody: ZSurveyCreateInput,
+  createdFrom: z.enum(["blank", "template"]).optional(),
 });
 
 /**
@@ -68,6 +70,15 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = result.id;
     ctx.auditLoggingCtx.newObject = result;
+
+    capturePostHogEvent(ctx.user.id, "survey_created", {
+      survey_id: result.id,
+      survey_type: result.type,
+      organization_id: organizationId,
+      question_count: result.questions?.length ?? 0,
+      created_from: parsedInput.createdFrom ?? "template",
+    });
+
     return result;
   })
 );

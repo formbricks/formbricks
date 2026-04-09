@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
 import { createOrUpdateIntegration, deleteIntegration } from "@/lib/integration/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -45,6 +46,12 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
       const result = await createOrUpdateIntegration(parsedInput.environmentId, parsedInput.integrationData);
       ctx.auditLoggingCtx.integrationId = result.id;
       ctx.auditLoggingCtx.newObject = result;
+
+      capturePostHogEvent(ctx.user.id, "integration_connected", {
+        integration_type: parsedInput.integrationData.type,
+        organization_id: organizationId,
+      });
+
       return result;
     })
   );

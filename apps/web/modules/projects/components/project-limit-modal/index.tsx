@@ -21,6 +21,7 @@ export const ProjectLimitModal = ({ open, setOpen, projectLimit, buttons }: Proj
           title={t("common.unlock_more_workspaces_with_a_higher_plan")}
           description={t("common.you_have_reached_your_limit_of_workspace_limit", { projectLimit })}
           buttons={buttons}
+          feature="workspaces"
         />
       </DialogContent>
     </Dialog>

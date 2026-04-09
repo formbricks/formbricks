@@ -2,15 +2,18 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
+import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { deleteOrganization, getOrganization, updateOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { getTranslate } from "@/lingodotdev/server";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { ZOrganizationAISettingsInput, ZUpdateOrganizationAISettingsAction } from "./schemas";
 
 async function updateOrganizationAction<T extends z.ZodRawShape>({
   ctx,
@@ -66,10 +69,53 @@ export const updateOrganizationNameAction = authenticatedActionClient
     )
   );
 
-const ZUpdateOrganizationAISettingsAction = z.object({
-  organizationId: ZId,
-  data: ZOrganizationUpdateInput.pick({ isAISmartToolsEnabled: true, isAIDataAnalysisEnabled: true }),
-});
+type TOrganizationAISettings = Pick<
+  NonNullable<Awaited<ReturnType<typeof getOrganization>>>,
+  "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled"
+>;
+
+type TResolvedOrganizationAISettings = {
+  smartToolsEnabled: boolean;
+  dataAnalysisEnabled: boolean;
+  isEnablingAnyAISetting: boolean;
+};
+
+const resolveOrganizationAISettings = ({
+  data,
+  organization,
+}: {
+  data: z.infer<typeof ZOrganizationAISettingsInput>;
+  organization: TOrganizationAISettings;
+}): TResolvedOrganizationAISettings => {
+  const smartToolsEnabled = Object.hasOwn(data, "isAISmartToolsEnabled")
+    ? (data.isAISmartToolsEnabled ?? organization.isAISmartToolsEnabled)
+    : organization.isAISmartToolsEnabled;
+  const dataAnalysisEnabled = Object.hasOwn(data, "isAIDataAnalysisEnabled")
+    ? (data.isAIDataAnalysisEnabled ?? organization.isAIDataAnalysisEnabled)
+    : organization.isAIDataAnalysisEnabled;
+
+  return {
+    smartToolsEnabled,
+    dataAnalysisEnabled,
+    isEnablingAnyAISetting:
+      (smartToolsEnabled && !organization.isAISmartToolsEnabled) ||
+      (dataAnalysisEnabled && !organization.isAIDataAnalysisEnabled),
+  };
+};
+
+const assertOrganizationAISettingsUpdateAllowed = ({
+  isInstanceAIConfigured,
+  resolvedSettings,
+  t,
+}: {
+  isInstanceAIConfigured: boolean;
+  resolvedSettings: TResolvedOrganizationAISettings;
+  t: Awaited<ReturnType<typeof getTranslate>>;
+}) => {
+  if (resolvedSettings.isEnablingAnyAISetting && !isInstanceAIConfigured) {
+    throw new OperationNotAllowedError(t("environments.settings.general.ai_instance_not_configured"));
+  }
+};
 
 export const updateOrganizationAISettingsAction = authenticatedActionClient
   .inputSchema(ZUpdateOrganizationAISettingsAction)
@@ -83,17 +129,33 @@ export const updateOrganizationAISettingsAction = authenticatedActionClient
       }: {
         ctx: AuthenticatedActionClientCtx;
         parsedInput: z.infer<typeof ZUpdateOrganizationAISettingsAction>;
-      }) =>
-        updateOrganizationAction({
+      }) => {
+        const t = await getTranslate(ctx.user.locale);
+        const organization = await getOrganization(parsedInput.organizationId);
+
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", parsedInput.organizationId);
+        }
+
+        const resolvedSettings = resolveOrganizationAISettings({
+          data: parsedInput.data,
+          organization,
+        });
+
+        assertOrganizationAISettingsUpdateAllowed({
+          isInstanceAIConfigured: isInstanceAIConfigured(),
+          resolvedSettings,
+          t,
+        });
+
+        return updateOrganizationAction({
           ctx,
           organizationId: parsedInput.organizationId,
-          schema: ZOrganizationUpdateInput.pick({
-            isAISmartToolsEnabled: true,
-            isAIDataAnalysisEnabled: true,
-          }),
+          schema: ZOrganizationAISettingsInput,
           data: parsedInput.data,
           roles: ["owner", "manager"],
-        })
+        });
+      }
     )
   );
 
@@ -106,7 +168,10 @@ export const deleteOrganizationAction = authenticatedActionClient
   .action(
     withAuditLogging("deleted", "organization", async ({ ctx, parsedInput }) => {
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-      if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
+      if (!isMultiOrgEnabled) {
+        const t = await getTranslate(ctx.user.locale);
+        throw new OperationNotAllowedError(t("environments.settings.general.organization_deletion_disabled"));
+      }
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
