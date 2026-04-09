@@ -218,7 +218,6 @@
     "enter_url": "Ange URL",
     "enterprise_license": "Företagslicens",
     "environment": "Miljö",
-    "environment_notice": "Du är för närvarande i {environment}-miljön.",
     "error": "Fel",
     "error_component_description": "Denna resurs finns inte eller så har du inte de nödvändiga rättigheterna för att komma åt den.",
     "error_component_title": "Fel vid laddning av resurser",

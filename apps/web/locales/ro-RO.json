@@ -218,7 +218,6 @@
     "enter_url": "Introduceți URL-ul",
     "enterprise_license": "Licență Întreprindere",
     "environment": "Mediu",
-    "environment_notice": "Te afli în prezent în mediul {environment}",
     "error": "Eroare",
     "error_component_description": "Această resursă nu există sau nu aveți drepturile necesare pentru a o accesa.",
     "error_component_title": "Eroare la încărcarea resurselor",

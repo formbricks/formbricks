@@ -218,7 +218,6 @@
     "enter_url": "Inserir URL",
     "enterprise_license": "Licença Empresarial",
     "environment": "Ambiente",
-    "environment_notice": "Você está atualmente no ambiente {environment}.",
     "error": "Erro",
     "error_component_description": "Esse recurso não existe ou você não tem permissão para acessá-lo.",
     "error_component_title": "Erro ao carregar recursos",

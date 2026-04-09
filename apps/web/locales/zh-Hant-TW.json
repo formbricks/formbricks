@@ -218,7 +218,6 @@
     "enter_url": "輸入 URL",
     "enterprise_license": "企業授權",
     "environment": "環境",
-    "environment_notice": "您目前在 '{'environment'}' 環境中。",
     "error": "錯誤",
     "error_component_description": "此資源不存在或您沒有存取權限。",
     "error_component_title": "載入資源錯誤",

@@ -218,7 +218,6 @@
     "enter_url": "Introduzir URL",
     "enterprise_license": "Licença Enterprise",
     "environment": "Ambiente",
-    "environment_notice": "Está atualmente no ambiente {environment}.",
     "error": "Erro",
     "error_component_description": "Este recurso não existe ou não tem os direitos necessários para aceder a ele.",
     "error_component_title": "Erro ao carregar recursos",

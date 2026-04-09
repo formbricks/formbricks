@@ -218,7 +218,6 @@
     "enter_url": "URL megadása",
     "enterprise_license": "Vállalati licenc",
     "environment": "Környezet",
-    "environment_notice": "Ön jelenleg a(z) {environment} környezetben van.",
     "error": "Hiba",
     "error_component_description": "Ez az erőforrás nem létezik, vagy nem rendelkezik a hozzáféréshez szükséges jogosultságokkal.",
     "error_component_title": "Hiba az erőforrások betöltésekor",

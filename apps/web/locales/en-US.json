@@ -218,7 +218,6 @@
     "enter_url": "Enter URL",
     "enterprise_license": "Enterprise License",
     "environment": "Environment",
-    "environment_notice": "You are currently in the {environment} environment.",
     "error": "Error",
     "error_component_description": "This resource does not exist or you do not have the necessary rights to access it.",
     "error_component_title": "Error loading resources",

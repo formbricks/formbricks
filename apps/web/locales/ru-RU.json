@@ -218,7 +218,6 @@
     "enter_url": "Введите URL",
     "enterprise_license": "Корпоративная лицензия",
     "environment": "Окружение",
-    "environment_notice": "В данный момент вы находитесь в среде {environment}.",
     "error": "Ошибка",
     "error_component_description": "Этот ресурс не существует или у вас нет необходимых прав для доступа к нему.",
     "error_component_title": "Ошибка загрузки ресурсов",

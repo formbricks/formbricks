@@ -191,7 +191,6 @@ checksums:
     common/enter_url: 468c2276d0f2cb971ff5a47a20fa4b97
     common/enterprise_license: e81bf506f47968870c7bd07245648a0d
     common/environment: 0844e8dc1485339c8de066dc0a9bb6a1
-    common/environment_notice: 228a8668be1812e031f438d166861729
     common/error: 3c95bcb32c2104b99a46f5b3dd015248
     common/error_component_description: fa9eee04f864c3fe6e6681f716caa015
     common/error_component_title: ae68fa341a143aaa13a5ea30dd57a63e

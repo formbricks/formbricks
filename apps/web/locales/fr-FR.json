@@ -218,7 +218,6 @@
     "enter_url": "Saisir l'URL",
     "enterprise_license": "Licence d'entreprise",
     "environment": "Environnement",
-    "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
     "error": "Erreur",
     "error_component_description": "Cette ressource n'existe pas ou vous n'avez pas les droits nécessaires pour y accéder.",
     "error_component_title": "Erreur de chargement des ressources",

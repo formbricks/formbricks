@@ -218,7 +218,6 @@
     "enter_url": "URLを入力",
     "enterprise_license": "エンタープライズライセンス",
     "environment": "環境",
-    "environment_notice": "現在、{environment} 環境にいます。",
     "error": "エラー",
     "error_component_description": "この リソース は 存在 しない か、アクセス する ための 必要な 権限 が ありません。",
     "error_component_title": "リソース の 読み込み エラー",

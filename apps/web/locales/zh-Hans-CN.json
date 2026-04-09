@@ -218,7 +218,6 @@
     "enter_url": "输入 URL",
     "enterprise_license": "企业 许可证",
     "environment": "环境",
-    "environment_notice": "你 目前 位于 {environment} 环境。",
     "error": "错误",
     "error_component_description": "这个资源不存在或您没有权限访问它。",
     "error_component_title": "错误 加载 资源",

@@ -218,7 +218,6 @@
     "enter_url": "URL eingeben",
     "enterprise_license": "Enterprise Lizenz",
     "environment": "Umgebung",
-    "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
     "error": "Fehler",
     "error_component_description": "Diese Ressource existiert nicht oder Du hast nicht die notwendigen Rechte, um darauf zuzugreifen.",
     "error_component_title": "Fehler beim Laden der Ressourcen",
