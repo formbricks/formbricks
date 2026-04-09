@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { TResponseUpdate } from "@formbricks/types/responses";
