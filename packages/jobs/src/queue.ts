@@ -19,7 +19,7 @@ import {
   getRecurringJobSchedulerId,
   toBullMQRepeatOptions,
 } from "@/src/schedules";
-import { type TResponsePipelineJobData, type TTestLogJobData } from "@/src/types";
+import { type TTestLogJobData } from "@/src/types";
 
 export interface JobsQueueHandle {
   connection: IORedis;
@@ -200,18 +200,6 @@ export const enqueueTestLogJob = async (data: TTestLogJobData): Promise<Job> => 
   }
 };
 
-export const enqueueResponsePipelineJob = async (data: TResponsePipelineJobData): Promise<Job> => {
-  try {
-    return await enqueueBackgroundJob(JOB_NAMES.responsePipeline, data);
-  } catch (error) {
-    logger.error(
-      { err: error, jobName: JOB_NAMES.responsePipeline },
-      "Failed to enqueue BullMQ response pipeline job"
-    );
-    throw error;
-  }
-};
-
 export const scheduleTestLogJobAt = async (
   schedule: TRunAtBackgroundJobSchedule,
   data: TTestLogJobData
@@ -222,21 +210,6 @@ export const scheduleTestLogJobAt = async (
     logger.error(
       { err: error, jobName: JOB_NAMES.testLog, schedule },
       "Failed to schedule BullMQ test log job"
-    );
-    throw error;
-  }
-};
-
-export const scheduleResponsePipelineJobAt = async (
-  schedule: TRunAtBackgroundJobSchedule,
-  data: TResponsePipelineJobData
-): Promise<Job> => {
-  try {
-    return await scheduleBackgroundJobAt(JOB_NAMES.responsePipeline, schedule, data);
-  } catch (error) {
-    logger.error(
-      { err: error, jobName: JOB_NAMES.responsePipeline, schedule },
-      "Failed to schedule BullMQ response pipeline job"
     );
     throw error;
   }
@@ -264,39 +237,9 @@ export const upsertRecurringTestLogJobSchedule = async (
   }
 };
 
-export const upsertRecurringResponsePipelineJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity,
-  schedule: TRecurringBackgroundJobSchedule,
-  data: TResponsePipelineJobData
-): Promise<Job> => {
-  try {
-    return await upsertRecurringBackgroundJobSchedule(JOB_NAMES.responsePipeline, identity, schedule, data);
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.responsePipeline,
-        schedule,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to upsert BullMQ response pipeline schedule"
-    );
-    throw error;
-  }
-};
-
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
-  enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueTestLog: async (data) => toEnqueuedJob(await enqueueTestLogJob(data)),
-  scheduleResponsePipelineAt: async (schedule, data) =>
-    toEnqueuedJob(await scheduleResponsePipelineJobAt(schedule, data)),
   scheduleTestLogAt: async (schedule, data) => toEnqueuedJob(await scheduleTestLogJobAt(schedule, data)),
-  upsertRecurringResponsePipelineSchedule: async (identity, schedule, data) =>
-    toUpsertedRecurringJobSchedule(
-      await upsertRecurringResponsePipelineJobSchedule(identity, schedule, data),
-      identity
-    ),
   upsertRecurringTestLogSchedule: async (identity, schedule, data) =>
     toUpsertedRecurringJobSchedule(
       await upsertRecurringTestLogJobSchedule(identity, schedule, data),

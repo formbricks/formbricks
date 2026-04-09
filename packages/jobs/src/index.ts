@@ -17,14 +17,11 @@ export type {
 export { backgroundJobDefinitions, getBackgroundJobDefinition } from "./definitions";
 export {
   createJobsQueue,
-  enqueueResponsePipelineJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
   getJobsQueue,
   resetJobsQueueFactory,
-  scheduleResponsePipelineJobAt,
   scheduleTestLogJobAt,
-  upsertRecurringResponsePipelineJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 export { processResponsePipelineJob } from "./processors/response-pipeline";

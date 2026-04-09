@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 const mockStartJobsRuntime = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
+const mockWarn = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -22,7 +23,7 @@ vi.mock("@formbricks/logger", () => ({
     debug: mockDebug,
     error: mockError,
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mockWarn,
   },
 }));
 
@@ -30,11 +31,13 @@ describe("instrumentation-jobs", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(async () => {
     const { resetJobsWorkerRegistrationForTests } = await import("./instrumentation-jobs");
     await resetJobsWorkerRegistrationForTests();
+    vi.useRealTimers();
   });
 
   slowTest("skips worker startup when disabled", async () => {
@@ -132,6 +135,36 @@ describe("instrumentation-jobs", () => {
 
     await expect(registerJobsWorker()).rejects.toThrow("startup failed");
     expect(mockError).toHaveBeenCalledWith({ err: startupError }, "BullMQ worker registration failed");
+    expect(mockWarn).toHaveBeenCalledWith(
+      { retryDelayMs: 30_000 },
+      "BullMQ worker registration retry scheduled"
+    );
+  });
+
+  slowTest("retries worker startup after a transient failure", async () => {
+    const startupError = new Error("startup failed");
+    const recoveredRuntime = {
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+
+    mockGetJobsWorkerBootstrapConfig.mockReturnValue({
+      enabled: true,
+      runtimeOptions: {
+        concurrency: 1,
+        redisUrl: "redis://localhost:6379",
+        workerCount: 1,
+      },
+    });
+
+    mockStartJobsRuntime.mockRejectedValueOnce(startupError).mockResolvedValueOnce(recoveredRuntime);
+
+    const { registerJobsWorker } = await import("./instrumentation-jobs");
+
+    await expect(registerJobsWorker()).rejects.toThrow("startup failed");
+
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);
   });
 
   slowTest("clears registration state even when reset close fails", async () => {
