@@ -33,7 +33,18 @@ const handleDatabaseError = (error: Error, url: string, endpoint: string, respon
 };
 
 const getValidatedResponseUpdateInput = async (req: Request): Promise<Response | TResponseUpdateInput> => {
-  const responseUpdate = await req.json();
+  let responseUpdate;
+
+  try {
+    responseUpdate = await req.json();
+  } catch (error) {
+    return responses.badRequestResponse(
+      "Invalid JSON in request body",
+      { error: error instanceof Error ? error.message : "Unknown error occurred" },
+      true
+    );
+  }
+
   const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
 
   if (!inputValidation.success) {
@@ -174,16 +185,16 @@ const updateResponseSafely = async (
     }
 
     if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+      return responses.badRequestResponse(error.message, undefined, true);
     }
 
     if (error instanceof DatabaseError) {
       logger.error({ error, url: req.url }, `Error in ${UPDATE_RESPONSE_ENDPOINT}`);
-      return responses.internalServerErrorResponse(error.message);
+      return responses.internalServerErrorResponse(error.message, true);
     }
 
     logger.error({ error, url: req.url }, `Error in ${UPDATE_RESPONSE_ENDPOINT}`);
-    return responses.internalServerErrorResponse("Something went wrong");
+    return responses.internalServerErrorResponse("Something went wrong", true);
   }
 };
 

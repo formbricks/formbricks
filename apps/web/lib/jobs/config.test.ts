@@ -97,7 +97,7 @@ describe("jobs runtime config", () => {
   );
 
   test(
-    "respects explicit worker disable flag outside tests",
+    "keeps queueing enabled when the worker is disabled but redis is configured",
     async () => {
       vi.doMock("@/lib/env", () => ({
         env: {
@@ -116,8 +116,8 @@ describe("jobs runtime config", () => {
         runtimeOptions: null,
       });
       expect(getJobsQueueingConfig()).toEqual({
-        enabled: false,
-        redisUrl: null,
+        enabled: true,
+        redisUrl: "redis://cache.internal:6379",
       });
     },
     TEST_TIMEOUT_MS

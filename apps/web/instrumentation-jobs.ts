@@ -55,9 +55,11 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     return await globalForJobsRuntime.formbricksJobsRuntimeInitializing;
   }
 
+  const runtimeOptions = jobsWorkerBootstrapConfig.runtimeOptions;
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime({
-    ...jobsWorkerBootstrapConfig.runtimeOptions,
+    ...runtimeOptions,
     jobHandlerOverrides: {
+      ...(runtimeOptions.jobHandlerOverrides ?? {}),
       [RESPONSE_PIPELINE_JOB_NAME]: async (data, context) => {
         await processResponsePipelineJob(data as TResponsePipelineJobData, context);
       },

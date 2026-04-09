@@ -371,22 +371,32 @@ const buildNotionPayloadProperties = (
   surveyData: TSurvey
 ) => {
   const properties: any = {};
-  const responses = data.response.data;
+  const normalizedResponses = { ...data.response.data };
 
   const surveyElements = getElementsFromBlocks(surveyData.blocks);
+  const surveyElementsById = new Map(surveyElements.map((element) => [element.id, element] as const));
   const pictureSelectionElementIds = new Set(
     mapping.filter((m) => m.element.type === TSurveyElementTypeEnum.PictureSelection).map((m) => m.element.id)
   );
 
-  Object.keys(responses).forEach((resp) => {
-    if (pictureSelectionElementIds.has(resp)) {
-      const selectedChoiceIds = responses[resp] as string[];
-      const pictureElement = surveyElements.find((el) => el.id === resp);
-
-      responses[resp] = (pictureElement as any)?.choices
-        .filter((choice: { id: string; imageUrl: string }) => selectedChoiceIds.includes(choice.id))
-        .map((choice: { id: string; imageUrl: string }) => resolveStorageUrlAuto(choice.imageUrl));
+  Object.keys(normalizedResponses).forEach((responseKey) => {
+    if (!pictureSelectionElementIds.has(responseKey)) {
+      return;
     }
+
+    const selectedChoiceIds = normalizedResponses[responseKey];
+    if (!Array.isArray(selectedChoiceIds)) {
+      return;
+    }
+
+    const pictureElement = surveyElementsById.get(responseKey);
+    if (pictureElement?.type !== TSurveyElementTypeEnum.PictureSelection) {
+      return;
+    }
+
+    normalizedResponses[responseKey] = pictureElement.choices
+      .filter((choice) => selectedChoiceIds.includes(choice.id))
+      .map((choice) => resolveStorageUrlAuto(choice.imageUrl));
   });
 
   mapping.forEach((map) => {
@@ -399,7 +409,7 @@ const buildNotionPayloadProperties = (
         [map.column.type]: getValue(map.column.type, data.response.createdAt) || null,
       };
     } else {
-      const value = responses[map.element.id];
+      const value = normalizedResponses[map.element.id];
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, value) || null,
       };
@@ -412,6 +422,33 @@ const buildNotionPayloadProperties = (
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
 type TNotionValueInput = string | string[] | Date | number | Record<string, string> | undefined;
+
+const coerceToNotionString = (
+  value: TNotionValueInput,
+  options?: { allowArrays?: boolean }
+): string | null => {
+  if (value == null) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    if (!options?.allowArrays) {
+      return null;
+    }
+
+    return value.join("\n");
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+};
 
 const getSelectValue = (value: TNotionValueInput) => {
   if (typeof value !== "string" || value.length === 0) {
@@ -431,57 +468,55 @@ const getMultiSelectValue = (value: TNotionValueInput) => {
   return value.map((entry: string) => ({ name: entry.replaceAll(",", "") }));
 };
 
-const getTitleValue = (value: TNotionValueInput) => [
-  {
-    text: {
-      content: value,
-    },
-  },
-];
-
-const getRichTextValue = (value: TNotionValueInput) => {
-  if (typeof value === "string") {
-    return [
-      {
-        text: {
-          content:
-            value.length > NOTION_RICH_TEXT_LIMIT ? truncateText(value, NOTION_RICH_TEXT_LIMIT) : value,
-        },
-      },
-    ];
-  }
-
-  if (Array.isArray(value)) {
-    const content = value.join("\n");
-    return [
-      {
-        text: {
-          content:
-            content.length > NOTION_RICH_TEXT_LIMIT ? truncateText(content, NOTION_RICH_TEXT_LIMIT) : content,
-        },
-      },
-    ];
+const getTitleValue = (value: TNotionValueInput) => {
+  const content = coerceToNotionString(value, { allowArrays: true });
+  if (!content) {
+    return null;
   }
 
   return [
     {
       text: {
-        content: value,
+        content,
+      },
+    },
+  ];
+};
+
+const getRichTextValue = (value: TNotionValueInput) => {
+  const content = coerceToNotionString(value, { allowArrays: true });
+  if (!content) {
+    return null;
+  }
+
+  return [
+    {
+      text: {
+        content:
+          content.length > NOTION_RICH_TEXT_LIMIT ? truncateText(content, NOTION_RICH_TEXT_LIMIT) : content,
       },
     },
   ];
 };
 
 const getUrlValue = (value: TNotionValueInput) => {
+  if (Array.isArray(value)) {
+    if (value.length !== 1) {
+      return null;
+    }
+
+    return coerceToNotionString(value[0]);
+  }
+
+  const content = coerceToNotionString(value);
+  if (!content) {
+    return null;
+  }
+
   if (typeof value === "string") {
     return value;
   }
-
-  if (Array.isArray(value)) {
-    return value.join(", ");
-  }
-
-  return undefined;
+  return content;
 };
 
 const getValue = (colType: string, value: TNotionValueInput) => {

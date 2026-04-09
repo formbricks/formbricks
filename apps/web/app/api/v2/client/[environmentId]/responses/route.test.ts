@@ -16,6 +16,7 @@ const {
   mockHeaders,
   mockLoggerError,
   mockTransformErrorToDetails,
+  mockValidateFileUploads,
   mockValidateOtherOptionLengthForMultipleChoice,
   mockValidateResponseData,
 } = vi.hoisted(() => ({
@@ -32,6 +33,7 @@ const {
   mockHeaders: vi.fn(),
   mockLoggerError: vi.fn(),
   mockTransformErrorToDetails: vi.fn(),
+  mockValidateFileUploads: vi.fn(),
   mockValidateOtherOptionLengthForMultipleChoice: vi.fn(),
   mockValidateResponseData: vi.fn(),
 }));
@@ -99,6 +101,10 @@ vi.mock("@/modules/ee/quotas/lib/helpers", () => ({
   createQuotaFullObject: mockCreateQuotaFullObject,
 }));
 
+vi.mock("@/modules/storage/utils", () => ({
+  validateFileUploads: mockValidateFileUploads,
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     debug: vi.fn(),
@@ -149,6 +155,7 @@ describe("POST /api/v2/client/[environmentId]/responses", () => {
     });
     mockCheckSurveyValidity.mockResolvedValue(null);
     mockGetElementsFromBlocks.mockReturnValue([]);
+    mockValidateFileUploads.mockReturnValue(true);
     mockValidateOtherOptionLengthForMultipleChoice.mockReturnValue(undefined);
     mockValidateResponseData.mockReturnValue(null);
     mockFormatValidationErrorsForV1Api.mockReturnValue([{ field: "data", message: "invalid" }]);
@@ -245,6 +252,30 @@ describe("POST /api/v2/client/[environmentId]/responses", () => {
       details: { questionId: "question_other" },
       message: "Response exceeds character limit",
     });
+  });
+
+  test("returns a bad request response for invalid file uploads", async () => {
+    mockValidateFileUploads.mockReturnValue(false);
+
+    const { POST } = await import("./route");
+    const response = await (POST as PostHandler)(
+      createRequest(
+        JSON.stringify({
+          data: { fileQuestion: ["invalid"] },
+          finished: false,
+          surveyId,
+        })
+      ),
+      {
+        params: Promise.resolve({ environmentId }),
+      }
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      message: "Invalid file upload response",
+    });
+    expect(mockCreateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
   });
 
   test("returns a validation response when the response payload is invalid", async () => {

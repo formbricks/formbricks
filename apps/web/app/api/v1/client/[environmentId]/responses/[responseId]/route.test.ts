@@ -186,6 +186,20 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
     expect(mockGetResponse).not.toHaveBeenCalled();
   });
 
+  test("returns a bad request response for malformed JSON bodies", async () => {
+    const { PUT } = await import("./route");
+    const result = await (PUT as unknown as PutHandler)({
+      props: { params: Promise.resolve({ environmentId, responseId }) },
+      req: createRequest("{"),
+    });
+
+    expect(result.response.status).toBe(400);
+    await expect(result.response.json()).resolves.toMatchObject({
+      message: "Invalid JSON in request body",
+    });
+    expect(mockGetResponse).not.toHaveBeenCalled();
+  });
+
   test("returns a bad request response when file uploads are invalid", async () => {
     mockValidateFileUploads.mockReturnValue(false);
 

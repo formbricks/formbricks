@@ -17,6 +17,7 @@ import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
+import { validateFileUploads } from "@/modules/storage/utils";
 import { type TResponseInputV2, ZResponseInputV2 } from "../types/response";
 import { createResponseWithQuotaEvaluation } from "./response";
 
@@ -92,6 +93,10 @@ const getResponseCreationValidationError = (
   responseInputData: TResponseInputV2,
   survey: TSurvey
 ): Response | undefined => {
+  if (!validateFileUploads(responseInputData.data, survey.questions)) {
+    return responses.badRequestResponse("Invalid file upload response", undefined, true);
+  }
+
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: responseInputData.data,
     surveyQuestions: getElementsFromBlocks(survey.blocks),
@@ -172,12 +177,13 @@ const createResponseSafely = async (
     });
   } catch (error) {
     if (isInvalidInputError(error)) {
-      return responses.badRequestResponse(error.message);
+      return responses.badRequestResponse(error.message, undefined, true);
     }
 
     logger.error({ error, url: req.url }, "Error creating response");
     return responses.internalServerErrorResponse(
-      error instanceof Error ? error.message : "Unknown error occurred"
+      error instanceof Error ? error.message : "Unknown error occurred",
+      true
     );
   }
 };

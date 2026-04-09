@@ -63,11 +63,15 @@ describe("instrumentation-jobs", () => {
     const mockRuntime = {
       close: vi.fn().mockResolvedValue(undefined),
     };
+    const mockExistingOverride = vi.fn();
 
     mockGetJobsWorkerBootstrapConfig.mockReturnValue({
       enabled: true,
       runtimeOptions: {
         concurrency: 4,
+        jobHandlerOverrides: {
+          "test-log.process": mockExistingOverride,
+        },
         redisUrl: "redis://localhost:6379",
         workerCount: 2,
       },
@@ -85,6 +89,7 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
       concurrency: 4,
       jobHandlerOverrides: {
+        "test-log.process": mockExistingOverride,
         "response-pipeline.process": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",

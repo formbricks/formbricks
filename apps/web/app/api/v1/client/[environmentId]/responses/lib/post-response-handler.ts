@@ -115,7 +115,7 @@ const getResponseCreationValidationError = (
   survey: TSurvey
 ): Response | undefined => {
   if (!validateFileUploads(responseInputData.data, survey.questions)) {
-    return responses.badRequestResponse("Invalid file upload response");
+    return responses.badRequestResponse("Invalid file upload response", undefined, true);
   }
 
   return validateResponse(responseInputData, survey)?.response;
@@ -169,12 +169,13 @@ const createResponseSafely = async (
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+      return responses.badRequestResponse(error.message, undefined, true);
     }
 
     logger.error({ error, url: req.url }, "Error creating response");
     return responses.internalServerErrorResponse(
-      error instanceof Error ? error.message : "Unknown error occurred"
+      error instanceof Error ? error.message : "Unknown error occurred",
+      true
     );
   }
 };

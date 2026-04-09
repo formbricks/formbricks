@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { processResponsePipelineJob } from "./process-response-pipeline-job";
@@ -153,6 +153,8 @@ const survey = {
   updatedAt: new Date("2026-04-01T10:00:00.000Z"),
 };
 
+const originalFetch = global.fetch;
+
 describe("processResponsePipelineJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -175,6 +177,11 @@ describe("processResponsePipelineJob", () => {
       status: 200,
     });
     global.fetch = mockFetch as typeof global.fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    mockFetch.mockReset();
   });
 
   test("processes responseCreated jobs with webhook, metering, and telemetry side effects", async () => {
@@ -286,21 +293,13 @@ describe("processResponsePipelineJob", () => {
     expect(mockSendTelemetryEvents).not.toHaveBeenCalled();
   });
 
-  test("logs partial downstream failures without failing the job", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
+  test("logs responseFinished side-effect failures without failing the job", async () => {
     mockPrismaUserFindMany.mockResolvedValue([
       {
         email: "owner@example.com",
         locale: "en",
       },
     ]);
-    mockValidateWebhookUrl.mockRejectedValue(new Error("invalid webhook"));
     mockSendResponseFinishedEmail.mockRejectedValue(new Error("smtp failed"));
     mockSendFollowUpsForResponse.mockResolvedValue({
       ok: false,
@@ -329,13 +328,6 @@ describe("processResponsePipelineJob", () => {
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         err: expect.any(Error),
-        webhookId: "webhook_123",
-      }),
-      "Response pipeline webhook delivery failed"
-    );
-    expect(mockLoggerError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        err: expect.any(Error),
         userEmail: "owner@example.com",
       }),
       "Response pipeline notification email failed"
@@ -350,6 +342,29 @@ describe("processResponsePipelineJob", () => {
       expect.objectContaining({
         status: "failure",
       })
+    );
+  });
+
+  test("fails the job when webhook delivery fails so BullMQ can retry it", async () => {
+    const webhookError = new Error("invalid webhook");
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+    mockValidateWebhookUrl.mockRejectedValue(webhookError);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow("invalid webhook");
+
+    expect(mockHandleIntegrations).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: webhookError,
+        webhookId: "webhook_123",
+      }),
+      "Response pipeline webhook delivery failed"
     );
   });
 
@@ -394,7 +409,7 @@ describe("processResponsePipelineJob", () => {
     );
   });
 
-  test("logs non-success webhook responses without failing the job", async () => {
+  test("fails the job when a webhook response is not successful", async () => {
     mockPrismaWebhookFindMany.mockResolvedValue([
       {
         id: "webhook_123",
@@ -407,7 +422,9 @@ describe("processResponsePipelineJob", () => {
       status: 500,
     });
 
-    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
+    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
+      "Webhook delivery failed with status 500"
+    );
 
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -416,6 +433,29 @@ describe("processResponsePipelineJob", () => {
       }),
       "Response pipeline webhook delivery failed"
     );
+  });
+
+  test("awaits the metering write before finishing responseCreated jobs", async () => {
+    let resolveMetering: (() => void) | undefined;
+    const meteringPromise = new Promise<void>((resolve) => {
+      resolveMetering = resolve;
+    });
+    mockRecordResponseCreatedMeterEvent.mockReturnValue(meteringPromise);
+
+    let settled = false;
+    const jobPromise = processResponsePipelineJob(baseData, baseContext).then(() => {
+      settled = true;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(settled).toBe(false);
+    expect(mockSendTelemetryEvents).not.toHaveBeenCalled();
+
+    resolveMetering?.();
+    await jobPromise;
+
+    expect(mockSendTelemetryEvents).toHaveBeenCalledTimes(1);
   });
 
   test("fails fast on preflight mismatches", async () => {

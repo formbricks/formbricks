@@ -442,6 +442,79 @@ describe("handleIntegrations", () => {
       expect(writeNotionData).not.toHaveBeenCalled();
     });
 
+    test("maps picture selection URLs without mutating the shared response payload", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TResponsePipelineJobData;
+
+      await handleIntegrations([mockNotionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          "Column 3": {
+            url: "http://image.com/1",
+          },
+        }),
+        mockNotionIntegration.config
+      );
+      expect(pipelineInput.response.data[questionId3]).toEqual(["picChoice1"]);
+    });
+
+    test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TResponsePipelineJobData;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId1] = 42;
+      pipelineResponseData.objectField = { foo: "bar" };
+      pipelineResponseData.manyUrls = ["https://example.com/a", "https://example.com/b"];
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId1, name: "Question 1", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_title", name: "Title", type: "title" },
+        },
+        {
+          element: { id: "objectField", name: "Object Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_rich", name: "Rich", type: "rich_text" },
+        },
+        {
+          element: { id: "manyUrls", name: "Many Urls", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_url", name: "Url", type: "url" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Rich: {
+            rich_text: [
+              {
+                text: {
+                  content: JSON.stringify({ foo: "bar" }),
+                },
+              },
+            ],
+          },
+          Title: {
+            title: [
+              {
+                text: {
+                  content: "42",
+                },
+              },
+            ],
+          },
+          Url: {
+            url: null,
+          },
+        }),
+        notionIntegration.config
+      );
+    });
+
     test("should return error result on failure", async () => {
       const error = new Error("Notion API error");
       vi.mocked(writeNotionData).mockRejectedValue(error);

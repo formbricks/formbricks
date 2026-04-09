@@ -9,7 +9,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 
-const TEST_TIMEOUT_MS = 15_000;
+const TEST_TIMEOUT_MS = 5_000;
 const authUtilsMocks = vi.hoisted(() => ({
   logAuthAttempt: vi.fn(),
   logAuthEvent: vi.fn(),
@@ -300,16 +300,20 @@ describe("authOptions", () => {
         "should throw error if backup codes are missing",
         async () => {
           vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
-          const mockUser = {
+          const mockTwoFactorUser = {
             id: mockUserId,
             email: "2fa@example.com",
             password: mockHashedPassword,
             twoFactorEnabled: true,
             backupCodes: null,
           };
-          vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
+          vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockTwoFactorUser as any);
 
-          const credentials = { email: mockUser.email, password: mockPassword, backupCode: "123456" };
+          const credentials = {
+            email: mockTwoFactorUser.email,
+            password: mockPassword,
+            backupCode: "123456",
+          };
 
           await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
             "No backup codes found"
@@ -468,16 +472,16 @@ describe("authOptions", () => {
       "should throw error if TOTP code is missing when 2FA is enabled",
       async () => {
         vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
-        const mockUser = {
+        const mockTwoFactorUser = {
           id: mockUserId,
           email: "2fa@example.com",
           password: mockHashedPassword,
           twoFactorEnabled: true,
           twoFactorSecret: "encrypted_secret",
         };
-        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
+        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockTwoFactorUser as any);
 
-        const credentials = { email: mockUser.email, password: mockPassword };
+        const credentials = { email: mockTwoFactorUser.email, password: mockPassword };
 
         await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
           "second factor required"
@@ -490,17 +494,17 @@ describe("authOptions", () => {
       "should throw error if two factor secret is missing",
       async () => {
         vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
-        const mockUser = {
+        const mockTwoFactorUserWithoutSecret = {
           id: mockUserId,
           email: "2fa@example.com",
           password: mockHashedPassword,
           twoFactorEnabled: true,
           twoFactorSecret: null,
         };
-        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
+        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockTwoFactorUserWithoutSecret as any);
 
         const credentials = {
-          email: mockUser.email,
+          email: mockTwoFactorUserWithoutSecret.email,
           password: mockPassword,
           totpCode: "123456",
         };

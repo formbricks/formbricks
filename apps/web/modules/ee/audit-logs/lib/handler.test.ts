@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
@@ -131,6 +132,7 @@ const mockCtxBase = {
 function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
+  vi.mocked(getClientIpFromHeaders).mockClear();
   if (mutableConstants) {
     // Check because it's a var and could be re-assigned (though not in this code)
     mutableConstants.AUDIT_LOG_ENABLED = true;
@@ -205,6 +207,7 @@ describe("queueAuditEventWithoutRequest", () => {
         ipAddress: "worker-ip",
       })
     );
+    expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
   });
 });
 

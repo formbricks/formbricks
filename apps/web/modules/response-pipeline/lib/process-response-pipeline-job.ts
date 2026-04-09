@@ -307,11 +307,13 @@ const runResponseCreatedSideEffects = async ({
   logContext: ReturnType<typeof getPipelineLogContext>;
   stripeCustomerId: string | null | undefined;
 }) => {
-  recordResponseCreatedMeterEvent({
-    stripeCustomerId,
-    responseId: data.response.id,
-    createdAt: data.response.createdAt,
-  }).catch((error) => {
+  try {
+    await recordResponseCreatedMeterEvent({
+      stripeCustomerId,
+      responseId: data.response.id,
+      createdAt: data.response.createdAt,
+    });
+  } catch (error) {
     logger.error(
       {
         ...logContext,
@@ -319,7 +321,7 @@ const runResponseCreatedSideEffects = async ({
       },
       "Response pipeline meter event failed"
     );
-  });
+  }
 
   try {
     await sendTelemetryEvents();
@@ -363,18 +365,15 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       })
     );
 
+    await Promise.all(webhookTasks);
+
     if (data.event === "responseFinished") {
-      await Promise.all([
-        Promise.allSettled(webhookTasks),
-        runResponseFinishedSideEffects({
-          data,
-          logContext,
-          organizationId: organization.id,
-          survey,
-        }),
-      ]);
-    } else {
-      await Promise.allSettled(webhookTasks);
+      await runResponseFinishedSideEffects({
+        data,
+        logContext,
+        organizationId: organization.id,
+        survey,
+      });
     }
 
     if (data.event === "responseCreated") {
