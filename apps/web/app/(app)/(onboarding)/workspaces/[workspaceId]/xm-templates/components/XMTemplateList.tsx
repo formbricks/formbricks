@@ -18,11 +18,10 @@ import { createSurveyAction } from "@/modules/survey/components/template-list/ac
 interface XMTemplateListProps {
   workspace: TWorkspace;
   user: TUser;
-  environmentId: string;
   workspaceId: string;
 }
 
-export const XMTemplateList = ({ workspace, user, environmentId, workspaceId }: XMTemplateListProps) => {
+export const XMTemplateList = ({ workspace, user, workspaceId }: XMTemplateListProps) => {
   const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -34,7 +33,7 @@ export const XMTemplateList = ({ workspace, user, environmentId, workspaceId }: 
       createdBy: user.id,
     };
     const createSurveyResponse = await createSurveyAction({
-      environmentId: environmentId,
+      workspaceId: workspaceId,
       surveyBody: augmentedTemplate,
     });
 

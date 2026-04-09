@@ -45,8 +45,8 @@ export const EditWelcomeCard = ({
   const { t } = useTranslation();
 
   const path = usePathname();
-  // Parse environment or workspace ID from path to build the base path for file uploads
-  const environmentId =
+  // Parse workspace ID from path to build the base path for file uploads
+  const workspaceId =
     path?.split("/environments/")[1]?.split("/")[0] ?? path?.split("/workspaces/")[1]?.split("/")[0];
 
   let open = activeElementId == "start";
@@ -129,7 +129,7 @@ export const EditWelcomeCard = ({
               <FileInput
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                   if (url?.length && url[0]) {
                     const update =

@@ -31,7 +31,6 @@ vi.mock("./contact", () => ({
   getContactByUserId: vi.fn(),
 }));
 
-const environmentId = "scgavd0rtce5xgahiresk4p0";
 const workspaceId = "cqiu9au22kgzgqjossdlp5qh";
 const surveyId = "kf4w7x11wut39ttl4j5v9ccg";
 const userId = "test-user-id";
@@ -39,14 +38,12 @@ const contactId = "f9bufd72cffj19a7qj67z5fm";
 const displayId = "apbycx5war0mfsyztgpwb8wr";
 
 const displayInput: TDisplayCreateInput = {
-  environmentId,
   workspaceId,
   surveyId,
   userId,
 };
 
 const displayInputWithoutUserId: TDisplayCreateInput = {
-  environmentId,
   workspaceId,
   surveyId,
 };
@@ -80,7 +77,7 @@ const mockDisplayWithoutContact = {
 const mockSurvey = {
   id: surveyId,
   name: "Test Survey",
-  environmentId,
+  workspaceId,
 } as any;
 
 describe("createDisplay", () => {
@@ -122,8 +119,7 @@ describe("createDisplay", () => {
     expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
-        environment: { connect: { id: environmentId } },
-        workspace: { connect: { id: workspaceId } },
+        workspaceId,
         attributes: {
           create: {
             attributeKey: {

@@ -15,13 +15,13 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
-  copySurveyToOtherEnvironmentAction,
+  copySurveyToOtherWorkspaceAction,
   deleteSurveyAction,
   getSurveyAction,
 } from "@/modules/survey/list/actions";
@@ -37,7 +37,6 @@ import {
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
-  environmentId: string;
   survey: TSurvey;
   publicDomain: string;
   disabled?: boolean;
@@ -47,7 +46,6 @@ interface SurveyDropDownMenuProps {
 }
 
 export const SurveyDropDownMenu = ({
-  environmentId,
   survey,
   publicDomain,
   disabled,
@@ -103,9 +101,9 @@ export const SurveyDropDownMenu = ({
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+      const duplicatedSurveyResponse = await copySurveyToOtherWorkspaceAction({
         surveyId,
-        targetEnvironmentId: environmentId,
+        targetWorkspaceId: survey.workspaceId,
       });
 
       if (duplicatedSurveyResponse?.data) {

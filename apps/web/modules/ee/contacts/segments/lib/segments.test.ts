@@ -11,7 +11,6 @@ import {
   TSegmentWithSurveyRefs,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   PrismaSegment,
@@ -28,10 +27,6 @@ import {
   transformPrismaSegment,
   updateSegment,
 } from "./segments";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -67,7 +62,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 // Helper data
-const environmentId = "test-env-id";
+const workspaceId = "workspace-id-mock";
 const segmentId = "test-segment-id";
 const surveyId = "test-survey-id";
 const attributeKey = "email";
@@ -78,8 +73,7 @@ const mockSegmentPrisma = {
   updatedAt: new Date(),
   title: "Test Segment",
   description: "This is a test segment",
-  environmentId,
-  workspaceId: "workspace-id-mock",
+  workspaceId,
   filters: [],
   isPrivate: false,
   surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
@@ -93,7 +87,7 @@ const mockSegment: TSegmentWithSurveyRefs = {
 };
 
 const mockSegmentCreateInput = {
-  environmentId,
+  workspaceId,
   title: "New Segment",
   isPrivate: false,
   filters: [],
@@ -101,16 +95,12 @@ const mockSegmentCreateInput = {
 
 const mockSurvey = {
   id: surveyId,
-  environmentId,
+  workspaceId,
   name: "Test Survey",
   status: "inProgress",
 };
 
 describe("Segment Service Tests", () => {
-  beforeEach(() => {
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
-  });
-
   describe("transformPrismaSegment", () => {
     test("should transform Prisma segment to TSegment", () => {
       const transformed = transformPrismaSegment(mockSegmentPrisma as unknown as PrismaSegment);
@@ -121,7 +111,6 @@ describe("Segment Service Tests", () => {
   describe("getSegment", () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
     });
 
     test("should return a segment successfully", async () => {
@@ -185,8 +174,7 @@ describe("Segment Service Tests", () => {
       expect(segment).toEqual(mockSegment);
       expect(prisma.segment.create).toHaveBeenCalledWith({
         data: {
-          environmentId,
-          workspaceId: "workspace-id-mock",
+          workspaceId,
           title: mockSegmentCreateInput.title,
           description: undefined,
           isPrivate: false,
@@ -204,8 +192,7 @@ describe("Segment Service Tests", () => {
       expect(segment).toEqual(mockSegment);
       expect(prisma.segment.create).toHaveBeenCalledWith({
         data: {
-          environmentId,
-          workspaceId: "workspace-id-mock",
+          workspaceId,
           title: inputWithSurvey.title,
           description: undefined,
           isPrivate: false,
@@ -233,13 +220,12 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.upsert).toHaveBeenCalledWith({
         where: {
           workspaceId_title: {
-            workspaceId: "workspace-id-mock",
+            workspaceId,
             title: privateInput.title,
           },
         },
         create: {
-          environmentId,
-          workspaceId: "workspace-id-mock",
+          workspaceId,
           title: privateInput.title,
           description: undefined,
           isPrivate: true,
@@ -267,13 +253,12 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.upsert).toHaveBeenCalledWith({
         where: {
           workspaceId_title: {
-            workspaceId: "workspace-id-mock",
+            workspaceId,
             title: privateInputWithSurvey.title,
           },
         },
         create: {
-          environmentId,
-          workspaceId: "workspace-id-mock",
+          workspaceId,
           title: privateInputWithSurvey.title,
           description: undefined,
           isPrivate: true,
@@ -328,8 +313,7 @@ describe("Segment Service Tests", () => {
           title: "Copy of Test Segment (1)",
           description: mockSegment.description,
           isPrivate: mockSegment.isPrivate,
-          environmentId: mockSegment.environmentId,
-          workspaceId: "workspace-id-mock",
+          workspaceId: mockSegment.workspaceId,
           filters: mockSegment.filters,
           surveys: { connect: { id: surveyId } },
         },
@@ -436,7 +420,6 @@ describe("Segment Service Tests", () => {
     };
 
     beforeEach(() => {
-      vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey as any);
       vi.mocked(prisma.segment.findFirst).mockResolvedValue(privateSegmentPrisma as any);
       vi.mocked(prisma.survey.update).mockResolvedValue({} as any);
@@ -482,8 +465,7 @@ describe("Segment Service Tests", () => {
           isPrivate: true,
           filters: [],
           surveys: { connect: { id: surveyId } },
-          environment: { connect: { id: environmentId } },
-          workspace: { connect: { id: "workspace-id-mock" } },
+          workspaceId,
         },
         select: selectSegment,
       });

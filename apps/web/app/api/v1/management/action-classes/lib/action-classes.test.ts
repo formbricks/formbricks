@@ -24,7 +24,7 @@ describe("getActionClasses", () => {
       type: "code" as const,
       key: "test-key-1" as string | null,
       noCodeConfig: {},
-      environmentId: "env1",
+      workspaceId: "ws1",
     },
     {
       id: "action2",
@@ -35,7 +35,7 @@ describe("getActionClasses", () => {
       type: "noCode" as const,
       key: "test-key-2" as string | null,
       noCodeConfig: {},
-      environmentId: "env2",
+      workspaceId: "ws2",
     },
   ];
 

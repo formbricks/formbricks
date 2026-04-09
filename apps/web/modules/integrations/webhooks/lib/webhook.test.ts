@@ -43,7 +43,7 @@ describe("testEndpoint", () => {
     vi.resetAllMocks();
     vi.mocked(generateStandardWebhookSignature).mockReturnValue("signed-payload");
     vi.mocked(validateWebhookUrl).mockResolvedValue(undefined);
-    vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
+    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any);
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
 

@@ -24,7 +24,7 @@ export const GET = withV1ApiWrapper({
           response: responses.notFoundResponse("Survey", params.surveyId),
         };
       }
-      if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
         return {
           response: responses.unauthorizedResponse(),
         };

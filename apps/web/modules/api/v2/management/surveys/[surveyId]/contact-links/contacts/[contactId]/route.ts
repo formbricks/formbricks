@@ -43,7 +43,7 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.environmentPermissions, workspaceId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
         });

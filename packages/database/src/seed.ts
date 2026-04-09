@@ -88,7 +88,7 @@ async function deleteData(): Promise<void> {
     "contactAttribute",
     "contactAttributeKey",
     "contact",
-    "apiKeyEnvironment",
+    "apiKeyWorkspace",
     "apiKey",
     "segment",
     "webhook",
@@ -444,33 +444,29 @@ async function main(): Promise<void> {
     },
   });
 
-  // Environments
-  const prodEnv = await prisma.environment.upsert({
-    where: { id: SEED_IDS.ENV_PROD },
-    update: { appSetupCompleted: false },
-    create: {
-      id: SEED_IDS.ENV_PROD,
-      type: "production",
-      workspaceId: workspace.id,
-      appSetupCompleted: false,
-      attributeKeys: {
-        create: [
-          { name: "Email", key: "email", isUnique: true, type: "default" },
-          { name: "First Name", key: "firstName", isUnique: false, type: "default" },
-          { name: "Last Name", key: "lastName", isUnique: false, type: "default" },
-          { name: "userId", key: "userId", isUnique: true, type: "default" },
-          { name: "Language", key: "language", isUnique: false, type: "default" },
-        ],
-      },
-    },
-  });
+  // Contact attribute keys for the workspace
+  const defaultAttributeKeys = [
+    { name: "Email", key: "email", isUnique: true, type: "default" as const },
+    { name: "First Name", key: "firstName", isUnique: false, type: "default" as const },
+    { name: "Last Name", key: "lastName", isUnique: false, type: "default" as const },
+    { name: "userId", key: "userId", isUnique: true, type: "default" as const },
+    { name: "Language", key: "language", isUnique: false, type: "default" as const },
+  ];
+
+  for (const attr of defaultAttributeKeys) {
+    await prisma.contactAttributeKey.upsert({
+      where: { key_workspaceId: { key: attr.key, workspaceId: workspace.id } },
+      update: {},
+      create: { ...attr, workspaceId: workspace.id },
+    });
+  }
 
   logger.info("Seeding surveys...");
 
   const createSurveyWithBlocks = async (
     id: string,
     name: string,
-    environmentId: string,
+    workspaceId: string,
     status: "inProgress" | "draft" | "completed",
     questions: SurveyQuestion[]
   ): Promise<void> => {
@@ -485,7 +481,7 @@ async function main(): Promise<void> {
     await prisma.survey.upsert({
       where: { id },
       update: {
-        environmentId,
+        workspaceId,
         type: "link",
         // @ts-expect-error - blocks is not typed correctly
         blocks: blocks as unknown as Prisma.InputJsonValue[],
@@ -493,7 +489,7 @@ async function main(): Promise<void> {
       create: {
         id,
         name,
-        environmentId,
+        workspaceId,
         status,
         type: "link",
         // @ts-expect-error - blocks is not typed correctly
@@ -506,13 +502,13 @@ async function main(): Promise<void> {
   await createSurveyWithBlocks(
     SEED_IDS.SURVEY_KITCHEN_SINK,
     "Kitchen Sink Survey",
-    prodEnv.id,
+    workspace.id,
     "inProgress",
     KITCHEN_SINK_QUESTIONS
   );
 
   // CSAT Survey
-  await createSurveyWithBlocks(SEED_IDS.SURVEY_CSAT, "CSAT Survey", prodEnv.id, "inProgress", [
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_CSAT, "CSAT Survey", workspace.id, "inProgress", [
     {
       id: createId(),
       type: "rating",
@@ -524,7 +520,7 @@ async function main(): Promise<void> {
   ]);
 
   // Draft Survey
-  await createSurveyWithBlocks(SEED_IDS.SURVEY_DRAFT, "Draft Survey", prodEnv.id, "draft", [
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_DRAFT, "Draft Survey", workspace.id, "draft", [
     {
       id: createId(),
       type: "openText",
@@ -534,7 +530,7 @@ async function main(): Promise<void> {
   ]);
 
   // Completed Survey
-  await createSurveyWithBlocks(SEED_IDS.SURVEY_COMPLETED, "Exit Survey", prodEnv.id, "completed", [
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_COMPLETED, "Exit Survey", workspace.id, "completed", [
     {
       id: createId(),
       type: "multipleChoiceSingle",

@@ -1,4 +1,4 @@
-import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
+import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -76,10 +76,8 @@ const apiKeyAuth = {
   organizationAccess: {
     accessControl: { read: true, write: false },
   },
-  environmentPermissions: [
+  workspacePermissions: [
     {
-      environmentId: validWorkspaceId,
-      environmentType: EnvironmentType.development,
       workspaceId: "proj_1",
       workspaceName: "P",
       permission: ApiKeyPermission.read,
@@ -95,9 +93,9 @@ describe("GET /api/v3/surveys", () => {
       expires: "2026-01-01",
     } as any);
     mockAuthenticateRequest.mockResolvedValue(null);
-    vi.mocked(requireV3WorkspaceAccess).mockImplementation(async (auth, workspaceId) => {
+    vi.mocked(requireV3WorkspaceAccess).mockImplementation(async (auth, _workspaceId) => {
       if (auth && "apiKeyId" in auth) {
-        const p = auth.environmentPermissions.find((e) => e.environmentId === workspaceId);
+        const p = (auth as any).workspacePermissions?.find((e: any) => e.workspaceId === "proj_1");
         if (!p) {
           return new Response(
             JSON.stringify({
@@ -110,13 +108,11 @@ describe("GET /api/v3/surveys", () => {
           );
         }
         return {
-          environmentId: workspaceId,
           workspaceId: p.workspaceId,
-          organizationId: auth.organizationId,
+          organizationId: (auth as any).organizationId,
         };
       }
       return {
-        environmentId: "proj_1",
         workspaceId: "proj_1",
         organizationId: "org_1",
       };
@@ -189,10 +185,8 @@ describe("GET /api/v3/surveys", () => {
     getServerSession.mockResolvedValue(null);
     mockAuthenticateRequest.mockResolvedValue({
       ...apiKeyAuth,
-      environmentPermissions: [
+      workspacePermissions: [
         {
-          environmentId: "claa1111111111111111111111",
-          environmentType: EnvironmentType.development,
           workspaceId: "proj_x",
           workspaceName: "X",
           permission: ApiKeyPermission.read,
@@ -298,13 +292,13 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(403);
   });
 
-  test("list items expose workspaceId instead of environmentId and omit internal fields", async () => {
+  test("list items expose workspaceId and omit internal fields", async () => {
     vi.mocked(getSurveyListPage).mockResolvedValue({
       surveys: [
         {
           id: "s1",
           name: "Survey 1",
-          environmentId: "env_1",
+          workspaceId: "ws_1",
           type: "link",
           status: "draft",
           createdAt: new Date(),
@@ -322,9 +316,8 @@ describe("GET /api/v3/surveys", () => {
     expect(body.data[0]).not.toHaveProperty("blocks");
     expect(body.data[0]).not.toHaveProperty("singleUse");
     expect(body.data[0]).not.toHaveProperty("_count");
-    expect(body.data[0]).not.toHaveProperty("environmentId");
     expect(body.data[0].id).toBe("s1");
-    expect(body.data[0].workspaceId).toBe("env_1");
+    expect(body.data[0].workspaceId).toBe("ws_1");
   });
 
   test("returns 403 when getSurveyListPage throws ResourceNotFoundError", async () => {

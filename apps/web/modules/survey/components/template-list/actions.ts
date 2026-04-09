@@ -5,7 +5,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -13,7 +13,7 @@ import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZCreateSurveyAction = z.object({
-  environmentId: z.cuid2(),
+  workspaceId: z.cuid2(),
   surveyBody: ZSurveyCreateInput,
 });
 
@@ -39,7 +39,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
 
 export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateSurveyAction).action(
   withAuditLogging("created", "survey", async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = parsedInput.workspaceId;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -65,7 +65,7 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
       await checkSurveyFollowUpsPermission(organizationId);
     }
 
-    const result = await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);
+    const result = await createSurvey(workspaceId, parsedInput.surveyBody);
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = result.id;
     ctx.auditLoggingCtx.newObject = result;

@@ -31,7 +31,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, environment, isBilling, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, isBilling, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [
     integrations,
@@ -62,7 +62,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
 
-  const appSetupCompleted = !!environment?.appSetupCompleted;
+  const appSetupCompleted = !!workspace.appSetupCompleted;
   const integrationCards = [
     {
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/zapier",

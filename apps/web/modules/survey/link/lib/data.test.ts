@@ -15,6 +15,8 @@ import {
   isSurveyResponsePresent,
 } from "./data";
 
+vi.mock("server-only", () => ({}));
+
 // Mock dependencies
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
@@ -52,7 +54,7 @@ describe("data", () => {
       updatedAt: new Date(),
       name: "Test Survey",
       type: "link",
-      environmentId: "env-1",
+      workspaceId: "ws-1",
       createdBy: "user-1",
       status: "inProgress",
       welcomeCard: {
@@ -155,7 +157,7 @@ describe("data", () => {
       id: "survey-1",
       type: "link",
       status: "inProgress",
-      environmentId: "env-1",
+      workspaceId: "ws-1",
       name: "Test Survey",
       styling: { primaryColor: "#000" },
       // Additional fields that should not be in metadata
@@ -174,7 +176,7 @@ describe("data", () => {
         updatedAt: new Date(),
         name: "Test Survey",
         type: "link",
-        environmentId: "env-1",
+        workspaceId: "ws-1",
         createdBy: "user-1",
         status: "inProgress",
         styling: { primaryColor: "#000" },
@@ -216,7 +218,7 @@ describe("data", () => {
         id: "survey-1",
         type: "link",
         status: "inProgress",
-        environmentId: "env-1",
+        workspaceId: "ws-1",
         name: "Test Survey",
         styling: { primaryColor: "#000" },
       });

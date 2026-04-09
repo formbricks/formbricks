@@ -37,7 +37,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const { session, isBilling, environment, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
+  const { session, isBilling, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
     return redirect(`/workspaces/${workspace.id}/settings/billing`);
@@ -69,7 +69,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     return (
       <TemplateContainerWithPreview
         userId={session.user.id}
-        environment={environment}
+        appSetupCompleted={workspace.appSetupCompleted}
         workspace={workspaceWithRequiredProps}
         isTemplatePage={false}
         publicDomain={publicDomain}
@@ -82,7 +82,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       <>
         <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
         <SurveysList
-          environmentId={environment.id}
+          workspaceId={workspace.id}
           isReadOnly={isReadOnly}
           publicDomain={publicDomain}
           userId={session.user.id}

@@ -66,7 +66,7 @@ export const SaveAsNewSegmentModal = ({
     const createSegment = async () => {
       setIsLoading(true);
       const createdSegment = await onCreateSegment({
-        environmentId: localSurvey.environmentId,
+        workspaceId: localSurvey.workspaceId,
         surveyId: localSurvey.id,
         title: data.title,
         description: data.description ?? "",

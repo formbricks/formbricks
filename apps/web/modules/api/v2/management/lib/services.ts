@@ -10,7 +10,6 @@ export const fetchWorkspaceId = reactCache(async (id: string, isResponseId: bool
       where: isResponseId ? { responses: { some: { id } } } : { id },
       select: {
         workspaceId: true,
-        environmentId: true,
       },
     });
 
@@ -21,7 +20,7 @@ export const fetchWorkspaceId = reactCache(async (id: string, isResponseId: bool
       });
     }
 
-    return ok({ workspaceId: result.workspaceId, environmentId: result.environmentId });
+    return ok({ workspaceId: result.workspaceId });
   } catch (error) {
     return err({
       type: "internal_server_error",

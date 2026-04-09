@@ -9,8 +9,6 @@ interface WorkspaceAndOrgSwitchProps {
   currentOrganizationName?: string; // Optional: for pages without context
   currentWorkspaceId?: string;
   currentWorkspaceName?: string; // Optional: for pages without context
-  currentEnvironmentId?: string;
-  environments: { id: string; type: string }[];
   isMultiOrgEnabled: boolean;
   organizationWorkspacesLimit: number;
   isFormbricksCloud: boolean;
@@ -25,7 +23,6 @@ export const WorkspaceAndOrgSwitch = ({
   currentOrganizationName,
   currentWorkspaceId,
   currentWorkspaceName,
-  currentEnvironmentId,
   isMultiOrgEnabled,
   organizationWorkspacesLimit,
   isFormbricksCloud,
@@ -40,13 +37,13 @@ export const WorkspaceAndOrgSwitch = ({
         <OrganizationBreadcrumb
           currentOrganizationId={currentOrganizationId}
           currentOrganizationName={currentOrganizationName}
-          currentEnvironmentId={currentEnvironmentId}
+          currentWorkspaceId={currentWorkspaceId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isFormbricksCloud={isFormbricksCloud}
           isMember={isMember}
           isOwnerOrManager={isOwnerOrManager}
         />
-        {currentWorkspaceId && currentEnvironmentId && (
+        {currentWorkspaceId && (
           <WorkspaceBreadcrumb
             currentWorkspaceId={currentWorkspaceId}
             currentWorkspaceName={currentWorkspaceName}

@@ -3,8 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getProductionEnvironmentIdByWorkspaceId } from "@/app/api/v1/management/lib/workspace-resolver";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
@@ -41,10 +40,6 @@ export const createContactAttributeKey = async (
       `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for workspace ${workspaceId}`
     );
   }
-  const environmentId = await getProductionEnvironmentIdByWorkspaceId(workspaceId);
-  if (!environmentId) {
-    throw new ResourceNotFoundError("Environment", null);
-  }
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
@@ -53,16 +48,7 @@ export const createContactAttributeKey = async (
         type: data.type,
         description: data.description ?? "",
         ...(data.dataType && { dataType: data.dataType }),
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
-        workspace: {
-          connect: {
-            id: workspaceId,
-          },
-        },
+        workspaceId,
       },
     });
 

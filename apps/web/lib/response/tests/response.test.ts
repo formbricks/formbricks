@@ -2,7 +2,6 @@ import {
   getMockUpdateResponseInput,
   mockContact,
   mockDisplay,
-  mockEnvironmentId,
   mockResponse,
   mockResponseData,
   mockResponseWithQuotas,
@@ -10,6 +9,7 @@ import {
   mockSurveyId,
   mockSurveySummaryOutput,
   mockTags,
+  mockWorkspaceId,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
 import { Prisma } from "@prisma/client";
@@ -31,7 +31,7 @@ import {
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
   getResponseDownloadFile,
-  getResponsesByEnvironmentId,
+  getResponsesByWorkspaceId,
   responseSelection,
   updateResponse,
 } from "../service";
@@ -286,16 +286,16 @@ describe("Tests for getResponseDownloadUrl service", () => {
   });
 });
 
-describe("Tests for getResponsesByEnvironmentId", () => {
+describe("Tests for getResponsesByWorkspaceId", () => {
   describe("Happy Path", () => {
-    test("Obtains all responses associated with a specific environment ID", async () => {
-      const responses = await getResponsesByEnvironmentId(mockEnvironmentId);
+    test("Obtains all responses associated with a specific workspace ID", async () => {
+      const responses = await getResponsesByWorkspaceId(mockWorkspaceId);
       expect(responses).toEqual([expectedResponseWithoutPerson]);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getResponsesByEnvironmentId, "123#");
+    testInputValidation(getResponsesByWorkspaceId, "123#");
 
     test("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -306,14 +306,14 @@ describe("Tests for getResponsesByEnvironmentId", () => {
 
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(DatabaseError);
+      await expect(getResponsesByWorkspaceId(mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
 
     test("Throws a generic Error for any other unhandled exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(Error);
+      await expect(getResponsesByWorkspaceId(mockWorkspaceId)).rejects.toThrow(Error);
     });
   });
 });

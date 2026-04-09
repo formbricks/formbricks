@@ -1,14 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 // Mock the cache functions
 vi.mock("@/lib/cache", () => ({
@@ -27,9 +21,6 @@ vi.mock("@/modules/ee/contacts/lib/attributes", async (importOriginal) => {
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    environment: {
-      findUnique: vi.fn(),
-    },
     contact: {
       findFirst: vi.fn(),
       create: vi.fn(),
@@ -41,7 +32,7 @@ vi.mock("./segments", () => ({
   getPersonSegmentIds: vi.fn(),
 }));
 
-const mockEnvironmentId = "test-environment-id";
+const mockWorkspaceId = "workspace-id-mock";
 const mockUserId = "test-user-id";
 const mockContactId = "test-contact-id";
 
@@ -58,13 +49,6 @@ const mockContactData = {
 describe("updateUser", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
-    // Mock environment lookup (cached) - just provide what's needed
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      id: mockEnvironmentId,
-      type: "production",
-      workspaceId: "workspace-id-mock",
-    } as any);
     // Mock successful attribute updates
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: [] });
     // Mock segments
@@ -75,28 +59,20 @@ describe("updateUser", () => {
     vi.clearAllMocks();
   });
 
-  test("should throw ResourceNotFoundError if environment is not found", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    await expect(updateUser(mockEnvironmentId, mockUserId, "desktop")).rejects.toThrow(
-      new ResourceNotFoundError("environment", mockEnvironmentId)
-    );
-  });
-
   test("should create a new contact if not found", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.contact.create).mockResolvedValue(mockContactData as any);
 
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop");
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop");
 
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
-        environment: { connect: { id: mockEnvironmentId } },
-        workspace: { connect: { id: "workspace-id-mock" } },
+        workspace: { connect: { id: mockWorkspaceId } },
         attributes: {
           create: [
             {
               attributeKey: {
-                connect: { key_workspaceId: { key: "userId", workspaceId: "workspace-id-mock" } },
+                connect: { key_workspaceId: { key: "userId", workspaceId: mockWorkspaceId } },
               },
               value: mockUserId,
             },
@@ -140,14 +116,9 @@ describe("updateUser", () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { email: "new@example.com", language: "en" };
 
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
-    expect(updateAttributes).toHaveBeenCalledWith(
-      mockContactId,
-      mockUserId,
-      mockEnvironmentId,
-      newAttributes
-    );
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, newAttributes);
     expect(result.state.data?.language).toBe("en");
     expect(result.messages).toBeUndefined();
   });
@@ -156,7 +127,7 @@ describe("updateUser", () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const existingAttributes = { email: "test@example.com" }; // Same as in mockContactData
 
-    await updateUser(mockEnvironmentId, mockUserId, "desktop", existingAttributes);
+    await updateUser(mockWorkspaceId, mockUserId, "desktop", existingAttributes);
 
     expect(updateAttributes).not.toHaveBeenCalled();
   });
@@ -169,26 +140,21 @@ describe("updateUser", () => {
     ];
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: updateMessages });
 
-    const result = await updateUser(mockEnvironmentId, mockUserId, "desktop", newAttributes);
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
-    expect(updateAttributes).toHaveBeenCalledWith(
-      mockContactId,
-      mockUserId,
-      mockEnvironmentId,
-      newAttributes
-    );
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, newAttributes);
     expect(result.messages).toEqual(["Created new attribute 'company' with type 'string'"]);
   });
 
   test("should use device type 'phone'", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
-    await updateUser(mockEnvironmentId, mockUserId, "phone");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockEnvironmentId, mockContactId, mockUserId, "phone");
+    await updateUser(mockWorkspaceId, mockUserId, "phone");
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "phone");
   });
 
   test("should use device type 'desktop'", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
-    await updateUser(mockEnvironmentId, mockUserId, "desktop");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockEnvironmentId, mockContactId, mockUserId, "desktop");
+    await updateUser(mockWorkspaceId, mockUserId, "desktop");
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "desktop");
   });
 });

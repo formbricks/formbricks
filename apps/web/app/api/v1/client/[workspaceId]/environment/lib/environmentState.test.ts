@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsWorkspaceState, TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
 import { WorkspaceStateData, getWorkspaceStateData } from "./data";
 import { getWorkspaceState } from "./environmentState";
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("server-only", () => ({}));
 
@@ -67,7 +68,6 @@ vi.mock("@formbricks/cache", () => ({
 const workspaceId = "test-workspace-id";
 
 const mockWorkspace: TJsWorkspaceStateWorkspaceSetting = {
-  id: workspaceId,
   recontactDays: 30,
   inAppSurveyBranding: true,
   placement: "bottomRight",
@@ -84,7 +84,6 @@ const mockSurveys: TSurvey[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
     name: "App Survey In Progress",
-    environmentId: workspaceId,
     type: "app",
     status: "inProgress",
     displayLimit: null,
@@ -117,7 +116,7 @@ const mockSurveys: TSurvey[] = [
   } as unknown as TSurvey,
 ];
 
-const mockActionClasses: TActionClass[] = [
+const mockActionClasses = [
   {
     id: "action-1",
     createdAt: new Date(),
@@ -129,7 +128,7 @@ const mockActionClasses: TActionClass[] = [
     environmentId: workspaceId,
     key: "action1",
   },
-];
+] as unknown as TActionClass[];
 
 const mockWorkspaceStateData: WorkspaceStateData = {
   workspace: {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { timeSince } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
@@ -15,7 +15,6 @@ import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
   survey: TSurvey;
-  environmentId: string;
   isReadOnly: boolean;
   publicDomain: string;
   deleteSurvey: (surveyId: string) => void;
@@ -24,7 +23,6 @@ interface SurveyCardProps {
 }
 export const SurveyCard = ({
   survey,
-  environmentId,
   isReadOnly,
   publicDomain,
   deleteSurvey,
@@ -99,7 +97,6 @@ export const SurveyCard = ({
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
-          environmentId={environmentId}
           publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}

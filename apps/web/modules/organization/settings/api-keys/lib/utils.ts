@@ -1,5 +1,5 @@
 import { OrganizationAccessType } from "@formbricks/types/api-key";
-import { TAPIKeyEnvironmentPermission, TAuthenticationApiKey } from "@formbricks/types/auth";
+import { TAPIKeyWorkspacePermission, TAuthenticationApiKey } from "@formbricks/types/auth";
 
 // Permission level required for different HTTP methods
 const methodPermissionMap = {
@@ -12,7 +12,7 @@ const methodPermissionMap = {
 
 // Check if API key has sufficient permission for the requested workspace and method
 export const hasPermission = (
-  permissions: TAPIKeyEnvironmentPermission[],
+  permissions: TAPIKeyWorkspacePermission[],
   workspaceId: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 ): boolean => {
@@ -43,23 +43,19 @@ export const hasPermission = (
 };
 
 // Check if API key has sufficient permission for the requested workspace and method.
-// Only considers the production environment's permission, since workspace-level access
-// always resolves to the production environment.
 export const hasWorkspacePermission = (
-  permissions: TAPIKeyEnvironmentPermission[],
+  permissions: TAPIKeyWorkspacePermission[],
   workspaceId: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 ): boolean => {
   if (!permissions) return false;
 
-  const prodPermission = permissions.find(
-    (p) => p.workspaceId === workspaceId && p.environmentType === "production"
-  );
-  if (!prodPermission) return false;
+  const workspacePermission = permissions.find((p) => p.workspaceId === workspaceId);
+  if (!workspacePermission) return false;
 
   const requiredPermission = methodPermissionMap[method];
 
-  switch (prodPermission.permission) {
+  switch (workspacePermission.permission) {
     case "manage":
       return true;
     case "write":

@@ -23,7 +23,6 @@ import {
 import { Input } from "@/modules/ui/components/input";
 
 interface EditOrganizationNameProps {
-  environmentId: string;
   organization: TOrganization;
   membershipRole?: TOrganizationRole;
 }

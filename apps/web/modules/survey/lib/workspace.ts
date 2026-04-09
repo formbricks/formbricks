@@ -9,50 +9,6 @@ type WorkspaceWithTeam = Workspace & {
   teamIds: string[];
 };
 
-export const getWorkspaceWithTeamIdsByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<WorkspaceWithTeam | null> => {
-    let workspacePrisma: Prisma.WorkspaceGetPayload<{
-      include: { workspaceTeams: { select: { teamId: true } } };
-    }> | null = null;
-
-    try {
-      workspacePrisma = await prisma.workspace.findFirst({
-        where: {
-          environments: {
-            some: {
-              id: environmentId,
-            },
-          },
-        },
-        include: {
-          workspaceTeams: {
-            select: {
-              teamId: true,
-            },
-          },
-        },
-      });
-
-      if (!workspacePrisma) {
-        return null;
-      }
-
-      const teamIds = workspacePrisma.workspaceTeams.map((workspaceTeam) => workspaceTeam.teamId);
-
-      return {
-        ...workspacePrisma,
-        teamIds,
-      };
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error fetching workspace by environment id");
-        throw new DatabaseError(error.message);
-      }
-      throw error;
-    }
-  }
-);
-
 export const getWorkspaceWithTeamIds = reactCache(
   async (workspaceId: string): Promise<WorkspaceWithTeam | null> => {
     let workspacePrisma: Prisma.WorkspaceGetPayload<{

@@ -19,12 +19,12 @@ import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditLogoProps {
   workspace: TWorkspace;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
 }
 
-export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
+export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
   const { t } = useTranslation();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(workspace.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(workspace.logo?.bgColor || undefined);
@@ -37,7 +37,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
   const handleImageUpload = async (file: File) => {
     setIsLoading(true);
     try {
-      const uploadResult = await handleFileUpload(file, environmentId);
+      const uploadResult = await handleFileUpload(file, workspaceId);
       if (uploadResult.error) {
         toast.error(uploadResult.error);
         return;
@@ -145,7 +145,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
           <FileInput
             id="logo-input"
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
               if (files?.[0]) {
                 setLogoUrl(files[0]);

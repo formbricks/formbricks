@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import {
   TSurvey,
   TSurveyCreateInputWithWorkspaceId,
@@ -88,7 +89,7 @@ const mockLanguage: TSurveyCreateInputWithWorkspaceId["languages"][number] = {
 
 const baseSurveyData: TSurveyCreateInputWithWorkspaceId = {
   name: "Test Survey",
-  environmentId: "test-env",
+  workspaceId: "mockWorkspaceId",
   questions: [
     {
       id: "q1",
@@ -333,7 +334,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -345,7 +346,7 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
     expect(responses.forbiddenResponse).toHaveBeenCalledWith(
@@ -364,7 +365,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -384,7 +385,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -397,7 +398,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });
@@ -413,7 +414,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -433,7 +434,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -446,7 +447,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeNull();
   });
 
@@ -461,7 +462,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -473,7 +474,7 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
     expect(result).toBeNull();
   });
 
@@ -488,7 +489,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -508,7 +509,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: false,
@@ -521,7 +522,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });

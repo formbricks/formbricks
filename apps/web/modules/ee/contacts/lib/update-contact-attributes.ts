@@ -2,7 +2,6 @@ import "server-only";
 import { TContactAttributes, TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TAttributeUpdateMessage, updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
@@ -18,14 +17,13 @@ export const updateContactAttributes = async (
   contactId: string,
   attributes: TContactAttributesInput
 ): Promise<UpdateContactAttributesResult> => {
-  // Load contact to get environmentId and current attributes
+  // Load contact to get workspaceId and current attributes
   const contact = await getContact(contactId);
   if (!contact) {
     throw new ResourceNotFoundError("contact", contactId);
   }
 
-  const environmentId = contact.environmentId;
-  const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+  const workspaceId = contact.workspaceId;
 
   // Extract userId from attributes (required by updateAttributes)
   // If missing, pass empty string but note it in messages
@@ -39,7 +37,7 @@ export const updateContactAttributes = async (
 
   // Call updateAttributes with deleteRemovedAttributes: true
   // UI forms submit all attributes, so any missing attribute should be deleted
-  const updateResult = await updateAttributes(contactId, userId, environmentId, attributes, true);
+  const updateResult = await updateAttributes(contactId, userId, workspaceId, attributes, true);
 
   // Merge any messages from updateAttributes
   if (updateResult.messages) {

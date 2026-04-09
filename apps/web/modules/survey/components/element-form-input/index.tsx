@@ -422,7 +422,7 @@ export const ElementFormInput = ({
             <FileInput
               id="element-image"
               allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-              environmentId={localSurvey.environmentId}
+              workspaceId={localSurvey.workspaceId}
               onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                 if (url) {
                   const update =

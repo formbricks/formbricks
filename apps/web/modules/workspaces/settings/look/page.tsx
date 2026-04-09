@@ -20,7 +20,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, organization, environment } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization } = await getWorkspaceAuth(params.workspaceId);
 
   const workspace = await getWorkspace(params.workspaceId);
 
@@ -46,7 +46,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
         className={cn(!isReadOnly && "max-w-7xl")}
         description={t("workspace.look.theme_settings_description")}>
         <ThemeStyling
-          environmentId={environment.id}
+          workspaceId={params.workspaceId}
           workspace={workspace}
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
@@ -58,7 +58,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
       <SettingsCard title={t("common.logo")} description={t("workspace.look.logo_settings_description")}>
         <EditLogo
           workspace={workspace}
-          environmentId={environment.id}
+          workspaceId={params.workspaceId}
           isReadOnly={isReadOnly}
           isStorageConfigured={IS_STORAGE_CONFIGURED}
         />

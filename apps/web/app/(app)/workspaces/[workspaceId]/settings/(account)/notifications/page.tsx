@@ -24,14 +24,12 @@ const setCompleteNotificationSettings = (
   for (const membership of memberships) {
     for (const workspace of membership.organization.workspaces) {
       // set default values for alerts
-      for (const environment of workspace.environments) {
-        for (const survey of environment.surveys) {
-          newNotificationSettings.alert[survey.id] =
-            (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
-              ?.responseFinished ||
-            (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
-            false; // check for legacy notification settings w/o "alerts" key
-        }
+      for (const survey of workspace.surveys) {
+        newNotificationSettings.alert[survey.id] =
+          (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
+            ?.responseFinished ||
+          (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
+          false; // check for legacy notification settings w/o "alerts" key
       }
     }
   }
@@ -115,18 +113,10 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
             select: {
               id: true,
               name: true,
-              environments: {
-                where: {
-                  type: "production",
-                },
+              surveys: {
                 select: {
                   id: true,
-                  surveys: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
+                  name: true,
                 },
               },
             },
@@ -143,7 +133,6 @@ const Page = async (props: {
   searchParams: Promise<Record<string, string>>;
 }) => {
   const searchParams = await props.searchParams;
-  const params = await props.params;
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -167,7 +156,7 @@ const Page = async (props: {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar environmentId={params.workspaceId} activeId="notifications" />
+        <AccountSettingsNavbar activeId="notifications" />
       </PageHeader>
       <SettingsCard
         title={t("workspace.settings.notifications.email_alerts_surveys")}
@@ -175,12 +164,11 @@ const Page = async (props: {
         <EditAlerts
           memberships={memberships}
           user={user}
-          environmentId={params.workspaceId}
           autoDisableNotificationType={autoDisableNotificationType}
           autoDisableNotificationElementId={autoDisableNotificationElementId}
         />
       </SettingsCard>
-      <IntegrationsTip environmentId={params.workspaceId} />
+      <IntegrationsTip />
     </PageContentWrapper>
   );
 };

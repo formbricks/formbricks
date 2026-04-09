@@ -24,14 +24,14 @@ import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { TEnvironmentAuth, TEnvironmentLayoutData } from "@/modules/environments/types/environment-auth";
+import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
 /**
  * Workspace-scoped equivalent of getEnvironmentAuth.
  * Accepts a workspaceId, resolves the production environment automatically,
  * and performs the same authorization checks as getEnvironmentAuth.
  */
-export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TEnvironmentAuth> => {
+export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
 
   const [workspace, session] = await Promise.all([getWorkspace(workspaceId), getServerSession(authOptions)]);
@@ -50,11 +50,6 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  const prodEnvironment = workspace.environments?.[0];
-  if (!prodEnvironment) {
-    throw new ResourceNotFoundError(t("common.environment"), null);
-  }
-
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!currentUserMembership) {
     throw new AuthorizationError(t("common.membership_not_found"));
@@ -69,7 +64,6 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
   const isReadOnly = isMember && hasReadAccess;
 
   return {
-    environment: prodEnvironment,
     workspace,
     organization,
     session,
@@ -163,16 +157,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         styling: true,
         logo: true,
         customHeadScripts: true,
-        environments: {
-          select: {
-            id: true,
-            type: true,
-            createdAt: true,
-            updatedAt: true,
-            workspaceId: true,
-            appSetupCompleted: true,
-          },
-        },
         organization: {
           select: {
             id: true,
@@ -211,7 +195,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
     }
 
     return {
-      environment: data.environments[0],
       workspace: {
         id: data.id,
         createdAt: data.createdAt,
@@ -230,7 +213,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         logo: data.logo,
         customHeadScripts: data.customHeadScripts,
         appSetupCompleted: data.appSetupCompleted,
-        environments: data.environments,
       },
       organization: {
         id: data.organization.id,
@@ -241,7 +223,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         isAIEnabled: data.organization.isAIEnabled,
         whitelabel: data.organization.whitelabel,
       },
-      environments: data.environments,
       membership: data.organization.memberships[0] || null,
     };
   } catch (error) {
@@ -258,7 +239,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
  * Resolves the production environment automatically.
  */
 export const getWorkspaceLayoutData = reactCache(
-  async (workspaceId: string, userId: string): Promise<TEnvironmentLayoutData> => {
+  async (workspaceId: string, userId: string): Promise<TWorkspaceLayoutData> => {
     validateInputs([workspaceId, ZId]);
     validateInputs([userId, ZId]);
 
@@ -288,7 +269,7 @@ export const getWorkspaceLayoutData = reactCache(
       throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
     }
 
-    const { environment, workspace, organization, environments, membership } = relationData;
+    const { workspace, organization, membership } = relationData;
 
     if (!membership) {
       throw new AuthorizationError(t("common.membership_not_found"));
@@ -308,10 +289,8 @@ export const getWorkspaceLayoutData = reactCache(
     return {
       session,
       user,
-      environment,
       workspace,
       organization,
-      environments,
       membership,
       isAccessControlAllowed,
       workspacePermission,

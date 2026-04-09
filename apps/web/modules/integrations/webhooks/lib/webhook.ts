@@ -10,7 +10,6 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
@@ -100,7 +99,7 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 };
 
 export const createWebhook = async (
-  environmentId: string,
+  workspaceId: string,
   webhookInput: TWebhookInput,
   secret?: string
 ): Promise<Webhook> => {
@@ -112,18 +111,12 @@ export const createWebhook = async (
     }
 
     const signingSecret = secret ?? generateWebhookSecret();
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
 
     const webhook = await prisma.webhook.create({
       data: {
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
         secret: signingSecret,
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
         workspace: {
           connect: {
             id: workspaceId,
@@ -139,7 +132,7 @@ export const createWebhook = async (
     }
 
     if (!(error instanceof InvalidInputError)) {
-      throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
+      throw new DatabaseError(`Database error when creating webhook for workspace ${workspaceId}`);
     }
 
     throw error;

@@ -167,7 +167,7 @@ export const SurveyMenuBar = ({
 
       // create a new private segment
       const newSegment = await createSegmentAction({
-        environmentId: localSurvey.environmentId,
+        workspaceId: localSurvey.workspaceId,
         filters,
         isPrivate: true,
         surveyId: localSurvey.id,

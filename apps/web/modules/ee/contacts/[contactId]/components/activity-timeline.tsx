@@ -4,7 +4,6 @@ import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TDisplay } from "@formbricks/types/displays";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -26,7 +25,7 @@ interface ActivityTimelineProps {
   user: TUser;
   responses: TResponseWithQuotas[];
   displays: Pick<TDisplay, "id" | "createdAt" | "surveyId">[];
-  environment: TEnvironment;
+  workspaceId: string;
   environmentTags: TTag[];
   locale: TUserLocale;
   workspacePermission: TTeamPermission | null;
@@ -37,7 +36,7 @@ export const ActivityTimeline = ({
   user,
   responses: initialResponses,
   displays,
-  environment,
+  workspaceId,
   environmentTags,
   locale,
   workspacePermission,
@@ -46,7 +45,7 @@ export const ActivityTimeline = ({
   const [responses, setResponses] = useState(initialResponses);
   const [isReversed, setIsReversed] = useState(false);
 
-  const { membershipRole } = useMembershipRole(environment.id, user.id);
+  const { membershipRole } = useMembershipRole(workspaceId, user.id);
 
   const isReadOnly = useMemo(() => {
     const { isMember } = getAccessFlags(membershipRole);
@@ -122,7 +121,6 @@ export const ActivityTimeline = ({
                 surveys={surveys}
                 user={user}
                 environmentTags={environmentTags}
-                environment={environment}
                 updateResponseList={updateResponseList}
                 updateResponse={updateResponse}
                 locale={locale}

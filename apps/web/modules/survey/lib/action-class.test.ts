@@ -26,7 +26,7 @@ const mockActionClasses: ActionClass[] = [
     description: "Description 1",
     type: "code",
     noCodeConfig: null,
-    environmentId: environmentId,
+    workspaceId: environmentId,
     key: "key1",
   },
   {
@@ -41,7 +41,7 @@ const mockActionClasses: ActionClass[] = [
       elementSelector: { cssSelector: ".btn" },
       urlFilters: [],
     },
-    environmentId: environmentId,
+    workspaceId: environmentId,
     key: null,
   },
 ];

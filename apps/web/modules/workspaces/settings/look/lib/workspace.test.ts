@@ -2,11 +2,19 @@ import { Prisma, Workspace } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { getWorkspaceByEnvironmentId } from "./workspace";
+import { getWorkspaceById } from "./workspace";
 
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
-vi.mock("@formbricks/database", () => ({ prisma: { workspace: { findFirst: vi.fn() } } }));
+vi.mock("@formbricks/database", () => ({ prisma: { workspace: { findUnique: vi.fn() } } }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
+
+vi.mock("react", async () => {
+  const actualReact = await vi.importActual("react");
+  return {
+    ...actualReact,
+    cache: vi.fn((fn: (...args: any[]) => any) => fn),
+  };
+});
 
 const baseWorkspace: Workspace = {
   id: "p1",
@@ -24,36 +32,37 @@ const baseWorkspace: Workspace = {
   overlay: "none",
   logo: null,
   customHeadScripts: null,
+  appSetupCompleted: false,
 };
 
-describe("getWorkspaceByEnvironmentId", () => {
+describe("getWorkspaceById", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
   test("returns workspace when found", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValueOnce(baseWorkspace);
-    const result = await getWorkspaceByEnvironmentId("env1");
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(baseWorkspace);
+    const result = await getWorkspaceById("ws1");
     expect(result).toEqual(baseWorkspace);
-    expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
-      where: { environments: { some: { id: "env1" } } },
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: "ws1" },
     });
   });
 
   test("returns null when not found", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValueOnce(null);
-    const result = await getWorkspaceByEnvironmentId("env1");
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(null);
+    const result = await getWorkspaceById("ws1");
     expect(result).toBeNull();
   });
 
   test("throws DatabaseError on Prisma error", async () => {
     const error = new Prisma.PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" });
-    vi.mocked(prisma.workspace.findFirst).mockRejectedValueOnce(error);
-    await expect(getWorkspaceByEnvironmentId("env1")).rejects.toThrow(DatabaseError);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValueOnce(error);
+    await expect(getWorkspaceById("ws1")).rejects.toThrow(DatabaseError);
   });
 
   test("throws unknown error", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockRejectedValueOnce(new Error("fail"));
-    await expect(getWorkspaceByEnvironmentId("env1")).rejects.toThrow("fail");
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValueOnce(new Error("fail"));
+    await expect(getWorkspaceById("ws1")).rejects.toThrow("fail");
   });
 });

@@ -8,11 +8,9 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
-  getOrganizationByEnvironmentId,
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -31,7 +29,6 @@ export const selectSurvey = {
   updatedAt: true,
   name: true,
   type: true,
-  environmentId: true,
   workspaceId: true,
   createdBy: true,
   status: true,
@@ -86,7 +83,6 @@ export const selectSurvey = {
           id: true,
           createdAt: true,
           updatedAt: true,
-          environmentId: true,
           workspaceId: true,
           name: true,
           description: true,
@@ -306,15 +302,14 @@ export const updateSurveyInternal = async (
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+    const actionClasses = await getActionClasses(updatedSurvey.workspaceId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
-      updatedSurvey;
+    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
@@ -410,7 +405,6 @@ export const updateSurveyInternal = async (
             data: updatedInput,
             select: {
               surveys: { select: { id: true } },
-              environmentId: true,
               id: true,
             },
           });
@@ -453,7 +447,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
-        const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
+        const workspaceId = updatedSurvey.workspaceId;
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -471,11 +465,6 @@ export const updateSurveyInternal = async (
                   title: surveyId,
                   isPrivate: true,
                   filters: [],
-                  environment: {
-                    connect: {
-                      id: environmentId,
-                    },
-                  },
                   workspace: {
                     connect: {
                       id: workspaceId,
@@ -547,7 +536,7 @@ export const updateSurveyInternal = async (
       data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
     }
 
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const organization = await getOrganizationByWorkspaceId(updatedSurvey.workspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -611,18 +600,9 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
   try {
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
 
-    const environment = await prisma.environment.findFirst({
-      where: { workspaceId: parsedWorkspaceId, type: "production" },
-      select: { id: true },
-    });
-    if (!environment) {
-      throw new ResourceNotFoundError("Environment", parsedWorkspaceId);
-    }
-    const environmentId = environment.id;
-
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
-    let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
+    let data: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
       // @ts-expect-error - languages would be undefined in case of empty array
       languages: languages?.length ? languages : undefined,
@@ -671,11 +651,6 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
     const survey = await prisma.survey.create({
       data: {
         ...data,
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
         workspace: {
           connect: {
             id: parsedWorkspaceId,
@@ -692,11 +667,6 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
-            connect: {
-              id: environmentId,
-            },
-          },
           workspace: {
             connect: {
               id: parsedWorkspaceId,
@@ -789,7 +759,6 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
           id: currentSurveySegment.id,
         },
         select: {
-          environmentId: true,
           surveys: {
             select: {
               id: true,

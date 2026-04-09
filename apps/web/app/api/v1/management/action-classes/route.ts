@@ -17,7 +17,7 @@ export const GET = withV1ApiWrapper({
 
     try {
       const workspaceIds = [
-        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
       const actionClasses = await getActionClasses(workspaceIds);
@@ -53,8 +53,8 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(actionClassInput, authentication.environmentPermissions, "POST");
+      // Validate workspace-level permission
+      const resolved = await resolveBodyIds(actionClassInput, authentication.workspacePermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZActionClassInput.safeParse(resolved.body);
@@ -70,7 +70,7 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.environmentPermissions, inputValidation.data.workspaceId, "POST")
+        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "POST")
       ) {
         return { response: responses.unauthorizedResponse() };
       }

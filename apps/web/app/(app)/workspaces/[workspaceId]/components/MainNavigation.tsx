@@ -332,7 +332,7 @@ export const MainNavigation = ({
                         organizationId: organization.id,
                         redirect: false,
                         callbackUrl: loginUrl,
-                        clearEnvironmentId: true,
+                        clearWorkspaceId: true,
                       });
                       router.push(route?.url || loginUrl); // NOSONAR // We want to check for empty strings
                     }}

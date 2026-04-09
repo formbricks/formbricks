@@ -55,7 +55,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <FaviconCustomizationSettings
         organization={organization}
         hasWhiteLabelPermission={hasWhiteLabelPermission}
-        environmentId={params.workspaceId}
+        workspaceId={params.workspaceId}
         isReadOnly={!isOwnerOrManager}
         isStorageConfigured={IS_STORAGE_CONFIGURED}
       />

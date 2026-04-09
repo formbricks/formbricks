@@ -18,7 +18,7 @@ export const toBase64 = (file: File) =>
 
 export const handleFileUpload = async (
   file: File,
-  environmentId: string,
+  workspaceId: string,
   allowedFileExtensions?: string[]
 ): Promise<{
   error?: FileUploadError;
@@ -49,7 +49,7 @@ export const handleFileUpload = async (
       fileName: file.name,
       fileType: file.type,
       allowedFileExtensions,
-      environmentId,
+      workspaceId,
     };
 
     const response = await fetch("/api/v1/management/storage", {

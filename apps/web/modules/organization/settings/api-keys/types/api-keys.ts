@@ -1,18 +1,16 @@
 import { type ApiKey, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
-import { ZEnvironment } from "@formbricks/types/environment";
 import { ZWorkspace } from "@formbricks/types/workspace";
 
-export const ZApiKeyEnvironmentPermission = z.object({
-  environmentId: z.string(),
+export const ZApiKeyWorkspacePermission = z.object({
   workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
 });
 
 export const ZApiKeyCreateInput = z.object({
   label: z.string(),
-  environmentPermissions: z.array(ZApiKeyEnvironmentPermission).optional(),
+  workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
   organizationAccess: ZOrganizationAccess,
 });
 
@@ -31,34 +29,31 @@ export interface TApiKey extends ApiKey {
 export const OrganizationWorkspace = z.object({
   id: z.string(),
   name: z.string(),
-  environments: z.array(ZEnvironment),
 });
 
 export type TOrganizationWorkspace = z.infer<typeof OrganizationWorkspace>;
 
-export const TApiKeyEnvironmentPermission = z.object({
-  environmentId: z.string(),
+export const TApiKeyWorkspacePermission = z.object({
+  workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
 });
 
-export type TApiKeyEnvironmentPermission = z.infer<typeof TApiKeyEnvironmentPermission>;
+export type TApiKeyWorkspacePermission = z.infer<typeof TApiKeyWorkspacePermission>;
 
 export interface TApiKeyWithEnvironmentPermission extends Pick<
   ApiKey,
   "id" | "label" | "createdAt" | "organizationAccess"
 > {
-  apiKeyEnvironments: TApiKeyEnvironmentPermission[];
+  apiKeyWorkspaces: TApiKeyWorkspacePermission[];
 }
 
-const ZApiKeyEnvironmentWithWorkspace = z.object({
+const ZApiKeyWorkspaceWithWorkspace = z.object({
   id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   apiKeyId: z.string(),
-  environmentId: z.string(),
   workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
-  environment: ZEnvironment,
   workspace: ZWorkspace.pick({ id: true, name: true }),
 });
 
@@ -76,7 +71,7 @@ const ZApiKey = z.object({
 });
 
 export const ZApiKeyWithEnvironmentAndWorkspace = ZApiKey.extend({
-  apiKeyEnvironments: z.array(ZApiKeyEnvironmentWithWorkspace),
+  apiKeyWorkspaces: z.array(ZApiKeyWorkspaceWithWorkspace),
 });
 
 export type TApiKeyWithEnvironmentAndWorkspace = z.infer<typeof ZApiKeyWithEnvironmentAndWorkspace>;

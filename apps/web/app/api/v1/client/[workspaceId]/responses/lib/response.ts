@@ -45,7 +45,6 @@ export const responseSelection = {
           createdAt: true,
           updatedAt: true,
           name: true,
-          environmentId: true,
           workspaceId: true,
         },
       },

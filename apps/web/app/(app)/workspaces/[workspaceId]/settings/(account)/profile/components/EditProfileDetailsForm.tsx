@@ -97,7 +97,7 @@ export const EditProfileDetailsForm = ({
           redirectUrl: "/email-change-without-verification-success",
           redirect: true,
           callbackUrl: "/email-change-without-verification-success",
-          clearEnvironmentId: true,
+          clearWorkspaceId: true,
         });
         return;
       }
@@ -141,7 +141,7 @@ export const EditProfileDetailsForm = ({
         redirectUrl: "/auth/login",
         redirect: true,
         callbackUrl: "/auth/login",
-        clearEnvironmentId: true,
+        clearWorkspaceId: true,
       });
     } else {
       const errorMessage = getFormattedErrorMessage(result);

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
@@ -30,7 +30,7 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { generatePersonalLinksAction } from "../../actions";
 
 interface PersonalLinksTabProps {
-  environmentId: string;
+  workspaceId: string;
   surveyId: string;
   segments: TSegment[];
   isContactsEnabled: boolean;
@@ -70,7 +70,7 @@ const RestrictedDatePicker = ({
 };
 
 export const PersonalLinksTab = ({
-  environmentId,
+  workspaceId,
   segments,
   surveyId,
   isContactsEnabled,
@@ -117,7 +117,7 @@ export const PersonalLinksTab = ({
     const result = await generatePersonalLinksAction({
       surveyId: surveyId,
       segmentId: selectedSegment,
-      environmentId: environmentId,
+      workspaceId: workspaceId,
       expirationDays: expiryDate
         ? Math.max(1, Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
         : undefined,

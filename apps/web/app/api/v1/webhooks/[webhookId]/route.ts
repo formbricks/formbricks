@@ -18,7 +18,7 @@ export const GET = withV1ApiWrapper({
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
-    if (!hasPermission(authentication.environmentPermissions, webhook.workspaceId, "GET")) {
+    if (!hasPermission(authentication.workspacePermissions, webhook.workspaceId, "GET")) {
       return {
         response: responses.unauthorizedResponse(),
       };
@@ -52,7 +52,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
-    if (!hasPermission(authentication.environmentPermissions, webhook.workspaceId, "DELETE")) {
+    if (!hasPermission(authentication.workspacePermissions, webhook.workspaceId, "DELETE")) {
       return {
         response: responses.unauthorizedResponse(),
       };

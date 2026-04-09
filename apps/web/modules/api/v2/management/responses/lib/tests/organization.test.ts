@@ -14,7 +14,6 @@ import {
   getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
 
-type OrgFindFirst = Awaited<ReturnType<typeof prisma.organization.findFirst>>;
 type OrgFindUnique = Awaited<ReturnType<typeof prisma.organization.findUnique>>;
 type ResponseAggregate = Awaited<ReturnType<typeof prisma.response.aggregate>>;
 
@@ -37,7 +36,7 @@ describe("Organization Lib", () => {
 
   describe("getOrganizationIdFromWorkspaceId", () => {
     test("return organization id when found", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: organizationId } as OrgFindFirst);
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: organizationId } as any);
 
       const result = await getOrganizationIdFromWorkspaceId(workspaceId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
@@ -82,7 +81,7 @@ describe("Organization Lib", () => {
     test("return organization billing when found", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
 
       const result = await getOrganizationBilling(organizationId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
@@ -195,7 +194,7 @@ describe("Organization Lib", () => {
     test("return response count when usageCycleAnchor is not set", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: { ...organizationBilling, usageCycleAnchor: null },
-      } as OrgFindFirst);
+      } as any);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(
         organizationWorkspaces as unknown as OrgFindUnique
       );
@@ -214,7 +213,7 @@ describe("Organization Lib", () => {
     test("return response count", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
       vi.mocked(prisma.response.aggregate).mockResolvedValue({
         _count: { id: 5 },
       } as unknown as ResponseAggregate);
@@ -233,7 +232,7 @@ describe("Organization Lib", () => {
     test("handle internal_server_error in aggregation", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
       const error = new Error("Aggregate error");
       vi.mocked(prisma.response.aggregate).mockRejectedValue(error);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(
@@ -253,7 +252,7 @@ describe("Organization Lib", () => {
     test("handle error when getAllWorkspaceIdsFromOrganizationId fails", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);

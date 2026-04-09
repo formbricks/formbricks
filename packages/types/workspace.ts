@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ZColor, ZOverlay, ZPlacement } from "./common";
-import { ZEnvironment } from "./environment";
 import { ZBaseStyling, ZLogo } from "./styling";
 
 export const ZWorkspaceStyling = ZBaseStyling.extend({
@@ -71,7 +70,6 @@ export const ZWorkspace = z.object({
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
   overlay: ZOverlay,
-  environments: z.array(ZEnvironment),
   languages: z.array(ZLanguage),
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
@@ -97,7 +95,6 @@ export const ZWorkspaceUpdateInput = z.object({
   placement: ZPlacement.optional(),
   clickOutsideClose: z.boolean().optional(),
   overlay: ZOverlay.optional(),
-  environments: z.array(ZEnvironment).optional(),
   styling: ZWorkspaceStyling.optional(),
   logo: ZLogo.optional(),
   teamIds: z.array(z.string()).optional(),

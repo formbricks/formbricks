@@ -17,31 +17,6 @@ export const getOrganizationIdFromWorkspaceId = reactCache(async (workspaceId: s
   return workspace.organizationId;
 });
 
-export const getOrganizationIdFromEnvironmentId = reactCache(
-  async (environmentId: string): Promise<string> => {
-    const organization = await prisma.organization.findFirst({
-      where: {
-        workspaces: {
-          some: {
-            environments: {
-              some: { id: environmentId },
-            },
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", null);
-    }
-
-    return organization.id;
-  }
-);
-
 export const getOrganizationAIKeys = reactCache(
   async (organizationId: string): Promise<{ isAIEnabled: boolean; billing: TOrganizationBilling } | null> => {
     try {

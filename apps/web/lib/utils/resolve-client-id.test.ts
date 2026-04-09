@@ -1,16 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { resolveClientApiIds } from "./resolve-client-id";
+import { findWorkspaceByIdOrLegacyEnvId, resolveClientApiIds } from "./resolve-client-id";
 
 vi.mock("server-only", () => ({}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    environment: {
-      findUnique: vi.fn(),
-    },
     workspace: {
-      findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -20,70 +17,72 @@ describe("resolveClientApiIds", () => {
     vi.clearAllMocks();
   });
 
-  it("resolves an environmentId to environmentId + workspaceId", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      id: "env-123",
-      workspaceId: "ws-456",
-    } as any);
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
-
-    const result = await resolveClientApiIds("env-123");
-
-    expect(result).toEqual({
-      environmentId: "env-123",
-      workspaceId: "ws-456",
-    });
-    expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-      where: { id: "env-123" },
-      select: { id: true, workspaceId: true },
-    });
-    // Both queries run in parallel
-    expect(prisma.workspace.findUnique).toHaveBeenCalled();
-  });
-
-  it("resolves a workspaceId to workspaceId + production environmentId", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+  test("resolves a workspaceId to workspaceId", async () => {
+    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({
       id: "ws-456",
-      environments: [{ id: "env-prod-789" }],
     } as any);
 
     const result = await resolveClientApiIds("ws-456");
 
     expect(result).toEqual({
-      environmentId: "env-prod-789",
       workspaceId: "ws-456",
     });
-    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
-      where: { id: "ws-456" },
-      select: {
-        id: true,
-        environments: {
-          where: { type: "production" },
-          select: { id: true },
-          take: 1,
-        },
-      },
+    expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
+      where: { OR: [{ id: "ws-456" }, { legacyEnvironmentId: "ws-456" }] },
+      select: { id: true },
     });
   });
 
-  it("returns null when neither environment nor workspace is found", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
+  test("falls back to legacyEnvironmentId when primary lookup fails", async () => {
+    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({ id: "ws-456" } as any);
+
+    const result = await resolveClientApiIds("env-old-123");
+
+    expect(result).toEqual({ workspaceId: "ws-456" });
+    expect(prisma.workspace.findFirst).toHaveBeenCalledTimes(1);
+    expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
+      where: { OR: [{ id: "env-old-123" }, { legacyEnvironmentId: "env-old-123" }] },
+      select: { id: true },
+    });
+  });
+
+  test("returns null when both lookups fail", async () => {
+    vi.mocked(prisma.workspace.findFirst).mockResolvedValue(null);
 
     const result = await resolveClientApiIds("unknown-id");
 
     expect(result).toBeNull();
+    expect(prisma.workspace.findFirst).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("findWorkspaceByIdOrLegacyEnvId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("returns null when workspace exists but has no production environment", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
-      id: "ws-456",
-      environments: [],
-    } as any);
+  test("returns workspace when found by primary id", async () => {
+    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({ id: "ws-123" } as any);
 
-    const result = await resolveClientApiIds("ws-456");
+    const result = await findWorkspaceByIdOrLegacyEnvId("ws-123");
+
+    expect(result).toEqual({ id: "ws-123" });
+    expect(prisma.workspace.findFirst).toHaveBeenCalledTimes(1);
+  });
+
+  test("returns workspace when found by legacyEnvironmentId", async () => {
+    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({ id: "ws-123" } as any);
+
+    const result = await findWorkspaceByIdOrLegacyEnvId("env-old");
+
+    expect(result).toEqual({ id: "ws-123" });
+    expect(prisma.workspace.findFirst).toHaveBeenCalledTimes(1);
+  });
+
+  test("returns null when not found by either lookup", async () => {
+    vi.mocked(prisma.workspace.findFirst).mockResolvedValue(null);
+
+    const result = await findWorkspaceByIdOrLegacyEnvId("nonexistent");
 
     expect(result).toBeNull();
   });

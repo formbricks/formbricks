@@ -33,8 +33,7 @@ interface AddApiKeyModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: {
     label: string;
-    environmentPermissions: Array<{
-      environmentId: string;
+    workspacePermissions: Array<{
       permission: ApiKeyPermission;
       workspaceId: string;
     }>;
@@ -51,7 +50,6 @@ interface WorkspaceOption {
 
 interface PermissionRecord {
   workspaceId: string;
-  environmentId: string;
   permission: ApiKeyPermission;
   workspaceName: string;
 }
@@ -79,11 +77,10 @@ export const AddApiKeyModal = ({
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
   const getInitialPermissions = (): Record<string, PermissionRecord> => {
-    if (workspaces.length > 0 && workspaces[0].environments.length > 0) {
+    if (workspaces.length > 0) {
       return {
         "permission-0": {
           workspaceId: workspaces[0].id,
-          environmentId: workspaces[0].environments[0].id,
           permission: ApiKeyPermission.read,
           workspaceName: workspaces[0].name,
         },
@@ -127,17 +124,15 @@ export const AddApiKeyModal = ({
     });
   };
 
-  // Update environment when workspace changes
-  const updateWorkspaceAndEnvironment = (key: string, workspaceId: string) => {
+  // Update workspace selection
+  const updateWorkspaceSelection = (key: string, workspaceId: string) => {
     const workspace = workspaces.find((p) => p.id === workspaceId);
-    if (workspace && workspace.environments.length > 0) {
-      const environment = workspace.environments[0];
+    if (workspace) {
       setSelectedPermissions({
         ...selectedPermissions,
         [key]: {
           ...selectedPermissions[key],
           workspaceId,
-          environmentId: environment.id,
           workspaceName: workspace.name,
         },
       });
@@ -159,15 +154,14 @@ export const AddApiKeyModal = ({
     }
 
     // Convert permissions to the format expected by the API
-    const environmentPermissions = Object.values(selectedPermissions).map((permission) => ({
-      environmentId: permission.environmentId,
+    const workspacePermissions = Object.values(selectedPermissions).map((permission) => ({
       permission: permission.permission,
       workspaceId: permission.workspaceId,
     }));
 
     await onSubmit({
       label: data.label,
-      environmentPermissions,
+      workspacePermissions,
       organizationAccess: selectedOrganizationAccess,
     });
 
@@ -248,7 +242,7 @@ export const AddApiKeyModal = ({
                               <DropdownMenuItem
                                 key={option.id}
                                 onClick={() => {
-                                  updateWorkspaceAndEnvironment(key, option.id);
+                                  updateWorkspaceSelection(key, option.id);
                                 }}>
                                 {option.name}
                               </DropdownMenuItem>

@@ -27,14 +27,12 @@ import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 
 interface TCreateSegmentModalProps {
-  environmentId: string;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   workspaceId: string;
 }
 
 export function CreateSegmentModal({
-  environmentId,
   contactAttributeKeys,
   segments,
   workspaceId,
@@ -46,7 +44,6 @@ export function CreateSegmentModal({
     description: "",
     isPrivate: false,
     filters: [],
-    environmentId,
     workspaceId,
     id: "",
     surveys: [],
@@ -90,7 +87,7 @@ export function CreateSegmentModal({
         description: segment.description ?? "",
         isPrivate: segment.isPrivate,
         filters: segment.filters,
-        environmentId,
+        workspaceId,
         surveyId: "",
       });
 
@@ -212,7 +209,7 @@ export function CreateSegmentModal({
 
                 <SegmentEditor
                   contactAttributeKeys={contactAttributeKeys}
-                  environmentId={environmentId}
+                  workspaceId={workspaceId}
                   group={segment.filters}
                   segment={segment}
                   segments={segments}

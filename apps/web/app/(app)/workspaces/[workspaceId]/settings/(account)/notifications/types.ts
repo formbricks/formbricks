@@ -7,12 +7,9 @@ export interface Membership {
     workspaces: {
       id: string;
       name: string;
-      environments: {
+      surveys: {
         id: string;
-        surveys: {
-          id: string;
-          name: string;
-        }[];
+        name: string;
       }[];
     }[];
   };

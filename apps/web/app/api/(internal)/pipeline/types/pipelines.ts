@@ -5,7 +5,6 @@ import { ZResponse } from "@formbricks/types/responses";
 export const ZPipelineInput = z.object({
   event: ZWebhook.shape.triggers.element,
   response: ZResponse,
-  environmentId: z.string(),
   workspaceId: z.string(),
   surveyId: z.string(),
 });

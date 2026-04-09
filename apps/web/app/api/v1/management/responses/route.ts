@@ -33,7 +33,7 @@ export const GET = withV1ApiWrapper({
             response: responses.notFoundResponse("Survey", surveyId, true),
           };
         }
-        if (!hasPermission(authentication.environmentPermissions, survey.workspaceId, "GET")) {
+        if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
           return {
             response: responses.unauthorizedResponse(),
           };
@@ -42,7 +42,7 @@ export const GET = withV1ApiWrapper({
         allResponses.push(...surveyResponses);
       } else {
         const workspaceIds = [
-          ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+          ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
         ];
         const workspaceResponses = await getResponsesByWorkspaceIds(workspaceIds, limit, offset);
         allResponses.push(...workspaceResponses);
@@ -101,7 +101,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(jsonInput, authentication.environmentPermissions, "POST");
+      const resolved = await resolveBodyIds(jsonInput, authentication.workspacePermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZResponseInput.safeParse(resolved.body);
@@ -119,7 +119,7 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.environmentPermissions, responseInput.workspaceId, "POST")
+        !hasPermission(authentication.workspacePermissions, responseInput.workspaceId, "POST")
       ) {
         return { response: responses.unauthorizedResponse() };
       }
@@ -168,7 +168,6 @@ export const POST = withV1ApiWrapper({
 
         sendToPipeline({
           event: "responseCreated",
-          environmentId: surveyResult.survey.environmentId,
           workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
@@ -177,7 +176,6 @@ export const POST = withV1ApiWrapper({
         if (response.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId: surveyResult.survey.environmentId,
             workspaceId: surveyResult.survey.workspaceId,
             surveyId: response.surveyId,
             response: response,

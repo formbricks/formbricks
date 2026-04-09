@@ -1,10 +1,8 @@
-import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
   getContact,
-  getEnvironment,
   getIntegration,
   getInvite,
   getLanguage,
@@ -60,15 +58,6 @@ export const getOrganizationIdFromWorkspaceId = async (workspaceId: string) => {
   }
 
   return workspace.organizationId;
-};
-
-export const getOrganizationIdFromEnvironmentId = async (environmentId: string) => {
-  const environment = await getEnvironment(environmentId);
-  if (!environment) {
-    throw new ResourceNotFoundError("environment", environmentId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(environment.workspaceId);
 };
 
 export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
@@ -186,28 +175,6 @@ export const getOrganizationIdFromQuotaId = async (quotaId: string) => {
 };
 
 // workspace id helpers
-export const getWorkspaceIdFromEnvironmentId = async (environmentId: string) => {
-  const environment = await getEnvironment(environmentId);
-  if (!environment) {
-    throw new ResourceNotFoundError("environment", environmentId);
-  }
-
-  return environment.workspaceId;
-};
-
-export const getEnvironmentIdFromWorkspaceId = async (workspaceId: string): Promise<string> => {
-  const environment = await prisma.environment.findFirst({
-    where: { workspaceId, type: "production" },
-    select: { id: true },
-  });
-
-  if (!environment) {
-    throw new ResourceNotFoundError("environment", workspaceId);
-  }
-
-  return environment.id;
-};
-
 export const getWorkspaceIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
@@ -293,43 +260,6 @@ export const getWorkspaceIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
 
   return await getWorkspaceIdFromSurveyId(quota.surveyId);
-};
-
-// environment id helpers
-export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
-  const survey = await getSurvey(surveyId);
-  if (!survey) {
-    throw new ResourceNotFoundError("survey", surveyId);
-  }
-
-  return survey.environmentId;
-};
-
-export const getEnvironmentIdFromResponseId = async (responseId: string) => {
-  const response = await getResponse(responseId);
-  if (!response) {
-    throw new ResourceNotFoundError("response", responseId);
-  }
-
-  return await getEnvironmentIdFromSurveyId(response.surveyId);
-};
-
-export const getEnvironmentIdFromSegmentId = async (segmentId: string) => {
-  const segment = await getSegment(segmentId);
-  if (!segment) {
-    throw new ResourceNotFoundError("segment", segmentId);
-  }
-
-  return segment.environmentId;
-};
-
-export const getEnvironmentIdFromTagId = async (tagId: string) => {
-  const tag = await getTag(tagId);
-  if (!tag) {
-    throw new ResourceNotFoundError("tag", tagId);
-  }
-
-  return tag.environmentId;
 };
 
 export const isStringMatch = (query: string, value: string): boolean => {

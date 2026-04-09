@@ -13,7 +13,7 @@ const apiKeySelect = {
   id: true,
   organizationId: true,
   lastUsedAt: true,
-  apiKeyEnvironments: {
+  apiKeyWorkspaces: {
     select: {
       environment: {
         select: {
@@ -42,7 +42,7 @@ type ApiKeyData = {
   hashedKey: string;
   organizationId: string;
   lastUsedAt: Date | null;
-  apiKeyEnvironments: Array<{
+  apiKeyWorkspaces: Array<{
     permission: string;
     environment: {
       id: string;
@@ -117,7 +117,7 @@ const updateApiKeyUsage = async (apiKeyId: string) => {
 };
 
 const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
-  const env = apiKeyData.apiKeyEnvironments[0].environment;
+  const env = apiKeyData.apiKeyWorkspaces[0].environment;
   return Response.json({
     id: env.id,
     type: env.type,
@@ -136,9 +136,9 @@ const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
 
 const isValidApiKeyEnvironment = (apiKeyData: ApiKeyData): boolean => {
   return (
-    apiKeyData.apiKeyEnvironments.length === 1 &&
+    apiKeyData.apiKeyWorkspaces.length === 1 &&
     ALLOWED_PERMISSIONS.includes(
-      apiKeyData.apiKeyEnvironments[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
+      apiKeyData.apiKeyWorkspaces[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
     )
   );
 };

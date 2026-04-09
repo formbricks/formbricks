@@ -2,7 +2,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -16,7 +15,6 @@ import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 
 interface ResponsePageProps {
-  environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   user?: TUser;
@@ -30,7 +28,6 @@ interface ResponsePageProps {
 }
 
 export const ResponsePage = ({
-  environment,
   survey,
   surveyId,
   user,
@@ -145,7 +142,6 @@ export const ResponsePage = ({
         survey={survey}
         responses={responses}
         user={user}
-        environment={environment}
         environmentTags={environmentTags}
         isReadOnly={isReadOnly}
         fetchNextPage={fetchNextPage}

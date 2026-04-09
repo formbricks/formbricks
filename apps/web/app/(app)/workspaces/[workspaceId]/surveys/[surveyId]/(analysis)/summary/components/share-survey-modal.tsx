@@ -70,7 +70,6 @@ export const ShareSurveyModal = ({
   isStorageConfigured,
   workspaceCustomScripts,
 }: ShareSurveyModalProps) => {
-  const environmentId = survey.environmentId;
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
@@ -103,7 +102,7 @@ export const ShareSurveyModal = ({
         description: t("workspace.surveys.share.personal_links.description"),
         componentType: PersonalLinksTab,
         componentProps: {
-          environmentId,
+          workspaceId: survey.workspaceId,
           surveyId: survey.id,
           segments,
           isContactsEnabled,
@@ -163,7 +162,7 @@ export const ShareSurveyModal = ({
         title: t("workspace.surveys.share.dynamic_popup.nav_title"),
         description: t("workspace.surveys.share.dynamic_popup.description"),
         componentType: DynamicPopupTab,
-        componentProps: { environmentId, surveyId: survey.id },
+        componentProps: { surveyId: survey.id },
       },
       {
         id: ShareSettingsType.LINK_SETTINGS,
@@ -210,7 +209,7 @@ export const ShareSurveyModal = ({
     user.locale,
     surveyUrl,
     isReadOnly,
-    environmentId,
+    survey.workspaceId,
     segments,
     isContactsEnabled,
     isFormbricksCloud,

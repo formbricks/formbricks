@@ -21,7 +21,7 @@ const fetchAndAuthorizeActionClass = async (
   }
 
   // Check if API key has permission to access this workspace with appropriate permissions
-  if (!hasPermission(authentication.environmentPermissions, actionClass.workspaceId, method)) {
+  if (!hasPermission(authentication.workspacePermissions, actionClass.workspaceId, method)) {
     throw new Error("Unauthorized");
   }
 
@@ -93,7 +93,7 @@ export const PUT = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(actionClassUpdate, authentication.environmentPermissions, "PUT");
+      const resolved = await resolveBodyIds(actionClassUpdate, authentication.workspacePermissions, "PUT");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZActionClassInput.safeParse(resolved.body);
@@ -108,7 +108,7 @@ export const PUT = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.environmentPermissions, inputValidation.data.workspaceId, "PUT")
+        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "PUT")
       ) {
         return { response: responses.unauthorizedResponse() };
       }

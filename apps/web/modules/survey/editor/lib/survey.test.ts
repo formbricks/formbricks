@@ -5,15 +5,10 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { updateSurveyInternal } from "@/lib/survey/service";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { checkTriggersValidity, handleTriggerUpdates, updateSurvey, updateSurveyDraft } from "./survey";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -53,7 +48,7 @@ vi.mock("@/modules/survey/lib/survey", () => ({
     updatedAt: true,
     name: true,
     type: true,
-    environmentId: true,
+    workspaceId: true,
   },
 }));
 
@@ -75,7 +70,7 @@ describe("Survey Editor Library Tests", () => {
       updatedAt: new Date(),
       name: "Test Survey",
       type: "app",
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdBy: "user123",
       status: "draft",
       displayOption: "displayOnce",
@@ -136,7 +131,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Code Action",
         description: "Action from code",
         type: "code" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -158,11 +153,10 @@ describe("Survey Editor Library Tests", () => {
     };
 
     beforeEach(() => {
-      vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
       vi.mocked(prisma.survey.update).mockResolvedValue(mockSurvey as any);
       vi.mocked(prisma.segment.update).mockResolvedValue({
         id: "segment1",
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         surveys: [{ id: "survey123" }],
       } as any);
 
@@ -282,7 +276,7 @@ describe("Survey Editor Library Tests", () => {
         id: "segment1",
         title: "Test Segment",
         isPrivate: true,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         surveys: ["survey123"],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -320,7 +314,7 @@ describe("Survey Editor Library Tests", () => {
         id: "segment1",
         title: "Test Segment",
         isPrivate: false,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         surveys: ["survey123"],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -529,7 +523,7 @@ describe("Survey Editor Library Tests", () => {
           id: "segment1",
           title: "Test Segment",
           isPrivate: false,
-          environmentId: "env123",
+          workspaceId: "workspace-id-mock",
           surveys: ["survey123"],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -550,7 +544,7 @@ describe("Survey Editor Library Tests", () => {
           id: "segment1",
           title: "Test Segment",
           isPrivate: false,
-          environmentId: "env123",
+          workspaceId: "workspace-id-mock",
           surveys: ["survey123"],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -570,7 +564,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 1",
         description: "Test Action 1",
         type: "code" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -581,7 +575,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 2",
         description: "Test Action 2",
         type: "noCode" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -594,7 +588,7 @@ describe("Survey Editor Library Tests", () => {
       name: `Action ${id}`,
       description: `Test Action ${id}`,
       type,
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdAt: new Date(),
       updatedAt: new Date(),
       key: null,
@@ -642,7 +636,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 1",
         description: "Test Action 1",
         type: "code" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -653,7 +647,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 2",
         description: "Test Action 2",
         type: "noCode" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -664,7 +658,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 3",
         description: "Test Action 3",
         type: "noCode" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -677,7 +671,7 @@ describe("Survey Editor Library Tests", () => {
       name: `Action ${id}`,
       description: `Test Action ${id}`,
       type,
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdAt: new Date(),
       updatedAt: new Date(),
       key: null,
@@ -763,7 +757,7 @@ describe("Survey Editor Library Tests", () => {
       updatedAt: new Date(),
       name: "Draft Survey",
       type: "app",
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdBy: "user123",
       status: "draft",
       displayOption: "displayOnce",

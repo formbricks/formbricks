@@ -39,7 +39,7 @@ import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface ThemeStylingProps {
   workspace: TWorkspace;
-  environmentId: string;
+  workspaceId: string;
   colors: string[];
   isUnsplashConfigured: boolean;
   isReadOnly: boolean;
@@ -49,7 +49,7 @@ interface ThemeStylingProps {
 
 export const ThemeStyling = ({
   workspace,
-  environmentId,
+  workspaceId,
   colors,
   isUnsplashConfigured,
   isReadOnly,
@@ -242,7 +242,7 @@ export const ThemeStyling = ({
                 <BackgroundStylingCard
                   open={backgroundStylingOpen}
                   setOpen={setBackgroundStylingOpen}
-                  environmentId={environmentId}
+                  workspaceId={workspaceId}
                   colors={colors}
                   isSettingsPage
                   isUnsplashConfigured={isUnsplashConfigured}

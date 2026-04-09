@@ -2,7 +2,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { getStyling } from "@/lib/utils/styling";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 
@@ -12,7 +12,7 @@ export const getEmailTemplateHtml = async (surveyId: string, locale: string) => 
   if (!survey) {
     throw new ResourceNotFoundError(t("common.survey"), surveyId);
   }
-  const workspace = await getWorkspaceByEnvironmentId(survey.environmentId);
+  const workspace = await getWorkspace(survey.workspaceId);
   if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }

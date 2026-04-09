@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionClass, Environment, Language, OrganizationRole, Workspace } from "@prisma/client";
+import { ActionClass, Language, OrganizationRole, Workspace } from "@prisma/client";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -26,7 +26,7 @@ import { refetchWorkspaceAction } from "../actions";
 interface SurveyEditorProps {
   survey: TSurvey;
   workspace: Workspace;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  appSetupCompleted: boolean;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -56,7 +56,7 @@ export const SurveyEditor = ({
   survey,
   workspace,
   workspaceLanguages,
-  environment,
+  appSetupCompleted,
   actionClasses,
   contactAttributeKeys,
   segments,
@@ -217,7 +217,7 @@ export const SurveyEditor = ({
           {activeView === "styling" && workspace.styling.allowStyleOverwrite && (
             <StylingView
               colors={colors}
-              environmentId={environment.id}
+              workspaceId={workspace.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               workspace={localWorkspace}
@@ -233,7 +233,6 @@ export const SurveyEditor = ({
 
           {activeView === "settings" && (
             <SettingsView
-              environment={environment}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               actionClasses={actionClasses}
@@ -270,7 +269,7 @@ export const SurveyEditor = ({
             survey={localSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}
-            environment={environment}
+            environment={{ appSetupCompleted }}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             isSpamProtectionAllowed={isSpamProtectionAllowed}

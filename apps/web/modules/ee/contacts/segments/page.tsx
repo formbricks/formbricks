@@ -11,7 +11,7 @@ export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ 
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const { isReadOnly, organization, workspace, environment } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [segments, contactAttributeKeys] = await Promise.all([
     getSegments(workspace.id),
@@ -35,7 +35,6 @@ export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ 
       isReadOnly={isReadOnly}
       cta={
         <CreateSegmentModal
-          environmentId={environment.id}
           contactAttributeKeys={contactAttributeKeys}
           segments={filteredSegments}
           workspaceId={workspace.id}

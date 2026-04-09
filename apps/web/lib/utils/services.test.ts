@@ -2,7 +2,6 @@ import {
   ActionClass,
   ApiKey,
   Contact,
-  Environment,
   Integration,
   Invite,
   Language,
@@ -25,7 +24,6 @@ import {
   getActionClass,
   getApiKey,
   getContact,
-  getEnvironment,
   getIntegration,
   getInvite,
   getLanguage,
@@ -52,9 +50,6 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
     apiKey: {
-      findUnique: vi.fn(),
-    },
-    environment: {
       findUnique: vi.fn(),
     },
     integration: {
@@ -116,14 +111,14 @@ describe("Service Functions", () => {
     const actionClassId = "action123";
 
     test("returns the action class when found", async () => {
-      const mockActionClass = { environmentId: "env123" } as unknown as ActionClass;
+      const mockActionClass = { workspaceId: "ws123" } as unknown as ActionClass;
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(mockActionClass);
 
       const result = await getActionClass(actionClassId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.actionClass.findUnique).toHaveBeenCalledWith({
         where: { id: actionClassId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockActionClass);
     });
@@ -168,45 +163,17 @@ describe("Service Functions", () => {
     });
   });
 
-  describe("getEnvironment", () => {
-    const environmentId = "env123";
-
-    test("returns the environment when found", async () => {
-      const mockEnvironment = { workspaceId: "proj123" } as unknown as Environment;
-      vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironment);
-
-      const result = await getEnvironment(environmentId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.environment.findUnique).toHaveBeenCalledWith({
-        where: { id: environmentId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockEnvironment);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.environment.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getEnvironment(environmentId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
   describe("getIntegration", () => {
     const integrationId = "int123";
 
     test("returns the integration when found", async () => {
-      const mockIntegration = { environmentId: "env123" } as unknown as Integration;
+      const mockIntegration = { workspaceId: "ws123" } as unknown as Integration;
       vi.mocked(prisma.integration.findUnique).mockResolvedValue(mockIntegration);
 
       const result = await getIntegration(integrationId);
       expect(prisma.integration.findUnique).toHaveBeenCalledWith({
         where: { id: integrationId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockIntegration);
     });
@@ -300,6 +267,21 @@ describe("Service Functions", () => {
       expect(result).toEqual(mockWorkspace);
     });
 
+    test("falls back to legacyEnvironmentId when primary lookup returns null", async () => {
+      const mockWorkspace = { organizationId: "org123" } as unknown as Workspace;
+      vi.mocked(prisma.workspace.findUnique)
+        .mockResolvedValueOnce(null) // primary lookup
+        .mockResolvedValueOnce(mockWorkspace); // legacy lookup
+
+      const result = await getWorkspace("env-old-123");
+      expect(prisma.workspace.findUnique).toHaveBeenCalledTimes(2);
+      expect(prisma.workspace.findUnique).toHaveBeenNthCalledWith(2, {
+        where: { legacyEnvironmentId: "env-old-123" },
+        select: { organizationId: true },
+      });
+      expect(result).toEqual(mockWorkspace);
+    });
+
     test("throws DatabaseError when database operation fails", async () => {
       vi.mocked(prisma.workspace.findUnique).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Error", {
@@ -344,14 +326,14 @@ describe("Service Functions", () => {
     const surveyId = "survey123";
 
     test("returns the survey when found", async () => {
-      const mockSurvey = { environmentId: "env123" } as unknown as Survey;
+      const mockSurvey = { workspaceId: "ws123" } as unknown as Survey;
       vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
 
       const result = await getSurvey(surveyId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { id: surveyId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockSurvey);
     });
@@ -372,14 +354,14 @@ describe("Service Functions", () => {
     const tagId = "tag123";
 
     test("returns the tag when found", async () => {
-      const mockTag = { environmentId: "env123" } as unknown as Tag;
+      const mockTag = { workspaceId: "ws123" } as unknown as Tag;
       vi.mocked(prisma.tag.findUnique).mockResolvedValue(mockTag);
 
       const result = await getTag(tagId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({
         where: { id: tagId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockTag);
     });
@@ -389,14 +371,14 @@ describe("Service Functions", () => {
     const webhookId = "webhook123";
 
     test("returns the webhook when found", async () => {
-      const mockWebhook = { environmentId: "env123" } as unknown as Webhook;
+      const mockWebhook = { workspaceId: "ws123" } as unknown as Webhook;
       vi.mocked(prisma.webhook.findUnique).mockResolvedValue(mockWebhook);
 
       const result = await getWebhook(webhookId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.webhook.findUnique).toHaveBeenCalledWith({
         where: { id: webhookId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockWebhook);
     });
@@ -523,14 +505,14 @@ describe("Service Functions", () => {
     const contactId = "contact123";
 
     test("returns the contact when found", async () => {
-      const mockContact = { environmentId: "env123" } as unknown as Contact;
+      const mockContact = { workspaceId: "ws123" } as unknown as Contact;
       vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
 
       const result = await getContact(contactId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.contact.findUnique).toHaveBeenCalledWith({
         where: { id: contactId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockContact);
     });
@@ -551,14 +533,14 @@ describe("Service Functions", () => {
     const segmentId = "segment123";
 
     test("returns the segment when found", async () => {
-      const mockSegment = { environmentId: "env123" } as unknown as Segment;
+      const mockSegment = { workspaceId: "ws123" } as unknown as Segment;
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegment);
 
       const result = await getSegment(segmentId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.segment.findUnique).toHaveBeenCalledWith({
         where: { id: segmentId },
-        select: { environmentId: true, workspaceId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockSegment);
     });

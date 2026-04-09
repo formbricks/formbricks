@@ -30,13 +30,13 @@ import { createWebhookAction, testEndpointAction } from "../actions";
 import { TWebhookInput } from "../types/webhooks";
 
 interface AddWebhookModalProps {
-  environmentId: string;
+  workspaceId: string;
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
 }
 
-export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) => {
+export const AddWebhookModal = ({ workspaceId, surveys, open, setOpen }: AddWebhookModalProps) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -147,7 +147,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         };
 
         const createWebhookActionResult = await createWebhookAction({
-          environmentId,
+          workspaceId,
           webhookInput: updatedData,
           webhookSecret: testResult.secret,
         });

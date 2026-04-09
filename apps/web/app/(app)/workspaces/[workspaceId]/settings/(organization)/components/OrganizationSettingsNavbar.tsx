@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 

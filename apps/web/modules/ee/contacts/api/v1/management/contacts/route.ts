@@ -21,7 +21,7 @@ export const GET = withV1ApiWrapper({
       }
 
       const workspaceIds = [
-        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
       const contacts = await getContacts(workspaceIds);

@@ -34,10 +34,10 @@ export const mockMeta = {
 
 export const mockContact = {
   id: mockContactId,
+  workspaceId: mockWorkspaceId,
   userId: mockUserId,
   createdAt: new Date(2000, 1, 1, 19),
   updatedAt: new Date(2000, 1, 1, 19),
-  environmentId: mockEnvironmentId,
   attributes: [],
 };
 
@@ -48,7 +48,6 @@ export const mockTags = [
       name: "tag1",
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
       workspaceId: mockWorkspaceId,
     },
   },
@@ -118,7 +117,6 @@ const getMockTags = (tags: string[]): { tag: TTag }[] => {
       name: tag,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
       workspaceId: mockWorkspaceId,
     },
   }));
@@ -432,7 +430,6 @@ export const mockSurvey: TSurvey = {
   updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   name: "New Survey",
   type: "link",
-  environmentId: "envId",
   createdBy: "creatorId",
   status: "draft",
   welcomeCard: mockWelcomeCard,

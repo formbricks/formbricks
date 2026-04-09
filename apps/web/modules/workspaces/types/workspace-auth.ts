@@ -1,6 +1,5 @@
 import { Session } from "next-auth";
 import { z } from "zod";
-import { TEnvironment, ZEnvironment } from "@formbricks/types/environment";
 import { TMembership, ZMembership } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
 import { TUser, ZUser } from "@formbricks/types/user";
@@ -21,8 +20,7 @@ type TEnterpriseLicense = {
   status: TLicenseStatus;
 };
 
-export const ZEnvironmentAuth = z.object({
-  environment: ZEnvironment,
+export const ZWorkspaceAuth = z.object({
   workspace: ZWorkspace,
   organization: ZOrganization,
   session: z.object({
@@ -41,22 +39,20 @@ export const ZEnvironmentAuth = z.object({
   isReadOnly: z.boolean(),
 });
 
-export type TEnvironmentAuth = z.infer<typeof ZEnvironmentAuth>;
+export type TWorkspaceAuth = z.infer<typeof ZWorkspaceAuth>;
 
 /**
- * Complete layout data type for environment pages.
+ * Complete layout data type for workspace pages.
  * Includes all data needed for layout rendering.
  *
  * Note: organizations and workspaces lists are NOT included - they are lazy-loaded
  * in switcher dropdowns only when needed.
  */
-export type TEnvironmentLayoutData = {
+export type TWorkspaceLayoutData = {
   session: Session;
   user: TUser;
-  environment: TEnvironment;
   workspace: TWorkspace; // Current workspace with full details
   organization: TOrganization;
-  environments: TEnvironment[]; // All workspace environments for switcher
   membership: TMembership;
   isAccessControlAllowed: boolean;
   workspacePermission: TTeamPermission | null;

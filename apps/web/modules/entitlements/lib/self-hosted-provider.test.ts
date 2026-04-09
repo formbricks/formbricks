@@ -24,14 +24,14 @@ beforeEach(() => {
 describe("getSelfHostedOrganizationEntitlementsContext", () => {
   test("throws ResourceNotFoundError when organization is null", async () => {
     mockGetOrg.mockResolvedValue(null);
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     await expect(getSelfHostedOrganizationEntitlementsContext("org1")).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("returns context with no license features", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 

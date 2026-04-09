@@ -73,11 +73,10 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Workspace", params.workspaceId),
       };
     }
-    const { environmentId, workspaceId } = resolved;
+    const { workspaceId } = resolved;
 
     const responseInputValidation = ZResponseInput.safeParse({
       ...responseInput,
-      environmentId,
       workspaceId,
     });
 
@@ -190,7 +189,6 @@ export const POST = withV1ApiWrapper({
 
     sendToPipeline({
       event: "responseCreated",
-      environmentId: survey.environmentId,
       workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
@@ -199,7 +197,6 @@ export const POST = withV1ApiWrapper({
     if (responseInput.finished) {
       sendToPipeline({
         event: "responseFinished",
-        environmentId: survey.environmentId,
         workspaceId,
         surveyId: responseData.surveyId,
         response: responseData,

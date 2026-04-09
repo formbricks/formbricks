@@ -74,7 +74,6 @@ export const responseSelection = {
           createdAt: true,
           updatedAt: true,
           name: true,
-          environmentId: true,
           workspaceId: true,
         },
       },
@@ -442,15 +441,15 @@ export const getResponseDownloadFile = async (
   }
 };
 
-export const getResponsesByEnvironmentId = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+export const getResponsesByWorkspaceId = reactCache(
+  async (workspaceId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const responses = await prisma.response.findMany({
         where: {
           survey: {
-            environmentId,
+            workspaceId,
           },
         },
         select: responseSelection,

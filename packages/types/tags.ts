@@ -5,7 +5,6 @@ export const ZTag = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  environmentId: z.string(),
   workspaceId: z.cuid2(),
 });
 export type TTag = z.infer<typeof ZTag>;

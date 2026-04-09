@@ -1,20 +1,19 @@
 import { logger } from "@formbricks/logger";
-import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
-const getOrgId = async (environmentId: string): Promise<string> => {
+const getOrgId = async (workspaceId: string): Promise<string> => {
   try {
-    const workspaceId = await getWorkspaceIdFromEnvironmentId(environmentId);
     return await getOrganizationIdFromWorkspaceId(workspaceId);
   } catch (error) {
-    logger.error({ error }, "Failed to get organization ID for environment");
+    logger.error({ error }, "Failed to get organization ID for workspace");
     return UNKNOWN_DATA;
   }
 };
 
 export const logFileDeletion = async ({
-  environmentId,
+  workspaceId,
   accessType,
   userId,
   status = "failure",
@@ -22,7 +21,7 @@ export const logFileDeletion = async ({
   oldObject,
   apiUrl,
 }: {
-  environmentId: string;
+  workspaceId: string;
   accessType?: string;
   userId?: string;
   status?: TAuditStatus;
@@ -31,18 +30,18 @@ export const logFileDeletion = async ({
   apiUrl: string;
 }) => {
   try {
-    const organizationId = await getOrgId(environmentId);
+    const organizationId = await getOrgId(workspaceId);
 
     await queueAuditEvent({
       action: "deleted",
       targetType: "file",
       userId: userId || UNKNOWN_DATA, // NOSONAR // We want to check for empty user IDs too
       userType: "user",
-      targetId: `${environmentId}:${accessType}`, // Generic target identifier
+      targetId: `${workspaceId}:${accessType}`, // Generic target identifier
       organizationId,
       status,
       newObject: {
-        environmentId,
+        workspaceId,
         accessType,
         ...(failureReason && { failureReason }),
       },

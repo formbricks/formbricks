@@ -233,7 +233,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
                   <FileInput
                     id={`og-image-upload-${survey.id}`}
                     allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
-                    environmentId={survey.environmentId}
+                    workspaceId={survey.workspaceId}
                     onFileUpload={handleFileUpload}
                     fileUrl={field.value}
                     maxSizeInMB={5}

@@ -5,10 +5,7 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ValidationError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import {
-  TWorkspaceUpdateBrandingInput,
-  ZWorkspaceUpdateBrandingInput,
-} from "@/modules/ee/whitelabel/remove-branding/types/workspace";
+import { TWorkspaceUpdateBrandingInput, ZWorkspaceUpdateBrandingInput } from "../types/workspace";
 
 export const updateWorkspaceBranding = async (
   workspaceId: string,
@@ -26,11 +23,6 @@ export const updateWorkspaceBranding = async (
       select: {
         id: true,
         organizationId: true,
-        environments: {
-          select: {
-            id: true,
-          },
-        },
       },
     });
 

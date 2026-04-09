@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -31,7 +31,7 @@ const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "w
 interface EmailCustomizationSettingsProps {
   organization: TOrganization;
   hasWhiteLabelPermission: boolean;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   isFormbricksCloud: boolean;
   user: TUser | null;
@@ -42,7 +42,7 @@ interface EmailCustomizationSettingsProps {
 export const EmailCustomizationSettings = ({
   organization,
   hasWhiteLabelPermission,
-  environmentId,
+  workspaceId,
   isReadOnly,
   isFormbricksCloud,
   user,
@@ -136,7 +136,7 @@ export const EmailCustomizationSettings = ({
   const handleSave = async () => {
     if (!logoFile) return;
     setIsSaving(true);
-    const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
+    const { url, error } = await handleFileUpload(logoFile, workspaceId, allowedFileExtensions);
 
     if (error) {
       toast.error(error);

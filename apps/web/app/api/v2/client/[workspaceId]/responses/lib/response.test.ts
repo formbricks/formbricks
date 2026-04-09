@@ -59,7 +59,6 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger");
 vi.mock("./contact");
 
-const environmentId = "test-environment-id";
 const workspaceId = "test-workspace-id";
 const surveyId = "test-survey-id";
 const organizationId = "test-organization-id";
@@ -81,7 +80,6 @@ const mockContact: { id: string; attributes: TContactAttributes } = {
 };
 
 const mockResponseInput: TResponseInputV2 = {
-  environmentId,
   workspaceId,
   surveyId,
   contactId: null,
@@ -203,7 +201,6 @@ describe("createResponse V2", () => {
     const mockTag: TTag = {
       id: "tag1",
       name: "Tag 1",
-      environmentId,
       workspaceId,
       createdAt: new Date(),
       updatedAt: new Date(),

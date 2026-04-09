@@ -390,18 +390,6 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       data: payload,
     });
 
-    const changedWorkspaceIds = [...workspaces.map((p) => p.workspaceId), ...deletedWorkspaces];
-
-    await prisma.environment.findMany({
-      where: {
-        workspaceId: {
-          in: changedWorkspaceIds,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

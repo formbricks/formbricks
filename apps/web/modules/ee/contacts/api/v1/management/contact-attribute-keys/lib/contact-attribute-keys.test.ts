@@ -4,14 +4,9 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { getProductionEnvironmentIdByWorkspaceId } from "@/app/api/v1/management/lib/workspace-resolver";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./contact-attribute-keys";
-
-vi.mock("@/app/api/v1/management/lib/workspace-resolver", () => ({
-  getProductionEnvironmentIdByWorkspaceId: vi.fn().mockResolvedValue("env-id-mock"),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -35,7 +30,7 @@ describe("getContactAttributeKeys", () => {
     const mockAttributeKeys = [
       {
         id: "key1",
-        environmentId: "env1",
+        workspaceId: "workspace1",
         name: "Key One",
         key: "keyOne",
         type: "custom" as TContactAttributeKeyType,
@@ -47,7 +42,7 @@ describe("getContactAttributeKeys", () => {
       },
       {
         id: "key2",
-        environmentId: "env2",
+        workspaceId: "workspace2",
         name: "Key Two",
         key: "keyTwo",
         type: "custom" as TContactAttributeKeyType,
@@ -97,7 +92,7 @@ describe("createContactAttributeKey", () => {
   const type: TContactAttributeKeyType = "custom";
   const mockCreatedAttributeKey = {
     id: "newKeyId",
-    environmentId: "env-id-mock",
+    workspaceId,
     name: key,
     key,
     type,
@@ -111,14 +106,13 @@ describe("createContactAttributeKey", () => {
   const createInput: TContactAttributeKeyCreateInput = {
     key,
     type,
-    environmentId: "env-id-mock",
+    workspaceId,
     name: key,
     description: "",
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getProductionEnvironmentIdByWorkspaceId).mockResolvedValue("env-id-mock");
   });
 
   test("should create and return a new contact attribute key", async () => {
@@ -134,8 +128,7 @@ describe("createContactAttributeKey", () => {
         name: createInput.name || createInput.key,
         type: createInput.type,
         description: createInput.description || "",
-        environment: { connect: { id: "env-id-mock" } },
-        workspace: { connect: { id: workspaceId } },
+        workspaceId,
       },
     });
     expect(result).toEqual(mockCreatedAttributeKey);
@@ -178,7 +171,7 @@ describe("createContactAttributeKey", () => {
     const inputWithoutName: TContactAttributeKeyCreateInput = {
       key,
       type,
-      environmentId: "env-id-mock",
+      workspaceId,
       description: "",
     };
 
@@ -190,8 +183,7 @@ describe("createContactAttributeKey", () => {
         name: "TestKey", // formatSnakeCaseToTitleCase("testKey") capitalizes first letter
         type: inputWithoutName.type,
         description: inputWithoutName.description || "",
-        environment: { connect: { id: "env-id-mock" } },
-        workspace: { connect: { id: workspaceId } },
+        workspaceId,
       },
     });
   });
@@ -203,7 +195,7 @@ describe("createContactAttributeKey", () => {
     const inputWithoutDescription: TContactAttributeKeyCreateInput = {
       key,
       type,
-      environmentId: "env-id-mock",
+      workspaceId,
       name: "Test Name",
     };
 
@@ -215,8 +207,7 @@ describe("createContactAttributeKey", () => {
         name: inputWithoutDescription.name,
         type: inputWithoutDescription.type,
         description: "", // Should fall back to empty string when description is not provided
-        environment: { connect: { id: "env-id-mock" } },
-        workspace: { connect: { id: workspaceId } },
+        workspaceId,
       },
     });
   });

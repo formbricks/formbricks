@@ -34,7 +34,7 @@ export const GET = withV1ApiWrapper({
       const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
       const workspaceIds = [
-        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
       const surveys = await getSurveys(workspaceIds, limit, offset);
@@ -95,7 +95,7 @@ export const POST = withV1ApiWrapper({
       surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(surveyInput, authentication.environmentPermissions, "POST");
+      const resolved = await resolveBodyIds(surveyInput, authentication.workspacePermissions, "POST");
       if (!resolved.ok) return { response: resolved.response };
       surveyInput = resolved.body;
 
@@ -111,11 +111,11 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const { environmentId, workspaceId } = inputValidation.data;
+      const { workspaceId } = inputValidation.data;
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.environmentPermissions, workspaceId, "POST")
+        !hasPermission(authentication.workspacePermissions, workspaceId, "POST")
       ) {
         return { response: responses.unauthorizedResponse() };
       }
@@ -127,7 +127,7 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const surveyData = { ...inputValidation.data, environmentId };
+      const surveyData = { ...inputValidation.data };
 
       const validateResult = validateSurveyInput(surveyData);
       if (!validateResult.ok) {
@@ -150,7 +150,7 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const { environmentId: _, workspaceId: __, ...surveyCreateInput } = surveyData;
+      const { workspaceId: __, ...surveyCreateInput } = surveyData;
       const survey = await createSurvey(workspaceId, surveyCreateInput);
       if (auditLog) {
         auditLog.targetId = survey.id;

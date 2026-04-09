@@ -2,13 +2,12 @@
 
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { EmptyAppSurveys } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import {
   SelectedFilterValue,
@@ -38,12 +37,12 @@ import { AddressSummary } from "./AddressSummary";
 interface SummaryListProps {
   summary: TSurveySummary["summary"];
   responseCount: number | null;
-  environment: TEnvironment;
   survey: TSurvey;
   locale: TUserLocale;
 }
 
-export const SummaryList = ({ summary, environment, responseCount, survey, locale }: SummaryListProps) => {
+export const SummaryList = ({ summary, responseCount, survey, locale }: SummaryListProps) => {
+  const { workspace } = useWorkspaceContext();
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const { t } = useTranslation();
   const setFilter = (
@@ -100,7 +99,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
 
   return (
     <div className="mt-10 space-y-8">
-      {survey.type === "app" && responseCount === 0 && !environment.appSetupCompleted ? (
+      {survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted ? (
         <EmptyAppSurveys />
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
@@ -199,12 +198,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
           }
           if (elementSummary.type === TSurveyElementTypeEnum.Cal) {
             return (
-              <CalSummary
-                key={elementSummary.element.id}
-                elementSummary={elementSummary}
-                environmentId={environment.id}
-                survey={survey}
-              />
+              <CalSummary key={elementSummary.element.id} elementSummary={elementSummary} survey={survey} />
             );
           }
           if (elementSummary.type === TSurveyElementTypeEnum.Matrix) {

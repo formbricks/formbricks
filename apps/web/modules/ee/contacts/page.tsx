@@ -11,7 +11,7 @@ import { ContactDataView } from "./components/contact-data-view";
 export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
   const params = await paramsProps;
 
-  const { environment, isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const t = await getTranslate();
 
@@ -23,7 +23,7 @@ export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ 
   const initialContacts = await getContacts(workspace.id, 0);
 
   const AddContactsButton = (
-    <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />
+    <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
   );
 
   return (
@@ -35,7 +35,7 @@ export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ 
       isReadOnly={isReadOnly}
       cta={AddContactsButton}>
       <ContactDataView
-        environment={environment}
+        workspaceId={workspace.id}
         itemsPerPage={ITEMS_PER_PAGE}
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}

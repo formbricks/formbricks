@@ -104,7 +104,7 @@ describe("forgotPasswordAction", () => {
 
   describe("Password Reset Flow", () => {
     test("should send password reset email when user exists with email identity provider", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -116,7 +116,7 @@ describe("forgotPasswordAction", () => {
     });
 
     test("should not send email when user doesn't exist", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -129,7 +129,7 @@ describe("forgotPasswordAction", () => {
 
     test("should not send email when user has non-email identity provider", async () => {
       const ssoUser = { ...mockUser, identityProvider: "google" };
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(ssoUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -146,7 +146,7 @@ describe("forgotPasswordAction", () => {
       // This test verifies that password reset is enabled by default
       // The actual PASSWORD_RESET_DISABLED check is part of the implementation
       // and we've mocked it as false, so rate limiting should work normally
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -168,7 +168,7 @@ describe("forgotPasswordAction", () => {
     });
 
     test("should handle user lookup errors after rate limiting", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockRejectedValue(new Error("Database error"));
 
       await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
@@ -179,7 +179,7 @@ describe("forgotPasswordAction", () => {
     });
 
     test("should handle email sending errors after rate limiting", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
       vi.mocked(sendForgotPasswordEmail).mockRejectedValue(new Error("Email service error"));
 
@@ -194,7 +194,7 @@ describe("forgotPasswordAction", () => {
 
   describe("Security Considerations", () => {
     test("should always return success even for non-existent users to prevent email enumeration", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -204,7 +204,7 @@ describe("forgotPasswordAction", () => {
 
     test("should always return success even for SSO users to prevent identity provider enumeration", async () => {
       const ssoUser = { ...mockUser, identityProvider: "github" };
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(ssoUser as any);
 
       const result = await forgotPasswordAction({ parsedInput: validInput } as any);
@@ -214,7 +214,7 @@ describe("forgotPasswordAction", () => {
     });
 
     test("should rate limit all requests regardless of user existence", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue();
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
       // Test with existing user
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);

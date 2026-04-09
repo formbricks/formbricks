@@ -46,15 +46,8 @@ export const SurveyEditorPage = async (props: {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const {
-    session,
-    isMember,
-    environment,
-    hasReadAccess,
-    currentUserMembership,
-    workspacePermission,
-    workspace,
-  } = await getWorkspaceAuth(params.workspaceId);
+  const { session, isMember, hasReadAccess, currentUserMembership, workspacePermission, workspace } =
+    await getWorkspaceAuth(params.workspaceId);
 
   const t = await getTranslate();
 
@@ -105,7 +98,6 @@ export const SurveyEditorPage = async (props: {
 
   if (
     !survey ||
-    !environment ||
     !actionClasses ||
     !contactAttributeKeys ||
     !workspaceWithTeamIds ||
@@ -122,7 +114,7 @@ export const SurveyEditorPage = async (props: {
     <SurveyEditor
       survey={survey}
       workspace={workspaceWithTeamIds}
-      environment={environment}
+      appSetupCompleted={workspace.appSetupCompleted}
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}

@@ -53,16 +53,12 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <SettingsCard
         title={t("workspace.settings.general.organization_name")}
         description={t("workspace.settings.general.organization_name_description")}>
-        <EditOrganizationNameForm
-          organization={organization}
-          environmentId={params.workspaceId}
-          membershipRole={currentUserMembership?.role}
-        />
+        <EditOrganizationNameForm organization={organization} membershipRole={currentUserMembership?.role} />
       </SettingsCard>
       <EmailCustomizationSettings
         organization={organization}
         hasWhiteLabelPermission={hasWhiteLabelPermission}
-        environmentId={params.workspaceId}
+        workspaceId={params.workspaceId}
         isReadOnly={!isOwnerOrManager}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         fbLogoUrl={FB_LOGO_URL}

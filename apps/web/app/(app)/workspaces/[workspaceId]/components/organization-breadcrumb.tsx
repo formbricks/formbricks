@@ -25,13 +25,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useOrganization, useWorkspace } from "../context/environment-context";
+import { useOrganization, useWorkspace } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
   currentOrganizationName?: string; // Optional: pass directly if context not available
   isMultiOrgEnabled: boolean;
-  currentEnvironmentId?: string;
+  currentWorkspaceId?: string;
   isFormbricksCloud: boolean;
   isMember: boolean;
   isOwnerOrManager: boolean;
@@ -52,7 +52,7 @@ export const OrganizationBreadcrumb = ({
   currentOrganizationId,
   currentOrganizationName,
   isMultiOrgEnabled,
-  currentEnvironmentId,
+  currentWorkspaceId,
   isFormbricksCloud,
   isMember,
   isOwnerOrManager,
@@ -241,7 +241,7 @@ export const OrganizationBreadcrumb = ({
               )}
             </>
           )}
-          {currentEnvironmentId && (
+          {currentWorkspaceId && (
             <div>
               {showOrganizationDropdown && <DropdownMenuSeparator />}
               <div className="px-2 py-1.5 text-sm font-medium text-slate-500">

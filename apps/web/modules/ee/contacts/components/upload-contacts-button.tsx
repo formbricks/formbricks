@@ -28,12 +28,12 @@ import {
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 
 interface UploadContactsCSVButtonProps {
-  environmentId: string;
+  workspaceId: string;
   contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const UploadContactsCSVButton = ({
-  environmentId,
+  workspaceId,
   contactAttributeKeys,
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
@@ -203,7 +203,7 @@ export const UploadContactsCSVButton = ({
       csvData: transformedCsvData,
       duplicateContactsAction,
       attributeMap,
-      environmentId,
+      workspaceId,
     });
 
     if (result?.data) {

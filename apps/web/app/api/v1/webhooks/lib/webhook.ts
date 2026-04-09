@@ -23,16 +23,7 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
         surveyIds: webhookInput.surveyIds || [],
         triggers: webhookInput.triggers || [],
         secret,
-        environment: {
-          connect: {
-            id: webhookInput.environmentId,
-          },
-        },
-        workspace: {
-          connect: {
-            id: webhookInput.workspaceId,
-          },
-        },
+        workspaceId: webhookInput.workspaceId,
       },
     });
 
@@ -44,7 +35,7 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
 
     if (!(error instanceof InvalidInputError)) {
       throw new DatabaseError(
-        `Database error when creating webhook for environment ${webhookInput.environmentId}`
+        `Database error when creating webhook for workspace ${webhookInput.workspaceId}`
       );
     }
 

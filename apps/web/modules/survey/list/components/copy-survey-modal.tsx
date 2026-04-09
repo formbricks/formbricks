@@ -33,7 +33,7 @@ export const CopySurveyModal = ({ open, setOpen, survey }: CopySurveyModalProps)
         <DialogBody>
           <SurveyCopyOptions
             survey={survey}
-            environmentId={survey.environmentId}
+            workspaceId={survey.workspaceId}
             onCancel={() => setOpen(false)}
             setOpen={setOpen}
           />

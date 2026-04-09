@@ -18,7 +18,7 @@ const contactId = "test-contact-id";
 
 const mockContactDbData = {
   id: contactId,
-  environmentId: "test-env-id",
+  workspaceId,
   createdAt: new Date(),
   updatedAt: new Date(),
   attributes: [
@@ -36,7 +36,7 @@ const expectedContactAttributes: TContactAttributes = {
 
 describe("getContactByUserId", () => {
   test("should return ok result with contact and attributes when found", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactDbData);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactDbData as any);
 
     const result = await getContactByUserId(workspaceId, userId);
 
@@ -124,7 +124,7 @@ describe("getContactByUserId", () => {
   test("should correctly transform multiple attributes", async () => {
     const mockContactWithManyAttributes = {
       id: contactId,
-      environmentId: "test-env-id",
+      workspaceId,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [
@@ -136,7 +136,7 @@ describe("getContactByUserId", () => {
       ],
     };
 
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactWithManyAttributes);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactWithManyAttributes as any);
 
     const result = await getContactByUserId(workspaceId, userId);
 
@@ -155,13 +155,13 @@ describe("getContactByUserId", () => {
   test("should handle contact with empty attributes array", async () => {
     const mockContactWithNoAttributes = {
       id: contactId,
-      environmentId: "test-env-id",
+      workspaceId,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [],
     };
 
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactWithNoAttributes);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactWithNoAttributes as any);
 
     const result = await getContactByUserId(workspaceId, userId);
 

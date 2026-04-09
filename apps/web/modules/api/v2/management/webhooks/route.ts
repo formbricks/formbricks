@@ -24,7 +24,7 @@ export const GET = async (request: NextRequest) =>
       }
 
       const workspaceIds = [
-        ...new Set(authentication.environmentPermissions.map((permission) => permission.workspaceId)),
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
       const res = await getWebhooks(workspaceIds, query);
@@ -44,7 +44,7 @@ export const POST = async (request: NextRequest) =>
       body: ZWebhookCreateInput,
     },
     bodyTransform: async (body, auth) => {
-      const resolved = await resolveBodyIdsV2(body, auth.environmentPermissions, "POST");
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "POST");
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },

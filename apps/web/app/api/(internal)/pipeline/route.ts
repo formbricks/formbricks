@@ -38,7 +38,6 @@ export const POST = async (request: Request) => {
     jsonInput,
     new Set(["contactAttributes", "variables", "data", "meta"])
   );
-
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
   if (!inputValidation.success) {

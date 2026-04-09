@@ -4,12 +4,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
-import { getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { createActionClass } from "./action-class";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getWorkspaceIdFromEnvironmentId: vi.fn().mockResolvedValue("workspace-id-mock"),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -22,7 +17,6 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const mockEnvironmentId = "test-environment-id";
 const mockWorkspaceId = "test-workspace-id";
 
 const mockCodeActionInput: TActionClassInput = {
@@ -30,8 +24,7 @@ const mockCodeActionInput: TActionClassInput = {
   description: "This is a test code action",
   type: "code",
   key: "test-code-action-key",
-  environmentId: mockEnvironmentId,
-  workspaceId: "test-workspace-id",
+  workspaceId: mockWorkspaceId,
 };
 
 const mockNoCodeActionInput: TActionClassInput = {
@@ -43,8 +36,7 @@ const mockNoCodeActionInput: TActionClassInput = {
     elementSelector: { cssSelector: ".btn" },
     urlFilters: [],
   },
-  environmentId: mockEnvironmentId,
-  workspaceId: "test-workspace-id",
+  workspaceId: mockWorkspaceId,
 };
 
 const mockActionClass: ActionClass = {
@@ -56,21 +48,19 @@ const mockActionClass: ActionClass = {
   type: "code",
   key: "test-action-key",
   noCodeConfig: null,
-  environmentId: mockEnvironmentId,
-  workspaceId: "test-workspace-id",
+  workspaceId: mockWorkspaceId,
 };
 
 describe("createActionClass", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getWorkspaceIdFromEnvironmentId).mockResolvedValue("workspace-id-mock");
   });
 
   test("should create a code action class successfully", async () => {
     const createdAction = { ...mockActionClass, ...mockCodeActionInput, noCodeConfig: null };
     vi.mocked(prisma.actionClass.create).mockResolvedValue(createdAction);
 
-    const result = await createActionClass(mockEnvironmentId, mockWorkspaceId, mockCodeActionInput);
+    const result = await createActionClass(mockWorkspaceId, mockCodeActionInput);
 
     expect(prisma.actionClass.create).toHaveBeenCalledWith({
       data: {
@@ -78,7 +68,6 @@ describe("createActionClass", () => {
         description: mockCodeActionInput.description,
         type: "code",
         key: mockCodeActionInput.key,
-        environment: { connect: { id: mockEnvironmentId } },
         workspace: { connect: { id: mockWorkspaceId } },
         noCodeConfig: undefined,
       },
@@ -95,7 +84,7 @@ describe("createActionClass", () => {
     };
     vi.mocked(prisma.actionClass.create).mockResolvedValue(createdAction);
 
-    const result = await createActionClass(mockEnvironmentId, mockWorkspaceId, mockNoCodeActionInput);
+    const result = await createActionClass(mockWorkspaceId, mockNoCodeActionInput);
 
     expect(prisma.actionClass.create).toHaveBeenCalledWith({
       data: {
@@ -103,7 +92,6 @@ describe("createActionClass", () => {
         description: mockNoCodeActionInput.description,
         type: "noCode",
         key: undefined,
-        environment: { connect: { id: mockEnvironmentId } },
         workspace: { connect: { id: mockWorkspaceId } },
         noCodeConfig: mockNoCodeActionInput.noCodeConfig,
       },
@@ -118,17 +106,13 @@ describe("createActionClass", () => {
     };
     vi.mocked(prisma.actionClass.create).mockRejectedValue(prismaError);
 
-    await expect(createActionClass(mockEnvironmentId, mockWorkspaceId, mockCodeActionInput)).rejects.toThrow(
-      DatabaseError
-    );
+    await expect(createActionClass(mockWorkspaceId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw DatabaseError for other database errors", async () => {
     const genericError = new Error("Some database error");
     vi.mocked(prisma.actionClass.create).mockRejectedValue(genericError);
 
-    await expect(createActionClass(mockEnvironmentId, mockWorkspaceId, mockCodeActionInput)).rejects.toThrow(
-      DatabaseError
-    );
+    await expect(createActionClass(mockWorkspaceId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
   });
 });

@@ -42,7 +42,7 @@ export const PictureSelectionForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: PictureSelectionFormProps): JSX.Element => {
-  const environmentId = localSurvey.environmentId;
+  const workspaceId = localSurvey.workspaceId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
   const handleChoiceDeletion = (choiceValue: string) => {
@@ -146,7 +146,7 @@ export const PictureSelectionForm = ({
           <FileInput
             id="choices-file-input"
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             onFileUpload={handleFileInputChanges}
             fileUrl={element?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
@@ -15,9 +14,7 @@ import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/a
 interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
-  environment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
-  otherEnvironment: TEnvironment;
   isReadOnly: boolean;
 }
 

@@ -11,13 +11,10 @@ interface SurveyWithSlug {
   name: string;
   slug: string | null;
   status: TSurveyStatus;
-  environment: {
+  workspace: {
     id: string;
-    type: "production" | "development";
-    workspace: {
-      id: string;
-      name: string;
-    };
+    name: string;
+    organizationId: string;
   };
   createdAt: Date;
 }
@@ -28,10 +25,6 @@ interface PrettyUrlsTableProps {
 
 export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
   const { t } = useTranslation();
-
-  const getEnvironmentBadgeColor = () => {
-    return "bg-green-100 text-green-800";
-  };
 
   const tableHeaders = [
     {
@@ -45,10 +38,6 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
     {
       label: t("workspace.settings.domain.pretty_url"),
       key: "slug",
-    },
-    {
-      label: t("common.environment"),
-      key: "environment",
     },
   ];
 
@@ -67,7 +56,7 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
         <TableBody className="[&_tr:last-child]:border-b">
           {surveys.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={4} className="text-center text-slate-500">
+              <TableCell colSpan={3} className="text-center text-slate-500">
                 {t("workspace.settings.domain.no_pretty_urls")}
               </TableCell>
             </TableRow>
@@ -76,19 +65,14 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
             <TableRow key={survey.id} className="border-slate-200 hover:bg-transparent">
               <TableCell className="font-medium">
                 <Link
-                  href={`/workspaces/${survey.environment.workspace.id}/surveys/${survey.id}/summary`}
+                  href={`/workspaces/${survey.workspace.id}/surveys/${survey.id}/summary`}
                   className="text-slate-900 hover:text-slate-700 hover:underline">
                   {survey.name}
                 </Link>
               </TableCell>
-              <TableCell>{survey.environment.workspace.name}</TableCell>
+              <TableCell>{survey.workspace.name}</TableCell>
               <TableCell>
                 <IdBadge id={survey.slug ?? ""} />
-              </TableCell>
-              <TableCell>
-                <span className={`rounded px-2 py-1 text-xs font-medium ${getEnvironmentBadgeColor()}`}>
-                  {t("common.production")}
-                </span>
               </TableCell>
             </TableRow>
           ))}

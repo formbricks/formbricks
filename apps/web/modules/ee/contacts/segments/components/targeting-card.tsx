@@ -15,7 +15,7 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/environment-context";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -39,7 +39,7 @@ import { SegmentEditor } from "./segment-editor";
 interface TargetingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  environmentId: string;
+  workspaceId: string;
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   initialSegment?: TSegment;
@@ -48,7 +48,7 @@ interface TargetingCardProps {
 export function TargetingCard({
   localSurvey,
   setLocalSurvey,
-  environmentId,
+  workspaceId,
   contactAttributeKeys,
   segments,
   initialSegment,
@@ -222,7 +222,7 @@ export function TargetingCard({
                   <div className="w-full">
                     <SegmentEditor
                       contactAttributeKeys={contactAttributeKeys}
-                      environmentId={environmentId}
+                      workspaceId={workspaceId}
                       group={segment.filters}
                       key={segment.filters.toString()}
                       segment={segment}
@@ -309,7 +309,7 @@ export function TargetingCard({
                   <div className="opacity-60">
                     <SegmentEditor
                       contactAttributeKeys={contactAttributeKeys}
-                      environmentId={environmentId}
+                      workspaceId={workspaceId}
                       group={segment.filters}
                       key={segment.filters.toString()}
                       segment={segment}

@@ -16,8 +16,8 @@ import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-cli
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
-import { TEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
   survey: TSurvey;
@@ -33,7 +33,7 @@ interface SurveyRendererProps {
   contactId?: string;
   isPreview: boolean;
   // New props - pre-fetched in parent
-  environmentContext: TEnvironmentContextForLinkSurvey;
+  workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
   responseCount?: number;
 }
@@ -56,7 +56,7 @@ export const renderSurvey = async ({
   singleUseResponse,
   contactId,
   isPreview,
-  environmentContext,
+  workspaceContext,
   locale,
   responseCount,
 }: SurveyRendererProps) => {
@@ -68,7 +68,7 @@ export const renderSurvey = async ({
   }
 
   // Extract workspace from pre-fetched context
-  const { workspace } = environmentContext;
+  const { workspace } = workspaceContext;
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 

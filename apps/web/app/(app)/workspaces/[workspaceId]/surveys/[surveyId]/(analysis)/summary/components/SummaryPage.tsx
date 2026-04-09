@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TDisplayWithContact } from "@formbricks/types/displays";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import {
@@ -45,7 +44,6 @@ const defaultSurveySummary: TSurveySummary = {
 };
 
 interface SummaryPageProps {
-  environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   locale: TUserLocale;
@@ -54,7 +52,6 @@ interface SummaryPageProps {
 }
 
 export const SummaryPage = ({
-  environment,
   survey,
   surveyId,
   locale,
@@ -211,7 +208,6 @@ export const SummaryPage = ({
         summary={surveySummary.summary}
         responseCount={surveySummary.meta.totalResponses}
         survey={surveyMemoized}
-        environment={environment}
         locale={locale}
       />
     </>

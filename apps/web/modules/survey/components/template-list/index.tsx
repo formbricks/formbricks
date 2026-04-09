@@ -17,7 +17,7 @@ import { TemplateFilters } from "./components/template-filters";
 
 interface TemplateListProps {
   userId: string;
-  environmentId: string;
+  workspaceId: string;
   workspace: Workspace;
   templateSearch?: string;
   showFilters?: boolean;
@@ -28,7 +28,7 @@ interface TemplateListProps {
 export const TemplateList = ({
   userId,
   workspace,
-  environmentId,
+  workspaceId,
   showFilters = true,
   templateSearch,
   onTemplateClick = () => {},
@@ -60,7 +60,7 @@ export const TemplateList = ({
       createdBy: userId,
     };
     const createSurveyResponse = await createSurveyAction({
-      environmentId: environmentId,
+      workspaceId: workspaceId,
       surveyBody: augmentedTemplate,
     });
 

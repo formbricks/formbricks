@@ -3,7 +3,7 @@ import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { getWorkspaceByEnvironmentId } from "@/modules/survey/link/lib/workspace";
+import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 import {
   getBasicSurveyMetadata,
   getBrandColorForURL,
@@ -18,7 +18,7 @@ vi.mock("@/modules/survey/lib/survey", () => ({
 }));
 
 vi.mock("@/modules/survey/link/lib/workspace", () => ({
-  getWorkspaceByEnvironmentId: vi.fn(),
+  getWorkspaceById: vi.fn(),
 }));
 
 // Mock constants
@@ -80,7 +80,7 @@ describe("Metadata Utils", () => {
 
   describe("getBasicSurveyMetadata", () => {
     const mockSurveyId = "survey-123";
-    const mockEnvironmentId = "env-456";
+    const mockWorkspaceId = "workspace-456";
 
     test("returns default metadata when survey is not found", async () => {
       const result = await getBasicSurveyMetadata(mockSurveyId);
@@ -97,7 +97,7 @@ describe("Metadata Utils", () => {
     test("uses welcome card headline when available", async () => {
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         welcomeCard: {
@@ -114,7 +114,7 @@ describe("Metadata Utils", () => {
       } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
-      vi.mocked(getWorkspaceByEnvironmentId).mockResolvedValue({ name: "Test Workspace" } as any);
+      vi.mocked(getWorkspaceById).mockResolvedValue({ name: "Test Workspace" } as any);
 
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
@@ -130,7 +130,7 @@ describe("Metadata Utils", () => {
     test("falls back to survey name when welcome card is not enabled", async () => {
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         welcomeCard: {
@@ -163,7 +163,7 @@ describe("Metadata Utils", () => {
 
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         welcomeCard: {
@@ -189,7 +189,7 @@ describe("Metadata Utils", () => {
 
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         languages: [],
@@ -220,7 +220,7 @@ describe("Metadata Utils", () => {
 
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         languages: [],

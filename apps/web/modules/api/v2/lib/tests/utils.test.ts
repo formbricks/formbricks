@@ -301,7 +301,7 @@ describe("utils", () => {
 
       // Capture the scope mock for tag verification
       const scopeSetTagMock = vi.fn();
-      vi.mocked(Sentry.withScope).mockImplementation((callback: (scope: any) => void) => {
+      vi.mocked(Sentry.withScope).mockImplementation(((callback: (scope: any) => void) => {
         const mockScope = {
           setTag: scopeSetTagMock,
           setContext: vi.fn(),
@@ -309,7 +309,7 @@ describe("utils", () => {
           setExtra: vi.fn(),
         };
         callback(mockScope);
-      });
+      }) as any);
 
       // Replace the original withContext with our mock
       const originalWithContext = logger.withContext;

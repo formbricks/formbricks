@@ -40,7 +40,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, workspaceIdResult.error);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, workspaceIdResult.data.workspaceId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
         });
@@ -88,9 +88,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (
-        !hasPermission(authentication.environmentPermissions, workspaceIdResult.data.workspaceId, "DELETE")
-      ) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "DELETE")) {
         return handleApiError(
           request,
           {
@@ -143,7 +141,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, workspaceIdResult.data.workspaceId, "PUT")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
@@ -228,7 +226,6 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       if (updatedResponseForPipeline.ok) {
         sendToPipeline({
           event: "responseUpdated",
-          environmentId: workspaceIdResult.data.environmentId,
           workspaceId: workspaceIdResult.data.workspaceId,
           surveyId: existingResponse.data.surveyId,
           response: updatedResponseForPipeline.data,
@@ -237,7 +234,6 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         if (response.data.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId: workspaceIdResult.data.environmentId,
             workspaceId: workspaceIdResult.data.workspaceId,
             surveyId: existingResponse.data.surveyId,
             response: updatedResponseForPipeline.data,

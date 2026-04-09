@@ -21,9 +21,7 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, isReadOnly, workspace, organization } = await getWorkspaceAuth(
-    params.workspaceId
-  );
+  const { session, isReadOnly, workspace, organization } = await getWorkspaceAuth(params.workspaceId);
 
   const surveyId = params.surveyId;
 
@@ -66,7 +64,6 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
         pageTitle={survey.name}
         cta={
           <SurveyAnalysisCTA
-            environment={environment}
             survey={survey}
             isReadOnly={isReadOnly}
             user={user}
@@ -81,7 +78,6 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
         <SurveyAnalysisNavigation survey={survey} activeId="summary" />
       </PageHeader>
       <SummaryPage
-        environment={environment}
         survey={survey}
         surveyId={params.surveyId}
         locale={user.locale ?? DEFAULT_LOCALE}

@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
-import { getEnvironmentIdFromWorkspaceId } from "@/lib/utils/helper";
 import { ITEMS_PER_PAGE } from "../constants";
 import {
   createOrUpdateIntegration,
@@ -12,10 +11,6 @@ import {
   getIntegrationByType,
   getIntegrations,
 } from "./service";
-
-vi.mock("@/lib/utils/helper", () => ({
-  getEnvironmentIdFromWorkspaceId: vi.fn().mockResolvedValue("environment-id-mock"),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -32,7 +27,6 @@ vi.mock("@formbricks/database", () => ({
 describe("Integration Service", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getEnvironmentIdFromWorkspaceId).mockResolvedValue("environment-id-mock");
   });
 
   afterEach(() => {
@@ -92,12 +86,10 @@ describe("Integration Service", () => {
         },
         update: {
           ...mockIntegrationData,
-          environment: { connect: { id: "environment-id-mock" } },
           workspace: { connect: { id: mockWorkspaceId } },
         },
         create: {
           ...mockIntegrationData,
-          environment: { connect: { id: "environment-id-mock" } },
           workspace: { connect: { id: mockWorkspaceId } },
         },
       });

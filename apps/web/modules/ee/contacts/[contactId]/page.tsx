@@ -20,7 +20,7 @@ export const SingleContactPage = async (props: {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { environment, isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
     await Promise.all([
@@ -65,7 +65,7 @@ export const SingleContactPage = async (props: {
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ActivitySection
-            environment={environment}
+            workspaceId={workspace.id}
             contactId={params.contactId}
             environmentTags={environmentTags}
           />
