@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   type SurveyProgressEntry,
@@ -11,18 +12,10 @@ import {
   saveSurveyProgress,
 } from "./offline-storage";
 
-// --- fake-indexeddb polyfill ---
-// Provide a minimal in-memory IndexedDB for tests when the real one isn't available.
-// vitest runs in jsdom or node, which may or may not have indexedDB.
-
-// We only import the real functions and let them run against the jsdom indexedDB.
-// If indexedDB is unavailable the functions should gracefully degrade.
-
-const indexedDBAvailable = typeof indexedDB !== "undefined";
-
-describe.skipIf(!indexedDBAvailable)("offline-storage (IndexedDB)", () => {
+describe("offline-storage (IndexedDB)", () => {
   beforeEach(async () => {
     // Clear all data between tests by deleting the database
+    // This also triggers onversionchange on any open connection, resetting the cached dbInstance
     await new Promise<void>((resolve, reject) => {
       const req = indexedDB.deleteDatabase("formbricks-offline");
       req.onsuccess = () => resolve();
@@ -236,6 +229,16 @@ describe.skipIf(!indexedDBAvailable)("offline-storage (IndexedDB)", () => {
 });
 
 describe("offline-storage graceful degradation", () => {
+  beforeEach(async () => {
+    // Reset the cached dbInstance by deleting the database
+    // (triggers onversionchange → close → dbInstance = null)
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.deleteDatabase("formbricks-offline");
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  });
+
   test("addPendingResponse returns -1 when IndexedDB is unavailable", async () => {
     const originalIndexedDB = globalThis.indexedDB;
     // @ts-expect-error -- intentionally removing indexedDB for test
