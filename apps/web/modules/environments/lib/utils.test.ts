@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
@@ -102,6 +102,12 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@formbricks/types/errors", () => ({
+  AuthenticationError: class AuthenticationError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "AuthenticationError";
+    }
+  },
   AuthorizationError: class AuthorizationError extends Error {},
   DatabaseError: class DatabaseError extends Error {},
   ResourceNotFoundError: class ResourceNotFoundError extends Error {
@@ -162,22 +168,22 @@ describe("utils.ts", () => {
 
     test("throws error if workspace not found", async () => {
       vi.mocked(getWorkspaceByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.workspace_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws error if environment not found", async () => {
       vi.mocked(getEnvironment).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.environment_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws error if session not found", async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.session_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(getEnvironmentAuth("env123")).rejects.toThrow("common.organization_not_found");
+      await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws AuthorizationError if membership not found", async () => {
@@ -219,7 +225,7 @@ describe("utils.ts", () => {
 
     test("throws error if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(environmentIdLayoutChecks("env123")).rejects.toThrow("common.organization_not_found");
+      await expect(environmentIdLayoutChecks("env123")).rejects.toThrow(ResourceNotFoundError);
     });
   });
 
@@ -271,7 +277,8 @@ describe("utils.ts", () => {
           updatedAt: new Date("2024-01-02"),
           name: "Test Organization",
           billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-          isAIEnabled: false,
+          isAISmartToolsEnabled: false,
+          isAIDataAnalysisEnabled: false,
           whitelabel: false,
           memberships: [
             {
@@ -411,7 +418,8 @@ describe("utils.ts", () => {
             updatedAt: new Date("2024-01-02"),
             name: "Test Organization",
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [
               {
@@ -454,7 +462,7 @@ describe("utils.ts", () => {
     test("throws error if session not found", async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow("common.session_not_found");
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if userId doesn't match session", async () => {
@@ -466,15 +474,13 @@ describe("utils.ts", () => {
     test("throws error if user not found", async () => {
       vi.mocked(getUser).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow("common.user_not_found");
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(AuthenticationError);
     });
 
     test("throws error if environment data not found", async () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValueOnce(null);
 
-      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(
-        "common.environment_not_found"
-      );
+      await expect(getEnvironmentLayoutData("env123", "user123")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws AuthorizationError if user has no environment access", async () => {
@@ -523,7 +529,8 @@ describe("utils.ts", () => {
             updatedAt: new Date("2024-01-02"),
             name: "Test Organization",
             billing: null,
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [
               {
@@ -573,7 +580,8 @@ describe("utils.ts", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [], // No membership
           },
@@ -656,7 +664,8 @@ describe("utils.ts", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [{ userId: "user123", organizationId: "org123", role: "owner", accepted: true }],
           },
@@ -695,7 +704,8 @@ describe("utils.ts", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: true,
+            isAISmartToolsEnabled: true,
+            isAIDataAnalysisEnabled: true,
             whitelabel: true,
             memberships: [{ userId: "user123", organizationId: "org456", role: "member", accepted: true }],
           },

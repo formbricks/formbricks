@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -20,7 +21,7 @@ export const ContactsSecondaryNavigation = async ({
     workspace = await getWorkspaceByEnvironmentId(environmentId);
 
     if (!workspace) {
-      throw new Error(t("common.workspace_not_found"));
+      throw new ResourceNotFoundError(t("common.workspace"), null);
     }
   }
 

@@ -23,9 +23,17 @@ interface WebhookModalProps {
   webhook: Webhook;
   surveys: TSurvey[];
   isReadOnly: boolean;
+  allowInternalUrls: boolean;
 }
 
-export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: WebhookModalProps) => {
+export const WebhookModal = ({
+  open,
+  setOpen,
+  webhook,
+  surveys,
+  isReadOnly,
+  allowInternalUrls,
+}: WebhookModalProps) => {
   const { t, i18n } = useTranslation();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
   const [activeTab, setActiveTab] = useState(0);
@@ -38,7 +46,13 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: We
     {
       title: t("common.settings"),
       children: (
-        <WebhookSettingsTab webhook={webhook} surveys={surveys} setOpen={setOpen} isReadOnly={isReadOnly} />
+        <WebhookSettingsTab
+          webhook={webhook}
+          surveys={surveys}
+          setOpen={setOpen}
+          isReadOnly={isReadOnly}
+          allowInternalUrls={allowInternalUrls}
+        />
       ),
     },
   ];

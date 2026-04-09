@@ -3,6 +3,7 @@ import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 // Import mocked rate limiting functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -10,14 +11,44 @@ import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
+vi.mock("@next-auth/prisma-adapter", () => ({
+  PrismaAdapter: vi.fn(() => ({
+    createUser: vi.fn(),
+    getUser: vi.fn(),
+    getUserByEmail: vi.fn(),
+    getUserByAccount: vi.fn(),
+    updateUser: vi.fn(),
+    deleteUser: vi.fn(),
+    linkAccount: vi.fn(),
+    unlinkAccount: vi.fn(),
+    createSession: vi.fn(),
+    getSessionAndUser: vi.fn(),
+    updateSession: vi.fn(),
+    deleteSession: vi.fn(),
+    createVerificationToken: vi.fn(),
+    useVerificationToken: vi.fn(),
+  })),
+}));
+
 // Mock encryption utilities
 vi.mock("@/lib/encryption", () => ({
   symmetricEncrypt: vi.fn((value: string) => `encrypted_${value}`),
   symmetricDecrypt: vi.fn((value: string) => value.replace("encrypted_", "")),
 }));
 
+vi.mock("@/lib/crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/crypto")>();
+  return {
+    ...actual,
+    symmetricEncrypt: vi.fn((value: string) => `encrypted_${value}`),
+    symmetricDecrypt: vi.fn((value: string) => value.replace("encrypted_", "")),
+  };
+});
+
 // Mock JWT
-vi.mock("@/lib/jwt");
+vi.mock("@/lib/jwt", () => ({
+  verifyToken: vi.fn(),
+}));
 
 // Mock rate limiting dependencies
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -51,6 +82,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     BREVO_API_KEY: undefined,
     RATE_LIMITING_DISABLED: false,
     CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+    POSTHOG_KEY: "phc_test_key",
   };
 });
 
@@ -86,7 +118,19 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
+    membership: {
+      count: vi.fn(),
+    },
   },
+}));
+
+vi.mock("@/modules/auth/lib/user", () => ({
+  updateUser: vi.fn(),
+  updateUserLastLoginAt: vi.fn(),
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 // Helper to get the provider by id from authOptions.providers.
@@ -300,51 +344,20 @@ describe("authOptions", () => {
   });
 
   describe("Callbacks", () => {
-    describe("jwt callback", () => {
-      test("should add profile information to token if user is found", async () => {
-        vi.spyOn(prisma.user, "findFirst").mockResolvedValue({
-          id: mockUser.id,
-          locale: mockUser.locale,
-          email: mockUser.email,
-          emailVerified: mockUser.emailVerified,
-        } as any);
-
-        const token = { email: mockUser.email };
-        if (!authOptions.callbacks?.jwt) {
-          throw new Error("jwt callback is not defined");
-        }
-        const result = await authOptions.callbacks.jwt({ token } as any);
-        expect(result).toEqual({
-          ...token,
-          profile: { id: mockUser.id },
-        });
-      });
-
-      test("should return token unchanged if no existing user is found", async () => {
-        vi.spyOn(prisma.user, "findFirst").mockResolvedValue(null);
-
-        const token = { email: "nonexistent@example.com" };
-        if (!authOptions.callbacks?.jwt) {
-          throw new Error("jwt callback is not defined");
-        }
-        const result = await authOptions.callbacks.jwt({ token } as any);
-        expect(result).toEqual(token);
-      });
-    });
-
     describe("session callback", () => {
-      test("should add user profile to session", async () => {
-        const token = {
-          id: "user6",
-          profile: { id: "user6", email: "user6@example.com" },
-        };
+      test("should add user id and isActive to session from database user", async () => {
+        const session = { user: { email: "user6@example.com" } };
+        const user = { id: "user6", isActive: false };
 
-        const session = { user: {} };
         if (!authOptions.callbacks?.session) {
           throw new Error("session callback is not defined");
         }
-        const result = await authOptions.callbacks.session({ session, token } as any);
-        expect(result.user).toEqual(token.profile);
+        const result = await authOptions.callbacks.session({ session, user } as any);
+        expect(result.user).toEqual({
+          email: "user6@example.com",
+          id: "user6",
+          isActive: false,
+        });
       });
     });
 
@@ -357,6 +370,66 @@ describe("authOptions", () => {
           await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
             "Email Verification is Pending"
           );
+        }
+      });
+
+      test("should capture user_signed_in PostHog event on successful credentials sign-in", async () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const user = { ...mockUser, emailVerified: new Date() };
+        const account = { provider: "credentials" } as any;
+
+        vi.mocked(prisma.membership.count).mockResolvedValue(2);
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({ lastLoginAt: yesterday } as any);
+
+        if (authOptions.callbacks?.signIn) {
+          const result = await authOptions.callbacks.signIn({ user, account });
+          expect(result).toBe(true);
+
+          // Allow the fire-and-forget captureSignIn to resolve
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          expect(capturePostHogEvent).toHaveBeenCalledWith(user.id, "user_signed_in", {
+            auth_provider: "credentials",
+            organization_count: 2,
+            is_first_login_today: true,
+          });
+        }
+      });
+
+      test("should set is_first_login_today to false when user already logged in today", async () => {
+        const user = { ...mockUser, emailVerified: new Date() };
+        const account = { provider: "credentials" } as any;
+
+        vi.mocked(prisma.membership.count).mockResolvedValue(1);
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({ lastLoginAt: new Date() } as any);
+
+        if (authOptions.callbacks?.signIn) {
+          await authOptions.callbacks.signIn({ user, account });
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          expect(capturePostHogEvent).toHaveBeenCalledWith(
+            user.id,
+            "user_signed_in",
+            expect.objectContaining({ is_first_login_today: false })
+          );
+        }
+      });
+
+      test("should not throw if captureSignIn prisma query fails", async () => {
+        const user = { ...mockUser, emailVerified: new Date() };
+        const account = { provider: "credentials" } as any;
+
+        vi.mocked(prisma.membership.count).mockRejectedValue(new Error("DB error"));
+
+        if (authOptions.callbacks?.signIn) {
+          const result = await authOptions.callbacks.signIn({ user, account });
+          expect(result).toBe(true);
+
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          expect(capturePostHogEvent).not.toHaveBeenCalled();
         }
       });
     });

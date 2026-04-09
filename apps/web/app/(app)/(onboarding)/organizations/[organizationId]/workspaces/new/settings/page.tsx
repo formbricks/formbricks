@@ -1,6 +1,7 @@
 import { XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TWorkspaceConfigChannel,
   TWorkspaceConfigIndustry,
@@ -49,7 +50,7 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
   const isAccessControlAllowed = await getAccessControlPermission(organization.id);
 
   if (!organizationTeams) {
-    throw new Error(t("common.organization_teams_not_found"));
+    throw new ResourceNotFoundError(t("common.team"), null);
   }
 
   const publicDomain = getPublicDomain();

@@ -60,6 +60,7 @@ export const BrandingSettingsCard = async ({
           title={t("environments.workspace.look.remove_branding_with_a_higher_plan")}
           description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
           buttons={buttons}
+          feature="remove_branding"
         />
       )}
       {isReadOnly && (

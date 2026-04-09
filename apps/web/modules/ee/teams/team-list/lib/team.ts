@@ -309,7 +309,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
 
     const currentTeamDetails = await getTeamDetails(teamId);
     if (!currentTeamDetails) {
-      throw new Error("Team not found");
+      throw new ResourceNotFoundError("Team", teamId);
     }
 
     // Check that all users exist within the organization's membership.

@@ -1,4 +1,4 @@
-export const validWebHookURL = (urlInput: string) => {
+export const validWebHookURL = (urlInput: string, allowInternalUrls = false) => {
   const trimmedInput = urlInput.trim();
   if (!trimmedInput) {
     return { valid: false, error: "Please enter a URL" };
@@ -6,6 +6,13 @@ export const validWebHookURL = (urlInput: string) => {
 
   try {
     const url = new URL(trimmedInput);
+
+    if (allowInternalUrls) {
+      if (url.protocol !== "https:" && url.protocol !== "http:") {
+        return { valid: false, error: "URL must start with https:// or http://" };
+      }
+      return { valid: true };
+    }
 
     if (url.protocol !== "https:") {
       return { valid: false, error: "URL must start with https://" };

@@ -202,7 +202,7 @@ function getLanguageCode(langParam: string | undefined, survey: TSurvey): string
 
   const selectedLanguage = survey.languages.find((surveyLanguage) => {
     return (
-      surveyLanguage.language.code === langParam.toLowerCase() ||
+      surveyLanguage.language.code.toLowerCase() === langParam.toLowerCase() ||
       surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
     );
   });

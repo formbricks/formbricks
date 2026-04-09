@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { getOrganization } from "@/lib/organization/service";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
@@ -35,7 +35,7 @@ const checkAdvancedTargetingPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", organizationId);
   }
 
   const isContactsEnabled = await getIsContactsEnabled(organizationId);

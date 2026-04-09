@@ -2,7 +2,11 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthorizationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
@@ -46,7 +50,7 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
     const organization = await getOrganization(organizationId);
 
     if (!organization) {
-      throw new Error("Organization not found");
+      throw new ResourceNotFoundError("Organization", organizationId);
     }
 
     const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);

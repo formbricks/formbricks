@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { TFunction } from "i18next";
 import {
   AirplayIcon,
   ArrowUpFromDotIcon,
@@ -53,6 +54,25 @@ export enum OptionsType {
   HIDDEN_FIELDS = "Hidden Fields",
   QUOTAS = "Quotas",
 }
+
+const getOptionsTypeTranslationKey = (type: OptionsType, t: TFunction): string => {
+  switch (type) {
+    case OptionsType.ELEMENTS:
+      return t("common.elements");
+    case OptionsType.TAGS:
+      return t("common.tags");
+    case OptionsType.ATTRIBUTES:
+      return t("common.attributes");
+    case OptionsType.OTHERS:
+      return t("common.other_filters");
+    case OptionsType.META:
+      return t("common.meta");
+    case OptionsType.HIDDEN_FIELDS:
+      return t("common.hidden_fields");
+    case OptionsType.QUOTAS:
+      return t("common.quotas");
+  }
+};
 
 export type ElementOption = {
   label: string;
@@ -218,7 +238,12 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             {options?.map((data) => (
               <Fragment key={data.header}>
                 {data?.option.length > 0 && (
-                  <CommandGroup heading={<p className="text-sm font-medium text-slate-600">{data.header}</p>}>
+                  <CommandGroup
+                    heading={
+                      <p className="text-sm font-medium text-slate-600">
+                        {getOptionsTypeTranslationKey(data.header, t)}
+                      </p>
+                    }>
                     {data?.option?.map((o) => (
                       <CommandItem
                         key={o.id}

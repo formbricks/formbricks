@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
@@ -146,18 +147,18 @@ const Page = async (props: {
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
   const autoDisableNotificationType = searchParams["type"];
   const autoDisableNotificationElementId = searchParams["elementId"];
 
   const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!memberships) {
-    throw new Error(t("common.membership_not_found"));
+    throw new ResourceNotFoundError(t("common.membership"), null);
   }
 
   if (user?.notificationSettings) {

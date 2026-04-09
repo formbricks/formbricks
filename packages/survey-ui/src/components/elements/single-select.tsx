@@ -181,7 +181,7 @@ function SingleSelect({
       />
 
       {/* Options */}
-      <div>
+      <div data-element-input>
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
@@ -278,7 +278,7 @@ function SingleSelect({
             ) : null}
           </>
         ) : (
-          <div className="relative">
+          <div className="relative" data-element-input>
             <ElementError errorMessage={errorMessage} dir={dir} />
             <RadioGroup
               name={inputId}

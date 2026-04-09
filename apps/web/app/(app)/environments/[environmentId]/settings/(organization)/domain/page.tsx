@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
@@ -25,7 +26,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   );
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.id);

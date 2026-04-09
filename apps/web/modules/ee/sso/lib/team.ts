@@ -4,6 +4,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_TEAM_ID } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -41,7 +42,7 @@ const getTeam = reactCache(async (teamId: string): Promise<Team> => {
     });
 
     if (!team) {
-      throw new Error("Team not found");
+      throw new ResourceNotFoundError("Team", teamId);
     }
 
     return team;
