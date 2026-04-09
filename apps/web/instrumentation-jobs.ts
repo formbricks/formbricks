@@ -56,14 +56,22 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
   }
 
   const runtimeOptions = jobsWorkerBootstrapConfig.runtimeOptions;
+  const jobHandlerOverrides = runtimeOptions.jobHandlerOverrides
+    ? {
+        ...runtimeOptions.jobHandlerOverrides,
+        [RESPONSE_PIPELINE_JOB_NAME]: async (data, context) => {
+          await processResponsePipelineJob(data as TResponsePipelineJobData, context);
+        },
+      }
+    : {
+        [RESPONSE_PIPELINE_JOB_NAME]: async (data, context) => {
+          await processResponsePipelineJob(data as TResponsePipelineJobData, context);
+        },
+      };
+
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime({
     ...runtimeOptions,
-    jobHandlerOverrides: {
-      ...(runtimeOptions.jobHandlerOverrides ?? {}),
-      [RESPONSE_PIPELINE_JOB_NAME]: async (data, context) => {
-        await processResponsePipelineJob(data as TResponsePipelineJobData, context);
-      },
-    },
+    jobHandlerOverrides,
   }).then((runtime) => {
     clearJobsWorkerRetryTimeout();
     globalForJobsRuntime.formbricksJobsRuntime = runtime;
