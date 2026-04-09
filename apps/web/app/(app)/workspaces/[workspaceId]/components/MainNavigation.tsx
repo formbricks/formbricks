@@ -439,7 +439,7 @@ export const MainNavigation = ({
     if (isFormbricksCloud) {
       return [
         {
-          text: t("environments.settings.billing.upgrade"),
+          text: t("workspace.settings.billing.upgrade"),
           href: `/workspaces/${workspace.id}/settings/billing`,
         },
         {
@@ -451,7 +451,7 @@ export const MainNavigation = ({
 
     return [
       {
-        text: t("environments.settings.billing.upgrade"),
+        text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
           ? `/workspaces/${workspace.id}/settings/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",

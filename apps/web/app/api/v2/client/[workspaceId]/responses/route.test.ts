@@ -5,14 +5,15 @@ const mocks = vi.hoisted(() => ({
   createResponseWithQuotaEvaluation: vi.fn(),
   getClientIpFromHeaders: vi.fn(),
   getIsContactsEnabled: vi.fn(),
-  getOrganizationIdFromEnvironmentId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   getSurvey: vi.fn(),
   reportApiError: vi.fn(),
+  resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   validateResponseData: vi.fn(),
 }));
 
-vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/utils", () => ({
+vi.mock("@/app/api/v2/client/[workspaceId]/responses/lib/utils", () => ({
   checkSurveyValidity: mocks.checkSurveyValidity,
 }));
 
@@ -37,7 +38,11 @@ vi.mock("@/lib/utils/client-ip", () => ({
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromEnvironmentId: mocks.getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
+}));
+
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  resolveClientApiIds: mocks.resolveClientApiIds,
 }));
 
 vi.mock("@/modules/api/lib/validation", () => ({
@@ -55,6 +60,7 @@ const surveyId = "clg123456789012345678901234";
 describe("api/v2 client responses route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: environmentId });
     mocks.checkSurveyValidity.mockResolvedValue(null);
     mocks.getSurvey.mockResolvedValue({
       id: surveyId,
@@ -64,7 +70,7 @@ describe("api/v2 client responses route", () => {
       isCaptureIpEnabled: false,
     });
     mocks.validateResponseData.mockReturnValue(null);
-    mocks.getOrganizationIdFromEnvironmentId.mockResolvedValue("org_123");
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org_123");
     mocks.getIsContactsEnabled.mockResolvedValue(true);
     mocks.getClientIpFromHeaders.mockResolvedValue("127.0.0.1");
   });
@@ -88,7 +94,7 @@ describe("api/v2 client responses route", () => {
 
     const { POST } = await import("./route");
     const response = await POST(request, {
-      params: Promise.resolve({ environmentId }),
+      params: Promise.resolve({ workspaceId: environmentId }),
     });
 
     expect(response.status).toBe(500);
@@ -124,7 +130,7 @@ describe("api/v2 client responses route", () => {
 
     const { POST } = await import("./route");
     const response = await POST(request, {
-      params: Promise.resolve({ environmentId }),
+      params: Promise.resolve({ workspaceId: environmentId }),
     });
 
     expect(response.status).toBe(500);

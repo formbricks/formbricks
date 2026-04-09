@@ -650,7 +650,8 @@ model Organization {
   /// [OrganizationWhitelabel]
   whitelabel                Json                      @default("{}")
   invites                   Invite[]
-  isAIEnabled               Boolean                   @default(false)
+  isAISmartToolsEnabled     Boolean                   @default(false)
+  isAIDataAnalysisEnabled   Boolean                   @default(false)
   teams                     Team[]
   apiKeys                   ApiKey[]
   feedbackRecordDirectories FeedbackRecordDirectory[]

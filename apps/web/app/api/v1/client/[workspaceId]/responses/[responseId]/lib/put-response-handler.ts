@@ -183,7 +183,7 @@ const getUpdatedResponse = async (
     if (error instanceof DatabaseError) {
       logger.error(
         { error, url: req.url },
-        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+        "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
       );
       return {
         response: responses.internalServerErrorResponse(error.message),
@@ -195,7 +195,7 @@ const getUpdatedResponse = async (
 
     logger.error(
       { error: unexpectedError, url: req.url },
-      "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
     );
     return {
       response: responses.internalServerErrorResponse("Something went wrong"),

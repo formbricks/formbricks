@@ -113,7 +113,7 @@ const assertOrganizationAISettingsUpdateAllowed = ({
   t: Awaited<ReturnType<typeof getTranslate>>;
 }) => {
   if (resolvedSettings.isEnablingAnyAISetting && !isInstanceAIConfigured) {
-    throw new OperationNotAllowedError(t("environments.settings.general.ai_instance_not_configured"));
+    throw new OperationNotAllowedError(t("workspace.settings.general.ai_instance_not_configured"));
   }
 };
 
@@ -170,7 +170,7 @@ export const deleteOrganizationAction = authenticatedActionClient
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
       if (!isMultiOrgEnabled) {
         const t = await getTranslate(ctx.user.locale);
-        throw new OperationNotAllowedError(t("environments.settings.general.organization_deletion_disabled"));
+        throw new OperationNotAllowedError(t("workspace.settings.general.organization_deletion_disabled"));
       }
 
       await checkAuthorizationUpdated({

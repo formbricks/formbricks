@@ -58,8 +58,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
         <EditOrganizationNameForm organization={organization} membershipRole={currentUserMembership?.role} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.settings.general.ai_enabled")}
-        description={t("environments.settings.general.ai_enabled_description")}>
+        title={t("workspace.settings.general.ai_enabled")}
+        description={t("workspace.settings.general.ai_enabled_description")}>
         <AISettingsToggle
           organization={organization}
           membershipRole={currentUserMembership?.role}

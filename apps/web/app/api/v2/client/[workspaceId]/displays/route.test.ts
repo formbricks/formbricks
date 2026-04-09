@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   createDisplay: vi.fn(),
   getIsContactsEnabled: vi.fn(),
-  getOrganizationIdFromEnvironmentId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   reportApiError: vi.fn(),
+  resolveClientApiIds: vi.fn(),
 }));
 
 vi.mock("./lib/display", () => ({
@@ -16,7 +17,11 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromEnvironmentId: mocks.getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
+}));
+
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  resolveClientApiIds: mocks.resolveClientApiIds,
 }));
 
 vi.mock("@/app/lib/api/api-error-reporter", () => ({
@@ -29,7 +34,8 @@ const surveyId = "clg123456789012345678901234";
 describe("api/v2 client displays route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getOrganizationIdFromEnvironmentId.mockResolvedValue("org_123");
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: environmentId });
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org_123");
     mocks.getIsContactsEnabled.mockResolvedValue(true);
   });
 
@@ -44,7 +50,7 @@ describe("api/v2 client displays route", () => {
 
     const { POST } = await import("./route");
     const response = await POST(request, {
-      params: Promise.resolve({ environmentId }),
+      params: Promise.resolve({ workspaceId: environmentId }),
     });
 
     expect(response.status).toBe(400);
@@ -74,7 +80,7 @@ describe("api/v2 client displays route", () => {
 
     const { POST } = await import("./route");
     const response = await POST(request, {
-      params: Promise.resolve({ environmentId }),
+      params: Promise.resolve({ workspaceId: environmentId }),
     });
 
     expect(response.status).toBe(500);
@@ -92,7 +98,7 @@ describe("api/v2 client displays route", () => {
 
   test("reports unexpected contact-license lookup failures with the same generic public response", async () => {
     const underlyingError = new Error("license lookup failed");
-    mocks.getOrganizationIdFromEnvironmentId.mockRejectedValue(underlyingError);
+    mocks.getOrganizationIdFromWorkspaceId.mockRejectedValue(underlyingError);
 
     const request = new Request(`https://api.test/api/v2/client/${environmentId}/displays`, {
       method: "POST",
@@ -107,7 +113,7 @@ describe("api/v2 client displays route", () => {
 
     const { POST } = await import("./route");
     const response = await POST(request, {
-      params: Promise.resolve({ environmentId }),
+      params: Promise.resolve({ workspaceId: environmentId }),
     });
 
     expect(response.status).toBe(500);

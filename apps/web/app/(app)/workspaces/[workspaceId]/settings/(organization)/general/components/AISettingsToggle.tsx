@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { updateOrganizationAISettingsAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { updateOrganizationAISettingsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/general/actions";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -35,7 +35,7 @@ export const AISettingsToggle = ({
   });
   const showInstanceConfigWarning = aiEnablementState.blockReason === "instanceNotConfigured";
   const isToggleDisabled = loadingField !== null || !canEdit || !aiEnablementState.canEnableFeatures;
-  const aiEnablementBlockedMessage = t("environments.settings.general.ai_instance_not_configured");
+  const aiEnablementBlockedMessage = t("workspace.settings.general.ai_instance_not_configured");
   const displayedSmartToolsValue = getDisplayedOrganizationAISettingValue({
     currentValue: organization.isAISmartToolsEnabled,
     isInstanceConfigured: isInstanceAIConfigured,
@@ -66,7 +66,7 @@ export const AISettingsToggle = ({
       });
 
       if (response?.data) {
-        toast.success(t("environments.settings.general.ai_settings_updated_successfully"));
+        toast.success(t("workspace.settings.general.ai_settings_updated_successfully"));
         router.refresh();
       } else {
         toast.error(getFormattedErrorMessage(response));
@@ -90,8 +90,8 @@ export const AISettingsToggle = ({
         isChecked={displayedSmartToolsValue}
         onToggle={(checked) => handleToggle("isAISmartToolsEnabled", checked)}
         htmlId="ai-smart-tools-toggle"
-        title={t("environments.settings.general.ai_smart_tools_enabled")}
-        description={t("environments.settings.general.ai_smart_tools_enabled_description")}
+        title={t("workspace.settings.general.ai_smart_tools_enabled")}
+        description={t("workspace.settings.general.ai_smart_tools_enabled_description")}
         disabled={isToggleDisabled}
         customContainerClass="px-0"
       />
@@ -100,8 +100,8 @@ export const AISettingsToggle = ({
         isChecked={displayedDataAnalysisValue}
         onToggle={(checked) => handleToggle("isAIDataAnalysisEnabled", checked)}
         htmlId="ai-data-analysis-toggle"
-        title={t("environments.settings.general.ai_data_analysis_enabled")}
-        description={t("environments.settings.general.ai_data_analysis_enabled_description")}
+        title={t("workspace.settings.general.ai_data_analysis_enabled")}
+        description={t("workspace.settings.general.ai_data_analysis_enabled_description")}
         disabled={isToggleDisabled}
         customContainerClass="px-0"
       />

@@ -55,21 +55,21 @@ vi.mock("./validated-response-update-input", () => ({
   getValidatedResponseUpdateInput: mocks.getValidatedResponseUpdateInput,
 }));
 
-const environmentId = "environment_a";
+const workspaceId = "workspace_a";
 const responseId = "response_123";
 const surveyId = "survey_123";
 
 const createRequest = () =>
-  new Request(`https://api.test/api/v1/client/${environmentId}/responses/${responseId}`, {
+  new Request(`https://api.test/api/v1/client/${workspaceId}/responses/${responseId}`, {
     method: "PUT",
   });
 
-const createHandlerParams = (params?: Partial<{ environmentId: string; responseId: string }>) =>
+const createHandlerParams = (params?: Partial<{ workspaceId: string; responseId: string }>) =>
   ({
     req: createRequest(),
     props: {
       params: Promise.resolve({
-        environmentId,
+        workspaceId,
         responseId,
         ...params,
       }),
@@ -97,7 +97,7 @@ const getBaseExistingResponse = () =>
 const getBaseSurvey = () =>
   ({
     id: surveyId,
-    environmentId,
+    workspaceId,
     blocks: [],
     questions: [],
   }) as const;
@@ -220,7 +220,7 @@ describe("putResponseHandler", () => {
         error,
         url: createRequest().url,
       },
-      "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
     );
   });
 
@@ -239,10 +239,10 @@ describe("putResponseHandler", () => {
     });
   });
 
-  test("rejects updates when the response survey does not belong to the requested environment", async () => {
+  test("rejects updates when the response survey does not belong to the requested workspace", async () => {
     mocks.getSurvey.mockResolvedValue({
       ...getBaseSurvey(),
-      environmentId: "different_environment",
+      workspaceId: "different_workspace",
     });
 
     const result = await putResponseHandler(createHandlerParams());
@@ -377,7 +377,7 @@ describe("putResponseHandler", () => {
         error,
         url: createRequest().url,
       },
-      "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
     );
   });
 
@@ -399,7 +399,7 @@ describe("putResponseHandler", () => {
         error,
         url: createRequest().url,
       },
-      "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
     );
   });
 
@@ -416,7 +416,7 @@ describe("putResponseHandler", () => {
     expect(mocks.sendToPipeline).toHaveBeenCalledTimes(1);
     expect(mocks.sendToPipeline).toHaveBeenCalledWith({
       event: "responseUpdated",
-      environmentId,
+      workspaceId,
       surveyId,
       response: {
         id: responseId,
@@ -458,7 +458,7 @@ describe("putResponseHandler", () => {
     expect(mocks.sendToPipeline).toHaveBeenCalledTimes(2);
     expect(mocks.sendToPipeline).toHaveBeenNthCalledWith(1, {
       event: "responseUpdated",
-      environmentId,
+      workspaceId,
       surveyId,
       response: {
         id: responseId,
@@ -472,7 +472,7 @@ describe("putResponseHandler", () => {
     });
     expect(mocks.sendToPipeline).toHaveBeenNthCalledWith(2, {
       event: "responseFinished",
-      environmentId,
+      workspaceId,
       surveyId,
       response: {
         id: responseId,
