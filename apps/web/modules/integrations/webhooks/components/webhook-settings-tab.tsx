@@ -26,9 +26,16 @@ interface WebhookSettingsTabProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
+  allowInternalUrls: boolean;
 }
 
-export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: WebhookSettingsTabProps) => {
+export const WebhookSettingsTab = ({
+  webhook,
+  surveys,
+  setOpen,
+  isReadOnly,
+  allowInternalUrls,
+}: WebhookSettingsTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -60,7 +67,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
 
   const handleTestEndpoint = async (sendSuccessToast: boolean): Promise<boolean> => {
     try {
-      const { valid, error } = validWebHookURL(testEndpointInput);
+      const { valid, error } = validWebHookURL(testEndpointInput, allowInternalUrls);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
         return false;

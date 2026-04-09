@@ -5,10 +5,9 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceStateData, getWorkspaceStateData } from "./data";
 import { getWorkspaceState } from "./environmentState";
-
-vi.mock("server-only", () => ({}));
 
 vi.mock("server-only", () => ({}));
 
@@ -54,6 +53,11 @@ vi.mock("@/lib/constants", () => ({
   IS_RECAPTCHA_CONFIGURED: true,
   IS_PRODUCTION: true,
   ENTERPRISE_LICENSE_KEY: "mock_enterprise_license_key",
+  POSTHOG_KEY: "phc_test_key",
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 // Mock @formbricks/cache
@@ -300,5 +304,39 @@ describe("getWorkspaceState", () => {
     const result = await getWorkspaceState(workspaceId);
 
     expect(result.data.actionClasses).toEqual([]);
+  });
+
+  test("should capture app_connected PostHog event when app setup completes", async () => {
+    const noCodeAction = {
+      ...mockActionClasses[0],
+      id: "action-2",
+      type: "noCode" as const,
+      key: null,
+    };
+    const incompleteWorkspaceData = {
+      ...mockWorkspaceStateData,
+      workspace: {
+        ...mockWorkspaceStateData.workspace,
+        appSetupCompleted: false,
+      },
+      actionClasses: [...mockActionClasses, noCodeAction],
+    };
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(incompleteWorkspaceData);
+
+    await getWorkspaceState(workspaceId);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(workspaceId, "app_connected", {
+      num_surveys: 1,
+      num_code_actions: 1,
+      num_no_code_actions: 1,
+    });
+  });
+
+  test("should not capture app_connected event when app setup already completed", async () => {
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
+
+    await getWorkspaceState(workspaceId);
+
+    expect(capturePostHogEvent).not.toHaveBeenCalled();
   });
 });

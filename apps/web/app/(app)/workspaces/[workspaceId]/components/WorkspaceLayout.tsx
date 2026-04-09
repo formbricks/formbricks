@@ -67,6 +67,10 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
           publicDomain={publicDomain}
+          isMultiOrgEnabled={isMultiOrgEnabled}
+          organizationWorkspacesLimit={organizationProjectsLimit}
+          isLicenseActive={active}
+          isAccessControlAllowed={isAccessControlAllowed}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

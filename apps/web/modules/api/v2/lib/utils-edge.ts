@@ -1,37 +1,38 @@
 // Function is this file can be used in edge runtime functions, like api routes.
-import * as Sentry from "@sentry/nextjs";
-import { logger } from "@formbricks/logger";
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
-export const logApiErrorEdge = (request: Request, error: ApiErrorResponseV2): void => {
-  const correlationId = request.headers.get("x-request-id") ?? "";
-  const method = request.method;
-  const url = new URL(request.url);
-  const path = url.pathname;
-
-  // Send the error to Sentry if the DSN is set and the error type is internal_server_error
-  // This is useful for tracking down issues without overloading Sentry with errors
-  if (SENTRY_DSN && IS_PRODUCTION && error.type === "internal_server_error") {
-    // Use Sentry scope to add correlation ID and request context as tags for easy filtering
-    Sentry.withScope((scope) => {
-      scope.setTag("correlationId", correlationId);
-      scope.setTag("method", method);
-      scope.setTag("path", path);
-      scope.setLevel("error");
-
-      scope.setExtra("originalError", error);
-      const err = new Error(`API V2 error, id: ${correlationId}`);
-      Sentry.captureException(err);
-    });
+const getStatusFromApiError = (error: ApiErrorResponseV2): number => {
+  switch (error.type) {
+    case "bad_request":
+      return 400;
+    case "unauthorized":
+      return 401;
+    case "forbidden":
+      return 403;
+    case "not_found":
+      return 404;
+    case "conflict":
+      return 409;
+    case "unprocessable_entity":
+      return 422;
+    case "too_many_requests":
+      return 429;
+    case "internal_server_error":
+    default:
+      return 500;
   }
+};
 
-  logger
-    .withContext({
-      correlationId,
-      method,
-      path,
-      error,
-    })
-    .error("API V2 Error Details");
+export const logApiErrorEdge = (
+  request: Request,
+  error: ApiErrorResponseV2,
+  originalError: unknown = error
+): void => {
+  reportApiError({
+    request,
+    status: getStatusFromApiError(error),
+    error,
+    originalError,
+  });
 };

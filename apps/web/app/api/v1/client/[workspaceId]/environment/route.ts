@@ -92,9 +92,11 @@ export const GET = withV1ApiWrapper({
         };
       }
 
+      const error = err instanceof Error ? err : new Error(String(err));
+
       logger.error(
         {
-          error: err,
+          error,
           url: req.url,
           workspaceId: params.workspaceId,
         },
@@ -102,9 +104,10 @@ export const GET = withV1ApiWrapper({
       );
       return {
         response: responses.internalServerErrorResponse(
-          err instanceof Error ? err.message : "Unknown error occurred",
+          "An error occurred while processing your request.",
           true
         ),
+        error,
       };
     }
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, HotelIcon, Loader2, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -198,7 +198,7 @@ export const WorkspaceBreadcrumb = ({
           id="workspaceDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <HotelIcon className="h-3 w-3" strokeWidth={1.5} />
+            <FoldersIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{workspaceName}</span>
             {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isEnvironmentBreadcrumbVisible && !isWorkspaceDropdownOpen ? (
@@ -211,7 +211,7 @@ export const WorkspaceBreadcrumb = ({
 
         <DropdownMenuContent align="start" className="mt-2">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <HotelIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+            <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
             {t("common.choose_workspace")}
           </div>
           {isLoadingWorkspaces && (

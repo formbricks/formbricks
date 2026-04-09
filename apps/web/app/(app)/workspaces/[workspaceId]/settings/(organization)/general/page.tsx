@@ -1,8 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { DeleteOrganization } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/general/components/DeleteOrganization";
-import { EditOrganizationNameForm } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/general/components/EditOrganizationNameForm";
-import { SecurityListTip } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/general/components/SecurityListTip";
-import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -14,6 +11,11 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import packageJson from "@/package.json";
+import { SettingsCard } from "../../components/SettingsCard";
+import { AISettingsToggle } from "./components/AISettingsToggle";
+import { DeleteOrganization } from "./components/DeleteOrganization";
+import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
+import { SecurityListTip } from "./components/SecurityListTip";
 
 const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
@@ -54,6 +56,15 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
         title={t("workspace.settings.general.organization_name")}
         description={t("workspace.settings.general.organization_name_description")}>
         <EditOrganizationNameForm organization={organization} membershipRole={currentUserMembership?.role} />
+      </SettingsCard>
+      <SettingsCard
+        title={t("environments.settings.general.ai_enabled")}
+        description={t("environments.settings.general.ai_enabled_description")}>
+        <AISettingsToggle
+          organization={organization}
+          membershipRole={currentUserMembership?.role}
+          isInstanceAIConfigured={isInstanceAIConfigured()}
+        />
       </SettingsCard>
       <EmailCustomizationSettings
         organization={organization}

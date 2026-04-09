@@ -11,7 +11,7 @@ import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
 
-const handleError = (err: unknown, url: string): { response: Response } => {
+const handleError = (err: unknown, url: string): { response: Response; error?: unknown } => {
   if (err instanceof ResourceNotFoundError) {
     return { response: responses.notFoundResponse(err.resourceType, err.resourceId) };
   }
@@ -21,7 +21,10 @@ const handleError = (err: unknown, url: string): { response: Response } => {
   }
 
   logger.error({ error: err, url }, "Error in POST /api/v1/client/[workspaceId]/user");
-  return { response: responses.internalServerErrorResponse("Unable to fetch user state", true) };
+  return {
+    response: responses.internalServerErrorResponse("Unable to fetch user state", true),
+    error: err,
+  };
 };
 
 export const OPTIONS = async (): Promise<Response> => {

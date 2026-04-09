@@ -41,7 +41,8 @@ export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ 
         />
       }
       upgradePromptTitle={t("workspace.segments.unlock_segments_title")}
-      upgradePromptDescription={t("workspace.segments.unlock_segments_description")}>
+      upgradePromptDescription={t("workspace.segments.unlock_segments_description")}
+      upgradeFeature="segments">
       <SegmentTable
         allSegments={segments}
         segments={filteredSegments}

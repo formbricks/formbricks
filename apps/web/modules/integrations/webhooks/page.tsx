@@ -1,3 +1,4 @@
+import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
@@ -21,13 +22,24 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
     getSurveys(workspace.id, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
   ]);
 
-  const renderAddWebhookButton = () => <AddWebhookButton workspaceId={workspace.id} surveys={surveys} />;
+  const renderAddWebhookButton = () => (
+    <AddWebhookButton
+      workspaceId={workspace.id}
+      surveys={surveys}
+      allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}
+    />
+  );
 
   return (
     <PageContentWrapper>
       <GoBackButton />
       <PageHeader pageTitle={t("common.webhooks")} cta={!isReadOnly ? renderAddWebhookButton() : <></>} />
-      <WebhookTable workspaceId={workspace.id} webhooks={webhooks} surveys={surveys} isReadOnly={isReadOnly}>
+      <WebhookTable
+        workspaceId={workspace.id}
+        webhooks={webhooks}
+        surveys={surveys}
+        isReadOnly={isReadOnly}
+        allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
           <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />

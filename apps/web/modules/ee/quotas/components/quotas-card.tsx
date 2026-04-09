@@ -173,6 +173,7 @@ export const QuotasCard = ({
               <UpgradePrompt
                 title={t("workspace.surveys.edit.quotas.upgrade_prompt_title")}
                 description={t("common.quotas_description")}
+                feature="quotas"
                 buttons={[
                   {
                     text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),

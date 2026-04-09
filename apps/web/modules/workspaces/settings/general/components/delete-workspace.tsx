@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -21,7 +22,7 @@ export const DeleteWorkspace = async ({
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.session_not_found"));
   }
   const availableWorkspaces = await getUserWorkspaces(session.user.id, organizationId);
 

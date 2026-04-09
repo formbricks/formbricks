@@ -10,9 +10,10 @@ import { AddWebhookModal } from "./add-webhook-modal";
 interface AddWebhookButtonProps {
   workspaceId: string;
   surveys: TSurvey[];
+  allowInternalUrls: boolean;
 }
 
-export const AddWebhookButton = ({ workspaceId, surveys }: AddWebhookButtonProps) => {
+export const AddWebhookButton = ({ workspaceId, surveys, allowInternalUrls }: AddWebhookButtonProps) => {
   const { t } = useTranslation();
   const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
   return (
@@ -30,6 +31,7 @@ export const AddWebhookButton = ({ workspaceId, surveys }: AddWebhookButtonProps
         surveys={surveys}
         open={isAddWebhookModalOpen}
         setOpen={setAddWebhookModalOpen}
+        allowInternalUrls={allowInternalUrls}
       />
     </>
   );

@@ -18,14 +18,21 @@ export const getOrganizationIdFromWorkspaceId = reactCache(async (workspaceId: s
 });
 
 export const getOrganizationAIKeys = reactCache(
-  async (organizationId: string): Promise<{ isAIEnabled: boolean; billing: TOrganizationBilling } | null> => {
+  async (
+    organizationId: string
+  ): Promise<{
+    isAISmartToolsEnabled: boolean;
+    isAIDataAnalysisEnabled: boolean;
+    billing: TOrganizationBilling;
+  } | null> => {
     try {
       const organization = await prisma.organization.findUnique({
         where: {
           id: organizationId,
         },
         select: {
-          isAIEnabled: true,
+          isAISmartToolsEnabled: true,
+          isAIDataAnalysisEnabled: true,
           billing: {
             select: {
               stripeCustomerId: true,
@@ -42,7 +49,8 @@ export const getOrganizationAIKeys = reactCache(
       }
 
       return {
-        isAIEnabled: organization.isAIEnabled,
+        isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
+        isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
         billing: {
           stripeCustomerId: organization.billing.stripeCustomerId,
           limits: organization.billing.limits as TOrganizationBilling["limits"],

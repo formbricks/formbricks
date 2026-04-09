@@ -43,6 +43,7 @@ export const TargetingLockedCard = ({ isFormbricksCloud }: TargetingLockedCardPr
           <UpgradePrompt
             title={t("workspace.surveys.edit.unlock_targeting_title")}
             description={t("workspace.surveys.edit.unlock_targeting_description")}
+            feature="targeting"
             buttons={[
               {
                 text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),

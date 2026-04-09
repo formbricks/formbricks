@@ -1,9 +1,9 @@
-import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[workspaceId]/responses/lib/utils";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -25,78 +25,74 @@ interface Context {
   }>;
 }
 
-export const OPTIONS = async (): Promise<Response> => {
-  return responses.successResponse(
-    {},
-    true,
-    // Cache CORS preflight responses for 1 hour (conservative approach)
-    // Balances performance gains with flexibility for CORS policy changes
-    "public, s-maxage=3600, max-age=3600"
-  );
-};
+type TResponseSurvey = NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
 
-export const POST = async (request: Request, context: Context): Promise<Response> => {
-  const params = await context.params;
-  const requestHeaders = await headers();
-  let responseInput;
-  try {
-    responseInput = await request.json();
-  } catch (error) {
-    return responses.badRequestResponse(
-      "Invalid JSON in request body",
-      { error: error instanceof Error ? error.message : "Unknown error occurred" },
-      true
-    );
-  }
+type TValidatedResponseInputResult =
+  | {
+      workspaceId: string;
+      responseInputData: TResponseInputV2;
+    }
+  | { response: Response };
 
-  // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
-  const resolved = await resolveClientApiIds(params.workspaceId);
-  if (!resolved) {
-    return responses.notFoundResponse("Workspace", params.workspaceId);
-  }
-  const { workspaceId } = resolved;
+const getCountry = (requestHeaders: Headers): string | undefined =>
+  requestHeaders.get("CF-IPCountry") ||
+  requestHeaders.get("X-Vercel-IP-Country") ||
+  requestHeaders.get("CloudFront-Viewer-Country") ||
+  undefined;
 
-  const responseInputValidation = ZResponseInputV2.safeParse({
-    ...responseInput,
-    workspaceId,
+const getUnexpectedPublicErrorResponse = (): Response =>
+  responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
+
+const parseAndValidateResponseInput = async (
+  request: Request,
+  workspaceId: string
+): Promise<TValidatedResponseInputResult> => {
+  const responseInputValidation = await parseAndValidateJsonBody({
+    request,
+    schema: ZResponseInputV2,
+    buildInput: (jsonInput) => ({
+      ...(jsonInput !== null && typeof jsonInput === "object" ? jsonInput : {}),
+      workspaceId,
+    }),
+    malformedJsonMessage: "Invalid JSON in request body",
   });
 
-  if (!responseInputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(responseInputValidation.error),
-      true
-    );
+  if ("response" in responseInputValidation) {
+    return responseInputValidation;
   }
 
-  const userAgent = request.headers.get("user-agent") || undefined;
-  const agent = new UAParser(userAgent);
+  return {
+    workspaceId,
+    responseInputData: responseInputValidation.data,
+  };
+};
 
-  const country =
-    requestHeaders.get("CF-IPCountry") ||
-    requestHeaders.get("X-Vercel-IP-Country") ||
-    requestHeaders.get("CloudFront-Viewer-Country") ||
-    undefined;
-
-  const responseInputData = responseInputValidation.data;
-
-  if (responseInputData.contactId) {
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-    const isContactsEnabled = await getIsContactsEnabled(organizationId);
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
-    }
+const getContactsDisabledResponse = async (
+  workspaceId: string,
+  contactId: string | null | undefined
+): Promise<Response | null> => {
+  if (!contactId) {
+    return null;
   }
 
-  // get and check survey
-  const survey = await getSurvey(responseInputData.surveyId);
-  if (!survey) {
-    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
-  }
-  const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInput);
-  if (surveyCheckResult) return surveyCheckResult;
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  const isContactsEnabled = await getIsContactsEnabled(organizationId);
 
-  // Validate response data for "other" options exceeding character limit
+  return isContactsEnabled
+    ? null
+    : responses.forbiddenResponse("User identification is only available for enterprise users.", true);
+};
+
+const validateResponseSubmission = async (
+  workspaceId: string,
+  responseInputData: TResponseInputV2,
+  survey: TResponseSurvey
+): Promise<Response | null> => {
+  const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInputData);
+  if (surveyCheckResult) {
+    return surveyCheckResult;
+  }
+
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: responseInputData.data,
     surveyQuestions: getElementsFromBlocks(survey.blocks),
@@ -113,7 +109,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  // Validate response data against validation rules
   const validationErrors = validateResponseData(
     survey.blocks,
     responseInputData.data,
@@ -121,15 +116,29 @@ export const POST = async (request: Request, context: Context): Promise<Response
     survey.questions
   );
 
-  if (validationErrors) {
-    return responses.badRequestResponse(
-      "Validation failed",
-      formatValidationErrorsForV1Api(validationErrors),
-      true
-    );
-  }
+  return validationErrors
+    ? responses.badRequestResponse(
+        "Validation failed",
+        formatValidationErrorsForV1Api(validationErrors),
+        true
+      )
+    : null;
+};
 
-  let response: TResponseWithQuotaFull;
+const createResponseForRequest = async ({
+  request,
+  survey,
+  responseInputData,
+  country,
+}: {
+  request: Request;
+  survey: TResponseSurvey;
+  responseInputData: TResponseInputV2;
+  country: string | undefined;
+}): Promise<TResponseWithQuotaFull | Response> => {
+  const userAgent = request.headers.get("user-agent") || undefined;
+  const agent = new UAParser(userAgent);
+
   try {
     const meta: TResponseInputV2["meta"] = {
       source: responseInputData?.meta?.source,
@@ -139,54 +148,123 @@ export const POST = async (request: Request, context: Context): Promise<Response
         device: agent.getDevice().type || "desktop",
         os: agent.getOS().name,
       },
-      country: country,
+      country,
       action: responseInputData?.meta?.action,
     };
 
-    // Capture IP address if the survey has IP capture enabled
-    // Server-derived IP always overwrites any client-provided value
     if (survey.isCaptureIpEnabled) {
-      const ipAddress = await getClientIpFromHeaders();
-      meta.ipAddress = ipAddress;
+      meta.ipAddress = await getClientIpFromHeaders();
     }
 
-    response = await createResponseWithQuotaEvaluation({
+    return await createResponseWithQuotaEvaluation({
       ...responseInputData,
       meta,
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+      return responses.badRequestResponse(error.message, undefined, true);
     }
-    logger.error({ error, url: request.url }, "Error creating response");
-    return responses.internalServerErrorResponse(
-      error instanceof Error ? error.message : "Unknown error occurred"
-    );
+
+    const response = getUnexpectedPublicErrorResponse();
+    reportApiError({
+      request,
+      status: response.status,
+      error,
+    });
+    return response;
   }
-  const { quotaFull, ...responseData } = response;
+};
 
-  sendToPipeline({
-    event: "responseCreated",
-    workspaceId,
-    surveyId: responseData.surveyId,
-    response: responseData,
-  });
+export const OPTIONS = async (): Promise<Response> => {
+  return responses.successResponse(
+    {},
+    true,
+    // Cache CORS preflight responses for 1 hour (conservative approach)
+    // Balances performance gains with flexibility for CORS policy changes
+    "public, s-maxage=3600, max-age=3600"
+  );
+};
 
-  if (responseData.finished) {
+export const POST = async (request: Request, context: Context): Promise<Response> => {
+  const params = await context.params;
+
+  // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
+  const resolved = await resolveClientApiIds(params.workspaceId);
+  if (!resolved) {
+    return responses.notFoundResponse("Workspace", params.workspaceId);
+  }
+  const { workspaceId } = resolved;
+
+  const validatedInput = await parseAndValidateResponseInput(request, workspaceId);
+
+  if ("response" in validatedInput) {
+    return validatedInput.response;
+  }
+
+  const { responseInputData } = validatedInput;
+  const country = getCountry(request.headers);
+
+  try {
+    const contactsDisabledResponse = await getContactsDisabledResponse(
+      workspaceId,
+      responseInputData.contactId
+    );
+    if (contactsDisabledResponse) {
+      return contactsDisabledResponse;
+    }
+
+    const survey = await getSurvey(responseInputData.surveyId);
+    if (!survey) {
+      return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
+    }
+
+    const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
+    if (validationResponse) {
+      return validationResponse;
+    }
+
+    const createdResponse = await createResponseForRequest({
+      request,
+      survey,
+      responseInputData,
+      country,
+    });
+    if (createdResponse instanceof Response) {
+      return createdResponse;
+    }
+    const { quotaFull, ...responseData } = createdResponse;
+
     sendToPipeline({
-      event: "responseFinished",
+      event: "responseCreated",
       workspaceId,
       surveyId: responseData.surveyId,
       response: responseData,
     });
+
+    if (responseData.finished) {
+      sendToPipeline({
+        event: "responseFinished",
+        workspaceId,
+        surveyId: responseData.surveyId,
+        response: responseData,
+      });
+    }
+
+    const quotaObj = createQuotaFullObject(quotaFull);
+
+    const responseDataWithQuota = {
+      id: responseData.id,
+      ...quotaObj,
+    };
+
+    return responses.successResponse(responseDataWithQuota, true);
+  } catch (error) {
+    const response = getUnexpectedPublicErrorResponse();
+    reportApiError({
+      request,
+      status: response.status,
+      error,
+    });
+    return response;
   }
-
-  const quotaObj = createQuotaFullObject(quotaFull);
-
-  const responseDataWithQuota = {
-    id: responseData.id,
-    ...quotaObj,
-  };
-
-  return responses.successResponse(responseDataWithQuota, true);
 };

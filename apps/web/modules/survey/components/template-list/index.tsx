@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
-import { templates } from "@/app/lib/templates";
+import { customSurveyTemplate, templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
@@ -59,9 +59,11 @@ export const TemplateList = ({
       type: surveyType,
       createdBy: userId,
     };
+    const isBlank = activeTemplate.name === customSurveyTemplate(t).name;
     const createSurveyResponse = await createSurveyAction({
       workspaceId: workspaceId,
       surveyBody: augmentedTemplate,
+      createdFrom: isBlank ? "blank" : "template",
     });
 
     if (createSurveyResponse?.data) {

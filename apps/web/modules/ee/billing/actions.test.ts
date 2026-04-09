@@ -25,6 +25,11 @@ vi.mock("@/lib/utils/action-client", () => ({
 
 vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "https://app.formbricks.com",
+  POSTHOG_KEY: undefined,
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
@@ -101,10 +106,7 @@ describe("billing actions", () => {
     });
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");
-    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
-      "org_1",
-      "start-hobby"
-    );
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });
   });
@@ -123,10 +125,7 @@ describe("billing actions", () => {
     } as any);
 
     expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
-    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith(
-      "org_1",
-      "start-hobby"
-    );
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });
   });
@@ -140,7 +139,7 @@ describe("billing actions", () => {
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1");
-    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1", "pro-trial");
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });
   });
@@ -160,7 +159,7 @@ describe("billing actions", () => {
 
     expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing");
-    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1", "pro-trial");
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(result).toEqual({ success: true });
   });

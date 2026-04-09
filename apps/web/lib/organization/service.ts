@@ -34,7 +34,8 @@ export const select = {
       stripe: true,
     },
   },
-  isAIEnabled: true,
+  isAISmartToolsEnabled: true,
+  isAIDataAnalysisEnabled: true,
   whitelabel: true,
 } satisfies Prisma.OrganizationSelect;
 
@@ -72,7 +73,8 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
   updatedAt: organization.updatedAt,
   name: organization.name,
   billing: mapOrganizationBilling(organization.billing),
-  isAIEnabled: organization.isAIEnabled,
+  isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
+  isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
   whitelabel: organization.whitelabel as TOrganization["whitelabel"],
 });
 
@@ -354,35 +356,34 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
   createdBy: string,
   organizationId: string
 ): Promise<void> => {
-  try {
-    const surveyCreator = await prisma.user.findUnique({
-      where: {
-        id: createdBy,
-      },
-    });
+  const surveyCreator = await prisma.user.findUnique({
+    where: {
+      id: createdBy,
+    },
+  });
 
-    if (!surveyCreator) {
-      throw new ResourceNotFoundError("User", createdBy);
-    }
-
-    if (surveyCreator.notificationSettings?.unsubscribedOrganizationIds?.includes(organizationId)) {
-      return;
-    }
-
-    const defaultSettings = { alert: {} };
-    const updatedNotificationSettings: TUserNotificationSettings = {
-      ...defaultSettings,
-      ...surveyCreator.notificationSettings,
-    };
-
-    updatedNotificationSettings.alert[surveyId] = true;
-
-    await updateUser(surveyCreator.id, {
-      notificationSettings: updatedNotificationSettings,
-    });
-  } catch (error) {
-    throw error;
+  if (!surveyCreator) {
+    throw new ResourceNotFoundError("User", createdBy);
   }
+
+  if (surveyCreator.notificationSettings?.unsubscribedOrganizationIds?.includes(organizationId)) {
+    return;
+  }
+
+  const defaultSettings = { alert: {} as NonNullable<TUserNotificationSettings["alert"]> };
+  const updatedNotificationSettings: TUserNotificationSettings = {
+    ...defaultSettings,
+    ...surveyCreator.notificationSettings,
+    alert: surveyCreator.notificationSettings?.alert
+      ? { ...surveyCreator.notificationSettings.alert }
+      : defaultSettings.alert,
+  };
+
+  updatedNotificationSettings.alert[surveyId] = true;
+
+  await updateUser(surveyCreator.id, {
+    notificationSettings: updatedNotificationSettings,
+  });
 };
 
 export const getOrganizationsWhereUserIsSingleOwner = reactCache(

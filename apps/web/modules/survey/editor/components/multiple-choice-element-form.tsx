@@ -369,8 +369,8 @@ export const MultipleChoiceElementForm = ({
         </div>
 
         <div className="mt-2">
-          <div className="mt-2 flex items-center justify-between space-x-2">
-            <div className="flex gap-2">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
               {specialChoices.map((specialChoice) => {
                 if (element.choices.some((c) => c.id === specialChoice.id)) return null;
                 return (

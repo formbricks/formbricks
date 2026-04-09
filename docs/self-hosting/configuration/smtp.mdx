@@ -64,6 +64,9 @@ EMAIL_VERIFICATION_DISABLED=0
 
 # Set to 0 to enable password reset functionality (requires working SMTP)
 PASSWORD_RESET_DISABLED=0
+
+# Optional: configure the password reset link lifetime in minutes (5-120, default 30)
+PASSWORD_RESET_TOKEN_LIFETIME_MINUTES=30
 ```
 
 ## Configuration for One-Click Setup
@@ -83,6 +86,7 @@ environment:
   SMTP_PASSWORD: your_password
   EMAIL_VERIFICATION_DISABLED: 0
   PASSWORD_RESET_DISABLED: 0
+  PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: 30
 ```
 
 2. Or during the setup, answer "Yes" when prompted to set up the email service:

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RESET_TOKEN";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;
@@ -95,6 +97,20 @@ class TooManyRequestsError extends Error {
   }
 }
 
+class InvalidPasswordResetTokenError extends Error {
+  statusCode = 400;
+  code: string;
+  reason?: string;
+  userId?: string;
+  constructor(code = INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE, reason?: string, userId?: string) {
+    super(code);
+    this.name = "InvalidPasswordResetTokenError";
+    this.code = code;
+    this.reason = reason;
+    this.userId = userId;
+  }
+}
+
 interface NetworkError {
   code: "network_error";
   message: string;
@@ -127,6 +143,7 @@ export {
   AuthenticationError,
   AuthorizationError,
   TooManyRequestsError,
+  InvalidPasswordResetTokenError,
 };
 export type { NetworkError, ForbiddenError };
 
@@ -142,6 +159,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",
+  "InvalidPasswordResetTokenError",
 ]);
 
 /**

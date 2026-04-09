@@ -303,6 +303,7 @@ export const EmailCustomizationSettings = ({
             title={t("workspace.settings.general.customize_email_with_a_higher_plan")}
             description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
             buttons={buttons}
+            feature="email_customization"
           />
         )}
 

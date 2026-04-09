@@ -2,8 +2,11 @@ import { IntegrationType } from "@prisma/client";
 import { createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { E2E_TESTING, IS_DEVELOPMENT, TELEMETRY_DISABLED } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { hashString } from "@/lib/hash-string";
 import { getInstanceInfo } from "@/lib/instance";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import packageJson from "@/package.json";
 
 const TELEMETRY_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -24,8 +27,31 @@ let nextTelemetryCheck = 0;
  * 2. Redis check (shared across instances, persists across restarts)
  * 3. Distributed lock (prevents concurrent execution in multi-instance deployments)
  */
+// Hashed license key for log context — allows correlating log entries to a specific license
+// without exposing the raw key. Computed once at module load.
+const hashedLicenseKey = env.ENTERPRISE_LICENSE_KEY ? hashString(env.ENTERPRISE_LICENSE_KEY) : null;
+
+/**
+ * Returns true if telemetry is disabled via env var AND there is no active EE license.
+ * EE customers cannot opt out — telemetry is always enforced for license compliance.
+ */
+const isTelemetryDisabledForCE = async (): Promise<boolean> => {
+  if (!TELEMETRY_DISABLED) return false;
+  const license = await getEnterpriseLicense();
+  return !license.active;
+};
+
 export const sendTelemetryEvents = async () => {
   try {
+    // ============================================================
+    // CHECK 0: Non-Production Hard Skip
+    // ============================================================
+    // Purpose: Unconditionally skip telemetry in dev and test/CI environments.
+    // No EE bypass — these are internal flags, not customer-facing.
+    if (E2E_TESTING || IS_DEVELOPMENT) {
+      return;
+    }
+
     const now = Date.now();
 
     // ============================================================
@@ -39,7 +65,18 @@ export const sendTelemetryEvents = async () => {
     }
 
     // ============================================================
-    // CHECK 2: Redis Check (Shared State)
+    // CHECK 2: Telemetry Disabled Check
+    // ============================================================
+    // Purpose: Allow CE self-hosters to opt out of telemetry via env var.
+    // EE bypass: If an active Enterprise License is detected, telemetry is always sent
+    // regardless of the TELEMETRY_DISABLED setting to enforce license compliance.
+    // Placed after in-memory check to avoid calling getEnterpriseLicense() on every invocation.
+    if (await isTelemetryDisabledForCE()) {
+      return;
+    }
+
+    // ============================================================
+    // CHECK 3: Redis Check (Shared State)
     // ============================================================
     // Purpose: Check if telemetry was sent recently by ANY instance (shared across cluster).
     // This persists across restarts and works in multi-instance deployments.
@@ -66,7 +103,7 @@ export const sendTelemetryEvents = async () => {
     }
 
     // ============================================================
-    // CHECK 3: Distributed Lock (Prevent Concurrent Execution)
+    // CHECK 4: Distributed Lock (Prevent Concurrent Execution)
     // ============================================================
     // Purpose: Ensure only ONE instance executes telemetry at a time in a cluster.
     // How it works:
@@ -100,7 +137,7 @@ export const sendTelemetryEvents = async () => {
       // Log as warning since telemetry is non-essential
       const errorMessage = e instanceof Error ? e.message : String(e);
       logger.warn(
-        { error: e, message: errorMessage, lastSent, now },
+        { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
         "Failed to send telemetry - applying 1h cooldown"
       );
 
@@ -118,7 +155,7 @@ export const sendTelemetryEvents = async () => {
     // Log as warning since telemetry is non-essential functionality
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.warn(
-      { error, message: errorMessage, timestamp: Date.now() },
+      { error, message: errorMessage, timestamp: Date.now(), hashedLicenseKey },
       "Unexpected error in sendTelemetryEvents wrapper - telemetry check skipped"
     );
   }

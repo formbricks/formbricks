@@ -111,6 +111,13 @@ const formbricks = {
   setNonce,
 };
 
+// Explicitly assign to globalThis so the wrapper SDK (@formbricks/js) can
+// find us even when the UMD environment detection is fooled by a leaked
+// `exports` or `module` global on the page (e.g. from another UMD bundle,
+// a tag manager, or a browser extension).  This runs inside the UMD factory,
+// so it executes regardless of which branch the wrapper picks.
+(globalThis as unknown as Record<string, unknown>).formbricks = formbricks;
+
 type TFormbricks = typeof formbricks;
 export type { TFormbricks };
 export default formbricks;

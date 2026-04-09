@@ -68,6 +68,7 @@ export const TeamsView = async ({
           title={t("workspace.settings.teams.unlock_teams_title")}
           description={t("workspace.settings.teams.unlock_teams_description")}
           buttons={buttons}
+          feature="teams"
         />
       )}
     </SettingsCard>

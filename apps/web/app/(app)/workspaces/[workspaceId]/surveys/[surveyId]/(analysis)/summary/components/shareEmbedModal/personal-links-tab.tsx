@@ -165,6 +165,7 @@ export const PersonalLinksTab = ({
       <UpgradePrompt
         title={t("workspace.surveys.share.personal_links.upgrade_prompt_title")}
         description={t("workspace.surveys.share.personal_links.upgrade_prompt_description")}
+        feature="personal_links"
         buttons={[
           {
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),

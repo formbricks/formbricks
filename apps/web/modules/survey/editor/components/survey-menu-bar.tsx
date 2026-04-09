@@ -71,6 +71,7 @@ export const SurveyMenuBar = ({
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
+  const isSurveyPublishingRef = useRef(false);
 
   // Refs for interval-based auto-save (to access current values without re-creating interval)
   const localSurveyRef = useRef(localSurvey);
@@ -268,8 +269,8 @@ export const SurveyMenuBar = ({
       // Skip if tab is not visible (no computation, no API calls for background tabs)
       if (document.hidden) return;
 
-      // Skip if already saving (manual or auto)
-      if (isAutoSavingRef.current || isSurveySavingRef.current) return;
+      // Skip if already saving, publishing, or auto-saving
+      if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
       // Check for changes using refs (avoids re-creating interval on every change)
       const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
@@ -288,10 +289,19 @@ export const SurveyMenuBar = ({
         } as unknown as TSurveyDraft);
 
         if (updatedSurveyResponse?.data) {
+          const savedData = updatedSurveyResponse.data;
+
+          // If the segment changed on the server (e.g., private segment was deleted when
+          // switching from app to link type), update localSurvey to prevent stale segment
+          // references when publishing
+          if (!isEqual(localSurveyRef.current.segment, savedData.segment)) {
+            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
+          }
+
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.
           // The comparison uses refs, so this prevents unnecessary re-saves.
-          surveyRef.current = { ...updatedSurveyResponse.data };
+          surveyRef.current = { ...savedData };
           isSuccessfullySavedRef.current = true;
           setLastAutoSaved(new Date());
         }
@@ -416,11 +426,13 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveyPublish = async () => {
+    isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
     if (!isSurveyValidatedWithZod) {
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       return;
     }
@@ -428,6 +440,7 @@ export const SurveyMenuBar = ({
     try {
       const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
@@ -444,10 +457,12 @@ export const SurveyMenuBar = ({
       if (!publishResult?.data) {
         const errorMessage = getFormattedErrorMessage(publishResult);
         toast.error(errorMessage);
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
 
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
@@ -455,6 +470,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       console.error(error);
       toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
     }
   };

@@ -244,6 +244,7 @@ export const FaviconCustomizationSettings = ({
           title={t("workspace.settings.domain.customize_favicon_with_higher_plan")}
           description={t("workspace.settings.domain.customize_favicon_description")}
           buttons={buttons}
+          feature="favicon_customization"
         />
       )}
     </SettingsCard>
