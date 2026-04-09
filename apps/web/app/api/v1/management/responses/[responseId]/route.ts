@@ -169,7 +169,7 @@ export const PUT = withV1ApiWrapper({
         auditLog.newObject = updated;
       }
 
-      void enqueueResponsePipelineEvents({
+      await enqueueResponsePipelineEvents({
         environmentId: result.survey.environmentId,
         events: updated.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
         responseId: updated.id,

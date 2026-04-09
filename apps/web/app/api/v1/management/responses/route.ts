@@ -174,7 +174,7 @@ export const POST = withV1ApiWrapper({
           auditLog.newObject = response;
         }
 
-        void enqueueResponsePipelineEvents({
+        await enqueueResponsePipelineEvents({
           environmentId: surveyResult.survey.environmentId,
           events: response.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
           responseId: response.id,

@@ -1,13 +1,5 @@
 /* v8 ignore start */
-export {
-  closeRedisConnection,
-  createProducerConnection,
-  createWorkerConnection,
-  getRedisUrlFromEnv,
-} from "./connection";
-export { JOB_NAMES, JOBS_DEFAULT_JOB_OPTIONS, JOBS_PREFIX, JOBS_QUEUE_NAME } from "./constants";
 export type {
-  BackgroundJobDefinition,
   BackgroundJobProducer,
   EnqueuedJob,
   JobHandlerOverrides,
@@ -15,14 +7,10 @@ export type {
   JobHandler,
   UpsertedRecurringJobSchedule,
 } from "./contracts";
-export { backgroundJobDefinitions, getBackgroundJobDefinition } from "./definitions";
 export {
-  createJobsQueue,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
-  getJobsQueue,
-  resetJobsQueueFactory,
   scheduleResponsePipelineJobAt,
   scheduleTestLogJobAt,
   upsertRecurringResponsePipelineJobSchedule,
@@ -43,7 +31,6 @@ export {
   getRecurringJobSchedulerId,
   toBullMQRepeatOptions,
 } from "./schedules";
-export type { JobsConnectionConfig } from "./connection";
 export type { JobsQueueHandle } from "./queue";
 export type { JobsRuntimeHandle, JobsRuntimeOptions } from "./runtime";
 export type {

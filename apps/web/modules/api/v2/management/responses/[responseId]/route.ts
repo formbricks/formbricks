@@ -220,7 +220,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
-      void enqueueResponsePipelineEvents({
+      await enqueueResponsePipelineEvents({
         environmentId: environmentIdResult.data,
         events: response.data.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
         responseId: params.responseId,

@@ -104,6 +104,41 @@ describe("storage file route", () => {
     mockLogFileDeletion.mockResolvedValue(undefined);
   });
 
+  test("streams the file for a successful GET request", async () => {
+    const fileContents = "hello from storage";
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(fileContents));
+        controller.close();
+      },
+    });
+
+    mockGetFileStreamForDownload.mockResolvedValue({
+      ok: true,
+      data: {
+        body,
+        contentLength: fileContents.length,
+        contentType: "image/jpeg",
+      },
+    });
+
+    const { GET } = await import("./route");
+    const response = await GET(new NextRequest(`http://localhost/storage/${environmentId}/public/file.jpg`), {
+      params: Promise.resolve({
+        accessType: "public",
+        environmentId,
+        fileName: "file.jpg",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(fileContents);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(response.headers.get("content-length")).toBe(String(fileContents.length));
+    expect(response.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(mockGetFileStreamForDownload).toHaveBeenCalledWith("file.jpg", environmentId, "public");
+  });
+
   test("returns the mapped storage error for download failures", async () => {
     mockGetFileStreamForDownload.mockResolvedValue({
       ok: false,
@@ -125,6 +160,32 @@ describe("storage file route", () => {
     expect(mockGetErrorResponseFromStorageError).toHaveBeenCalledWith(
       { code: StorageErrorCode.FileNotFoundError },
       { fileName: "file.jpg" }
+    );
+  });
+
+  test("returns a success response for successful DELETE requests", async () => {
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new NextRequest(`http://localhost/storage/${environmentId}/public/test%20file.jpg`),
+      {
+        params: Promise.resolve({
+          accessType: "public",
+          environmentId,
+          fileName: "test%20file.jpg",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockDeleteFile).toHaveBeenCalledWith(environmentId, "public", "test file.jpg");
+    expect(mockApplyRateLimit).toHaveBeenCalledWith("storage-delete-limit", "user_123");
+    expect(mockLogFileDeletion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        accessType: "public",
+        environmentId,
+        userId: "user_123",
+      })
     );
   });
 

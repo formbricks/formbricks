@@ -108,6 +108,18 @@ const createRequest = (body: BodyInit) =>
     method: "PUT",
   });
 
+const waitForEnqueueCall = async (mockFn: ReturnType<typeof vi.fn>) => {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    if (mockFn.mock.calls.length > 0) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  throw new Error("Timed out waiting for enqueueResponsePipelineEvents to be called");
+};
+
 describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -290,5 +302,32 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
       responseId,
       surveyId,
     });
+  });
+
+  test("waits for the enqueue attempt before returning the update response", async () => {
+    let resolveEnqueue: (() => void) | undefined;
+    const enqueuePromise = new Promise<void>((resolve) => {
+      resolveEnqueue = resolve;
+    });
+    mockEnqueueResponsePipelineEvents.mockReturnValue(enqueuePromise);
+
+    const { PUT } = await import("./route");
+
+    let settled = false;
+    const resultPromise = (PUT as unknown as PutHandler)({
+      props: { params: Promise.resolve({ environmentId, responseId }) },
+      req: createRequest(JSON.stringify({ data: { question_1: "new" }, finished: true })),
+    }).then((result) => {
+      settled = true;
+      return result;
+    });
+
+    await waitForEnqueueCall(mockEnqueueResponsePipelineEvents);
+    expect(settled).toBe(false);
+
+    resolveEnqueue?.();
+
+    const result = await resultPromise;
+    expect(result.response.status).toBe(200);
   });
 });

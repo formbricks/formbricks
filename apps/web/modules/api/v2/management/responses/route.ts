@@ -154,7 +154,7 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
-      void enqueueResponsePipelineEvents({
+      await enqueueResponsePipelineEvents({
         environmentId,
         events: createResponseResult.data.finished
           ? ["responseCreated", "responseFinished"]

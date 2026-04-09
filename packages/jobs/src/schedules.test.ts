@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { getDelayForRunAtSchedule, getRecurringJobSchedulerId } from "./schedules";
+import {
+  ZBackgroundJobScheduleIdentity,
+  getDelayForRunAtSchedule,
+  getRecurringJobSchedulerId,
+} from "./schedules";
 
 describe("@formbricks/jobs schedules", () => {
   test("clamps small past drift to immediate execution", () => {
@@ -35,5 +39,21 @@ describe("@formbricks/jobs schedules", () => {
         scope: "environment_123",
       })
     ).toBe("response-pipeline.process:environment_123:daily-sync");
+  });
+
+  test("rejects reserved delimiters in recurring scheduler identities", () => {
+    expect(() =>
+      ZBackgroundJobScheduleIdentity.parse({
+        scheduleId: "daily:sync",
+        scope: "environment_123",
+      })
+    ).toThrow(/reserved in recurring scheduler ids/);
+
+    expect(() =>
+      getRecurringJobSchedulerId("response-pipeline.process", {
+        scheduleId: "daily-sync",
+        scope: "environment:123",
+      })
+    ).toThrow(/reserved in recurring scheduler ids/);
   });
 });

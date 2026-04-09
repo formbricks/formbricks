@@ -11,9 +11,6 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 };
 
 vi.mock("@formbricks/jobs", () => ({
-  JOB_NAMES: {
-    responsePipeline: "response-pipeline.process",
-  },
   startJobsRuntime: mockStartJobsRuntime,
 }));
 

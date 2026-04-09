@@ -7,6 +7,7 @@ const ZValidDate = z.date().refine((value) => !Number.isNaN(value.getTime()), {
 
 const ZPositiveInteger = z.number().int().positive();
 const MAX_RUN_AT_PAST_DRIFT_MS = 5_000;
+const RESERVED_SCHEDULER_ID_DELIMITER = ":";
 
 const ZScheduleWindow = {
   endAt: ZValidDate.optional(),
@@ -17,8 +18,16 @@ const ZScheduleWindow = {
 const hasValidScheduleWindow = (value: { startAt?: Date; endAt?: Date }): boolean =>
   !value.startAt || !value.endAt || value.endAt.getTime() > value.startAt.getTime();
 
-export const ZBackgroundJobScheduleId = z.string().trim().min(1);
-export const ZBackgroundJobScheduleScope = z.string().trim().min(1);
+const ZSchedulerKeySegment = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((value) => !value.includes(RESERVED_SCHEDULER_ID_DELIMITER), {
+    message: `"${RESERVED_SCHEDULER_ID_DELIMITER}" is reserved in recurring scheduler ids`,
+  });
+
+export const ZBackgroundJobScheduleId = ZSchedulerKeySegment;
+export const ZBackgroundJobScheduleScope = ZSchedulerKeySegment;
 export const ZBackgroundJobScheduleIdentity = z.object({
   scheduleId: ZBackgroundJobScheduleId,
   scope: ZBackgroundJobScheduleScope,

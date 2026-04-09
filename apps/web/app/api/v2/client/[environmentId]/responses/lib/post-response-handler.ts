@@ -217,7 +217,7 @@ export const handleCreateResponseRequest = async ({
 
   const { quotaFull, ...responseData } = response;
 
-  void enqueueResponsePipelineEvents({
+  await enqueueResponsePipelineEvents({
     environmentId,
     events: response.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
     responseId: responseData.id,
