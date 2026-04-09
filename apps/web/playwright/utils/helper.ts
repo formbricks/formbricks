@@ -1,5 +1,4 @@
 import { expect } from "@playwright/test";
-import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
 import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
