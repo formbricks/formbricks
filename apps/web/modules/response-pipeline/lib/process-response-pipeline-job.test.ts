@@ -50,11 +50,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/app/api/(internal)/pipeline/lib/handleIntegrations", () => ({
+vi.mock("./handle-integrations", () => ({
   handleIntegrations: mockHandleIntegrations,
 }));
 
-vi.mock("@/app/api/(internal)/pipeline/lib/telemetry", () => ({
+vi.mock("./telemetry", () => ({
   sendTelemetryEvents: mockSendTelemetryEvents,
 }));
 

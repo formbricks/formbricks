@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import {
   TIntegrationAirtable,
@@ -25,7 +26,6 @@ import {
 import { TResponse, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -35,7 +35,7 @@ import { writeDataToSlack } from "@/lib/slack/service";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
-import { handleIntegrations } from "./handleIntegrations";
+import { handleIntegrations } from "./handle-integrations";
 
 // Mock dependencies
 vi.mock("@/lib/airtable/service");
@@ -93,7 +93,7 @@ const mockPipelineInput = {
     },
     ttc: {},
   } as unknown as TResponse,
-} as TPipelineInput;
+} as TResponsePipelineJobData;
 
 const mockSurvey = {
   id: surveyId,

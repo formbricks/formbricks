@@ -5,8 +5,6 @@ import { prisma } from "@formbricks/database";
 import type { JobHandler, TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { handleIntegrations } from "@/app/api/(internal)/pipeline/lib/handleIntegrations";
-import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -20,6 +18,8 @@ import { sendResponseFinishedEmail } from "@/modules/email";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { handleIntegrations } from "./handle-integrations";
+import { sendTelemetryEvents } from "./telemetry";
 
 const WEBHOOK_TIMEOUT_MS = 5_000;
 
