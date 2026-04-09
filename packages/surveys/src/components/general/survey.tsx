@@ -857,7 +857,7 @@ export function Survey({
       // Clear offline persistence data on survey completion.
       // Only clear when the responses were actually sent (online), not when we're
       // still offline — the sync-on-reconnect logic needs those entries.
-      if (offlinePersistEnabled && navigator.onLine) {
+      if (offlinePersistEnabled && isOnline) {
         const cleanup = async () => {
           await clearSurveyProgress(survey.id);
           await clearPendingResponses(survey.id);
@@ -865,7 +865,7 @@ export function Survey({
         void cleanup();
       }
     }
-  }, [isResponseSendingFinished, isSurveyFinished, onFinished, offlinePersistEnabled, survey.id]);
+  }, [isResponseSendingFinished, isSurveyFinished, onFinished, offlinePersistEnabled, isOnline, survey.id]);
 
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     // Get the first responded element ID for tracking
