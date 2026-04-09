@@ -5,9 +5,9 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  TJsEnvironmentStateActionClass,
-  TJsEnvironmentStateSurvey,
-  TJsEnvironmentStateWorkspace,
+  TJsWorkspaceStateActionClass,
+  TJsWorkspaceStateSurvey,
+  TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -18,17 +18,21 @@ import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
  * Uses a single Prisma query with strategic includes to minimize database calls
  * Critical for performance on high-frequency endpoint serving hundreds of thousands of SDK clients
  */
-export interface EnvironmentStateData {
-  workspace: TJsEnvironmentStateWorkspace & { appSetupCompleted: boolean };
-  surveys: TJsEnvironmentStateSurvey[];
-  actionClasses: TJsEnvironmentStateActionClass[];
+export interface WorkspaceStateData {
+  workspace: {
+    id: string;
+    appSetupCompleted: boolean;
+    workspaceSettings: TJsWorkspaceStateWorkspaceSetting;
+  };
+  surveys: TJsWorkspaceStateSurvey[];
+  actionClasses: TJsWorkspaceStateActionClass[];
 }
 
 /**
  * Single optimized query that fetches all required data
  * Replaces multiple separate service calls with one efficient database operation
  */
-export const getEnvironmentStateData = async (workspaceId: string): Promise<EnvironmentStateData> => {
+export const getWorkspaceStateData = async (workspaceId: string): Promise<WorkspaceStateData> => {
   validateInputs([workspaceId, ZId]);
 
   try {
@@ -38,13 +42,13 @@ export const getEnvironmentStateData = async (workspaceId: string): Promise<Envi
       where: { id: workspaceId },
       select: {
         id: true,
+        appSetupCompleted: true,
         recontactDays: true,
         clickOutsideClose: true,
         overlay: true,
         placement: true,
         inAppSurveyBranding: true,
         styling: true,
-        appSetupCompleted: true,
         // Action classes (optimized for environment state)
         actionClasses: {
           select: {
@@ -132,22 +136,24 @@ export const getEnvironmentStateData = async (workspaceId: string): Promise<Envi
 
     // Transform surveys using existing utility
     const transformedSurveys = workspaceData.surveys.map((survey) =>
-      transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey)
+      transformPrismaSurvey<TJsWorkspaceStateSurvey>(survey)
     );
 
     return {
       workspace: {
         id: workspaceData.id,
-        recontactDays: workspaceData.recontactDays,
-        clickOutsideClose: workspaceData.clickOutsideClose,
-        overlay: workspaceData.overlay,
-        placement: workspaceData.placement,
-        inAppSurveyBranding: workspaceData.inAppSurveyBranding,
-        styling: resolveStorageUrlsInObject(workspaceData.styling),
         appSetupCompleted: workspaceData.appSetupCompleted,
+        workspaceSettings: {
+          recontactDays: workspaceData.recontactDays,
+          clickOutsideClose: workspaceData.clickOutsideClose,
+          overlay: workspaceData.overlay,
+          placement: workspaceData.placement,
+          inAppSurveyBranding: workspaceData.inAppSurveyBranding,
+          styling: resolveStorageUrlsInObject(workspaceData.styling),
+        },
       },
       surveys: resolveStorageUrlsInObject(transformedSurveys),
-      actionClasses: workspaceData.actionClasses as TJsEnvironmentStateActionClass[],
+      actionClasses: workspaceData.actionClasses as TJsWorkspaceStateActionClass[],
     };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
@@ -155,11 +161,11 @@ export const getEnvironmentStateData = async (workspaceId: string): Promise<Envi
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Database error in getEnvironmentStateData");
+      logger.error(error, "Database error in getWorkspaceStateData");
       throw new DatabaseError(`Database error when fetching environment state for ${workspaceId}`);
     }
 
-    logger.error(error, "Unexpected error in getEnvironmentStateData");
+    logger.error(error, "Unexpected error in getWorkspaceStateData");
     throw error;
   }
 };

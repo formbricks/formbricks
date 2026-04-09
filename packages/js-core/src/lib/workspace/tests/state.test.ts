@@ -5,20 +5,20 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
 import {
-  addEnvironmentStateExpiryCheckListener,
-  clearEnvironmentStateExpiryCheckListener,
-  fetchEnvironmentState,
-} from "@/lib/environment/state";
-import type { TEnvironmentState } from "@/types/config";
+  addWorkspaceStateExpiryCheckListener,
+  clearWorkspaceStateExpiryCheckListener,
+  fetchWorkspaceState,
+} from "@/lib/workspace/state";
+import type { TWorkspaceState } from "@/types/config";
 
-// Mock the ApiClient so we can control environment.getEnvironmentState
+// Mock the ApiClient so we can control workspace.getWorkspaceState
 vi.mock("@/lib/common/api", () => ({
-  ApiClient: vi.fn(function MockApiClient(this: { getEnvironmentState: ReturnType<typeof vi.fn> }) {
-    this.getEnvironmentState = vi.fn();
+  ApiClient: vi.fn(function MockApiClient(this: { getWorkspaceState: ReturnType<typeof vi.fn> }) {
+    this.getWorkspaceState = vi.fn();
   }),
 }));
 
-// Mock logger (so we don’t spam console)
+// Mock logger (so we don't spam console)
 vi.mock("@/lib/common/logger", () => ({
   Logger: {
     getInstance: vi.fn(() => {
@@ -59,47 +59,47 @@ describe("environment/state.ts", () => {
     vi.useRealTimers();
   });
 
-  describe("fetchEnvironmentState()", () => {
-    test("returns ok(...) with environment state", async () => {
+  describe("fetchWorkspaceState()", () => {
+    test("returns ok(...) with workspace state", async () => {
       // Setup mock
       (ApiClient as unknown as Mock).mockImplementationOnce(function MockApiClient() {
         return {
-          getEnvironmentState: vi.fn().mockResolvedValue({
+          getWorkspaceState: vi.fn().mockResolvedValue({
             ok: true,
             data: { data: { foo: "bar" }, expiresAt: new Date(Date.now() + 1000 * 60 * 30) },
           }),
         };
       });
 
-      const result = await fetchEnvironmentState({
+      const result = await fetchWorkspaceState({
         appUrl: "https://fake.host",
-        environmentId: "env_123",
+        workspaceId: "env_123",
       });
 
       expect(result.ok).toBe(true);
 
       if (result.ok) {
-        const val: TEnvironmentState = result.data;
+        const val: TWorkspaceState = result.data;
         expect(val.data).toEqual({ foo: "bar" });
         expect(val.expiresAt).toBeInstanceOf(Date);
       }
     });
 
-    test("returns err(...) if environment.getEnvironmentState is not ok", async () => {
+    test("returns err(...) if workspace.getWorkspaceState is not ok", async () => {
       const mockError = { code: "forbidden", status: 403, message: "Access denied" };
 
       (ApiClient as unknown as Mock).mockImplementationOnce(function MockApiClient() {
         return {
-          getEnvironmentState: vi.fn().mockResolvedValue({
+          getWorkspaceState: vi.fn().mockResolvedValue({
             ok: false,
             error: mockError,
           }),
         };
       });
 
-      const result = await fetchEnvironmentState({
+      const result = await fetchWorkspaceState({
         appUrl: "https://fake.host",
-        environmentId: "env_123",
+        workspaceId: "env_123",
       });
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -118,13 +118,13 @@ describe("environment/state.ts", () => {
 
       (ApiClient as unknown as Mock).mockImplementationOnce(function MockApiClient() {
         return {
-          getEnvironmentState: vi.fn().mockRejectedValue(mockNetworkError),
+          getWorkspaceState: vi.fn().mockRejectedValue(mockNetworkError),
         };
       });
 
-      const result = await fetchEnvironmentState({
+      const result = await fetchWorkspaceState({
         appUrl: "https://fake.host",
-        environmentId: "env_123",
+        workspaceId: "env_123",
       });
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -135,7 +135,7 @@ describe("environment/state.ts", () => {
     });
   });
 
-  describe("addEnvironmentStateExpiryCheckListener()", () => {
+  describe("addWorkspaceStateExpiryCheckListener()", () => {
     let mockJsConfig: MockInstance<() => Config>;
     let mockLoggerInstance: MockInstance<() => Logger>;
 
@@ -151,11 +151,11 @@ describe("environment/state.ts", () => {
       mockJsConfig = vi.spyOn(Config, "getInstance");
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          environment: {
+          workspace: {
             expiresAt: new Date(Date.now() + 60_000), // Not expired for now
           },
           user: {},
-          environmentId: "env_123",
+          workspaceId: "env_123",
           appUrl: "https://fake.host",
         }),
       };
@@ -167,17 +167,17 @@ describe("environment/state.ts", () => {
     });
 
     afterEach(() => {
-      clearEnvironmentStateExpiryCheckListener(); // clear after each test
+      clearWorkspaceStateExpiryCheckListener(); // clear after each test
     });
 
     test("starts interval check and updates state when expired", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          environment: {
+          workspace: {
             expiresAt: new Date(Date.now() - 1000).toISOString(), // expired
           },
           appUrl: "https://test.com",
-          environmentId: "env_123",
+          workspaceId: "env_123",
           user: { data: {} },
         }),
         update: vi.fn(),
@@ -193,7 +193,7 @@ describe("environment/state.ts", () => {
 
       (ApiClient as Mock).mockImplementation(function MockApiClient() {
         return {
-          getEnvironmentState: vi.fn().mockResolvedValue({
+          getWorkspaceState: vi.fn().mockResolvedValue({
             ok: true,
             data: mockNewState,
           }),
@@ -211,7 +211,7 @@ describe("environment/state.ts", () => {
       });
 
       // Add listener
-      addEnvironmentStateExpiryCheckListener();
+      addWorkspaceStateExpiryCheckListener();
 
       // Fast-forward time
       await vi.advanceTimersByTimeAsync(1000 * 60);
@@ -223,11 +223,11 @@ describe("environment/state.ts", () => {
     test("extends expiry on error", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          environment: {
+          workspace: {
             expiresAt: new Date(Date.now() - 1000).toISOString(),
           },
           appUrl: "https://test.com",
-          environmentId: "env_123",
+          workspaceId: "env_123",
         }),
         update: vi.fn(),
       };
@@ -237,11 +237,11 @@ describe("environment/state.ts", () => {
       // Mock API to throw an error
       (ApiClient as Mock).mockImplementation(function MockApiClient() {
         return {
-          getEnvironmentState: vi.fn().mockRejectedValue(new Error("Network error")),
+          getWorkspaceState: vi.fn().mockRejectedValue(new Error("Network error")),
         };
       });
 
-      addEnvironmentStateExpiryCheckListener();
+      addWorkspaceStateExpiryCheckListener();
 
       // Fast-forward time
       await vi.advanceTimersByTimeAsync(1000 * 60);
@@ -254,11 +254,11 @@ describe("environment/state.ts", () => {
       const futureDate = new Date(Date.now() + 1000 * 60 * 60); // 1 hour in future
       const mockConfig = {
         get: vi.fn().mockReturnValue({
-          environment: {
+          workspace: {
             expiresAt: futureDate.toISOString(),
           },
           appUrl: "https://test.com",
-          environmentId: "env_123",
+          workspaceId: "env_123",
         }),
         update: vi.fn(),
       };
@@ -267,13 +267,13 @@ describe("environment/state.ts", () => {
 
       const apiMock = vi.fn().mockImplementation(function MockApiClient() {
         return {
-          getEnvironmentState: vi.fn(),
+          getWorkspaceState: vi.fn(),
         };
       });
 
       (ApiClient as Mock).mockImplementation(apiMock);
 
-      addEnvironmentStateExpiryCheckListener();
+      addWorkspaceStateExpiryCheckListener();
 
       // Fast-forward time by less than expiry
       await vi.advanceTimersByTimeAsync(1000 * 60);
@@ -281,11 +281,11 @@ describe("environment/state.ts", () => {
       expect(mockConfig.update).not.toHaveBeenCalled();
     });
 
-    test("clears interval when clearEnvironmentStateExpiryCheckListener is called", () => {
+    test("clears interval when clearWorkspaceStateExpiryCheckListener is called", () => {
       const clearIntervalSpy = vi.spyOn(global, "clearInterval");
 
-      addEnvironmentStateExpiryCheckListener();
-      clearEnvironmentStateExpiryCheckListener();
+      addWorkspaceStateExpiryCheckListener();
+      clearWorkspaceStateExpiryCheckListener();
 
       expect(clearIntervalSpy).toHaveBeenCalled();
     });

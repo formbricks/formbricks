@@ -142,7 +142,7 @@ describe("survey/action.ts", () => {
   describe("trackCodeAction", () => {
     test("returns error for unknown action code", async () => {
       mockConfig.get.mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [{ type: "code", key: "known_code", name: "Known Action" }],
           },
@@ -163,7 +163,7 @@ describe("survey/action.ts", () => {
       const actionClass = { type: "code", key: "valid_code", name: "Valid Action" };
 
       mockConfig.get.mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [actionClass],
           },
@@ -171,7 +171,7 @@ describe("survey/action.ts", () => {
       });
 
       mockConfig.get.mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [actionClass],
           },

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -108,9 +108,9 @@ describe("isRTL", () => {
 
 describe("isRTLLanguage", () => {
   const createJsSurvey = (
-    languages: TJsEnvironmentStateSurvey["languages"] = [],
+    languages: TJsWorkspaceStateSurvey["languages"] = [],
     blocks: TSurveyBlock[] = []
-  ): TJsEnvironmentStateSurvey =>
+  ): TJsWorkspaceStateSurvey =>
     ({
       id: "s1",
       createdAt: new Date(),
@@ -126,7 +126,7 @@ describe("isRTLLanguage", () => {
       },
       blocks,
       languages,
-    }) as unknown as TJsEnvironmentStateSurvey;
+    }) as unknown as TJsWorkspaceStateSurvey;
 
   test("checks language codes when multi-language enabled", () => {
     const survey = createJsSurvey([
@@ -162,7 +162,7 @@ describe("isRTLLanguage", () => {
     const survey = {
       ...createJsSurvey([], []),
       welcomeCard: { enabled: true, headline: { default: "مرحبا" } },
-    } as unknown as TJsEnvironmentStateSurvey;
+    } as unknown as TJsWorkspaceStateSurvey;
     expect(isRTLLanguage(survey, "default")).toBe(true);
   });
 

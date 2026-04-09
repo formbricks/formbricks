@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsEnvironmentStateWorkspace } from "@formbricks/types/js";
+import { TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
-import { EnvironmentStateData, getEnvironmentStateData } from "./data";
-import { getEnvironmentState } from "./environmentState";
+import { WorkspaceStateData, getWorkspaceStateData } from "./data";
+import { getWorkspaceState } from "./environmentState";
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("server-only", () => ({}));
 
@@ -29,22 +31,22 @@ vi.mock("@formbricks/logger", () => ({
     error: vi.fn(),
   },
 }));
-vi.mock("./data", () => ({
-  getEnvironmentStateData: vi.fn(),
-}));
-
+vi.mock("./data");
 vi.mock("@/app/lib/api/api-backwards-compat", () => ({
-  addLegacyProjectOverwritesToList: vi.fn((surveys: any[]) =>
-    surveys.map((s: any) => ({
+  addLegacyProjectOverwritesToList: vi.fn((surveys: unknown[]) =>
+    surveys.map((s: Record<string, unknown>) => ({
       ...s,
       projectOverwrites: s.workspaceOverwrites ?? null,
     }))
   ),
-  addLegacyProjectToEnvironmentState: vi.fn((state: any) => ({
-    ...state,
-    project: state.workspace,
+  addLegacyProjectToEnvironmentState: vi.fn((data: Record<string, unknown>) => ({
+    ...data,
+    project: data.workspace,
   })),
 }));
+vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
+vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((o: unknown) => o) }));
+vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn((s: unknown) => s) }));
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   RECAPTCHA_SITE_KEY: "mock_recaptcha_site_key",
@@ -65,8 +67,7 @@ vi.mock("@formbricks/cache", () => ({
 
 const workspaceId = "test-workspace-id";
 
-const mockWorkspace: TJsEnvironmentStateWorkspace = {
-  id: workspaceId,
+const mockWorkspace: TJsWorkspaceStateWorkspaceSetting = {
   recontactDays: 30,
   inAppSurveyBranding: true,
   placement: "bottomRight",
@@ -83,7 +84,6 @@ const mockSurveys: TSurvey[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
     name: "App Survey In Progress",
-    workspaceId,
     type: "app",
     status: "inProgress",
     displayLimit: null,
@@ -125,21 +125,22 @@ const mockActionClasses = [
     description: null,
     type: "code",
     noCodeConfig: null,
-    workspaceId,
+    environmentId: workspaceId,
     key: "action1",
   },
 ] as unknown as TActionClass[];
 
-const mockEnvironmentStateData: EnvironmentStateData = {
+const mockWorkspaceStateData: WorkspaceStateData = {
   workspace: {
-    ...mockWorkspace,
+    id: workspaceId,
     appSetupCompleted: true,
+    workspaceSettings: mockWorkspace,
   },
   surveys: mockSurveys,
   actionClasses: mockActionClasses,
 };
 
-describe("getEnvironmentState", () => {
+describe("getWorkspaceState", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
@@ -147,7 +148,7 @@ describe("getEnvironmentState", () => {
     vi.mocked(cache.withCache).mockImplementation(async (fn) => await fn());
 
     // Default mocks for successful retrieval
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(mockEnvironmentStateData);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
   });
 
   afterEach(() => {
@@ -155,7 +156,7 @@ describe("getEnvironmentState", () => {
   });
 
   test("should return the correct environment state", async () => {
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     // Backwards compat: response includes `project` alongside `workspace`,
     // and each survey includes `projectOverwrites` alongside `workspaceOverwrites`
@@ -164,45 +165,40 @@ describe("getEnvironmentState", () => {
       projectOverwrites: (s as Record<string, unknown>).workspaceOverwrites ?? null,
     }));
 
-    const workspaceWithSetup = {
-      ...mockWorkspace,
-      appSetupCompleted: true,
-    };
-
     const expectedData = {
       recaptchaSiteKey: "mock_recaptcha_site_key",
       surveys: surveysWithLegacy,
       actionClasses: mockActionClasses,
-      workspace: workspaceWithSetup,
-      project: workspaceWithSetup,
+      workspace: mockWorkspace,
+      project: mockWorkspace,
     };
 
     expect(result.data).toEqual(expectedData);
-    expect(getEnvironmentStateData).toHaveBeenCalledWith(workspaceId);
+    expect(getWorkspaceStateData).toHaveBeenCalledWith(workspaceId);
     expect(prisma.workspace.update).not.toHaveBeenCalled();
   });
 
   test("should throw ResourceNotFoundError if workspace not found", async () => {
-    vi.mocked(getEnvironmentStateData).mockRejectedValue(new ResourceNotFoundError("workspace", workspaceId));
-    await expect(getEnvironmentState(workspaceId)).rejects.toThrow(ResourceNotFoundError);
+    vi.mocked(getWorkspaceStateData).mockRejectedValue(new ResourceNotFoundError("workspace", workspaceId));
+    await expect(getWorkspaceState(workspaceId)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should throw ResourceNotFoundError if organization not found", async () => {
-    vi.mocked(getEnvironmentStateData).mockRejectedValue(new ResourceNotFoundError("organization", null));
-    await expect(getEnvironmentState(workspaceId)).rejects.toThrow(ResourceNotFoundError);
+    vi.mocked(getWorkspaceStateData).mockRejectedValue(new ResourceNotFoundError("organization", null));
+    await expect(getWorkspaceState(workspaceId)).rejects.toThrow(ResourceNotFoundError);
   });
 
-  test("should update workspace and capture event if app setup not completed", async () => {
+  test("should update workspace when app setup not completed", async () => {
     const incompleteData = {
-      ...mockEnvironmentStateData,
+      ...mockWorkspaceStateData,
       workspace: {
-        ...mockEnvironmentStateData.workspace,
+        ...mockWorkspaceStateData.workspace,
         appSetupCompleted: false,
       },
     };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(incompleteData);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(incompleteData);
 
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     expect(prisma.workspace.update).toHaveBeenCalledWith({
       where: { id: workspaceId },
@@ -212,38 +208,38 @@ describe("getEnvironmentState", () => {
   });
 
   test("should include recaptchaSiteKey if recaptcha variables are set", async () => {
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
   });
 
   test("should use cache.withCache for caching with correct cache key and TTL", () => {
-    getEnvironmentState(workspaceId);
+    getWorkspaceState(workspaceId);
 
     expect(cache.withCache).toHaveBeenCalledWith(
       expect.any(Function),
-      "fb:env:test-workspace-id:state",
-      60 * 1000 // 1 minute in milliseconds
+      `fb:env:${workspaceId}:state`,
+      60 * 1000 // 1 minutes in milliseconds
     );
   });
 
   test("should propagate database update errors", async () => {
     const incompleteData = {
-      ...mockEnvironmentStateData,
+      ...mockWorkspaceStateData,
       workspace: {
-        ...mockEnvironmentStateData.workspace,
+        ...mockWorkspaceStateData.workspace,
         appSetupCompleted: false,
       },
     };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(incompleteData);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(incompleteData);
     vi.mocked(prisma.workspace.update).mockRejectedValue(new Error("Database error"));
 
-    // Should throw error since database update fails
-    await expect(getEnvironmentState(workspaceId)).rejects.toThrow("Database error");
+    // Should throw error since Promise.all will fail if database update fails
+    await expect(getWorkspaceState(workspaceId)).rejects.toThrow("Database error");
   });
 
   test("should include recaptchaSiteKey when IS_RECAPTCHA_CONFIGURED is true", async () => {
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     expect(result.data).toHaveProperty("recaptchaSiteKey");
     expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
@@ -267,12 +263,12 @@ describe("getEnvironmentState", () => {
     ];
 
     const modifiedData = {
-      ...mockEnvironmentStateData,
+      ...mockWorkspaceStateData,
       surveys: mixedSurveys,
     };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(modifiedData);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(modifiedData);
 
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     // Backwards compat: each survey includes `projectOverwrites`
     const expectedSurveys = mixedSurveys.map((s) => ({
@@ -284,24 +280,24 @@ describe("getEnvironmentState", () => {
 
   test("should handle empty surveys array", async () => {
     const emptyData = {
-      ...mockEnvironmentStateData,
+      ...mockWorkspaceStateData,
       surveys: [],
     };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(emptyData);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(emptyData);
 
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     expect(result.data.surveys).toEqual([]);
   });
 
   test("should handle empty actionClasses array", async () => {
     const emptyData = {
-      ...mockEnvironmentStateData,
+      ...mockWorkspaceStateData,
       actionClasses: [],
     };
-    vi.mocked(getEnvironmentStateData).mockResolvedValue(emptyData);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(emptyData);
 
-    const result = await getEnvironmentState(workspaceId);
+    const result = await getWorkspaceState(workspaceId);
 
     expect(result.data.actionClasses).toEqual([]);
   });

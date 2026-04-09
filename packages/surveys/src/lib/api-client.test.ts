@@ -3,7 +3,7 @@ import { ApiClient } from "./api-client";
 
 describe("ApiClient", () => {
   const appUrl = "http://localhost:3000";
-  const workspaceId = "env-test";
+  const workspaceId = "ws-test";
   let client: ApiClient;
 
   beforeEach(() => {

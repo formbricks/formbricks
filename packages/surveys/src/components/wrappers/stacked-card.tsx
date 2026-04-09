@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { JSX } from "preact/jsx-runtime";
 import React from "react";
 import { type TPlacement } from "@formbricks/types/common";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 
 interface StackedCardProps {
@@ -14,7 +14,7 @@ interface StackedCardProps {
   borderStyles: React.CSSProperties;
   getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
   cardHeight: string;
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   cardWidth: number;
   hovered: boolean;
   cardArrangement: TCardArrangementOptions;

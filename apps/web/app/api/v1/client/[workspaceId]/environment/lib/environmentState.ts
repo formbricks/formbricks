@@ -1,14 +1,14 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
-import { TJsEnvironmentState } from "@formbricks/types/js";
+import { TJsWorkspaceState } from "@formbricks/types/js";
 import {
   addLegacyProjectOverwritesToList,
   addLegacyProjectToEnvironmentState,
 } from "@/app/lib/api/api-backwards-compat";
 import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
-import { getEnvironmentStateData } from "./data";
+import { getWorkspaceStateData } from "./data";
 
 /**
  * Optimized environment state fetcher using new caching approach
@@ -19,13 +19,13 @@ import { getEnvironmentStateData } from "./data";
  * @returns The environment state
  * @throws ResourceNotFoundError if workspace not found
  */
-export const getEnvironmentState = async (
+export const getWorkspaceState = async (
   workspaceId: string
-): Promise<{ data: TJsEnvironmentState["data"] }> => {
+): Promise<{ data: TJsWorkspaceState["data"] }> => {
   return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
-      const { workspace, surveys, actionClasses } = await getEnvironmentStateData(workspaceId);
+      const { workspace, surveys, actionClasses } = await getWorkspaceStateData(workspaceId);
 
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
@@ -42,9 +42,9 @@ export const getEnvironmentState = async (
       const data = addLegacyProjectToEnvironmentState({
         surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
-        workspace,
+        workspace: workspace.workspaceSettings,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
-      } as TJsEnvironmentState["data"]);
+      } as TJsWorkspaceState["data"]);
 
       return { data };
     },

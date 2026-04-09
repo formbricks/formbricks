@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getEnvironmentState } from "@/app/api/v1/client/[workspaceId]/environment/lib/environmentState";
+import { getWorkspaceState } from "@/app/api/v1/client/[workspaceId]/environment/lib/environmentState";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
@@ -52,15 +52,15 @@ export const GET = withV1ApiWrapper({
       const resolved = await resolveClientApiIds(idParam);
       if (!resolved) {
         return {
-          response: responses.notFoundResponse("Environment", idParam),
+          response: responses.notFoundResponse("Workspace", idParam),
         };
       }
 
       const { workspaceId } = resolved;
 
       // Use optimized environment state fetcher with new caching approach
-      const environmentState = await getEnvironmentState(workspaceId);
-      const { data } = environmentState;
+      const workspace = await getWorkspaceState(workspaceId);
+      const { data } = workspace;
 
       return {
         response: responses.successResponse(

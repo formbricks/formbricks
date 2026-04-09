@@ -35,7 +35,7 @@ const getSurveyState: () => SurveyState = () => ({
 
 const getConfig = (overrides = {}) => ({
   appUrl: "http://localhost",
-  workspaceId: "env1",
+  workspaceId: "ws1",
   retryAttempts: 2,
   setSurveyState: vi.fn(),
   onResponseSendingFailed: vi.fn(),
