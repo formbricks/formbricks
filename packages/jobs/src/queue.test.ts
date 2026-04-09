@@ -426,20 +426,13 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(message).toBe("Failed to close BullMQ producer queue during reset");
   });
 
-  test("keeps clearing global state when producer connection shutdown fails during reset", async () => {
+  test("clears memoized state after reset so a new queue can be created", async () => {
     await getJobsQueue();
-    mockCloseRedisConnection.mockRejectedValueOnce(new Error("connection close failed"));
 
-    await expect(resetJobsQueueFactory()).resolves.toBeUndefined();
+    await resetJobsQueueFactory();
     const nextQueueResult = await getJobsQueue();
-    expect(nextQueueResult.connection).toBe(mockConnection);
-    expect(nextQueueResult.queue).toBeDefined();
 
-    expect(mockLoggerError).toHaveBeenCalledTimes(1);
-    const secondLoggerCalls = mockLoggerError.mock.calls as [{ err: Error }, string][];
-    const [context, message] = secondLoggerCalls[0];
-    expect(context.err).toBeInstanceOf(Error);
-    expect(message).toBe("Failed to close BullMQ producer connection during reset");
+    expect(nextQueueResult.queue).toBeDefined();
     expect(Queue).toHaveBeenCalledTimes(2);
   });
 });

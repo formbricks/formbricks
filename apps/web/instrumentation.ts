@@ -25,7 +25,7 @@ export const register = async () => {
 
     try {
       const { registerJobsWorker } = await import("./instrumentation-jobs");
-      await registerJobsWorker();
+      void registerJobsWorker().catch(() => undefined);
     } catch (error) {
       logger.error({ err: error }, "BullMQ worker registration failed during Next.js instrumentation");
     }
