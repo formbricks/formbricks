@@ -102,7 +102,7 @@ const openDb = (): Promise<IDBDatabase> => {
     };
 
     request.onerror = () => {
-      reject(request.error);
+      reject(request.error ?? new Error("IndexedDB open failed"));
     };
   });
 };
@@ -116,7 +116,7 @@ export const addPendingResponse = async (entry: Omit<PendingResponseEntry, "id">
       const request = store.add(entry);
 
       request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to persist response to IndexedDB", e);
@@ -137,7 +137,7 @@ export const getPendingResponses = async (surveyId: string): Promise<PendingResp
         const results = (request.result as PendingResponseEntry[]).sort((a, b) => a.createdAt - b.createdAt);
         resolve(results);
       };
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to read pending responses from IndexedDB", e);
@@ -154,7 +154,7 @@ export const removePendingResponse = async (id: number): Promise<void> => {
       const request = store.delete(id);
 
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to remove pending response from IndexedDB", e);
@@ -170,7 +170,7 @@ export const countPendingResponses = async (surveyId: string): Promise<number> =
       const request = index.count(IDBKeyRange.only(surveyId));
 
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to count pending responses from IndexedDB", e);
@@ -195,7 +195,7 @@ export const clearPendingResponses = async (surveyId: string): Promise<void> => 
         }
       };
       tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+      tx.onerror = () => reject(tx.error ?? new Error("IndexedDB transaction failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to clear pending responses from IndexedDB", e);
@@ -211,7 +211,7 @@ export const saveSurveyProgress = async (progress: SurveyProgressEntry): Promise
       const request = store.put(progress);
 
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to save survey progress to IndexedDB", e);
@@ -227,7 +227,7 @@ export const getSurveyProgress = async (surveyId: string): Promise<SurveyProgres
       const request = store.get(surveyId);
 
       request.onsuccess = () => resolve(request.result as SurveyProgressEntry | undefined);
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to read survey progress from IndexedDB", e);
@@ -244,7 +244,7 @@ export const clearSurveyProgress = async (surveyId: string): Promise<void> => {
       const request = store.delete(surveyId);
 
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
     });
   } catch (e) {
     console.warn("Formbricks: Failed to clear survey progress from IndexedDB", e);

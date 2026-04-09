@@ -40,7 +40,7 @@ export class ResponseQueue {
   readonly api: ApiClient;
   private responseRecaptchaToken?: string;
   // Maps in-memory queue index → IndexedDB id for cleanup after successful send
-  private pendingDbIds: Map<TResponseUpdate, number> = new Map();
+  private readonly pendingDbIds: Map<TResponseUpdate, number> = new Map();
   private isSyncing = false;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {

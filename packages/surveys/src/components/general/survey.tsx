@@ -38,6 +38,23 @@ import { useOnlineStatus } from "@/lib/use-online-status";
 import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
+const restoreSurveyStateFromSnapshot = (
+  surveyState: SurveyState,
+  snapshot: {
+    responseId: string | null;
+    displayId: string | null;
+    userId: string | null;
+    contactId: string | null;
+    responseAcc: TResponseUpdate;
+  }
+): void => {
+  if (snapshot.responseId) surveyState.updateResponseId(snapshot.responseId);
+  if (snapshot.displayId) surveyState.updateDisplayId(snapshot.displayId);
+  if (snapshot.userId) surveyState.updateUserId(snapshot.userId);
+  if (snapshot.contactId) surveyState.updateContactId(snapshot.contactId);
+  surveyState.responseAcc = snapshot.responseAcc;
+};
+
 interface VariableStackEntry {
   questionId: string;
   variables: TResponseVariables;
@@ -415,12 +432,7 @@ export function Survey({
 
       // Restore survey state from snapshot
       if (surveyState && progress.surveyStateSnapshot) {
-        const snap = progress.surveyStateSnapshot;
-        if (snap.responseId) surveyState.updateResponseId(snap.responseId);
-        if (snap.displayId) surveyState.updateDisplayId(snap.displayId);
-        if (snap.userId) surveyState.updateUserId(snap.userId);
-        if (snap.contactId) surveyState.updateContactId(snap.contactId);
-        surveyState.responseAcc = snap.responseAcc;
+        restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot);
       }
 
       // Load any pending responses that were persisted but never sent
