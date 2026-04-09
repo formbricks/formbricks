@@ -102,7 +102,7 @@ export class ResponseQueue {
     }
 
     // If offline and persistence is enabled, don't attempt to send — data is safe in IndexedDB.
-    if (this.config.persistOffline && !navigator.onLine) {
+    if (this.config.persistOffline && typeof navigator !== "undefined" && !navigator.onLine) {
       return { success: false };
     }
 
@@ -128,7 +128,7 @@ export class ResponseQueue {
       return { success: true };
     } else {
       // If offline persistence is enabled and we're now offline, don't treat it as a failure
-      if (this.config.persistOffline && !navigator.onLine) {
+      if (this.config.persistOffline && typeof navigator !== "undefined" && !navigator.onLine) {
         this.isRequestInProgress = false;
         return { success: false };
       }

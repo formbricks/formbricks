@@ -1147,18 +1147,16 @@ export function Survey({
   };
 
   return (
-    <>
-      <StackedCardsContainer
-        cardArrangement={cardArrangement}
-        currentBlockId={blockId}
-        getCardContent={getCardContent}
-        survey={localSurvey}
-        styling={styling}
-        setBlockId={setBlockId}
-        shouldResetBlockId={shouldResetQuestionId}
-        fullSizeCards={fullSizeCards}
-        placement={placement}
-      />
-    </>
+    <StackedCardsContainer
+      cardArrangement={cardArrangement}
+      currentBlockId={blockId}
+      getCardContent={getCardContent}
+      survey={localSurvey}
+      styling={styling}
+      setBlockId={setBlockId}
+      shouldResetBlockId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
+      placement={placement}
+    />
   );
 }
