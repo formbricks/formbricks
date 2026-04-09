@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { updateResponse } from "@/lib/response/service";
@@ -19,7 +19,7 @@ import { validateInputs } from "@/lib/utils/validate";
  * @returns Object with passed and failed quotas
  */
 export const evaluateQuotas = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   responseData: TResponseData,
   variablesData: TResponseVariables,
   quotas: TSurveyQuota[],

@@ -1,37 +1,37 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
-import { TJsEnvironmentState } from "@formbricks/types/js";
+import { TJsWorkspaceState } from "@formbricks/types/js";
 import {
   addLegacyProjectOverwritesToList,
   addLegacyProjectToEnvironmentState,
 } from "@/app/lib/api/api-backwards-compat";
 import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
-import { getEnvironmentStateData } from "./data";
+import { getWorkspaceStateData } from "./data";
 
 /**
  * Optimized environment state fetcher using new caching approach
  * Uses withCache for Redis-backed caching with graceful fallback
  * Single database query via optimized data service
  *
- * @param environmentId - The environment ID to fetch state for
+ * @param workspaceId - The workspace ID to fetch state for
  * @returns The environment state
- * @throws ResourceNotFoundError if environment, organization, or workspace not found
+ * @throws ResourceNotFoundError if workspace not found
  */
-export const getEnvironmentState = async (
-  environmentId: string
-): Promise<{ data: TJsEnvironmentState["data"] }> => {
+export const getWorkspaceState = async (
+  workspaceId: string
+): Promise<{ data: TJsWorkspaceState["data"] }> => {
   return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
-      const { environment, surveys, actionClasses } = await getEnvironmentStateData(environmentId);
+      const { workspace, surveys, actionClasses } = await getWorkspaceStateData(workspaceId);
 
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
-      if (!environment.appSetupCompleted) {
-        await prisma.environment.update({
-          where: { id: environmentId },
+      if (!workspace.appSetupCompleted) {
+        await prisma.workspace.update({
+          where: { id: workspaceId },
           data: { appSetupCompleted: true },
         });
       }
@@ -42,13 +42,13 @@ export const getEnvironmentState = async (
       const data = addLegacyProjectToEnvironmentState({
         surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
-        workspace: environment.workspace,
+        workspace: workspace.workspaceSettings,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
-      } as TJsEnvironmentState["data"]);
+      } as TJsWorkspaceState["data"]);
 
       return { data };
     },
-    createCacheKey.environment.state(environmentId),
+    createCacheKey.environment.state(workspaceId),
     60 * 1000 // 1 minute in milliseconds
   );
 };

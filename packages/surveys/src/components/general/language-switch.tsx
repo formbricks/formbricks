@@ -1,6 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
@@ -11,7 +11,7 @@ import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn, isRTLLanguage } from "@/lib/utils";
 
 interface LanguageSwitchProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;

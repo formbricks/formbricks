@@ -5,9 +5,9 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  TJsEnvironmentStateActionClass,
-  TJsEnvironmentStateSurvey,
-  TJsEnvironmentStateWorkspace,
+  TJsWorkspaceStateActionClass,
+  TJsWorkspaceStateSurvey,
+  TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -18,45 +18,37 @@ import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
  * Uses a single Prisma query with strategic includes to minimize database calls
  * Critical for performance on high-frequency endpoint serving hundreds of thousands of SDK clients
  */
-export interface EnvironmentStateData {
-  environment: {
+export interface WorkspaceStateData {
+  workspace: {
     id: string;
-    type: string;
     appSetupCompleted: boolean;
-    workspace: TJsEnvironmentStateWorkspace;
+    workspaceSettings: TJsWorkspaceStateWorkspaceSetting;
   };
-  surveys: TJsEnvironmentStateSurvey[];
-  actionClasses: TJsEnvironmentStateActionClass[];
+  surveys: TJsWorkspaceStateSurvey[];
+  actionClasses: TJsWorkspaceStateActionClass[];
 }
 
 /**
  * Single optimized query that fetches all required data
  * Replaces multiple separate service calls with one efficient database operation
  */
-export const getEnvironmentStateData = async (environmentId: string): Promise<EnvironmentStateData> => {
-  validateInputs([environmentId, ZId]);
+export const getWorkspaceStateData = async (workspaceId: string): Promise<WorkspaceStateData> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     // Single query that fetches everything needed for environment state
     // Uses strategic includes and selects to minimize data transfer
-    const environmentData = await prisma.environment.findUnique({
-      where: { id: environmentId },
+    const workspaceData = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
       select: {
         id: true,
-        type: true,
         appSetupCompleted: true,
-        // Workspace data (optimized select)
-        workspace: {
-          select: {
-            id: true,
-            recontactDays: true,
-            clickOutsideClose: true,
-            overlay: true,
-            placement: true,
-            inAppSurveyBranding: true,
-            styling: true,
-          },
-        },
+        recontactDays: true,
+        clickOutsideClose: true,
+        overlay: true,
+        placement: true,
+        inAppSurveyBranding: true,
+        styling: true,
         // Action classes (optimized for environment state)
         actionClasses: {
           select: {
@@ -138,36 +130,30 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
       },
     });
 
-    if (!environmentData) {
-      throw new ResourceNotFoundError("environment", environmentId);
-    }
-
-    if (!environmentData.workspace) {
-      throw new ResourceNotFoundError("workspace", null);
+    if (!workspaceData) {
+      throw new ResourceNotFoundError("workspace", workspaceId);
     }
 
     // Transform surveys using existing utility
-    const transformedSurveys = environmentData.surveys.map((survey) =>
-      transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey)
+    const transformedSurveys = workspaceData.surveys.map((survey) =>
+      transformPrismaSurvey<TJsWorkspaceStateSurvey>(survey)
     );
 
     return {
-      environment: {
-        id: environmentData.id,
-        type: environmentData.type,
-        appSetupCompleted: environmentData.appSetupCompleted,
-        workspace: {
-          id: environmentData.workspace.id,
-          recontactDays: environmentData.workspace.recontactDays,
-          clickOutsideClose: environmentData.workspace.clickOutsideClose,
-          overlay: environmentData.workspace.overlay,
-          placement: environmentData.workspace.placement,
-          inAppSurveyBranding: environmentData.workspace.inAppSurveyBranding,
-          styling: resolveStorageUrlsInObject(environmentData.workspace.styling),
+      workspace: {
+        id: workspaceData.id,
+        appSetupCompleted: workspaceData.appSetupCompleted,
+        workspaceSettings: {
+          recontactDays: workspaceData.recontactDays,
+          clickOutsideClose: workspaceData.clickOutsideClose,
+          overlay: workspaceData.overlay,
+          placement: workspaceData.placement,
+          inAppSurveyBranding: workspaceData.inAppSurveyBranding,
+          styling: resolveStorageUrlsInObject(workspaceData.styling),
         },
       },
       surveys: resolveStorageUrlsInObject(transformedSurveys),
-      actionClasses: environmentData.actionClasses as TJsEnvironmentStateActionClass[],
+      actionClasses: workspaceData.actionClasses as TJsWorkspaceStateActionClass[],
     };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
@@ -175,11 +161,11 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Database error in getEnvironmentStateData");
-      throw new DatabaseError(`Database error when fetching environment state for ${environmentId}`);
+      logger.error(error, "Database error in getWorkspaceStateData");
+      throw new DatabaseError(`Database error when fetching environment state for ${workspaceId}`);
     }
 
-    logger.error(error, "Unexpected error in getEnvironmentStateData");
+    logger.error(error, "Unexpected error in getWorkspaceStateData");
     throw error;
   }
 };

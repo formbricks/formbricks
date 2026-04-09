@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
@@ -25,7 +25,7 @@ describe("Survey Logic", () => {
     { id: "var3", name: "Variable 3", type: "text", value: "another string" },
   ];
 
-  const mockSurvey: TJsEnvironmentStateSurvey = {
+  const mockSurvey: TJsWorkspaceStateSurvey = {
     id: "survey1",
     name: "Test Survey",
     questions: [], // Deprecated - using blocks instead
@@ -922,7 +922,7 @@ describe("Survey Logic", () => {
 
     test("evaluates isClicked and isNotClicked operators for CTA elements", () => {
       // Create a survey with a CTA element
-      const ctaSurvey: TJsEnvironmentStateSurvey = {
+      const ctaSurvey: TJsWorkspaceStateSurvey = {
         ...mockSurvey,
         blocks: [
           ...mockSurvey.blocks,
@@ -1266,7 +1266,7 @@ describe("Survey Logic", () => {
       };
 
       // Mock survey with date questions
-      const dateSurvey: TJsEnvironmentStateSurvey = {
+      const dateSurvey: TJsWorkspaceStateSurvey = {
         ...mockSurvey,
         blocks: [
           ...mockSurvey.blocks,
@@ -1322,7 +1322,7 @@ describe("Survey Logic", () => {
         multiValue: ["option1", "option2"],
       };
 
-      const multiSurvey: TJsEnvironmentStateSurvey = {
+      const multiSurvey: TJsWorkspaceStateSurvey = {
         ...mockSurvey,
         blocks: [
           ...mockSurvey.blocks,
@@ -1451,7 +1451,7 @@ describe("Survey Logic", () => {
     });
 
     test("getLeftOperandValue with edge cases", () => {
-      const specialSurvey: TJsEnvironmentStateSurvey = {
+      const specialSurvey: TJsWorkspaceStateSurvey = {
         ...mockSurvey,
         blocks: [
           ...mockSurvey.blocks,
