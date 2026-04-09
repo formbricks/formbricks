@@ -1,9 +1,11 @@
+import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TUser } from "@formbricks/types/user";
 import { upsertAccount } from "@/lib/account/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
@@ -102,6 +104,11 @@ vi.mock("@/lib/constants", () => ({
   DEFAULT_TEAM_ID: "team-123",
   DEFAULT_ORGANIZATION_ID: "org-123",
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
+  POSTHOG_KEY: undefined,
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 describe("handleSsoCallback", () => {
@@ -330,6 +337,47 @@ describe("handleSsoCallback", () => {
       expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
     });
 
+    test("should capture user_signed_up PostHog event for new SSO user", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+
+      await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(capturePostHogEvent).toHaveBeenCalledWith(mockUser.id, "user_signed_up", {
+        auth_provider: mockAccount.provider,
+        email_domain: "example.com",
+        signup_source: "direct",
+        invite_organization_id: null,
+      });
+    });
+
+    test("should capture user_signed_up with invite signup_source when callbackUrl has token", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization as unknown as Organization);
+      vi.mocked(getAccessControlPermission).mockResolvedValue(true);
+
+      await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000?token=invite-token",
+      });
+
+      expect(capturePostHogEvent).toHaveBeenCalledWith(
+        mockUser.id,
+        "user_signed_up",
+        expect.objectContaining({
+          signup_source: "invite",
+        })
+      );
+    });
+
     test("should return true when organization doesn't exist with DEFAULT_TEAM_ID", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
@@ -350,7 +398,7 @@ describe("handleSsoCallback", () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
-      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
+      vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization as unknown as Organization);
       vi.mocked(getAccessControlPermission).mockResolvedValue(false);
 
       const result = await handleSsoCallback({

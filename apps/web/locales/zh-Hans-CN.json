@@ -148,6 +148,8 @@
     "bottom_right": "右下",
     "cancel": "取消",
     "centered_modal": "居中 模态",
+    "change_organization": "切换组织",
+    "change_workspace": "切换工作区",
     "choices": "选项",
     "choose_environment": "选择 环境",
     "choose_organization": "选择 组织",

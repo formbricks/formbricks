@@ -20,3 +20,15 @@
 {{- if and .Values.envoy.enabled .Values.envoy.formbricks.ingress.enabled (not (include "formbricks.envoy.ingressHost" .)) -}}
 {{- fail "envoy.formbricks.ingress.enabled requires envoy.formbricks.ingress.host or ingress.hosts[0].host" -}}
 {{- end -}}
+
+{{- $otlpEnabled := .Values.envoy.formbricks.proxy.telemetry.openTelemetry.enabled -}}
+{{- $otlpHost := default "" .Values.envoy.formbricks.proxy.telemetry.openTelemetry.host | trim -}}
+{{- $otlpBackendRefs := .Values.envoy.formbricks.proxy.telemetry.openTelemetry.backendRefs -}}
+
+{{- if and $otlpEnabled $otlpHost (gt (len $otlpBackendRefs) 0) -}}
+{{- fail "envoy.formbricks.proxy.telemetry.openTelemetry supports either host/port or backendRefs, but not both" -}}
+{{- end -}}
+
+{{- if and $otlpEnabled (not $otlpHost) (eq (len $otlpBackendRefs) 0) -}}
+{{- fail "envoy.formbricks.proxy.telemetry.openTelemetry.enabled requires either openTelemetry.host or openTelemetry.backendRefs" -}}
+{{- end -}}

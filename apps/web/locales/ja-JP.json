@@ -148,6 +148,8 @@
     "bottom_right": "右下",
     "cancel": "キャンセル",
     "centered_modal": "中央モーダル",
+    "change_organization": "組織を変更",
+    "change_workspace": "ワークスペースを変更",
     "choices": "選択肢",
     "choose_environment": "環境を選択",
     "choose_organization": "組織を選択",

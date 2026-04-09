@@ -36,6 +36,8 @@ rate limiting.
 - The bundled controller reads its Redis backend from `envoy.config.envoyGateway.rateLimit.backend.redis.url`.
   If you enable Redis authentication or override `envoyRedis.fullnameOverride`, set that URL explicitly so the
   controller points at the correct backend.
+- OpenTelemetry proxy metrics can target either `envoy.formbricks.proxy.telemetry.openTelemetry.host`/`port`
+  or `backendRefs`, but not both. Prefer `host`/`port` for collectors that live in another namespace.
 - When both the main app ingress and the Envoy API ingress are enabled, set `envoy.formbricks.ingress.host`
   explicitly so the Envoy host choice is intentional.
 

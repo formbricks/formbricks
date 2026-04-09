@@ -39,8 +39,13 @@ spec:
       sinks:
         - type: OpenTelemetry
           openTelemetry:
+            {{- if .Values.envoy.formbricks.proxy.telemetry.openTelemetry.host }}
+            host: {{ .Values.envoy.formbricks.proxy.telemetry.openTelemetry.host | quote }}
+            port: {{ .Values.envoy.formbricks.proxy.telemetry.openTelemetry.port }}
+            {{- else }}
             backendRefs:
               {{- toYaml .Values.envoy.formbricks.proxy.telemetry.openTelemetry.backendRefs | nindent 14 }}
+            {{- end }}
             resourceAttributes:
               service.name: {{ default $proxyServiceName .Values.envoy.formbricks.proxy.telemetry.openTelemetry.serviceName | quote }}
               service.namespace: {{ default $namespace .Values.envoy.formbricks.proxy.telemetry.openTelemetry.serviceNamespace | quote }}
