@@ -29,6 +29,7 @@
     "@formbricks/email": "workspace:*",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/js-core": "workspace:*",
+    "@formbricks/jobs": "workspace:*",
     "@formbricks/logger": "workspace:*",
     "@formbricks/storage": "workspace:*",
     "@formbricks/surveys": "workspace:*",

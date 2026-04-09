@@ -310,6 +310,10 @@ redis:
   externalRedisUrl: ""
   fullnameOverride: "formbricks-redis"
   architecture: standalone
+  commonConfiguration: |-
+    appendonly yes
+    save ""
+    maxmemory-policy noeviction
   auth:
     enabled: true
     existingSecret: "formbricks-app-secrets"

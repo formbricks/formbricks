@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { type Instrumentation } from "next";
+import { logger } from "@formbricks/logger";
 import { isExpectedError } from "@formbricks/types/errors";
 import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
@@ -20,6 +21,13 @@ export const register = async () => {
     // Load OpenTelemetry instrumentation when Prometheus metrics or OTLP export is enabled
     if (PROMETHEUS_ENABLED || process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
       await import("./instrumentation-node");
+    }
+
+    try {
+      const { registerJobsWorker } = await import("./instrumentation-jobs");
+      void registerJobsWorker().catch(() => undefined);
+    } catch (error) {
+      logger.error({ err: error }, "BullMQ worker registration failed during Next.js instrumentation");
     }
   }
   // Sentry init loads after OTEL to avoid TracerProvider conflicts

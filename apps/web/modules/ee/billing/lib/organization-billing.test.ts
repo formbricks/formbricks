@@ -445,6 +445,7 @@ describe("organization-billing", () => {
   });
 
   test("syncOrganizationBillingFromStripe returns billing unchanged when customer is missing", async () => {
+    const usageCycleAnchor = new Date("2026-04-08T07:19:10.425Z");
     const billing = {
       stripeCustomerId: null,
       limits: {
@@ -453,11 +454,11 @@ describe("organization-billing", () => {
           responses: 1500,
         },
       },
-      usageCycleAnchor: new Date(),
+      usageCycleAnchor,
     };
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       ...billing,
-      usageCycleAnchor: new Date(),
+      usageCycleAnchor,
       stripe: null,
     });
 

@@ -1,12 +1,4 @@
-import { z } from "zod";
-import { ZWebhook } from "@formbricks/database/zod/webhooks";
-import { ZResponse } from "@formbricks/types/responses";
-
-export const ZPipelineInput = z.object({
-  event: ZWebhook.shape.triggers.element,
-  response: ZResponse,
-  environmentId: z.string(),
-  surveyId: z.string(),
-});
-
-export type TPipelineInput = z.infer<typeof ZPipelineInput>;
+/* v8 ignore start */
+export { ZResponsePipelineJobData as ZPipelineInput } from "@formbricks/jobs";
+export type { TResponsePipelineJobData as TPipelineInput } from "@formbricks/jobs";
+/* v8 ignore stop */

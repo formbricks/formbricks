@@ -1,41 +1,39 @@
 /// <reference types="vitest" />
 import { resolve } from "path";
-import { PluginOption, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "."),
+    },
+  },
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
-      name: "formbricksStorage",
+      name: "formbricksJobs",
       fileName: "index",
       formats: ["es", "cjs"],
     },
     rollupOptions: {
-      external: [
-        "@aws-sdk/client-s3",
-        "@aws-sdk/s3-presigned-post",
-        "@aws-sdk/s3-request-presigner",
-        "@formbricks/logger",
-      ],
+      external: ["@formbricks/logger", "bullmq", "ioredis", "zod"],
     },
-    emptyOutDir: false,
   },
   test: {
     environment: "node",
     globals: true,
     coverage: {
+      exclude: ["src/index.ts"],
       reporter: ["text", "json", "html", "lcov"],
-      exclude: ["src/types/**"],
-      include: ["src/**/*.ts"],
     },
   },
   plugins: [
     dts({
       include: ["src/**/*"],
+      exclude: ["src/**/*.test.ts"],
       entryRoot: "src",
       outDir: "dist",
-      rollupTypes: true,
-    }) as PluginOption,
+    }),
   ],
 });
