@@ -38,19 +38,38 @@ const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   return result.join("\n");
 };
 
+interface TIntegrationFieldSelection {
+  elementIds: string[];
+  includeCreatedAt: boolean;
+  includeHiddenFields: boolean;
+  includeMetadata: boolean;
+  includeVariables: boolean;
+}
+
+const toIntegrationFieldSelection = (config: {
+  elementIds: string[];
+  includeCreatedAt?: boolean | null;
+  includeHiddenFields?: boolean | null;
+  includeMetadata?: boolean | null;
+  includeVariables?: boolean | null;
+}): TIntegrationFieldSelection => ({
+  elementIds: config.elementIds,
+  includeCreatedAt: Boolean(config.includeCreatedAt),
+  includeHiddenFields: Boolean(config.includeHiddenFields),
+  includeMetadata: Boolean(config.includeMetadata),
+  includeVariables: Boolean(config.includeVariables),
+});
+
 const processDataForIntegration = async (
   integrationType: TIntegrationType,
   data: TResponsePipelineJobData,
   survey: TSurvey,
-  includeVariables: boolean,
-  includeMetadata: boolean,
-  includeHiddenFields: boolean,
-  includeCreatedAt: boolean,
-  elementIds: string[]
+  selection: TIntegrationFieldSelection
 ): Promise<{
   responses: string[];
   elements: string[];
 }> => {
+  const { elementIds, includeCreatedAt, includeHiddenFields, includeMetadata, includeVariables } = selection;
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...elementIds, ...survey.hiddenFields.fieldIds]
@@ -89,7 +108,7 @@ export const handleIntegrations = async (
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
-      case "googleSheets":
+      case "googleSheets": {
         const googleResult = await handleGoogleSheetsIntegration(
           integration as TIntegrationGoogleSheets,
           data,
@@ -99,13 +118,15 @@ export const handleIntegrations = async (
           logger.error(googleResult.error, "Error in google sheets integration");
         }
         break;
-      case "slack":
+      }
+      case "slack": {
         const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
         if (!slackResult.ok) {
           logger.error(slackResult.error, "Error in slack integration");
         }
         break;
-      case "airtable":
+      }
+      case "airtable": {
         const airtableResult = await handleAirtableIntegration(
           integration as TIntegrationAirtable,
           data,
@@ -115,12 +136,14 @@ export const handleIntegrations = async (
           logger.error(airtableResult.error, "Error in airtable integration");
         }
         break;
-      case "notion":
+      }
+      case "notion": {
         const notionResult = await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
         if (!notionResult.ok) {
           logger.error(notionResult.error, "Error in notion integration");
         }
         break;
+      }
     }
   }
 };
@@ -138,11 +161,7 @@ const handleAirtableIntegration = async (
             "airtable",
             data,
             survey,
-            !!element.includeVariables,
-            !!element.includeMetadata,
-            !!element.includeHiddenFields,
-            !!element.includeCreatedAt,
-            element.elementIds
+            toIntegrationFieldSelection(element)
           );
           await airtableWriteData(integration.config.key, element, values.responses, values.elements);
         }
@@ -174,11 +193,7 @@ const handleGoogleSheetsIntegration = async (
             "googleSheets",
             data,
             survey,
-            !!element.includeVariables,
-            !!element.includeMetadata,
-            !!element.includeHiddenFields,
-            !!element.includeCreatedAt,
-            element.elementIds
+            toIntegrationFieldSelection(element)
           );
           const integrationData = structuredClone(integration);
           integrationData.config.data.forEach((data) => {
@@ -215,11 +230,7 @@ const handleSlackIntegration = async (
             "slack",
             data,
             survey,
-            !!element.includeVariables,
-            !!element.includeMetadata,
-            !!element.includeHiddenFields,
-            !!element.includeCreatedAt,
-            element.elementIds
+            toIntegrationFieldSelection(element)
           );
           await writeDataToSlack(
             integration.config.key,
@@ -363,13 +374,12 @@ const buildNotionPayloadProperties = (
   const responses = data.response.data;
 
   const surveyElements = getElementsFromBlocks(surveyData.blocks);
-
-  const mappingElementIds = mapping
-    .filter((m) => m.element.type === TSurveyElementTypeEnum.PictureSelection)
-    .map((m) => m.element.id);
+  const pictureSelectionElementIds = new Set(
+    mapping.filter((m) => m.element.type === TSurveyElementTypeEnum.PictureSelection).map((m) => m.element.id)
+  );
 
   Object.keys(responses).forEach((resp) => {
-    if (mappingElementIds.find((elementId) => elementId === resp)) {
+    if (pictureSelectionElementIds.has(resp)) {
       const selectedChoiceIds = responses[resp] as string[];
       const pictureElement = surveyElements.find((el) => el.id === resp);
 
@@ -401,64 +411,81 @@ const buildNotionPayloadProperties = (
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-const getValue = (
-  colType: string,
-  value: string | string[] | Date | number | Record<string, string> | undefined
-) => {
+type TNotionValueInput = string | string[] | Date | number | Record<string, string> | undefined;
+
+const getSelectValue = (value: TNotionValueInput) => {
+  if (typeof value !== "string" || value.length === 0) {
+    return null;
+  }
+
+  return {
+    name: value.replaceAll(",", ""),
+  };
+};
+
+const getMultiSelectValue = (value: TNotionValueInput) => {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  return value.map((entry: string) => ({ name: entry.replaceAll(",", "") }));
+};
+
+const getTitleValue = (value: TNotionValueInput) => [
+  {
+    text: {
+      content: value,
+    },
+  },
+];
+
+const getRichTextValue = (value: TNotionValueInput) => {
+  if (typeof value === "string") {
+    return [
+      {
+        text: {
+          content:
+            value.length > NOTION_RICH_TEXT_LIMIT ? truncateText(value, NOTION_RICH_TEXT_LIMIT) : value,
+        },
+      },
+    ];
+  }
+
+  if (Array.isArray(value)) {
+    const content = value.join("\n");
+    return [
+      {
+        text: {
+          content:
+            content.length > NOTION_RICH_TEXT_LIMIT ? truncateText(content, NOTION_RICH_TEXT_LIMIT) : content,
+        },
+      },
+    ];
+  }
+
+  return [
+    {
+      text: {
+        content: value,
+      },
+    },
+  ];
+};
+
+const getUrlValue = (value: TNotionValueInput) =>
+  typeof value === "string" ? value : Array.isArray(value) ? value.join(", ") : undefined;
+
+const getValue = (colType: string, value: TNotionValueInput) => {
   try {
     switch (colType) {
       case "select":
-        if (!value) return null;
-        if (typeof value === "string") {
-          // Replace commas
-          const sanitizedValue = value.replace(/,/g, "");
-          return {
-            name: sanitizedValue,
-          };
-        }
+        return getSelectValue(value);
       case "multi_select":
-        if (Array.isArray(value)) {
-          return value.map((v: string) => ({ name: v.replace(/,/g, "") }));
-        }
+        return getMultiSelectValue(value);
       case "title":
-        return [
-          {
-            text: {
-              content: value,
-            },
-          },
-        ];
+        return getTitleValue(value);
       case "rich_text":
-        if (typeof value === "string") {
-          return [
-            {
-              text: {
-                content:
-                  value.length > NOTION_RICH_TEXT_LIMIT ? truncateText(value, NOTION_RICH_TEXT_LIMIT) : value,
-              },
-            },
-          ];
-        }
-        if (Array.isArray(value)) {
-          const content = value.join("\n");
-          return [
-            {
-              text: {
-                content:
-                  content.length > NOTION_RICH_TEXT_LIMIT
-                    ? truncateText(content, NOTION_RICH_TEXT_LIMIT)
-                    : content,
-              },
-            },
-          ];
-        }
-        return [
-          {
-            text: {
-              content: value,
-            },
-          },
-        ];
+        return getRichTextValue(value);
       case "status":
         return {
           name: value,
@@ -472,11 +499,13 @@ const getValue = (
       case "email":
         return value;
       case "number":
-        return parseInt(value as string);
+        return Number.parseInt(value as string, 10);
       case "phone_number":
         return value;
       case "url":
-        return typeof value === "string" ? value : (value as string[]).join(", ");
+        return getUrlValue(value);
+      default:
+        return null;
     }
   } catch (error) {
     logger.error(error, "Payload build failed!");
