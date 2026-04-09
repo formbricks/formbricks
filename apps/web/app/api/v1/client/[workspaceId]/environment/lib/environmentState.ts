@@ -48,7 +48,7 @@ export const getWorkspaceState = async (
 
       return { data };
     },
-    createCacheKey.environment.state(workspaceId),
+    createCacheKey.workspace.state(workspaceId),
     60 * 1000 // 1 minute in milliseconds
   );
 };

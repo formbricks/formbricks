@@ -8,7 +8,6 @@ import { ActionActivityTab } from "./ActionActivityTab";
 import { ActionSettingsTab } from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
-  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
@@ -18,7 +17,6 @@ interface ActionDetailModalProps {
 }
 
 export const ActionDetailModal = ({
-  environmentId,
   open,
   setOpen,
   actionClass,
@@ -35,7 +33,6 @@ export const ActionDetailModal = ({
           otherEnvActionClasses={otherEnvActionClasses}
           isReadOnly={isReadOnly}
           actionClass={actionClass}
-          environmentId={environmentId}
         />
       ),
     },

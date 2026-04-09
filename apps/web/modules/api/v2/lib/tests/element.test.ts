@@ -25,10 +25,6 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSpamProtectionEnabled: vi.fn(),
 }));
 
-vi.mock("@/app/api/v2/client/[workspaceId]/responses/lib/organization", () => ({
-  getOrganizationBillingByEnvironmentId: vi.fn(),
-}));
-
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),

@@ -6,7 +6,6 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
-  environmentId: string;
   actionClasses: TActionClass[];
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
@@ -14,7 +13,6 @@ interface ActionClassesTableProps {
 }
 
 export const ActionClassesTable = ({
-  environmentId,
   actionClasses,
   children: [TableHeading, actionRows],
   isReadOnly,
@@ -60,7 +58,6 @@ export const ActionClassesTable = ({
       </div>
       {activeActionClass && (
         <ActionDetailModal
-          environmentId={environmentId}
           open={isActionDetailModalOpen}
           setOpen={setIsActionDetailModalOpen}
           actionClasses={actionClasses}

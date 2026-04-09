@@ -26,7 +26,7 @@ describe("getContactAttributeKeys", () => {
   });
 
   test("should return contact attribute keys when found", async () => {
-    const mockEnvironmentIds = ["env1", "env2"];
+    const mockWorkspaceIds = ["ws1", "ws2"];
     const mockAttributeKeys = [
       {
         id: "key1",
@@ -55,26 +55,26 @@ describe("getContactAttributeKeys", () => {
     ];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockAttributeKeys);
 
-    const result = await getContactAttributeKeys(mockEnvironmentIds);
+    const result = await getContactAttributeKeys(mockWorkspaceIds);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: { in: mockEnvironmentIds } },
+      where: { workspaceId: { in: mockWorkspaceIds } },
     });
     expect(result).toEqual(mockAttributeKeys);
   });
 
   test("should throw DatabaseError if Prisma call fails", async () => {
-    const mockEnvironmentIds = ["env1"];
+    const mockWorkspaceIds = ["ws1"];
     const errorMessage = "Prisma error";
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P1000", clientVersion: "test" })
     );
 
-    await expect(getContactAttributeKeys(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
+    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw generic error if non-Prisma error occurs", async () => {
-    const mockEnvironmentIds = ["env1"];
+    const mockWorkspaceIds = ["ws1"];
     const errorMessage = "Some other error";
 
     const errToThrow = new Prisma.PrismaClientKnownRequestError(errorMessage, {
@@ -82,7 +82,7 @@ describe("getContactAttributeKeys", () => {
       code: PrismaErrorType.UniqueConstraintViolation,
     });
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(errToThrow);
-    await expect(getContactAttributeKeys(mockEnvironmentIds)).rejects.toThrow(errorMessage);
+    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(errorMessage);
   });
 });
 

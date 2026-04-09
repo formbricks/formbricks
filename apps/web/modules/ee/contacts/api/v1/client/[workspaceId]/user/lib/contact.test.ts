@@ -10,7 +10,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const workspaceId = "testEnvironmentId";
+const workspaceId = "testWorkspaceId";
 const userId = "testUserId";
 
 const mockContactDbData = {

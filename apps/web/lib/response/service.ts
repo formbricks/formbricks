@@ -569,13 +569,13 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
       const { pathname } = new URL(fileUrl);
-      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
 
-      if (!environmentId || !accessType || !fileName) {
+      if (!storageId || !accessType || !fileName) {
         throw new Error(`Invalid file path: ${pathname}`);
       }
 
-      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+      return deleteFile(storageId, accessType as "private" | "public", fileName, survey.workspaceId);
     } catch (error) {
       logger.error(error, `Failed to delete file ${fileUrl}`);
     }

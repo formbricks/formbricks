@@ -92,7 +92,6 @@ const mockBaseSurvey: TSurvey = {
   updatedAt: new Date(),
   displayOption: "displayOnce",
   displayPercentage: null,
-  environmentId: "env_123",
   singleUse: null,
   surveyClosedMessage: null,
   pin: null,

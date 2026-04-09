@@ -40,7 +40,7 @@ describe("getContacts", () => {
     vi.clearAllMocks();
   });
 
-  test("should return contacts for given environmentIds", async () => {
+  test("should return contacts for given workspaceIds", async () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
 
     const result = await getContacts(mockWorkspaceIds);

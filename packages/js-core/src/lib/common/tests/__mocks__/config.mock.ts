@@ -1,14 +1,13 @@
 import type { TConfig } from "@/types/config";
 
 // ids
-export const mockEnvironmentId = "ggskhsue85p2xrxrc7x3qagg";
 export const mockWorkspaceId = "f5kptre0saxmltl7ram364qt";
 export const mockLanguageId = "n4ts6u7wy5lbn4q3jovikqot";
 export const mockSurveyId = "lz5m554yqh1i3moa3y230wei";
 export const mockActionClassId = "wypzu5qw7adgy66vq8s77tso";
 
 export const mockConfig: TConfig = {
-  workspaceId: mockEnvironmentId,
+  workspaceId: mockWorkspaceId,
   appUrl: "https://myapp.example",
   workspace: {
     expiresAt: "2999-12-31T23:59:59Z",
@@ -58,7 +57,7 @@ export const mockConfig: TConfig = {
                 name: "Manual Trigger",
                 createdAt: "2025-01-01T10:00:00Z",
                 updatedAt: "2025-01-01T10:00:00Z",
-                environmentId: mockEnvironmentId,
+                workspaceId: mockWorkspaceId,
                 description: "Manual Trigger",
                 noCodeConfig: {},
               },

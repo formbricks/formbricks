@@ -25,7 +25,8 @@ export const response: Response = {
   ...responseInput,
 };
 
-export const survey: Pick<Survey, "questions" | "blocks"> = {
+export const survey: Pick<Survey, "questions" | "blocks" | "workspaceId"> = {
+  workspaceId: "ws_mock_workspace_id",
   questions: [
     {
       id: "ggaw04zw7gx7uxodk5da7if8",

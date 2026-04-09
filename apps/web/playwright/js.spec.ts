@@ -10,7 +10,7 @@ const HTML_TEMPLATE = `<head>
       var e = document.getElementsByTagName("script")[0];
       t.onload = function(){
         if (window.formbricks) {
-          window.formbricks.setup({environmentId: "ENVIRONMENT_ID", appUrl: "http://localhost:3000"});
+          window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "http://localhost:3000"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
         }
@@ -27,13 +27,13 @@ const HTML_TEMPLATE = `<head>
 
 test.describe("JS Package Test", async () => {
   let server: http.Server;
-  let environmentId: string;
+  let workspaceId: string;
 
   test.setTimeout(3 * 60 * 1000);
   test.beforeAll(async () => {
     // Create a simple HTTP server
     server = http.createServer((_, res) => {
-      const htmlContent = HTML_TEMPLATE.replace("ENVIRONMENT_ID", environmentId || "");
+      const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", workspaceId || "");
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end(htmlContent);
     });
@@ -56,7 +56,7 @@ test.describe("JS Package Test", async () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     // Get the workspaceId from the fixture (needed for SDK setup)
-    environmentId =
+    workspaceId =
       user.workspaceId ??
       (() => {
         throw new Error("Unable to get workspaceId from user fixture");

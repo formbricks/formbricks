@@ -26,6 +26,7 @@ describe("Survey Lib", () => {
         select: {
           questions: true,
           blocks: true,
+          workspaceId: true,
         },
       });
       expect(result.ok).toBe(true);

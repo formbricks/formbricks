@@ -33,7 +33,6 @@ describe("Utils Tests", () => {
       id: "survey1",
       name: "Test Survey",
       type: "app",
-      environmentId: "env1",
       status: "draft",
       blocks: [
         {

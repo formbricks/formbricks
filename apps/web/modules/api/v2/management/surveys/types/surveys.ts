@@ -28,7 +28,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   name: true,
   redirectUrl: true,
   type: true,
-  environmentId: true,
   questions: true,
   blocks: true,
   endings: true,
@@ -69,6 +68,9 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   .meta({
     id: "surveyInput",
     description: "A survey input object for creating or updating surveys",
+  })
+  .extend({
+    environmentId: z.cuid2(),
   });
 
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;

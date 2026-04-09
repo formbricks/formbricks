@@ -1,5 +1,3 @@
-export const mockEnvironmentId = "clqkr5961000108jyfnjmbjhi";
-export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
 export const mockSurveyId = "clqkr8dlv000308jybb08evgr";
 export const mockUserId = "qwywazmugeezyfr3zcg9jk8a";
 export const mockDisplayId = "clqkr5smu000208jy50v6g5k4";

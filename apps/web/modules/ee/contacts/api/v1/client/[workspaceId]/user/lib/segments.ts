@@ -32,7 +32,7 @@ export const getSegments = reactCache(
           throw error;
         }
       },
-      createCacheKey.environment.segments(workspaceId),
+      createCacheKey.workspace.segments(workspaceId),
       60 * 1000 // 1 minutes in milliseconds
     )
 );

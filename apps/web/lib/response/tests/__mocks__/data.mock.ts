@@ -13,7 +13,6 @@ type ResponseMock = Prisma.ResponseGetPayload<{
   include: typeof responseSelection;
 }>;
 
-export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
 export const mockWorkspaceId = "wksp2tjk8hsi8oqk1uac00mo";
 export const mockContactId = "lhwy39ga2zy8by1ol1bnaiso";
 export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";

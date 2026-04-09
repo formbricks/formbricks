@@ -13,12 +13,11 @@ import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/a
 
 interface ActivityTabProps {
   actionClass: TActionClass;
-  environmentId: string;
   otherEnvActionClasses: TActionClass[];
   isReadOnly: boolean;
 }
 
-export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabProps) => {
+export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
@@ -44,7 +43,7 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
     };
 
     updateState();
-  }, [actionClass.id, environmentId]);
+  }, [actionClass.id]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;

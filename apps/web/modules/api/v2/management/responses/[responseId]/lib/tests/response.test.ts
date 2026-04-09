@@ -296,7 +296,11 @@ describe("Response Lib", () => {
       });
       expect(deleteDisplay).toHaveBeenCalledWith(response.displayId);
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
-      expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(response.data, survey.questions);
+      expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(
+        response.data,
+        survey.questions,
+        survey.workspaceId
+      );
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(response);

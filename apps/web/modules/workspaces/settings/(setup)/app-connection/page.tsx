@@ -72,7 +72,6 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
         </SettingsCard>
         <ActionSettingsCard
           otherEnvActionClasses={[]}
-          environmentId={workspace.id}
           workspaceId={workspace.id}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}

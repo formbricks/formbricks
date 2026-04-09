@@ -128,14 +128,6 @@ export const finishOnboarding = async (
   await expect(page.getByText("My Workspace")).toBeVisible();
 };
 
-export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
-  let htmlContent = readFileSync(filePath, "utf-8");
-  htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
-
-  writeFileSync(filePath, htmlContent, { mode: 1 });
-  return "file:///" + filePath;
-};
-
 export const signupUsingInviteToken = async (page: Page, name: string, email: string, password: string) => {
   await page.getByRole("button", { name: "Continue with Email" }).click();
   await page.getByPlaceholder("Full Name").fill(name);

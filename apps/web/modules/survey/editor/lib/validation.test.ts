@@ -910,7 +910,6 @@ describe("validation.isSurveyValid", () => {
       id: "survey1",
       name: "Test Survey",
       type: "web",
-      environmentId: "env1",
       status: "draft",
       questions: [],
       blocks: [
@@ -1093,7 +1092,6 @@ describe("validation.isSurveyValid", () => {
           title: "temp segment",
           description: "",
           surveyId: "survey1",
-          environmentId: "env1",
         },
       } as unknown as TSurvey;
 
@@ -1118,7 +1116,6 @@ describe("validation.isSurveyValid", () => {
           title: "temp segment",
           description: "",
           surveyId: "survey1",
-          environmentId: "env1",
         },
       } as unknown as TSurvey;
       const mockSafeParse = vi.spyOn(ZSegmentFilters, "safeParse");

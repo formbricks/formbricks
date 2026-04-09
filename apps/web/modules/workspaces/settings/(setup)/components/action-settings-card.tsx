@@ -12,7 +12,6 @@ import { AddActionModal } from "@/modules/workspaces/settings/(setup)/components
 
 interface ActionSettingsCardProps {
   otherEnvActionClasses: TActionClass[];
-  environmentId: string;
   workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
@@ -20,7 +19,6 @@ interface ActionSettingsCardProps {
 }
 export const ActionSettingsCard = ({
   otherEnvActionClasses,
-  environmentId,
   workspaceId,
   actionClasses,
   isReadOnly,
@@ -40,7 +38,6 @@ export const ActionSettingsCard = ({
         }}>
         <ActionClassesTable
           otherEnvActionClasses={otherEnvActionClasses}
-          environmentId={environmentId}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}>
           <ActionTableHeading />

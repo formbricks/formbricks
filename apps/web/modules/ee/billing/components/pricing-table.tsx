@@ -31,7 +31,6 @@ import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
-const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
 const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
@@ -238,9 +237,8 @@ export const PricingTable = ({
     ];
   }, [billingCatalog, locale, selectedInterval, t]);
 
-  const persistEnvironmentId = () => {
+  const persistWorkspaceId = () => {
     if (globalThis.window !== undefined) {
-      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, workspaceId);
       if (workspace?.id) {
         globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY, workspace.id);
       }
@@ -269,7 +267,7 @@ export const PricingTable = ({
 
   const openTrialPaymentCheckout = async () => {
     try {
-      persistEnvironmentId();
+      persistWorkspaceId();
       const response = await createTrialPaymentCheckoutAction({ workspaceId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
@@ -320,7 +318,7 @@ export const PricingTable = ({
       return;
     }
 
-    persistEnvironmentId();
+    persistWorkspaceId();
     const response = await createPlanCheckoutAction({
       workspaceId,
       targetPlan: plan,

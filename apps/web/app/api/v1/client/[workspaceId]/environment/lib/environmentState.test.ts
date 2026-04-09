@@ -59,7 +59,7 @@ vi.mock("@/lib/constants", () => ({
 // Mock @formbricks/cache
 vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
-    environment: {
+    workspace: {
       state: vi.fn((workspaceId: string) => `fb:env:${workspaceId}:state`),
     },
   },
