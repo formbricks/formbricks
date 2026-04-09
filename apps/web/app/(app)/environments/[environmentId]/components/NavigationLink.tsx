@@ -1,6 +1,7 @@
 import Link from "next/link";
 import React from "react";
 import { cn } from "@/lib/cn";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface NavigationLinkProps {
@@ -70,10 +71,17 @@ export const NavigationLink = ({
       ) : (
         <li className={cn("mb-1 rounded-l-md py-2 pl-5 text-sm", expandedColorClass)}>
           {disabled ? (
-            <div className="flex items-center">
-              {children}
-              {label}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center">
+                  {children}
+                  {label}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                {disabledMessage || linkText}
+              </PopoverContent>
+            </Popover>
           ) : (
             <Link href={href} className="flex items-center">
               {children}
