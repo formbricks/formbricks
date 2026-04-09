@@ -1,4 +1,9 @@
-import { type JobsRuntimeHandle, type TResponsePipelineJobData, startJobsRuntime } from "@formbricks/jobs";
+import {
+  type JobHandlerOverrides,
+  type JobsRuntimeHandle,
+  type TResponsePipelineJobData,
+  startJobsRuntime,
+} from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
@@ -13,6 +18,9 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
+const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processResponsePipelineJob(data as TResponsePipelineJobData, context);
+};
 
 const clearJobsWorkerRetryTimeout = (): void => {
   if (globalForJobsRuntime.formbricksJobsRuntimeRetryTimeout) {
@@ -56,17 +64,13 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
   }
 
   const runtimeOptions = jobsWorkerBootstrapConfig.runtimeOptions;
-  const jobHandlerOverrides = runtimeOptions.jobHandlerOverrides
+  const jobHandlerOverrides: JobHandlerOverrides = runtimeOptions.jobHandlerOverrides
     ? {
         ...runtimeOptions.jobHandlerOverrides,
-        [RESPONSE_PIPELINE_JOB_NAME]: async (data, context) => {
-          await processResponsePipelineJob(data as TResponsePipelineJobData, context);
-        },
+        [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
       }
     : {
-        [RESPONSE_PIPELINE_JOB_NAME]: async (data, context) => {
-          await processResponsePipelineJob(data as TResponsePipelineJobData, context);
-        },
+        [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
       };
 
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime({
