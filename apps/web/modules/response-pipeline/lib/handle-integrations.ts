@@ -472,8 +472,17 @@ const getRichTextValue = (value: TNotionValueInput) => {
   ];
 };
 
-const getUrlValue = (value: TNotionValueInput) =>
-  typeof value === "string" ? value : Array.isArray(value) ? value.join(", ") : undefined;
+const getUrlValue = (value: TNotionValueInput) => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+
+  return undefined;
+};
 
 const getValue = (colType: string, value: TNotionValueInput) => {
   try {
