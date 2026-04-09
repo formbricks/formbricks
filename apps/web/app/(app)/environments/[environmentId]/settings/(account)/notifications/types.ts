@@ -4,7 +4,7 @@ export interface Membership {
   organization: {
     id: string;
     name: string;
-    projects: {
+    workspaces: {
       id: string;
       name: string;
       environments: {

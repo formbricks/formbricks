@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma, Project } from "@prisma/client";
+import { Prisma, Workspace } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
@@ -16,13 +16,13 @@ import { validateInputs } from "@/lib/utils/validate";
  * deduplication within the same render cycle.
  */
 
-type TProjectForLinkSurvey = Pick<
-  Project,
+type TWorkspaceForLinkSurvey = Pick<
+  Workspace,
   "id" | "name" | "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts"
 >;
 
 export interface TEnvironmentContextForLinkSurvey {
-  project: TProjectForLinkSurvey;
+  workspace: TWorkspaceForLinkSurvey;
   organizationId: string;
   organizationBilling: TOrganizationBilling;
   organizationWhitelabel: TOrganizationWhitelabel | null;
@@ -30,7 +30,7 @@ export interface TEnvironmentContextForLinkSurvey {
 
 /**
  * Fetches all environment-related data needed for link surveys in a single optimized query.
- * Combines project, organization, and billing data using Prisma relationships to minimize
+ * Combines workspace, organization, and billing data using Prisma relationships to minimize
  * database round trips.
  *
  * This function is specifically optimized for link survey rendering and only fetches the
@@ -38,14 +38,14 @@ export interface TEnvironmentContextForLinkSurvey {
  * field combinations and should use their own specialized functions.
  *
  * @param environmentId - The environment identifier
- * @returns Object containing project styling data, organization ID, and billing information
- * @throws ResourceNotFoundError if environment, project, or organization not found
+ * @returns Object containing workspace styling data, organization ID, and billing information
+ * @throws ResourceNotFoundError if environment, workspace, or organization not found
  * @throws DatabaseError if database query fails
  *
  * @example
  * ```typescript
  * // In server components, function is automatically cached per request
- * const { project, organizationId, organizationBilling } =
+ * const { workspace, organizationId, organizationBilling } =
  *   await getEnvironmentContextForLinkSurvey(survey.environmentId);
  * ```
  */
@@ -57,7 +57,7 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
       const environment = await prisma.environment.findUnique({
         where: { id: environmentId },
         select: {
-          project: {
+          workspace: {
             select: {
               id: true,
               name: true,
@@ -86,38 +86,38 @@ export const getEnvironmentContextForLinkSurvey = reactCache(
       });
 
       // Fail early pattern: validate data before proceeding
-      if (!environment?.project) {
-        throw new ResourceNotFoundError("Project", null);
+      if (!environment?.workspace) {
+        throw new ResourceNotFoundError("Workspace", null);
       }
 
-      if (!environment.project.organization) {
+      if (!environment.workspace.organization) {
         throw new ResourceNotFoundError("Organization", null);
       }
 
-      if (!environment.project.organization.billing) {
-        throw new ResourceNotFoundError("OrganizationBilling", environment.project.organization.id);
+      if (!environment.workspace.organization.billing) {
+        throw new ResourceNotFoundError("OrganizationBilling", environment.workspace.organization.id);
       }
 
       // Return structured, typed data
       return {
-        project: {
-          id: environment.project.id,
-          name: environment.project.name,
-          styling: environment.project.styling,
-          logo: environment.project.logo,
-          linkSurveyBranding: environment.project.linkSurveyBranding,
-          customHeadScripts: environment.project.customHeadScripts,
+        workspace: {
+          id: environment.workspace.id,
+          name: environment.workspace.name,
+          styling: environment.workspace.styling,
+          logo: environment.workspace.logo,
+          linkSurveyBranding: environment.workspace.linkSurveyBranding,
+          customHeadScripts: environment.workspace.customHeadScripts,
         },
-        organizationId: environment.project.organizationId,
+        organizationId: environment.workspace.organizationId,
         organizationBilling: {
-          stripeCustomerId: environment.project.organization.billing.stripeCustomerId,
-          limits: environment.project.organization.billing.limits as TOrganizationBilling["limits"],
-          usageCycleAnchor: environment.project.organization.billing.usageCycleAnchor,
-          ...(environment.project.organization.billing.stripe === null
+          stripeCustomerId: environment.workspace.organization.billing.stripeCustomerId,
+          limits: environment.workspace.organization.billing.limits as TOrganizationBilling["limits"],
+          usageCycleAnchor: environment.workspace.organization.billing.usageCycleAnchor,
+          ...(environment.workspace.organization.billing.stripe === null
             ? {}
-            : { stripe: environment.project.organization.billing.stripe }),
+            : { stripe: environment.workspace.organization.billing.stripe }),
         },
-        organizationWhitelabel: environment.project.organization.whitelabel ?? null,
+        organizationWhitelabel: environment.workspace.organization.whitelabel ?? null,
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

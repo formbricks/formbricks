@@ -10,8 +10,8 @@ export const ZApiKeyEnvironment = z.object({
   updatedAt: z.date(),
   apiKeyId: z.cuid2(),
   environmentId: z.cuid2(),
-  projectId: z.cuid2(),
-  projectName: z.string(),
+  workspaceId: z.cuid2(),
+  workspaceName: z.string(),
   environmentType: z.enum(EnvironmentType),
   permission: ZApiKeyPermission,
 }) satisfies z.ZodType<ApiKeyEnvironment>;
@@ -52,8 +52,8 @@ export const ZApiKeyData = ZApiKey.pick({
         environmentId: true,
         environmentType: true,
         permission: true,
-        projectId: true,
-        projectName: true,
+        workspaceId: true,
+        workspaceName: true,
       })
     ),
   }).shape

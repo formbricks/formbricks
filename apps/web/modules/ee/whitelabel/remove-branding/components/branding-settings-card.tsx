@@ -1,4 +1,4 @@
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -8,14 +8,14 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 
 interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
-  project: Project;
+  workspace: Workspace;
   environmentId: string;
   isReadOnly: boolean;
 }
 
 export const BrandingSettingsCard = async ({
   canRemoveBranding,
-  project,
+  workspace,
   environmentId,
   isReadOnly,
 }: BrandingSettingsCardProps) => {
@@ -44,14 +44,14 @@ export const BrandingSettingsCard = async ({
         <div className="space-y-4">
           <EditBranding
             type="linkSurvey"
-            isEnabled={project.linkSurveyBranding}
-            projectId={project.id}
+            isEnabled={workspace.linkSurveyBranding}
+            workspaceId={workspace.id}
             isReadOnly={isReadOnly}
           />
           <EditBranding
             type="appSurvey"
-            isEnabled={project.inAppSurveyBranding}
-            projectId={project.id}
+            isEnabled={workspace.inAppSurveyBranding}
+            workspaceId={workspace.id}
             isReadOnly={isReadOnly}
           />
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,7 +36,7 @@ interface SurveyMenuBarProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
-  project: Project;
+  workspace: Workspace;
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
@@ -54,7 +54,7 @@ export const SurveyMenuBar = ({
   activeId,
   setActiveId,
   setInvalidElements,
-  project,
+  workspace,
   responseCount,
   selectedLanguageCode,
   isCxMode,
@@ -491,7 +491,7 @@ export const SurveyMenuBar = ({
             {t("common.back")}
           </Button>
         )}
-        <p className="hidden pl-4 font-semibold md:block">{project.name} / </p>
+        <p className="hidden pl-4 font-semibold md:block">{workspace.name} / </p>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {

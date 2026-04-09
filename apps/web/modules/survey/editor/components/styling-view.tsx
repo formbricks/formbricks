@@ -1,14 +1,14 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import {
   COLOR_DEFAULTS,
   STYLE_DEFAULTS,
@@ -34,7 +34,7 @@ import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
   environmentId: string;
-  project: Project;
+  workspace: Workspace;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
@@ -50,7 +50,7 @@ interface StylingViewProps {
 export const StylingView = ({
   colors,
   environmentId,
-  project,
+  workspace,
   localSurvey,
   setLocalSurvey,
   setStyling,
@@ -63,24 +63,24 @@ export const StylingView = ({
 }: StylingViewProps) => {
   const { t } = useTranslation();
 
-  const savedProjectStyling = project.styling as Partial<TProjectStyling> | null;
+  const savedWorkspaceStyling = workspace.styling as Partial<TWorkspaceStyling> | null;
 
   // Strip null/undefined values so they don't override STYLE_DEFAULTS.
-  const cleanProject = savedProjectStyling
-    ? Object.fromEntries(Object.entries(savedProjectStyling).filter(([, v]) => v != null))
+  const cleanWorkspace = savedWorkspaceStyling
+    ? Object.fromEntries(Object.entries(savedWorkspaceStyling).filter(([, v]) => v != null))
     : {};
   const cleanSurvey = localSurvey.styling
     ? Object.fromEntries(Object.entries(localSurvey.styling).filter(([, v]) => v != null))
     : {};
 
-  const projectLegacyFills = deriveNewFieldsFromLegacy(cleanProject);
+  const workspaceLegacyFills = deriveNewFieldsFromLegacy(cleanWorkspace);
   const surveyLegacyFills = deriveNewFieldsFromLegacy(cleanSurvey);
 
   const form = useForm<TSurveyStyling>({
     defaultValues: {
       ...STYLE_DEFAULTS,
-      ...projectLegacyFills,
-      ...cleanProject,
+      ...workspaceLegacyFills,
+      ...cleanWorkspace,
       ...surveyLegacyFills,
       ...cleanSurvey,
     },
@@ -110,7 +110,7 @@ export const StylingView = ({
   };
 
   const onResetThemeStyling = () => {
-    const { allowStyleOverwrite, ...baseStyling } = project.styling ?? {};
+    const { allowStyleOverwrite, ...baseStyling } = workspace.styling ?? {};
 
     setStyling({
       ...baseStyling,
@@ -149,12 +149,12 @@ export const StylingView = ({
     return () => subscription.unsubscribe();
   }, [form, setLocalSurvey]);
 
-  const defaultProjectStyling = useMemo(() => {
-    const { styling: projectStyling } = project;
-    const { allowStyleOverwrite, ...baseStyling } = projectStyling ?? {};
+  const defaultWorkspaceStyling = useMemo(() => {
+    const { styling: workspaceStyling } = workspace;
+    const { allowStyleOverwrite, ...baseStyling } = workspaceStyling ?? {};
 
     return baseStyling;
-  }, [project]);
+  }, [workspace]);
 
   const handleOverwriteToggle = (value: boolean) => {
     // survey styling from the server is surveyStyling, it could either be set or not
@@ -162,12 +162,12 @@ export const StylingView = ({
 
     setOverwriteThemeStyling(value);
 
-    // if the toggle is turned on, we set the local styling to the project styling
+    // if the toggle is turned on, we set the local styling to the workspace styling
     if (value) {
       if (!styling) {
-        // copy the project styling to the survey styling
+        // copy the workspace styling to the survey styling
         setStyling({
-          ...defaultProjectStyling,
+          ...defaultWorkspaceStyling,
           overwriteThemeStyling: true,
         });
         return;
@@ -177,23 +177,23 @@ export const StylingView = ({
       if (localStylingChanges) {
         setStyling(localStylingChanges);
       }
-      // if there are no local styling changes, we set the styling to the project styling
+      // if there are no local styling changes, we set the styling to the workspace styling
       else {
         setStyling({
-          ...defaultProjectStyling,
+          ...defaultWorkspaceStyling,
           overwriteThemeStyling: true,
         });
       }
     }
 
-    // if the toggle is turned off, we store the local styling changes and set the styling to the project styling
+    // if the toggle is turned off, we store the local styling changes and set the styling to the workspace styling
     else {
       // copy the styling to localStylingChanges
       setLocalStylingChanges(styling);
 
-      // copy the project styling to the survey styling
+      // copy the workspace styling to the survey styling
       setStyling({
-        ...defaultProjectStyling,
+        ...defaultWorkspaceStyling,
         overwriteThemeStyling: false,
       });
     }
@@ -264,7 +264,7 @@ export const StylingView = ({
             open={formStylingOpen}
             setOpen={setFormStylingOpen}
             disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
           />
 
           <CardStylingSettings
@@ -272,7 +272,7 @@ export const StylingView = ({
             setOpen={setCardStylingOpen}
             surveyType={localSurvey.type}
             disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
           />
 
           {localSurvey.type === "link" && (
@@ -284,7 +284,7 @@ export const StylingView = ({
                 colors={colors}
                 disabled={!overwriteThemeStyling}
                 isUnsplashConfigured={isUnsplashConfigured}
-                form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+                form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                 isStorageConfigured={isStorageConfigured}
               />
 
@@ -293,7 +293,7 @@ export const StylingView = ({
                 setOpen={setLogoSettingsOpen}
                 disabled={!overwriteThemeStyling}
                 environmentId={environmentId}
-                form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+                form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                 isStorageConfigured={isStorageConfigured}
               />
             </>

@@ -139,6 +139,12 @@ export const OrganizationBreadcrumb = ({
       href: `/environments/${currentEnvironmentId}/settings/teams`,
     },
     {
+      id: "feedback-record-directories",
+      label: t("environments.settings.feedback_record_directories.nav_label"),
+      href: `/environments/${currentEnvironmentId}/settings/feedback-record-directories`,
+      hidden: isMember,
+    },
+    {
       id: "api-keys",
       label: t("common.api_keys"),
       href: `/environments/${currentEnvironmentId}/settings/api-keys`,

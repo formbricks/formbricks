@@ -30,8 +30,8 @@ const mockEnvironmentData = {
   id: environmentId,
   type: "production",
   appSetupCompleted: true,
-  project: {
-    id: "project-123",
+  workspace: {
+    id: "workspace-123",
     recontactDays: 30,
     clickOutsideClose: true,
     overlay: "none",
@@ -73,7 +73,7 @@ const mockEnvironmentData = {
       triggers: [],
       displayPercentage: null,
       delay: 0,
-      projectOverwrites: null,
+      workspaceOverwrites: null,
     },
   ],
 };
@@ -97,8 +97,8 @@ describe("getEnvironmentStateData", () => {
         id: environmentId,
         type: "production",
         appSetupCompleted: true,
-        project: {
-          id: "project-123",
+        workspace: {
+          id: "workspace-123",
           recontactDays: 30,
           clickOutsideClose: true,
           overlay: "none",
@@ -117,7 +117,7 @@ describe("getEnvironmentStateData", () => {
         id: true,
         type: true,
         appSetupCompleted: true,
-        project: expect.any(Object),
+        workspace: expect.any(Object),
         actionClasses: expect.any(Object),
         surveys: expect.any(Object),
       }),
@@ -131,10 +131,10 @@ describe("getEnvironmentStateData", () => {
     await expect(getEnvironmentStateData(environmentId)).rejects.toThrow("environment");
   });
 
-  test("should throw ResourceNotFoundError when project is not found", async () => {
+  test("should throw ResourceNotFoundError when workspace is not found", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
       ...mockEnvironmentData,
-      project: null,
+      workspace: null,
     } as never);
 
     await expect(getEnvironmentStateData(environmentId)).rejects.toThrow(ResourceNotFoundError);
@@ -201,9 +201,9 @@ describe("getEnvironmentStateData", () => {
     expect(result.surveys).toHaveLength(2);
   });
 
-  test("should correctly map project properties to environment.project", async () => {
-    const customProject = {
-      ...mockEnvironmentData.project,
+  test("should correctly map workspace properties to environment.workspace", async () => {
+    const customWorkspace = {
+      ...mockEnvironmentData.workspace,
       recontactDays: 14,
       clickOutsideClose: false,
       overlay: "dark",
@@ -214,13 +214,13 @@ describe("getEnvironmentStateData", () => {
 
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
       ...mockEnvironmentData,
-      project: customProject,
+      workspace: customWorkspace,
     } as never);
 
     const result = await getEnvironmentStateData(environmentId);
 
-    expect(result.environment.project).toEqual({
-      id: "project-123",
+    expect(result.environment.workspace).toEqual({
+      id: "workspace-123",
       recontactDays: 14,
       clickOutsideClose: false,
       overlay: "dark",

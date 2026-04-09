@@ -15,9 +15,9 @@ import {
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
-import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
+import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
@@ -43,7 +43,7 @@ type TOrganizationWithBilling = Prisma.OrganizationGetPayload<{ select: typeof s
 
 const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
-    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
     },
@@ -121,7 +121,7 @@ export const getOrganizationByEnvironmentId = reactCache(
     try {
       const organization = await prisma.organization.findFirst({
         where: {
-          projects: {
+          workspaces: {
             some: {
               environments: {
                 some: {
@@ -249,7 +249,7 @@ export const updateOrganization = async (
         where: {
           id: organizationId,
         },
-        select: { ...select, memberships: true, projects: { select: { environments: true } } }, // include memberships & environments
+        select: { ...select, memberships: true, workspaces: { select: { environments: true } } }, // include memberships & environments
       });
     });
 
@@ -260,7 +260,7 @@ export const updateOrganization = async (
     const organization = {
       ...mapOrganization(updatedOrganization),
       memberships: undefined,
-      projects: undefined,
+      workspaces: undefined,
     };
 
     return organization;
@@ -295,7 +295,7 @@ export const deleteOrganization = async (organizationId: string) => {
             userId: true,
           },
         },
-        projects: {
+        workspaces: {
           select: {
             id: true,
             environments: {
@@ -334,8 +334,8 @@ export const getMonthlyOrganizationResponseCount = reactCache(
       const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
       // Get all environment IDs for the organization
-      const projects = await getProjects(organizationId);
-      const environmentIds = projects.flatMap((project) => project.environments.map((env) => env.id));
+      const workspaces = await getWorkspaces(organizationId);
+      const environmentIds = workspaces.flatMap((workspace) => workspace.environments.map((env) => env.id));
 
       // Use Prisma's aggregate to count responses for all environments
       const responseAggregations = await prisma.response.aggregate({

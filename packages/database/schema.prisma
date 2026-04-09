@@ -340,7 +340,7 @@ enum SurveyScriptMode {
 /// @property triggers - Actions that can trigger this survey
 /// @property attributeFilters - Rules for targeting specific contacts
 /// @property customHeadScripts - Survey-specific custom HTML scripts (self-hosted only)
-/// @property customHeadScriptsMode - "add" (merge with project) or "replace" (override project)
+/// @property customHeadScriptsMode - "add" (merge with workspace) or "replace" (override workspace)
 model Survey {
   id                  String                  @id @default(cuid())
   createdAt           DateTime                @default(now()) @map(name: "created_at")
@@ -383,8 +383,8 @@ model Survey {
   segmentId           String?
   segment             Segment?                @relation(fields: [segmentId], references: [id])
 
-  /// [SurveyProjectOverwrites]
-  projectOverwrites Json?
+  /// [SurveyWorkspaceOverwrites]
+  workspaceOverwrites Json?
 
   /// [SurveyStyling]
   styling Json?
@@ -567,13 +567,13 @@ model DataMigration {
   status     DataMigrationStatus
 }
 
-/// Represents either a production or development environment within a project.
-/// Each project has exactly two environments, serving as the main reference point
+/// Represents either a production or development environment within a workspace.
+/// Each workspace has exactly two environments, serving as the main reference point
 /// for most Formbricks resources including surveys and actions.
 ///
 /// @property id - Unique identifier for the environment
 /// @property type - Either 'production' or 'development'
-/// @property project - Reference to parent project
+/// @property workspace - Reference to parent workspace
 /// @property surveys - Collection of surveys in this environment
 /// @property contacts - Collection of contacts/users tracked
 /// @property actionClasses - Defined actions that can trigger surveys
@@ -583,8 +583,8 @@ model Environment {
   createdAt         DateTime              @default(now()) @map(name: "created_at")
   updatedAt         DateTime              @updatedAt @map(name: "updated_at")
   type              EnvironmentType
-  project           Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId         String
+  workspace         Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
   appSetupCompleted Boolean               @default(false)
   surveys           Survey[]
   contacts          Contact[]
@@ -596,7 +596,7 @@ model Environment {
   integration       Integration[]
   ApiKeyEnvironment ApiKeyEnvironment[]
 
-  @@index([projectId])
+  @@index([workspaceId])
 }
 
 enum WidgetPlacement {
@@ -614,39 +614,40 @@ enum SurveyOverlay {
 }
 
 /// Main grouping mechanism for resources in Formbricks.
-/// Each organization can have multiple projects to separate different applications or products.
+/// Each organization can have multiple workspaces to separate different applications or products.
 ///
-/// @property id - Unique identifier for the project
-/// @property name - Display name of the project
+/// @property id - Unique identifier for the workspace
+/// @property name - Display name of the workspace
 /// @property organization - Reference to parent organization
 /// @property environments - Development and production environments
-/// @property styling - Project-wide styling configuration
-/// @property config - Project-specific configuration
+/// @property styling - Workspace-wide styling configuration
+/// @property config - Workspace-specific configuration
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
-model Project {
-  id                  String          @id @default(cuid())
-  createdAt           DateTime        @default(now()) @map(name: "created_at")
-  updatedAt           DateTime        @updatedAt @map(name: "updated_at")
-  name                String
-  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId      String
-  environments        Environment[]
+model Workspace {
+  id                                String                             @id @default(cuid())
+  createdAt                         DateTime                           @default(now()) @map(name: "created_at")
+  updatedAt                         DateTime                           @updatedAt @map(name: "updated_at")
+  name                              String
+  organization                      Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId                    String
+  environments                      Environment[]
   /// [Styling]
-  styling             Json            @default("{\"allowStyleOverwrite\":true}")
-  /// [ProjectConfig]
-  config              Json            @default("{}")
-  recontactDays       Int             @default(7)
-  linkSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement           WidgetPlacement @default(bottomRight)
-  clickOutsideClose   Boolean         @default(true)
-  overlay             SurveyOverlay   @default(none)
-  languages           Language[]
+  styling                           Json                               @default("{\"allowStyleOverwrite\":true}")
+  /// [WorkspaceConfig]
+  config                            Json                               @default("{}")
+  recontactDays                     Int                                @default(7)
+  linkSurveyBranding                Boolean                            @default(true) // Determines if the survey branding should be displayed in link surveys
+  inAppSurveyBranding               Boolean                            @default(true) // Determines if the survey branding should be displayed in in-app surveys
+  placement                         WidgetPlacement                    @default(bottomRight)
+  clickOutsideClose                 Boolean                            @default(true)
+  overlay                           SurveyOverlay                      @default(none)
+  languages                         Language[]
   /// [Logo]
-  logo                Json?
-  projectTeams        ProjectTeam[]
-  customHeadScripts   String? // Custom HTML scripts for link surveys (self-hosted only)
+  logo                              Json?
+  workspaceTeams                    WorkspaceTeam[]
+  customHeadScripts                 String? // Custom HTML scripts for link surveys (self-hosted only)
+  feedbackRecordDirectoryWorkspaces FeedbackRecordDirectoryWorkspace[]
 
   @@unique([organizationId, name])
 }
@@ -658,26 +659,26 @@ model Project {
 /// @property id - Unique identifier for the organization
 /// @property name - Display name of the organization
 /// @property memberships - User memberships within the organization
-/// @property projects - Collection of projects owned by the organization
+/// @property workspaces - Collection of workspaces owned by the organization
 /// @property billing - JSON field containing billing information
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
 /// @property isAIDataAnalysisEnabled - Controls access to AI data analysis features that touch experience data
 model Organization {
-  id                      String               @id @default(cuid())
-  createdAt               DateTime             @default(now()) @map(name: "created_at")
-  updatedAt               DateTime             @updatedAt @map(name: "updated_at")
-  name                    String
-  memberships             Membership[]
-  projects                Project[]
-  billing                 OrganizationBilling?
+  id                        String                    @id @default(cuid())
+  createdAt                 DateTime                  @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                  @updatedAt @map(name: "updated_at")
+  name                      String
+  memberships               Membership[]
+  workspaces                Workspace[]
+  billing                   OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel              Json                 @default("{}")
-  invites                 Invite[]
-  isAISmartToolsEnabled   Boolean              @default(false)
-  isAIDataAnalysisEnabled Boolean              @default(false)
-  teams                   Team[]
-  apiKeys                 ApiKey[]
+  whitelabel                Json                      @default("{}")
+  invites                   Invite[]
+  isAIEnabled               Boolean                   @default(false)
+  teams                     Team[]
+  apiKeys                   ApiKey[]
+  feedbackRecordDirectories FeedbackRecordDirectory[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -965,18 +966,18 @@ model Segment {
 /// @property id - Unique identifier for the language
 /// @property code - Language code (e.g., 'en-US')
 /// @property alias - Optional friendly name
-/// @property project - The project this language is enabled for
+/// @property workspace - The workspace this language is enabled for
 model Language {
   id              String           @id @default(cuid())
   createdAt       DateTime         @default(now()) @map(name: "created_at")
   updatedAt       DateTime         @updatedAt @map(name: "updated_at")
   code            String
   alias           String?
-  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId       String
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId     String
   surveyLanguages SurveyLanguage[]
 
-  @@unique([projectId, code])
+  @@unique([workspaceId, code])
 }
 
 /// Links surveys to their supported languages.
@@ -1005,16 +1006,16 @@ model SurveyLanguage {
 /// @property name - Display name of the team
 /// @property organization - The parent organization
 /// @property teamUsers - Users who are part of this team
-/// @property projectTeams - Projects this team has access to
+/// @property workspaceTeams - Workspaces this team has access to
 model Team {
-  id             String        @id @default(cuid())
-  createdAt      DateTime      @default(now()) @map(name: "created_at")
-  updatedAt      DateTime      @updatedAt @map(name: "updated_at")
+  id             String          @id @default(cuid())
+  createdAt      DateTime        @default(now()) @map(name: "created_at")
+  updatedAt      DateTime        @updatedAt @map(name: "updated_at")
   name           String
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   teamUsers      TeamUser[]
-  projectTeams   ProjectTeam[]
+  workspaceTeams WorkspaceTeam[]
 
   @@unique([organizationId, name])
 }
@@ -1043,27 +1044,65 @@ model TeamUser {
   @@index([userId])
 }
 
-enum ProjectTeamPermission {
+enum WorkspaceTeamPermission {
   read
   readWrite
   manage
 }
 
-/// Defines team access to specific projects.
-/// Manages project-level permissions for teams.
+/// Defines team access to specific workspaces.
+/// Manages workspace-level permissions for teams.
 ///
-/// @property project - The accessed project
+/// @property workspace - The accessed workspace
 /// @property team - The team receiving access
 /// @property permission - Level of access granted
-model ProjectTeam {
-  createdAt  DateTime              @default(now()) @map(name: "created_at")
-  updatedAt  DateTime              @updatedAt @map(name: "updated_at")
-  projectId  String
-  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  teamId     String
-  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permission ProjectTeamPermission @default(read)
+model WorkspaceTeam {
+  createdAt   DateTime                @default(now()) @map(name: "created_at")
+  updatedAt   DateTime                @updatedAt @map(name: "updated_at")
+  workspaceId String
+  workspace   Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  teamId      String
+  team        Team                    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permission  WorkspaceTeamPermission @default(read)
 
-  @@id([projectId, teamId])
+  @@id([workspaceId, teamId])
   @@index([teamId])
+}
+
+/// Represents a feedback record directory (Hub tenant) owned by an organization.
+/// Directories group feedback data and are assigned to workspaces for access control.
+///
+/// @property id - Unique identifier for the directory
+/// @property name - Display name of the directory
+/// @property isArchived - Soft delete flag
+/// @property organization - The parent organization
+/// @property workspaces - Workspaces assigned to this directory
+model FeedbackRecordDirectory {
+  id             String                             @id @default(cuid())
+  createdAt      DateTime                           @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                           @updatedAt @map(name: "updated_at")
+  name           String
+  isArchived     Boolean                            @default(false)
+  organizationId String
+  organization   Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaces     FeedbackRecordDirectoryWorkspace[]
+
+  @@unique([organizationId, name])
+}
+
+/// Links feedback record directories to workspaces (workspaces).
+/// Manages which workspaces can access a given directory.
+///
+/// @property feedbackRecordDirectory - The directory being accessed
+/// @property workspace - The workspace receiving access
+model FeedbackRecordDirectoryWorkspace {
+  createdAt                 DateTime                @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                @updatedAt @map(name: "updated_at")
+  feedbackRecordDirectoryId String
+  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
+  workspaceId               String
+  workspace                 Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([feedbackRecordDirectoryId, workspaceId])
+  @@index([workspaceId])
 }

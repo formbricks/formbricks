@@ -28,7 +28,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import {
   getOrganizationsForSwitcherAction,
-  getProjectsForSwitcherAction,
+  getWorkspacesForSwitcherAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
@@ -39,9 +39,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
-import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
-import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -54,24 +51,27 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import { CreateWorkspaceModal } from "@/modules/workspaces/components/create-workspace-modal";
+import { WorkspaceLimitModal } from "@/modules/workspaces/components/workspace-limit-modal";
+import { getLatestStableFbReleaseAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
 import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
   user: TUser;
   organization: TOrganization;
-  project: { id: string; name: string };
+  workspace: { id: string; name: string };
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
   publicDomain: string;
   isMultiOrgEnabled: boolean;
-  organizationProjectsLimit: number;
+  organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
   isAccessControlAllowed: boolean;
 }
 
-const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
+const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
   if (pathname.includes("/settings/")) {
     return false;
   }
@@ -94,13 +94,13 @@ export const MainNavigation = ({
   environment,
   organization,
   user,
-  project,
+  workspace,
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
   publicDomain,
   isMultiOrgEnabled,
-  organizationProjectsLimit,
+  organizationWorkspacesLimit,
   isLicenseActive,
   isAccessControlAllowed,
 }: NavigationProps) => {
@@ -136,7 +136,7 @@ export const MainNavigation = ({
   }, [isCollapsed]);
 
   useEffect(() => {
-    // Auto collapse project navbar on org and account settings
+    // Auto collapse workspace navbar on org and account settings
     if (pathname?.includes("/settings")) {
       setIsCollapsed(true);
     }
@@ -192,16 +192,16 @@ export const MainNavigation = ({
 
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-  const [hasInitializedProjects, setHasInitializedProjects] = useState(false);
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
+  const [hasInitializedWorkspaces, setHasInitializedWorkspaces] = useState(false);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
   const [workspaceLoadError, setWorkspaceLoadError] = useState<string | null>(null);
   const [organizationLoadError, setOrganizationLoadError] = useState<string | null>(null);
-  const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
+  const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
-  const [openProjectLimitModal, setOpenProjectLimitModal] = useState(false);
+  const [openWorkspaceLimitModal, setOpenWorkspaceLimitModal] = useState(false);
 
   const renderSwitcherError = (error: string, onRetry: () => void, retryLabel: string) => (
     <div className="px-2 py-4">
@@ -212,7 +212,7 @@ export const MainNavigation = ({
     </div>
   );
 
-  const projectSettings = [
+  const workspaceSettings = [
     {
       id: "general",
       label: t("common.general"),
@@ -287,15 +287,15 @@ export const MainNavigation = ({
     },
   ];
 
-  const loadProjects = useCallback(async () => {
-    setIsLoadingProjects(true);
+  const loadWorkspaces = useCallback(async () => {
+    setIsLoadingWorkspaces(true);
     setWorkspaceLoadError(null);
 
     try {
-      const result = await getProjectsForSwitcherAction({ organizationId: organization.id });
+      const result = await getWorkspacesForSwitcherAction({ organizationId: organization.id });
       if (result?.data) {
         const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
-        setProjects(sorted);
+        setWorkspaces(sorted);
       } else {
         setWorkspaceLoadError(getFormattedErrorMessage(result) || t("common.failed_to_load_workspaces"));
       }
@@ -308,18 +308,18 @@ export const MainNavigation = ({
         formattedError || (error instanceof Error ? error.message : t("common.failed_to_load_workspaces"))
       );
     } finally {
-      setIsLoadingProjects(false);
-      setHasInitializedProjects(true);
+      setIsLoadingWorkspaces(false);
+      setHasInitializedWorkspaces(true);
     }
   }, [organization.id, t]);
 
   useEffect(() => {
-    if (!isWorkspaceDropdownOpen || projects.length > 0 || isLoadingProjects || workspaceLoadError) {
+    if (!isWorkspaceDropdownOpen || workspaces.length > 0 || isLoadingWorkspaces || workspaceLoadError) {
       return;
     }
 
-    loadProjects();
-  }, [isWorkspaceDropdownOpen, projects.length, isLoadingProjects, workspaceLoadError, loadProjects]);
+    loadWorkspaces();
+  }, [isWorkspaceDropdownOpen, workspaces.length, isLoadingWorkspaces, workspaceLoadError, loadWorkspaces]);
 
   const loadOrganizations = useCallback(async () => {
     setIsLoadingOrganizations(true);
@@ -398,10 +398,10 @@ export const MainNavigation = ({
 
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
-  const handleProjectChange = (projectId: string) => {
-    if (projectId === project.id) return;
+  const handleWorkspaceChange = (workspaceId: string) => {
+    if (workspaceId === workspace.id) return;
     startTransition(() => {
-      router.push(`/workspaces/${projectId}/`);
+      router.push(`/workspaces/${workspaceId}/`);
     });
   };
 
@@ -418,20 +418,20 @@ export const MainNavigation = ({
     });
   };
 
-  const handleProjectCreate = () => {
-    if (!hasInitializedProjects || isLoadingProjects) {
+  const handleWorkspaceCreate = () => {
+    if (!hasInitializedWorkspaces || isLoadingWorkspaces) {
       return;
     }
 
-    if (projects.length >= organizationProjectsLimit) {
-      setOpenProjectLimitModal(true);
+    if (workspaces.length >= organizationWorkspacesLimit) {
+      setOpenWorkspaceLimitModal(true);
       return;
     }
 
-    setOpenCreateProjectModal(true);
+    setOpenCreateWorkspaceModal(true);
   };
 
-  const projectLimitModalButtons = (): [ModalButton, ModalButton] => {
+  const workspaceLimitModalButtons = (): [ModalButton, ModalButton] => {
     if (isFormbricksCloud) {
       return [
         {
@@ -440,7 +440,7 @@ export const MainNavigation = ({
         },
         {
           text: t("common.cancel"),
-          onClick: () => setOpenProjectLimitModal(false),
+          onClick: () => setOpenWorkspaceLimitModal(false),
         },
       ];
     }
@@ -454,7 +454,7 @@ export const MainNavigation = ({
       },
       {
         text: t("common.cancel"),
-        onClick: () => setOpenProjectLimitModal(false),
+        onClick: () => setOpenWorkspaceLimitModal(false),
       },
     ];
   };
@@ -466,11 +466,12 @@ export const MainNavigation = ({
 
   const switcherIconClasses =
     "flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600";
-  const isInitialProjectsLoading = isWorkspaceDropdownOpen && !hasInitializedProjects && !workspaceLoadError;
+  const isInitialWorkspacesLoading =
+    isWorkspaceDropdownOpen && !hasInitializedWorkspaces && !workspaceLoadError;
 
   return (
     <>
-      {project && (
+      {workspace && (
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
@@ -560,7 +561,7 @@ export const MainNavigation = ({
                     {!isCollapsed && !isTextVisible && (
                       <>
                         <div className="grow overflow-hidden">
-                          <p className="truncate text-sm font-bold text-slate-700">{project.name}</p>
+                          <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
                           <p className="text-sm text-slate-500">{t("common.workspace")}</p>
                         </div>
                         {isPending && (
@@ -576,30 +577,30 @@ export const MainNavigation = ({
                     <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
                     {t("common.change_workspace")}
                   </div>
-                  {(isLoadingProjects || isInitialProjectsLoading) && (
+                  {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
                     <div className="flex items-center justify-center py-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   )}
-                  {!isLoadingProjects &&
-                    !isInitialProjectsLoading &&
+                  {!isLoadingWorkspaces &&
+                    !isInitialWorkspacesLoading &&
                     workspaceLoadError &&
                     renderSwitcherError(
                       workspaceLoadError,
                       () => {
                         setWorkspaceLoadError(null);
-                        setProjects([]);
+                        setWorkspaces([]);
                       },
                       t("common.try_again")
                     )}
-                  {!isLoadingProjects && !isInitialProjectsLoading && !workspaceLoadError && (
+                  {!isLoadingWorkspaces && !isInitialWorkspacesLoading && !workspaceLoadError && (
                     <>
                       <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                        {projects.map((proj) => (
+                        {workspaces.map((proj) => (
                           <DropdownMenuCheckboxItem
                             key={proj.id}
-                            checked={proj.id === project.id}
-                            onClick={() => handleProjectChange(proj.id)}
+                            checked={proj.id === workspace.id}
+                            onClick={() => handleWorkspaceChange(proj.id)}
                             className="cursor-pointer">
                             {proj.name}
                           </DropdownMenuCheckboxItem>
@@ -607,7 +608,7 @@ export const MainNavigation = ({
                       </DropdownMenuGroup>
                       {isOwnerOrManager && (
                         <DropdownMenuCheckboxItem
-                          onClick={handleProjectCreate}
+                          onClick={handleWorkspaceCreate}
                           className="w-full cursor-pointer justify-between">
                           <span>{t("common.add_new_workspace")}</span>
                           <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
@@ -621,10 +622,10 @@ export const MainNavigation = ({
                       <Cog className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
                       {t("common.workspace_configuration")}
                     </div>
-                    {projectSettings.map((setting) => (
+                    {workspaceSettings.map((setting) => (
                       <DropdownMenuCheckboxItem
                         key={setting.id}
-                        checked={isActiveProjectSetting(pathname, setting.id)}
+                        checked={isActiveWorkspaceSetting(pathname, setting.id)}
                         onClick={() => handleSettingNavigation(setting.href)}
                         className="cursor-pointer">
                         {setting.label}
@@ -794,18 +795,18 @@ export const MainNavigation = ({
           </div>
         </aside>
       )}
-      {openProjectLimitModal && (
-        <ProjectLimitModal
-          open={openProjectLimitModal}
-          setOpen={setOpenProjectLimitModal}
-          buttons={projectLimitModalButtons()}
-          projectLimit={organizationProjectsLimit}
+      {openWorkspaceLimitModal && (
+        <WorkspaceLimitModal
+          open={openWorkspaceLimitModal}
+          setOpen={setOpenWorkspaceLimitModal}
+          buttons={workspaceLimitModalButtons()}
+          workspaceLimit={organizationWorkspacesLimit}
         />
       )}
-      {openCreateProjectModal && (
-        <CreateProjectModal
-          open={openCreateProjectModal}
-          setOpen={setOpenCreateProjectModal}
+      {openCreateWorkspaceModal && (
+        <CreateWorkspaceModal
+          open={openCreateWorkspaceModal}
+          setOpen={setOpenCreateWorkspaceModal}
           organizationId={organization.id}
           isAccessControlAllowed={isAccessControlAllowed}
         />

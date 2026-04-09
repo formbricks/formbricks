@@ -1,11 +1,11 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
@@ -16,8 +16,8 @@ import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
   survey: TSurvey;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
-  styling: TProjectStyling | TSurveyStyling;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  styling: TWorkspaceStyling | TSurveyStyling;
   publicDomain: string;
   responseCount?: number;
   languageCode: string;
@@ -39,7 +39,7 @@ let setResponseData = (_: TResponseData) => {};
 
 export const SurveyClientWrapper = ({
   survey,
-  project,
+  workspace,
   styling,
   publicDomain,
   responseCount,
@@ -142,13 +142,13 @@ export const SurveyClientWrapper = ({
       {/* Inject custom scripts for tracking/analytics (self-hosted only) */}
       {!IS_FORMBRICKS_CLOUD && !isPreview && (
         <CustomScriptsInjector
-          projectScripts={project.customHeadScripts}
+          workspaceScripts={workspace.customHeadScripts}
           surveyScripts={survey.customHeadScripts}
           scriptsMode={survey.customHeadScriptsMode}
         />
       )}
       <LinkSurveyWrapper
-        project={project}
+        workspace={workspace}
         surveyId={survey.id}
         isWelcomeCardEnabled={survey.welcomeCard.enabled}
         isPreview={isPreview}
@@ -160,7 +160,7 @@ export const SurveyClientWrapper = ({
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
-        isBrandingEnabled={project.linkSurveyBranding}
+        isBrandingEnabled={workspace.linkSurveyBranding}
         dir={logoDir}>
         <SurveyInline
           appUrl={publicDomain}
@@ -169,7 +169,7 @@ export const SurveyClientWrapper = ({
           survey={survey}
           styling={styling}
           languageCode={languageCode}
-          isBrandingEnabled={project.linkSurveyBranding}
+          isBrandingEnabled={workspace.linkSurveyBranding}
           shouldResetQuestionId={false}
           autoFocus={autoFocus}
           prefillResponseData={prefillValue}

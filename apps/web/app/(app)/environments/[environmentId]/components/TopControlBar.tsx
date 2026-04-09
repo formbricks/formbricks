@@ -2,16 +2,16 @@
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/project-and-org-switch";
+import { WorkspaceAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/workspace-and-org-switch";
 import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { getAccessFlags } from "@/lib/membership/utils";
 
 interface TopControlBarProps {
   environments: TEnvironment[];
   currentOrganizationId: string;
-  currentProjectId: string;
+  currentWorkspaceId: string;
   isMultiOrgEnabled: boolean;
-  organizationProjectsLimit: number;
+  organizationWorkspacesLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
   isOwnerOrManager: boolean;
@@ -22,9 +22,9 @@ interface TopControlBarProps {
 export const TopControlBar = ({
   environments,
   currentOrganizationId,
-  currentProjectId,
+  currentWorkspaceId,
   isMultiOrgEnabled,
-  organizationProjectsLimit,
+  organizationWorkspacesLimit,
   isFormbricksCloud,
   isLicenseActive,
   isOwnerOrManager,
@@ -38,13 +38,13 @@ export const TopControlBar = ({
     <div
       className="flex h-14 w-full items-center justify-between bg-slate-50 px-6"
       data-testid="fb__global-top-control-bar">
-      <ProjectAndOrgSwitch
+      <WorkspaceAndOrgSwitch
         currentEnvironmentId={environment.id}
         environments={environments}
         currentOrganizationId={currentOrganizationId}
-        currentProjectId={currentProjectId}
+        currentWorkspaceId={currentWorkspaceId}
         isMultiOrgEnabled={isMultiOrgEnabled}
-        organizationProjectsLimit={organizationProjectsLimit}
+        organizationWorkspacesLimit={organizationWorkspacesLimit}
         isFormbricksCloud={isFormbricksCloud}
         isLicenseActive={isLicenseActive}
         isOwnerOrManager={isOwnerOrManager}

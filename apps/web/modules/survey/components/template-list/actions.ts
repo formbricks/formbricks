@@ -6,7 +6,7 @@ import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -51,9 +51,9 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });

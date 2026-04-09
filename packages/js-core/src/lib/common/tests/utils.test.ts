@@ -1,6 +1,6 @@
 // utils.test.ts
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { mockProjectId, mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
+import { mockSurveyId, mockWorkspaceId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
   diffInDays,
@@ -21,8 +21,8 @@ import {
 import type {
   TEnvironmentState,
   TEnvironmentStateActionClass,
-  TEnvironmentStateProject,
   TEnvironmentStateSurvey,
+  TEnvironmentStateWorkspace,
   TSurveyStyling,
   TUserState,
 } from "@/types/config";
@@ -166,15 +166,15 @@ describe("utils.ts", () => {
       environment = {
         expiresAt: new Date(),
         data: {
-          project: {
-            id: mockProjectId,
+          workspace: {
+            id: mockWorkspaceId,
             recontactDays: 7, // fallback if survey doesn't have it
             clickOutsideClose: false,
             overlay: "none",
             placement: "bottomRight",
             inAppSurveyBranding: true,
             styling: { allowStyleOverwrite: false },
-          } as TEnvironmentStateProject,
+          } as TEnvironmentStateWorkspace,
           surveys: [],
           actionClasses: [],
         },
@@ -252,7 +252,7 @@ describe("utils.ts", () => {
     });
 
     test("filters out surveys if recontactDays not met", () => {
-      // Suppose survey uses project fallback (7 days)
+      // Suppose survey uses workspace fallback (7 days)
       environment.data.surveys = [
         { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TEnvironmentStateSurvey,
       ];
@@ -308,11 +308,11 @@ describe("utils.ts", () => {
   // getStyling
   // ---------------------------------------------------------------------------------
   describe("getStyling()", () => {
-    test("returns project styling if allowStyleOverwrite=false", () => {
-      const project = {
+    test("returns workspace styling if allowStyleOverwrite=false", () => {
+      const workspace = {
         id: "p1",
         styling: { allowStyleOverwrite: false, brandColor: { light: "#fff" } },
-      } as TEnvironmentStateProject;
+      } as TEnvironmentStateWorkspace;
       const survey = {
         styling: {
           overwriteThemeStyling: true,
@@ -320,16 +320,16 @@ describe("utils.ts", () => {
         } as TSurveyStyling,
       } as TEnvironmentStateSurvey;
 
-      const result = getStyling(project, survey);
-      // should get project styling
-      expect(result).toEqual(project.styling);
+      const result = getStyling(workspace, survey);
+      // should get workspace styling
+      expect(result).toEqual(workspace.styling);
     });
 
-    test("returns project styling if allowStyleOverwrite=true but survey overwriteThemeStyling=false", () => {
-      const project = {
+    test("returns workspace styling if allowStyleOverwrite=true but survey overwriteThemeStyling=false", () => {
+      const workspace = {
         id: "p1",
         styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
-      } as TEnvironmentStateProject;
+      } as TEnvironmentStateWorkspace;
       const survey = {
         styling: {
           overwriteThemeStyling: false,
@@ -337,16 +337,16 @@ describe("utils.ts", () => {
         } as TSurveyStyling,
       } as TEnvironmentStateSurvey;
 
-      const result = getStyling(project, survey);
-      // should get project styling still
-      expect(result).toEqual(project.styling);
+      const result = getStyling(workspace, survey);
+      // should get workspace styling still
+      expect(result).toEqual(workspace.styling);
     });
 
     test("returns survey styling if allowStyleOverwrite=true and survey overwriteThemeStyling=true", () => {
-      const project = {
+      const workspace = {
         id: "p1",
         styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
-      } as TEnvironmentStateProject;
+      } as TEnvironmentStateWorkspace;
       const survey = {
         styling: {
           overwriteThemeStyling: true,
@@ -354,7 +354,7 @@ describe("utils.ts", () => {
         } as TSurveyStyling,
       } as TEnvironmentStateSurvey;
 
-      const result = getStyling(project, survey);
+      const result = getStyling(workspace, survey);
       expect(result).toEqual(survey.styling);
     });
   });

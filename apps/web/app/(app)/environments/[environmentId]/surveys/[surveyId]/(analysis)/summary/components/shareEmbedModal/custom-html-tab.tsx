@@ -22,7 +22,7 @@ import {
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 interface CustomHtmlTabProps {
-  projectCustomScripts: string | null | undefined;
+  workspaceCustomScripts: string | null | undefined;
   isReadOnly: boolean;
 }
 
@@ -31,7 +31,7 @@ interface CustomHtmlFormData {
   customHeadScriptsMode: TSurvey["customHeadScriptsMode"];
 }
 
-export const CustomHtmlTab = ({ projectCustomScripts, isReadOnly }: CustomHtmlTabProps) => {
+export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtmlTabProps) => {
   const { t } = useTranslation();
   const { survey } = useSurvey();
   const [isSaving, setIsSaving] = useState(false);
@@ -101,18 +101,18 @@ export const CustomHtmlTab = ({ projectCustomScripts, isReadOnly }: CustomHtmlTa
           </div>
 
           {/* Workspace Scripts Preview */}
-          {projectCustomScripts && (
+          {workspaceCustomScripts && (
             <div className={scriptsMode === "replace" ? "opacity-50" : ""}>
               <FormLabel>{t("environments.surveys.share.custom_html.workspace_scripts_label")}</FormLabel>
               <div className="mt-2 max-h-32 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3">
                 <pre className="whitespace-pre-wrap font-mono text-xs text-slate-600">
-                  {projectCustomScripts}
+                  {workspaceCustomScripts}
                 </pre>
               </div>
             </div>
           )}
 
-          {!projectCustomScripts && (
+          {!workspaceCustomScripts && (
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
               <p className="text-sm text-slate-500">
                 {t("environments.surveys.share.custom_html.no_workspace_scripts")}

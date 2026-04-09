@@ -2,6 +2,10 @@ import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { TJsEnvironmentState } from "@formbricks/types/js";
+import {
+  addLegacyProjectOverwritesToList,
+  addLegacyProjectToEnvironmentState,
+} from "@/app/lib/api/api-backwards-compat";
 import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, POSTHOG_KEY, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -14,7 +18,7 @@ import { getEnvironmentStateData } from "./data";
  *
  * @param environmentId - The environment ID to fetch state for
  * @returns The environment state
- * @throws ResourceNotFoundError if environment, organization, or project not found
+ * @throws ResourceNotFoundError if environment, organization, or workspace not found
  */
 export const getEnvironmentState = async (
   environmentId: string
@@ -42,12 +46,14 @@ export const getEnvironmentState = async (
       }
 
       // Build the response data
-      const data: TJsEnvironmentState["data"] = {
-        surveys,
+      // Backwards compat: include `project` alongside `workspace`, and
+      // `projectOverwrites` alongside `workspaceOverwrites` in each survey
+      const data = addLegacyProjectToEnvironmentState({
+        surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
-        project: environment.project,
+        workspace: environment.workspace,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
-      };
+      } as TJsEnvironmentState["data"]);
 
       return { data };
     },

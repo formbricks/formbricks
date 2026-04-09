@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
@@ -41,7 +41,7 @@ import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
 interface BlockCardProps {
   localSurvey: TSurvey;
-  project: Project;
+  workspace: Workspace;
   block: TSurveyBlock;
   blockIdx: number;
   moveElement: (elementIdx: number, up: boolean) => void;
@@ -81,7 +81,7 @@ interface BlockCardProps {
 
 export const BlockCard = ({
   localSurvey,
-  project,
+  workspace,
   block,
   blockIdx,
   moveElement,
@@ -218,7 +218,7 @@ export const BlockCard = ({
 
     // FileUpload needs extra props
     if (element.type === TSurveyElementTypeEnum.FileUpload) {
-      additionalProps.project = project;
+      additionalProps.workspace = workspace;
       additionalProps.isFormbricksCloud = isFormbricksCloud;
     }
 
@@ -374,7 +374,7 @@ export const BlockCard = ({
                                 buttonLabel: block.buttonLabel,
                                 backButtonLabel: block.backButtonLabel,
                               }}
-                              project={project}
+                              workspace={workspace}
                               updateCard={updateElement}
                               addCard={addElement}
                               addCardToBlock={addElementToBlock}
@@ -447,7 +447,7 @@ export const BlockCard = ({
                 setLocalSurvey={setLocalSurvey}
                 setActiveElementId={setActiveElementId}
                 block={block}
-                project={project}
+                workspace={workspace}
                 isCxMode={isCxMode}
               />
             </div>

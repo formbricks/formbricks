@@ -6,8 +6,8 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TJsEnvironmentStateActionClass,
-  TJsEnvironmentStateProject,
   TJsEnvironmentStateSurvey,
+  TJsEnvironmentStateWorkspace,
 } from "@formbricks/types/js";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -23,7 +23,7 @@ export interface EnvironmentStateData {
     id: string;
     type: string;
     appSetupCompleted: boolean;
-    project: TJsEnvironmentStateProject;
+    workspace: TJsEnvironmentStateWorkspace;
   };
   surveys: TJsEnvironmentStateSurvey[];
   actionClasses: TJsEnvironmentStateActionClass[];
@@ -45,8 +45,8 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
         id: true,
         type: true,
         appSetupCompleted: true,
-        // Project data (optimized select)
-        project: {
+        // Workspace data (optimized select)
+        workspace: {
           select: {
             id: true,
             recontactDays: true,
@@ -97,7 +97,7 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
                     alias: true,
                     createdAt: true,
                     updatedAt: true,
-                    projectId: true,
+                    workspaceId: true,
                   },
                 },
               },
@@ -132,7 +132,7 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             },
             displayPercentage: true,
             delay: true,
-            projectOverwrites: true,
+            workspaceOverwrites: true,
           },
         },
       },
@@ -142,8 +142,8 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
       throw new ResourceNotFoundError("environment", environmentId);
     }
 
-    if (!environmentData.project) {
-      throw new ResourceNotFoundError("project", null);
+    if (!environmentData.workspace) {
+      throw new ResourceNotFoundError("workspace", null);
     }
 
     // Transform surveys using existing utility
@@ -156,14 +156,14 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
         id: environmentData.id,
         type: environmentData.type,
         appSetupCompleted: environmentData.appSetupCompleted,
-        project: {
-          id: environmentData.project.id,
-          recontactDays: environmentData.project.recontactDays,
-          clickOutsideClose: environmentData.project.clickOutsideClose,
-          overlay: environmentData.project.overlay,
-          placement: environmentData.project.placement,
-          inAppSurveyBranding: environmentData.project.inAppSurveyBranding,
-          styling: resolveStorageUrlsInObject(environmentData.project.styling),
+        workspace: {
+          id: environmentData.workspace.id,
+          recontactDays: environmentData.workspace.recontactDays,
+          clickOutsideClose: environmentData.workspace.clickOutsideClose,
+          overlay: environmentData.workspace.overlay,
+          placement: environmentData.workspace.placement,
+          inAppSurveyBranding: environmentData.workspace.inAppSurveyBranding,
+          styling: resolveStorageUrlsInObject(environmentData.workspace.styling),
         },
       },
       surveys: resolveStorageUrlsInObject(transformedSurveys),

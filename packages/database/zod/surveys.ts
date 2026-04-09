@@ -99,7 +99,7 @@ const ZSurveyBase = z.object({
     .nullable()
     .describe("Message shown when survey is closed"),
   segmentId: z.string().nullable().describe("ID of the segment"),
-  projectOverwrites: z
+  workspaceOverwrites: z
     .object({
       brandColor: ZColor.nullish(),
       highlightBorderColor: ZColor.nullish(),
@@ -108,7 +108,7 @@ const ZSurveyBase = z.object({
       overlay: ZOverlay.nullish(),
     })
     .nullable()
-    .describe("Project specific overwrites"),
+    .describe("Workspace specific overwrites"),
   styling: z
     .object({
       brandColor: ZStylingColor.nullish(),

@@ -3,7 +3,6 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
@@ -12,6 +11,7 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { selectSurvey } from "../service";
 
 const selectContact = {
@@ -57,7 +57,7 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: mockId,
+      workspaceId: mockId,
     },
   },
   {
@@ -69,16 +69,16 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: mockId,
+      workspaceId: mockId,
     },
   },
 ];
 
-export const mockProject: TProject = {
+export const mockWorkspace: TWorkspace = {
   id: mockId,
   createdAt: currentDate,
   updatedAt: currentDate,
-  name: "mock Project",
+  name: "mock Workspace",
   organizationId: mockId,
   recontactDays: 0,
   linkSurveyBranding: false,
@@ -112,7 +112,7 @@ export const mockEnvironment: TEnvironment = {
   createdAt: currentDate,
   updatedAt: currentDate,
   type: "production",
-  projectId: mockId,
+  workspaceId: mockId,
   appSetupCompleted: false,
 };
 
@@ -237,7 +237,7 @@ export const mockOrganizationOutput: TOrganization = {
   billing: {
     stripeCustomerId: null,
     limits: {
-      projects: 3,
+      workspaces: 3,
       monthly: {
         responses: 1500,
       },
@@ -251,7 +251,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   singleUse: null,
   styling: null,
   recaptcha: null,
@@ -278,7 +278,7 @@ export const mockSurveyOutput: SurveyMock = {
   displayOption: "respondMultiple",
   metadata: {},
   triggers: [{ actionClass: mockActionClass }],
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   recaptcha: null,
   singleUse: null,
   styling: null,
@@ -311,7 +311,7 @@ export const updateSurveyInput: TSurvey = {
   displayOption: "respondMultiple",
   metadata: {},
   triggers: [{ actionClass: mockActionClass }],
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   recaptcha: null,
   singleUse: null,
   styling: null,

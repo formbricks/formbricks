@@ -39,7 +39,7 @@ interface PricingTableProps {
   organization: TOrganization;
   environmentId: string;
   responseCount: number;
-  projectCount: number;
+  workspaceCount: number;
   usageCycleStart: Date;
   usageCycleEnd: Date;
   hasBillingRights: boolean;
@@ -134,7 +134,7 @@ export const PricingTable = ({
   environmentId,
   organization,
   responseCount,
-  projectCount,
+  workspaceCount,
   usageCycleStart,
   usageCycleEnd,
   hasBillingRights,
@@ -173,7 +173,7 @@ export const PricingTable = ({
     timeZone: "UTC",
   })}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
-  const projectsUnlimitedCheck = organization.billing.limits.projects === null;
+  const workspacesUnlimitedCheck = organization.billing.limits.workspaces === null;
   const currentPlanLevel =
     currentCloudPlan === "hobby" || currentCloudPlan === "pro" || currentCloudPlan === "scale"
       ? STANDARD_PLAN_LEVEL[currentCloudPlan]
@@ -530,9 +530,9 @@ export const PricingTable = ({
 
             <UsageCard
               metric={t("common.workspaces")}
-              currentCount={projectCount}
-              limit={organization.billing.limits.projects}
-              isUnlimited={projectsUnlimitedCheck}
+              currentCount={workspaceCount}
+              limit={organization.billing.limits.workspaces}
+              isUnlimited={workspacesUnlimitedCheck}
               unlimitedLabel={t("environments.settings.billing.unlimited_workspaces")}
             />
           </div>

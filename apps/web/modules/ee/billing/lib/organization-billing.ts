@@ -47,7 +47,7 @@ export const invalidateOrganizationBillingCache = async (organizationId: string)
 
 export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
-    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
     },
@@ -1058,15 +1058,15 @@ const resolveEntitlementDrivenLimits = (
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
 
-  const projectsLimit =
+  const workspacesLimit =
     workspaceLimitFromEntitlements === undefined
-      ? (previousLimits?.projects ?? null)
+      ? (previousLimits?.workspaces ?? null)
       : workspaceLimitFromEntitlements;
 
-  if (workspaceLimitFromEntitlements === undefined && previousLimits?.projects == null) {
+  if (workspaceLimitFromEntitlements === undefined && previousLimits?.workspaces == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
-      "No workspace limit entitlement found in Stripe entitlements; preserving previous projects limit"
+      "No workspace limit entitlement found in Stripe entitlements; preserving previous workspaces limit"
     );
   }
 
@@ -1083,7 +1083,7 @@ const resolveEntitlementDrivenLimits = (
   }
 
   return {
-    projects: projectsLimit,
+    workspaces: workspacesLimit,
     monthly: {
       responses: responsesIncludedLimit,
     },

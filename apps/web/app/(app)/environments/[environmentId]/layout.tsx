@@ -27,7 +27,7 @@ const EnvLayout = async (props: {
       <EnvironmentStorageHandler environmentId={params.environmentId} />
       <EnvironmentContextWrapper
         environment={layoutData.environment}
-        project={layoutData.project}
+        workspace={layoutData.workspace}
         organization={layoutData.organization}>
         <EnvironmentLayout layoutData={layoutData}>{children}</EnvironmentLayout>
       </EnvironmentContextWrapper>

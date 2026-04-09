@@ -40,7 +40,7 @@ const createSurvey = (overrides: Partial<TSurvey>): TSurvey =>
     surveyClosedMessage: null,
     segment: null,
     segmentId: null,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     singleUse: null,
     pin: null,
     redirectUrl: null,

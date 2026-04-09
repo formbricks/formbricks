@@ -13,7 +13,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
   TApiKeyUpdateInput,
-  TApiKeyWithEnvironmentAndProject,
+  TApiKeyWithEnvironmentAndWorkspace,
   TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -52,14 +52,14 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
 
 // Get API key with its permissions from a raw API key
 export const getApiKeyWithPermissions = reactCache(
-  async (apiKey: string): Promise<TApiKeyWithEnvironmentAndProject | null> => {
+  async (apiKey: string): Promise<TApiKeyWithEnvironmentAndWorkspace | null> => {
     try {
       const includeQuery = {
         apiKeyEnvironments: {
           include: {
             environment: {
               include: {
-                project: {
+                workspace: {
                   select: {
                     id: true,
                     name: true,
@@ -121,7 +121,7 @@ export const getApiKeyWithPermissions = reactCache(
           });
       }
 
-      return apiKeyData as TApiKeyWithEnvironmentAndProject;
+      return apiKeyData as TApiKeyWithEnvironmentAndWorkspace;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

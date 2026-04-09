@@ -5,7 +5,7 @@ import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
-import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { TEnvironmentLayoutData } from "@/modules/environments/types/environment-auth";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -25,10 +25,10 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
     environment,
     organization,
     membership,
-    project, // Current project details
-    environments, // All project environments (for environment switcher)
+    workspace, // Current workspace details
+    environments, // All workspace environments (for environment switcher)
     isAccessControlAllowed,
-    projectPermission,
+    workspacePermission,
     license,
     responseCount,
   } = layoutData;
@@ -38,11 +38,11 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
 
   const { features, lastChecked, isPendingDowngrade, active, status } = license;
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.id);
+  const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
   const isOwnerOrManager = isOwner || isManager;
 
-  // Validate that project permission exists for members
-  if (isMember && !projectPermission) {
+  // Validate that workspace permission exists for members
+  if (isMember && !workspacePermission) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
@@ -70,13 +70,13 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
           environment={environment}
           organization={organization}
           user={user}
-          project={{ id: project.id, name: project.name }}
+          workspace={{ id: workspace.id, name: workspace.name }}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
           publicDomain={publicDomain}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          organizationProjectsLimit={organizationProjectsLimit}
+          organizationWorkspacesLimit={organizationProjectsLimit}
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}
         />
@@ -84,9 +84,9 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
           <TopControlBar
             environments={environments}
             currentOrganizationId={organization.id}
-            currentProjectId={project.id}
+            currentWorkspaceId={workspace.id}
             isMultiOrgEnabled={isMultiOrgEnabled}
-            organizationProjectsLimit={organizationProjectsLimit}
+            organizationWorkspacesLimit={organizationWorkspacesLimit}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isLicenseActive={active}
             isOwnerOrManager={isOwnerOrManager}
