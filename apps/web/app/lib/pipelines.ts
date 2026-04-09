@@ -1,6 +1,7 @@
 import "server-only";
 import { type TResponsePipelineEvent, getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import type { TResponse } from "@formbricks/types/responses";
 import { getJobsQueueingConfig } from "@/lib/jobs/config";
 import { getResponseSnapshotForPipeline } from "@/lib/response/service";
 
@@ -9,6 +10,7 @@ export interface EnqueueResponsePipelineEventsInput {
   surveyId: string;
   responseId: string;
   events: TResponsePipelineEvent[];
+  response?: TResponse;
 }
 
 export const enqueueResponsePipelineEvents = async ({
@@ -16,6 +18,7 @@ export const enqueueResponsePipelineEvents = async ({
   surveyId,
   responseId,
   events,
+  response: providedResponse,
 }: EnqueueResponsePipelineEventsInput): Promise<void> => {
   const uniqueEvents = [...new Set(events)];
 
@@ -38,21 +41,38 @@ export const enqueueResponsePipelineEvents = async ({
     return;
   }
 
-  let response;
-  try {
-    response = await getResponseSnapshotForPipeline(responseId);
-  } catch (error) {
-    logger.error(
+  let response = providedResponse;
+
+  if (response && response.id !== responseId) {
+    logger.warn(
       {
         environmentId,
-        err: error,
         events: uniqueEvents,
+        providedResponseId: response.id,
         responseId,
         surveyId,
       },
-      "Failed to hydrate response snapshot for BullMQ response pipeline"
+      "BullMQ response pipeline enqueue ignored a mismatched provided response snapshot"
     );
-    return;
+    response = undefined;
+  }
+
+  if (!response) {
+    try {
+      response = await getResponseSnapshotForPipeline(responseId);
+    } catch (error) {
+      logger.error(
+        {
+          environmentId,
+          err: error,
+          events: uniqueEvents,
+          responseId,
+          surveyId,
+        },
+        "Failed to hydrate response snapshot for BullMQ response pipeline"
+      );
+      return;
+    }
   }
 
   if (!response) {

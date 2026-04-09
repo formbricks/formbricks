@@ -371,6 +371,10 @@ describe("POST /api/v2/client/[environmentId]/responses", () => {
     expect(mockEnqueueResponsePipelineEvents).toHaveBeenCalledWith({
       environmentId,
       events: ["responseCreated", "responseFinished"],
+      response: expect.objectContaining({
+        id: "resp_1",
+        surveyId,
+      }),
       responseId: "resp_1",
       surveyId,
     });

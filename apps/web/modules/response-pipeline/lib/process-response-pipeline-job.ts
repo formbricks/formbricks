@@ -32,10 +32,14 @@ const getPipelineLogContext = (
   event: data.event,
   jobId: context.jobId,
   jobName: context.jobName,
+  maxAttempts: context.maxAttempts,
   queueName: context.queueName,
   responseId: data.response.id,
   surveyId: data.surveyId,
 });
+
+const toError = (error: unknown, fallbackMessage: string): Error =>
+  error instanceof Error ? error : new Error(fallbackMessage);
 
 const fetchWithTimeout = async (
   url: string,
@@ -141,6 +145,46 @@ const createWebhookDeliveryTask = async ({
     );
     throw error;
   }
+};
+
+const deliverWebhooks = async ({
+  data,
+  logContext,
+  survey,
+  webhooks,
+}: {
+  data: TResponsePipelineJobData;
+  logContext: ReturnType<typeof getPipelineLogContext>;
+  survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  webhooks: Webhook[];
+}): Promise<void> => {
+  const results = await Promise.allSettled(
+    webhooks.map((webhook) =>
+      createWebhookDeliveryTask({
+        webhook,
+        data,
+        survey,
+        logContext,
+      })
+    )
+  );
+
+  const failedResults = results.filter((result) => result.status === "rejected");
+  if (failedResults.length === 0) {
+    return;
+  }
+
+  if (logContext.attempt < logContext.maxAttempts) {
+    throw toError(failedResults[0].reason, "Response pipeline webhook delivery failed");
+  }
+
+  logger.error(
+    {
+      ...logContext,
+      failedWebhookCount: failedResults.length,
+    },
+    "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
+  );
 };
 
 const runResponseFinishedSideEffects = async ({
@@ -356,16 +400,12 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
 
     const event = data.event as PipelineTriggers;
     const webhooks = await getWebhooksForPipeline(data.environmentId, event, data.surveyId);
-    const webhookTasks = webhooks.map((webhook) =>
-      createWebhookDeliveryTask({
-        webhook,
-        data,
-        survey,
-        logContext,
-      })
-    );
-
-    await Promise.all(webhookTasks);
+    await deliverWebhooks({
+      data,
+      logContext,
+      survey,
+      webhooks,
+    });
 
     if (data.event === "responseFinished") {
       await runResponseFinishedSideEffects({

@@ -131,7 +131,13 @@ const baseContext = {
   attempt: 1,
   jobId: "job_123",
   jobName: "response-pipeline.process",
+  maxAttempts: 3,
   queueName: "background-jobs",
+};
+
+const finalAttemptContext = {
+  ...baseContext,
+  attempt: baseContext.maxAttempts,
 };
 
 const organization = {
@@ -345,8 +351,20 @@ describe("processResponsePipelineJob", () => {
     );
   });
 
-  test("fails the job when webhook delivery fails so BullMQ can retry it", async () => {
+  test("fails the job before the final attempt when webhook delivery fails", async () => {
     const webhookError = new Error("invalid webhook");
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+    mockGetSurvey.mockResolvedValue({
+      ...survey,
+      autoComplete: 1,
+      followUps: [{ id: "followup_123" }],
+    });
+    mockPrismaUserFindMany.mockResolvedValue([
+      {
+        email: "owner@example.com",
+        locale: "en",
+      },
+    ]);
     mockPrismaWebhookFindMany.mockResolvedValue([
       {
         id: "webhook_123",
@@ -356,15 +374,73 @@ describe("processResponsePipelineJob", () => {
     ]);
     mockValidateWebhookUrl.mockRejectedValue(webhookError);
 
-    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow("invalid webhook");
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).rejects.toThrow("invalid webhook");
 
     expect(mockHandleIntegrations).not.toHaveBeenCalled();
+    expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
+    expect(mockSendResponseFinishedEmail).not.toHaveBeenCalled();
+    expect(mockUpdateSurvey).not.toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         err: webhookError,
         webhookId: "webhook_123",
       }),
       "Response pipeline webhook delivery failed"
+    );
+  });
+
+  test("continues responseFinished side effects on the final webhook attempt", async () => {
+    const webhookError = new Error("invalid webhook");
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+    mockGetSurvey.mockResolvedValue({
+      ...survey,
+      autoComplete: 1,
+      followUps: [{ id: "followup_123" }],
+    });
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+    mockPrismaUserFindMany.mockResolvedValue([
+      {
+        email: "owner@example.com",
+        locale: "en",
+      },
+    ]);
+    mockValidateWebhookUrl.mockRejectedValue(webhookError);
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        finalAttemptContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockHandleIntegrations).toHaveBeenCalledTimes(1);
+    expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123");
+    expect(mockSendResponseFinishedEmail).toHaveBeenCalledTimes(1);
+    expect(mockUpdateSurvey).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attempt: 3,
+        failedWebhookCount: 1,
+        maxAttempts: 3,
+      }),
+      "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
     );
   });
 
@@ -432,6 +508,37 @@ describe("processResponsePipelineJob", () => {
         webhookId: "webhook_123",
       }),
       "Response pipeline webhook delivery failed"
+    );
+  });
+
+  test("continues responseCreated side effects on the final webhook attempt", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+    });
+
+    await expect(processResponsePipelineJob(baseData, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockRecordResponseCreatedMeterEvent).toHaveBeenCalledWith({
+      createdAt: baseData.response.createdAt,
+      responseId: "response_123",
+      stripeCustomerId: "cus_123",
+    });
+    expect(mockSendTelemetryEvents).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attempt: 3,
+        failedWebhookCount: 1,
+        maxAttempts: 3,
+      }),
+      "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
     );
   });
 

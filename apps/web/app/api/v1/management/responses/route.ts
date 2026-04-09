@@ -177,6 +177,7 @@ export const POST = withV1ApiWrapper({
         await enqueueResponsePipelineEvents({
           environmentId: surveyResult.survey.environmentId,
           events: response.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
+          response,
           responseId: response.id,
           surveyId: response.surveyId,
         });

@@ -172,6 +172,7 @@ export const PUT = withV1ApiWrapper({
       await enqueueResponsePipelineEvents({
         environmentId: result.survey.environmentId,
         events: updated.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
+        response: updated,
         responseId: updated.id,
         surveyId: result.survey.id,
       });

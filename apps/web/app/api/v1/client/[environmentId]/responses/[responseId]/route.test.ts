@@ -313,6 +313,10 @@ describe("PUT /api/v1/client/[environmentId]/responses/[responseId]", () => {
     expect(mockEnqueueResponsePipelineEvents).toHaveBeenCalledWith({
       environmentId,
       events: ["responseUpdated", "responseFinished"],
+      response: expect.objectContaining({
+        finished: true,
+        id: responseId,
+      }),
       responseId,
       surveyId,
     });

@@ -144,6 +144,68 @@ describe("enqueueResponsePipelineEvents", () => {
     expect(mockEnqueueResponsePipeline).not.toHaveBeenCalled();
   });
 
+  test("uses the provided response snapshot without loading it again", async () => {
+    mockGetJobsQueueingConfig.mockReturnValue({
+      enabled: true,
+      redisUrl: "redis://localhost:6379",
+    });
+    mockEnqueueResponsePipeline.mockResolvedValue({ jobId: "job-1" });
+
+    await enqueueResponsePipelineEvents({
+      environmentId: "env_123",
+      events: ["responseCreated"],
+      response: mockResponse,
+      responseId: mockResponse.id,
+      surveyId: mockResponse.surveyId,
+    });
+
+    expect(mockGetResponseSnapshotForPipeline).not.toHaveBeenCalled();
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({
+      environmentId: "env_123",
+      event: "responseCreated",
+      response: mockResponse,
+      surveyId: "cm9-survey-id",
+    });
+  });
+
+  test("falls back to an uncached snapshot lookup when the provided response id mismatches", async () => {
+    mockGetJobsQueueingConfig.mockReturnValue({
+      enabled: true,
+      redisUrl: "redis://localhost:6379",
+    });
+    mockGetResponseSnapshotForPipeline.mockResolvedValue(mockResponse);
+    mockEnqueueResponsePipeline.mockResolvedValue({ jobId: "job-1" });
+
+    await enqueueResponsePipelineEvents({
+      environmentId: "env_123",
+      events: ["responseCreated"],
+      response: {
+        ...mockResponse,
+        id: "other-response-id",
+      },
+      responseId: mockResponse.id,
+      surveyId: mockResponse.surveyId,
+    });
+
+    expect(mockWarn).toHaveBeenCalledWith(
+      {
+        environmentId: "env_123",
+        events: ["responseCreated"],
+        providedResponseId: "other-response-id",
+        responseId: mockResponse.id,
+        surveyId: "cm9-survey-id",
+      },
+      "BullMQ response pipeline enqueue ignored a mismatched provided response snapshot"
+    );
+    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledWith(mockResponse.id);
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({
+      environmentId: "env_123",
+      event: "responseCreated",
+      response: mockResponse,
+      surveyId: "cm9-survey-id",
+    });
+  });
+
   test("hydrates one response snapshot and enqueues unique events", async () => {
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: true,

@@ -253,6 +253,7 @@ export const handleUpdateResponseRequest = async ({
   await enqueueResponsePipelineEvents({
     environmentId: survey.environmentId,
     events: updatedResponse.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
+    response: responseData,
     responseId: responseData.id,
     surveyId: survey.id,
   });

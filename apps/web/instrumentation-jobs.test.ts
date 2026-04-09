@@ -108,7 +108,13 @@ describe("instrumentation-jobs", () => {
         response: { id: "res_123" },
         surveyId: "survey_123",
       },
-      { attempt: 1, jobId: "job_123", jobName: "response-pipeline.process", queueName: "background-jobs" }
+      {
+        attempt: 1,
+        jobId: "job_123",
+        jobName: "response-pipeline.process",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
     );
 
     expect(mockProcessResponsePipelineJob).toHaveBeenCalledWith(
@@ -118,7 +124,13 @@ describe("instrumentation-jobs", () => {
         response: { id: "res_123" },
         surveyId: "survey_123",
       },
-      { attempt: 1, jobId: "job_123", jobName: "response-pipeline.process", queueName: "background-jobs" }
+      {
+        attempt: 1,
+        jobId: "job_123",
+        jobName: "response-pipeline.process",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
     );
   });
 

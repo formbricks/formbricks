@@ -19,11 +19,13 @@ export const processJob = async (job: Job, handlerOverrides?: JobHandlerOverride
 
   const data = definition.schema.parse(job.data);
   const handler = handlerOverrides?.[job.name] ?? definition.handle;
+  const maxAttempts = typeof job.opts.attempts === "number" && job.opts.attempts > 0 ? job.opts.attempts : 1;
 
   await handler(data, {
     attempt: job.attemptsMade + 1,
     jobId: String(job.id),
     jobName: job.name,
+    maxAttempts,
     queueName: job.queueName,
   });
 };

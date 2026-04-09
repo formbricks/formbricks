@@ -10,6 +10,7 @@ export interface JobExecutionContext {
   attempt: number;
   jobId: string;
   jobName: string;
+  maxAttempts: number;
   queueName: string;
 }
 

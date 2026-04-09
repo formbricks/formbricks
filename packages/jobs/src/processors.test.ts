@@ -34,6 +34,7 @@ describe("@formbricks/jobs processor registry", () => {
       data: { message: "processor test" },
       id: "job-1",
       name: JOB_NAMES.testLog,
+      opts: { attempts: 3 },
       queueName: "background-jobs",
     } as never);
 
@@ -75,6 +76,7 @@ describe("@formbricks/jobs processor registry", () => {
         },
         id: "job-3",
         name: JOB_NAMES.responsePipeline,
+        opts: { attempts: 3 },
         queueName: "background-jobs",
       } as never)
     ).rejects.toThrow("BullMQ response pipeline processor override missing");
@@ -118,6 +120,7 @@ describe("@formbricks/jobs processor registry", () => {
       },
       id: "job-override",
       name: JOB_NAMES.responsePipeline,
+      opts: { attempts: 5 },
       queueName: "background-jobs",
     } as never;
 
@@ -136,6 +139,7 @@ describe("@formbricks/jobs processor registry", () => {
         attempt: 1,
         jobId: "job-override",
         jobName: JOB_NAMES.responsePipeline,
+        maxAttempts: 5,
         queueName: "background-jobs",
       }
     );
@@ -148,6 +152,7 @@ describe("@formbricks/jobs processor registry", () => {
         data: {},
         id: "job-2",
         name: "unknown.job",
+        opts: { attempts: 3 },
         queueName: "background-jobs",
       } as never)
     ).rejects.toThrow("No BullMQ processor registered for job: unknown.job");
