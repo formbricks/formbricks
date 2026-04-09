@@ -401,6 +401,7 @@ export function Survey({
 
     const restore = async () => {
       const progress = await getSurveyProgress(survey.id);
+
       if (cancelled || !progress) {
         setProgressRestored(true);
         return;
@@ -526,31 +527,47 @@ export function Survey({
   }, [offlinePersistEnabled, flushProgressToDb]);
 
   // --- Offline support: sync pending responses when coming back online ---
+  const isSyncingRef = useRef(false);
+
   useEffect(() => {
-    if (!offlinePersistEnabled || !isOnline || !responseQueue || !progressRestored) return;
+    if (!offlinePersistEnabled || !responseQueue || !progressRestored) return;
+
+    // Reset the guard when going offline so a new sync can start next time we're online
+    if (!isOnline) {
+      isSyncingRef.current = false;
+      return;
+    }
+
+    // Prevent duplicate syncs from re-renders while a sync is already in progress
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
 
     const syncPending = async () => {
-      const count = await responseQueue.getPendingCount();
-      if (count === 0) return;
+      try {
+        const count = await responseQueue.getPendingCount();
+        if (count === 0) return;
 
-      setIsSyncing(true);
-      setPendingSyncCount(count);
+        setIsSyncing(true);
+        setPendingSyncCount(count);
 
-      const result = await responseQueue.syncPersistedResponses((synced, total) => {
-        setPendingSyncCount(total - synced);
-      });
+        const result = await responseQueue.syncPersistedResponses((synced, total) => {
+          setPendingSyncCount(total - synced);
+        });
 
-      setIsSyncing(false);
-      setPendingSyncCount(0);
+        setIsSyncing(false);
+        setPendingSyncCount(0);
 
-      if (result.syncedCount > 0) {
-        console.log(`Formbricks: Synced ${result.syncedCount} offline response(s)`);
-      }
+        if (result.syncedCount > 0) {
+          console.log(`Formbricks: Synced ${result.syncedCount} offline response(s)`);
+        }
 
-      // Clean up IndexedDB after successful sync
-      if (result.success) {
-        await clearSurveyProgress(survey.id);
-        await clearPendingResponses(survey.id);
+        // Clean up IndexedDB after successful sync
+        if (result.success) {
+          await clearSurveyProgress(survey.id);
+          await clearPendingResponses(survey.id);
+        }
+      } finally {
+        isSyncingRef.current = false;
       }
     };
 
