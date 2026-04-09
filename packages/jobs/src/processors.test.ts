@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { JOB_NAMES } from "./constants";
 import { getBackgroundJobDefinition } from "./definitions";
+import type { JobExecutionContext, TResponsePipelineJobData } from "./index";
 import { getJobProcessor, processJob } from "./processors/registry";
 
 const { mockDebug, mockError } = vi.hoisted(() => ({
@@ -142,6 +143,81 @@ describe("@formbricks/jobs processor registry", () => {
         maxAttempts: 5,
         queueName: "background-jobs",
       }
+    );
+  });
+
+  test("accepts serialized response pipeline payloads from BullMQ", async () => {
+    const overrideHandler = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      processJob(
+        {
+          attemptsMade: 0,
+          data: {
+            environmentId: "env_123",
+            event: "responseCreated",
+            response: {
+              contact: null,
+              contactAttributes: null,
+              createdAt: "2026-04-07T10:00:00.000Z",
+              data: {},
+              displayId: null,
+              endingId: null,
+              finished: false,
+              id: "cm8cmpnjj000108jfdr9dfqe6",
+              language: null,
+              meta: {},
+              singleUseId: null,
+              surveyId: "cm8cmpnjj000108jfdr9dfqe7",
+              tags: [
+                {
+                  createdAt: "2026-04-07T10:00:00.000Z",
+                  environmentId: "env_123",
+                  id: "cm8cmpnjj000108jfdr9dfqe8",
+                  name: "tag-1",
+                  updatedAt: "2026-04-07T10:00:00.000Z",
+                },
+              ],
+              updatedAt: "2026-04-07T10:00:00.000Z",
+              variables: {},
+            },
+            surveyId: "survey_123",
+          },
+          id: "job-serialized",
+          name: JOB_NAMES.responsePipeline,
+          opts: { attempts: 3 },
+          queueName: "background-jobs",
+        } as never,
+        {
+          [JOB_NAMES.responsePipeline]: overrideHandler,
+        }
+      )
+    ).resolves.toBeUndefined();
+
+    expect(overrideHandler).toHaveBeenCalledTimes(1);
+
+    const firstCall = overrideHandler.mock.calls[0] as
+      | [TResponsePipelineJobData, JobExecutionContext]
+      | undefined;
+
+    expect(firstCall).toBeDefined();
+    if (!firstCall) {
+      throw new Error("Expected the response pipeline override handler to be called");
+    }
+
+    const [payload, context] = firstCall;
+    expect(payload.response.createdAt).toEqual(new Date("2026-04-07T10:00:00.000Z"));
+    expect(payload.response.updatedAt).toEqual(new Date("2026-04-07T10:00:00.000Z"));
+    expect(payload.response.tags).toEqual([
+      expect.objectContaining({
+        createdAt: new Date("2026-04-07T10:00:00.000Z"),
+        updatedAt: new Date("2026-04-07T10:00:00.000Z"),
+      }),
+    ]);
+    expect(context).toEqual(
+      expect.objectContaining({
+        jobId: "job-serialized",
+      })
     );
   });
 
