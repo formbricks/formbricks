@@ -298,9 +298,9 @@ export const universalElementPresets = {
   required: false,
 };
 
-export const getElementDefaults = (id: string, workspace: any, t: TFunction) => {
+export const getElementDefaults = (id: string, project: any, t: TFunction) => {
   const elementType = getElementTypes(t).find((elementType) => elementType.id === id);
-  return replaceElementPresetPlaceholders(elementType?.preset, workspace);
+  return replaceElementPresetPlaceholders(elementType?.preset, project);
 };
 
 export const getTSurveyElementTypeEnumName = (id: string, t: TFunction) => {

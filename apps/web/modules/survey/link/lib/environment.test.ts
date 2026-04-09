@@ -27,9 +27,9 @@ describe("getEnvironmentContextForLinkSurvey", () => {
   test("should successfully fetch environment context with all required data", async () => {
     const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9i";
     const mockData = {
-      workspace: {
+      project: {
         id: "clh1a2b3c4d5e6f7g8h9j",
-        name: "Test Workspace",
+        name: "Test Project",
         styling: { primaryColor: "#000000" },
         logo: { url: "https://example.com/logo.png" },
         linkSurveyBranding: true,
@@ -43,7 +43,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
               monthly: {
                 responses: 100,
               },
-              workspaces: 3,
+              projects: 3,
             },
             usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
           },
@@ -57,23 +57,23 @@ describe("getEnvironmentContextForLinkSurvey", () => {
     const result = await getEnvironmentContextForLinkSurvey(mockEnvironmentId);
 
     expect(result).toEqual({
-      workspace: {
+      project: {
         id: "clh1a2b3c4d5e6f7g8h9j",
-        name: "Test Workspace",
+        name: "Test Project",
         styling: { primaryColor: "#000000" },
         logo: { url: "https://example.com/logo.png" },
         linkSurveyBranding: true,
         customHeadScripts: null,
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9k",
-      organizationBilling: mockData.workspace.organization.billing,
+      organizationBilling: mockData.project.organization.billing,
       organizationWhitelabel: null,
     });
 
     expect(prisma.environment.findUnique).toHaveBeenCalledWith({
       where: { id: mockEnvironmentId },
       select: {
-        workspace: {
+        project: {
           select: {
             id: true,
             name: true,
@@ -108,17 +108,17 @@ describe("getEnvironmentContextForLinkSurvey", () => {
     await expect(getEnvironmentContextForLinkSurvey(invalidId)).rejects.toThrow(ValidationError);
   });
 
-  test("should throw ResourceNotFoundError when environment has no workspace", async () => {
+  test("should throw ResourceNotFoundError when environment has no project", async () => {
     const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9m";
 
     vi.mocked(prisma.environment.findUnique).mockResolvedValue({
-      workspace: null,
+      project: null,
     } as any);
 
     await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(
       ResourceNotFoundError
     );
-    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow("Workspace");
+    await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow("Project");
   });
 
   test("should throw ResourceNotFoundError when environment is not found", async () => {
@@ -131,12 +131,12 @@ describe("getEnvironmentContextForLinkSurvey", () => {
     );
   });
 
-  test("should throw ResourceNotFoundError when workspace has no organization", async () => {
+  test("should throw ResourceNotFoundError when project has no organization", async () => {
     const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9n";
     const mockData = {
-      workspace: {
+      project: {
         id: "clh1a2b3c4d5e6f7g8h9o",
-        name: "Test Workspace",
+        name: "Test Project",
         styling: {},
         logo: null,
         linkSurveyBranding: true,
@@ -175,12 +175,12 @@ describe("getEnvironmentContextForLinkSurvey", () => {
     await expect(getEnvironmentContextForLinkSurvey(mockEnvironmentId)).rejects.toThrow(genericError);
   });
 
-  test("should handle workspace with minimal data", async () => {
+  test("should handle project with minimal data", async () => {
     const mockEnvironmentId = "clh1a2b3c4d5e6f7g8h9s";
     const mockData = {
-      workspace: {
+      project: {
         id: "clh1a2b3c4d5e6f7g8h9t",
-        name: "Minimal Workspace",
+        name: "Minimal Project",
         styling: null,
         logo: null,
         linkSurveyBranding: false,
@@ -194,7 +194,7 @@ describe("getEnvironmentContextForLinkSurvey", () => {
               monthly: {
                 responses: 100,
               },
-              workspaces: 3,
+              projects: 3,
             },
             usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
           },
@@ -208,16 +208,16 @@ describe("getEnvironmentContextForLinkSurvey", () => {
     const result = await getEnvironmentContextForLinkSurvey(mockEnvironmentId);
 
     expect(result).toEqual({
-      workspace: {
+      project: {
         id: "clh1a2b3c4d5e6f7g8h9t",
-        name: "Minimal Workspace",
+        name: "Minimal Project",
         styling: null,
         logo: null,
         linkSurveyBranding: false,
         customHeadScripts: null,
       },
       organizationId: "clh1a2b3c4d5e6f7g8h9u",
-      organizationBilling: mockData.workspace.organization.billing,
+      organizationBilling: mockData.project.organization.billing,
       organizationWhitelabel: null,
     });
   });

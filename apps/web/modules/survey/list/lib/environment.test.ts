@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { doesEnvironmentExist, getEnvironment, getWorkspaceIdIfEnvironmentExists } from "./environment";
+import { doesEnvironmentExist, getEnvironment, getProjectIdIfEnvironmentExists } from "./environment";
 
 vi.mock("@/lib/utils/validate");
 
@@ -33,7 +33,7 @@ vi.mock("react", async () => {
 });
 
 const mockEnvironmentId = "clxko31qs000008jya8v4ah0a";
-const mockWorkspaceId = "clxko31qt000108jyd64v5688";
+const mockProjectId = "clxko31qt000108jyd64v5688";
 
 describe("doesEnvironmentExist", () => {
   beforeEach(() => {
@@ -65,32 +65,32 @@ describe("doesEnvironmentExist", () => {
   });
 });
 
-describe("getWorkspaceIdIfEnvironmentExists", () => {
+describe("getProjectIdIfEnvironmentExists", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  test("should return workspaceId if environment exists", async () => {
-    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ workspaceId: mockWorkspaceId } as Awaited<
+  test("should return projectId if environment exists", async () => {
+    vi.mocked(prisma.environment.findUnique).mockResolvedValue({ projectId: mockProjectId } as Awaited<
       ReturnType<typeof prisma.environment.findUnique>
     >); // Ensure correct mock value
 
-    const result = await getWorkspaceIdIfEnvironmentExists(mockEnvironmentId);
+    const result = await getProjectIdIfEnvironmentExists(mockEnvironmentId);
 
-    expect(result).toBe(mockWorkspaceId);
+    expect(result).toBe(mockProjectId);
     expect(prisma.environment.findUnique).toHaveBeenCalledWith({
       where: { id: mockEnvironmentId },
-      select: { workspaceId: true },
+      select: { projectId: true },
     });
   });
 
   test("should throw ResourceNotFoundError if environment does not exist", async () => {
     vi.mocked(prisma.environment.findUnique).mockResolvedValue(null);
 
-    await expect(getWorkspaceIdIfEnvironmentExists(mockEnvironmentId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getProjectIdIfEnvironmentExists(mockEnvironmentId)).rejects.toThrow(ResourceNotFoundError);
     expect(prisma.environment.findUnique).toHaveBeenCalledWith({
       where: { id: mockEnvironmentId },
-      select: { workspaceId: true },
+      select: { projectId: true },
     });
   });
 });

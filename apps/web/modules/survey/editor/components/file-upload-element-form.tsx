@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Workspace } from "@prisma/client";
+import { Project } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
@@ -20,7 +20,7 @@ import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  workspace: Workspace;
+  project: Project;
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
@@ -39,7 +39,7 @@ export const FileUploadElementForm = ({
   elementIdx,
   updateElement,
   isInvalid,
-  workspace,
+  project,
   selectedLanguageCode,
   setSelectedLanguageCode,
   isFormbricksCloud,
@@ -53,7 +53,7 @@ export const FileUploadElementForm = ({
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(workspace.organizationId);
+  } = useGetBillingInfo(project.organizationId);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const maxSizeInMBLimit = useMemo(() => {
@@ -62,8 +62,8 @@ export const FileUploadElementForm = ({
     }
 
     const hasPaidCloudCapacity =
-      billingInfo.limits.workspaces === null ||
-      (typeof billingInfo.limits.workspaces === "number" && billingInfo.limits.workspaces > 1);
+      billingInfo.limits.projects === null ||
+      (typeof billingInfo.limits.projects === "number" && billingInfo.limits.projects > 1);
 
     if (hasPaidCloudCapacity) {
       // 1GB in MB

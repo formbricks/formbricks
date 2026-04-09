@@ -11,7 +11,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
   const { isOwner, isManager } = getAccessFlags(userMembershipRole);
 
   const validTeamIds: string[] = [];
-  const validWorkspaceIds: string[] = [];
+  const validProjectIds: string[] = [];
 
   const isOwnerOrManager = isOwner || isManager;
   try {
@@ -21,9 +21,9 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
           id: teamId,
         },
         select: {
-          workspaceTeams: {
+          projectTeams: {
             select: {
-              workspaceId: true,
+              projectId: true,
             },
           },
         },
@@ -39,7 +39,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
         });
 
         validTeamIds.push(teamId);
-        validWorkspaceIds.push(...team.workspaceTeams.map((pt) => pt.workspaceId));
+        validProjectIds.push(...team.projectTeams.map((pt) => pt.projectId));
       }
     }
   } catch (error) {

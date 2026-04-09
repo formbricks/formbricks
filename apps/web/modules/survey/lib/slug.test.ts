@@ -111,7 +111,7 @@ describe("Slug Library Tests", () => {
           environment: {
             id: "env_1",
             type: "production",
-            workspace: { id: "proj_1", name: "Workspace 1" },
+            project: { id: "proj_1", name: "Project 1" },
           },
         },
       ];
@@ -123,7 +123,7 @@ describe("Slug Library Tests", () => {
         expect.objectContaining({
           where: {
             slug: { not: null },
-            environment: { workspace: { organizationId: "org_123" } },
+            environment: { project: { organizationId: "org_123" } },
           },
         })
       );

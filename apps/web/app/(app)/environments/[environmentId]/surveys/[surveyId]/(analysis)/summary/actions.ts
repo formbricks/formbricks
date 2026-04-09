@@ -8,7 +8,7 @@ import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { convertToCsv } from "@/lib/utils/file-conversion";
-import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -35,9 +35,9 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -64,13 +64,13 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
 
 const ZResetSurveyAction = z.object({
   surveyId: ZId,
-  workspaceId: ZId,
+  projectId: ZId,
 });
 
 export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSurveyAction).action(
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    const projectId = await getProjectIdFromSurveyId(parsedInput.surveyId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -81,9 +81,9 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          workspaceId,
+          projectId,
         },
       ],
     });
@@ -125,9 +125,9 @@ export const getEmailHtmlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -160,8 +160,8 @@ export const generatePersonalLinksAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -234,8 +234,8 @@ export const updateSingleUseLinksAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],

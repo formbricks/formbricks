@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
 import { type TPlacement } from "@formbricks/types/common";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
@@ -16,7 +16,7 @@ interface StackedCardsContainerProps {
   currentBlockId: string;
   survey: TJsEnvironmentStateSurvey;
   getCardContent: (blockIdx: number, offset: number) => JSX.Element | undefined;
-  styling: TWorkspaceStyling | TSurveyStyling;
+  styling: TProjectStyling | TSurveyStyling;
   setBlockId: (blockId: string) => void;
   shouldResetBlockId?: boolean;
   fullSizeCards: boolean;

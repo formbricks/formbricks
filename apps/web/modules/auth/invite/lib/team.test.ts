@@ -29,7 +29,7 @@ describe("createTeamMembership", () => {
 
   test("creates team memberships and revalidates caches", async () => {
     const mockTeam = {
-      workspaceTeams: [{ workspaceId: "workspace1" }],
+      projectTeams: [{ projectId: "project1" }],
     };
 
     vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam as any);

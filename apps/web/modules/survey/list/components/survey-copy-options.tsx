@@ -4,9 +4,9 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { getWorkspacesByEnvironmentIdAction } from "@/modules/survey/list/actions";
+import { getProjectsByEnvironmentIdAction } from "@/modules/survey/list/actions";
+import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
-import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
 import { CopySurveyForm } from "./copy-survey-form";
 
 interface SurveyCopyOptionsProps {
@@ -17,28 +17,26 @@ interface SurveyCopyOptionsProps {
 }
 
 const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
-  const [workspaces, setWorkspaces] = useState<TUserWorkspace[]>([]);
-  const [workspaceLoading, setWorkspaceLoading] = useState(true);
+  const [projects, setProjects] = useState<TUserProject[]>([]);
+  const [projectLoading, setProjectLoading] = useState(true);
 
   useEffect(() => {
-    const fetchWorkspaces = async () => {
-      const getWorkspacesByEnvironmentIdResponse = await getWorkspacesByEnvironmentIdAction({
-        environmentId,
-      });
-      if (getWorkspacesByEnvironmentIdResponse?.data) {
-        setWorkspaces(getWorkspacesByEnvironmentIdResponse?.data);
+    const fetchProjects = async () => {
+      const getProjectsByEnvironmentIdResponse = await getProjectsByEnvironmentIdAction({ environmentId });
+      if (getProjectsByEnvironmentIdResponse?.data) {
+        setProjects(getProjectsByEnvironmentIdResponse?.data);
       } else {
-        const errorMessage = getFormattedErrorMessage(getWorkspacesByEnvironmentIdResponse);
+        const errorMessage = getFormattedErrorMessage(getProjectsByEnvironmentIdResponse);
         toast.error(errorMessage);
       }
 
-      setWorkspaceLoading(false);
+      setProjectLoading(false);
     };
 
-    fetchWorkspaces();
+    fetchProjects();
   }, [environmentId]);
 
-  if (workspaceLoading) {
+  if (projectLoading) {
     return (
       <div className="relative flex h-full min-h-96 w-full items-center justify-center bg-white pb-12">
         <Loader2 className="animate-spin" />
@@ -46,9 +44,7 @@ const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyC
     );
   }
 
-  return (
-    <CopySurveyForm defaultWorkspaces={workspaces} survey={survey} onCancel={onCancel} setOpen={setOpen} />
-  );
+  return <CopySurveyForm defaultProjects={projects} survey={survey} onCancel={onCancel} setOpen={setOpen} />;
 };
 
 export default SurveyCopyOptions;

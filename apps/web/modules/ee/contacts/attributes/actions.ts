@@ -6,7 +6,7 @@ import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-k
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -32,7 +32,7 @@ export const createContactAttributeKeyAction = authenticatedActionClient
   .action(
     withAuditLogging("created", "contactAttributeKey", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-      const workspaceId = await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -43,9 +43,9 @@ export const createContactAttributeKeyAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "readWrite",
-            workspaceId,
+            projectId,
           },
         ],
       });
@@ -83,7 +83,7 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
       }
 
       const organizationId = await getOrganizationIdFromEnvironmentId(existingKey.environmentId);
-      const workspaceId = await getWorkspaceIdFromEnvironmentId(existingKey.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(existingKey.environmentId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -94,9 +94,9 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "readWrite",
-            workspaceId,
+            projectId,
           },
         ],
       });
@@ -130,7 +130,7 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
       }
 
       const organizationId = await getOrganizationIdFromEnvironmentId(existingKey.environmentId);
-      const workspaceId = await getWorkspaceIdFromEnvironmentId(existingKey.environmentId);
+      const projectId = await getProjectIdFromEnvironmentId(existingKey.environmentId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -141,9 +141,9 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "readWrite",
-            workspaceId,
+            projectId,
           },
         ],
       });

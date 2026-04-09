@@ -1,10 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
+import { TLanguage } from "@formbricks/types/project";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TLanguage } from "@formbricks/types/workspace";
 import {
   DateRange,
   SelectedFilterValue,

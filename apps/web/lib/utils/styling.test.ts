@@ -1,16 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { TJsEnvironmentStateSurvey, TJsEnvironmentStateWorkspace } from "@formbricks/types/js";
+import { TJsEnvironmentStateProject, TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { getStyling } from "./styling";
 
 describe("Styling Utilities", () => {
-  test("returns workspace styling when workspace does not allow style overwrite", () => {
-    const workspace: TJsEnvironmentStateWorkspace = {
+  test("returns project styling when project does not allow style overwrite", () => {
+    const project: TJsEnvironmentStateProject = {
       styling: {
         allowStyleOverwrite: false,
         brandColor: "#000000",
         highlightBorderColor: "#000000",
       },
-    } as unknown as TJsEnvironmentStateWorkspace;
+    } as unknown as TJsEnvironmentStateProject;
 
     const survey: TJsEnvironmentStateSurvey = {
       styling: {
@@ -20,17 +20,17 @@ describe("Styling Utilities", () => {
       },
     } as unknown as TJsEnvironmentStateSurvey;
 
-    expect(getStyling(workspace, survey)).toBe(workspace.styling);
+    expect(getStyling(project, survey)).toBe(project.styling);
   });
 
-  test("returns workspace styling when workspace allows style overwrite but survey does not overwrite", () => {
-    const workspace: TJsEnvironmentStateWorkspace = {
+  test("returns project styling when project allows style overwrite but survey does not overwrite", () => {
+    const project: TJsEnvironmentStateProject = {
       styling: {
         allowStyleOverwrite: true,
         brandColor: "#000000",
         highlightBorderColor: "#000000",
       },
-    } as unknown as TJsEnvironmentStateWorkspace;
+    } as unknown as TJsEnvironmentStateProject;
 
     const survey: TJsEnvironmentStateSurvey = {
       styling: {
@@ -40,17 +40,17 @@ describe("Styling Utilities", () => {
       },
     } as unknown as TJsEnvironmentStateSurvey;
 
-    expect(getStyling(workspace, survey)).toBe(workspace.styling);
+    expect(getStyling(project, survey)).toBe(project.styling);
   });
 
-  test("returns survey styling when both workspace and survey allow style overwrite", () => {
-    const workspace: TJsEnvironmentStateWorkspace = {
+  test("returns survey styling when both project and survey allow style overwrite", () => {
+    const project: TJsEnvironmentStateProject = {
       styling: {
         allowStyleOverwrite: true,
         brandColor: "#000000",
         highlightBorderColor: "#000000",
       },
-    } as unknown as TJsEnvironmentStateWorkspace;
+    } as unknown as TJsEnvironmentStateProject;
 
     const survey: TJsEnvironmentStateSurvey = {
       styling: {
@@ -60,33 +60,33 @@ describe("Styling Utilities", () => {
       },
     } as unknown as TJsEnvironmentStateSurvey;
 
-    expect(getStyling(workspace, survey)).toBe(survey.styling);
+    expect(getStyling(project, survey)).toBe(survey.styling);
   });
 
-  test("returns workspace styling when workspace allows style overwrite but survey styling is undefined", () => {
-    const workspace: TJsEnvironmentStateWorkspace = {
+  test("returns project styling when project allows style overwrite but survey styling is undefined", () => {
+    const project: TJsEnvironmentStateProject = {
       styling: {
         allowStyleOverwrite: true,
         brandColor: "#000000",
         highlightBorderColor: "#000000",
       },
-    } as unknown as TJsEnvironmentStateWorkspace;
+    } as unknown as TJsEnvironmentStateProject;
 
     const survey: TJsEnvironmentStateSurvey = {
       styling: undefined,
     } as unknown as TJsEnvironmentStateSurvey;
 
-    expect(getStyling(workspace, survey)).toBe(workspace.styling);
+    expect(getStyling(project, survey)).toBe(project.styling);
   });
 
-  test("returns workspace styling when workspace allows style overwrite but survey overwriteThemeStyling is undefined", () => {
-    const workspace: TJsEnvironmentStateWorkspace = {
+  test("returns project styling when project allows style overwrite but survey overwriteThemeStyling is undefined", () => {
+    const project: TJsEnvironmentStateProject = {
       styling: {
         allowStyleOverwrite: true,
         brandColor: "#000000",
         highlightBorderColor: "#000000",
       },
-    } as unknown as TJsEnvironmentStateWorkspace;
+    } as unknown as TJsEnvironmentStateProject;
 
     const survey: TJsEnvironmentStateSurvey = {
       styling: {
@@ -95,6 +95,6 @@ describe("Styling Utilities", () => {
       },
     } as unknown as TJsEnvironmentStateSurvey;
 
-    expect(getStyling(workspace, survey)).toBe(workspace.styling);
+    expect(getStyling(project, survey)).toBe(project.styling);
   });
 });

@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 export const signUpAndLogin = async (
@@ -103,13 +103,13 @@ export const uploadFileForFileUploadQuestion = async (page: Page) => {
 
 export const finishOnboarding = async (
   page: Page,
-  workspaceChannel: TWorkspaceConfigChannel = "website"
+  projectChannel: TProjectConfigChannel = "website"
 ): Promise<void> => {
   await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
-  if (workspaceChannel === "app") {
+  if (projectChannel === "app") {
     await page.getByRole("button", { name: "In-product surveys" }).click();
   } else {
     await page.getByRole("button", { name: "Link & email surveys" }).click();
@@ -120,7 +120,7 @@ export const finishOnboarding = async (
   await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
   await page.locator("#form-next-button").click();
 
-  if (workspaceChannel !== "link") {
+  if (projectChannel !== "link") {
     await page.getByRole("button", { name: "I will do it later" }).click();
   }
 

@@ -5,7 +5,7 @@ import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
@@ -43,8 +43,8 @@ const ConfigLayout = async (props: {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  const workspace = await getWorkspaceByEnvironmentId(params.environmentId);
-  if (!workspace) {
+  const project = await getProjectByEnvironmentId(params.environmentId);
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 

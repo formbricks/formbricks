@@ -10,8 +10,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromIntegrationId,
-  getWorkspaceIdFromEnvironmentId,
-  getWorkspaceIdFromIntegrationId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromIntegrationId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
@@ -35,9 +35,9 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "readWrite",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           },
         ],
       });
@@ -73,8 +73,8 @@ export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDe
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromIntegrationId(parsedInput.integrationId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromIntegrationId(parsedInput.integrationId),
           minPermission: "readWrite",
         },
       ],

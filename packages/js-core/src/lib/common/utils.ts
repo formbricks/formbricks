@@ -2,11 +2,11 @@ import { Logger } from "@/lib/common/logger";
 import type {
   TEnvironmentState,
   TEnvironmentStateActionClass,
+  TEnvironmentStateProject,
   TEnvironmentStateSurvey,
-  TEnvironmentStateWorkspace,
+  TProjectStyling,
   TSurveyStyling,
   TUserState,
-  TWorkspaceStyling,
 } from "@/types/config";
 import type { Result } from "@/types/error";
 import {
@@ -65,7 +65,7 @@ export const filterSurveys = (
   environmentState: TEnvironmentState,
   userState: TUserState
 ): TEnvironmentStateSurvey[] => {
-  const { workspace, surveys } = environmentState.data;
+  const { project, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = userState.data;
 
   // Function to filter surveys based on displayOption criteria
@@ -110,9 +110,9 @@ export const filterSurveys = (
       return diffInDays(new Date(), new Date(lastDisplayAt)) >= survey.recontactDays;
     }
 
-    // use recontactDays of the workspace if survey does not have recontactDays
-    if (workspace.recontactDays) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= workspace.recontactDays;
+    // use recontactDays of the project if survey does not have recontactDays
+    if (project.recontactDays) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= project.recontactDays;
     }
 
     // if no recontactDays is set, show the survey
@@ -139,22 +139,22 @@ export const filterSurveys = (
 };
 
 export const getStyling = (
-  workspace: TEnvironmentStateWorkspace,
+  project: TEnvironmentStateProject,
   survey: TEnvironmentStateSurvey
-): TWorkspaceStyling | TSurveyStyling => {
-  // allow style overwrite is enabled from the workspace
-  if (workspace.styling.allowStyleOverwrite) {
+): TProjectStyling | TSurveyStyling => {
+  // allow style overwrite is enabled from the project
+  if (project.styling.allowStyleOverwrite) {
     // survey style overwrite is disabled
     if (!survey.styling?.overwriteThemeStyling) {
-      return workspace.styling;
+      return project.styling;
     }
 
     // survey style overwrite is enabled
     return survey.styling;
   }
 
-  // allow style overwrite is disabled from the workspace
-  return workspace.styling;
+  // allow style overwrite is disabled from the project
+  return project.styling;
 };
 
 export const getDefaultLanguageCode = (survey: TEnvironmentStateSurvey): string | undefined => {

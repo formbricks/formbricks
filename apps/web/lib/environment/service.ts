@@ -17,8 +17,8 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { getOrganizationsByUserId } from "../organization/service";
+import { getUserProjects } from "../project/service";
 import { validateInputs } from "../utils/validate";
-import { getUserWorkspaces } from "../workspace/service";
 
 export const getEnvironment = reactCache(async (environmentId: string): Promise<TEnvironment | null> => {
   validateInputs([environmentId, ZId]);
@@ -40,21 +40,21 @@ export const getEnvironment = reactCache(async (environmentId: string): Promise<
   }
 });
 
-export const getEnvironments = reactCache(async (workspaceId: string): Promise<TEnvironment[]> => {
-  validateInputs([workspaceId, ZId]);
-  let workspacePrisma;
+export const getEnvironments = reactCache(async (projectId: string): Promise<TEnvironment[]> => {
+  validateInputs([projectId, ZId]);
+  let projectPrisma;
   try {
-    workspacePrisma = await prisma.workspace.findFirst({
+    projectPrisma = await prisma.project.findFirst({
       where: {
-        id: workspaceId,
+        id: projectId,
       },
       include: {
         environments: true,
       },
     });
 
-    if (!workspacePrisma) {
-      throw new ResourceNotFoundError("Workspace", workspaceId);
+    if (!projectPrisma) {
+      throw new ResourceNotFoundError("Project", projectId);
     }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -64,7 +64,7 @@ export const getEnvironments = reactCache(async (workspaceId: string): Promise<T
   }
 
   const environments: TEnvironment[] = [];
-  for (let environment of workspacePrisma.environments) {
+  for (let environment of projectPrisma.environments) {
     let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
     environments.push(targetEnvironment);
   }
@@ -110,12 +110,12 @@ export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<str
       return null;
     }
     const firstOrganization = organizations[0];
-    const workspaces = await getUserWorkspaces(userId, firstOrganization.id);
-    if (workspaces.length === 0) {
+    const projects = await getUserProjects(userId, firstOrganization.id);
+    if (projects.length === 0) {
       return null;
     }
-    const firstWorkspace = workspaces[0];
-    const productionEnvironment = firstWorkspace.environments.find(
+    const firstProject = projects[0];
+    const productionEnvironment = firstProject.environments.find(
       (environment) => environment.type === "production"
     );
     if (!productionEnvironment) {
@@ -128,16 +128,16 @@ export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<str
 };
 
 export const createEnvironment = async (
-  workspaceId: string,
+  projectId: string,
   environmentInput: Partial<TEnvironmentCreateInput>
 ): Promise<TEnvironment> => {
-  validateInputs([workspaceId, ZId], [environmentInput, ZEnvironmentCreateInput]);
+  validateInputs([projectId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
   try {
     const environment = await prisma.environment.create({
       data: {
         type: environmentInput.type || "development",
-        workspace: { connect: { id: workspaceId } },
+        project: { connect: { id: projectId } },
         appSetupCompleted: environmentInput.appSetupCompleted || false,
         attributeKeys: {
           create: [

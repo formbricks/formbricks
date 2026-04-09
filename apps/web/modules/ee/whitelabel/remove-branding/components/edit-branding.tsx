@@ -4,19 +4,19 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { updateWorkspaceBrandingAction } from "@/modules/ee/whitelabel/remove-branding/actions";
-import { TWorkspaceUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/workspace";
+import { updateProjectBrandingAction } from "@/modules/ee/whitelabel/remove-branding/actions";
+import { TProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface EditBrandingProps {
   type: "linkSurvey" | "appSurvey";
   isEnabled: boolean;
-  workspaceId: string;
+  projectId: string;
   isReadOnly?: boolean;
 }
 
-export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditBrandingProps) => {
+export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBrandingProps) => {
   const { t } = useTranslation();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(isEnabled);
   const [updatingBranding, setUpdatingBranding] = useState(false);
@@ -26,10 +26,10 @@ export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditB
     const newBrandingState = !isBrandingEnabled;
     setIsBrandingEnabled(newBrandingState);
 
-    let inputWorkspace: TWorkspaceUpdateBrandingInput = {
+    let inputProject: TProjectUpdateBrandingInput = {
       [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
     };
-    const updateBrandingResponse = await updateWorkspaceBrandingAction({ workspaceId, data: inputWorkspace });
+    const updateBrandingResponse = await updateProjectBrandingAction({ projectId, data: inputProject });
 
     if (updateBrandingResponse?.data) {
       toast.success(

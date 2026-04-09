@@ -8,7 +8,7 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
   try {
     const organization = await prisma.organization.findFirst({
       where: {
-        workspaces: {
+        projects: {
           some: {
             environments: {
               some: {
@@ -84,7 +84,7 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
       },
 
       select: {
-        workspaces: {
+        projects: {
           select: {
             environments: {
               select: {
@@ -100,8 +100,8 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
       return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
     }
 
-    const environmentIds = organization.workspaces
-      .flatMap((workspace) => workspace.environments)
+    const environmentIds = organization.projects
+      .flatMap((project) => project.environments)
       .map((environment) => environment.id);
 
     return ok(environmentIds);

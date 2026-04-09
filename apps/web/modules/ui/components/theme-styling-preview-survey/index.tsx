@@ -1,6 +1,6 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
+import { Project } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +14,7 @@ import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  workspace: Workspace;
+  project: Project;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
   publicDomain: string;
@@ -49,7 +49,7 @@ const previewParentContainerVariant: Variants = {
 
 export const ThemeStylingPreviewSurvey = ({
   survey,
-  workspace,
+  project,
   previewType,
   setPreviewType,
   publicDomain,
@@ -59,7 +59,7 @@ export const ThemeStylingPreviewSurvey = ({
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink] = useState(false);
   const { t } = useTranslation();
-  const { workspaceOverwrites } = survey || {};
+  const { projectOverwrites } = survey || {};
   const isAppSurvey = previewType === "app"; // Moved up
 
   const previewScreenVariants: Variants = {
@@ -96,15 +96,15 @@ export const ThemeStylingPreviewSurvey = ({
     },
   };
 
-  const { placement: surveyPlacement } = workspaceOverwrites || {};
-  const { overlay: surveyOverlay } = workspaceOverwrites || {};
-  const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
+  const { placement: surveyPlacement } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
-  const placement = surveyPlacement || workspace.placement;
-  const overlay = surveyOverlay ?? workspace.overlay;
-  const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
+  const placement = surveyPlacement || project.placement;
+  const overlay = surveyOverlay ?? project.overlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
-  const highlightBorderColor = workspace.styling.highlightBorderColor?.light;
+  const highlightBorderColor = project.styling.highlightBorderColor?.light;
   const [surveyFormKey, setSurveyFormKey] = useState<number>(Date.now());
 
   const resetQuestionProgress = () => {
@@ -113,10 +113,10 @@ export const ThemeStylingPreviewSurvey = ({
 
   const styling = useMemo(() => {
     if (survey.styling?.overwriteThemeStyling) {
-      return { ...workspace.styling, ...survey.styling };
+      return { ...project.styling, ...survey.styling };
     }
-    return workspace.styling;
-  }, [workspace.styling, survey.styling]);
+    return project.styling;
+  }, [project.styling, survey.styling]);
 
   // Create a unique key that includes both timestamp and preview type
   // This ensures the survey remounts when switching between app and link
@@ -172,14 +172,14 @@ export const ThemeStylingPreviewSurvey = ({
               clickOutsideClose={clickOutsideClose}
               overlay={overlay}
               previewMode="desktop"
-              background={workspace.styling.cardBackgroundColor?.light}
-              borderRadius={workspace.styling.roundness ?? 8}>
+              background={project.styling.cardBackgroundColor?.light}
+              borderRadius={project.styling.roundness ?? 8}>
               <Fragment key={surveyKey}>
                 <SurveyInline
                   appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={{ ...survey, type: "app" }}
-                  isBrandingEnabled={workspace.inAppSurveyBranding}
+                  isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   onFileUpload={async (file) => file.name}
                   styling={styling}
@@ -194,19 +194,19 @@ export const ThemeStylingPreviewSurvey = ({
               styling={styling}
               ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
-              {!workspace.styling?.isLogoHidden && (
+              {!project.styling?.isLogoHidden && (
                 <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
-                  <ClientLogo workspaceLogo={workspace.logo} previewSurvey />
+                  <ClientLogo projectLogo={project.logo} previewSurvey />
                 </button>
               )}
               <div
                 key={surveyKey}
-                className={`${!workspace.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md overflow-hidden rounded-lg p-4`}>
+                className={`${!project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md overflow-hidden rounded-lg p-4`}>
                 <SurveyInline
                   appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={{ ...survey, type: "link" }}
-                  isBrandingEnabled={workspace.linkSurveyBranding}
+                  isBrandingEnabled={project.linkSurveyBranding}
                   isRedirectDisabled={true}
                   onFileUpload={async (file) => file.name}
                   responseCount={42}

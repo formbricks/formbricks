@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZLanguageInput } from "@formbricks/types/workspace";
+import { ZLanguageInput } from "@formbricks/types/project";
 import {
   createLanguage,
   deleteLanguage,
@@ -14,19 +14,19 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromLanguageId,
-  getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromLanguageId,
+  getOrganizationIdFromProjectId,
+  getProjectIdFromLanguageId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateLanguageAction = z.object({
-  workspaceId: ZId,
+  projectId: ZId,
   languageInput: ZLanguageInput,
 });
 
 export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreateLanguageAction).action(
   withAuditLogging("created", "language", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -39,14 +39,14 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
     });
 
-    const result = await createLanguage(parsedInput.workspaceId, parsedInput.languageInput);
+    const result = await createLanguage(parsedInput.projectId, parsedInput.languageInput);
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = result.id;
     ctx.auditLoggingCtx.newObject = result;
@@ -56,18 +56,18 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
 
 const ZDeleteLanguageAction = z.object({
   languageId: ZId,
-  workspaceId: ZId,
+  projectId: ZId,
 });
 
 export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDeleteLanguageAction).action(
   withAuditLogging("deleted", "language", async ({ ctx, parsedInput }) => {
-    const languageWorkspaceId = await getWorkspaceIdFromLanguageId(parsedInput.languageId);
+    const languageProjectId = await getProjectIdFromLanguageId(parsedInput.languageId);
 
-    if (languageWorkspaceId !== parsedInput.workspaceId) {
+    if (languageProjectId !== parsedInput.projectId) {
       throw new Error("Invalid language id");
     }
 
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -78,8 +78,8 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
@@ -87,7 +87,7 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;
-    const result = await deleteLanguage(parsedInput.languageId, parsedInput.workspaceId);
+    const result = await deleteLanguage(parsedInput.languageId, parsedInput.projectId);
     ctx.auditLoggingCtx.oldObject = result;
     return result;
   })
@@ -111,8 +111,8 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromLanguageId(parsedInput.languageId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromLanguageId(parsedInput.languageId),
           minPermission: "manage",
         },
       ],
@@ -122,20 +122,20 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   });
 
 const ZUpdateLanguageAction = z.object({
-  workspaceId: ZId,
+  projectId: ZId,
   languageId: ZId,
   languageInput: ZLanguageInput,
 });
 
 export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdateLanguageAction).action(
   withAuditLogging("updated", "language", async ({ ctx, parsedInput }) => {
-    const languageProductId = await getWorkspaceIdFromLanguageId(parsedInput.languageId);
+    const languageProductId = await getProjectIdFromLanguageId(parsedInput.languageId);
 
-    if (languageProductId !== parsedInput.workspaceId) {
+    if (languageProductId !== parsedInput.projectId) {
       throw new Error("Invalid language id");
     }
 
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -148,8 +148,8 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
@@ -159,7 +159,7 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;
     ctx.auditLoggingCtx.oldObject = await getLanguage(parsedInput.languageId);
     const result = await updateLanguage(
-      parsedInput.workspaceId,
+      parsedInput.projectId,
       parsedInput.languageId,
       parsedInput.languageInput
     );

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
@@ -11,9 +11,9 @@ const Layout = async (props: { params: Promise<{ environmentId: string }>; child
   const { children } = props;
 
   const t = await getTranslate();
-  const [organization, workspace, session] = await Promise.all([
+  const [organization, project, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
-    getWorkspaceByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
 
@@ -21,7 +21,7 @@ const Layout = async (props: { params: Promise<{ environmentId: string }>; child
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  if (!workspace) {
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 

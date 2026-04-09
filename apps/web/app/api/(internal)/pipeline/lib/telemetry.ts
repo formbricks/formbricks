@@ -185,7 +185,7 @@ const sendTelemetry = async (lastSent: number) => {
           organizationCount: bigint;
           userCount: bigint;
           teamCount: bigint;
-          workspaceCount: bigint;
+          projectCount: bigint;
           surveyCount: bigint;
           inProgressSurveyCount: bigint;
           completedSurveyCount: bigint;
@@ -202,7 +202,7 @@ const sendTelemetry = async (lastSent: number) => {
         (SELECT COUNT(*) FROM "Organization") as "organizationCount",
         (SELECT COUNT(*) FROM "User") as "userCount",
         (SELECT COUNT(*) FROM "Team") as "teamCount",
-        (SELECT COUNT(*) FROM "Workspace") as "workspaceCount",
+        (SELECT COUNT(*) FROM "Project") as "projectCount",
         (SELECT COUNT(*) FROM "Survey") as "surveyCount",
         (SELECT COUNT(*) FROM "Survey" WHERE status = 'inProgress') as "inProgressSurveyCount",
         (SELECT COUNT(*) FROM "Survey" WHERE status = 'completed') as "completedSurveyCount",
@@ -223,7 +223,7 @@ const sendTelemetry = async (lastSent: number) => {
   const organizationCount = Number(counts.organizationCount);
   const userCount = Number(counts.userCount);
   const teamCount = Number(counts.teamCount);
-  const workspaceCount = Number(counts.workspaceCount);
+  const projectCount = Number(counts.projectCount);
   const surveyCount = Number(counts.surveyCount);
   const inProgressSurveyCount = Number(counts.inProgressSurveyCount);
   const completedSurveyCount = Number(counts.completedSurveyCount);
@@ -259,7 +259,7 @@ const sendTelemetry = async (lastSent: number) => {
     organizationCount,
     userCount,
     teamCount,
-    workspaceCount,
+    projectCount,
     surveyCount,
     inProgressSurveyCount,
     completedSurveyCount,

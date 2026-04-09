@@ -19,14 +19,14 @@ import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { validateInputs } from "@/lib/utils/validate";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TEnvironmentAuth, TEnvironmentLayoutData } from "../types/environment-auth";
 
@@ -34,20 +34,20 @@ import { TEnvironmentAuth, TEnvironmentLayoutData } from "../types/environment-a
  * Common utility to fetch environment data and perform authorization checks
  *
  * Usage:
- *   const { environment, workspace, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+ *   const { environment, project, isReadOnly } = await getEnvironmentAuth(params.environmentId);
  */
 export const getEnvironmentAuth = reactCache(async (environmentId: string): Promise<TEnvironmentAuth> => {
   const t = await getTranslate();
 
   // Perform all fetches in parallel
-  const [environment, workspace, session, organization] = await Promise.all([
+  const [environment, project, session, organization] = await Promise.all([
     getEnvironment(environmentId),
-    getWorkspaceByEnvironmentId(environmentId),
+    getProjectByEnvironmentId(environmentId),
     getServerSession(authOptions),
     getOrganizationByEnvironmentId(environmentId),
   ]);
 
-  if (!workspace) {
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
@@ -70,19 +70,19 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
-  const { hasReadAccess, hasReadWriteAccess, hasManageAccess } = getTeamPermissionFlags(workspacePermission);
+  const { hasReadAccess, hasReadWriteAccess, hasManageAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 
   return {
     environment,
-    workspace,
+    project,
     organization,
     session,
     currentUserMembership,
-    workspacePermission,
+    projectPermission,
     isMember,
     isOwner,
     isManager,
@@ -121,9 +121,9 @@ export const environmentIdLayoutChecks = async (environmentId: string) => {
 };
 
 /**
- * Fetches environment with related workspace, organization, environments, and current user's membership
+ * Fetches environment with related project, organization, environments, and current user's membership
  * in a single optimized database query.
- * Returns data with proper types matching TEnvironment, TWorkspace, TOrganization.
+ * Returns data with proper types matching TEnvironment, TProject, TOrganization.
  *
  * Note: Validation is handled by parent function (getEnvironmentLayoutData)
  */
@@ -137,10 +137,10 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         createdAt: true,
         updatedAt: true,
         type: true,
-        workspaceId: true,
+        projectId: true,
         appSetupCompleted: true,
-        // Workspace via relation (nested select)
-        workspace: {
+        // Project via relation (nested select)
+        project: {
           select: {
             id: true,
             createdAt: true,
@@ -158,14 +158,14 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
             styling: true,
             logo: true,
             customHeadScripts: true,
-            // All workspace environments
+            // All project environments
             environments: {
               select: {
                 id: true,
                 type: true,
                 createdAt: true,
                 updatedAt: true,
-                workspaceId: true,
+                projectId: true,
                 appSetupCompleted: true,
               },
             },
@@ -209,8 +209,8 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
 
     if (!data) return null;
 
-    if (!data.workspace.organization.billing) {
-      throw new ResourceNotFoundError("OrganizationBilling", data.workspace.organization.id);
+    if (!data.project.organization.billing) {
+      throw new ResourceNotFoundError("OrganizationBilling", data.project.organization.id);
     }
 
     // Extract and return properly typed data
@@ -220,40 +220,40 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         type: data.type,
-        workspaceId: data.workspaceId,
+        projectId: data.projectId,
         appSetupCompleted: data.appSetupCompleted,
       },
-      workspace: {
-        id: data.workspace.id,
-        createdAt: data.workspace.createdAt,
-        updatedAt: data.workspace.updatedAt,
-        name: data.workspace.name,
-        organizationId: data.workspace.organizationId,
-        languages: data.workspace.languages,
-        recontactDays: data.workspace.recontactDays,
-        linkSurveyBranding: data.workspace.linkSurveyBranding,
-        inAppSurveyBranding: data.workspace.inAppSurveyBranding,
-        config: data.workspace.config,
-        placement: data.workspace.placement,
-        clickOutsideClose: data.workspace.clickOutsideClose,
-        overlay: data.workspace.overlay,
-        styling: data.workspace.styling,
-        logo: data.workspace.logo,
-        customHeadScripts: data.workspace.customHeadScripts,
-        environments: data.workspace.environments,
+      project: {
+        id: data.project.id,
+        createdAt: data.project.createdAt,
+        updatedAt: data.project.updatedAt,
+        name: data.project.name,
+        organizationId: data.project.organizationId,
+        languages: data.project.languages,
+        recontactDays: data.project.recontactDays,
+        linkSurveyBranding: data.project.linkSurveyBranding,
+        inAppSurveyBranding: data.project.inAppSurveyBranding,
+        config: data.project.config,
+        placement: data.project.placement,
+        clickOutsideClose: data.project.clickOutsideClose,
+        overlay: data.project.overlay,
+        styling: data.project.styling,
+        logo: data.project.logo,
+        customHeadScripts: data.project.customHeadScripts,
+        environments: data.project.environments,
       },
       organization: {
-        id: data.workspace.organization.id,
-        createdAt: data.workspace.organization.createdAt,
-        updatedAt: data.workspace.organization.updatedAt,
-        name: data.workspace.organization.name,
-        billing: data.workspace.organization.billing,
-        isAISmartToolsEnabled: data.workspace.organization.isAISmartToolsEnabled,
-        isAIDataAnalysisEnabled: data.workspace.organization.isAIDataAnalysisEnabled,
-        whitelabel: data.workspace.organization.whitelabel,
+        id: data.project.organization.id,
+        createdAt: data.project.organization.createdAt,
+        updatedAt: data.project.organization.updatedAt,
+        name: data.project.organization.name,
+        billing: data.project.organization.billing,
+        isAISmartToolsEnabled: data.project.organization.isAISmartToolsEnabled,
+        isAIDataAnalysisEnabled: data.project.organization.isAIDataAnalysisEnabled,
+        whitelabel: data.project.organization.whitelabel,
       },
-      environments: data.workspace.environments,
-      membership: data.workspace.organization.memberships[0] || null, // First (and only) membership or null
+      environments: data.project.environments,
+      membership: data.project.organization.memberships[0] || null, // First (and only) membership or null
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -267,7 +267,7 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
 /**
  * Fetches all data required for environment layout rendering.
  * Consolidates multiple queries and eliminates duplicates.
- * Does NOT fetch switcher data (organizations/workspaces lists) - those are lazy-loaded.
+ * Does NOT fetch switcher data (organizations/projects lists) - those are lazy-loaded.
  *
  * Note: userId is included in cache key to make it explicit that results are user-specific,
  * even though React.cache() is per-request and doesn't leak across users.
@@ -306,7 +306,7 @@ export const getEnvironmentLayoutData = reactCache(
       throw new ResourceNotFoundError(t("common.environment"), environmentId);
     }
 
-    const { environment, workspace, organization, environments, membership } = relationData;
+    const { environment, project, organization, environments, membership } = relationData;
 
     // Validate user's membership was found
     if (!membership) {
@@ -314,9 +314,9 @@ export const getEnvironmentLayoutData = reactCache(
     }
 
     // Fetch remaining data in parallel
-    const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([
+    const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
       getAccessControlPermission(organization.id),
-      getWorkspacePermissionByUserId(userId, environment.workspaceId), // 1 DB query
+      getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);
 
@@ -330,12 +330,12 @@ export const getEnvironmentLayoutData = reactCache(
       session,
       user,
       environment,
-      workspace,
+      project,
       organization,
       environments,
       membership,
       isAccessControlAllowed,
-      workspacePermission,
+      projectPermission,
       license,
       responseCount,
     };

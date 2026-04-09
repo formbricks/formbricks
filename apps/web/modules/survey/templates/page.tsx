@@ -3,7 +3,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
+import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { TemplateContainerWithPreview } from "./components/template-container";
 
 interface SurveyTemplateProps {
@@ -19,9 +19,9 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
 
   const { session, environment, isReadOnly } = await getEnvironmentAuth(environmentId);
 
-  const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(environmentId);
+  const project = await getProjectWithTeamIdsByEnvironmentId(environmentId);
 
-  if (!workspace) {
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
@@ -35,7 +35,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
     <TemplateContainerWithPreview
       userId={session.user.id}
       environment={environment}
-      workspace={workspace}
+      project={project}
       publicDomain={publicDomain}
     />
   );

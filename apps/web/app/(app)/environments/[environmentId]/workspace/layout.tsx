@@ -1,4 +1,4 @@
-import { WorkspaceSettingsLayout, metadata } from "@/modules/workspaces/settings/layout";
+import { ProjectSettingsLayout, metadata } from "@/modules/projects/settings/layout";
 
 export { metadata };
-export default WorkspaceSettingsLayout;
+export default ProjectSettingsLayout;

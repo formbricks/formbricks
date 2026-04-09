@@ -10,7 +10,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -35,9 +35,9 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -82,9 +82,9 @@ export const getSurveyFilterDataAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });

@@ -64,7 +64,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  const { workspace } = useEnvironment();
+  const { project } = useEnvironment();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const appSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
@@ -128,7 +128,7 @@ export const SurveyAnalysisCTA = ({
     setIsResetting(true);
     const result = await resetSurveyAction({
       surveyId: survey.id,
-      workspaceId: workspace.id,
+      projectId: project.id,
     });
     if (result?.data) {
       toast.success(
@@ -212,7 +212,7 @@ export const SurveyAnalysisCTA = ({
           isFormbricksCloud={isFormbricksCloud}
           isReadOnly={isReadOnly}
           isStorageConfigured={isStorageConfigured}
-          workspaceCustomScripts={workspace.customHeadScripts}
+          projectCustomScripts={project.customHeadScripts}
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />

@@ -11,7 +11,7 @@ export type AuditLoggingCtx = {
   tagId?: string;
   webhookId?: string;
   userId?: string;
-  workspaceId?: string;
+  projectId?: string;
   languageId?: string;
   inviteId?: string;
   membershipId?: string;
@@ -22,7 +22,6 @@ export type AuditLoggingCtx = {
   quotaId?: string;
   teamId?: string;
   integrationId?: string;
-  feedbackRecordDirectoryId?: string;
 };
 
 export type ActionClientCtx = {

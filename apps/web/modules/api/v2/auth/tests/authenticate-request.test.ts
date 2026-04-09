@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
-import { TApiKeyWithEnvironmentAndWorkspace } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { TApiKeyWithEnvironmentAndProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { authenticateRequest } from "../authenticate-request";
 
 // Mock the getApiKeyWithPermissions function
@@ -35,14 +35,14 @@ describe("authenticateRequest", () => {
           apiKeyId: "api-key-id",
           environment: {
             id: "env-id-1",
-            workspaceId: "workspace-id-1",
+            projectId: "project-id-1",
             type: "development",
             createdAt: new Date(),
             updatedAt: new Date(),
             appSetupCompleted: false,
-            workspace: {
-              id: "workspace-id-1",
-              name: "Workspace 1",
+            project: {
+              id: "project-id-1",
+              name: "Project 1",
             },
           },
         },
@@ -52,19 +52,19 @@ describe("authenticateRequest", () => {
           apiKeyId: "api-key-id",
           environment: {
             id: "env-id-2",
-            workspaceId: "workspace-id-2",
+            projectId: "project-id-2",
             type: "production",
             createdAt: new Date(),
             updatedAt: new Date(),
             appSetupCompleted: false,
-            workspace: {
-              id: "workspace-id-2",
-              name: "Workspace 2",
+            project: {
+              id: "project-id-2",
+              name: "Project 2",
             },
           },
         },
       ],
-    } as unknown as TApiKeyWithEnvironmentAndWorkspace;
+    } as unknown as TApiKeyWithEnvironmentAndProject;
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData);
 
@@ -79,15 +79,15 @@ describe("authenticateRequest", () => {
             environmentId: "env-id-1",
             permission: "manage",
             environmentType: "development",
-            workspaceId: "workspace-id-1",
-            workspaceName: "Workspace 1",
+            projectId: "project-id-1",
+            projectName: "Project 1",
           },
           {
             environmentId: "env-id-2",
             permission: "read",
             environmentType: "production",
-            workspaceId: "workspace-id-2",
-            workspaceName: "Workspace 2",
+            projectId: "project-id-2",
+            projectName: "Project 2",
           },
         ],
         apiKeyId: "api-key-id",
@@ -124,7 +124,7 @@ describe("authenticateRequest", () => {
         },
       },
       apiKeyEnvironments: [], // No environment-specific permissions
-    } as unknown as TApiKeyWithEnvironmentAndWorkspace;
+    } as unknown as TApiKeyWithEnvironmentAndProject;
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData);
 

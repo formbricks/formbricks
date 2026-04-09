@@ -31,7 +31,7 @@ test.describe("API Tests for Users", () => {
       organizationId = responseBody.data.organizationId;
     });
 
-    // Create a team to use for the workspace team
+    // Create a team to use for the project team
     await test.step("Create Team via API", async () => {
       const teamBody = {
         organizationId: organizationId,

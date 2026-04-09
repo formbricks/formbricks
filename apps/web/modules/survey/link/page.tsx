@@ -93,9 +93,9 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      // Need to fetch workspace for error page - fetch environmentContext for it
+      // Need to fetch project for error page - fetch environmentContext for it
       const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
+      return <SurveyInactive status="link invalid" project={environmentContext.project} />;
     }
     singleUseId = validatedSingleUseId;
   }

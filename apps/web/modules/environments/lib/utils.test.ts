@@ -7,8 +7,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
-import { TWorkspace } from "@formbricks/types/workspace";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -17,11 +17,11 @@ import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
-import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 // Pull in the mocked implementations to configure them in tests
 import {
@@ -45,7 +45,7 @@ vi.mock("@/modules/auth/lib/authOptions", () => ({
 }));
 
 vi.mock("@/modules/ee/teams/lib/roles", () => ({
-  getWorkspacePermissionByUserId: vi.fn(),
+  getProjectPermissionByUserId: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/teams/utils/teams", () => ({
@@ -73,8 +73,8 @@ vi.mock("@/lib/organization/service", () => ({
   getMonthlyOrganizationResponseCount: vi.fn(),
 }));
 
-vi.mock("@/lib/workspace/service", () => ({
-  getWorkspaceByEnvironmentId: vi.fn(),
+vi.mock("@/lib/project/service", () => ({
+  getProjectByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@/lib/user/service", () => ({
@@ -126,7 +126,7 @@ describe("utils.ts", () => {
     // Provide default mocks for successful scenario
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user123" } });
     vi.mocked(getEnvironment).mockResolvedValue({ id: "env123" } as TEnvironment);
-    vi.mocked(getWorkspaceByEnvironmentId).mockResolvedValue({ id: "proj123" } as TWorkspace);
+    vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ id: "proj123" } as TProject);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org123" } as TOrganization);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
       role: "member",
@@ -137,7 +137,7 @@ describe("utils.ts", () => {
       isManager: false,
       isBilling: false,
     });
-    vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
+    vi.mocked(getProjectPermissionByUserId).mockResolvedValue("read");
     vi.mocked(getTeamPermissionFlags).mockReturnValue({
       hasReadAccess: true,
       hasReadWriteAccess: true,
@@ -160,14 +160,14 @@ describe("utils.ts", () => {
     test("returns environment data on success", async () => {
       const result = await getEnvironmentAuth("env123");
       expect(result.environment.id).toBe("env123");
-      expect(result.workspace.id).toBe("proj123");
+      expect(result.project.id).toBe("proj123");
       expect(result.organization.id).toBe("org123");
       expect(result.session.user.id).toBe("user123");
       expect(result.isReadOnly).toBe(true); // from mocks (isMember = true & hasReadAccess = true)
     });
 
-    test("throws error if workspace not found", async () => {
-      vi.mocked(getWorkspaceByEnvironmentId).mockResolvedValueOnce(null);
+    test("throws error if project not found", async () => {
+      vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce(null);
       await expect(getEnvironmentAuth("env123")).rejects.toThrow(ResourceNotFoundError);
     });
 
@@ -235,13 +235,13 @@ describe("utils.ts", () => {
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-02"),
       type: "production" as const,
-      workspaceId: "proj123",
+      projectId: "proj123",
       appSetupCompleted: true,
-      workspace: {
+      project: {
         id: "proj123",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
-        name: "Test Workspace",
+        name: "Test Project",
         organizationId: "org123",
         languages: ["en"],
         recontactDays: 7,
@@ -259,7 +259,7 @@ describe("utils.ts", () => {
             type: "production" as const,
             createdAt: new Date("2024-01-01"),
             updatedAt: new Date("2024-01-02"),
-            workspaceId: "proj123",
+            projectId: "proj123",
             appSetupCompleted: true,
           },
           {
@@ -267,7 +267,7 @@ describe("utils.ts", () => {
             type: "development" as const,
             createdAt: new Date("2024-01-01"),
             updatedAt: new Date("2024-01-02"),
-            workspaceId: "proj123",
+            projectId: "proj123",
             appSetupCompleted: false,
           },
         ],
@@ -296,14 +296,14 @@ describe("utils.ts", () => {
       vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockPrismaData as any);
     });
 
-    test("returns combined environment, workspace, organization, and membership data", async () => {
+    test("returns combined environment, project, organization, and membership data", async () => {
       const result = await getEnvironmentWithRelations("env123", "user123");
 
       expect(result).toBeDefined();
       expect(result!.environment.id).toBe("env123");
       expect(result!.environment.type).toBe("production");
-      expect(result!.workspace.id).toBe("proj123");
-      expect(result!.workspace.name).toBe("Test Workspace");
+      expect(result!.project.id).toBe("proj123");
+      expect(result!.project.name).toBe("Test Project");
       expect(result!.organization.id).toBe("org123");
       expect(result!.organization.name).toBe("Test Organization");
       expect(result!.environments).toHaveLength(2);
@@ -321,7 +321,7 @@ describe("utils.ts", () => {
       expect(prisma.environment.findUnique).toHaveBeenCalledWith({
         where: { id: "env123" },
         select: expect.objectContaining({
-          workspace: expect.objectContaining({
+          project: expect.objectContaining({
             select: expect.objectContaining({
               organization: expect.objectContaining({
                 select: expect.objectContaining({
@@ -348,10 +348,10 @@ describe("utils.ts", () => {
     test("returns null membership when user has no membership", async () => {
       const dataWithoutMembership = {
         ...mockPrismaData,
-        workspace: {
-          ...mockPrismaData.workspace,
+        project: {
+          ...mockPrismaData.project,
           organization: {
-            ...mockPrismaData.workspace.organization,
+            ...mockPrismaData.project.organization,
             memberships: [], // No memberships
           },
         },
@@ -384,13 +384,13 @@ describe("utils.ts", () => {
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
         type: "production",
-        workspaceId: "proj123",
+        projectId: "proj123",
         appSetupCompleted: true,
-        workspace: {
+        project: {
           id: "proj123",
           createdAt: new Date("2024-01-01"),
           updatedAt: new Date("2024-01-02"),
-          name: "Test Workspace",
+          name: "Test Project",
           organizationId: "org123",
           languages: ["en"],
           recontactDays: 7,
@@ -408,7 +408,7 @@ describe("utils.ts", () => {
               type: "production",
               createdAt: new Date("2024-01-01"),
               updatedAt: new Date("2024-01-02"),
-              workspaceId: "proj123",
+              projectId: "proj123",
               appSetupCompleted: true,
             },
           ],
@@ -441,12 +441,12 @@ describe("utils.ts", () => {
       expect(result.session).toBeDefined();
       expect(result.user).toBeDefined();
       expect(result.environment).toBeDefined();
-      expect(result.workspace).toBeDefined();
+      expect(result.project).toBeDefined();
       expect(result.organization).toBeDefined();
       expect(result.environments).toBeDefined();
       expect(result.membership).toBeDefined();
       expect(result.isAccessControlAllowed).toBeDefined();
-      expect(result.workspacePermission).toBeDefined();
+      expect(result.projectPermission).toBeDefined();
       expect(result.license).toBeDefined();
       expect(result.responseCount).toBe(0);
     });
@@ -495,13 +495,13 @@ describe("utils.ts", () => {
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
         type: "production",
-        workspaceId: "proj123",
+        projectId: "proj123",
         appSetupCompleted: true,
-        workspace: {
+        project: {
           id: "proj123",
           createdAt: new Date("2024-01-01"),
           updatedAt: new Date("2024-01-02"),
-          name: "Test Workspace",
+          name: "Test Project",
           organizationId: "org123",
           languages: ["en"],
           recontactDays: 7,
@@ -519,7 +519,7 @@ describe("utils.ts", () => {
               type: "production",
               createdAt: new Date("2024-01-01"),
               updatedAt: new Date("2024-01-02"),
-              workspaceId: "proj123",
+              projectId: "proj123",
               appSetupCompleted: true,
             },
           ],
@@ -555,11 +555,11 @@ describe("utils.ts", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         type: "production",
-        workspaceId: "proj123",
+        projectId: "proj123",
         appSetupCompleted: true,
-        workspace: {
+        project: {
           id: "proj123",
-          name: "Test Workspace",
+          name: "Test Project",
           organizationId: "org123",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -608,7 +608,7 @@ describe("utils.ts", () => {
       await getEnvironmentLayoutData("env123", "user123");
 
       expect(getAccessControlPermission).toHaveBeenCalled();
-      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith("user123", "proj123");
+      expect(getProjectPermissionByUserId).toHaveBeenCalledWith("user123", "proj123");
       expect(getEnterpriseLicense).toHaveBeenCalled();
     });
 
@@ -639,11 +639,11 @@ describe("utils.ts", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         type: "production",
-        workspaceId: "proj123",
+        projectId: "proj123",
         appSetupCompleted: true,
-        workspace: {
+        project: {
           id: "proj123",
-          name: "Workspace 1",
+          name: "Project 1",
           organizationId: "org123",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -679,11 +679,11 @@ describe("utils.ts", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         type: "development",
-        workspaceId: "proj456",
+        projectId: "proj456",
         appSetupCompleted: true,
-        workspace: {
+        project: {
           id: "proj456",
-          name: "Workspace 2",
+          name: "Project 2",
           organizationId: "org456",
           createdAt: new Date(),
           updatedAt: new Date(),

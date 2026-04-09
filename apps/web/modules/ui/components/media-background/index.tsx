@@ -5,12 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import { TWorkspaceStyling } from "@formbricks/types/workspace";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
-  styling: TSurveyStyling | TWorkspaceStyling;
+  styling: TSurveyStyling | TProjectStyling;
   surveyType: SurveyType;
   isEditorView?: boolean;
   isMobilePreview?: boolean;

@@ -24,7 +24,7 @@ export const isEntitlementFeature = (feature: string): feature is TEntitlementFe
 };
 
 export type TEntitlementLimits = {
-  workspaces: number | null;
+  projects: number | null;
   monthlyResponses: number | null;
 };
 

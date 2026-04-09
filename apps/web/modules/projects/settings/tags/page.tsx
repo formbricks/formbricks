@@ -1,0 +1,38 @@
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
+import { getTranslate } from "@/lingodotdev/server";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { EditTagsWrapper } from "./components/edit-tags-wrapper";
+
+export const TagsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  const t = await getTranslate();
+
+  const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
+
+  const [tags, environmentTagsCount] = await Promise.all([
+    getTagsByEnvironmentId(params.environmentId),
+    getTagsOnResponsesCount(params.environmentId),
+  ]);
+
+  return (
+    <PageContentWrapper>
+      <PageHeader pageTitle={t("common.workspace_configuration")}>
+        <ProjectConfigNavigation environmentId={params.environmentId} activeId="tags" />
+      </PageHeader>
+      <SettingsCard
+        title={t("environments.workspace.tags.manage_tags")}
+        description={t("environments.workspace.tags.manage_tags_description")}>
+        <EditTagsWrapper
+          environmentTags={tags}
+          environmentTagsCount={environmentTagsCount}
+          isReadOnly={isReadOnly}
+        />
+      </SettingsCard>
+    </PageContentWrapper>
+  );
+};

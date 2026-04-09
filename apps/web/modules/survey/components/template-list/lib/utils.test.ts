@@ -12,12 +12,12 @@ vi.mock("@/lib/pollyfills/structuredClone", () => ({
 }));
 
 describe("Template utils", () => {
-  test("replacePresetPlaceholders replaces workspace name in template with blocks", () => {
+  test("replacePresetPlaceholders replaces project name in template with blocks", () => {
     const mockTemplate: TTemplate = {
       name: "Test Template",
       description: "Template description",
       preset: {
-        name: "$[workspaceName] Feedback",
+        name: "$[projectName] Feedback",
         welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
         blocks: [
           {
@@ -28,7 +28,7 @@ describe("Template utils", () => {
                 id: "elem1",
                 type: "openText",
                 headline: {
-                  default: "How would you rate $[workspaceName]?",
+                  default: "How would you rate $[projectName]?",
                 },
                 required: false,
                 inputType: "text",
@@ -41,11 +41,11 @@ describe("Template utils", () => {
       } as any,
     };
 
-    const mockWorkspace = {
+    const mockProject = {
       name: "TestProject",
     };
 
-    const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
+    const result = replacePresetPlaceholders(mockTemplate, mockProject);
 
     expect(structuredClone).toHaveBeenCalledWith(mockTemplate.preset);
     expect(result.preset.name).toBe("TestProject Feedback");

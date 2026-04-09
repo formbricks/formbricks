@@ -21,9 +21,9 @@ const apiKeySelect = {
           type: true,
           createdAt: true,
           updatedAt: true,
-          workspaceId: true,
+          projectId: true,
           appSetupCompleted: true,
-          workspace: {
+          project: {
             select: {
               id: true,
               name: true,
@@ -49,9 +49,9 @@ type ApiKeyData = {
       type: string;
       createdAt: Date;
       updatedAt: Date;
-      workspaceId: string;
+      projectId: string;
       appSetupCompleted: boolean;
-      workspace: {
+      project: {
         id: string;
         name: string;
       };
@@ -124,13 +124,10 @@ const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
     createdAt: env.createdAt,
     updatedAt: env.updatedAt,
     appSetupCompleted: env.appSetupCompleted,
-    workspace: {
-      id: env.workspaceId,
-      name: env.workspace.name,
+    project: {
+      id: env.projectId,
+      name: env.project.name,
     },
-    // Backwards compat: old consumers expect project fields
-    projectId: env.workspaceId,
-    projectName: env.workspace.name,
   });
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionClass, Environment, Language, OrganizationRole, Workspace } from "@prisma/client";
+import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -10,7 +10,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
-import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
@@ -21,11 +21,11 @@ import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-ba
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { refetchWorkspaceAction } from "../actions";
+import { refetchProjectAction } from "../actions";
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  workspace: Workspace;
+  project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
@@ -40,9 +40,9 @@ interface SurveyEditorProps {
   isQuotasAllowed: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
-  workspacePermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
   mailFrom: string;
-  workspaceLanguages: Language[];
+  projectLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
@@ -54,8 +54,8 @@ interface SurveyEditorProps {
 
 export const SurveyEditor = ({
   survey,
-  workspace,
-  workspaceLanguages,
+  project,
+  projectLanguages,
   environment,
   actionClasses,
   contactAttributeKeys,
@@ -70,7 +70,7 @@ export const SurveyEditor = ({
   isQuotasAllowed,
   isCxMode = false,
   locale,
-  workspacePermission,
+  projectPermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
@@ -87,21 +87,21 @@ export const SurveyEditor = ({
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
-  const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
+  const [localProject, setLocalProject] = useState<Project>(project);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const fetchLatestWorkspace = useCallback(async () => {
-    const refetchWorkspaceResponse = await refetchWorkspaceAction({ workspaceId: localWorkspace.id });
-    if (refetchWorkspaceResponse?.data) {
-      setLocalWorkspace(refetchWorkspaceResponse.data);
+  const fetchLatestProject = useCallback(async () => {
+    const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
+    if (refetchProjectResponse?.data) {
+      setLocalProject(refetchProjectResponse.data);
     }
-  }, [localWorkspace.id]);
+  }, [localProject.id]);
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
-  useDocumentVisibility(fetchLatestWorkspace);
+  useDocumentVisibility(fetchLatestProject);
 
   useEffect(() => {
     if (survey) {
@@ -123,20 +123,20 @@ export const SurveyEditor = ({
   useEffect(() => {
     const listener = () => {
       if (document.visibilityState === "visible") {
-        const fetchLatestWorkspace = async () => {
-          const refetchWorkspaceResponse = await refetchWorkspaceAction({ workspaceId: localWorkspace.id });
-          if (refetchWorkspaceResponse?.data) {
-            setLocalWorkspace(refetchWorkspaceResponse.data);
+        const fetchLatestProject = async () => {
+          const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
+          if (refetchProjectResponse?.data) {
+            setLocalProject(refetchProjectResponse.data);
           }
         };
-        fetchLatestWorkspace();
+        fetchLatestProject();
       }
     };
     document.addEventListener("visibilitychange", listener);
     return () => {
       document.removeEventListener("visibilitychange", listener);
     };
-  }, [localWorkspace.id]);
+  }, [localProject.id]);
 
   // when the survey type changes, we need to reset the active element id to the first element
   useEffect(() => {
@@ -172,7 +172,7 @@ export const SurveyEditor = ({
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidElements={setInvalidElements}
-        workspace={localWorkspace}
+        project={localProject}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
@@ -189,7 +189,7 @@ export const SurveyEditor = ({
             activeId={activeView}
             setActiveId={setActiveView}
             isCxMode={isCxMode}
-            isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            isStylingTabVisible={!!project.styling.allowStyleOverwrite}
           />
 
           {activeView === "elements" && (
@@ -198,8 +198,8 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurveyNonNull}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
-              workspace={localWorkspace}
-              workspaceLanguages={workspaceLanguages}
+              project={localProject}
+              projectLanguages={projectLanguages}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
@@ -215,13 +215,13 @@ export const SurveyEditor = ({
             />
           )}
 
-          {activeView === "styling" && workspace.styling.allowStyleOverwrite && (
+          {activeView === "styling" && project.styling.allowStyleOverwrite && (
             <StylingView
               colors={colors}
               environmentId={environment.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
-              workspace={localWorkspace}
+              project={localProject}
               styling={styling ?? null}
               setStyling={setStyling}
               localStylingChanges={localStylingChanges}
@@ -244,7 +244,7 @@ export const SurveyEditor = ({
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
               isSpamProtectionAllowed={isSpamProtectionAllowed}
-              workspacePermission={workspacePermission}
+              projectPermission={projectPermission}
               isFormbricksCloud={isFormbricksCloud}
               isQuotasAllowed={isQuotasAllowed}
               quotas={quotas}
@@ -270,7 +270,7 @@ export const SurveyEditor = ({
           <PreviewSurvey
             survey={localSurvey}
             elementId={activeElementId}
-            workspace={localWorkspace}
+            project={localProject}
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}

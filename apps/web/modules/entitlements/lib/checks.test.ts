@@ -27,7 +27,7 @@ const baseContext: TOrganizationEntitlementsContext = {
   organizationId: "org1",
   source: "cloud_stripe",
   features: ["rbac", "spam-protection"],
-  limits: { workspaces: 3, monthlyResponses: 500 },
+  limits: { projects: 3, monthlyResponses: 500 },
   licenseStatus: "no-license",
   licenseFeatures: null,
   stripeCustomerId: "cus_1",
@@ -190,7 +190,7 @@ describe("getOrganizationEntitlementLimits", () => {
   test("returns limits from context", async () => {
     mockGetContext.mockResolvedValue(baseContext);
     expect(await getOrganizationEntitlementLimits("org1")).toEqual({
-      workspaces: 3,
+      projects: 3,
       monthlyResponses: 500,
     });
   });

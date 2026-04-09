@@ -1,3 +1,3 @@
-import { LanguagesLoading } from "@/modules/workspaces/settings/languages/loading";
+import { LanguagesLoading } from "@/modules/projects/settings/languages/loading";
 
 export default LanguagesLoading;

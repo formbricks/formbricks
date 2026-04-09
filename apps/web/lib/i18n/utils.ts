@@ -1,7 +1,7 @@
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
+import { TLanguage } from "@formbricks/types/project";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
-import { TLanguage } from "@formbricks/types/workspace";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 // Helper function to create an i18nString from a regular string.

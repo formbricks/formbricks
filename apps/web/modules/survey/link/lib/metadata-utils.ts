@@ -1,7 +1,7 @@
 import { Metadata } from "next";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -87,20 +87,20 @@ export const getBasicSurveyMetadata = async (
 };
 
 /**
- * Determines the brand color for OG metadata based on workspace and survey styling settings.
- * Uses workspace brand color unless the workspace allows style overwrite AND the survey overrides the theme.
+ * Determines the brand color for OG metadata based on project and survey styling settings.
+ * Uses project brand color unless the project allows style overwrite AND the survey overrides the theme.
  */
 export const getMetadataBrandColor = (
-  workspaceStyling: TWorkspaceStyling,
+  projectStyling: TProjectStyling,
   surveyStyling?: TSurveyStyling | null
 ): string | undefined => {
-  if (!workspaceStyling.allowStyleOverwrite) {
-    return workspaceStyling.brandColor?.light;
+  if (!projectStyling.allowStyleOverwrite) {
+    return projectStyling.brandColor?.light;
   }
 
   return surveyStyling?.overwriteThemeStyling
     ? surveyStyling.brandColor?.light
-    : workspaceStyling.brandColor?.light;
+    : projectStyling.brandColor?.light;
 };
 
 /**

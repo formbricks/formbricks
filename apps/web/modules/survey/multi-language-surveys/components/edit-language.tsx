@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
-import type { TWorkspace } from "@formbricks/types/workspace";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -24,7 +24,7 @@ import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
-  workspace: TWorkspace;
+  project: TProject;
   locale: TUserLocale;
   isReadOnly: boolean;
 }
@@ -77,9 +77,9 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
   return true;
 };
 
-export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProps) {
+export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps) {
   const { t } = useTranslation();
-  const [languages, setLanguages] = useState<Language[]>(workspace.languages);
+  const [languages, setLanguages] = useState<Language[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -89,8 +89,8 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   });
 
   useEffect(() => {
-    setLanguages(workspace.languages);
-  }, [workspace.languages]);
+    setLanguages(project.languages);
+  }, [project.languages]);
 
   const router = useRouter();
 
@@ -101,7 +101,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       updatedAt: new Date(),
       code: "",
       alias: "",
-      workspaceId: workspace.id,
+      projectId: project.id,
     };
     setLanguages((prev) => [...prev, newLanguage]);
     setIsEditing(true);
@@ -143,7 +143,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   const performLanguageDeletion = async (languageId: string) => {
     try {
-      const result = await deleteLanguageAction({ languageId, workspaceId: workspace.id });
+      const result = await deleteLanguageAction({ languageId, projectId: project.id });
       if (result?.serverError) {
         toast.error(getFormattedErrorMessage(result));
         setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
@@ -160,7 +160,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   const handleCancelChanges = async () => {
-    setLanguages(workspace.languages);
+    setLanguages(project.languages);
     setIsEditing(false);
   };
 
@@ -170,11 +170,11 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
-              workspaceId: workspace.id,
+              projectId: project.id,
               languageInput: { code: lang.code, alias: lang.alias },
             })
           : updateLanguageAction({
-              workspaceId: workspace.id,
+              projectId: project.id,
               languageId: lang.id,
               languageInput: { code: lang.code, alias: lang.alias },
             });
@@ -221,7 +221,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           onClick={handleAddLanguage}
           isEditing={isEditing}
           languages={languages}
-          workspace={workspace}
+          project={project}
         />
       </div>
       <EditSaveButtons

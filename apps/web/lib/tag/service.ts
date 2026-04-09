@@ -6,7 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
-import { TagError } from "@/modules/workspaces/settings/types/tag";
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 

@@ -10,7 +10,7 @@ type HasFindMany =
   | Prisma.WebhookFindManyArgs
   | Prisma.ResponseFindManyArgs
   | Prisma.TeamFindManyArgs
-  | Prisma.WorkspaceTeamFindManyArgs
+  | Prisma.ProjectTeamFindManyArgs
   | Prisma.UserFindManyArgs
   | Prisma.ContactAttributeKeyFindManyArgs;
 

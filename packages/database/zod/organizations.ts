@@ -10,13 +10,13 @@ export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
   limits: z
     .object({
-      workspaces: z.number().nullable(),
+      projects: z.number().nullable(),
       monthly: z.object({
         responses: z.number().nullable(),
       }),
     })
     .prefault({
-      workspaces: 3,
+      projects: 3,
       monthly: {
         responses: 1500,
       },

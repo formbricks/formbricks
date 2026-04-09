@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
-import { ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 
 export const ZTeamRole = z.enum(["admin", "contributor"]);
 export type TTeamRole = z.infer<typeof ZTeamRole>;
@@ -41,10 +41,10 @@ export const ZTeamDetails = z.object({
       role: ZTeamRole,
     })
   ),
-  workspaces: z.array(
+  projects: z.array(
     z.object({
-      workspaceId: ZId,
-      workspaceName: z.string(),
+      projectId: ZId,
+      projectName: z.string(),
       permission: ZTeamPermission,
     })
   ),
@@ -72,15 +72,15 @@ export const ZTeamSettingsFormSchema = z.object({
     .min(1, {
       error: "Please add at least one member",
     }),
-  workspaces: z
+  projects: z
     .array(
       z.object({
-        workspaceId: z.string().trim().min(1, "Please select a workspace"),
+        projectId: z.string().trim().min(1, "Please select a project"),
         permission: ZTeamPermission,
       })
     )
     .min(1, {
-      error: "Please add at least one workspace",
+      error: "Please add at least one project",
     }),
 });
 

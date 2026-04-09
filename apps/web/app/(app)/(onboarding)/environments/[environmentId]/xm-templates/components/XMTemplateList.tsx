@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TProject } from "@formbricks/types/project";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import { TWorkspace } from "@formbricks/types/workspace";
 import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/utils";
 import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
@@ -16,12 +16,12 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 
 interface XMTemplateListProps {
-  workspace: TWorkspace;
+  project: TProject;
   user: TUser;
   environmentId: string;
 }
 
-export const XMTemplateList = ({ workspace, user, environmentId }: XMTemplateListProps) => {
+export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListProps) => {
   const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -48,7 +48,7 @@ export const XMTemplateList = ({ workspace, user, environmentId }: XMTemplateLis
   const handleTemplateClick = (templateIdx: number) => {
     setActiveTemplateId(templateIdx);
     const template = getXMTemplates(t)[templateIdx];
-    const newTemplate = replacePresetPlaceholders(template, workspace);
+    const newTemplate = replacePresetPlaceholders(template, project);
     createSurvey(newTemplate);
   };
 

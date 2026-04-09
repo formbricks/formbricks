@@ -3,33 +3,33 @@
 import { Trash2Icon } from "lucide-react";
 import { Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { TTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
-import { ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 
 export interface WorkspaceRowProps {
   index: number;
-  workspace: { workspaceId: string; permission: string };
-  workspaceOpts: { value: string; label: string }[];
+  project: { projectId: string; permission: string };
+  projectOpts: { value: string; label: string }[];
   control: Control<TTeamSettingsFormSchema>;
-  initialWorkspaceIds: Set<string>;
+  initialProjectIds: Set<string>;
   isOwnerOrManager: boolean;
-  onRemoveWorkspace: (index: number) => void;
-  workspaceCount: number;
+  onRemoveProject: (index: number) => void;
+  projectCount: number;
 }
 
 export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
   const {
     index,
-    workspace,
-    workspaceOpts,
+    project,
+    projectOpts,
     control,
-    initialWorkspaceIds,
+    initialProjectIds,
     isOwnerOrManager,
-    onRemoveWorkspace,
-    workspaceCount,
+    onRemoveProject,
+    projectCount,
   } = props;
   const { t } = useTranslation();
 
@@ -37,17 +37,17 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
     <div className="flex gap-2.5">
       <FormField
         control={control}
-        name={`workspaces.${index}.workspaceId`}
+        name={`projects.${index}.projectId`}
         render={({ field, fieldState: { error } }) => {
-          const isExistingWorkspace = workspace.workspaceId && initialWorkspaceIds.has(workspace.workspaceId);
-          const isSelectDisabled = isExistingWorkspace || !isOwnerOrManager;
+          const isExistingProject = project.projectId && initialProjectIds.has(project.projectId);
+          const isSelectDisabled = isExistingProject || !isOwnerOrManager;
 
           return (
             <FormItem className="flex-1">
               <div className={isSelectDisabled ? "pointer-events-none opacity-50" : undefined}>
                 <InputCombobox
-                  id={`workspace-select-${index}`}
-                  options={workspaceOpts}
+                  id={`project-select-${index}`}
+                  options={projectOpts}
                   value={field.value || null}
                   onChangeValue={(val) => {
                     const value = typeof val === "string" ? val : "";
@@ -66,7 +66,7 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
       />
       <FormField
         control={control}
-        name={`workspaces.${index}.permission`}
+        name={`projects.${index}.permission`}
         render={({ field }) => {
           const permissionOptions = [
             {
@@ -87,7 +87,7 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
             <FormItem className="flex-1">
               <div className={isOwnerOrManager ? undefined : "pointer-events-none opacity-50"}>
                 <InputCombobox
-                  id={`workspace-permission-select-${index}`}
+                  id={`project-permission-select-${index}`}
                   options={permissionOptions}
                   value={field.value}
                   onChangeValue={(val) => field.onChange(val)}
@@ -99,14 +99,14 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
           );
         }}
       />
-      {workspaceCount > 1 && (
+      {projectCount > 1 && (
         <Button
           size="icon"
           type="button"
           variant="secondary"
           className="shrink-0"
           disabled={!isOwnerOrManager}
-          onClick={() => onRemoveWorkspace(index)}>
+          onClick={() => onRemoveProject(index)}>
           <Trash2Icon className="h-4 w-4" />
         </Button>
       )}

@@ -3,15 +3,15 @@ import {
   mockLanguageId,
   mockLanguageInput,
   mockLanguageUpdate,
+  mockProjectId,
   mockUpdatedLanguage,
-  mockWorkspaceId,
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import { TWorkspace } from "@formbricks/types/workspace";
-import { getWorkspace } from "@/lib/workspace/service";
+import { TProject } from "@formbricks/types/project";
+import { getProject } from "@/lib/project/service";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
 
 vi.mock("@formbricks/database", () => ({
@@ -24,18 +24,18 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-// stub out workspace/service and caches
-vi.mock("@/lib/workspace/service", () => ({
-  getWorkspace: vi.fn(),
+// stub out project/service and caches
+vi.mock("@/lib/project/service", () => ({
+  getProject: vi.fn(),
 }));
 
-const fakeWorkspace = {
-  id: mockWorkspaceId,
+const fakeProject = {
+  id: mockProjectId,
   environments: [{ id: "env1" }, { id: "env2" }],
-} as TWorkspace;
+} as TProject;
 
 const testInputValidation = async (
-  service: (workspaceId: string, ...functionArgs: any[]) => Promise<any>,
+  service: (projectId: string, ...functionArgs: any[]) => Promise<any>,
   ...args: [string, ...any[]]
 ): Promise<void> => {
   test("throws ValidationError on bad input", async () => {
@@ -45,12 +45,12 @@ const testInputValidation = async (
 
 describe("createLanguage", () => {
   beforeEach(() => {
-    vi.mocked(getWorkspace).mockResolvedValue(fakeWorkspace);
+    vi.mocked(getProject).mockResolvedValue(fakeProject);
   });
 
   test("happy path creates a new Language", async () => {
     vi.mocked(prisma.language.create).mockResolvedValue(mockLanguage);
-    const result = await createLanguage(mockWorkspaceId, mockLanguageInput);
+    const result = await createLanguage(mockProjectId, mockLanguageInput);
     expect(result).toEqual(mockLanguage);
   });
 
@@ -63,14 +63,14 @@ describe("createLanguage", () => {
         clientVersion: "1",
       });
       vi.mocked(prisma.language.create).mockRejectedValue(err);
-      await expect(createLanguage(mockWorkspaceId, mockLanguageInput)).rejects.toThrow(DatabaseError);
+      await expect(createLanguage(mockProjectId, mockLanguageInput)).rejects.toThrow(DatabaseError);
     });
   });
 });
 
 describe("updateLanguage", () => {
   beforeEach(() => {
-    vi.mocked(getWorkspace).mockResolvedValue(fakeWorkspace);
+    vi.mocked(getProject).mockResolvedValue(fakeProject);
   });
 
   test("happy path updates a language", async () => {
@@ -83,7 +83,7 @@ describe("updateLanguage", () => {
       ],
     };
     vi.mocked(prisma.language.update).mockResolvedValue(mockUpdatedLanguageWithSurveyLanguage);
-    const result = await updateLanguage(mockWorkspaceId, mockLanguageId, mockLanguageUpdate);
+    const result = await updateLanguage(mockProjectId, mockLanguageId, mockLanguageUpdate);
     expect(result).toEqual(mockUpdatedLanguage);
   });
 
@@ -96,7 +96,7 @@ describe("updateLanguage", () => {
         clientVersion: "1",
       });
       vi.mocked(prisma.language.update).mockRejectedValue(err);
-      await expect(updateLanguage(mockWorkspaceId, mockLanguageId, mockLanguageUpdate)).rejects.toThrow(
+      await expect(updateLanguage(mockProjectId, mockLanguageId, mockLanguageUpdate)).rejects.toThrow(
         DatabaseError
       );
     });
@@ -105,17 +105,17 @@ describe("updateLanguage", () => {
 
 describe("deleteLanguage", () => {
   beforeEach(() => {
-    vi.mocked(getWorkspace).mockResolvedValue(fakeWorkspace);
+    vi.mocked(getProject).mockResolvedValue(fakeProject);
   });
 
   test("happy path deletes a language", async () => {
     vi.mocked(prisma.language.delete).mockResolvedValue(mockLanguage);
-    const result = await deleteLanguage(mockLanguageId, mockWorkspaceId);
+    const result = await deleteLanguage(mockLanguageId, mockProjectId);
     expect(result).toEqual(mockLanguage);
   });
 
   describe("sad path", () => {
-    testInputValidation(deleteLanguage, "bad-id", mockWorkspaceId);
+    testInputValidation(deleteLanguage, "bad-id", mockProjectId);
 
     test("throws DatabaseError on PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
@@ -123,7 +123,7 @@ describe("deleteLanguage", () => {
         clientVersion: "1",
       });
       vi.mocked(prisma.language.delete).mockRejectedValue(err);
-      await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
+      await expect(deleteLanguage(mockLanguageId, mockProjectId)).rejects.toThrow(DatabaseError);
     });
   });
 });

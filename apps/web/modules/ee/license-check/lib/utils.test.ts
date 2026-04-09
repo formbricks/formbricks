@@ -19,7 +19,7 @@ import {
   getIsSpamProtectionEnabled,
   getIsSsoEnabled,
   getIsTwoFactorAuthEnabled,
-  getOrganizationWorkspacesLimit,
+  getOrganizationProjectsLimit,
   getRemoveBrandingPermission,
   getWhiteLabelPermission,
 } from "./utils";
@@ -49,7 +49,7 @@ vi.mock("./license", () => ({
 
 const defaultFeatures: TEnterpriseLicenseFeatures = {
   whitelabel: false,
-  workspaces: null,
+  projects: null,
   isMultiOrgEnabled: false,
   contacts: false,
   removeBranding: false,
@@ -78,7 +78,7 @@ const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
   source: "cloud_stripe",
   features: [],
   limits: {
-    workspaces: 3,
+    projects: 3,
     monthlyResponses: null,
   },
   licenseStatus: "active",
@@ -297,7 +297,7 @@ describe("License Utils", () => {
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         licenseStatus: "active",
-        limits: { ...defaultEntitlementsContext.limits, workspaces: 10 },
+        limits: { ...defaultEntitlementsContext.limits, projects: 10 },
       });
 
       const result = await getBiggerUploadFileSizePermission("org_1");
@@ -310,7 +310,7 @@ describe("License Utils", () => {
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         licenseStatus: "active",
-        limits: { ...defaultEntitlementsContext.limits, workspaces: 1 },
+        limits: { ...defaultEntitlementsContext.limits, projects: 1 },
       });
 
       const result = await getBiggerUploadFileSizePermission("org_1");
@@ -323,7 +323,7 @@ describe("License Utils", () => {
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         licenseStatus: "expired",
-        limits: { ...defaultEntitlementsContext.limits, workspaces: 10 },
+        limits: { ...defaultEntitlementsContext.limits, projects: 10 },
       });
 
       const result = await getBiggerUploadFileSizePermission("org_1");
@@ -431,16 +431,16 @@ describe("License Utils", () => {
     });
   });
 
-  describe("getOrganizationWorkspacesLimit", () => {
+  describe("getOrganizationProjectsLimit", () => {
     test("returns cloud projects limit when cloud license status allows usage", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         licenseStatus: "active",
-        limits: { ...defaultEntitlementsContext.limits, workspaces: 10 },
+        limits: { ...defaultEntitlementsContext.limits, projects: 10 },
       });
 
-      const result = await getOrganizationWorkspacesLimit("org_1");
+      const result = await getOrganizationProjectsLimit("org_1");
 
       expect(result).toBe(10);
     });
@@ -450,10 +450,10 @@ describe("License Utils", () => {
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         licenseStatus: "no-license",
-        limits: { ...defaultEntitlementsContext.limits, workspaces: null },
+        limits: { ...defaultEntitlementsContext.limits, projects: null },
       });
 
-      const result = await getOrganizationWorkspacesLimit("org_1");
+      const result = await getOrganizationProjectsLimit("org_1");
 
       expect(result).toBe(Infinity);
     });
@@ -463,38 +463,38 @@ describe("License Utils", () => {
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         licenseStatus: "expired",
-        limits: { ...defaultEntitlementsContext.limits, workspaces: 10 },
+        limits: { ...defaultEntitlementsContext.limits, projects: 10 },
       });
 
-      const result = await getOrganizationWorkspacesLimit("org_1");
+      const result = await getOrganizationProjectsLimit("org_1");
 
       expect(result).toBe(3);
     });
 
-    test("returns self-hosted workspace limit from active license feature", async () => {
+    test("returns self-hosted project limit from active license feature", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         source: "self_hosted_license",
         licenseStatus: "active",
-        licenseFeatures: { ...defaultFeatures, workspaces: 5 },
+        licenseFeatures: { ...defaultFeatures, projects: 5 },
       });
 
-      const result = await getOrganizationWorkspacesLimit("org_1");
+      const result = await getOrganizationProjectsLimit("org_1");
 
       expect(result).toBe(5);
     });
 
-    test("returns 3 for self-hosted without active workspace entitlement", async () => {
+    test("returns 3 for self-hosted without active project entitlement", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         source: "self_hosted_license",
         licenseStatus: "active",
-        licenseFeatures: { ...defaultFeatures, workspaces: null },
+        licenseFeatures: { ...defaultFeatures, projects: null },
       });
 
-      const result = await getOrganizationWorkspacesLimit("org_1");
+      const result = await getOrganizationProjectsLimit("org_1");
 
       expect(result).toBe(3);
     });

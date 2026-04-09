@@ -1,3 +1,3 @@
-import { LanguagesPage } from "@/modules/workspaces/settings/languages/page";
+import { LanguagesPage } from "@/modules/projects/settings/languages/page";
 
 export default LanguagesPage;

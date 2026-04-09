@@ -5,7 +5,7 @@ import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
@@ -19,7 +19,7 @@ const tabs = [
 interface OnboardingSetupInstructionsProps {
   environmentId: string;
   publicDomain: string;
-  channel: TWorkspaceConfigChannel;
+  channel: TProjectConfigChannel;
   appSetupCompleted: boolean;
 }
 

@@ -1,3 +1,3 @@
-import { WorkspaceTeams } from "@/modules/ee/teams/workspace-teams/page";
+import { ProjectTeams } from "@/modules/ee/teams/project-teams/page";
 
-export default WorkspaceTeams;
+export default ProjectTeams;

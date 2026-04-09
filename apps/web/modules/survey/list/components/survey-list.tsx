@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { wrapThrows } from "@formbricks/types/error-handlers";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getSurveysAction } from "@/modules/survey/list/actions";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -24,7 +24,7 @@ interface SurveysListProps {
   publicDomain: string;
   userId: string;
   surveysPerPage: number;
-  currentWorkspaceChannel: TWorkspaceConfigChannel;
+  currentProjectChannel: TProjectConfigChannel;
   locale: TUserLocale;
 }
 
@@ -34,7 +34,7 @@ export const SurveysList = ({
   publicDomain,
   userId,
   surveysPerPage: surveysLimit,
-  currentWorkspaceChannel,
+  currentProjectChannel,
   locale,
 }: SurveysListProps) => {
   const router = useRouter();
@@ -140,7 +140,7 @@ export const SurveysList = ({
       <SurveyFilters
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
-        currentWorkspaceChannel={currentWorkspaceChannel}
+        currentProjectChannel={currentProjectChannel}
       />
       {surveys.length > 0 ? (
         <div>

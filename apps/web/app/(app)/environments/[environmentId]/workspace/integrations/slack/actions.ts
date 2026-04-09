@@ -5,7 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { getSlackChannels } from "@/lib/slack/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 
 const ZGetSlackChannelsAction = z.object({
   environmentId: ZId,
@@ -23,8 +23,8 @@ export const getSlackChannelsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
       ],

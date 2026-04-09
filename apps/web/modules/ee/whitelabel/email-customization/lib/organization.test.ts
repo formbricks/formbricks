@@ -36,7 +36,7 @@ describe("organization", () => {
       };
 
       const mockUpdatedOrganization = {
-        workspaces: [
+        projects: [
           {
             id: "clp123456789012345678901234",
             environments: [{ id: "cle123456789012345678901234" }],
@@ -62,7 +62,7 @@ describe("organization", () => {
           },
         },
         select: {
-          workspaces: {
+          projects: {
             select: {
               id: true,
               environments: {
@@ -97,7 +97,7 @@ describe("organization", () => {
         whitelabel: {
           logoUrl: "old-logo.png",
         },
-        workspaces: [
+        projects: [
           {
             id: "clp123456789012345678901234",
             environments: [{ id: "cle123456789012345678901234" }],
@@ -115,7 +115,7 @@ describe("organization", () => {
         where: { id: "clg123456789012345678901234" },
         select: {
           whitelabel: true,
-          workspaces: {
+          projects: {
             select: {
               id: true,
               environments: {
@@ -149,7 +149,7 @@ describe("organization", () => {
         where: { id: "clg123456789012345678901234" },
         select: {
           whitelabel: true,
-          workspaces: {
+          projects: {
             select: {
               id: true,
               environments: {

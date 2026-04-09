@@ -10,10 +10,12 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { MemberRow } from "@/modules/ee/teams/team-list/components/team-settings/member-row";
 import { WorkspaceRow } from "@/modules/ee/teams/team-list/components/team-settings/workspace-row";
+import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
   TOrganizationMember,
   TTeamDetails,
@@ -22,9 +24,7 @@ import {
   ZTeamRole,
   ZTeamSettingsFormSchema,
 } from "@/modules/ee/teams/team-list/types/team";
-import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
-import { ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -46,7 +46,7 @@ interface TeamSettingsModalProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   team: TTeamDetails;
   orgMembers: TOrganizationMember[];
-  orgWorkspaces: TOrganizationWorkspace[];
+  orgProjects: TOrganizationProject[];
   membershipRole?: TOrganizationRole;
   userTeamRole: TTeamRole | undefined;
   currentUserId: string;
@@ -57,7 +57,7 @@ export const TeamSettingsModal = ({
   setOpen,
   team,
   orgMembers,
-  orgWorkspaces,
+  orgProjects,
   userTeamRole,
   membershipRole,
   currentUserId,
@@ -80,10 +80,10 @@ export const TeamSettingsModal = ({
     return new Set(team.members.map((member) => member.userId));
   }, [team.members]);
 
-  // Track initial workspace IDs to distinguish existing workspaces from newly added ones
-  const initialWorkspaceIds = useMemo(() => {
-    return new Set(team.workspaces.map((workspace) => workspace.workspaceId));
-  }, [team.workspaces]);
+  // Track initial project IDs to distinguish existing projects from newly added ones
+  const initialProjectIds = useMemo(() => {
+    return new Set(team.projects.map((project) => project.projectId));
+  }, [team.projects]);
 
   const initialMembers = useMemo(() => {
     const members = team.members.map((member) => ({
@@ -94,19 +94,19 @@ export const TeamSettingsModal = ({
     return members.length ? members : [{ userId: "", role: ZTeamRole.enum.contributor }];
   }, [team.members]);
 
-  const initialWorkspaces = useMemo(() => {
-    const workspaces = team.workspaces.map((workspace) => ({
-      workspaceId: workspace.workspaceId,
-      permission: workspace.permission,
+  const initialProjects = useMemo(() => {
+    const projects = team.projects.map((project) => ({
+      projectId: project.projectId,
+      permission: project.permission,
     }));
-    return workspaces.length ? workspaces : [{ workspaceId: "", permission: ZTeamPermission.enum.read }];
-  }, [team.workspaces]);
+    return projects.length ? projects : [{ projectId: "", permission: ZTeamPermission.enum.read }];
+  }, [team.projects]);
 
   const form = useForm<TTeamSettingsFormSchema>({
     defaultValues: {
       name: team.name,
       members: initialMembers,
-      workspaces: initialWorkspaces,
+      projects: initialProjects,
     },
     mode: "onChange",
     resolver: zodResolver(ZTeamSettingsFormSchema),
@@ -126,14 +126,14 @@ export const TeamSettingsModal = ({
 
   const handleUpdateTeam: SubmitHandler<TTeamSettingsFormSchema> = async (data) => {
     const members = data.members.filter((m) => m.userId);
-    const workspaces = data.workspaces.filter((p) => p.workspaceId);
+    const projects = data.projects.filter((p) => p.projectId);
 
     const updatedTeamActionResponse = await updateTeamDetailsAction({
       teamId: team.id,
       data: {
         name: data.name,
         members,
-        workspaces,
+        projects,
       },
     });
 
@@ -148,7 +148,7 @@ export const TeamSettingsModal = ({
   };
 
   const watchMembers = watch("members");
-  const watchWorkspaces = useWatch({ control, name: "workspaces" }) || [];
+  const watchProjects = useWatch({ control, name: "projects" }) || [];
 
   const handleAddMember = () => {
     const newMembers = [...watchMembers, { userId: "", role: ZTeamRole.enum.contributor }];
@@ -162,21 +162,21 @@ export const TeamSettingsModal = ({
     );
   };
 
-  const handleAddWorkspace = () => {
-    const newWorkspaces = [...watchWorkspaces, { workspaceId: "", permission: ZTeamPermission.enum.read }];
-    setValue("workspaces", newWorkspaces);
+  const handleAddProject = () => {
+    const newProjects = [...watchProjects, { projectId: "", permission: ZTeamPermission.enum.read }];
+    setValue("projects", newProjects);
   };
 
-  const handleRemoveWorkspace = (index: number) => {
+  const handleRemoveProject = (index: number) => {
     setValue(
-      "workspaces",
-      watchWorkspaces.filter((_, i) => i !== index)
+      "projects",
+      watchProjects.filter((_, i) => i !== index)
     );
   };
 
   const selectedMemberIds = watchMembers.map((m) => m.userId);
 
-  const selectedWorkspaceIds = watchWorkspaces.map((p) => p.workspaceId);
+  const selectedProjectIds = watchProjects.map((p) => p.projectId);
 
   const getMemberOptionsForIndex = (index: number) => {
     const currentMemberId = watchMembers[index]?.userId;
@@ -186,10 +186,10 @@ export const TeamSettingsModal = ({
       .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
   };
 
-  const getWorkspaceOptionsForIndex = (index: number) => {
-    const currentWorkspaceId = watchWorkspaces[index]?.workspaceId;
-    return orgWorkspaces
-      .filter((op) => !selectedWorkspaceIds.includes(op?.id) || op?.id === currentWorkspaceId)
+  const getProjectOptionsForIndex = (index: number) => {
+    const currentProjectId = watchProjects[index]?.projectId;
+    return orgProjects
+      .filter((op) => !selectedProjectIds.includes(op?.id) || op?.id === currentProjectId)
       .map((op) => ({ label: op?.name ?? "", value: op?.id }))
       .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
   };
@@ -208,7 +208,7 @@ export const TeamSettingsModal = ({
 
   const hasEmptyMember = watchMembers.some((m) => !m.userId);
 
-  const hasEmptyWorkspace = watchWorkspaces.some((p) => !p.workspaceId);
+  const hasEmptyProject = watchProjects.some((p) => !p.projectId);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -309,7 +309,7 @@ export const TeamSettingsModal = ({
                 </TooltipRenderer>
               </div>
 
-              {/* Workspaces Section */}
+              {/* Projects Section */}
               <div className="space-y-2">
                 <div className="flex flex-col space-y-1">
                   <FormLabel>{t("common.workspaces")}</FormLabel>
@@ -319,21 +319,21 @@ export const TeamSettingsModal = ({
                 </div>
                 <FormField
                   control={control}
-                  name={`workspaces`}
+                  name={`projects`}
                   render={({ fieldState: { error } }) => (
                     <FormItem className="flex-1">
                       <div className="space-y-2">
-                        {watchWorkspaces.map((workspace, index) => (
+                        {watchProjects.map((project, index) => (
                           <WorkspaceRow
-                            key={`workspace-${workspace.workspaceId}-${index}`}
+                            key={`workspace-${project.projectId}-${index}`}
                             index={index}
-                            workspace={workspace}
-                            workspaceOpts={getWorkspaceOptionsForIndex(index)}
+                            project={project}
+                            projectOpts={getProjectOptionsForIndex(index)}
                             control={control}
-                            initialWorkspaceIds={initialWorkspaceIds}
+                            initialProjectIds={initialProjectIds}
                             isOwnerOrManager={isOwnerOrManager}
-                            onRemoveWorkspace={handleRemoveWorkspace}
-                            workspaceCount={watchWorkspaces.length}
+                            onRemoveProject={handleRemoveProject}
+                            projectCount={watchProjects.length}
                           />
                         ))}
                       </div>
@@ -345,10 +345,10 @@ export const TeamSettingsModal = ({
                 />
 
                 <TooltipRenderer
-                  shouldRender={selectedWorkspaceIds.length === orgWorkspaces.length || hasEmptyWorkspace}
+                  shouldRender={selectedProjectIds.length === orgProjects.length || hasEmptyProject}
                   triggerClass="inline-block"
                   tooltipContent={
-                    hasEmptyWorkspace
+                    hasEmptyProject
                       ? t("environments.settings.teams.please_fill_all_workspace_fields")
                       : t("environments.settings.teams.all_workspaces_added")
                   }>
@@ -356,11 +356,9 @@ export const TeamSettingsModal = ({
                     size="sm"
                     type="button"
                     variant="secondary"
-                    onClick={handleAddWorkspace}
+                    onClick={handleAddProject}
                     disabled={
-                      !isOwnerOrManager ||
-                      selectedWorkspaceIds.length === orgWorkspaces.length ||
-                      hasEmptyWorkspace
+                      !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
                     }>
                     <PlusIcon className="h-4 w-4" />
                     {t("common.add_workspace")}

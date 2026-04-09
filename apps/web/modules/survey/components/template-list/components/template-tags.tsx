@@ -4,8 +4,8 @@ import { TFunction } from "i18next";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
-import { TWorkspaceConfigChannel, TWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
@@ -15,7 +15,7 @@ interface TemplateTagsProps {
   selectedFilter: TTemplateFilter[];
 }
 
-type NonNullabeChannel = NonNullable<TWorkspaceConfigChannel>;
+type NonNullabeChannel = NonNullable<TProjectConfigChannel>;
 
 export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
@@ -75,7 +75,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
   );
 
   const channelTag = useMemo(() => getChannelTag(template.channels, t), [template.channels]);
-  const getIndustryTag = (industries: TWorkspaceConfigIndustry[] | undefined): string | undefined => {
+  const getIndustryTag = (industries: TProjectConfigIndustry[] | undefined): string | undefined => {
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
     if (selectedFilter[1] !== null) {
       const industry = getIndustryMapping(t).find((industry) => industry.value === selectedFilter[1]);

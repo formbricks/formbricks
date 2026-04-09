@@ -22,7 +22,7 @@ import { SecondaryLanguageSelect } from "./secondary-language-select";
 
 interface MultiLanguageCardProps {
   localSurvey: TSurvey;
-  workspaceLanguages: Language[];
+  projectLanguages: Language[];
   setLocalSurvey: (survey: TSurvey) => void;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
@@ -44,7 +44,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   localSurvey,
   setActiveElementId,
   setLocalSurvey,
-  workspaceLanguages,
+  projectLanguages,
   setSelectedLanguageCode,
   locale,
 }) => {
@@ -115,7 +115,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const handleDefaultLanguageChange = (languageCode: string) => {
-    const language = workspaceLanguages.find((lang) => lang.code === languageCode);
+    const language = projectLanguages.find((lang) => lang.code === languageCode);
     if (language) {
       let languageExists = false;
 
@@ -213,7 +213,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
               <Switch
                 checked={isMultiLanguageActivated}
-                disabled={workspaceLanguages.length === 0}
+                disabled={projectLanguages.length === 0}
                 id="multi-lang-toggle"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -225,27 +225,27 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <div className="space-y-6 pt-3">
-            {workspaceLanguages.length === 0 && (
+            {projectLanguages.length === 0 && (
               <div className="mb-4 text-sm italic text-slate-500">
                 {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
               </div>
             )}
-            {workspaceLanguages.length > 0 && (
+            {projectLanguages.length > 0 && (
               <div className="space-y-6">
                 {isMultiLanguageActivated ? (
                   <div className="space-y-6">
                     <DefaultLanguageSelect
                       defaultLanguage={defaultLanguage}
                       handleDefaultLanguageChange={handleDefaultLanguageChange}
-                      workspaceLanguages={workspaceLanguages}
+                      projectLanguages={projectLanguages}
                       setConfirmationModalInfo={setConfirmationModalInfo}
                       locale={locale}
                     />
-                    {defaultLanguage && workspaceLanguages.length > 1 ? (
+                    {defaultLanguage && projectLanguages.length > 1 ? (
                       <SecondaryLanguageSelect
                         defaultLanguage={defaultLanguage}
                         localSurvey={localSurvey}
-                        workspaceLanguages={workspaceLanguages}
+                        projectLanguages={projectLanguages}
                         setActiveElementId={setActiveElementId}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         updateSurveyLanguages={updateSurveyLanguages}

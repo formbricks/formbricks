@@ -15,7 +15,7 @@ import {
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
-import { getWorkspaceByEnvironmentId } from "@/modules/survey/link/lib/workspace";
+import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -52,7 +52,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
     const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
-    const brandColor = getMetadataBrandColor(environmentContext.workspace.styling, survey.styling);
+    const brandColor = getMetadataBrandColor(environmentContext.project.styling, survey.styling);
     const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
     // Override with the custom image URL
@@ -97,8 +97,8 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     ) {
       return <SurveyInactive surveyClosedMessage={{ heading: t("c.link_expired") }} status="link expired" />;
     }
-    // When token is invalid, we don't have survey data to get workspace branding settings
-    // So we show SurveyInactive without workspace data (shows branding by default for backward compatibility)
+    // When token is invalid, we don't have survey data to get project branding settings
+    // So we show SurveyInactive without project data (shows branding by default for backward compatibility)
     return <SurveyInactive status="link invalid" />;
   }
 
@@ -108,8 +108,8 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (existingResponse) {
     const survey = await getSurvey(surveyId);
     if (survey) {
-      const workspace = await getWorkspaceByEnvironmentId(survey.environmentId);
-      return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
+      const project = await getProjectByEnvironmentId(survey.environmentId);
+      return <SurveyInactive status="response submitted" project={project || undefined} />;
     }
     return <SurveyInactive status="response submitted" />;
   }
@@ -130,7 +130,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
       const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
+      return <SurveyInactive status="link invalid" project={environmentContext.project} />;
     }
 
     singleUseId = validatedSingleUseId;

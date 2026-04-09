@@ -25,7 +25,7 @@ export const getMetadataForLinkSurvey = async (
   const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
 
   // Use the shared function for creating the base metadata but override with custom data
-  const brandColor = getMetadataBrandColor(environmentContext.workspace.styling, survey.styling);
+  const brandColor = getMetadataBrandColor(environmentContext.project.styling, survey.styling);
   const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
   // Override with the custom image URL

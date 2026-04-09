@@ -8,7 +8,7 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
-  workspaceLanguages: Language[];
+  projectLanguages: Language[];
   defaultLanguage: Language;
   setSelectedLanguageCode: (languageCode: string) => void;
   setActiveElementId: (elementId: string) => void;
@@ -18,7 +18,7 @@ interface SecondaryLanguageSelectProps {
 }
 
 export function SecondaryLanguageSelect({
-  workspaceLanguages,
+  projectLanguages,
   defaultLanguage,
   setSelectedLanguageCode,
   setActiveElementId,
@@ -40,7 +40,7 @@ export function SecondaryLanguageSelect({
       <p className="text-sm font-medium text-slate-800">
         {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}
       </p>{" "}
-      {workspaceLanguages
+      {projectLanguages
         .filter((lang) => lang.id !== defaultLanguage.id)
         .map((language) => (
           <LanguageToggle

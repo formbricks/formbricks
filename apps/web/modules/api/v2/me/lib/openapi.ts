@@ -5,7 +5,7 @@ import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 export const getMeEndpoint: ZodOpenApiOperationObject = {
   operationId: "me",
   summary: "Me",
-  description: "Fetches the workspaces and organizations associated with the API key.",
+  description: "Fetches the projects and organizations associated with the API key.",
   tags: ["Me"],
   responses: {
     "200": {

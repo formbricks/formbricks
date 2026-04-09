@@ -1,6 +1,6 @@
 "use client";
 
-import type { Environment, Workspace } from "@prisma/client";
+import type { Environment, Project } from "@prisma/client";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TTemplate } from "@formbricks/types/templates";
@@ -12,7 +12,7 @@ import { SearchBar } from "@/modules/ui/components/search-bar";
 import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
-  workspace: Workspace;
+  project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   userId: string;
   isTemplatePage?: boolean;
@@ -20,7 +20,7 @@ type TemplateContainerWithPreviewProps = {
 };
 
 export const TemplateContainerWithPreview = ({
-  workspace,
+  project,
   environment,
   userId,
   isTemplatePage = true,
@@ -56,7 +56,7 @@ export const TemplateContainerWithPreview = ({
           </div>
           <TemplateList
             environmentId={environment.id}
-            workspace={workspace}
+            project={project}
             userId={userId}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
@@ -70,7 +70,7 @@ export const TemplateContainerWithPreview = ({
             <PreviewSurvey
               survey={{ ...getMinimalSurvey(t), ...activeTemplate.preset }}
               elementId={activeElementId}
-              workspace={workspace}
+              project={project}
               environment={environment}
               languageCode={"default"}
               isSpamProtectionAllowed={false} // setting it to false as this is a template

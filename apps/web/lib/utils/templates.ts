@@ -1,14 +1,14 @@
+import type { TProject } from "@formbricks/types/project";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type { TTemplate } from "@formbricks/types/templates";
-import type { TWorkspace } from "@formbricks/types/workspace";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 export const replaceElementPresetPlaceholders = (
   element: TSurveyElement,
-  workspace: TWorkspace
+  project: TProject
 ): TSurveyElement => {
-  if (!workspace) return element;
+  if (!project) return element;
   const newElement = structuredClone(element);
   const defaultLanguageCode = "default";
 
@@ -16,29 +16,29 @@ export const replaceElementPresetPlaceholders = (
     newElement.headline[defaultLanguageCode] = getLocalizedValue(
       newElement.headline,
       defaultLanguageCode
-    ).replace("$[workspaceName]", workspace.name);
+    ).replace("$[projectName]", project.name);
   }
 
   if (newElement.subheader) {
     newElement.subheader[defaultLanguageCode] = getLocalizedValue(
       newElement.subheader,
       defaultLanguageCode
-    )?.replace("$[workspaceName]", workspace.name);
+    )?.replace("$[projectName]", project.name);
   }
 
   return newElement;
 };
 
-// replace all occurences of workspaceName with the actual workspace name in the current template
-export const replacePresetPlaceholders = (template: TTemplate, workspace: any) => {
+// replace all occurences of projectName with the actual project name in the current template
+export const replacePresetPlaceholders = (template: TTemplate, project: any) => {
   const preset = structuredClone(template.preset);
-  preset.name = preset.name.replace("$[workspaceName]", workspace.name);
+  preset.name = preset.name.replace("$[projectName]", project.name);
 
   // Handle blocks if present
   if (preset.blocks && preset.blocks.length > 0) {
     preset.blocks = preset.blocks.map((block) => ({
       ...block,
-      elements: block.elements.map((element) => replaceElementPresetPlaceholders(element, workspace)),
+      elements: block.elements.map((element) => replaceElementPresetPlaceholders(element, project)),
     }));
   }
 

@@ -6,8 +6,8 @@ import { CheckIcon } from "lucide-react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
-import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
@@ -22,7 +22,7 @@ type CardStylingSettingsProps = {
   isSettingsPage?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
-  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
+  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
 };
 
 export const CardStylingSettings = ({

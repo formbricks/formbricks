@@ -1,14 +1,14 @@
 import { TFunction } from "i18next";
+import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplateRole } from "@formbricks/types/templates";
-import { TWorkspaceConfigChannel, TWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 
-export const getChannelMapping = (t: TFunction): { value: TWorkspaceConfigChannel; label: string }[] => [
+export const getChannelMapping = (t: TFunction): { value: TProjectConfigChannel; label: string }[] => [
   { value: "website", label: t("common.website_survey") },
   { value: "app", label: t("common.app_survey") },
   { value: "link", label: t("common.link_survey") },
 ];
 
-export const getIndustryMapping = (t: TFunction): { value: TWorkspaceConfigIndustry; label: string }[] => [
+export const getIndustryMapping = (t: TFunction): { value: TProjectConfigIndustry; label: string }[] => [
   { value: "eCommerce", label: t("common.e_commerce") },
   { value: "saas", label: t("common.saas") },
   { value: "other", label: t("common.other") },

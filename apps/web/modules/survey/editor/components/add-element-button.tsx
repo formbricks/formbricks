@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Workspace } from "@prisma/client";
+import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
@@ -17,11 +17,11 @@ import {
 
 interface AddElementButtonProps {
   addElement: (element: any) => void;
-  workspace: Workspace;
+  project: Project;
   isCxMode: boolean;
 }
 
-export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElementButtonProps) => {
+export const AddElementButton = ({ addElement, project, isCxMode }: AddElementButtonProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
             onClick={() => {
               addElement({
                 ...universalElementPresets,
-                ...getElementDefaults(elementType.id, workspace, t),
+                ...getElementDefaults(elementType.id, project, t),
                 id: createId(),
                 type: elementType.id,
               });

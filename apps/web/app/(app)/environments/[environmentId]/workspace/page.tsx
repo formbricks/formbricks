@@ -1,3 +1,3 @@
-import { WorkspaceSettingsPage } from "@/modules/workspaces/settings/page";
+import { ProjectSettingsPage } from "@/modules/projects/settings/page";
 
-export default WorkspaceSettingsPage;
+export default ProjectSettingsPage;

@@ -8,9 +8,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
-import { TagError } from "@/modules/workspaces/settings/types/tag";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 import { SingleResponseCardMetadata } from "./SingleResponseCardMetadata";
 

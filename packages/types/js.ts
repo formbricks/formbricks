@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZId } from "./common";
+import { ZProject } from "./project";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
-import { ZWorkspace } from "./workspace";
 
 export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   id: true,
@@ -27,7 +27,7 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   triggers: true,
   displayPercentage: true,
   delay: true,
-  workspaceOverwrites: true,
+  projectOverwrites: true,
   isBackButtonHidden: true,
   recaptcha: true,
 }).superRefine((survey, ctx) => {
@@ -46,7 +46,7 @@ export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
 
 export type TJsEnvironmentStateActionClass = z.infer<typeof ZJsEnvironmentStateActionClass>;
 
-export const ZJsEnvironmentStateWorkspace = ZWorkspace.pick({
+export const ZJsEnvironmentStateProject = ZProject.pick({
   id: true,
   recontactDays: true,
   clickOutsideClose: true,
@@ -56,14 +56,14 @@ export const ZJsEnvironmentStateWorkspace = ZWorkspace.pick({
   styling: true,
 });
 
-export type TJsEnvironmentStateWorkspace = z.infer<typeof ZJsEnvironmentStateWorkspace>;
+export type TJsEnvironmentStateProject = z.infer<typeof ZJsEnvironmentStateProject>;
 
 export const ZJsEnvironmentState = z.object({
   expiresAt: z.date(),
   data: z.object({
     surveys: z.array(ZJsEnvironmentStateSurvey),
     actionClasses: z.array(ZJsEnvironmentStateActionClass),
-    workspace: ZJsEnvironmentStateWorkspace,
+    project: ZJsEnvironmentStateProject,
     recaptchaSiteKey: z.string().optional(),
   }),
 });

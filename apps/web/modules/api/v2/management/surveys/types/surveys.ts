@@ -48,7 +48,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   welcomeCard: true,
   surveyClosedMessage: true,
   styling: true,
-  workspaceOverwrites: true,
+  projectOverwrites: true,
   showLanguageSwitch: true,
 })
   .partial({
@@ -61,7 +61,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
     autoComplete: true,
     surveyClosedMessage: true,
     styling: true,
-    workspaceOverwrites: true,
+    projectOverwrites: true,
     showLanguageSwitch: true,
     inlineTriggers: true,
     displayPercentage: true,

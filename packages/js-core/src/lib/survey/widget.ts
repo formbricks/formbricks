@@ -83,7 +83,7 @@ export const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay.toString()} seconds.`);
   }
 
-  const { workspace } = config.get().environment.data;
+  const { project } = config.get().environment.data;
   const { language } = config.get().user.data;
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
@@ -101,11 +101,11 @@ export const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const workspaceOverwrites = survey.workspaceOverwrites ?? {};
-  const clickOutside = workspaceOverwrites.clickOutsideClose ?? workspace.clickOutsideClose;
-  const overlay = workspaceOverwrites.overlay ?? workspace.overlay;
-  const placement = workspaceOverwrites.placement ?? workspace.placement;
-  const isBrandingEnabled = workspace.inAppSurveyBranding;
+  const projectOverwrites = survey.projectOverwrites ?? {};
+  const clickOutside = projectOverwrites.clickOutsideClose ?? project.clickOutsideClose;
+  const overlay = projectOverwrites.overlay ?? project.overlay;
+  const placement = projectOverwrites.placement ?? project.placement;
+  const isBrandingEnabled = project.inAppSurveyBranding;
 
   let formbricksSurveys: TFormbricksSurveys;
   try {
@@ -140,7 +140,7 @@ export const renderWidget = async (
       overlay,
       languageCode,
       placement,
-      styling: getStyling(workspace, survey),
+      styling: getStyling(project, survey),
       hiddenFieldsRecord: hiddenFieldsObject,
       recaptchaSiteKey,
       isSpamProtectionEnabled,

@@ -73,7 +73,7 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   isSingleResponsePerEmailEnabled: false,
   singleUse: null,
   pin: null,
-  workspaceOverwrites: null,
+  projectOverwrites: null,
   surveyClosedMessage: null,
   followUps: [],
   delay: 0,

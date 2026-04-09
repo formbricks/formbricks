@@ -1,5 +1,5 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
-import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { TProjectStyling } from "@formbricks/types/project";
 import { isLight, mixColor } from "@/lib/utils/colors";
 
 export const COLOR_DEFAULTS = {
@@ -17,7 +17,7 @@ const DEFAULT_BRAND_COLOR = "#64748b";
 /**
  * Derives a complete set of suggested color values from a single brand color.
  *
- * Used by the workspace-level "Suggest Colors" button **and** to build
+ * Used by the project-level "Suggest Colors" button **and** to build
  * `STYLE_DEFAULTS` so that a fresh install always has colours that are
  * visually cohesive with the default brand.
  *
@@ -91,7 +91,7 @@ const _colors = getSuggestedColors(DEFAULT_BRAND_COLOR);
  * Used everywhere: form defaults, preview rendering, email templates,
  * and as the reset target for "Restore defaults".
  */
-export const STYLE_DEFAULTS: TWorkspaceStyling = {
+export const STYLE_DEFAULTS: TProjectStyling = {
   allowStyleOverwrite: true,
   brandColor: { light: _colors["brandColor.light"] },
   questionColor: { light: _colors["questionColor.light"] },
@@ -189,7 +189,7 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
 };
 
 /**
- * Builds a complete TWorkspaceStyling object from a single brand color.
+ * Builds a complete TProjectStyling object from a single brand color.
  *
  * Uses STYLE_DEFAULTS for all non-color properties (dimensions, weights, etc.)
  * and derives every color from the given brand color via getSuggestedColors().
@@ -197,7 +197,7 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
  * Useful when only a brand color is known (e.g. onboarding) and a fully
  * coherent styling object is needed for both preview rendering and persistence.
  */
-export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TWorkspaceStyling => {
+export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TProjectStyling => {
   const colors = getSuggestedColors(brandColor);
 
   return {

@@ -53,7 +53,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         singleUse: true,
 
         // Styling & branding
-        workspaceOverwrites: true,
+        projectOverwrites: true,
         styling: true,
         surveyClosedMessage: true,
         showLanguageSwitch: true,
@@ -75,7 +75,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
                 createdAt: true,
                 updatedAt: true,
                 code: true,
-                workspaceId: true,
+                projectId: true,
                 alias: true,
               },
             },

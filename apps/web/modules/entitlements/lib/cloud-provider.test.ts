@@ -13,7 +13,7 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
   getDefaultOrganizationBilling: () => ({
-    limits: { workspaces: 1, monthly: { responses: 250 } },
+    limits: { projects: 1, monthly: { responses: 250 } },
     stripeCustomerId: null,
     usageCycleAnchor: null,
   }),
@@ -29,7 +29,7 @@ const mockGetLicense = vi.mocked(getEnterpriseLicense);
 const createBillingFixture = (overrides: Partial<TOrganizationBilling> = {}): TOrganizationBilling => ({
   stripeCustomerId: null,
   limits: {
-    workspaces: null,
+    projects: null,
     monthly: {
       responses: null,
     },
@@ -53,7 +53,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: [],
-      limits: { workspaces: 1, monthlyResponses: 250 },
+      limits: { projects: 1, monthlyResponses: 250 },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,
@@ -67,7 +67,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
         stripeCustomerId: "cus_1",
-        limits: { workspaces: 5, monthly: { responses: 1000 } },
+        limits: { projects: 5, monthly: { responses: 1000 } },
         usageCycleAnchor,
         stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
       })
@@ -80,7 +80,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: ["rbac", "spam-protection"],
-      limits: { workspaces: 5, monthlyResponses: 1000 },
+      limits: { projects: 5, monthlyResponses: 1000 },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
@@ -96,7 +96,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual([]);
-    expect(result.limits).toEqual({ workspaces: null, monthlyResponses: null });
+    expect(result.limits).toEqual({ projects: null, monthlyResponses: null });
     expect(result.stripeCustomerId).toBeNull();
     expect(result.subscriptionStatus).toBeNull();
     expect(result.usageCycleAnchor).toBeNull();
@@ -133,7 +133,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
         stripeCustomerId: "cus_1",
-        limits: { workspaces: 5, monthly: { responses: 1000 } },
+        limits: { projects: 5, monthly: { responses: 1000 } },
         stripe: { features: ["follow-ups"], subscriptionStatus: "trialing" },
       })
     );

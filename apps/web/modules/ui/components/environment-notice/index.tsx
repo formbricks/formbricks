@@ -17,7 +17,7 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
     throw new ResourceNotFoundError(t("common.environment"), environmentId);
   }
 
-  const environments = await getEnvironments(environment.workspaceId);
+  const environments = await getEnvironments(environment.projectId);
   const otherEnvironment = environments.find(
     (candidateEnvironment) => candidateEnvironment.id !== environment.id
   );

@@ -1,8 +1,8 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getStyling } from "@/lib/utils/styling";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 
@@ -12,12 +12,12 @@ export const getEmailTemplateHtml = async (surveyId: string, locale: string) => 
   if (!survey) {
     throw new ResourceNotFoundError(t("common.survey"), surveyId);
   }
-  const workspace = await getWorkspaceByEnvironmentId(survey.environmentId);
-  if (!workspace) {
+  const project = await getProjectByEnvironmentId(survey.environmentId);
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const styling = getStyling(workspace, survey);
+  const styling = getStyling(project, survey);
   const surveyUrl = getPublicDomain() + "/s/" + survey.id;
   const html = await getPreviewEmailTemplateHtml(survey, surveyUrl, styling, locale, t);
   const doctype =

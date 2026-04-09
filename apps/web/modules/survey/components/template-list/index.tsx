@@ -1,13 +1,13 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
+import { Project } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
-import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { customSurveyTemplate, templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "./actions";
@@ -18,7 +18,7 @@ import { TemplateFilters } from "./components/template-filters";
 interface TemplateListProps {
   userId: string;
   environmentId: string;
-  workspace: Workspace;
+  project: Project;
   templateSearch?: string;
   showFilters?: boolean;
   onTemplateClick?: (template: TTemplate) => void;
@@ -27,7 +27,7 @@ interface TemplateListProps {
 
 export const TemplateList = ({
   userId,
-  workspace,
+  project,
   environmentId,
   showFilters = true,
   templateSearch,
@@ -40,16 +40,16 @@ export const TemplateList = ({
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>([null, null, null]);
   const surveyType: TSurveyType = useMemo(() => {
-    if (workspace.config.channel) {
-      if (workspace.config.channel === "website") {
+    if (project.config.channel) {
+      if (project.config.channel === "website") {
         return "app";
       }
 
-      return workspace.config.channel;
+      return project.config.channel;
     }
 
     return "link";
-  }, [workspace.config.channel]);
+  }, [project.config.channel]);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
@@ -80,8 +80,8 @@ export const TemplateList = ({
       }
 
       // Parse and validate the filters
-      const channelParseResult = ZWorkspaceConfigChannel.nullable().safeParse(selectedFilter[0]);
-      const industryParseResult = ZWorkspaceConfigIndustry.nullable().safeParse(selectedFilter[1]);
+      const channelParseResult = ZProjectConfigChannel.nullable().safeParse(selectedFilter[0]);
+      const industryParseResult = ZProjectConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
       // Ensure all validations are successful
@@ -118,7 +118,7 @@ export const TemplateList = ({
           activeTemplate={activeTemplate}
           setActiveTemplate={setActiveTemplate}
           onTemplateClick={onTemplateClick}
-          workspace={workspace}
+          project={project}
           createSurvey={createSurvey}
           loading={loading}
           noPreview={noPreview}
@@ -132,7 +132,7 @@ export const TemplateList = ({
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}
                 onTemplateClick={onTemplateClick}
-                workspace={workspace}
+                project={project}
                 createSurvey={createSurvey}
                 loading={loading}
                 selectedFilter={selectedFilter}

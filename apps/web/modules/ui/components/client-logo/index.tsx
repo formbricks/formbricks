@@ -1,6 +1,6 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
+import { Project } from "@prisma/client";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 
 interface ClientLogoProps {
   environmentId?: string;
-  workspaceLogo: Workspace["logo"] | null;
+  projectLogo: Project["logo"] | null;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
   dir?: "ltr" | "rtl" | "auto";
@@ -18,13 +18,13 @@ interface ClientLogoProps {
 
 export const ClientLogo = ({
   environmentId,
-  workspaceLogo,
+  projectLogo,
   surveyLogo,
   previewSurvey = false,
   dir = "auto",
 }: ClientLogoProps) => {
   const { t } = useTranslation();
-  const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
+  const logoToUse = surveyLogo?.url ? surveyLogo : projectLogo;
 
   let positionClasses = "";
   if (!previewSurvey) {

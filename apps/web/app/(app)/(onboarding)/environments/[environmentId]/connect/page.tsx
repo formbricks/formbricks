@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { getEnvironment } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
@@ -24,12 +24,12 @@ const Page = async (props: ConnectPageProps) => {
     throw new ResourceNotFoundError(t("common.environment"), params.environmentId);
   }
 
-  const workspace = await getWorkspaceByEnvironmentId(environment.id);
-  if (!workspace) {
+  const project = await getProjectByEnvironmentId(environment.id);
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const channel = workspace.config.channel || null;
+  const channel = project.config.channel || null;
 
   const publicDomain = getPublicDomain();
 

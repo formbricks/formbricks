@@ -1,6 +1,6 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TWorkspace } from "@formbricks/types/workspace";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { TProject } from "@formbricks/types/project";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
@@ -15,12 +15,12 @@ export const ContactsSecondaryNavigation = async ({
   environmentId,
   loading,
 }: PersonSecondaryNavigationProps) => {
-  let workspace: TWorkspace | null = null;
+  let project: TProject | null = null;
   const t = await getTranslate();
   if (!loading && environmentId) {
-    workspace = await getWorkspaceByEnvironmentId(environmentId);
+    project = await getProjectByEnvironmentId(environmentId);
 
-    if (!workspace) {
+    if (!project) {
       throw new ResourceNotFoundError(t("common.workspace"), null);
     }
   }

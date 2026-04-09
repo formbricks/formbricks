@@ -24,14 +24,14 @@ export const doesEnvironmentExist = reactCache(async (environmentId: string): Pr
   return environment.id;
 });
 
-export const getWorkspaceIdIfEnvironmentExists = reactCache(
+export const getProjectIdIfEnvironmentExists = reactCache(
   async (environmentId: string): Promise<string | null> => {
     const environment = await prisma.environment.findUnique({
       where: {
         id: environmentId,
       },
       select: {
-        workspaceId: true,
+        projectId: true,
       },
     });
 
@@ -39,7 +39,7 @@ export const getWorkspaceIdIfEnvironmentExists = reactCache(
       throw new ResourceNotFoundError("Environment", environmentId);
     }
 
-    return environment.workspaceId;
+    return environment.projectId;
   }
 );
 

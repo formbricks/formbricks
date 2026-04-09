@@ -3,7 +3,7 @@ import { type TEnvironmentStateSurvey } from "@/types/config";
 export const mockSurveyId = "tj57w6va6jd634yyt9ekrw98";
 export const mockLanguageId = "zngds2ve6ezz055oe91ybu46";
 export const mockActionClassId = "y1fy1169ymgql3exgx49lyx9";
-export const mockWorkspaceId = "kr6tqhajodm086z7u4claj9y";
+export const mockProjectId = "kr6tqhajodm086z7u4claj9y";
 export const mockEnvironmentId = "n48a66c01dz05k1297vq06pu";
 
 export const mockSurvey: TEnvironmentStateSurvey = {
@@ -33,7 +33,7 @@ export const mockSurvey: TEnvironmentStateSurvey = {
   displayOption: "displayMultiple",
   hiddenFields: { enabled: false },
   delay: 5, // e.g. 5s
-  workspaceOverwrites: {},
+  projectOverwrites: {},
   languages: [
     {
       // SurveyLanguage fields
@@ -48,7 +48,7 @@ export const mockSurvey: TEnvironmentStateSurvey = {
         alias: "en",
         createdAt: new Date("2025-01-01T10:00:00Z"),
         updatedAt: new Date("2025-01-01T10:00:00Z"),
-        workspaceId: mockWorkspaceId,
+        projectId: mockProjectId,
       },
     },
   ],

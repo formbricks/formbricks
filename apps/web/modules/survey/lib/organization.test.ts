@@ -42,7 +42,7 @@ describe("getOrganizationIdFromEnvironmentId", () => {
     expect(result).toBe(mockOrgId);
     expect(mockPrismaOrganization.findFirst).toHaveBeenCalledWith({
       where: {
-        workspaces: {
+        projects: {
           some: {
             environments: {
               some: { id: mockEnvId },
@@ -95,7 +95,7 @@ describe("getOrganizationAIKeys", () => {
       usageCycleAnchor: new Date(),
       limits: {
         monthly: { responses: null },
-        workspaces: null,
+        projects: null,
       },
     }, // Prisma.JsonValue compatible
   };

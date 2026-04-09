@@ -149,7 +149,7 @@ test.describe("Create, update and delete team", async () => {
     await page.locator("#member-select-0").click();
     await page.locator('[data-slot="command-item"]').first().click();
 
-    await page.locator("#workspace-select-0").click();
+    await page.locator("#project-select-0").click();
     await page.locator('[data-slot="command-item"]').first().click();
 
     await page.getByRole("button", { name: "Save" }).click();

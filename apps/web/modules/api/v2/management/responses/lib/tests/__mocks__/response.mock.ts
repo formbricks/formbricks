@@ -82,7 +82,7 @@ export const organizationBilling: TOrganizationBilling = {
   stripeCustomerId: "cus_P78901234567890123456789",
   limits: {
     monthly: { responses: 100 },
-    workspaces: 1,
+    projects: 1,
   },
   usageCycleAnchor: new Date(),
 };

@@ -1,5 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
-import type { ActionClass, Language, Segment, Survey, SurveyLanguage, Workspace } from "@prisma/client";
+import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
 
 export type TEnvironmentStateSurvey = Pick<
   Survey,
@@ -18,7 +18,7 @@ export type TEnvironmentStateSurvey = Pick<
   | "displayOption"
   | "hiddenFields"
   | "delay"
-  | "workspaceOverwrites"
+  | "projectOverwrites"
   | "isBackButtonHidden"
   | "recaptcha"
 > & {
@@ -30,11 +30,11 @@ export type TEnvironmentStateSurvey = Pick<
   styling?: TSurveyStyling;
 };
 
-export type TEnvironmentStateWorkspace = Pick<
-  Workspace,
+export type TEnvironmentStateProject = Pick<
+  Project,
   "id" | "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
 > & {
-  styling: TWorkspaceStyling;
+  styling: TProjectStyling;
 };
 
 export type TEnvironmentStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
@@ -44,7 +44,7 @@ export interface TEnvironmentState {
   data: {
     surveys: TEnvironmentStateSurvey[];
     actionClasses: TEnvironmentStateActionClass[];
-    workspace: TEnvironmentStateWorkspace;
+    project: TEnvironmentStateProject;
     recaptchaSiteKey?: string;
   };
 }
@@ -116,7 +116,7 @@ export interface TBaseStyling {
   isLogoHidden?: boolean | null;
 }
 
-export interface TWorkspaceStyling extends TBaseStyling {
+export interface TProjectStyling extends TBaseStyling {
   allowStyleOverwrite: boolean;
 }
 

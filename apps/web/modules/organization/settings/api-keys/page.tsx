@@ -4,7 +4,7 @@ import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
+import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { ApiKeyList } from "./components/api-key-list";
@@ -15,8 +15,8 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
 
   const { currentUserMembership, organization, session } = await getEnvironmentAuth(params.environmentId);
 
-  const [workspaces, locale] = await Promise.all([
-    getWorkspacesByOrganizationId(organization.id),
+  const [projects, locale] = await Promise.all([
+    getProjectsByOrganizationId(organization.id),
     getUserLocale(session.user.id),
   ]);
 
@@ -41,7 +41,7 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
           organizationId={organization.id}
           locale={locale ?? DEFAULT_LOCALE}
           isReadOnly={!canAccessApiKeys}
-          workspaces={workspaces}
+          projects={projects}
         />
       </SettingsCard>
     </PageContentWrapper>

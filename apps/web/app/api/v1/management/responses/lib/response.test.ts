@@ -27,7 +27,7 @@ const mockOrganization = {
   updatedAt: new Date(),
   billing: {
     stripeCustomerId: null,
-    limits: { workspaces: 3, monthly: { responses: null } },
+    limits: { projects: 3, monthly: { responses: null } },
     usageCycleAnchor: new Date(),
   } as TOrganizationBilling, // Default no limit
 } as unknown as Organization;

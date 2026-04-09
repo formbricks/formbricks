@@ -6,7 +6,7 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
-import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-card";
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
@@ -25,7 +25,7 @@ interface SettingsViewProps {
   membershipRole?: OrganizationRole;
   isUserTargetingAllowed?: boolean;
   isSpamProtectionAllowed: boolean;
-  workspacePermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
@@ -43,7 +43,7 @@ export const SettingsView = ({
   isUserTargetingAllowed = false,
   isSpamProtectionAllowed,
   isQuotasAllowed,
-  workspacePermission,
+  projectPermission,
   isFormbricksCloud,
   quotas,
 }: SettingsViewProps) => {
@@ -81,7 +81,7 @@ export const SettingsView = ({
         environmentId={environment.id}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
-        workspacePermission={workspacePermission}
+        projectPermission={projectPermission}
       />
       <QuotasCard
         localSurvey={localSurvey}

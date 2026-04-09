@@ -1,17 +1,17 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
+import { TProject } from "@formbricks/types/project";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TXMTemplate } from "@formbricks/types/templates";
-import { TWorkspace } from "@formbricks/types/workspace";
 import { replacePresetPlaceholders } from "./utils";
 
 // Mock data
-const mockWorkspace: TWorkspace = {
-  id: "workspace1",
+const mockProject: TProject = {
+  id: "project1",
   createdAt: new Date(),
   updatedAt: new Date(),
-  name: "Test Workspace",
+  name: "Test Project",
   organizationId: "org1",
   styling: {
     allowStyleOverwrite: true,
@@ -32,7 +32,7 @@ const mockWorkspace: TWorkspace = {
   logo: null,
 };
 const mockTemplate: TXMTemplate = {
-  name: "$[workspaceName] Survey",
+  name: "$[projectName] Survey",
   blocks: [
     {
       id: "block1",
@@ -42,7 +42,7 @@ const mockTemplate: TXMTemplate = {
           id: "q1",
           type: "openText" as TSurveyElementTypeEnum.OpenText,
           inputType: "text" as const,
-          headline: { default: "$[workspaceName] Question" },
+          headline: { default: "$[projectName] Question" },
           subheader: { default: "" },
           required: false,
           placeholder: { default: "" },
@@ -70,19 +70,19 @@ describe("replacePresetPlaceholders", () => {
     cleanup();
   });
 
-  test("replaces workspaceName placeholder in template name", () => {
-    const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
-    expect(result.name).toBe("Test Workspace Survey");
+  test("replaces projectName placeholder in template name", () => {
+    const result = replacePresetPlaceholders(mockTemplate, mockProject);
+    expect(result.name).toBe("Test Project Survey");
   });
 
-  test("replaces workspaceName placeholder in element headline", () => {
-    const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
-    expect(result.blocks[0].elements[0].headline.default).toBe("Test Workspace Question");
+  test("replaces projectName placeholder in element headline", () => {
+    const result = replacePresetPlaceholders(mockTemplate, mockProject);
+    expect(result.blocks[0].elements[0].headline.default).toBe("Test Project Question");
   });
 
   test("returns a new object without mutating the original template", () => {
     const originalTemplate = structuredClone(mockTemplate);
-    const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
+    const result = replacePresetPlaceholders(mockTemplate, mockProject);
     expect(result).not.toBe(mockTemplate);
     expect(mockTemplate).toEqual(originalTemplate);
   });

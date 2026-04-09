@@ -7,15 +7,15 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
+import { TUserProject } from "@/modules/survey/list/types/projects";
 import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@/modules/survey/list/types/surveys";
-import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 
 interface CopySurveyFormProps {
-  readonly defaultWorkspaces: TUserWorkspace[];
+  readonly defaultProjects: TUserProject[];
   readonly survey: TSurvey;
   readonly onCancel: () => void;
   readonly setOpen: (value: boolean) => void;
@@ -65,19 +65,19 @@ function EnvironmentCheckbox({
 }
 
 interface EnvironmentCheckboxGroupProps {
-  readonly workspace: TUserWorkspace;
+  readonly project: TUserProject;
   readonly form: ReturnType<typeof useForm<TSurveyCopyFormData>>;
-  readonly workspaceIndex: number;
+  readonly projectIndex: number;
 }
 
-function EnvironmentCheckboxGroup({ workspace, form, workspaceIndex }: EnvironmentCheckboxGroupProps) {
+function EnvironmentCheckboxGroup({ project, form, projectIndex }: EnvironmentCheckboxGroupProps) {
   return (
     <div className="flex flex-col gap-4">
-      {workspace.environments.map((environment) => (
+      {project.environments.map((environment) => (
         <FormField
           key={environment.id}
           control={form.control}
-          name={`workspaces.${workspaceIndex}.environments`}
+          name={`projects.${projectIndex}.environments`}
           render={({ field }) => (
             <EnvironmentCheckbox
               environmentId={environment.id}
@@ -92,43 +92,43 @@ function EnvironmentCheckboxGroup({ workspace, form, workspaceIndex }: Environme
   );
 }
 
-export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }: CopySurveyFormProps) => {
+export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: CopySurveyFormProps) => {
   const { t } = useTranslation();
 
-  const filteredWorkspaces = defaultWorkspaces.map((workspace) => ({
-    ...workspace,
-    environments: workspace.environments.filter((env) => env.id !== survey.environmentId),
+  const filteredProjects = defaultProjects.map((project) => ({
+    ...project,
+    environments: project.environments.filter((env) => env.id !== survey.environmentId),
   }));
 
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
     defaultValues: {
-      workspaces: filteredWorkspaces.map((workspace) => ({
-        workspace: workspace.id,
+      projects: filteredProjects.map((project) => ({
+        project: project.id,
         environments: [],
       })),
     },
   });
 
   const formFields = useFieldArray({
-    name: "workspaces",
+    name: "projects",
     control: form.control,
   });
 
   async function onSubmit(data: TSurveyCopyFormData) {
-    const filteredData = data.workspaces.filter((workspace) => workspace.environments.length > 0);
+    const filteredData = data.projects.filter((project) => project.environments.length > 0);
 
     try {
-      const copyOperationsWithMetadata = filteredData.flatMap((workspaceData) => {
-        const workspace = filteredWorkspaces.find((p) => p.id === workspaceData.workspace);
-        return workspaceData.environments.map((environmentId) => {
+      const copyOperationsWithMetadata = filteredData.flatMap((projectData) => {
+        const project = filteredProjects.find((p) => p.id === projectData.project);
+        return projectData.environments.map((environmentId) => {
           const environment =
-            workspace?.environments[0]?.id === environmentId
-              ? workspace?.environments[0]
-              : workspace?.environments[1];
+            project?.environments[0]?.id === environmentId
+              ? project?.environments[0]
+              : project?.environments[1];
 
           return {
-            workspaceName: workspace?.name ?? "Unknown Workspace",
+            projectName: project?.name ?? "Unknown Project",
             environmentType: environment?.type ?? "unknown",
             environmentId,
           };
@@ -175,11 +175,11 @@ export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }:
 
       if (errorsIndexes.length > 0) {
         errorsIndexes.forEach((index, idx) => {
-          const { workspaceName, environmentType } = copyOperationsWithMetadata[index];
+          const { projectName, environmentType } = copyOperationsWithMetadata[index];
           const result = results[index];
 
           const errorMessage = getFormattedErrorMessage(result);
-          toast.error(`[${workspaceName}] - [${environmentType}] - ${errorMessage}`, {
+          toast.error(`[${projectName}] - [${environmentType}] - ${errorMessage}`, {
             duration: 2000 + 2000 * idx,
           });
         });
@@ -195,21 +195,17 @@ export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }:
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
         <div className="flex-1 space-y-8 overflow-y-auto">
-          {formFields.fields.map((field, workspaceIndex) => {
-            const workspace = filteredWorkspaces.find((workspace) => workspace.id === field.workspace);
-            if (!workspace) return null;
+          {formFields.fields.map((field, projectIndex) => {
+            const project = filteredProjects.find((project) => project.id === field.project);
+            if (!project) return null;
 
             return (
-              <div key={workspace.id}>
+              <div key={project.id}>
                 <div className="flex flex-col gap-4">
                   <div className="w-fit">
-                    <p className="text-base font-semibold text-slate-900">{workspace.name}</p>
+                    <p className="text-base font-semibold text-slate-900">{project.name}</p>
                   </div>
-                  <EnvironmentCheckboxGroup
-                    workspace={workspace}
-                    form={form}
-                    workspaceIndex={workspaceIndex}
-                  />
+                  <EnvironmentCheckboxGroup project={project} form={form} projectIndex={projectIndex} />
                 </div>
               </div>
             );

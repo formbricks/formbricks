@@ -4,10 +4,6 @@ import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
-import {
-  addLegacyProjectOverwrites,
-  normaliseProjectOverwritesToWorkspace,
-} from "@/app/lib/api/api-backwards-compat";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -61,21 +57,17 @@ export const GET = withV1ApiWrapper({
       if (shouldTransformToQuestions) {
         return {
           response: responses.successResponse(
-            addLegacyProjectOverwrites(
-              resolveStorageUrlsInObject({
-                ...result.survey,
-                questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
-                blocks: [],
-              })
-            )
+            resolveStorageUrlsInObject({
+              ...result.survey,
+              questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
+              blocks: [],
+            })
           ),
         };
       }
 
       return {
-        response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(result.survey))
-        ),
+        response: responses.successResponse(resolveStorageUrlsInObject(result.survey)),
       };
     } catch (error) {
       return {
@@ -167,9 +159,6 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
-      surveyUpdate = normaliseProjectOverwritesToWorkspace(surveyUpdate);
-
       const validateResult = validateSurveyInput({ ...surveyUpdate, updateOnly: true });
       if (!validateResult.ok) {
         return {
@@ -222,16 +211,12 @@ export const PUT = withV1ApiWrapper({
           };
 
           return {
-            response: responses.successResponse(
-              addLegacyProjectOverwrites(resolveStorageUrlsInObject(surveyWithQuestions))
-            ),
+            response: responses.successResponse(resolveStorageUrlsInObject(surveyWithQuestions)),
           };
         }
 
         return {
-          response: responses.successResponse(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(updatedSurvey))
-          ),
+          response: responses.successResponse(resolveStorageUrlsInObject(updatedSurvey)),
         };
       } catch (error) {
         return {

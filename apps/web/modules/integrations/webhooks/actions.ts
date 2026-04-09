@@ -9,8 +9,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromWebhookId,
-  getWorkspaceIdFromEnvironmentId,
-  getWorkspaceIdFromWebhookId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromWebhookId,
 } from "@/lib/utils/helper";
 import { getWebhook } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -40,9 +40,9 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -73,9 +73,9 @@ export const deleteWebhookAction = authenticatedActionClient.inputSchema(ZDelete
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.id),
+          projectId: await getProjectIdFromWebhookId(parsedInput.id),
         },
       ],
     });
@@ -106,9 +106,9 @@ export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdate
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
+          projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
         },
       ],
     });
@@ -144,9 +144,9 @@ export const testEndpointAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "read",
-            workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
+            projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
           },
         ],
       });

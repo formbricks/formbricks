@@ -100,7 +100,7 @@ describe("surveyLogic", () => {
     delay: 0,
     displayPercentage: null,
     isBackButtonHidden: false,
-    workspaceOverwrites: null,
+    projectOverwrites: null,
     styling: null,
     showLanguageSwitch: null,
     languages: [],

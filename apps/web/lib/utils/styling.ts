@@ -1,21 +1,21 @@
-import { TJsEnvironmentStateSurvey, TJsEnvironmentStateWorkspace } from "@formbricks/types/js";
+import { TJsEnvironmentStateProject, TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
-export const getStyling = (workspace: TJsEnvironmentStateWorkspace, survey: TJsEnvironmentStateSurvey) => {
-  // allow style overwrite is disabled from the workspace
-  if (!workspace.styling.allowStyleOverwrite) {
-    return workspace.styling;
+export const getStyling = (project: TJsEnvironmentStateProject, survey: TJsEnvironmentStateSurvey) => {
+  // allow style overwrite is disabled from the project
+  if (!project.styling.allowStyleOverwrite) {
+    return project.styling;
   }
 
-  // allow style overwrite is enabled from the workspace
-  if (workspace.styling.allowStyleOverwrite) {
+  // allow style overwrite is enabled from the project
+  if (project.styling.allowStyleOverwrite) {
     // survey style overwrite is disabled
     if (!survey.styling?.overwriteThemeStyling) {
-      return workspace.styling;
+      return project.styling;
     }
 
     // survey style overwrite is enabled
     return survey.styling;
   }
 
-  return workspace.styling;
+  return project.styling;
 };

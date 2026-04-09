@@ -1,12 +1,12 @@
 "use client";
 
-import { Environment, Workspace } from "@prisma/client";
+import { Environment, Project } from "@prisma/client";
 import { motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
@@ -21,7 +21,7 @@ interface PreviewSurveyProps {
   survey: TSurvey;
   elementId?: string | null;
   previewType?: TPreviewType;
-  workspace: Workspace;
+  project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
   isSpamProtectionAllowed: boolean;
@@ -35,7 +35,7 @@ export const PreviewSurvey = ({
   elementId,
   survey,
   previewType,
-  workspace,
+  project,
   environment,
   languageCode,
   isSpamProtectionAllowed,
@@ -48,35 +48,35 @@ export const PreviewSurvey = ({
 
   const [previewMode, setPreviewMode] = useState("desktop");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const { workspaceOverwrites } = survey || {};
+  const { projectOverwrites } = survey || {};
 
-  const { placement: surveyPlacement } = workspaceOverwrites || {};
-  const { overlay: surveyOverlay } = workspaceOverwrites || {};
-  const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
+  const { placement: surveyPlacement } = projectOverwrites || {};
+  const { overlay: surveyOverlay } = projectOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
-  const placement = surveyPlacement || workspace.placement;
-  const overlay = surveyOverlay ?? workspace.overlay;
-  const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
+  const placement = surveyPlacement || project.placement;
+  const overlay = surveyOverlay ?? project.overlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
-  const styling: TSurveyStyling | TWorkspaceStyling = useMemo(() => {
-    // allow style overwrite is disabled from the workspace
-    if (!workspace.styling.allowStyleOverwrite) {
-      return workspace.styling;
+  const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
+    // allow style overwrite is disabled from the project
+    if (!project.styling.allowStyleOverwrite) {
+      return project.styling;
     }
 
-    // allow style overwrite is enabled from the workspace
-    if (workspace.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the project
+    if (project.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return workspace.styling;
+        return project.styling;
       }
 
       // survey style overwrite is enabled
       return survey.styling;
     }
 
-    return workspace.styling;
-  }, [workspace.styling, survey.styling]);
+    return project.styling;
+  }, [project.styling, survey.styling]);
 
   const updateElementId = useCallback(
     (newElementId: string) => {
@@ -249,7 +249,7 @@ export const PreviewSurvey = ({
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={survey}
-                    isBrandingEnabled={workspace.inAppSurveyBranding}
+                    isBrandingEnabled={project.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     styling={styling}
@@ -269,7 +269,7 @@ export const PreviewSurvey = ({
                     {!styling.isLogoHidden && (
                       <ClientLogo
                         environmentId={environment.id}
-                        workspaceLogo={workspace.logo}
+                        projectLogo={project.logo}
                         surveyLogo={styling.logo}
                         previewSurvey
                       />
@@ -280,7 +280,7 @@ export const PreviewSurvey = ({
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
-                      isBrandingEnabled={workspace.linkSurveyBranding}
+                      isBrandingEnabled={project.linkSurveyBranding}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
@@ -357,7 +357,7 @@ export const PreviewSurvey = ({
                   appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={survey}
-                  isBrandingEnabled={workspace.inAppSurveyBranding}
+                  isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   styling={styling}
@@ -381,7 +381,7 @@ export const PreviewSurvey = ({
                   {!styling.isLogoHidden && (
                     <ClientLogo
                       environmentId={environment.id}
-                      workspaceLogo={workspace.logo}
+                      projectLogo={project.logo}
                       surveyLogo={styling.logo}
                       previewSurvey
                     />
@@ -392,7 +392,7 @@ export const PreviewSurvey = ({
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
-                    isBrandingEnabled={workspace.linkSurveyBranding}
+                    isBrandingEnabled={project.linkSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     responseCount={42}

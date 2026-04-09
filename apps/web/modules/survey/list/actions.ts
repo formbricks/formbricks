@@ -9,19 +9,19 @@ import {
   getEnvironmentIdFromSurveyId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
-  getWorkspaceIdFromEnvironmentId,
-  getWorkspaceIdFromSurveyId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getWorkspaceIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
+import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
+import { getUserProjects } from "@/modules/survey/list/lib/project";
 import {
   copySurveyToOtherEnvironment,
   deleteSurvey,
   getSurvey,
   getSurveys,
 } from "@/modules/survey/list/lib/survey";
-import { getUserWorkspaces } from "@/modules/survey/list/lib/workspace";
 
 const ZGetSurveyAction = z.object({
   surveyId: z.cuid2(),
@@ -39,9 +39,9 @@ export const getSurveyAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -59,15 +59,15 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
   .action(
     withAuditLogging("copiedToOtherEnvironment", "survey", async ({ ctx, parsedInput }) => {
       const sourceEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-      const sourceEnvironmentWorkspaceId = await getWorkspaceIdIfEnvironmentExists(sourceEnvironmentId);
-      const targetEnvironmentWorkspaceId = await getWorkspaceIdIfEnvironmentExists(
+      const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(sourceEnvironmentId);
+      const targetEnvironmentProjectId = await getProjectIdIfEnvironmentExists(
         parsedInput.targetEnvironmentId
       );
 
-      if (!sourceEnvironmentWorkspaceId || !targetEnvironmentWorkspaceId) {
+      if (!sourceEnvironmentProjectId || !targetEnvironmentProjectId) {
         throw new ResourceNotFoundError(
           "Environment",
-          sourceEnvironmentWorkspaceId ? parsedInput.targetEnvironmentId : sourceEnvironmentId
+          sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : sourceEnvironmentId
         );
       }
 
@@ -90,9 +90,9 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "readWrite",
-            workspaceId: sourceEnvironmentWorkspaceId,
+            projectId: sourceEnvironmentProjectId,
           },
         ],
       });
@@ -107,9 +107,9 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
+            type: "projectTeam",
             minPermission: "readWrite",
-            workspaceId: targetEnvironmentWorkspaceId,
+            projectId: targetEnvironmentProjectId,
           },
         ],
       });
@@ -127,12 +127,12 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
     })
   );
 
-const ZGetWorkspacesByEnvironmentIdAction = z.object({
+const ZGetProjectsByEnvironmentIdAction = z.object({
   environmentId: z.cuid2(),
 });
 
-export const getWorkspacesByEnvironmentIdAction = authenticatedActionClient
-  .inputSchema(ZGetWorkspacesByEnvironmentIdAction)
+export const getProjectsByEnvironmentIdAction = authenticatedActionClient
+  .inputSchema(ZGetProjectsByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
@@ -144,14 +144,14 @@ export const getWorkspacesByEnvironmentIdAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
 
-    return await getUserWorkspaces(ctx.user.id, organizationId);
+    return await getUserProjects(ctx.user.id, organizationId);
   });
 
 const ZDeleteSurveyAction = z.object({
@@ -169,8 +169,8 @@ export const deleteSurveyAction = authenticatedActionClient.inputSchema(ZDeleteS
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -201,8 +201,8 @@ export const generateSingleUseIdsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -232,9 +232,9 @@ export const getSurveysAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });

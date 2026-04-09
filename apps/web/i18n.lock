@@ -91,7 +91,6 @@ checksums:
     common/action: c92af0bdf1698b0d10cf5b28d2ad4945
     common/actions: c46571856723b03262fd33f511116298
     common/actions_description: 8e35b1538d1006fa8470183310ad21ef
-    common/active: 3e1ec025c4a50830bbb9ad57a176630a
     common/active_surveys: 95bf0fd5d2bf62cdd010b7cf66795ed7
     common/activity: 1948763de8e531483a798b68195e297e
     common/add: 87c4a663507f2bcbbf79934af8164e13
@@ -113,7 +112,6 @@ checksums:
     common/app: 77e32ac4e5a1e01bc9a6a15fdfef9bf8
     common/app_survey: f076d131d20bfdadb35fba29c8275232
     common/apply_filters: 6543c1e80038b3da0f4a42848d08d4d1
-    common/archived: cf5127ecfd7e43a35466a1ba5fe16450
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
     common/back: f541015a827e37cb3b1234e56bc2aa3c
@@ -462,7 +460,7 @@ checksums:
     common/you: db2a4a796b70cc1430d1b21f6ffb6dcb
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
     common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
-    common/you_have_reached_your_limit_of_workspace_limit: 506a6ee315d9754da7ea26929bc40f52
+    common/you_have_reached_your_limit_of_workspace_limit: 54d754c3267036742f23fb05fd3fcc45
     common/you_have_reached_your_monthly_response_limit_of: 3824db23ecc3dcd2b1787b98ccfdd5f9
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
     common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254
@@ -1030,6 +1028,7 @@ checksums:
     environments/settings/enterprise/license_feature_access_control: bdc5ce7e88ad724d4abd3e8a07a9de5d
     environments/settings/enterprise/license_feature_audit_logs: e93f59c176cfc8460d2bd56551ed78b8
     environments/settings/enterprise/license_feature_contacts: fd76522bc82324ac914e124cdf9935b0
+    environments/settings/enterprise/license_feature_projects: 8ba082a84aa35cf851af1cf874b853e2
     environments/settings/enterprise/license_feature_quotas: e6afead11b5b8ae627885ce2b84a548f
     environments/settings/enterprise/license_feature_remove_branding: a5c71d43cd3ed25e6e48bca64e8ffc9f
     environments/settings/enterprise/license_feature_saml: 86b76024524fc585b2c3950126ef6f62
@@ -1037,7 +1036,6 @@ checksums:
     environments/settings/enterprise/license_feature_sso: 8c029b7dd2cb3aa1393d2814aba6cd7b
     environments/settings/enterprise/license_feature_two_factor_auth: bc68ddd9c3c82225ef641f097e0940db
     environments/settings/enterprise/license_feature_whitelabel: 81e9ec1d4230419f4230e6f5a318497c
-    environments/settings/enterprise/license_feature_workspaces: 8ba082a84aa35cf851af1cf874b853e2
     environments/settings/enterprise/license_features_table_access: 550606d4a12bdf108c1b12b925ca1b3a
     environments/settings/enterprise/license_features_table_description: d6260830d0703f5a2c9ed59c9da462e3
     environments/settings/enterprise/license_features_table_disabled: 0889a3dfd914a7ef638611796b17bf72
@@ -1075,32 +1073,6 @@ checksums:
     environments/settings/enterprise/sso: 95e98e279bb89233d63549b202bd9112
     environments/settings/enterprise/teams: 21ab78abcba0f16c3029741563f789ea
     environments/settings/enterprise/unlock_the_full_power_of_formbricks_free_for_30_days: 104d07b63a42911c9673ceb08a4dbd43
-    environments/settings/feedback_record_directories/archive: fa813ab3074103e5daad07462af25789
-    environments/settings/feedback_record_directories/archive_directory: 1114a8e1c5c5af3d30a174b28582f424
-    environments/settings/feedback_record_directories/archive_not_allowed: 3ffe3336572a633406858887de60a470
-    environments/settings/feedback_record_directories/are_you_sure_you_want_to_archive: d249e6e8bc0345835a13f70856eb1c30
-    environments/settings/feedback_record_directories/assign_workspaces_description: 6c3f0bbf3bd7744bb313f4cd7886e184
-    environments/settings/feedback_record_directories/create_feedback_directory: c178dd6dbd702398df3ac08a9fa43324
-    environments/settings/feedback_record_directories/description: 8f56b169cb38d8c7b2697bf3a3ed7a61
-    environments/settings/feedback_record_directories/directory_archived_successfully: fba5b99ced59d0546c8f2241c092a5dd
-    environments/settings/feedback_record_directories/directory_created_successfully: 5db20153b840d91842543f71cdd91043
-    environments/settings/feedback_record_directories/directory_id: 933a1376d7d8a8dc41ded90ef1c0f619
-    environments/settings/feedback_record_directories/directory_name: 353de006e16451bf64da469a81fbe451
-    environments/settings/feedback_record_directories/directory_settings_description: 895d890b4292effa5ade45fe7164990f
-    environments/settings/feedback_record_directories/directory_settings_title: c32af860e3254dea9dfaeefc7cd92d49
-    environments/settings/feedback_record_directories/directory_unarchived_successfully: 08d56e260decc62fe664b50ab774b728
-    environments/settings/feedback_record_directories/directory_updated_successfully: 638cb6c92f535328d809274cf2be4d7d
-    environments/settings/feedback_record_directories/empty_state: 665593dcb7cfa081a3e719677d0f6b0d
-    environments/settings/feedback_record_directories/enter_directory_name: a1c950988199bb4c4e014dcf430cce41
-    environments/settings/feedback_record_directories/error_directory_name_duplicate: 349d650f562cff96b084787126323ca2
-    environments/settings/feedback_record_directories/error_directory_name_required: 0f42d7292979006a1069063ab213b8e3
-    environments/settings/feedback_record_directories/error_directory_workspaces_invalid_org: 477b5c1a466c4194668544ffd42ec9bf
-    environments/settings/feedback_record_directories/nav_label: cf9a57b3cbac0f04b98e06fb693e986e
-    environments/settings/feedback_record_directories/no_access: cc3385cd01a11e3949003a2cc6fb5b31
-    environments/settings/feedback_record_directories/select_workspaces_placeholder: 7d8c8f5910b264525f73bd32107765db
-    environments/settings/feedback_record_directories/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
-    environments/settings/feedback_record_directories/title: e3d425c27f80162f29ce094e31a3fd8f
-    environments/settings/feedback_record_directories/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
     environments/settings/general/ai_data_analysis_disabled_for_organization: 2066fe71ecf8994ba738c79b63a1934b
     environments/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
     environments/settings/general/ai_data_analysis_enabled_description: 46d4f0bdf4ebf89e78f79cc961a2de83
@@ -2105,8 +2077,8 @@ checksums:
     environments/workspace/general/custom_scripts_updated_successfully: eabe8e6ededa86342d59093fe308c681
     environments/workspace/general/custom_scripts_warning: 5faa0f284d48110918a5e8a467e2bcb8
     environments/workspace/general/delete_workspace: 3badbc0f4b49644986fc19d8b2d8f317
-    environments/workspace/general/delete_workspace_confirmation: 2ab40f39fc52289953828ec078c8c36d
-    environments/workspace/general/delete_workspace_name_includes_surveys_responses_people_and_more: 7cc851b70a3081cf5bcbb862486e90a5
+    environments/workspace/general/delete_workspace_confirmation: 54a4ee78867537e0244c7170453cdb3f
+    environments/workspace/general/delete_workspace_name_includes_surveys_responses_people_and_more: 1b6c0597fddc5b6604e3a204402ed35e
     environments/workspace/general/delete_workspace_settings_description: 411ef100f167fc8fca64e833b6c0d030
     environments/workspace/general/error_saving_workspace_information: e7b8022785619ef34de1fb1630b3c476
     environments/workspace/general/only_owners_or_managers_can_delete_workspaces: 58da180cd2610210302d85a9896d80bd
@@ -2291,8 +2263,8 @@ checksums:
     organizations/workspaces/new/settings/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
     organizations/workspaces/new/settings/team_description: 534ba98e256646074a03949daf85665d
     organizations/workspaces/new/settings/workspace_creation_failed: 5c6a0e087d481255a1b201c0287d0221
-    organizations/workspaces/new/settings/workspace_name: 855614bbf862fd6a9f6a3e76943f92d4
-    organizations/workspaces/new/settings/workspace_name_description: 3dc82d99f2ac9789c5c92b64a4addc0a
+    organizations/workspaces/new/settings/workspace_name: 7002a32bc4ce3343ede2076b30649ff7
+    organizations/workspaces/new/settings/workspace_name_description: 0885c4cd8cc8836e74b6ccdb5d25b43d
     organizations/workspaces/new/settings/workspace_settings_subtitle: 83a72b3e9c08f2936524fcd11b29421b
     organizations/workspaces/new/settings/workspace_settings_title: a4ec3549507071e1f7d3c834b019fcce
     s/check_inbox_or_spam: c48ac1f7b76052881bb3b6d10615152d
@@ -2368,10 +2340,10 @@ checksums:
     templates/book_interview: 1cc9c72d1c088b28e5dfa5ec7d7b78c4
     templates/build_product_roadmap_description: 6ca163ed3b0095cedcbc11822a0d502a
     templates/build_product_roadmap_name: 8c216b183c3539c0340ce87465a391cc
-    templates/build_product_roadmap_question_1_headline: 2f6f6ea1b3651fabba19a436e9b8417b
+    templates/build_product_roadmap_question_1_headline: 8875cb9cdb0dd7e1f4c471ac0f096e01
     templates/build_product_roadmap_question_1_lower_label: 83c1f45c6c471dbab0277948397a1af3
     templates/build_product_roadmap_question_1_upper_label: c24f08a4a3b5d3fbfb37eb948d594087
-    templates/build_product_roadmap_question_2_headline: 570b1bd272200749e7e43d75802100ce
+    templates/build_product_roadmap_question_2_headline: 123c5e407108afe5f5e179aa1f26f012
     templates/build_product_roadmap_question_2_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/card_abandonment_survey: 705c3dfcc7f6de3a445aaefe0d68c43f
     templates/card_abandonment_survey_description: a3db29212b51402a7659a76248299798
@@ -2404,10 +2376,10 @@ checksums:
     templates/card_abandonment_survey_question_8_headline: ef1289130df46b80d43119380095b579
     templates/career_development_survey_description: 00e92f566813b67301934bf24956f2d8
     templates/career_development_survey_name: d92b724f8c749bb9c859a14db164b257
-    templates/career_development_survey_question_1_headline: f03cc6bec0bd2c7b1560fed0b0d57f9d
+    templates/career_development_survey_question_1_headline: 663cb1f5a371e4c1e1e579d9722acc05
     templates/career_development_survey_question_1_lower_label: 586eedbc7b53319775e42c7cd4cef4de
     templates/career_development_survey_question_1_upper_label: a04ddfea06817ade6c56cff126cfca80
-    templates/career_development_survey_question_2_headline: 33fcb2c577264b09f39fe09f1ef1b4a9
+    templates/career_development_survey_question_2_headline: 0890709df1c9d6fcb003845fe3014f16
     templates/career_development_survey_question_2_lower_label: 586eedbc7b53319775e42c7cd4cef4de
     templates/career_development_survey_question_2_upper_label: a04ddfea06817ade6c56cff126cfca80
     templates/career_development_survey_question_3_headline: 47d01a8841cdfbe076cf9eb4e14083ed
@@ -2433,7 +2405,7 @@ checksums:
     templates/career_development_survey_question_6_headline: 88d2a87cbf2ec21882798890990c2225
     templates/career_development_survey_question_6_subheader: b9b478e967930358b0c74324a7c18fc8
     templates/cess_survey_name: dd706043a56d66f2895cad743935c5b4
-    templates/cess_survey_question_1_headline: 70115a7960746a05acef03f815652fc3
+    templates/cess_survey_question_1_headline: 1f75deab2d159eb8c33c37cc51ef4b3e
     templates/cess_survey_question_1_lower_label: 586eedbc7b53319775e42c7cd4cef4de
     templates/cess_survey_question_1_upper_label: a04ddfea06817ade6c56cff126cfca80
     templates/cess_survey_question_2_headline: b05b561f04753ae81febee18e08ce2dd
@@ -2460,7 +2432,7 @@ checksums:
     templates/churn_survey_question_1_headline: 899d5501fa89e0ca8cff72b050a14420
     templates/churn_survey_question_1_subheader: 1861f78f2e78068dc80980efdce9282a
     templates/churn_survey_question_2_button_label: 76a8497d7b546628b03bb81d5c1ce995
-    templates/churn_survey_question_2_headline: f24be65a7ea59614a3d6923520c374f4
+    templates/churn_survey_question_2_headline: 17d3e7e2ce62af5ef9332c0d208f9172
     templates/churn_survey_question_3_button_label: 43834ccf20c1c7cd49382468abe2edce
     templates/churn_survey_question_3_headline: 76444078de5c30666ff65f453f60b420
     templates/churn_survey_question_3_html: b14d1ca18d779f49fc64015b36f1d1ad
@@ -2499,15 +2471,15 @@ checksums:
     templates/csat_name: f216066cef52693bbaa842a3305377c7
     templates/csat_question_10_headline: b6a9ca9c6c20dced146d817c9a1e9be7
     templates/csat_question_10_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
-    templates/csat_question_1_headline: c3b9d9d9904c41c1f43c75ef8194ffda
+    templates/csat_question_1_headline: bd4894e95695ce5bc9fc5d326c79bc90
     templates/csat_question_1_lower_label: 54d464343c0bc17231fd51aa2d73623f
     templates/csat_question_1_upper_label: 9f000f63949d875ae628fc354a2a7f6a
-    templates/csat_question_2_choice_1: a0cf57bc571c95c43924a3c641d1355e
-    templates/csat_question_2_choice_2: a3a49eb9cc86972bce6dc41a107f472d
+    templates/csat_question_2_choice_1: a3a49eb9cc86972bce6dc41a107f472d
+    templates/csat_question_2_choice_2: a0cf57bc571c95c43924a3c641d1355e
     templates/csat_question_2_choice_3: a7c58d9b8afdaefadeb1f5fdf4d5ad3f
     templates/csat_question_2_choice_4: d09723c4bc1d85d99c2a9248ed0d4578
     templates/csat_question_2_choice_5: a89ca2602a3322e89adf17b3349e03ab
-    templates/csat_question_2_headline: 0bb37bda01ec0a7ceb7ee527e9944e73
+    templates/csat_question_2_headline: 4e6dc882f742536accbd36e9a301ab57
     templates/csat_question_2_subheader: c1fe8f70be7d41a4daa6c9a9ef60eafa
     templates/csat_question_3_choice_1: 095b4b4aaf4aee8a77da3bf707a3b6e1
     templates/csat_question_3_choice_10: a9886a5199df1d581aa9005a123af060
@@ -2519,28 +2491,28 @@ checksums:
     templates/csat_question_3_choice_7: db68abbd863987837097aac843c8b6ad
     templates/csat_question_3_choice_8: 6abbde1174a09d7b9d61de382f7f9677
     templates/csat_question_3_choice_9: 4c3429e68c6fbd9a8808285838054e0c
-    templates/csat_question_3_headline: 9da4c07c08de5655bc91b90a0ea06d37
+    templates/csat_question_3_headline: 8c6ffa4d4c0fef480bf22f61dbea5ce6
     templates/csat_question_3_subheader: ed43eb9723166fd6a8d8e44356def97e
     templates/csat_question_4_choice_1: 3af1ce39d4f133a26c4272c8245ded07
     templates/csat_question_4_choice_2: 78f2c2b121ffbb4633452f7da4e9c338
     templates/csat_question_4_choice_3: 315f0d4c1497f69ef252d86e486fc715
     templates/csat_question_4_choice_4: 3e123a754f7c5062b253814ca6fa7a1a
     templates/csat_question_4_choice_5: 2a0c59ef15817ff02fecb0544b144562
-    templates/csat_question_4_headline: 80192356fb9c83d82bb245bed3d50779
+    templates/csat_question_4_headline: e082eacf184ec07a306977d36df3ec2c
     templates/csat_question_4_subheader: aa206f483bcb547d10599b1e564cc813
     templates/csat_question_5_choice_1: 2f6dd5a4f63df441b73a1e91ff1fb1f7
     templates/csat_question_5_choice_2: 0036f3b944c7a367567c35dadea42ae6
     templates/csat_question_5_choice_3: 8c99a10632579680c30ca19951c115cc
     templates/csat_question_5_choice_4: 60e3f3b75e9082779eebff3a12892c78
     templates/csat_question_5_choice_5: 2c079befacaca59ab5941c5e5f655ad5
-    templates/csat_question_5_headline: 7ed7fd916b071e76a00001bf5ca492fe
+    templates/csat_question_5_headline: 11a8884bd3ec93a32bb73caf550fd2a3
     templates/csat_question_5_subheader: aa206f483bcb547d10599b1e564cc813
     templates/csat_question_6_choice_1: 16372294108f169683263c353c4071dc
     templates/csat_question_6_choice_2: 4adfac25f3b96d2f767c22c165623d35
     templates/csat_question_6_choice_3: 8ebb872222898ed8785e5a9d77c5a2c3
     templates/csat_question_6_choice_4: a4b641cd9783e7a4c33b5c75d42134ca
     templates/csat_question_6_choice_5: ee43b88abd26e897ad4a612361c2ae2b
-    templates/csat_question_6_headline: ddfda6f1ff03f2b74e82304b5c26fa6c
+    templates/csat_question_6_headline: 699bcc628559419dde25786c58459b11
     templates/csat_question_6_subheader: c1fe8f70be7d41a4daa6c9a9ef60eafa
     templates/csat_question_7_choice_1: a6b5a70cac6cc35275b3e1bc3582361a
     templates/csat_question_7_choice_2: fe4f1b5fe2fac2fceb75bfcb721d0250
@@ -2554,17 +2526,17 @@ checksums:
     templates/csat_question_8_choice_3: 50fd311f267683de79c4c0c871be81c4
     templates/csat_question_8_choice_4: 073b66551a87590137d8df50f7534869
     templates/csat_question_8_choice_5: a94c895f9ea70203cddbf7d783c06fcc
-    templates/csat_question_8_headline: 5707d6be8ef4cb97a04b4b2b8a0ba5fa
+    templates/csat_question_8_headline: 8e95e1360583899191632a8be2764571
     templates/csat_question_8_subheader: c1fe8f70be7d41a4daa6c9a9ef60eafa
     templates/csat_question_9_choice_1: 77d668acd2d8fd6dd1ccc8960380dfb8
     templates/csat_question_9_choice_2: 9f000f63949d875ae628fc354a2a7f6a
     templates/csat_question_9_choice_3: d50b9b06372ff4e681253558a1b1925c
     templates/csat_question_9_choice_4: a5672052779a848e42aa0723de7aff84
     templates/csat_question_9_choice_5: d9de99c54e06922698076a00c7ae29e1
-    templates/csat_question_9_headline: 9e5f014cd5b49e54c578dc0965bd2249
+    templates/csat_question_9_headline: ba151502dd2ac4c8bbffc16fdc3a4703
     templates/csat_question_9_subheader: aa206f483bcb547d10599b1e564cc813
-    templates/csat_survey_name: c9b8f32fdd57511fb63ecb74bfb5095b
-    templates/csat_survey_question_1_headline: c3db899931adf315522075ba5886f883
+    templates/csat_survey_name: ceed42acb13f9443cfde57b8ba264435
+    templates/csat_survey_question_1_headline: e16ad1b490d58ecbce5d2bcae8758e01
     templates/csat_survey_question_1_lower_label: 04dc1812c9072b2f32c7b307a2b46e42
     templates/csat_survey_question_1_upper_label: c24f08a4a3b5d3fbfb37eb948d594087
     templates/csat_survey_question_2_headline: ac0e2dcc8108dd5dd339043958c98464
@@ -2578,7 +2550,7 @@ checksums:
     templates/custom_survey_question_1_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/customer_effort_score_description: 3427623c1f486fe2f3c9de17ef1ab05d
     templates/customer_effort_score_name: 4f9aa509c57b7d0eb5773cd6fd62d308
-    templates/customer_effort_score_question_1_headline: 70115a7960746a05acef03f815652fc3
+    templates/customer_effort_score_question_1_headline: 1f75deab2d159eb8c33c37cc51ef4b3e
     templates/customer_effort_score_question_1_lower_label: 586eedbc7b53319775e42c7cd4cef4de
     templates/customer_effort_score_question_1_upper_label: a04ddfea06817ade6c56cff126cfca80
     templates/customer_effort_score_question_2_headline: b05b561f04753ae81febee18e08ce2dd
@@ -2602,14 +2574,14 @@ checksums:
     templates/earned_advocacy_score_name: 6f18c3f805a1f1875935784c7efa8639
     templates/earned_advocacy_score_question_1_choice_1: ec580fd11a45779b039466f1e35eed2a
     templates/earned_advocacy_score_question_1_choice_2: 8c708225830b06df2d1141c536f2a0d6
-    templates/earned_advocacy_score_question_1_headline: 57d2a966902d8cf06e5f3d21632ed2db
+    templates/earned_advocacy_score_question_1_headline: d282a886c3d0728917873dd0f2c111b3
     templates/earned_advocacy_score_question_2_headline: f1044ad7510b0c1b6671730d277e51fb
     templates/earned_advocacy_score_question_2_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/earned_advocacy_score_question_3_headline: 2c036ea73e811371f7b9fdce1324da56
     templates/earned_advocacy_score_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/earned_advocacy_score_question_4_choice_1: ec580fd11a45779b039466f1e35eed2a
     templates/earned_advocacy_score_question_4_choice_2: 8c708225830b06df2d1141c536f2a0d6
-    templates/earned_advocacy_score_question_4_headline: 7f723a7ab350cf1488f69980315575d6
+    templates/earned_advocacy_score_question_4_headline: 3363abab5ef272cc4bf3892808d01aba
     templates/earned_advocacy_score_question_5_headline: 7aeb3b3873bd940d9a7a055fa67cdfb9
     templates/earned_advocacy_score_question_5_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/employee_satisfaction_description: 1b329b7c83094e0fdc4750dc0d1952ad
@@ -2658,7 +2630,7 @@ checksums:
     templates/evaluate_a_product_idea_description: 734295caa08aac718e9ee01a99c3debe
     templates/evaluate_a_product_idea_name: b0d8039556d686b83dfcd455092b9d9c
     templates/evaluate_a_product_idea_question_1_button_label: ad840f586c880820e8b52b6860eb57fb
-    templates/evaluate_a_product_idea_question_1_headline: 5339ee5efbf33619b0e1e300083c8e1e
+    templates/evaluate_a_product_idea_question_1_headline: 7e2aab8a2b62564a5273c82dd92f9f8f
     templates/evaluate_a_product_idea_question_1_html: bc0dcb887591e018dfeeb65a3a5c4bb9
     templates/evaluate_a_product_idea_question_2_headline: 10a50778c4559554336e7289a48d021c
     templates/evaluate_a_product_idea_question_2_lower_label: c2f05d3610d8879ae503a61d49e32e80
@@ -2741,7 +2713,7 @@ checksums:
     templates/identify_sign_up_barriers_question_1_button_label: 080fd22c580f56ffdcea6c3d60448b84
     templates/identify_sign_up_barriers_question_1_headline: c8c247363daf4697e1939aaf8dc5770c
     templates/identify_sign_up_barriers_question_1_html: 51029ae64c19101af608684b6f429eb8
-    templates/identify_sign_up_barriers_question_2_headline: 019e6339441974088020d483c9313429
+    templates/identify_sign_up_barriers_question_2_headline: f768ea3053b07f6bbcba977f714ec3da
     templates/identify_sign_up_barriers_question_2_lower_label: d9de99c54e06922698076a00c7ae29e1
     templates/identify_sign_up_barriers_question_2_upper_label: 9f000f63949d875ae628fc354a2a7f6a
     templates/identify_sign_up_barriers_question_3_choice_1_label: 136bb71047ef7aa7306b3624ef383ca0
@@ -2749,8 +2721,8 @@ checksums:
     templates/identify_sign_up_barriers_question_3_choice_3_label: 969b81566c6be1a27e9848834b70946a
     templates/identify_sign_up_barriers_question_3_choice_4_label: e2d3c2ebd342ea84dab7e0e9f2ea1156
     templates/identify_sign_up_barriers_question_3_choice_5_label: d4bc66df5a8d842dfca0a176ccddf71e
-    templates/identify_sign_up_barriers_question_3_headline: ad950843e1ee338201beb63fcdb27164
-    templates/identify_sign_up_barriers_question_4_headline: 57ab48526001692d6c68a02607ec1e4a
+    templates/identify_sign_up_barriers_question_3_headline: eb2e0db2c4f9650fc72b931d47aebc58
+    templates/identify_sign_up_barriers_question_4_headline: d9652977772912124e858228dc8c3034
     templates/identify_sign_up_barriers_question_4_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/identify_sign_up_barriers_question_5_headline: b97e7e8403f4b4662e72a76e32aa3f47
     templates/identify_sign_up_barriers_question_5_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
@@ -2769,7 +2741,7 @@ checksums:
     templates/identify_upsell_opportunities_question_1_choice_2: 143d16c1d19d3579a5586cfb6b637d8f
     templates/identify_upsell_opportunities_question_1_choice_3: da9bf0f1948918d93a8044dacd0af86c
     templates/identify_upsell_opportunities_question_1_choice_4: 32cfb0ac99e5128103deb1cea876b089
-    templates/identify_upsell_opportunities_question_1_headline: c6d0abd4ea9c45397959a54e178731f7
+    templates/identify_upsell_opportunities_question_1_headline: 1e1aa49f39aca7873d05bfcc81fa77b7
     templates/improve_activation_rate_description: 9587721eb5a40c4b8312e41a1f9fae19
     templates/improve_activation_rate_name: ab2908e5166d4addb19093f3cb542835
     templates/improve_activation_rate_question_1_choice_1: 148839adc1e7cee224a765cea67b9f22
@@ -2777,10 +2749,10 @@ checksums:
     templates/improve_activation_rate_question_1_choice_3: e26f3bc7d47c851e0a7988fa72e45850
     templates/improve_activation_rate_question_1_choice_4: 6dcd4ed2668c72ac1f57b4b0276ebb02
     templates/improve_activation_rate_question_1_choice_5: d4bc66df5a8d842dfca0a176ccddf71e
-    templates/improve_activation_rate_question_1_headline: 170031a5a88bd67ecf63beb8d99e3252
-    templates/improve_activation_rate_question_2_headline: 31641f19cfe0b3e7cbe58ec1c4142bcd
+    templates/improve_activation_rate_question_1_headline: 22b5234b65cd8be0691a44d66a598150
+    templates/improve_activation_rate_question_2_headline: b52a2e4fe00ef7ef0376cba959a4310c
     templates/improve_activation_rate_question_2_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
-    templates/improve_activation_rate_question_3_headline: 3868576109abecaa60d54f2650ff84c4
+    templates/improve_activation_rate_question_3_headline: a0b70d840e8a9fba18070cade4ff88a1
     templates/improve_activation_rate_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/improve_activation_rate_question_4_headline: 83c2d5428b5cdd6db19e5681f1e08007
     templates/improve_activation_rate_question_4_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
@@ -2809,7 +2781,7 @@ checksums:
     templates/improve_trial_conversion_question_1_headline: 6d0a492446be0250f04850de383fec54
     templates/improve_trial_conversion_question_1_subheader: 67c7047ba2365d461df14dbed3f9506d
     templates/improve_trial_conversion_question_2_button_label: 89ddbcf710eba274963494f312bdc8a9
-    templates/improve_trial_conversion_question_2_headline: 54324cd652667183dd3cf647ba72dd07
+    templates/improve_trial_conversion_question_2_headline: 05dd4820f60b9d267a9affc7e662f029
     templates/improve_trial_conversion_question_4_button_label: d94a6a11cfdf4ebde4c5332e585e2e96
     templates/improve_trial_conversion_question_4_headline: 9b07341f65574c4165086ec107cebb45
     templates/improve_trial_conversion_question_4_html: 8ce95691eeeae7ad61c4d2f867b918ca
@@ -2825,7 +2797,7 @@ checksums:
     templates/integration_setup_survey_question_1_upper_label: b88eaddaea17a4f285209c2529a9b8f8
     templates/integration_setup_survey_question_2_headline: 7f98f8b8d4876c7e9e933d2bf874f6a6
     templates/integration_setup_survey_question_2_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
-    templates/integration_setup_survey_question_3_headline: 65562a516eec7939484b3262a156fc63
+    templates/integration_setup_survey_question_3_headline: 0c16233b11661b4b2ebe046d17baba95
     templates/integration_setup_survey_question_3_subheader: fd5ef11f1f5263f03f65c41caebe4c3b
     templates/interview_prompt_description: d4e9f8cdaf01be900d6a3dc3a1d9e9b7
     templates/interview_prompt_name: 9c55f5051d07df6b53f5fa0a95195235
@@ -2836,23 +2808,23 @@ checksums:
     templates/long_term_retention_check_in_name: f1e97a69fbfbb0ebd3f740cdefa55f2f
     templates/long_term_retention_check_in_question_10_headline: 9567068886cfea40a7044705ec7ffb06
     templates/long_term_retention_check_in_question_10_placeholder: cc69cd219a32056c973e155b3ef9469d
-    templates/long_term_retention_check_in_question_1_headline: 688d3793cd3af11d59eb59bb3387aaea
+    templates/long_term_retention_check_in_question_1_headline: aff2f4abe332ba02b04f24b0fee0c0ad
     templates/long_term_retention_check_in_question_1_lower_label: a6a66fe3d042b1ca404952096a7d3ef7
     templates/long_term_retention_check_in_question_1_upper_label: a3a49eb9cc86972bce6dc41a107f472d
-    templates/long_term_retention_check_in_question_2_headline: ecc851d4c1077d1e04a315f38a1c9f34
+    templates/long_term_retention_check_in_question_2_headline: 8ffadebbe7626554a31f625cd0ce09d5
     templates/long_term_retention_check_in_question_2_placeholder: 0c87033285f92b09a261977368fd080e
     templates/long_term_retention_check_in_question_3_choice_1: 341ff316a339b106a178f0b8d362951b
     templates/long_term_retention_check_in_question_3_choice_2: e3762261a5c81ffcdd00e19af5204ef8
     templates/long_term_retention_check_in_question_3_choice_3: bbb93f54e33f2269ae0002b1576e6753
     templates/long_term_retention_check_in_question_3_choice_4: ce27f1aeacccc542a174c4b2bce022b0
     templates/long_term_retention_check_in_question_3_choice_5: 4e7493a16fd18152de9fe4e55086d437
-    templates/long_term_retention_check_in_question_3_headline: c720b000a0204b37fe460c9d5d22dbb2
-    templates/long_term_retention_check_in_question_4_headline: 03169477b5e208cb73f5132137a90247
+    templates/long_term_retention_check_in_question_3_headline: dc814600d2efed1976fbbe63230f19cf
+    templates/long_term_retention_check_in_question_4_headline: 642bf1125d9c0f5b4c241989d2392191
     templates/long_term_retention_check_in_question_4_lower_label: 20b69a5ffcae1d4f52366870b349cf91
     templates/long_term_retention_check_in_question_4_upper_label: 48f47b5f80ca0ce8ff7395081d4bb9e1
-    templates/long_term_retention_check_in_question_5_headline: 0ef86c4a1fcdcf8850a63cfa4d31e32d
+    templates/long_term_retention_check_in_question_5_headline: b1a0d267548ebced5594eb3c24e99e22
     templates/long_term_retention_check_in_question_5_placeholder: d9ab7189d17443c03f728f146d5ff92e
-    templates/long_term_retention_check_in_question_6_headline: feb791cd9a69245b51dc1758993d797a
+    templates/long_term_retention_check_in_question_6_headline: 89245aac6cbe8f6ac7ce5dea84556ca7
     templates/long_term_retention_check_in_question_6_lower_label: 54d464343c0bc17231fd51aa2d73623f
     templates/long_term_retention_check_in_question_6_upper_label: 9f000f63949d875ae628fc354a2a7f6a
     templates/long_term_retention_check_in_question_7_choice_1: ec3be31f7b93f97bff2b89252fca96be
@@ -2861,7 +2833,7 @@ checksums:
     templates/long_term_retention_check_in_question_7_choice_4: 54f1b084598783779d84f332b7cb1e77
     templates/long_term_retention_check_in_question_7_choice_5: e40d9aa9eda5560d8496b806e7a7e832
     templates/long_term_retention_check_in_question_7_headline: 3136f67531f1cfbf6e9f8a890472c6a1
-    templates/long_term_retention_check_in_question_8_headline: 6a11ceb473c16b76fce93c45a32cef4c
+    templates/long_term_retention_check_in_question_8_headline: 934ea59cbe6b692daecfe462564dbfe2
     templates/long_term_retention_check_in_question_8_placeholder: 863ad0c2bd362ab0c92c3018bdf7090c
     templates/long_term_retention_check_in_question_9_headline: f69032a93cee667d66f83a0d608eb8ef
     templates/long_term_retention_check_in_question_9_lower_label: 6dce68b71925d2b0b229f08498109e5e
@@ -2880,8 +2852,8 @@ checksums:
     templates/market_site_clarity_question_1_choice_1: f1e807ab1684b329d0ffd670239ea37b
     templates/market_site_clarity_question_1_choice_2: bdb8b4861dfc77d43ff9028c9c651a97
     templates/market_site_clarity_question_1_choice_3: 91a0ee10fef5e56fd0adcefe5f1fcacf
-    templates/market_site_clarity_question_1_headline: 1b18b1375c77f5c4b89ef9e5b9ebc7d8
-    templates/market_site_clarity_question_2_headline: cd4f558bd7a7c881be65651f72ba03ce
+    templates/market_site_clarity_question_1_headline: 8502f3b9799198999ecab126bde938c0
+    templates/market_site_clarity_question_2_headline: 092eefd876d5d9460abadfe2109bb1bf
     templates/market_site_clarity_question_3_button_label: d2eeb44560b2dd61fbc2b9aca2de8363
     templates/market_site_clarity_question_3_headline: d6afccb3f411c48039ac15f3b3dcef14
     templates/matrix: ff18f26a7020ec89bef25eee6aa800f8
@@ -2926,12 +2898,12 @@ checksums:
     templates/nps_description: a0967386c2e53a3df5a165ff16a8fbda
     templates/nps_lower_label: d9de99c54e06922698076a00c7ae29e1
     templates/nps_name: ee9c686b6f62eeb53535c2ea91867775
-    templates/nps_question_1_headline: feb791cd9a69245b51dc1758993d797a
+    templates/nps_question_1_headline: 89245aac6cbe8f6ac7ce5dea84556ca7
     templates/nps_question_1_lower_label: 54d464343c0bc17231fd51aa2d73623f
     templates/nps_question_1_upper_label: 9f000f63949d875ae628fc354a2a7f6a
     templates/nps_question_2_headline: 10665a2282eac80f6cb34d1ba9b1be2d
     templates/nps_survey_name: 94ef35c2e6ed7061f8a533c9e61b155b
-    templates/nps_survey_question_1_headline: feb791cd9a69245b51dc1758993d797a
+    templates/nps_survey_question_1_headline: 89245aac6cbe8f6ac7ce5dea84556ca7
     templates/nps_survey_question_1_lower_label: d9de99c54e06922698076a00c7ae29e1
     templates/nps_survey_question_1_upper_label: 77d668acd2d8fd6dd1ccc8960380dfb8
     templates/nps_survey_question_2_headline: b64138e12a7edcd1998e156f825a3471
@@ -2965,7 +2937,7 @@ checksums:
     templates/preview_survey_ending_card_description: 6a98bdb1b083e437bb71d8b6c27b0e3a
     templates/preview_survey_ending_card_headline: 3512326ea9ad9a8a6c420a1e69d4d93f
     templates/preview_survey_name: 82503c2dba9f071c93860e5ce9584e14
-    templates/preview_survey_question_1_headline: b1b00f576c7b23e94e14094235799c2a
+    templates/preview_survey_question_1_headline: 91622f99f8018adefb3ed0921bc1ad7a
     templates/preview_survey_question_1_lower_label: ff4681be0a94185111459994fe58478c
     templates/preview_survey_question_1_subheader: c4d49637dd08a33a8271cd08b1bdbbe1
     templates/preview_survey_question_1_upper_label: ac7de1981be78aff08b2133569fd3b95
@@ -2989,16 +2961,16 @@ checksums:
     templates/prioritize_features_question_2_choice_2: 1e7326a57e8d91ed25a34a98bdc86c81
     templates/prioritize_features_question_2_choice_3: 6913aa70491e150337f39bf146692ba2
     templates/prioritize_features_question_2_headline: c4525eca2da7061b16b88b7a515266f1
-    templates/prioritize_features_question_3_headline: 46e936563314555c717356e359543a4b
+    templates/prioritize_features_question_3_headline: 17b35f21d32560f745997b78fcebd91a
     templates/prioritize_features_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/product_market_fit_short_description: d14c8e7f4eb7c98919de171457d10a31
     templates/product_market_fit_short_name: 132d722134fb937204775988ddfd0b34
     templates/product_market_fit_short_question_1_choice_1: 074b2a608d4bba5706b5c55dae249edf
     templates/product_market_fit_short_question_1_choice_2: c054cdb1df479db6172b110551f59a98
     templates/product_market_fit_short_question_1_choice_3: 33eca9f8f318485c076c9199048902ed
-    templates/product_market_fit_short_question_1_headline: 89ea8c1a467a83a3be0630613b32b2b8
+    templates/product_market_fit_short_question_1_headline: e672209cf1d47ba0523b06e1111e9179
     templates/product_market_fit_short_question_1_subheader: b9b478e967930358b0c74324a7c18fc8
-    templates/product_market_fit_short_question_2_headline: 13799c7e571d8d167cc87fe48c40c9f7
+    templates/product_market_fit_short_question_2_headline: 015de4634fbeca165e399a526ac0992f
     templates/product_market_fit_short_question_2_subheader: 51276effa2d7ddf4d1df7dfad45d9747
     templates/product_market_fit_superhuman: 48b1b2db74562dea0d00483b29942346
     templates/product_market_fit_superhuman_description: d14c8e7f4eb7c98919de171457d10a31
@@ -3008,7 +2980,7 @@ checksums:
     templates/product_market_fit_superhuman_question_2_choice_1: 074b2a608d4bba5706b5c55dae249edf
     templates/product_market_fit_superhuman_question_2_choice_2: c054cdb1df479db6172b110551f59a98
     templates/product_market_fit_superhuman_question_2_choice_3: 33eca9f8f318485c076c9199048902ed
-    templates/product_market_fit_superhuman_question_2_headline: 89ea8c1a467a83a3be0630613b32b2b8
+    templates/product_market_fit_superhuman_question_2_headline: e672209cf1d47ba0523b06e1111e9179
     templates/product_market_fit_superhuman_question_2_subheader: b9b478e967930358b0c74324a7c18fc8
     templates/product_market_fit_superhuman_question_3_choice_1: da5bfc0a0de1d49c23fa6757dcd0f7b1
     templates/product_market_fit_superhuman_question_3_choice_2: 4f4d5a5772566ea830ca2ba90ee80480
@@ -3017,9 +2989,9 @@ checksums:
     templates/product_market_fit_superhuman_question_3_choice_5: e6a66473cd54c4a1958969481b8af6f7
     templates/product_market_fit_superhuman_question_3_headline: bfba21665f10be39b957c68dac002dc9
     templates/product_market_fit_superhuman_question_3_subheader: b9b478e967930358b0c74324a7c18fc8
-    templates/product_market_fit_superhuman_question_4_headline: ca9869d478a37bef84d8ad4789b7d6bc
-    templates/product_market_fit_superhuman_question_5_headline: 56faebca0e8a32aee4c2eec262980af2
-    templates/product_market_fit_superhuman_question_6_headline: 13799c7e571d8d167cc87fe48c40c9f7
+    templates/product_market_fit_superhuman_question_4_headline: a7c8b5b3eb52e410705135f1a7b6ec11
+    templates/product_market_fit_superhuman_question_5_headline: 65be01997ff636390de3e6fc21dba44b
+    templates/product_market_fit_superhuman_question_6_headline: 015de4634fbeca165e399a526ac0992f
     templates/product_market_fit_superhuman_question_6_subheader: 51276effa2d7ddf4d1df7dfad45d9747
     templates/professional_development_growth_survey_description: 9fb0c943037258435fdb1686cc4fec51
     templates/professional_development_growth_survey_name: b7c77f82f48269619ad45fef47c94cb8
@@ -3090,7 +3062,7 @@ checksums:
     templates/recognition_and_reward_survey_question_4_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/review_prompt_description: 21f19ec762c1319c261764d9cceb9564
     templates/review_prompt_name: beb7a913fa25579c937fe5f7570cf4b8
-    templates/review_prompt_question_1_headline: c66aeba9d97ff9496365e7b58def8372
+    templates/review_prompt_question_1_headline: 6b15d118037b729138c2214cfef49a68
     templates/review_prompt_question_1_lower_label: ff4681be0a94185111459994fe58478c
     templates/review_prompt_question_1_upper_label: a3a49eb9cc86972bce6dc41a107f472d
     templates/review_prompt_question_2_button_label: 98490793678c51afc8b61ff405185bf1
@@ -3133,7 +3105,7 @@ checksums:
     templates/site_abandonment_survey_question_8_headline: 9e82d6f51788351c7e2c8f73be66d005
     templates/site_abandonment_survey_question_9_headline: ef1289130df46b80d43119380095b579
     templates/smileys_survey_name: 6ef64e8182e7820efa53a2d1c81eb912
-    templates/smileys_survey_question_1_headline: c66aeba9d97ff9496365e7b58def8372
+    templates/smileys_survey_question_1_headline: 6b15d118037b729138c2214cfef49a68
     templates/smileys_survey_question_1_lower_label: ff4681be0a94185111459994fe58478c
     templates/smileys_survey_question_1_upper_label: a3a49eb9cc86972bce6dc41a107f472d
     templates/smileys_survey_question_2_button_label: 98490793678c51afc8b61ff405185bf1
@@ -3143,8 +3115,8 @@ checksums:
     templates/smileys_survey_question_3_headline: a76ad381785e46dbc0b1cb45662fa0be
     templates/smileys_survey_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/smileys_survey_question_3_subheader: 43098f46dc68b7594522e9d94ba0b51f
-    templates/star_rating_survey_name: 70bfbf5773bdbc6a662d963af2e352d8
-    templates/star_rating_survey_question_1_headline: c66aeba9d97ff9496365e7b58def8372
+    templates/star_rating_survey_name: a81021d9fb79ed14a7212274c0970a5f
+    templates/star_rating_survey_question_1_headline: 6b15d118037b729138c2214cfef49a68
     templates/star_rating_survey_question_1_lower_label: 04dc1812c9072b2f32c7b307a2b46e42
     templates/star_rating_survey_question_1_upper_label: c24f08a4a3b5d3fbfb37eb948d594087
     templates/star_rating_survey_question_2_button_label: 98490793678c51afc8b61ff405185bf1
@@ -3177,7 +3149,7 @@ checksums:
     templates/uncover_strengths_and_weaknesses_question_1_choice_3: e68c41a832ff03592d6955e30cbe5a86
     templates/uncover_strengths_and_weaknesses_question_1_choice_4: 8e7f41cc79df15a3f9e5c285d46129b7
     templates/uncover_strengths_and_weaknesses_question_1_choice_5: 79acaa6cd481262bea4e743a422529d2
-    templates/uncover_strengths_and_weaknesses_question_1_headline: 84643dbb23275a6928986b16f4af0a64
+    templates/uncover_strengths_and_weaknesses_question_1_headline: 997d9175bda65bfe83925cccae37b959
     templates/uncover_strengths_and_weaknesses_question_2_choice_1: 1563fcb5ddb5037b0709ccd3dd384a92
     templates/uncover_strengths_and_weaknesses_question_2_choice_2: 40607a68c0281d374337ae692e580835
     templates/uncover_strengths_and_weaknesses_question_2_choice_3: ce27f1aeacccc542a174c4b2bce022b0
@@ -3193,8 +3165,8 @@ checksums:
     templates/understand_low_engagement_question_1_choice_3: 6dcd4ed2668c72ac1f57b4b0276ebb02
     templates/understand_low_engagement_question_1_choice_4: 1735e52f2db8627a8b0b4f293a570b78
     templates/understand_low_engagement_question_1_choice_5: 79acaa6cd481262bea4e743a422529d2
-    templates/understand_low_engagement_question_1_headline: a367267c8e6da898a0b8b8dee80b4358
-    templates/understand_low_engagement_question_2_headline: dae498aeefa0718c527e7bc46f4ad724
+    templates/understand_low_engagement_question_1_headline: 5cba0c6c68c586c7a68dfc1483d4d27d
+    templates/understand_low_engagement_question_2_headline: 4ccc6e00439ccce991bccffd2c6431b2
     templates/understand_low_engagement_question_2_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/understand_low_engagement_question_3_headline: ebb675aba5e32a27fdf6a11060fae929
     templates/understand_low_engagement_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee

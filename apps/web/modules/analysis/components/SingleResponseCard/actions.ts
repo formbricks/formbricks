@@ -12,8 +12,8 @@ import {
   getEnvironmentIdFromResponseId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
-  getWorkspaceIdFromEnvironmentId,
-  getWorkspaceIdFromResponseId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromResponseId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -36,8 +36,8 @@ export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagA
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
       ],
@@ -87,8 +87,8 @@ export const createTagToResponseAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(responseEnvironmentId),
+            type: "projectTeam",
+            projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
             minPermission: "readWrite",
           },
         ],
@@ -130,8 +130,8 @@ export const deleteTagOnResponseAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromEnvironmentId(responseEnvironmentId),
+            type: "projectTeam",
+            projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
             minPermission: "readWrite",
           },
         ],
@@ -161,8 +161,8 @@ export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDelet
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromResponseId(parsedInput.responseId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
           minPermission: "readWrite",
         },
       ],
@@ -191,9 +191,9 @@ export const getResponseAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
+          type: "projectTeam",
           minPermission: "read",
-          workspaceId: await getWorkspaceIdFromResponseId(parsedInput.responseId),
+          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
         },
       ],
     });

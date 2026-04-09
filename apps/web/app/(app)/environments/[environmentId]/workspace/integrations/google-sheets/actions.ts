@@ -10,7 +10,7 @@ import { getSpreadsheetNameById, validateGoogleSheetsConnection } from "@/lib/go
 import { getIntegrationByType } from "@/lib/integration/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getWorkspaceIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 
 const ZValidateGoogleSheetsConnectionAction = z.object({
   environmentId: ZId,
@@ -28,8 +28,8 @@ export const validateGoogleSheetsConnectionAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
       ],
@@ -62,8 +62,8 @@ export const getSpreadsheetNameByIdAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.environmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
       ],

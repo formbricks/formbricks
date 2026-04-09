@@ -18,8 +18,8 @@ export const MOCK_IDS = {
   organizationId: "test-org-id",
   defaultOrganizationId: "org-123",
 
-  // Workspace IDs
-  workspaceId: "test-workspace-id",
+  // Project IDs
+  projectId: "test-project-id",
 };
 
 /**
@@ -28,13 +28,13 @@ export const MOCK_IDS = {
 export const MOCK_TEAM: {
   id: string;
   organizationId: string;
-  workspaceTeams: { workspaceId: string }[];
+  projectTeams: { projectId: string }[];
 } = {
   id: MOCK_IDS.teamId,
   organizationId: MOCK_IDS.organizationId,
-  workspaceTeams: [
+  projectTeams: [
     {
-      workspaceId: MOCK_IDS.workspaceId,
+      projectId: MOCK_IDS.projectId,
     },
   ],
 };

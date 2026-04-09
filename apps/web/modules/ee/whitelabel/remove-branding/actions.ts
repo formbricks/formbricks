@@ -6,69 +6,67 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
-import { updateWorkspaceBranding } from "@/modules/ee/whitelabel/remove-branding/lib/workspace";
-import { ZWorkspaceUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/workspace";
-import { getWorkspace } from "@/modules/survey/editor/lib/workspace";
+import { updateProjectBranding } from "@/modules/ee/whitelabel/remove-branding/lib/project";
+import { ZProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
+import { getProject } from "@/modules/survey/editor/lib/project";
 
-const ZUpdateWorkspaceAction = z.object({
-  workspaceId: ZId,
-  data: ZWorkspaceUpdateBrandingInput,
+const ZUpdateProjectAction = z.object({
+  projectId: ZId,
+  data: ZProjectUpdateBrandingInput,
 });
 
-export const updateWorkspaceBrandingAction = authenticatedActionClient
-  .inputSchema(ZUpdateWorkspaceAction)
-  .action(
-    withAuditLogging("updated", "workspace", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+export const updateProjectBrandingAction = authenticatedActionClient.inputSchema(ZUpdateProjectAction).action(
+  withAuditLogging("updated", "project", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            workspaceId: parsedInput.workspaceId,
-            minPermission: "manage",
-          },
-        ],
-      });
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
+          minPermission: "manage",
+        },
+      ],
+    });
 
-      if (
-        parsedInput.data.inAppSurveyBranding !== undefined ||
-        parsedInput.data.linkSurveyBranding !== undefined
-      ) {
-        const organization = await getOrganization(organizationId);
+    if (
+      parsedInput.data.inAppSurveyBranding !== undefined ||
+      parsedInput.data.linkSurveyBranding !== undefined
+    ) {
+      const organization = await getOrganization(organizationId);
 
-        if (!organization) {
-          throw new ResourceNotFoundError("Organization", organizationId);
-        }
-        const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("Organization", organizationId);
+      }
+      const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
 
-        if (parsedInput.data.inAppSurveyBranding !== undefined) {
-          if (!canRemoveBranding) {
-            throw new OperationNotAllowedError("You are not allowed to remove in-app branding");
-          }
-        }
-
-        if (parsedInput.data.linkSurveyBranding !== undefined) {
-          if (!canRemoveBranding) {
-            throw new OperationNotAllowedError("You are not allowed to remove link survey branding");
-          }
+      if (parsedInput.data.inAppSurveyBranding !== undefined) {
+        if (!canRemoveBranding) {
+          throw new OperationNotAllowedError("You are not allowed to remove in-app branding");
         }
       }
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
-      ctx.auditLoggingCtx.oldObject = await getWorkspace(parsedInput.workspaceId);
-      const result = await updateWorkspaceBranding(parsedInput.workspaceId, parsedInput.data);
-      ctx.auditLoggingCtx.newObject = await getWorkspace(parsedInput.workspaceId);
-      return result;
-    })
-  );
+      if (parsedInput.data.linkSurveyBranding !== undefined) {
+        if (!canRemoveBranding) {
+          throw new OperationNotAllowedError("You are not allowed to remove link survey branding");
+        }
+      }
+    }
+
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.projectId = parsedInput.projectId;
+    ctx.auditLoggingCtx.oldObject = await getProject(parsedInput.projectId);
+    const result = await updateProjectBranding(parsedInput.projectId, parsedInput.data);
+    ctx.auditLoggingCtx.newObject = await getProject(parsedInput.projectId);
+    return result;
+  })
+);

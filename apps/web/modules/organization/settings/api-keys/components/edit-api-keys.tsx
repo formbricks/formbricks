@@ -13,7 +13,7 @@ import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/co
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
-  TOrganizationWorkspace,
+  TOrganizationProject,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -25,16 +25,10 @@ interface EditAPIKeysProps {
   apiKeys: TApiKeyWithEnvironmentPermission[];
   locale: TUserLocale;
   isReadOnly: boolean;
-  workspaces: TOrganizationWorkspace[];
+  projects: TOrganizationProject[];
 }
 
-export const EditAPIKeys = ({
-  organizationId,
-  apiKeys,
-  locale,
-  isReadOnly,
-  workspaces,
-}: EditAPIKeysProps) => {
+export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, projects }: EditAPIKeysProps) => {
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
   const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
@@ -231,7 +225,7 @@ export const EditAPIKeys = ({
         open={isAddAPIKeyModalOpen}
         setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
-        workspaces={workspaces}
+        projects={projects}
         isCreatingAPIKey={isLoading}
       />
       {activeKey && (
@@ -240,7 +234,7 @@ export const EditAPIKeys = ({
           setOpen={setViewPermissionsOpen}
           onSubmit={handleUpdateAPIKey}
           apiKey={activeKey}
-          workspaces={workspaces}
+          projects={projects}
           isUpdating={isLoading}
         />
       )}

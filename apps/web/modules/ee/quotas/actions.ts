@@ -10,8 +10,8 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import {
   getOrganizationIdFromQuotaId,
   getOrganizationIdFromSurveyId,
-  getWorkspaceIdFromQuotaId,
-  getWorkspaceIdFromSurveyId,
+  getProjectIdFromQuotaId,
+  getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -47,8 +47,8 @@ export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQu
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
           minPermission: "readWrite",
         },
       ],
@@ -82,8 +82,8 @@ export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQu
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
           minPermission: "readWrite",
         },
       ],
@@ -115,8 +115,8 @@ export const createQuotaAction = authenticatedActionClient.inputSchema(ZCreateQu
           roles: ["owner", "manager"],
         },
         {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.quota.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -155,8 +155,8 @@ export const getQuotaResponseCountAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "workspaceTeam",
-            workspaceId: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
+            type: "projectTeam",
+            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
             minPermission: "readWrite",
           },
         ],

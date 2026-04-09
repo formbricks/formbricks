@@ -9,7 +9,7 @@
  * (and derive environmentId or equivalent from it). Change only this file.
  */
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { getEnvironment } from "@/lib/utils/services";
 
 /**
@@ -19,14 +19,14 @@ import { getEnvironment } from "@/lib/utils/services";
 export type V3WorkspaceContext = {
   /** Environment ID — the container for surveys today. Replaced by workspace when Environment is deprecated. */
   environmentId: string;
-  /** Workspace ID used for workspaceTeam auth. */
-  workspaceId: string;
+  /** Project ID used for projectTeam auth. */
+  projectId: string;
   /** Organization ID used for org-level auth. */
   organizationId: string;
 };
 
 /**
- * Resolves a V3 API workspaceId to internal environmentId, workspaceId, and organizationId.
+ * Resolves a V3 API workspaceId to internal environmentId, projectId, and organizationId.
  * Today: workspaceId is treated as environmentId (workspace = container for surveys = Environment).
  *
  * @throws ResourceNotFoundError if the workspace (environment) does not exist.
@@ -38,13 +38,13 @@ export async function resolveV3WorkspaceContext(workspaceId: string): Promise<V3
     throw new ResourceNotFoundError("environment", workspaceId);
   }
 
-  // Derive org for auth; workspace comes from the environment.
-  const organizationId = await getOrganizationIdFromWorkspaceId(environment.workspaceId);
+  // Derive org for auth; project comes from the environment.
+  const organizationId = await getOrganizationIdFromProjectId(environment.projectId);
 
   // We looked up by workspaceId (as environment id), so the resolved environment id is workspaceId.
   return {
     environmentId: workspaceId,
-    workspaceId: environment.workspaceId,
+    projectId: environment.projectId,
     organizationId,
   };
 }

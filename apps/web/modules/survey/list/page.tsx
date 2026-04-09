@@ -8,7 +8,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
+import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
@@ -31,9 +31,9 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(params.environmentId);
+  const project = await getProjectWithTeamIdsByEnvironmentId(params.environmentId);
 
-  if (!workspace) {
+  if (!project) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
@@ -45,7 +45,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
 
   const surveyCount = await getSurveyCount(params.environmentId);
 
-  const currentWorkspaceChannel = workspace.config.channel ?? null;
+  const currentProjectChannel = project.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
   const CreateSurveyButton = () => {
     return (
@@ -58,9 +58,9 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     );
   };
 
-  const workspaceWithRequiredProps = {
-    ...workspace,
-    brandColor: workspace.styling?.brandColor?.light ?? null,
+  const projectWithRequiredProps = {
+    ...project,
+    brandColor: project.styling?.brandColor?.light ?? null,
     highlightBorderColor: null,
   };
 
@@ -69,7 +69,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       <TemplateContainerWithPreview
         userId={session.user.id}
         environment={environment}
-        workspace={workspaceWithRequiredProps}
+        project={projectWithRequiredProps}
         isTemplatePage={false}
         publicDomain={publicDomain}
       />
@@ -86,7 +86,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
           publicDomain={publicDomain}
           userId={session.user.id}
           surveysPerPage={SURVEYS_PER_PAGE}
-          currentWorkspaceChannel={currentWorkspaceChannel}
+          currentProjectChannel={currentProjectChannel}
           locale={locale}
         />
       </>
