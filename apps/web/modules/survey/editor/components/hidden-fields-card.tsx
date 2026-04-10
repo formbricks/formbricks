@@ -214,7 +214,7 @@ export const HiddenFieldsCard = ({
               );
 
               if (validateIdError) {
-                toast.error(getValidateIdErrorMessage(validateIdError, "Hidden field", t));
+                toast.error(getValidateIdErrorMessage(validateIdError, "hiddenField", t));
                 return;
               }
 

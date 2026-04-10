@@ -1138,6 +1138,9 @@ describe("validation.isSurveyValid", () => {
 
 describe("validation.getValidateIdErrorMessage", () => {
   const mockT: TFunction = ((key: string, params?: Record<string, string>) => {
+    // Simulate localized entity labels
+    if (key === "common.hidden_field") return "Hidden field";
+    if (key === "environments.surveys.edit.question") return "Question";
     if (!params) return key;
     return Object.entries(params).reduce((str, [k, v]) => str.replace(`{${k}}`, v), key);
   }) as TFunction;
@@ -1145,7 +1148,7 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for Empty error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Empty, field: "" },
-      "Hidden field",
+      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_empty");
@@ -1154,7 +1157,7 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for Duplicate error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Duplicate, field: "test" },
-      "Question",
+      "question",
       mockT
     );
     expect(result).toContain("validate_id_duplicate");
@@ -1163,7 +1166,7 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for Reserved error code with field name", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Reserved, field: "userId" },
-      "Hidden field",
+      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_reserved");
@@ -1172,7 +1175,7 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for HasSpaces error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.HasSpaces, field: "my field" },
-      "Hidden field",
+      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_no_spaces");
@@ -1181,32 +1184,40 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for InvalidChars error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.InvalidChars, field: "field!" },
-      "Question",
+      "question",
       mockT
     );
     expect(result).toContain("validate_id_invalid_chars");
   });
 
-  test("passes type parameter to translation function", () => {
-    const spyT = vi.fn().mockReturnValue("translated");
+  test("localizes type before passing to translation function", () => {
+    const spyT = vi.fn().mockImplementation((key: string) => {
+      if (key === "common.hidden_field") return "Hidden field";
+      return "translated";
+    });
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Empty, field: "" },
-      "Hidden field",
+      "hiddenField",
       spyT as unknown as TFunction
     );
+    expect(spyT).toHaveBeenCalledWith("common.hidden_field");
     expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.validate_id_empty", {
       type: "Hidden field",
     });
     expect(result).toBe("translated");
   });
 
-  test("passes type and field parameters for Reserved error code", () => {
-    const spyT = vi.fn().mockReturnValue("translated");
+  test("localizes question type and passes field for Reserved error code", () => {
+    const spyT = vi.fn().mockImplementation((key: string) => {
+      if (key === "environments.surveys.edit.question") return "Question";
+      return "translated";
+    });
     validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Reserved, field: "userId" },
-      "Question",
+      "question",
       spyT as unknown as TFunction
     );
+    expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.question");
     expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.validate_id_reserved", {
       type: "Question",
       field: "userId",
