@@ -147,10 +147,14 @@ export const createUser = async (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
-      return err({
-        type: "conflict",
-        details: [{ field: "email", issue: `A user with this email already exists` }],
-      });
+      const target = error.meta?.target as string[] | undefined;
+
+      if (target?.includes("email")) {
+        return err({
+          type: "conflict",
+          details: [{ field: "email", issue: "A user with this email already exists" }],
+        });
+      }
     }
 
     return err({

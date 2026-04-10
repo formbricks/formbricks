@@ -119,6 +119,27 @@ describe("Users Lib", () => {
         ]);
       }
     });
+
+    test("returns internal_server_error if unique constraint violation is not on email", async () => {
+      (prisma.user.create as any).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError(
+          "Unique constraint failed on the fields: (`organizationId`,`email`)",
+          {
+            code: PrismaErrorType.UniqueConstraintViolation,
+            clientVersion: "1.0.0",
+            meta: { target: ["organizationId"] },
+          }
+        )
+      );
+      const result = await createUser(
+        { name: "Duplicate", email: "test@example.com", role: "member" },
+        "org456"
+      );
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("internal_server_error");
+      }
+    });
   });
 
   describe("updateUser", () => {
