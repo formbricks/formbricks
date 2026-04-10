@@ -100,6 +100,13 @@ export function BlockConditional({
       });
     }
     const mergedValue = { ...value, ...responseData };
+    const blockResponses = block.elements.reduce<TResponseData>((acc, element) => {
+      const elementValue = mergedValue[element.id];
+      if (elementValue !== undefined) {
+        acc[element.id] = elementValue;
+      }
+      return acc;
+    }, {});
 
     // Merge with existing block data to preserve other element values
     onChange(mergedValue);
@@ -115,9 +122,12 @@ export function BlockConditional({
       autoProgressingInFlightRef.current = true;
       // Defer submission so element-level change handlers can finalize TTC updates first.
       setTimeout(() => {
-        const blockTtc = collectTtcValues();
-        onSubmit(mergedValue, blockTtc);
-        autoProgressingInFlightRef.current = false;
+        try {
+          const blockTtc = collectTtcValues();
+          onSubmit(blockResponses, blockTtc);
+        } finally {
+          autoProgressingInFlightRef.current = false;
+        }
       }, 0);
     }
   };

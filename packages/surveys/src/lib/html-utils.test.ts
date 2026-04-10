@@ -42,6 +42,19 @@ describe("html-utils", () => {
     test("should handle empty string", () => {
       expect(stripInlineStyles("")).toBe("");
     });
+
+    test("should remove script tags and dangerous event handler attributes", () => {
+      const input =
+        '<script>alert("x")</script><img src="x" onerror="alert(1)" /><a href="https://example.com" target="_blank" onclick="alert(1)" style="color:red">Go</a>';
+      const sanitized = stripInlineStyles(input);
+
+      expect(sanitized).not.toContain("<script");
+      expect(sanitized).not.toContain("</script>");
+      expect(sanitized).not.toContain("onerror=");
+      expect(sanitized).not.toContain("onclick=");
+      expect(sanitized).not.toContain("style=");
+      expect(sanitized).toContain('target="_blank"');
+    });
   });
 
   describe("isValidHTML", () => {
