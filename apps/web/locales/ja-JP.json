@@ -63,6 +63,8 @@
       "login_with_email": "メールアドレスでログイン",
       "lost_access": "アクセスを紛失しましたか？",
       "new_to_formbricks": "Formbricksを初めてご利用ですか？",
+      "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
+      "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
       "use_a_backup_code": "バックアップコードを使用"
     },
     "saml_connection_error": "問題が発生しました。詳細については、アプリのコンソールを確認してください。",

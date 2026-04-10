@@ -136,4 +136,34 @@ describe("auth route audit logging", () => {
       })
     );
   });
+
+  test("logs blocked SSO account-linking attempts as SSO failures", async () => {
+    const error = new Error("OAuthAccountNotLinked");
+    mocks.baseSignIn.mockRejectedValueOnce(error);
+
+    const authOptions = await getWrappedAuthOptions("req-sso-failure");
+    const user = { id: "user_3", email: "user3@example.com" };
+    const account = { provider: "google" };
+
+    await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "signedIn",
+        targetType: "user",
+        userId: "user_3",
+        targetId: "user_3",
+        organizationId: "unknown",
+        status: "failure",
+        userType: "user",
+        eventId: "req-sso-failure",
+        newObject: expect.objectContaining({
+          email: "user3@example.com",
+          authMethod: "sso",
+          provider: "google",
+          errorMessage: "OAuthAccountNotLinked",
+        }),
+      })
+    );
+  });
 });

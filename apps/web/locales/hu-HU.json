@@ -63,6 +63,8 @@
       "login_with_email": "Bejelentkezés e-mail-címmel",
       "lost_access": "Elvesztette a hozzáférést?",
       "new_to_formbricks": "Új a Formbicksen?",
+      "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
+      "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },
     "saml_connection_error": "Valami probléma történt. A további részletekért nézze meg az alkalmazás konzolját.",

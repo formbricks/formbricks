@@ -63,6 +63,8 @@
       "login_with_email": "Se connecter avec un e-mail",
       "lost_access": "Accès perdu ?",
       "new_to_formbricks": "Nouveau sur Formbricks ?",
+      "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
+      "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
       "use_a_backup_code": "Utiliser un code de secours"
     },
     "saml_connection_error": "Quelque chose s'est mal passé. Veuillez vérifier la console de votre application pour plus de détails.",

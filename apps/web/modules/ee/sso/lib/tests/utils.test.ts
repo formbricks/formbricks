@@ -19,11 +19,16 @@ describe("getCallbackUrl", () => {
 
   test("should handle empty source parameter", () => {
     const result = getCallbackUrl("https://example.com/invite", "");
-    expect(result).toBe("https://example.com/invite?source=");
+    expect(result).toBe("https://example.com/invite");
   });
 
-  test("should handle undefined source parameter", () => {
+  test("should avoid serializing undefined source parameters", () => {
     const result = getCallbackUrl("https://example.com/invite", undefined);
-    expect(result).toBe("https://example.com/invite?source=undefined");
+    expect(result).toBe("https://example.com/invite");
+  });
+
+  test("should replace an existing source parameter instead of duplicating it", () => {
+    const result = getCallbackUrl("https://example.com/invite?source=signup&token=abc", "signin");
+    expect(result).toBe("https://example.com/invite?source=signin&token=abc");
   });
 });

@@ -1,4 +1,4 @@
-import type { IdentityProvider, Organization } from "@prisma/client";
+import type { IdentityProvider, Organization, Prisma } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -24,19 +24,93 @@ import {
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
-const syncSsoAccount = async (userId: string, account: Account) => {
-  await upsertAccount({
-    userId,
-    type: account.type,
-    provider: account.provider,
-    providerAccountId: account.providerAccountId,
-    ...(account.access_token !== undefined ? { access_token: account.access_token } : {}),
-    ...(account.refresh_token !== undefined ? { refresh_token: account.refresh_token } : {}),
-    ...(account.expires_at !== undefined ? { expires_at: account.expires_at } : {}),
-    ...(account.scope !== undefined ? { scope: account.scope } : {}),
-    ...(account.token_type !== undefined ? { token_type: account.token_type } : {}),
-    ...(account.id_token !== undefined ? { id_token: account.id_token } : {}),
-  });
+const LINKED_SSO_LOOKUP_SELECT = {
+  id: true,
+  email: true,
+  locale: true,
+  emailVerified: true,
+  isActive: true,
+  identityProvider: true,
+  identityProviderAccountId: true,
+} as const;
+
+const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
+
+const syncSsoAccount = async (userId: string, account: Account, tx?: Prisma.TransactionClient) => {
+  await upsertAccount(
+    {
+      userId,
+      type: account.type,
+      provider: account.provider,
+      providerAccountId: account.providerAccountId,
+      ...(account.access_token !== undefined ? { access_token: account.access_token } : {}),
+      ...(account.refresh_token !== undefined ? { refresh_token: account.refresh_token } : {}),
+      ...(account.expires_at !== undefined ? { expires_at: account.expires_at } : {}),
+      ...(account.scope !== undefined ? { scope: account.scope } : {}),
+      ...(account.token_type !== undefined ? { token_type: account.token_type } : {}),
+      ...(account.id_token !== undefined ? { id_token: account.id_token } : {}),
+    },
+    tx
+  );
+};
+
+const syncLinkedSsoUser = async ({
+  linkedUser,
+  user,
+  account,
+  contextLogger,
+  logSource,
+}: {
+  linkedUser: Pick<TUser, "id" | "email">;
+  user: TUser;
+  account: Account;
+  contextLogger: ReturnType<typeof logger.withContext>;
+  logSource: "account_row" | "legacy_identity_provider";
+}) => {
+  contextLogger.debug(
+    {
+      linkedUserId: linkedUser.id,
+      emailMatches: linkedUser.email === user.email,
+      logSource,
+    },
+    "Found existing linked SSO user"
+  );
+
+  if (linkedUser.email === user.email) {
+    await syncSsoAccount(linkedUser.id, account);
+    contextLogger.debug(
+      { linkedUserId: linkedUser.id, logSource },
+      "SSO callback successful: linked user, email matches"
+    );
+    return true;
+  }
+
+  contextLogger.debug(
+    { linkedUserId: linkedUser.id, logSource },
+    "Email changed in SSO provider, checking for conflicts"
+  );
+
+  const otherUserWithEmail = await getUserByEmail(user.email);
+
+  if (!otherUserWithEmail) {
+    contextLogger.debug(
+      { linkedUserId: linkedUser.id, action: "email_update", logSource },
+      "No other user with this email found, updating linked user email after SSO provider change"
+    );
+
+    await updateUser(linkedUser.id, { email: user.email });
+    await syncSsoAccount(linkedUser.id, account);
+    return true;
+  }
+
+  contextLogger.debug(
+    { linkedUserId: linkedUser.id, conflictingUserId: otherUserWithEmail.id, logSource },
+    "SSO callback failed: email conflict after provider change"
+  );
+
+  throw new Error(
+    "Looks like you updated your email somewhere else. A user with this new email exists already."
+  );
 };
 
 export const handleSsoCallback = async ({
@@ -92,93 +166,73 @@ export const handleSsoCallback = async ({
   }
 
   if (account.provider) {
-    // check if accounts for this provider / account Id already exists
     contextLogger.debug(
-      { lookupType: "sso_provider_account" },
-      "Checking for existing user with SSO provider"
+      { lookupType: "account_provider_account_id" },
+      "Checking for existing linked user by provider account"
     );
 
-    const existingUserWithAccount = await prisma.user.findFirst({
-      include: {
-        accounts: {
-          where: {
-            provider: account.provider,
-          },
+    const existingLinkedAccount = await prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
         },
       },
+      select: {
+        user: {
+          select: LINKED_SSO_LOOKUP_SELECT,
+        },
+      },
+    });
+
+    if (existingLinkedAccount?.user) {
+      return syncLinkedSsoUser({
+        linkedUser: existingLinkedAccount.user,
+        user,
+        account,
+        contextLogger,
+        logSource: "account_row",
+      });
+    }
+
+    contextLogger.debug(
+      { lookupType: "legacy_identity_provider_account_id" },
+      "No account row found, checking for legacy linked SSO user"
+    );
+
+    const existingLegacyLinkedUser = await prisma.user.findFirst({
       where: {
         identityProvider: provider,
         identityProviderAccountId: account.providerAccountId,
       },
+      select: LINKED_SSO_LOOKUP_SELECT,
     });
 
-    if (existingUserWithAccount) {
-      contextLogger.debug(
-        {
-          existingUserId: existingUserWithAccount.id,
-          emailMatches: existingUserWithAccount.email === user.email,
-        },
-        "Found existing user with SSO provider"
-      );
-
-      // User with this provider found
-      // check if email still the same
-      if (existingUserWithAccount.email === user.email) {
-        await syncSsoAccount(existingUserWithAccount.id, account);
-        contextLogger.debug(
-          { existingUserId: existingUserWithAccount.id },
-          "SSO callback successful: existing user, email matches"
-        );
-        return true;
-      }
-
-      contextLogger.debug(
-        { existingUserId: existingUserWithAccount.id },
-        "Email changed in SSO provider, checking for conflicts"
-      );
-
-      // user seemed to change his email within the provider
-      // check if user with this email already exist
-      // if not found just update user with new email address
-      // if found throw an error (TODO find better solution)
-      const otherUserWithEmail = await getUserByEmail(user.email);
-
-      if (!otherUserWithEmail) {
-        contextLogger.debug(
-          { existingUserId: existingUserWithAccount.id, action: "email_update" },
-          "No other user with this email found, updating user email after SSO provider change"
-        );
-
-        await updateUser(existingUserWithAccount.id, { email: user.email });
-        await syncSsoAccount(existingUserWithAccount.id, account);
-        return true;
-      }
-
-      contextLogger.debug(
-        { existingUserId: existingUserWithAccount.id, conflictingUserId: otherUserWithEmail.id },
-        "SSO callback failed: email conflict after provider change"
-      );
-
-      throw new Error(
-        "Looks like you updated your email somewhere else. A user with this new email exists already."
-      );
+    if (existingLegacyLinkedUser) {
+      return syncLinkedSsoUser({
+        linkedUser: existingLegacyLinkedUser,
+        user,
+        account,
+        contextLogger,
+        logSource: "legacy_identity_provider",
+      });
     }
 
-    // There is no existing account for this identity provider / account id
-    // check if user account with this email already exists
-    // if user already exists throw error and request password login
-    contextLogger.debug({ lookupType: "email" }, "No existing SSO account found, checking for user by email");
+    // There is no existing linked account for this identity provider / account id
+    // check if a user account with this email already exists and fail closed if so
+    contextLogger.debug({ lookupType: "email" }, "No linked SSO account found, checking for user by email");
 
     const existingUserWithEmail = await getUserByEmail(user.email);
 
     if (existingUserWithEmail) {
-      await syncSsoAccount(existingUserWithEmail.id, account);
       contextLogger.debug(
-        { existingUserId: existingUserWithEmail.id, action: "existing_user_login" },
-        "SSO callback successful: existing user found by email"
+        {
+          existingUserId: existingUserWithEmail.id,
+          existingIdentityProvider: existingUserWithEmail.identityProvider,
+        },
+        "SSO callback blocked: existing user found by email without linked provider account"
       );
-      // Sign in the user with the existing account
-      return true;
+      throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
     }
 
     contextLogger.debug(
@@ -339,19 +393,66 @@ export const handleSsoCallback = async ({
     }
 
     contextLogger.debug({ hasUserName: !!userName, identityProvider: provider }, "Creating new SSO user");
+    const matchedLocale = await findMatchingLocale();
 
-    const userProfile = await createUser({
-      name:
-        userName ||
-        user.email
-          .split("@")[0]
-          .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
-          .trim(),
-      email: user.email,
-      emailVerified: new Date(Date.now()),
-      identityProvider: provider,
-      identityProviderAccountId: account.providerAccountId,
-      locale: await findMatchingLocale(),
+    const userProfile = await prisma.$transaction(async (tx) => {
+      const createdUser = await createUser(
+        {
+          name:
+            userName ||
+            user.email
+              .split("@")[0]
+              .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
+              .trim(),
+          email: user.email,
+          emailVerified: new Date(Date.now()),
+          identityProvider: provider,
+          identityProviderAccountId: account.providerAccountId,
+          locale: matchedLocale,
+        },
+        tx
+      );
+
+      await syncSsoAccount(createdUser.id, account, tx);
+
+      if (organization) {
+        contextLogger.debug(
+          { newUserId: createdUser.id, organizationId: organization.id, role: "member" },
+          "Assigning user to organization"
+        );
+        await createMembership(organization.id, createdUser.id, { role: "member", accepted: true }, tx);
+
+        if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+          contextLogger.debug(
+            { newUserId: createdUser.id, defaultTeamId: DEFAULT_TEAM_ID },
+            "Creating default team membership"
+          );
+          await createDefaultTeamMembership(createdUser.id, tx);
+        }
+
+        const updatedNotificationSettings: TUserNotificationSettings = {
+          ...createdUser.notificationSettings,
+          alert: {
+            ...createdUser.notificationSettings?.alert,
+          },
+          unsubscribedOrganizationIds: Array.from(
+            new Set([
+              ...(createdUser.notificationSettings?.unsubscribedOrganizationIds || []),
+              organization.id,
+            ])
+          ),
+        };
+
+        await updateUser(
+          createdUser.id,
+          {
+            notificationSettings: updatedNotificationSettings,
+          },
+          tx
+        );
+      }
+
+      return createdUser;
     });
 
     contextLogger.debug(
@@ -369,8 +470,6 @@ export const handleSsoCallback = async ({
       invite_organization_id: organization?.id ?? null,
     });
 
-    await syncSsoAccount(userProfile.id, account);
-
     if (isMultiOrgEnabled) {
       contextLogger.debug(
         { isMultiOrgEnabled, newUserId: userProfile.id },
@@ -381,33 +480,6 @@ export const handleSsoCallback = async ({
 
     // Default organization assignment if env variable is set
     if (organization) {
-      contextLogger.debug(
-        { newUserId: userProfile.id, organizationId: organization.id, role: "member" },
-        "Assigning user to organization"
-      );
-      await createMembership(organization.id, userProfile.id, { role: "member", accepted: true });
-
-      if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
-        contextLogger.debug(
-          { newUserId: userProfile.id, defaultTeamId: DEFAULT_TEAM_ID },
-          "Creating default team membership"
-        );
-        await createDefaultTeamMembership(userProfile.id);
-      }
-
-      const updatedNotificationSettings: TUserNotificationSettings = {
-        ...userProfile.notificationSettings,
-        alert: {
-          ...userProfile.notificationSettings?.alert,
-        },
-        unsubscribedOrganizationIds: Array.from(
-          new Set([...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
-        ),
-      };
-
-      await updateUser(userProfile.id, {
-        notificationSettings: updatedNotificationSettings,
-      });
       return true;
     }
     // Without default organization assignment

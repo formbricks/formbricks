@@ -63,6 +63,8 @@
       "login_with_email": "Logga in med e-post",
       "lost_access": "Förlorad åtkomst?",
       "new_to_formbricks": "Ny på Formbricks?",
+      "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
+      "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
       "use_a_backup_code": "Använd en reservkod"
     },
     "saml_connection_error": "Något gick fel. Kontrollera din appkonsol för mer information.",

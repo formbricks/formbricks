@@ -1,5 +1,14 @@
 export const getCallbackUrl = (inviteUrl?: string, source?: string) => {
-  return inviteUrl
-    ? `${inviteUrl}${inviteUrl.includes("?") ? "&" : "?"}source=${source}`
-    : `/?source=${source}`;
+  const fallbackBaseUrl = "http://localhost";
+  const callbackUrl = new URL(inviteUrl ?? "/", fallbackBaseUrl);
+
+  if (source) {
+    callbackUrl.searchParams.set("source", source);
+  }
+
+  if (!inviteUrl || inviteUrl.startsWith("/")) {
+    return `${callbackUrl.pathname}${callbackUrl.search}${callbackUrl.hash}`;
+  }
+
+  return callbackUrl.toString();
 };
