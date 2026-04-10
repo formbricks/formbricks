@@ -1357,6 +1357,8 @@
         "assign": "Toewijzen =",
         "audience": "Publiek",
         "auto_close_on_inactivity": "Automatisch sluiten bij inactiviteit",
+        "auto_progress_rating_and_nps": "Automatisch doorgaan bij beoordelings- en NPS-vragen",
+        "auto_progress_rating_and_nps_description": "Ga automatisch verder wanneer respondenten een antwoord selecteren bij beoordelings- of NPS-vragen. Dit geldt alleen voor blokken met één vraag. Bij verplichte vragen wordt de Volgende-knop verborgen; bij optionele vragen blijft deze zichtbaar om de vraag over te slaan.",
         "auto_save_disabled": "Automatisch opslaan uitgeschakeld",
         "auto_save_disabled_tooltip": "Uw enquête wordt alleen automatisch opgeslagen wanneer deze een concept is. Dit zorgt ervoor dat openbare enquêtes niet onbedoeld worden bijgewerkt.",
         "auto_save_on": "Automatisch opslaan aan",

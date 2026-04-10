@@ -1061,7 +1061,9 @@ export const getResponsesForSummary = reactCache(
       const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
         responses.map((responsePrisma) => {
           return {
-            ...responsePrisma,
+            id: responsePrisma.id,
+            data: (responsePrisma.data ?? {}) as TResponseData,
+            updatedAt: responsePrisma.updatedAt,
             contact: responsePrisma.contact
               ? {
                   id: responsePrisma.contact.id as string,
@@ -1070,6 +1072,10 @@ export const getResponsesForSummary = reactCache(
                   )?.value as string,
                 }
               : null,
+            contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
+            language: responsePrisma.language,
+            ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
+            finished: responsePrisma.finished,
           };
         })
       );

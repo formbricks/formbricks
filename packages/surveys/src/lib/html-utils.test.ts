@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { describe, expect, test } from "vitest";
 import { isValidHTML, stripInlineStyles } from "./html-utils";
 

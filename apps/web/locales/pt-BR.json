@@ -1357,6 +1357,8 @@
         "assign": "atribuir =",
         "audience": "Público",
         "auto_close_on_inactivity": "Fechar automaticamente por inatividade",
+        "auto_progress_rating_and_nps": "Avançar automaticamente em perguntas de avaliação e NPS",
+        "auto_progress_rating_and_nps_description": "Avança automaticamente quando os respondentes selecionam uma resposta em perguntas de avaliação ou NPS. Isso se aplica apenas a blocos com uma única pergunta. Perguntas obrigatórias ocultam o botão Próximo; perguntas opcionais ainda o exibem para permitir pular.",
         "auto_save_disabled": "Salvamento automático desativado",
         "auto_save_disabled_tooltip": "Sua pesquisa só é salva automaticamente quando está em rascunho. Isso garante que pesquisas públicas não sejam atualizadas involuntariamente.",
         "auto_save_on": "Salvamento automático ativado",

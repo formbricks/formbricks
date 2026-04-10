@@ -1357,6 +1357,8 @@
         "assign": "Atribuir =",
         "audience": "Público",
         "auto_close_on_inactivity": "Fechar automaticamente por inatividade",
+        "auto_progress_rating_and_nps": "Avançar automaticamente em perguntas de classificação e NPS",
+        "auto_progress_rating_and_nps_description": "Avança automaticamente quando os inquiridos selecionam uma resposta em perguntas de classificação ou NPS. Isto aplica-se apenas a blocos com uma única pergunta. Perguntas obrigatórias ocultam o botão Seguinte; perguntas opcionais continuam a mostrá-lo para permitir saltar.",
         "auto_save_disabled": "Guardar automático desativado",
         "auto_save_disabled_tooltip": "O seu inquérito só é guardado automaticamente quando está em rascunho. Isto garante que os inquéritos públicos não sejam atualizados involuntariamente.",
         "auto_save_on": "Guardar automático ativado",

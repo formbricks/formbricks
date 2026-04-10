@@ -1357,6 +1357,8 @@
         "assign": "Tilldela =",
         "audience": "Målgrupp",
         "auto_close_on_inactivity": "Stäng automatiskt vid inaktivitet",
+        "auto_progress_rating_and_nps": "Gå vidare automatiskt vid betygs- och NPS-frågor",
+        "auto_progress_rating_and_nps_description": "Gå automatiskt vidare när respondenter väljer ett svar på betygs- eller NPS-frågor. Detta gäller endast block med en enda fråga. Obligatoriska frågor döljer Nästa-knappen; valfria frågor visar den fortfarande för att kunna hoppas över.",
         "auto_save_disabled": "Automatisk sparning inaktiverad",
         "auto_save_disabled_tooltip": "Din enkät sparas endast automatiskt när den är ett utkast. Detta säkerställer att publika enkäter inte uppdateras oavsiktligt.",
         "auto_save_on": "Automatisk sparning på",

@@ -411,6 +411,7 @@ checksums:
     common/team_name: 549d949de4b9adad4afd6427a60a329e
     common/team_role: 66db395781aef64ef3791417b3b67c0b
     common/teams: b63448c05270497973ac4407047dae02
+    common/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     common/text: 4ddccc1974775ed7357f9beaf9361cec
     common/time: b504a03d52e8001bfdc5cb6205364f42
     common/time_to_finish: c8f6abdb886bee3619bb50b08fada5fa
@@ -1285,6 +1286,8 @@ checksums:
     environments/surveys/edit/assign: e80715ab64bf7cf463abb3a9fd1ad516
     environments/surveys/edit/audience: a4d9fab4214a641e2d358fbb28f010e0
     environments/surveys/edit/auto_close_on_inactivity: 093db516799315ccd4242a3675693012
+    environments/surveys/edit/auto_progress_rating_and_nps: 76b98e95a5b850850baa0ccc3c7fbf7c
+    environments/surveys/edit/auto_progress_rating_and_nps_description: cbf676789b9f3f47e36bdf35fa58282b
     environments/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     environments/surveys/edit/auto_save_disabled_tooltip: 77322e1e866b7d29f7641a88bbd3b681
     environments/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963

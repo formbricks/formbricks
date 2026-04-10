@@ -1357,6 +1357,8 @@
         "assign": "Attribuer =",
         "audience": "Public",
         "auto_close_on_inactivity": "Fermeture automatique en cas d'inactivité",
+        "auto_progress_rating_and_nps": "Progression automatique pour les questions d'évaluation et NPS",
+        "auto_progress_rating_and_nps_description": "Passe automatiquement à la question suivante lorsque les répondants sélectionnent une réponse aux questions d'évaluation ou NPS. Cela s'applique uniquement aux blocs à question unique. Les questions obligatoires masquent le bouton Suivant ; les questions facultatives l'affichent toujours pour permettre de passer la question.",
         "auto_save_disabled": "Sauvegarde automatique désactivée",
         "auto_save_disabled_tooltip": "Votre sondage n'est sauvegardé automatiquement que lorsqu'il est en brouillon. Cela garantit que les sondages publics ne sont pas mis à jour involontairement.",
         "auto_save_on": "Sauvegarde automatique activée",

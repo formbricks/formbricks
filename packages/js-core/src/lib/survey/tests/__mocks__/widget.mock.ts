@@ -79,4 +79,5 @@ export const mockSurvey: TEnvironmentStateSurvey = {
     brandColor: { light: "#2B6CB0" },
   },
   isBackButtonHidden: false,
+  isAutoProgressingEnabled: false,
 };

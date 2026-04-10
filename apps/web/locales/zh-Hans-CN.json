@@ -1357,6 +1357,8 @@
         "assign": "指派 =",
         "audience": "受众",
         "auto_close_on_inactivity": "自动关闭 在 无活动时",
+        "auto_progress_rating_and_nps": "自动推进评分和 NPS 问题",
+        "auto_progress_rating_and_nps_description": "当受访者在评分或 NPS 问题上选择答案时自动前进。这仅适用于单问题区块。必填问题会隐藏\"下一步\"按钮；可选问题仍会显示该按钮以便跳过。",
         "auto_save_disabled": "自动保存已禁用",
         "auto_save_disabled_tooltip": "您的调查仅在草稿状态时自动保存。这确保公开的调查不会被意外更新。",
         "auto_save_on": "自动保存已启用",

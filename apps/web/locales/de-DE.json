@@ -1357,6 +1357,8 @@
         "assign": "Zuweisen =",
         "audience": "Publikum",
         "auto_close_on_inactivity": "Automatisches Schließen bei Inaktivität",
+        "auto_progress_rating_and_nps": "Bewertungs- und NPS-Fragen automatisch fortsetzen",
+        "auto_progress_rating_and_nps_description": "Fahre automatisch fort, sobald Befragte eine Antwort bei Bewertungs- oder NPS-Fragen auswählen. Dies gilt nur für Blöcke mit einer einzelnen Frage. Bei Pflichtfragen wird die Weiter-Schaltfläche ausgeblendet; bei optionalen Fragen bleibt sie zum Überspringen sichtbar.",
         "auto_save_disabled": "Automatisches Speichern deaktiviert",
         "auto_save_disabled_tooltip": "Ihre Umfrage wird nur im Entwurfsmodus automatisch gespeichert. So wird sichergestellt, dass öffentliche Umfragen nicht unbeabsichtigt aktualisiert werden.",
         "auto_save_on": "Automatisches Speichern an",

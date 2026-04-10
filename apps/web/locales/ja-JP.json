@@ -1357,6 +1357,8 @@
         "assign": "割り当て =",
         "audience": "オーディエンス",
         "auto_close_on_inactivity": "非アクティブ時に自動閉鎖",
+        "auto_progress_rating_and_nps": "評価とNPSの質問を自動進行",
+        "auto_progress_rating_and_nps_description": "評価またはNPSの質問で回答者が選択肢を選んだ際に自動的に次へ進みます。これは単一質問ブロックにのみ適用されます。必須の質問では「次へ」ボタンが非表示になり、任意の質問ではスキップ用に引き続き表示されます。",
         "auto_save_disabled": "自動保存が無効",
         "auto_save_disabled_tooltip": "アンケートは下書き状態の時のみ自動保存されます。これにより、公開中のアンケートが意図せず更新されることを防ぎます。",
         "auto_save_on": "自動保存オン",
