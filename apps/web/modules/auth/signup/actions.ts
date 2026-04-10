@@ -191,17 +191,19 @@ async function handlePostUserCreation(
   }
 
   if (!emailVerificationDisabled) {
-    const inviteCallbackUrl = inviteToken ? new URL("/invite", WEBAPP_URL) : undefined;
+    let inviteCallbackUrl: string | undefined;
 
     if (inviteToken) {
-      inviteCallbackUrl.searchParams.set("token", inviteToken);
+      const inviteUrl = new URL("/invite", WEBAPP_URL);
+      inviteUrl.searchParams.set("token", inviteToken);
+      inviteCallbackUrl = inviteUrl.toString();
     }
 
     await sendVerificationEmail({
       id: user.id,
       email: user.email,
       locale: user.locale,
-      callbackUrl: inviteCallbackUrl?.toString(),
+      callbackUrl: inviteCallbackUrl,
     });
   }
 }
