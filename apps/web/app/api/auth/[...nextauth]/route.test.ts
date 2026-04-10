@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { GET } from "./route";
 
+type WrappedAuthOptions = {
+  callbacks: {
+    signIn: (params: { user: unknown; account: unknown }) => Promise<boolean | string>;
+  };
+  events: {
+    signIn: (params: { user: unknown; account: unknown; isNewUser: boolean }) => Promise<void>;
+  };
+};
+
 const mocks = vi.hoisted(() => {
   const nextAuthHandler = vi.fn(async () => new Response(null, { status: 200 }));
-  const nextAuth = vi.fn(() => nextAuthHandler);
+  const nextAuth = vi.fn((_authOptions: WrappedAuthOptions) => nextAuthHandler);
 
   return {
     nextAuth,
@@ -54,7 +63,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: mocks.queueAuditEventBackground,
 }));
 
-const getWrappedAuthOptions = async (requestId: string = "req-123") => {
+const getWrappedAuthOptions = async (requestId: string = "req-123"): Promise<WrappedAuthOptions> => {
   const request = new Request("http://localhost/api/auth/signin", {
     headers: { "x-request-id": requestId },
   });
@@ -63,7 +72,17 @@ const getWrappedAuthOptions = async (requestId: string = "req-123") => {
 
   expect(mocks.nextAuth).toHaveBeenCalledTimes(1);
 
-  return mocks.nextAuth.mock.calls[0][0];
+  const firstCall = mocks.nextAuth.mock.calls.at(0);
+  if (!firstCall) {
+    throw new Error("NextAuth was not called");
+  }
+
+  const [authOptions] = firstCall;
+  if (!authOptions) {
+    throw new Error("NextAuth options were not provided");
+  }
+
+  return authOptions;
 };
 
 describe("auth route audit logging", () => {

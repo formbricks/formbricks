@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, Team } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -8,6 +8,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 
 type TTeamDbClient = PrismaClient | Prisma.TransactionClient;
+type TTeamMembershipTarget = Pick<Team, "id">;
 
 const getDbClient = (tx?: Prisma.TransactionClient): TTeamDbClient => tx ?? prisma;
 
@@ -25,7 +26,7 @@ export const createTeamMembership = async (
   try {
     const prismaClient = getDbClient(tx);
     for (const teamId of teamIds) {
-      const team = await getTeamProjectIds(teamId, invite.organizationId, tx);
+      const team = await getTeamForOrganization(teamId, invite.organizationId, tx);
 
       if (!team) {
         logger.warn({ teamId, userId }, "Team no longer exists during invite acceptance");
@@ -59,25 +60,31 @@ export const createTeamMembership = async (
   }
 };
 
-export const getTeamProjectIds = reactCache(
+export const getTeamForOrganization = reactCache(
   async (
     teamId: string,
     organizationId: string,
     tx?: Prisma.TransactionClient
-  ): Promise<{ projectTeams: { projectId: string }[] } | null> => {
-    const team = await getDbClient(tx).team.findUnique({
-      where: {
-        id: teamId,
-        organizationId,
-      },
-      select: {
-        projectTeams: {
-          select: {
-            projectId: true,
+  ): Promise<TTeamMembershipTarget | null> => {
+    const team = tx
+      ? await tx.team.findUnique({
+          where: {
+            id: teamId,
+            organizationId,
           },
-        },
-      },
-    });
+          select: {
+            id: true,
+          },
+        })
+      : await prisma.team.findUnique({
+          where: {
+            id: teamId,
+            organizationId,
+          },
+          select: {
+            id: true,
+          },
+        });
 
     if (!team) {
       return null;

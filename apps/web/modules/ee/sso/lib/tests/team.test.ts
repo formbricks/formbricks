@@ -20,7 +20,7 @@ const setupMocks = () => {
         findUnique: vi.fn(),
       },
       teamUser: {
-        create: vi.fn(),
+        upsert: vi.fn(),
       },
     },
   }));
@@ -70,7 +70,7 @@ describe("Team Management", () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue({
           projectTeams: { projectId: ["test-project-id"] },
         } as any);
-        vi.mocked(prisma.teamUser.create).mockResolvedValue(MOCK_DEFAULT_TEAM_USER);
+        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(MOCK_DEFAULT_TEAM_USER as any);
 
         await createDefaultTeamMembership(MOCK_IDS.userId);
 
@@ -80,11 +80,20 @@ describe("Team Management", () => {
           },
         });
 
-        expect(prisma.teamUser.create).toHaveBeenCalledWith({
-          data: {
+        expect(prisma.teamUser.upsert).toHaveBeenCalledWith({
+          create: {
             teamId: "team-123",
             userId: MOCK_IDS.userId,
             role: "admin",
+          },
+          update: {
+            role: "admin",
+          },
+          where: {
+            teamId_userId: {
+              teamId: "team-123",
+              userId: MOCK_IDS.userId,
+            },
           },
         });
       });
@@ -106,7 +115,7 @@ describe("Team Management", () => {
       test("handles database errors gracefully", async () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_DEFAULT_TEAM);
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
-        vi.mocked(prisma.teamUser.create).mockRejectedValue(new Error("Database error"));
+        vi.mocked(prisma.teamUser.upsert).mockRejectedValue(new Error("Database error"));
 
         await createDefaultTeamMembership(MOCK_IDS.userId);
       });

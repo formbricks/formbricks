@@ -45,7 +45,15 @@ export const getValidatedCallbackUrl = (
 
   try {
     const parsedWebAppUrl = new URL(WEBAPP_URL);
-    const parsedUrl = new URL(url, parsedWebAppUrl.origin);
+    const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
+    const isRootRelativePath = url.startsWith("/");
+
+    // Reject ambiguous non-URL values like "foo" while still allowing safe root-relative paths.
+    if (!isAbsoluteUrl && !isRootRelativePath) {
+      return null;
+    }
+
+    const parsedUrl = isAbsoluteUrl ? new URL(url) : new URL(url, parsedWebAppUrl.origin);
     const allowedSchemes = ["https:", "http:"];
     const allowedOrigins = new Set([parsedWebAppUrl.origin]);
 
