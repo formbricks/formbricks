@@ -1,14 +1,14 @@
-export const getCallbackUrl = (inviteUrl?: string, source?: string) => {
+export const getSsoReturnToUrl = (returnToUrl?: string, source?: string) => {
   const fallbackBaseUrl = "http://localhost";
-  const callbackUrl = new URL(inviteUrl ?? "/", fallbackBaseUrl);
+  const nextReturnToUrl = new URL(returnToUrl ?? "/", fallbackBaseUrl);
 
   if (source) {
-    callbackUrl.searchParams.set("source", source);
+    nextReturnToUrl.searchParams.set("source", source);
   }
 
-  if (!inviteUrl || inviteUrl.startsWith("/")) {
-    return `${callbackUrl.pathname}${callbackUrl.search}${callbackUrl.hash}`;
+  if (!returnToUrl || returnToUrl.startsWith("/")) {
+    return `${nextReturnToUrl.pathname}${nextReturnToUrl.search}${nextReturnToUrl.hash}`;
   }
 
-  return callbackUrl.toString();
+  return nextReturnToUrl.toString();
 };

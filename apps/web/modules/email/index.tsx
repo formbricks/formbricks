@@ -41,8 +41,8 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
-import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getTranslate } from "@/lingodotdev/server";
+import { buildVerificationLinks } from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
@@ -139,20 +139,15 @@ export const sendVerificationEmail = async ({
     const token = createToken(id, {
       expiresIn: "1d",
     });
-    const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
-    const verifyLink = new URL("/auth/verify", WEBAPP_URL);
-    verifyLink.searchParams.set("token", token);
-    const verificationRequestLink = new URL("/auth/verification-requested", WEBAPP_URL);
-    verificationRequestLink.searchParams.set("token", token);
-
-    if (validatedCallbackUrl) {
-      verifyLink.searchParams.set("callbackUrl", validatedCallbackUrl);
-      verificationRequestLink.searchParams.set("callbackUrl", validatedCallbackUrl);
-    }
+    const { verifyLink, verificationRequestLink } = buildVerificationLinks({
+      token,
+      webAppUrl: WEBAPP_URL,
+      callbackUrl,
+    });
 
     const html = await renderVerificationEmail({
-      verificationRequestLink: verificationRequestLink.toString(),
-      verifyLink: verifyLink.toString(),
+      verificationRequestLink,
+      verifyLink,
       t,
       ...legalProps,
     });

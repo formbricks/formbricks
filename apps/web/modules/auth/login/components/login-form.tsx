@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
+import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
@@ -115,10 +116,12 @@ export const LoginForm = ({
       if (signInResponse?.error === "Email Verification is Pending") {
         const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
         if (emailTokenActionResponse?.data) {
-          const verificationRequestedUrl = new URL("/auth/verification-requested", window.location.origin);
-          verificationRequestedUrl.searchParams.set("token", emailTokenActionResponse.data);
-          verificationRequestedUrl.searchParams.set("callbackUrl", resolvedCallbackUrl);
-          router.push(`${verificationRequestedUrl.pathname}${verificationRequestedUrl.search}`);
+          router.push(
+            buildVerificationRequestedPath({
+              token: emailTokenActionResponse.data,
+              callbackUrl: resolvedCallbackUrl,
+            })
+          );
         } else {
           const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
           toast.error(errorMessage);
@@ -284,7 +287,7 @@ export const LoginForm = ({
               samlSsoEnabled={samlSsoEnabled}
               samlTenant={samlTenant}
               samlProduct={samlProduct}
-              callbackUrl={resolvedCallbackUrl}
+              returnToUrl={resolvedCallbackUrl}
               source="signin"
             />
           )}
