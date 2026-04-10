@@ -199,32 +199,10 @@ export const StylingView = ({
     }
   };
 
-  const handleAutoProgressToggle = (enabled: boolean) => {
-    setLocalSurvey((prev) => ({
-      ...prev,
-      isAutoProgressingEnabled: enabled,
-    }));
-  };
-
   return (
     <FormProvider {...form}>
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="mt-12 space-y-3 p-5">
-          <div className="rounded-lg border border-slate-300 bg-white p-4">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={Boolean(localSurvey.isAutoProgressingEnabled)}
-                onCheckedChange={handleAutoProgressToggle}
-              />
-              <FormLabel className="text-base font-semibold text-slate-900">
-                {t("environments.surveys.edit.auto_progress_rating_and_nps")}
-              </FormLabel>
-            </div>
-            <FormDescription className="mt-2 text-sm text-slate-800">
-              {t("environments.surveys.edit.auto_progress_rating_and_nps_description")}
-            </FormDescription>
-          </div>
-
           {!isCxMode && (
             <div className="flex items-center gap-4 py-4">
               <FormField
