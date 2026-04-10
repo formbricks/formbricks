@@ -23,10 +23,21 @@ describe("auth callback URL helpers", () => {
     const result = resolveAuthCallbackUrl({
       searchParamCallbackUrl: undefined,
       cookieCallbackUrl: "http://localhost:3000/invite?token=cookie-token&source=signin",
+      allowCookieFallback: true,
       webAppUrl: WEBAPP_URL,
     });
 
     expect(result).toBe("http://localhost:3000/invite?token=cookie-token&source=signin");
+  });
+
+  test("does not fall back to the callback URL cookie unless explicitly allowed", () => {
+    const result = resolveAuthCallbackUrl({
+      searchParamCallbackUrl: undefined,
+      cookieCallbackUrl: "http://localhost:3000/invite?token=cookie-token&source=signin",
+      webAppUrl: WEBAPP_URL,
+    });
+
+    expect(result).toBeNull();
   });
 
   test("rejects callback URLs on a different origin", () => {

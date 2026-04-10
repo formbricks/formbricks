@@ -123,9 +123,16 @@ export const SignupForm = ({
       const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
       const token = emailTokenActionResponse?.data;
 
+      const verificationRequestedUrl = new URL("/auth/verification-requested", window.location.origin);
+      verificationRequestedUrl.searchParams.set("token", token ?? "");
+
+      if (inviteToken) {
+        verificationRequestedUrl.searchParams.set("callbackUrl", callbackUrl);
+      }
+
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success?token=${token}`
-        : `/auth/verification-requested?token=${token}`;
+        : `${verificationRequestedUrl.pathname}${verificationRequestedUrl.search}`;
 
       if (createUserResponse?.data) {
         router.push(url);

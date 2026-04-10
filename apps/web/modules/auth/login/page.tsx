@@ -46,11 +46,13 @@ export const LoginPage = async ({
     searchParamsProps,
     cookies(),
   ]);
+  const oauthError = getSearchParamString(searchParams.error);
 
   const resolvedCallbackUrl =
     resolveAuthCallbackUrl({
       searchParamCallbackUrl: searchParams.callbackUrl,
       cookieCallbackUrl: getAuthCallbackUrlFromCookies(cookieStore),
+      allowCookieFallback: oauthError === "OAuthAccountNotLinked",
       webAppUrl: WEBAPP_URL,
     }) ?? WEBAPP_URL;
   const resolvedCallbackPath = getRelativeCallbackUrl(resolvedCallbackUrl, WEBAPP_URL);
@@ -74,7 +76,7 @@ export const LoginPage = async ({
           samlSsoEnabled={samlSsoEnabled}
           samlTenant={SAML_TENANT}
           samlProduct={SAML_PRODUCT}
-          oauthError={getSearchParamString(searchParams.error)}
+          oauthError={oauthError}
           prefilledEmail={getSearchParamString(searchParams.email)}
           inviteToken={inviteToken}
           resolvedCallbackPath={resolvedCallbackPath}

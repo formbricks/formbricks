@@ -41,6 +41,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
+import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
@@ -126,22 +127,32 @@ export const sendVerificationEmail = async ({
   id,
   email,
   locale,
+  callbackUrl,
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
+  callbackUrl?: string;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: "1d",
     });
-    const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
-    const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
+    const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
+    const verifyLink = new URL("/auth/verify", WEBAPP_URL);
+    verifyLink.searchParams.set("token", token);
+    const verificationRequestLink = new URL("/auth/verification-requested", WEBAPP_URL);
+    verificationRequestLink.searchParams.set("token", token);
+
+    if (validatedCallbackUrl) {
+      verifyLink.searchParams.set("callbackUrl", validatedCallbackUrl);
+      verificationRequestLink.searchParams.set("callbackUrl", validatedCallbackUrl);
+    }
 
     const html = await renderVerificationEmail({
-      verificationRequestLink,
-      verifyLink,
+      verificationRequestLink: verificationRequestLink.toString(),
+      verifyLink: verifyLink.toString(),
       t,
       ...legalProps,
     });

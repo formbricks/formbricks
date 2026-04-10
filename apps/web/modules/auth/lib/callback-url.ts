@@ -32,18 +32,26 @@ export const getAuthCallbackUrlFromCookies = (cookieStore: TCookieStore): string
 export const resolveAuthCallbackUrl = ({
   searchParamCallbackUrl,
   cookieCallbackUrl,
+  allowCookieFallback = false,
   webAppUrl,
 }: {
   searchParamCallbackUrl?: string | string[];
   cookieCallbackUrl?: string | null;
+  allowCookieFallback?: boolean;
   webAppUrl: string;
 }): string | null => {
   const callbackUrlFromSearchParams = getSearchParamValue(searchParamCallbackUrl);
+  const validatedSearchParamCallbackUrl = getValidatedCallbackUrl(callbackUrlFromSearchParams, webAppUrl);
 
-  return (
-    getValidatedCallbackUrl(callbackUrlFromSearchParams, webAppUrl) ??
-    getValidatedCallbackUrl(cookieCallbackUrl, webAppUrl)
-  );
+  if (validatedSearchParamCallbackUrl) {
+    return validatedSearchParamCallbackUrl;
+  }
+
+  if (!allowCookieFallback) {
+    return null;
+  }
+
+  return getValidatedCallbackUrl(cookieCallbackUrl, webAppUrl);
 };
 
 export const getRelativeCallbackUrl = (callbackUrl: string | null | undefined, webAppUrl: string): string => {

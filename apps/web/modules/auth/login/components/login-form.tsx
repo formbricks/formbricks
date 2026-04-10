@@ -115,7 +115,10 @@ export const LoginForm = ({
       if (signInResponse?.error === "Email Verification is Pending") {
         const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
         if (emailTokenActionResponse?.data) {
-          router.push(`/auth/verification-requested?token=${emailTokenActionResponse?.data}`);
+          const verificationRequestedUrl = new URL("/auth/verification-requested", window.location.origin);
+          verificationRequestedUrl.searchParams.set("token", emailTokenActionResponse.data);
+          verificationRequestedUrl.searchParams.set("callbackUrl", resolvedCallbackUrl);
+          router.push(`${verificationRequestedUrl.pathname}${verificationRequestedUrl.search}`);
         } else {
           const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
           toast.error(errorMessage);
