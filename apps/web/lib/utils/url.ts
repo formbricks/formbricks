@@ -75,9 +75,6 @@ export const getValidatedCallbackUrl = (
   }
 };
 
-export const isValidCallbackUrl = (url: string, WEBAPP_URL: string): boolean =>
-  getValidatedCallbackUrl(url, WEBAPP_URL) !== null;
-
 export const isStringUrl = (url: string): boolean => {
   try {
     new URL(url);
