@@ -79,16 +79,11 @@ export const createDefaultTeamMembership = async (userId: string, tx?: Prisma.Tr
       return;
     }
 
-    const organizationMembership = tx
-      ? await prismaClient.membership.findUnique({
-          where: {
-            userId_organizationId: {
-              userId,
-              organizationId: defaultTeam.organizationId,
-            },
-          },
-        })
-      : await getMembershipByUserIdOrganizationId(userId, defaultTeam.organizationId);
+    const organizationMembership = await getMembershipByUserIdOrganizationId(
+      userId,
+      defaultTeam.organizationId,
+      tx
+    );
 
     if (!organizationMembership) {
       logger.error("Organization membership not found");

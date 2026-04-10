@@ -67,9 +67,6 @@ describe("Team Management", () => {
       test("creates the default team membership successfully", async () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_DEFAULT_TEAM);
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
-        vi.mocked(prisma.team.findUnique).mockResolvedValue({
-          projectTeams: { projectId: ["test-project-id"] },
-        } as any);
         vi.mocked(prisma.teamUser.upsert).mockResolvedValue(MOCK_DEFAULT_TEAM_USER as any);
 
         await createDefaultTeamMembership(MOCK_IDS.userId);
@@ -79,6 +76,11 @@ describe("Team Management", () => {
             id: "team-123",
           },
         });
+        expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith(
+          MOCK_IDS.userId,
+          MOCK_DEFAULT_TEAM.organizationId,
+          undefined
+        );
 
         expect(prisma.teamUser.upsert).toHaveBeenCalledWith({
           create: {
@@ -96,6 +98,27 @@ describe("Team Management", () => {
             },
           },
         });
+      });
+
+      test("passes the transaction client into membership resolution when provided", async () => {
+        const tx = {
+          team: {
+            findUnique: vi.fn().mockResolvedValue(MOCK_DEFAULT_TEAM),
+          },
+          teamUser: {
+            upsert: vi.fn().mockResolvedValue(MOCK_DEFAULT_TEAM_USER),
+          },
+        } as any;
+
+        vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
+
+        await createDefaultTeamMembership(MOCK_IDS.userId, tx);
+
+        expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith(
+          MOCK_IDS.userId,
+          MOCK_DEFAULT_TEAM.organizationId,
+          tx
+        );
       });
     });
 

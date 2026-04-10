@@ -12,6 +12,32 @@ type TTeamMembershipTarget = Pick<Team, "id">;
 
 const getDbClient = (tx?: Prisma.TransactionClient): TTeamDbClient => tx ?? prisma;
 
+const getTeamForOrganizationUncached = async (
+  teamId: string,
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<TTeamMembershipTarget | null> => {
+  const team = await getDbClient(tx).team.findUnique({
+    where: {
+      id: teamId,
+      organizationId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!team) {
+    return null;
+  }
+
+  return team;
+};
+
+const getTeamForOrganizationCached = reactCache(async (teamId: string, organizationId: string) =>
+  getTeamForOrganizationUncached(teamId, organizationId)
+);
+
 export const createTeamMembership = async (
   invite: CreateMembershipInvite,
   userId: string,
@@ -60,36 +86,14 @@ export const createTeamMembership = async (
   }
 };
 
-export const getTeamForOrganization = reactCache(
-  async (
-    teamId: string,
-    organizationId: string,
-    tx?: Prisma.TransactionClient
-  ): Promise<TTeamMembershipTarget | null> => {
-    const team = tx
-      ? await tx.team.findUnique({
-          where: {
-            id: teamId,
-            organizationId,
-          },
-          select: {
-            id: true,
-          },
-        })
-      : await prisma.team.findUnique({
-          where: {
-            id: teamId,
-            organizationId,
-          },
-          select: {
-            id: true,
-          },
-        });
-
-    if (!team) {
-      return null;
-    }
-
-    return team;
+export const getTeamForOrganization = async (
+  teamId: string,
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<TTeamMembershipTarget | null> => {
+  if (tx) {
+    return getTeamForOrganizationUncached(teamId, organizationId, tx);
   }
-);
+
+  return getTeamForOrganizationCached(teamId, organizationId);
+};

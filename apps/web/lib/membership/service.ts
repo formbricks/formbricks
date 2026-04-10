@@ -12,37 +12,51 @@ type TMembershipDbClient = PrismaClient | Prisma.TransactionClient;
 
 const getDbClient = (tx?: Prisma.TransactionClient): TMembershipDbClient => tx ?? prisma;
 
-export const getMembershipByUserIdOrganizationId = reactCache(
-  async (
-    userId: string,
-    organizationId: string,
-    tx?: Prisma.TransactionClient
-  ): Promise<TMembership | null> => {
-    validateInputs([userId, ZString], [organizationId, ZString]);
+const getMembershipByUserIdOrganizationIdUncached = async (
+  userId: string,
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<TMembership | null> => {
+  validateInputs([userId, ZString], [organizationId, ZString]);
 
-    try {
-      const membership = await getDbClient(tx).membership.findUnique({
-        where: {
-          userId_organizationId: {
-            userId,
-            organizationId,
-          },
+  try {
+    const membership = await getDbClient(tx).membership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
         },
-      });
+      },
+    });
 
-      if (!membership) return null;
+    if (!membership) return null;
 
-      return membership;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting membership by user id and organization id");
-        throw new DatabaseError(error.message);
-      }
-
-      throw new UnknownError("Error while fetching membership");
+    return membership;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      logger.error(error, "Error getting membership by user id and organization id");
+      throw new DatabaseError(error.message);
     }
+
+    throw new UnknownError("Error while fetching membership");
   }
+};
+
+const getMembershipByUserIdOrganizationIdCached = reactCache(async (userId: string, organizationId: string) =>
+  getMembershipByUserIdOrganizationIdUncached(userId, organizationId)
 );
+
+export const getMembershipByUserIdOrganizationId = async (
+  userId: string,
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<TMembership | null> => {
+  if (tx) {
+    return getMembershipByUserIdOrganizationIdUncached(userId, organizationId, tx);
+  }
+
+  return getMembershipByUserIdOrganizationIdCached(userId, organizationId);
+};
 
 export const createMembership = async (
   organizationId: string,

@@ -195,5 +195,27 @@ describe("Team Management", () => {
 
       expect(result).toBeNull();
     });
+
+    test("uses the transaction client directly when provided", async () => {
+      const tx = {
+        team: {
+          findUnique: vi.fn().mockResolvedValue(mockTeamLookup),
+        },
+      } as any;
+
+      const result = await getTeamForOrganization(MOCK_IDS.teamId, MOCK_IDS.organizationId, tx);
+
+      expect(result).toEqual(mockTeamLookup);
+      expect(tx.team.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: MOCK_IDS.teamId,
+          organizationId: MOCK_IDS.organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+      expect(prisma.team.findUnique).not.toHaveBeenCalled();
+    });
   });
 });
