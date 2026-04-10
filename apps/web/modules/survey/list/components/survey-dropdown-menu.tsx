@@ -4,8 +4,11 @@ import {
   ArrowUpFromLineIcon,
   CopyIcon,
   EyeIcon,
+  FileText,
+  Globe,
   LinkIcon,
   MoreVertical,
+  Printer,
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
@@ -221,6 +224,104 @@ export const SurveyDropDownMenu = ({
                 </DropdownMenuItem>
               </>
             )}
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  try {
+                    const fullSurveyResponse = await getSurveyAction({ surveyId: survey.id });
+                    if (!fullSurveyResponse?.data) {
+                      toast.error("Failed to load survey data");
+                      return;
+                    }
+                    const { surveyToExportable } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/transform"
+                    );
+                    const { generateSurveyHtml } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/generate-html"
+                    );
+                    const { openHtmlInNewTab } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/download"
+                    );
+                    const data = surveyToExportable(fullSurveyResponse.data as unknown as Parameters<typeof surveyToExportable>[0]);
+                    const html = generateSurveyHtml(data);
+                    openHtmlInNewTab(html);
+                    toast.success("Survey exported as HTML");
+                  } catch {
+                    toast.error("Failed to export survey");
+                  }
+                }}>
+                <Globe className="mr-2 h-4 w-4" />
+                Export as HTML
+              </button>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  try {
+                    const fullSurveyResponse = await getSurveyAction({ surveyId: survey.id });
+                    if (!fullSurveyResponse?.data) {
+                      toast.error("Failed to load survey data");
+                      return;
+                    }
+                    const { surveyToExportable } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/transform"
+                    );
+                    const { generateSurveyDocx } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/generate-docx"
+                    );
+                    const { downloadBlob } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/download"
+                    );
+                    const data = surveyToExportable(fullSurveyResponse.data as unknown as Parameters<typeof surveyToExportable>[0]);
+                    const blob = await generateSurveyDocx(data);
+                    downloadBlob(blob, `${survey.name.replace(/[^a-zA-Z0-9]/g, "_")}_survey.docx`);
+                    toast.success("Survey exported as DOCX");
+                  } catch {
+                    toast.error("Failed to export survey");
+                  }
+                }}>
+                <FileText className="mr-2 h-4 w-4" />
+                Export as DOCX
+              </button>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <button
+                type="button"
+                className="flex w-full items-center"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  try {
+                    const fullSurveyResponse = await getSurveyAction({ surveyId: survey.id });
+                    if (!fullSurveyResponse?.data) {
+                      toast.error("Failed to load survey data");
+                      return;
+                    }
+                    const { surveyToExportable } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/transform"
+                    );
+                    const { generateSurveyPdf } = await import(
+                      "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/generate-pdf"
+                    );
+                    const data = surveyToExportable(fullSurveyResponse.data as unknown as Parameters<typeof surveyToExportable>[0]);
+                    await generateSurveyPdf(data);
+                    toast.success("Print dialog opened — select 'Save as PDF'");
+                  } catch {
+                    toast.error("Failed to export survey");
+                  }
+                }}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print as PDF
+              </button>
+            </DropdownMenuItem>
             {!isSurveyCreationDeletionDisabled && (
               <DropdownMenuItem>
                 <button
