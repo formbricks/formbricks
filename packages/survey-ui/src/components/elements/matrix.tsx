@@ -147,7 +147,7 @@ function Matrix({
                     aria-invalid={Boolean(errorMessage)}>
                     <tr className={cn("relative", baseBgColor)}>
                       {/* Row label */}
-                      <th scope="row" className={cn("rounded-l-input p-2 align-middle")}>
+                      <th scope="row" className={cn("rounded-l-input p-2 text-left align-middle")}>
                         <div className="flex flex-col gap-0 leading-none">
                           <Label>{row.label}</Label>
                         </div>
@@ -189,7 +189,7 @@ function Matrix({
                   aria-invalid={Boolean(errorMessage)}>
                   <tr className={cn("relative", totalRowCount % 2 !== 0 ? "bg-input-bg" : "bg-transparent")}>
                     {/* Other row label cell with text input */}
-                    <th scope="row" className={cn("rounded-l-input p-2 align-middle")}>
+                    <th scope="row" className={cn("rounded-l-input p-2 text-left align-middle")}>
                       <div className="flex flex-col gap-1 leading-none">
                         <Label>{otherRowLabel}</Label>
                         {otherRowSelected && (
