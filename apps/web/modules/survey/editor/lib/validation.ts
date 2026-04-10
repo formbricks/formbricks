@@ -23,6 +23,7 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { TValidateIdError, TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
 import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
@@ -298,4 +299,23 @@ export const isSurveyValid = (
   }
 
   return true;
+};
+
+export const getValidateIdErrorMessage = (
+  error: TValidateIdError,
+  type: "Hidden field" | "Question",
+  t: TFunction
+): string => {
+  switch (error.code) {
+    case TValidateIdErrorCode.Empty:
+      return t("environments.surveys.edit.validate_id_empty", { type });
+    case TValidateIdErrorCode.Duplicate:
+      return t("environments.surveys.edit.validate_id_duplicate", { type });
+    case TValidateIdErrorCode.Reserved:
+      return t("environments.surveys.edit.validate_id_reserved", { type, field: error.field });
+    case TValidateIdErrorCode.HasSpaces:
+      return t("environments.surveys.edit.validate_id_no_spaces", { type });
+    case TValidateIdErrorCode.InvalidChars:
+      return t("environments.surveys.edit.validate_id_invalid_chars", { type });
+  }
 };

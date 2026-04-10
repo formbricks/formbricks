@@ -1776,6 +1776,11 @@
         "upper_label": "Felső címke",
         "url_filters": "URL szűrők",
         "url_not_supported": "Az URL nem támogatott",
+        "validate_id_duplicate": "{type} ID already exists in questions, hidden fields, or variables.",
+        "validate_id_empty": "Please enter a {type} ID.",
+        "validate_id_invalid_chars": "{type} ID is not allowed. Please use only alphanumeric characters, hyphens, or underscores.",
+        "validate_id_no_spaces": "{type} ID cannot contain spaces. Please remove spaces.",
+        "validate_id_reserved": "{type} ID \"{field}\" is not allowed. It is a reserved keyword.",
         "validation": {
           "add_validation_rule": "Ellenőrzési szabály hozzáadása",
           "answer_all_rows": "Válaszoljon az összes sorra",
