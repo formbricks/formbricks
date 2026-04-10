@@ -7,7 +7,7 @@ import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/ty
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatDateWithOrdinal, formatMonthYear, isMonthYearString } from "@/lib/utils/datetime";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -32,6 +32,10 @@ export const DateElementSummary = ({ elementSummary, environmentId, survey, loca
   };
 
   const renderResponseValue = (value: string) => {
+    if (isMonthYearString(value)) {
+      return formatMonthYear(value);
+    }
+
     const parsedDate = new Date(value);
 
     const formattedDate = isNaN(parsedDate.getTime())

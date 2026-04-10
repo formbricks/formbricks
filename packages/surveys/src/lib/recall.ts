@@ -1,7 +1,7 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { ALL_COMPOUND_FIELD_INDICES } from "@formbricks/types/surveys/compound-fields";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
+import { formatDateWithOrdinal, formatMonthYear, isMonthYearString, isValidDateString } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
@@ -63,7 +63,9 @@ export const replaceRecallInfo = (
 
       // Additional value formatting if it exists
       if (value) {
-        if (isValidDateString(value)) {
+        if (isMonthYearString(value)) {
+          value = formatMonthYear(value);
+        } else if (isValidDateString(value)) {
           value = formatDateWithOrdinal(new Date(value));
         } else if (Array.isArray(value)) {
           value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma

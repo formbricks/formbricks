@@ -26,7 +26,18 @@ interface IDateElementFormProps {
   isExternalUrlsAllowed?: boolean;
 }
 
-const dateOptions = [
+const dateKindOptions = [
+  {
+    value: "full",
+    label: "Full Date",
+  },
+  {
+    value: "monthYear",
+    label: "Month & Year",
+  },
+];
+
+const fullDateOptions = [
   {
     value: "M-d-y",
     label: "MM-DD-YYYY",
@@ -38,6 +49,21 @@ const dateOptions = [
   {
     value: "y-M-d",
     label: "YYYY-MM-DD",
+  },
+];
+
+const monthYearDateOptions = [
+  {
+    value: "M-d-y",
+    label: "MM-YYYY",
+  },
+  {
+    value: "d-M-y",
+    label: "MM-YYYY",
+  },
+  {
+    value: "y-M-d",
+    label: "YYYY-MM",
   },
 ];
 
@@ -115,10 +141,23 @@ export const DateElementForm = ({
       </div>
 
       <div className="mt-3">
+        <Label htmlFor="dateKind">{t("environments.surveys.edit.date_selection")}</Label>
+        <div className="mt-2 flex items-center">
+          <OptionsSwitch
+            options={dateKindOptions}
+            currentOption={element.dateKind ?? "full"}
+            handleOptionChange={(value: "full" | "monthYear") =>
+              updateElement(elementIdx, { dateKind: value })
+            }
+          />
+        </div>
+      </div>
+
+      <div className="mt-3">
         <Label htmlFor="elementType">{t("environments.surveys.edit.date_format")}</Label>
         <div className="mt-2 flex items-center">
           <OptionsSwitch
-            options={dateOptions}
+            options={element.dateKind === "monthYear" ? monthYearDateOptions : fullDateOptions}
             currentOption={element.format}
             handleOptionChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>
               updateElement(elementIdx, { format: value })

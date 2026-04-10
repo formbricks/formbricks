@@ -204,6 +204,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     preset: {
       headline: createI18nString("", []),
       format: "M-d-y",
+      dateKind: "full",
     },
   },
   {

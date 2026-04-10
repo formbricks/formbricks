@@ -80,6 +80,7 @@ export function DateElement({
         locale={languageCode}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        dateKind={element.dateKind}
       />
     </form>
   );

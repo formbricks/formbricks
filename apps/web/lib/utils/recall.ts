@@ -7,7 +7,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { formatDateWithOrdinal, isValidDateString } from "./datetime";
+import { formatDateWithOrdinal, formatMonthYear, isMonthYearString, isValidDateString } from "./datetime";
 
 export interface fallbacks {
   [id: string]: string;
@@ -285,7 +285,9 @@ export const parseRecallInfo = (
 
       // Apply formatting for special value types
       if (value) {
-        if (isValidDateString(value as string)) {
+        if (isMonthYearString(value as string)) {
+          value = formatMonthYear(value as string);
+        } else if (isValidDateString(value as string)) {
           value = formatDateWithOrdinal(new Date(value as string));
         } else if (Array.isArray(value)) {
           value = value.filter((item) => item).join(", ");

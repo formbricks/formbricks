@@ -18,8 +18,16 @@ export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): str
   return `${dayOfWeek}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
 
+export const isMonthYearString = (value: string): boolean => /^\d{4}-\d{2}$/.test(value);
+
+export const formatMonthYear = (value: string, locale: string = "en-US"): string => {
+  const [year, month] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, 1);
+  return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(date);
+};
+
 export const isValidDateString = (value: string) => {
-  const regex = /^(?:\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/;
+  const regex = /^(?:\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4}|\d{4}-\d{2})$/;
 
   if (!regex.test(value)) {
     return false;

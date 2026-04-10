@@ -34,6 +34,7 @@ export {
 } from "@/components/elements/single-select";
 export { Matrix, type MatrixProps, type MatrixOption } from "@/components/elements/matrix";
 export { DateElement, type DateElementProps } from "@/components/elements/date";
+export { MonthPicker, type MonthPickerProps } from "@/components/general/month-picker";
 export { getDateFnsLocale } from "@/lib/locale";
 export {
   PictureSelect,

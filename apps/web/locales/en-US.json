@@ -1253,6 +1253,7 @@
         "customize_survey_logo": "Customize the survey logo",
         "darken_or_lighten_background_of_your_choice": "Darken or lighten background of your choice.",
         "date_format": "Date format",
+        "date_selection": "Date selection",
         "days_before_showing_this_survey_again": "or more days to pass between the last shown survey and showing this survey.",
         "defaults": "Defaults",
         "delete_block": "Delete block",

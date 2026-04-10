@@ -603,6 +603,7 @@ export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Date),
   html: ZI18nString.optional(),
   format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+  dateKind: z.enum(["full", "monthYear"]).optional().default("full"),
 });
 
 /**
