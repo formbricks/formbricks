@@ -87,10 +87,11 @@ export function EndingCard({
   );
 
   const handleSubmit = useCallback(() => {
+    if (isOfflineWithPending) return;
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
       processAndRedirect(endingCard.buttonLink);
     }
-  }, [endingCard, isRedirectDisabled, processAndRedirect]);
+  }, [endingCard, isOfflineWithPending, isRedirectDisabled, processAndRedirect]);
 
   useEffect(() => {
     if (isCurrent) {
@@ -169,6 +170,7 @@ export function EndingCard({
                         isLastQuestion={false}
                         focus={isCurrent ? autoFocusEnabled : false}
                         onClick={handleSubmit}
+                        disabled={isOfflineWithPending}
                       />
                     </div>
                   ) : null}
