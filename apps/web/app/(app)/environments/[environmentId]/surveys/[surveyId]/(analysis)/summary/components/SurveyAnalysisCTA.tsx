@@ -11,6 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import { SurveyExportDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyExportDropdown";
 import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -188,6 +189,7 @@ export const SurveyAnalysisCTA = ({
       )}
 
       <IconBar actions={iconActions} />
+      <SurveyExportDropdown survey={survey} />
       <Button
         onClick={() => {
           setModalState((prev) => ({ ...prev, share: true }));
