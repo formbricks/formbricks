@@ -28,6 +28,10 @@ spec:
         labels:
           app.kubernetes.io/name: {{ $proxyServiceName }}
           app.kubernetes.io/managed-by: {{ .Release.Service }}
+        {{- if .Values.envoy.formbricks.proxy.service.annotations }}
+        annotations:
+          {{- include "formbricks.tplvalues.render" (dict "value" .Values.envoy.formbricks.proxy.service.annotations "context" $ ) | nindent 10 }}
+        {{- end }}
   logging:
     level:
       default: {{ .Values.envoy.formbricks.proxy.logging.defaultLevel | quote }}

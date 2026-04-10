@@ -20,6 +20,7 @@
     "question_video": "问题视频",
     "required": "必填",
     "respondents_will_not_see_this_card": "受访者将不会看到此卡片",
+    "response_saved_offline": "你的回复尚未发送。一旦恢复网络连接，将自动提交。",
     "retry": "重试",
     "retrying": "重试中...",
     "search": "搜索...",

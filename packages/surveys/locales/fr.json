@@ -20,6 +20,7 @@
     "question_video": "Vidéo de la question",
     "required": "Obligatoire",
     "respondents_will_not_see_this_card": "Les répondants ne verront pas cette carte",
+    "response_saved_offline": "Votre réponse n'a pas encore été envoyée. Elle sera soumise automatiquement dès que vous serez de nouveau en ligne.",
     "retry": "Réessayer",
     "retrying": "Nouvelle tentative...",
     "search": "Rechercher...",

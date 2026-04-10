@@ -20,6 +20,7 @@
     "question_video": "Kérdés videója",
     "required": "Kötelező",
     "respondents_will_not_see_this_card": "A válaszadók nem fogják látni ezt a kártyát",
+    "response_saved_offline": "A válaszod még nem lett elküldve. Automatikusan el fogjuk küldeni, amint újra online leszel.",
     "retry": "Újrapróbálkozás",
     "retrying": "Újrapróbálkozás…",
     "search": "Keresés...",
