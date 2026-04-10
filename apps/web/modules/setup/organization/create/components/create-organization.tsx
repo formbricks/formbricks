@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
 import { createOrganizationAction } from "@/app/setup/organization/create/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -36,7 +37,7 @@ export const CreateOrganization = () => {
       setIsSubmitting(true);
       const createOrganizationResponse = await createOrganizationAction({ organizationName });
       if (createOrganizationResponse?.serverError) {
-        console.error("Create organization failed", { serverError: createOrganizationResponse.serverError }); toast.error(t("common.something_went_wrong"));
+        toast.error(getFormattedErrorMessage(createOrganizationResponse));
         setIsSubmitting(false);
         return;
       }
