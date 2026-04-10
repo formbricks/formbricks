@@ -25,6 +25,7 @@ import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
+  getFullSurveyAction,
   getSurveyAction,
 } from "@/modules/survey/list/actions";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
@@ -232,7 +233,7 @@ export const SurveyDropDownMenu = ({
                   e.preventDefault();
                   setIsDropDownOpen(false);
                   try {
-                    const fullSurveyResponse = await getSurveyAction({ surveyId: survey.id });
+                    const fullSurveyResponse = await getFullSurveyAction({ surveyId: survey.id });
                     if (!fullSurveyResponse?.data) {
                       toast.error("Failed to load survey data");
                       return;
@@ -266,7 +267,7 @@ export const SurveyDropDownMenu = ({
                   e.preventDefault();
                   setIsDropDownOpen(false);
                   try {
-                    const fullSurveyResponse = await getSurveyAction({ surveyId: survey.id });
+                    const fullSurveyResponse = await getFullSurveyAction({ surveyId: survey.id });
                     if (!fullSurveyResponse?.data) {
                       toast.error("Failed to load survey data");
                       return;
@@ -300,7 +301,7 @@ export const SurveyDropDownMenu = ({
                   e.preventDefault();
                   setIsDropDownOpen(false);
                   try {
-                    const fullSurveyResponse = await getSurveyAction({ surveyId: survey.id });
+                    const fullSurveyResponse = await getFullSurveyAction({ surveyId: survey.id });
                     if (!fullSurveyResponse?.data) {
                       toast.error("Failed to load survey data");
                       return;

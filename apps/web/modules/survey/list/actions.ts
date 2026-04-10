@@ -17,6 +17,7 @@ import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
 import { getUserProjects } from "@/modules/survey/list/lib/project";
+import { getSurvey as getFullSurveyService } from "@/lib/survey/service";
 import {
   copySurveyToOtherEnvironment,
   deleteSurvey,
@@ -48,6 +49,32 @@ export const getSurveyAction = authenticatedActionClient
     });
 
     return await getSurvey(parsedInput.surveyId);
+  });
+
+const ZGetFullSurveyAction = z.object({
+  surveyId: z.string().cuid2(),
+});
+
+export const getFullSurveyAction = authenticatedActionClient
+  .schema(ZGetFullSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
+    });
+
+    return await getFullSurveyService(parsedInput.surveyId);
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
