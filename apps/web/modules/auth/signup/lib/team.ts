@@ -33,7 +33,7 @@ export const createTeamMembership = async (
       }
 
       await prismaClient.teamUser.upsert({
-        data: {
+        create: {
           teamId,
           userId,
           role: isOwnerOrManager ? "admin" : "contributor",
