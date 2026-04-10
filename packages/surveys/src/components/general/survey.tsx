@@ -343,18 +343,6 @@ export function Survey({
     setSelectedLanguage(languageCode);
   }, [languageCode]);
 
-  // Warn before leaving mid-survey so users don't lose progress
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (history.length > 0 && !isSurveyFinished) {
-        e.preventDefault();
-      }
-    };
-
-    globalThis.addEventListener("beforeunload", handleBeforeUnload);
-    return () => globalThis.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [history.length, isSurveyFinished]);
-
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
