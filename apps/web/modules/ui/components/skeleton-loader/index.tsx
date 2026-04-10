@@ -1,7 +1,7 @@
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
 type SkeletonLoaderProps = {
-  type: "response" | "summary";
+  type: "response" | "responseTable" | "summary";
 };
 
 export const SkeletonLoader = ({ type }: SkeletonLoaderProps) => {
@@ -21,6 +21,46 @@ export const SkeletonLoader = ({ type }: SkeletonLoaderProps) => {
             <div className="h-12 w-full rounded-full bg-slate-200"></div>
           </div>
         </Skeleton>
+      </div>
+    );
+  }
+
+  if (type === "responseTable") {
+    const row = (
+      <div className="flex h-12 items-center gap-4 border-b border-slate-100 px-4 last:border-b-0">
+        <Skeleton className="h-4 w-4 rounded bg-slate-200" />
+        <Skeleton className="h-4 w-24 rounded bg-slate-200" />
+        <Skeleton className="h-4 w-32 rounded bg-slate-200" />
+        <Skeleton className="h-4 w-40 rounded bg-slate-200" />
+        <Skeleton className="h-4 w-40 rounded bg-slate-200" />
+        <Skeleton className="h-4 w-32 rounded bg-slate-200" />
+      </div>
+    );
+
+    return (
+      <div data-testid="skeleton-loader-response-table">
+        {/* Toolbar placeholder */}
+        <div className="flex items-center justify-between py-2">
+          <Skeleton className="h-8 w-48 rounded-md bg-slate-200" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-8 rounded-md bg-slate-200" />
+            <Skeleton className="h-8 w-8 rounded-md bg-slate-200" />
+          </div>
+        </div>
+        {/* Table */}
+        <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="flex h-12 items-center gap-4 border-b border-slate-200 bg-slate-100 px-4">
+            <Skeleton className="h-4 w-4 rounded bg-slate-200" />
+            <Skeleton className="h-4 w-24 rounded bg-slate-200" />
+            <Skeleton className="h-4 w-32 rounded bg-slate-200" />
+            <Skeleton className="h-4 w-40 rounded bg-slate-200" />
+            <Skeleton className="h-4 w-40 rounded bg-slate-200" />
+            <Skeleton className="h-4 w-32 rounded bg-slate-200" />
+          </div>
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i}>{row}</div>
+          ))}
+        </div>
       </div>
     );
   }
