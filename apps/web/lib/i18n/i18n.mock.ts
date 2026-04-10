@@ -206,6 +206,7 @@ export const mockDateQuestion: TSurveyDateQuestion = {
     default: "When is your birthday?",
   },
   format: "M-d-y",
+  dateKind: "full",
   id: "ts2f6v2oo9jfmfli9kk6lki9",
   type: TSurveyQuestionTypeEnum.Date,
   isDraft: true,
