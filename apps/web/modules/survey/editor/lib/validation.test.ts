@@ -23,6 +23,7 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
@@ -1131,6 +1132,84 @@ describe("validation.isSurveyValid", () => {
       expect(validation.isSurveyValid(surveyWithValidSegment, "en", mockT)).toBe(true);
       expect(toast.error).not.toHaveBeenCalled();
       mockSafeParse.mockRestore();
+    });
+  });
+});
+
+describe("validation.getValidateIdErrorMessage", () => {
+  const mockT: TFunction = ((key: string, params?: Record<string, string>) => {
+    if (!params) return key;
+    return Object.entries(params).reduce((str, [k, v]) => str.replace(`{${k}}`, v), key);
+  }) as TFunction;
+
+  test("returns translated message for Empty error code", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.Empty, field: "" },
+      "Hidden field",
+      mockT
+    );
+    expect(result).toContain("validate_id_empty");
+  });
+
+  test("returns translated message for Duplicate error code", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.Duplicate, field: "test" },
+      "Question",
+      mockT
+    );
+    expect(result).toContain("validate_id_duplicate");
+  });
+
+  test("returns translated message for Reserved error code with field name", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.Reserved, field: "userId" },
+      "Hidden field",
+      mockT
+    );
+    expect(result).toContain("validate_id_reserved");
+  });
+
+  test("returns translated message for HasSpaces error code", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.HasSpaces, field: "my field" },
+      "Hidden field",
+      mockT
+    );
+    expect(result).toContain("validate_id_no_spaces");
+  });
+
+  test("returns translated message for InvalidChars error code", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.InvalidChars, field: "field!" },
+      "Question",
+      mockT
+    );
+    expect(result).toContain("validate_id_invalid_chars");
+  });
+
+  test("passes type parameter to translation function", () => {
+    const spyT = vi.fn().mockReturnValue("translated");
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.Empty, field: "" },
+      "Hidden field",
+      spyT as unknown as TFunction
+    );
+    expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.validate_id_empty", {
+      type: "Hidden field",
+    });
+    expect(result).toBe("translated");
+  });
+
+  test("passes type and field parameters for Reserved error code", () => {
+    const spyT = vi.fn().mockReturnValue("translated");
+    validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.Reserved, field: "userId" },
+      "Question",
+      spyT as unknown as TFunction
+    );
+    expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.validate_id_reserved", {
+      type: "Question",
+      field: "userId",
     });
   });
 });
