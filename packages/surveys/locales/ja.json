@@ -20,6 +20,7 @@
     "question_video": "質問ビデオ",
     "required": "必須",
     "respondents_will_not_see_this_card": "回答者はこのカードを見ることができません",
+    "response_saved_offline": "あなたの回答はまだ送信されていません。オンラインに戻ると自動的に送信されます。",
     "retry": "再試行",
     "retrying": "再試行中...",
     "search": "検索...",

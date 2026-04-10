@@ -42,6 +42,7 @@ export interface SurveyProgressEntry {
 }
 
 let dbInstance: IDBDatabase | null = null;
+let dbPromise: Promise<IDBDatabase> | null = null;
 
 const isIndexedDBAvailable = (): boolean => {
   try {
@@ -53,8 +54,9 @@ const isIndexedDBAvailable = (): boolean => {
 
 const openDb = (): Promise<IDBDatabase> => {
   if (dbInstance) return Promise.resolve(dbInstance);
+  if (dbPromise) return dbPromise;
 
-  return new Promise((resolve, reject) => {
+  dbPromise = new Promise((resolve, reject) => {
     if (!isIndexedDBAvailable()) {
       reject(new Error("IndexedDB is not available"));
       return;
@@ -80,6 +82,7 @@ const openDb = (): Promise<IDBDatabase> => {
 
     request.onsuccess = () => {
       dbInstance = request.result;
+      dbPromise = null;
 
       dbInstance.onclose = () => {
         dbInstance = null;
@@ -102,9 +105,12 @@ const openDb = (): Promise<IDBDatabase> => {
     };
 
     request.onerror = () => {
+      dbPromise = null;
       reject(request.error ?? new Error("IndexedDB open failed"));
     };
   });
+
+  return dbPromise;
 };
 
 export const addPendingResponse = async (entry: Omit<PendingResponseEntry, "id">): Promise<number> => {

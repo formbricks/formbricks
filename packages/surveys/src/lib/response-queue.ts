@@ -175,6 +175,9 @@ export class ResponseQueue {
       const entries = await getPendingResponses(this.config.surveyId);
       if (entries.length === 0) return { success: true, syncedCount: 0 };
 
+      // Snapshot queue length before sync — entries added during async sync must be preserved.
+      const queueLengthBeforeSync = this.queue.length;
+
       let syncedCount = 0;
 
       for (const entry of entries) {
@@ -185,17 +188,23 @@ export class ResponseQueue {
           this.surveyState.updateResponseId(entry.surveyStateSnapshot.responseId);
         }
 
-        const result = await this.sendResponse(entry.responseUpdate);
+        let result = await this.sendResponse(entry.responseUpdate);
 
-        // Remove the entry from IndexedDB regardless of outcome — if it failed with a
-        // client error (4xx like "response already completed"), retrying won't help.
-        // For transient server errors (5xx/network), we stop syncing and leave remaining
-        // entries for the next attempt.
+        // If updateResponse returned 404, the original createResponse likely never reached
+        // the server. Reset responseId and retry as a fresh createResponse.
+        if (!result.ok && result.error?.status === 404 && this.surveyState.responseId !== null) {
+          this.surveyState.responseId = null;
+          if (entry.surveyStateSnapshot.displayId) {
+            this.surveyState.updateDisplayId(entry.surveyStateSnapshot.displayId);
+          }
+          result = await this.sendResponse(entry.responseUpdate);
+        }
+
         if (entry.id !== undefined) {
           if (result.ok) {
             await removePendingResponse(entry.id);
           } else if (result.error && result.error.status >= 400 && result.error.status < 500) {
-            // Client error (e.g., 404 "response not found", 409 "already completed") —
+            // Client error (e.g., 409 "already completed") —
             // this entry is stale, remove it and continue with the next one.
             await removePendingResponse(entry.id);
             continue;
@@ -209,9 +218,17 @@ export class ResponseQueue {
         onProgress?.(syncedCount, entries.length);
       }
 
-      // Clear the in-memory queue since all persisted entries have been synced
-      this.queue.length = 0;
-      this.pendingDbIds.clear();
+      // Only remove pre-sync entries from the in-memory queue.
+      // Entries added by add() during the async sync loop must be preserved.
+      const removed = this.queue.splice(0, queueLengthBeforeSync);
+      for (const item of removed) {
+        this.pendingDbIds.delete(item);
+      }
+
+      // Kick off processQueue for any entries added during sync
+      if (this.queue.length > 0) {
+        this.processQueue();
+      }
 
       return { success: true, syncedCount };
     } finally {

@@ -26,7 +26,7 @@ import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-conta
 import { ApiClient } from "@/lib/api-client";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import {
-  clearPendingResponses,
+  type SerializedSurveyState,
   clearSurveyProgress,
   getSurveyProgress,
   saveSurveyProgress,
@@ -38,20 +38,12 @@ import { useOnlineStatus } from "@/lib/use-online-status";
 import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
-const restoreSurveyStateFromSnapshot = (
-  surveyState: SurveyState,
-  snapshot: {
-    responseId: string | null;
-    displayId: string | null;
-    userId: string | null;
-    contactId: string | null;
-    responseAcc: TResponseUpdate;
-  }
-): void => {
+const restoreSurveyStateFromSnapshot = (surveyState: SurveyState, snapshot: SerializedSurveyState): void => {
   if (snapshot.responseId) surveyState.updateResponseId(snapshot.responseId);
   if (snapshot.displayId) surveyState.updateDisplayId(snapshot.displayId);
   if (snapshot.userId) surveyState.updateUserId(snapshot.userId);
   if (snapshot.contactId) surveyState.updateContactId(snapshot.contactId);
+  if (snapshot.singleUseId) surveyState.singleUseId = snapshot.singleUseId;
   surveyState.responseAcc = snapshot.responseAcc;
 };
 
@@ -345,17 +337,29 @@ export function Survey({
     onDisplay,
   ]);
 
+  // Create display on mount. When offline persistence is enabled, wait for progress
+  // restoration so we can skip creating a new display if a session was restored.
+  const displayCreatedRef = useRef(false);
+
   useEffect(() => {
-    // call onDisplay when component is mounted
+    if (offlinePersistEnabled && !progressRestored) return;
+
+    // If we restored a session that already has a displayId, skip creating a new one.
+    if (offlinePersistEnabled && surveyState?.displayId) {
+      displayCreatedRef.current = true;
+      return;
+    }
+
+    if (displayCreatedRef.current) return;
+    displayCreatedRef.current = true;
 
     if (appUrl && environmentId) {
       createDisplay();
     } else {
       onDisplay?.();
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- onDisplay should only be called once
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, or once after restore for offline
+  }, [progressRestored]);
 
   useEffect(() => {
     if (getSetIsError) {
@@ -415,32 +419,52 @@ export function Survey({
         return;
       }
 
+      // Check pending responses first — this determines whether the survey is truly complete.
+      const pendingCount = responseQueue ? await responseQueue.loadPersistedQueue() : 0;
+
+      // If the survey is fully complete (no pending responses + finished), discard stale
+      // progress and start fresh instead of restoring to the ending card.
+      if (pendingCount === 0) {
+        const isEndingCard = localSurvey.endings.some((e) => e.id === progress.blockId);
+        const isResponseFinished = progress.surveyStateSnapshot?.responseAcc?.finished === true;
+
+        if (isEndingCard || isResponseFinished) {
+          await clearSurveyProgress(survey.id);
+          setProgressRestored(true);
+          return;
+        }
+      }
+
+      if (pendingCount > 0) {
+        setPendingSyncCount(pendingCount);
+      }
+
       // Validate that the saved blockId still exists in the current survey
       const blockExists =
-        progress.blockId === "start" || localSurvey.blocks.some((b) => b.id === progress.blockId);
-      if (!blockExists) {
+        progress.blockId === "start" ||
+        progress.blockId === "end" ||
+        localSurvey.blocks.some((b) => b.id === progress.blockId) ||
+        localSurvey.endings.some((e) => e.id === progress.blockId);
+
+      if (blockExists) {
+        setBlockId(progress.blockId);
+        setResponseData(progress.responseData);
+        setTtc(progress.ttc);
+        setCurrentVariables(progress.currentVariables);
+        setHistory(progress.history);
+        setSelectedLanguage(progress.selectedLanguage);
+
+        // Restore survey state from snapshot
+        if (surveyState && progress.surveyStateSnapshot) {
+          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot);
+        }
+      } else {
+        // Block no longer exists (survey structure changed) — discard UI progress
+        // but still restore survey state and sync pending responses below.
         await clearSurveyProgress(survey.id);
-        setProgressRestored(true);
-        return;
-      }
 
-      setBlockId(progress.blockId);
-      setResponseData(progress.responseData);
-      setTtc(progress.ttc);
-      setCurrentVariables(progress.currentVariables);
-      setHistory(progress.history);
-      setSelectedLanguage(progress.selectedLanguage);
-
-      // Restore survey state from snapshot
-      if (surveyState && progress.surveyStateSnapshot) {
-        restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot);
-      }
-
-      // Load any pending responses that were persisted but never sent
-      if (responseQueue) {
-        const loadedCount = await responseQueue.loadPersistedQueue();
-        if (loadedCount > 0) {
-          setPendingSyncCount(loadedCount);
+        if (surveyState && progress.surveyStateSnapshot) {
+          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot);
         }
       }
 
@@ -455,76 +479,7 @@ export function Survey({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- should only run on mount
   }, []);
 
-  // --- Offline support: save progress to IndexedDB on state changes ---
-  const saveProgressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const flushProgressToDb = useCallback(() => {
-    if (!offlinePersistEnabled || !progressRestored) return;
-    void saveSurveyProgress({
-      surveyId: survey.id,
-      blockId,
-      responseData,
-      ttc,
-      currentVariables,
-      history,
-      selectedLanguage,
-      surveyStateSnapshot: {
-        responseId: surveyState?.responseId ?? null,
-        displayId: surveyState?.displayId ?? null,
-        surveyId: survey.id,
-        singleUseId: surveyState?.singleUseId ?? null,
-        userId: surveyState?.userId ?? null,
-        contactId: surveyState?.contactId ?? null,
-        responseAcc: surveyState?.responseAcc ?? { finished: false, data: {}, ttc: {}, variables: {} },
-      },
-      updatedAt: Date.now(),
-    });
-  }, [
-    blockId,
-    responseData,
-    ttc,
-    currentVariables,
-    history,
-    selectedLanguage,
-    offlinePersistEnabled,
-    progressRestored,
-    survey.id,
-    surveyState,
-  ]);
-
-  useEffect(() => {
-    if (!offlinePersistEnabled || !progressRestored) return;
-
-    // Debounce saves to avoid excessive IndexedDB writes
-    if (saveProgressTimeoutRef.current) {
-      clearTimeout(saveProgressTimeoutRef.current);
-    }
-
-    saveProgressTimeoutRef.current = setTimeout(flushProgressToDb, 300);
-
-    return () => {
-      if (saveProgressTimeoutRef.current) {
-        clearTimeout(saveProgressTimeoutRef.current);
-      }
-    };
-  }, [flushProgressToDb, offlinePersistEnabled, progressRestored]);
-
-  // Flush progress immediately when the tab goes hidden (belt-and-suspenders for the debounce)
-  useEffect(() => {
-    if (!offlinePersistEnabled) return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        if (saveProgressTimeoutRef.current) {
-          clearTimeout(saveProgressTimeoutRef.current);
-        }
-        flushProgressToDb();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [offlinePersistEnabled, flushProgressToDb]);
+  // --- Offline support: save progress to IndexedDB on submit (see onSubmit) ---
 
   // --- Offline support: sync pending responses when coming back online ---
   const isSyncingRef = useRef(false);
@@ -561,10 +516,15 @@ export function Survey({
           console.log(`Formbricks: Synced ${result.syncedCount} offline response(s)`);
         }
 
-        // Clean up IndexedDB after successful sync
+        // Clean up IndexedDB and mark sending as finished after successful sync
+        // Individual entries are already removed from IndexedDB inside syncPersistedResponses.
+        // Don't use clearPendingResponses here — it would wipe entries added during the async sync.
         if (result.success) {
           await clearSurveyProgress(survey.id);
-          await clearPendingResponses(survey.id);
+
+          if (result.syncedCount > 0) {
+            setIsResponseSendingFinished(true);
+          }
         }
       } finally {
         isSyncingRef.current = false;
@@ -572,7 +532,7 @@ export function Survey({
     };
 
     void syncPending();
-  }, [isOnline, offlinePersistEnabled, responseQueue, progressRestored]);
+  }, [isOnline, offlinePersistEnabled, responseQueue, progressRestored, survey.id]);
 
   // --- Offline support: warn before leaving with unsent responses ---
   useEffect(() => {
@@ -882,19 +842,8 @@ export function Survey({
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
       onFinished?.();
-
-      // Clear offline persistence data on survey completion.
-      // Only clear when the responses were actually sent (online), not when we're
-      // still offline — the sync-on-reconnect logic needs those entries.
-      if (offlinePersistEnabled && isOnline) {
-        const cleanup = async () => {
-          await clearSurveyProgress(survey.id);
-          await clearPendingResponses(survey.id);
-        };
-        void cleanup();
-      }
     }
-  }, [isResponseSendingFinished, isSurveyFinished, onFinished, offlinePersistEnabled, isOnline, survey.id]);
+  }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     // Get the first responded element ID for tracking
@@ -952,7 +901,34 @@ export function Survey({
       }
     }
     // add current block to history
-    setHistory([...history, blockId]);
+    const newHistory = [...history, blockId];
+    setHistory(newHistory);
+
+    // --- Offline support: save progress on each submit ---
+    if (offlinePersistEnabled) {
+      const newBlockId = finished ? endingId || localSurvey.endings[0]?.id || "end" : nextBlockId || blockId;
+
+      void saveSurveyProgress({
+        surveyId: survey.id,
+        blockId: newBlockId,
+        responseData: { ...responseData, ...surveyResponseData },
+        ttc: { ...ttc, ...responsettc },
+        currentVariables: calculatedVariables,
+        history: newHistory,
+        selectedLanguage,
+        surveyStateSnapshot: {
+          responseId: surveyState?.responseId ?? null,
+          displayId: surveyState?.displayId ?? null,
+          surveyId: survey.id,
+          singleUseId: surveyState?.singleUseId ?? null,
+          userId: surveyState?.userId ?? null,
+          contactId: surveyState?.contactId ?? null,
+          responseAcc: surveyState?.responseAcc ?? { finished: false, data: {}, ttc: {}, variables: {} },
+        },
+        updatedAt: Date.now(),
+      });
+    }
+
     setLoadingElement(false);
   };
 
@@ -1062,6 +1038,7 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
               fullSizeCards={fullSizeCards}
+              isOfflineWithPending={offlinePersistEnabled && !isOnline && isSurveyFinished}
             />
           );
         }

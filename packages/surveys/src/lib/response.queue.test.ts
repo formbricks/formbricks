@@ -418,7 +418,7 @@ describe("ResponseQueue", () => {
     expect(offlineQueue["isSyncing"]).toBe(false);
   });
 
-  test("syncPersistedResponses removes stale 4xx entries and continues", async () => {
+  test("syncPersistedResponses retries 404 as createResponse by resetting responseId", async () => {
     const { getPendingResponses, removePendingResponse } = await import("./offline-storage");
     vi.mocked(getPendingResponses).mockResolvedValue([
       {
@@ -436,12 +436,56 @@ describe("ResponseQueue", () => {
         },
         createdAt: Date.now(),
       },
+    ]);
+
+    // Use a state that actually mutates on updateResponseId/updateDisplayId
+    const offlineState = getSurveyState();
+    offlineState.updateResponseId = vi.fn((id: string) => {
+      offlineState.responseId = id;
+    });
+    offlineState.updateDisplayId = vi.fn((id: string) => {
+      offlineState.displayId = id;
+    });
+
+    const offlineQueue = new ResponseQueue(getConfig({ persistOffline: true, surveyId: "s1" }), offlineState);
+
+    // First call: 404 (updateResponse fails), second call: retry as createResponse succeeds
+    vi.spyOn(offlineQueue, "sendResponse")
+      .mockResolvedValueOnce(err({ code: "not_found", message: "not found", status: 404 }))
+      .mockResolvedValueOnce(ok(true));
+
+    const result = await offlineQueue.syncPersistedResponses();
+    expect(result).toEqual({ success: true, syncedCount: 1 });
+    expect(offlineQueue.sendResponse).toHaveBeenCalledTimes(2);
+    expect(removePendingResponse).toHaveBeenCalledWith(10);
+    // responseId should have been reset to null for the retry
+    expect(offlineState.responseId).toBeNull();
+  });
+
+  test("syncPersistedResponses removes non-404 4xx entries and continues", async () => {
+    const { getPendingResponses, removePendingResponse } = await import("./offline-storage");
+    vi.mocked(getPendingResponses).mockResolvedValue([
+      {
+        id: 10,
+        surveyId: "s1",
+        responseUpdate,
+        surveyStateSnapshot: {
+          responseId: null,
+          displayId: "d1",
+          surveyId: "s1",
+          singleUseId: null,
+          userId: null,
+          contactId: null,
+          responseAcc: { finished: false, data: {} },
+        },
+        createdAt: Date.now(),
+      },
       {
         id: 11,
         surveyId: "s1",
         responseUpdate,
         surveyStateSnapshot: {
-          responseId: "r1",
+          responseId: null,
           displayId: "d1",
           surveyId: "s1",
           singleUseId: null,
@@ -458,7 +502,7 @@ describe("ResponseQueue", () => {
       getSurveyState()
     );
     vi.spyOn(offlineQueue, "sendResponse")
-      .mockResolvedValueOnce(err({ code: "not_found", message: "not found", status: 404 }))
+      .mockResolvedValueOnce(err({ code: "bad_request", message: "already completed", status: 409 }))
       .mockResolvedValueOnce(ok(true));
 
     const result = await offlineQueue.syncPersistedResponses();
