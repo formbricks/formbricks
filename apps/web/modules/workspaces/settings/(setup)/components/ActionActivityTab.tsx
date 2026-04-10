@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createActionClassAction } from "@/modules/survey/editor/actions";
-import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -17,21 +13,11 @@ import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/a
 
 interface ActivityTabProps {
   actionClass: TActionClass;
-  environmentId: string;
-  environment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
-  otherEnvironment: TEnvironment;
   isReadOnly: boolean;
 }
 
-export const ActionActivityTab = ({
-  actionClass,
-  otherEnvActionClasses,
-  otherEnvironment,
-  environmentId,
-  environment,
-  isReadOnly,
-}: ActivityTabProps) => {
+export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
@@ -57,58 +43,7 @@ export const ActionActivityTab = ({
     };
 
     updateState();
-  }, [actionClass.id, environmentId]);
-
-  const actionClassNames = useMemo(
-    () => otherEnvActionClasses.map((actionClass) => actionClass.name),
-    [otherEnvActionClasses]
-  );
-
-  const actionClassKeys = useMemo(() => {
-    const codeActionClasses: TActionClassInputCode[] = otherEnvActionClasses.filter(
-      (actionClass) => actionClass.type === "code"
-    ) as TActionClassInputCode[];
-
-    return codeActionClasses.map((actionClass) => actionClass.key);
-  }, [otherEnvActionClasses]);
-
-  const copyAction = async (data: TActionClassInput) => {
-    const { type } = data;
-    let copyName = data.name;
-    try {
-      if (isReadOnly) {
-        throw new Error(t("common.you_are_not_authorized_to_perform_this_action"));
-      }
-
-      if (copyName && actionClassNames.includes(copyName)) {
-        while (actionClassNames.includes(copyName)) {
-          copyName += ` ${t("common.duplicate_copy")}`;
-        }
-      }
-
-      if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
-        throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
-      }
-
-      let updatedAction = {
-        ...data,
-        name: copyName.trim(),
-        environmentId: otherEnvironment.id,
-      };
-
-      const createActionClassResponse = await createActionClassAction({
-        action: updatedAction as TActionClassInput,
-      });
-
-      if (!createActionClassResponse?.data) {
-        throw new Error(t("environments.actions.action_copy_failed", {}));
-      }
-
-      toast.success(t("environments.actions.action_copied_successfully"));
-    } catch (e: any) {
-      toast.error(e.message);
-    }
-  };
+  }, [actionClass.id]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;
@@ -154,20 +89,7 @@ export const ActionActivityTab = ({
         <div className="">
           <Label className="text-xs font-normal text-slate-500">{t("common.environment")}</Label>
           <div className="items-center-center flex gap-2">
-            <p className="text-xs text-slate-700">
-              {environment.type === "development" ? t("common.development") : t("common.production")}
-            </p>
-            <Button
-              onClick={() => {
-                copyAction(actionClass);
-              }}
-              className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4 focus:ring-0 focus:ring-offset-0"
-              variant="ghost">
-              {t("common.copy_to_environment", {
-                environment:
-                  environment.type === "development" ? t("common.production") : t("common.development"),
-              })}
-            </Button>
+            <p className="text-xs text-slate-700">{t("common.production")}</p>
           </div>
         </div>
       </div>

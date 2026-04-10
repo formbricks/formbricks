@@ -258,7 +258,6 @@ export const mockSurvey: TSurvey = {
   updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   name: "New Survey",
   type: "link",
-  environmentId: "envId",
   createdBy: "creatorId",
   status: "draft",
   welcomeCard: mockWelcomeCard,

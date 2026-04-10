@@ -47,7 +47,7 @@ export const ArchiveFeedbackRecordDirectory = ({
       return;
     }
     if (response?.data) {
-      toast.success(t("environments.settings.feedback_record_directories.directory_archived_successfully"));
+      toast.success(t("workspace.settings.feedback_record_directories.directory_archived_successfully"));
       onArchive?.();
       router.refresh();
     } else {
@@ -63,7 +63,7 @@ export const ArchiveFeedbackRecordDirectory = ({
       <div className="flex flex-row items-baseline space-x-2">
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
-          tooltipContent={t("environments.settings.feedback_record_directories.archive_not_allowed")}
+          tooltipContent={t("workspace.settings.feedback_record_directories.archive_not_allowed")}
           className="w-auto">
           <Button
             variant="destructive"
@@ -71,7 +71,7 @@ export const ArchiveFeedbackRecordDirectory = ({
             className="w-auto"
             disabled={!isOwnerOrManager}
             onClick={() => setIsArchiveDialogOpen(true)}>
-            {t("environments.settings.feedback_record_directories.archive_directory")}
+            {t("workspace.settings.feedback_record_directories.archive_directory")}
           </Button>
         </TooltipRenderer>
       </div>
@@ -83,13 +83,13 @@ export const ArchiveFeedbackRecordDirectory = ({
               <div className="flex items-center gap-2">
                 <CircleAlert className="h-4 w-4" />
                 <DialogTitle>
-                  {t("environments.settings.feedback_record_directories.archive_directory")}
+                  {t("workspace.settings.feedback_record_directories.archive_directory")}
                 </DialogTitle>
               </div>
             </DialogHeader>
 
             <DialogBody>
-              <p>{t("environments.settings.feedback_record_directories.are_you_sure_you_want_to_archive")}</p>
+              <p>{t("workspace.settings.feedback_record_directories.are_you_sure_you_want_to_archive")}</p>
             </DialogBody>
 
             <DialogFooter>
@@ -100,7 +100,7 @@ export const ArchiveFeedbackRecordDirectory = ({
                 {t("common.cancel")}
               </Button>
               <Button variant="destructive" onClick={handleArchive} loading={isArchiving}>
-                {t("environments.settings.feedback_record_directories.archive")}
+                {t("workspace.settings.feedback_record_directories.archive")}
               </Button>
             </DialogFooter>
           </DialogContent>

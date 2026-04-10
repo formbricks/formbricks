@@ -3,28 +3,23 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TUserLocale } from "@formbricks/types/user";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ActionClassesTable } from "@/modules/workspaces/settings/(setup)/components/ActionClassesTable";
 import { ActionClassDataRow } from "@/modules/workspaces/settings/(setup)/components/ActionRowData";
 import { ActionTableHeading } from "@/modules/workspaces/settings/(setup)/components/ActionTableHeading";
 import { AddActionModal } from "@/modules/workspaces/settings/(setup)/components/AddActionModal";
 
 interface ActionSettingsCardProps {
-  environment: TEnvironment;
-  otherEnvironment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
-  environmentId: string;
+  workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   locale: TUserLocale;
 }
 export const ActionSettingsCard = ({
-  environment,
-  otherEnvironment,
   otherEnvActionClasses,
-  environmentId,
+  workspaceId,
   actionClasses,
   isReadOnly,
   locale,
@@ -42,10 +37,7 @@ export const ActionSettingsCard = ({
           variant: "default",
         }}>
         <ActionClassesTable
-          environment={environment}
-          otherEnvironment={otherEnvironment}
           otherEnvActionClasses={otherEnvActionClasses}
-          environmentId={environmentId}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}>
           <ActionTableHeading />
@@ -55,7 +47,7 @@ export const ActionSettingsCard = ({
         </ActionClassesTable>
       </SettingsCard>
       <AddActionModal
-        environmentId={environmentId}
+        workspaceId={workspaceId}
         actionClasses={actionClasses}
         isReadOnly={isReadOnly}
         open={isActionModalOpen}

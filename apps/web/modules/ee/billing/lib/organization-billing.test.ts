@@ -644,7 +644,7 @@ describe("organization-billing", () => {
       createPaidPlanCheckoutSession({
         organizationId: "org_1",
         customerId: "cus_1",
-        environmentId: "env_1",
+        workspaceId: "ws_1",
         plan: "pro",
         interval: "yearly",
       })

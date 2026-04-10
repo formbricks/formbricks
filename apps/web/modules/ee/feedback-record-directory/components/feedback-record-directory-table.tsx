@@ -73,9 +73,7 @@ export const FeedbackRecordDirectoryTable = ({
         data: { isArchived: false },
       });
       if (response?.data) {
-        toast.success(
-          t("environments.settings.feedback_record_directories.directory_unarchived_successfully")
-        );
+        toast.success(t("workspace.settings.feedback_record_directories.directory_unarchived_successfully"));
         router.refresh();
       } else {
         const errorCode = getFormattedErrorMessage(response);
@@ -95,11 +93,11 @@ export const FeedbackRecordDirectoryTable = ({
           <div className="flex items-center gap-2">
             <Switch checked={showArchived} onCheckedChange={setShowArchived} />
             <span className="text-sm text-slate-500">
-              {t("environments.settings.feedback_record_directories.show_archived")}
+              {t("workspace.settings.feedback_record_directories.show_archived")}
             </span>
           </div>
           <Button size="sm" onClick={() => setOpenCreateModal(true)}>
-            {t("environments.settings.feedback_record_directories.create_feedback_directory")}
+            {t("workspace.settings.feedback_record_directories.create_feedback_directory")}
           </Button>
         </div>
       )}
@@ -109,7 +107,7 @@ export const FeedbackRecordDirectoryTable = ({
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
               <TableHead className="font-medium text-slate-500">
-                {t("environments.settings.feedback_record_directories.directory_name")}
+                {t("workspace.settings.feedback_record_directories.directory_name")}
               </TableHead>
               <TableHead className="font-medium text-slate-500">{t("common.workspaces")}</TableHead>
               <TableHead className="font-medium text-slate-500">{t("common.status")}</TableHead>
@@ -120,7 +118,7 @@ export const FeedbackRecordDirectoryTable = ({
             {filteredDirectories.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center hover:bg-transparent">
-                  {t("environments.settings.feedback_record_directories.empty_state")}
+                  {t("workspace.settings.feedback_record_directories.empty_state")}
                 </TableCell>
               </TableRow>
             )}
@@ -153,7 +151,7 @@ export const FeedbackRecordDirectoryTable = ({
                       loading={loadingDirectoryId === directory.id}
                       disabled={loadingDirectoryId !== null}
                       onClick={() => handleUnarchiveDirectory(directory.id)}>
-                      {t("environments.settings.feedback_record_directories.unarchive")}
+                      {t("workspace.settings.feedback_record_directories.unarchive")}
                     </Button>
                   )}
                 </TableCell>

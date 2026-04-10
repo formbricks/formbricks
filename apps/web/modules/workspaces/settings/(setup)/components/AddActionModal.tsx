@@ -15,7 +15,7 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface AddActionModalProps {
-  environmentId: string;
+  workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   open: boolean;
@@ -23,7 +23,7 @@ interface AddActionModalProps {
 }
 
 export const AddActionModal = ({
-  environmentId,
+  workspaceId,
   actionClasses,
   isReadOnly,
   open,
@@ -38,15 +38,15 @@ export const AddActionModal = ({
       <DialogContent disableCloseOnOutsideClick>
         <DialogHeader>
           <MousePointerClickIcon />
-          <DialogTitle>{t("environments.actions.track_new_user_action")}</DialogTitle>
+          <DialogTitle>{t("workspace.actions.track_new_user_action")}</DialogTitle>
           <DialogDescription>
-            {t("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")}
+            {t("workspace.actions.track_user_action_to_display_surveys_or_create_user_segment")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
           <CreateNewActionTab
             actionClasses={newActionClasses}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             isReadOnly={isReadOnly}
             setActionClasses={setNewActionClasses}
             setOpen={setOpen}

@@ -25,12 +25,12 @@ export const testURLmatch = (
       try {
         regex = new RegExp(pageUrlValue);
       } catch {
-        throw new Error(t("environments.actions.invalid_regex"));
+        throw new Error(t("workspace.actions.invalid_regex"));
       }
 
       return regex.test(testUrl);
     default:
-      throw new Error(t("environments.actions.invalid_match_type"));
+      throw new Error(t("workspace.actions.invalid_match_type"));
   }
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Environment, Workspace } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +22,7 @@ interface PreviewSurveyProps {
   elementId?: string | null;
   previewType?: TPreviewType;
   workspace: Workspace;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  environment: { appSetupCompleted: boolean };
   languageCode: string;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;
@@ -267,12 +267,7 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo
-                        environmentId={environment.id}
-                        workspaceLogo={workspace.logo}
-                        surveyLogo={styling.logo}
-                        previewSurvey
-                      />
+                      <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
@@ -312,15 +307,13 @@ export const PreviewSurvey = ({
                   }}
                   aria-label={
                     isFullScreenPreview
-                      ? t("environments.surveys.edit.shrink_preview")
-                      : t("environments.surveys.edit.expand_preview")
+                      ? t("workspace.surveys.edit.shrink_preview")
+                      : t("workspace.surveys.edit.expand_preview")
                   }></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
-                  {previewType === "modal"
-                    ? t("environments.surveys.edit.your_web_app")
-                    : t("common.preview")}
+                  {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
                 </p>
 
                 <div className="flex items-center">
@@ -379,12 +372,7 @@ export const PreviewSurvey = ({
                 isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo
-                      environmentId={environment.id}
-                      workspaceLogo={workspace.logo}
-                      surveyLogo={styling.logo}
-                      previewSurvey
-                    />
+                    <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">

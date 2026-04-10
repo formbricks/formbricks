@@ -19,7 +19,7 @@ import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   publicDomain: string;
   userId: string;
@@ -29,7 +29,7 @@ interface SurveysListProps {
 }
 
 export const SurveysList = ({
-  environmentId,
+  workspaceId,
   isReadOnly,
   publicDomain,
   userId,
@@ -83,7 +83,7 @@ export const SurveysList = ({
     const fetchFilteredSurveys = async () => {
       setIsFetching(true);
       const res = await getSurveysAction({
-        environmentId,
+        workspaceId,
         limit: surveysLimit,
         offset: undefined,
         filterCriteria: filters,
@@ -100,12 +100,12 @@ export const SurveysList = ({
     };
     fetchFilteredSurveys();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environmentId, surveysLimit, filters, refreshTrigger, isFilterInitialized]);
+  }, [workspaceId, surveysLimit, filters, refreshTrigger, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
     const res = await getSurveysAction({
-      environmentId,
+      workspaceId,
       limit: surveysLimit,
       offset: surveys.length,
       filterCriteria: filters,
@@ -120,7 +120,7 @@ export const SurveysList = ({
       setSurveys([...surveys, ...res.data]);
       setIsFetching(false);
     }
-  }, [environmentId, surveys, surveysLimit, filters]);
+  }, [workspaceId, surveys, surveysLimit, filters]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
@@ -159,7 +159,6 @@ export const SurveysList = ({
                 <SurveyCard
                   key={survey.id}
                   survey={survey}
-                  environmentId={environmentId}
                   isReadOnly={isReadOnly}
                   publicDomain={publicDomain}
                   deleteSurvey={handleDeleteSurvey}

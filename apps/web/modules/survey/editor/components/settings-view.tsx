@@ -1,4 +1,4 @@
-import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { ActionClass, OrganizationRole } from "@prisma/client";
 import { type Dispatch, type SetStateAction } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -15,7 +15,6 @@ import { TargetingLockedCard } from "@/modules/survey/editor/components/targetin
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 
 interface SettingsViewProps {
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
   localSurvey: TSurvey;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   actionClasses: ActionClass[];
@@ -32,7 +31,6 @@ interface SettingsViewProps {
 }
 
 export const SettingsView = ({
-  environment,
   localSurvey,
   setLocalSurvey,
   actionClasses,
@@ -51,7 +49,7 @@ export const SettingsView = ({
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
+      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       {localSurvey.type === "app" ? (
         <div>
@@ -62,7 +60,7 @@ export const SettingsView = ({
                   key={localSurvey.segment?.id}
                   localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
-                  environmentId={environment.id}
+                  workspaceId={localSurvey.workspaceId}
                   contactAttributeKeys={contactAttributeKeys}
                   segments={segments}
                   initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
@@ -70,7 +68,7 @@ export const SettingsView = ({
               </div>
             </div>
           ) : (
-            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} environmentId={environment.id} />
+            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} />
           )}
         </div>
       ) : null}
@@ -78,7 +76,7 @@ export const SettingsView = ({
       <WhenToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environment.id}
+        workspaceId={localSurvey.workspaceId}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
         workspacePermission={workspacePermission}
@@ -100,13 +98,7 @@ export const SettingsView = ({
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
-      {isAppSurvey && (
-        <SurveyPlacementCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          environmentId={environment.id}
-        />
-      )}
+      {isAppSurvey && <SurveyPlacementCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
     </div>
   );
 };

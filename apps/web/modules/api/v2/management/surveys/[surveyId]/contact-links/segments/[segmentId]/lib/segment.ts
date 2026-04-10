@@ -8,7 +8,7 @@ export const getSegment = reactCache(async (segmentId: string) => {
       where: { id: segmentId },
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         filters: true,
       },
     });

@@ -158,7 +158,7 @@ describe("authOptions", () => {
     });
 
     test("should throw error if user not found", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const credentials = { email: mockUser.email, password: mockPassword };
@@ -169,7 +169,7 @@ describe("authOptions", () => {
     });
 
     test("should throw error if user has no password stored", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -184,7 +184,7 @@ describe("authOptions", () => {
     });
 
     test("should throw error if password verification fails", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
         id: mockUserId,
         email: mockUser.email,
@@ -199,7 +199,7 @@ describe("authOptions", () => {
     });
 
     test("should successfully login when credentials are valid", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       const fakeUser = {
         id: mockUserId,
         email: mockUser.email,
@@ -222,7 +222,7 @@ describe("authOptions", () => {
 
     describe("Rate Limiting", () => {
       test("should apply rate limiting before credential validation", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue();
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
         vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
           id: mockUserId,
           email: mockUser.email,
@@ -255,7 +255,7 @@ describe("authOptions", () => {
       });
 
       test("should use correct rate limit configuration", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue();
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
         vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
           id: mockUserId,
           email: mockUser.email,
@@ -278,7 +278,7 @@ describe("authOptions", () => {
 
     describe("Two-Factor Backup Code login", () => {
       test("should throw error if backup codes are missing", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
         const mockUser = {
           id: mockUserId,
           email: "2fa@example.com",
@@ -307,7 +307,7 @@ describe("authOptions", () => {
     });
 
     test("should throw error if token is invalid or user not found", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       const credentials = { token: "badtoken" };
 
       await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
@@ -317,7 +317,7 @@ describe("authOptions", () => {
 
     describe("Rate Limiting", () => {
       test("should apply rate limiting before token verification", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue();
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
         const credentials = { token: "sometoken" };
 
@@ -439,7 +439,7 @@ describe("authOptions", () => {
     const credentialsProvider = getProviderById("credentials");
 
     test("should throw error if TOTP code is missing when 2FA is enabled", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       const mockUser = {
         id: mockUserId,
         email: "2fa@example.com",
@@ -457,7 +457,7 @@ describe("authOptions", () => {
     });
 
     test("should throw error if two factor secret is missing", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       const mockUser = {
         id: mockUserId,
         email: "2fa@example.com",

@@ -4822,7 +4822,7 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     updatedAt: new Date(),
     name: t("templates.preview_survey_name"),
     type: "link" as const,
-    environmentId: "cltwumfcz0009echxg02fh7oa",
+    workspaceId: "cmnh38nzx00003b6r3svd9pv2",
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress" as const,
     welcomeCard: {

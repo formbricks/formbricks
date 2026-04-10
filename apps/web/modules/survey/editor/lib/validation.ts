@@ -255,7 +255,7 @@ export const isSurveyValid = (
 ) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
-    toast.error(t("environments.surveys.edit.fallback_missing"));
+    toast.error(t("workspace.surveys.edit.fallback_missing"));
     return false;
   }
 
@@ -266,7 +266,7 @@ export const isSurveyValid = (
     if (!parsedFilters.success) {
       const errMsg =
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
-        t("environments.surveys.edit.invalid_targeting");
+        t("workspace.surveys.edit.invalid_targeting");
       toast.error(errMsg);
       return false;
     }
@@ -275,13 +275,13 @@ export const isSurveyValid = (
   // Response limit validation
   if (survey.autoComplete !== null && responseCount !== undefined) {
     if (survey.autoComplete === 0) {
-      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
+      toast.error(t("workspace.surveys.edit.response_limit_can_t_be_set_to_0"));
       return false;
     }
 
     if (survey.autoComplete <= responseCount) {
       toast.error(
-        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+        t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
           responseCount,
         }),
         {
@@ -293,7 +293,7 @@ export const isSurveyValid = (
   }
 
   if (!hasValidSurveyClosedMessageHeading(survey)) {
-    toast.error(t("environments.surveys.edit.survey_closed_message_heading_required"));
+    toast.error(t("workspace.surveys.edit.survey_closed_message_heading_required"));
     return false;
   }
 

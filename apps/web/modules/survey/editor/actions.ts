@@ -10,10 +10,8 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -99,7 +97,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
@@ -167,7 +165,7 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       }
     }
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
@@ -290,7 +288,8 @@ const ZCreateActionClassAction = z.object({
 
 export const createActionClassAction = authenticatedActionClient.inputSchema(ZCreateActionClassAction).action(
   withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId);
+    const workspaceId = parsedInput.action.workspaceId;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
@@ -302,13 +301,13 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.action.environmentId),
+          workspaceId,
         },
       ],
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+    const result = await createActionClass(workspaceId, parsedInput.action);
     ctx.auditLoggingCtx.actionClassId = result.id;
     ctx.auditLoggingCtx.newObject = result;
     return result;

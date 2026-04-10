@@ -33,7 +33,10 @@ interface AddApiKeyModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: {
     label: string;
-    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    workspacePermissions: Array<{
+      permission: ApiKeyPermission;
+      workspaceId: string;
+    }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
   workspaces: TOrganizationWorkspace[];
@@ -47,10 +50,8 @@ interface WorkspaceOption {
 
 interface PermissionRecord {
   workspaceId: string;
-  environmentId: string;
   permission: ApiKeyPermission;
   workspaceName: string;
-  environmentType: string;
 }
 
 const permissionOptions = [ApiKeyPermission.read, ApiKeyPermission.write, ApiKeyPermission.manage];
@@ -76,14 +77,12 @@ export const AddApiKeyModal = ({
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
   const getInitialPermissions = (): Record<string, PermissionRecord> => {
-    if (workspaces.length > 0 && workspaces[0].environments.length > 0) {
+    if (workspaces.length > 0) {
       return {
         "permission-0": {
           workspaceId: workspaces[0].id,
-          environmentId: workspaces[0].environments[0].id,
           permission: ApiKeyPermission.read,
           workspaceName: workspaces[0].name,
-          environmentType: workspaces[0].environments[0].type,
         },
       };
     }
@@ -116,32 +115,25 @@ export const AddApiKeyModal = ({
   };
 
   const updatePermission = (key: string, field: string, value: string) => {
-    const workspace = workspaces.find((p) => p.id === selectedPermissions[key].workspaceId);
-    const environment = workspace?.environments.find((env) => env.id === value);
-
     setSelectedPermissions({
       ...selectedPermissions,
       [key]: {
         ...selectedPermissions[key],
         [field]: value,
-        ...(field === "environmentId" && environment ? { environmentType: environment.type } : {}),
       },
     });
   };
 
-  // Update environment when workspace changes
-  const updateWorkspaceAndEnvironment = (key: string, workspaceId: string) => {
+  // Update workspace selection
+  const updateWorkspaceSelection = (key: string, workspaceId: string) => {
     const workspace = workspaces.find((p) => p.id === workspaceId);
-    if (workspace && workspace.environments.length > 0) {
-      const environment = workspace.environments[0];
+    if (workspace) {
       setSelectedPermissions({
         ...selectedPermissions,
         [key]: {
           ...selectedPermissions[key],
           workspaceId,
-          environmentId: environment.id,
           workspaceName: workspace.name,
-          environmentType: environment.type,
         },
       });
     }
@@ -149,7 +141,7 @@ export const AddApiKeyModal = ({
 
   const checkForDuplicatePermissions = () => {
     const permissions = Object.values(selectedPermissions);
-    const uniquePermissions = new Set(permissions.map((p) => `${p.workspaceId}-${p.environmentId}`));
+    const uniquePermissions = new Set(permissions.map((p) => p.workspaceId));
     return uniquePermissions.size !== permissions.length;
   };
 
@@ -157,31 +149,25 @@ export const AddApiKeyModal = ({
     const data = getValues();
 
     if (checkForDuplicatePermissions()) {
-      toast.error(t("environments.workspace.api_keys.duplicate_access"));
+      toast.error(t("workspace.api_keys.duplicate_access"));
       return;
     }
 
     // Convert permissions to the format expected by the API
-    const environmentPermissions = Object.values(selectedPermissions).map((permission) => ({
-      environmentId: permission.environmentId,
+    const workspacePermissions = Object.values(selectedPermissions).map((permission) => ({
       permission: permission.permission,
+      workspaceId: permission.workspaceId,
     }));
 
     await onSubmit({
       label: data.label,
-      environmentPermissions,
+      workspacePermissions,
       organizationAccess: selectedOrganizationAccess,
     });
 
     reset();
     setSelectedPermissions({});
     setSelectedOrganizationAccess(defaultOrganizationAccess);
-  };
-
-  // Get environment options for a workspace
-  const getEnvironmentOptionsForWorkspace = (workspaceId: string) => {
-    const workspace = workspaces.find((p) => p.id === workspaceId);
-    return workspace?.environments || [];
   };
 
   const isSubmitDisabled = () => {
@@ -215,12 +201,12 @@ export const AddApiKeyModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="px-1">{t("environments.workspace.api_keys.add_api_key")}</DialogTitle>
+          <DialogTitle className="px-1">{t("workspace.api_keys.add_api_key")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitAPIKey)} className="contents">
           <DialogBody className="space-y-4 overflow-y-auto px-1 py-4">
             <div className="space-y-2">
-              <Label>{t("environments.workspace.api_keys.api_key_label")}</Label>
+              <Label>{t("workspace.api_keys.api_key_label")}</Label>
               <Input
                 placeholder="e.g. GitHub, PostHog, Slack"
                 {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
@@ -228,7 +214,7 @@ export const AddApiKeyModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("environments.workspace.api_keys.workspace_access")}</Label>
+              <Label>{t("workspace.api_keys.workspace_access")}</Label>
               <div className="space-y-2">
                 {/* Permission rows */}
                 {Object.keys(selectedPermissions).map((key) => {
@@ -237,7 +223,7 @@ export const AddApiKeyModal = ({
                   return (
                     <div key={key} className="flex items-center gap-2">
                       {/* Workspace dropdown */}
-                      <div className="w-1/3">
+                      <div className="w-1/2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
@@ -256,7 +242,7 @@ export const AddApiKeyModal = ({
                               <DropdownMenuItem
                                 key={option.id}
                                 onClick={() => {
-                                  updateWorkspaceAndEnvironment(key, option.id);
+                                  updateWorkspaceSelection(key, option.id);
                                 }}>
                                 {option.name}
                               </DropdownMenuItem>
@@ -265,39 +251,8 @@ export const AddApiKeyModal = ({
                         </DropdownMenu>
                       </div>
 
-                      {/* Environment dropdown */}
-                      <div className="w-1/3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
-                              <span className="flex w-4/5 flex-1">
-                                <span className="w-full truncate text-left capitalize">
-                                  {permission.environmentType}
-                                </span>
-                              </span>
-                              <span className="flex h-full items-center border-l pl-3">
-                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
-                              </span>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto capitalize">
-                            {getEnvironmentOptionsForWorkspace(permission.workspaceId).map((env) => (
-                              <DropdownMenuItem
-                                key={env.id}
-                                onClick={() => {
-                                  updatePermission(key, "environmentId", env.id);
-                                }}>
-                                {env.type}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
                       {/* Permission level dropdown */}
-                      <div className="w-1/3">
+                      <div className="w-1/2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
@@ -337,13 +292,13 @@ export const AddApiKeyModal = ({
 
                 {/* Add permission button */}
                 <Button type="button" variant="outline" onClick={addPermission}>
-                  <span className="mr-2">+</span> {t("environments.settings.api_keys.add_permission")}
+                  <span className="mr-2">+</span> {t("workspace.settings.api_keys.add_permission")}
                 </Button>
               </div>
             </div>
 
             <div className="space-y-4">
-              <Label>{t("environments.workspace.api_keys.organization_access")}</Label>
+              <Label>{t("workspace.api_keys.organization_access")}</Label>
               {Object.keys(selectedOrganizationAccess).map((key) => (
                 <div key={key} className="mt-2 flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -366,11 +321,11 @@ export const AddApiKeyModal = ({
                 </div>
               ))}
               <p className="text-sm text-slate-500">
-                {t("environments.workspace.api_keys.organization_access_description")}
+                {t("workspace.api_keys.organization_access_description")}
               </p>
             </div>
             <Alert variant="warning">
-              <AlertTitle>{t("environments.workspace.api_keys.api_key_security_warning")}</AlertTitle>
+              <AlertTitle>{t("workspace.api_keys.api_key_security_warning")}</AlertTitle>
             </Alert>
           </DialogBody>
           <DialogFooter>
@@ -388,7 +343,7 @@ export const AddApiKeyModal = ({
               type="submit"
               disabled={isSubmitDisabled() || isCreatingAPIKey}
               loading={isCreatingAPIKey}>
-              {t("environments.workspace.api_keys.add_api_key")}
+              {t("workspace.api_keys.add_api_key")}
             </Button>
           </DialogFooter>
         </form>

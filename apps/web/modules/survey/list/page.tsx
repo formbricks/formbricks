@@ -7,14 +7,14 @@ import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
+import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 interface SurveyTemplateProps {
   params: Promise<{
-    environmentId: string;
+    workspaceId: string;
   }>;
 }
 
@@ -31,27 +31,28 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(params.environmentId);
+  const workspace = await getWorkspaceWithTeamIds(params.workspaceId);
 
   if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, isBilling, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
+    return redirect(`/workspaces/${workspace.id}/settings/billing`);
   }
 
-  const surveyCount = await getSurveyCount(params.environmentId);
+  const surveyCount = await getSurveyCount(params.workspaceId);
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" asChild>
-        <Link href={`/environments/${environment.id}/surveys/templates`}>
-          {t("environments.surveys.new_survey")}
+        <Link href={`${workspaceBasePath}/surveys/templates`}>
+          {t("workspace.surveys.new_survey")}
           <PlusIcon />
         </Link>
       </Button>
@@ -68,7 +69,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     return (
       <TemplateContainerWithPreview
         userId={session.user.id}
-        environment={environment}
+        appSetupCompleted={workspace.appSetupCompleted}
         workspace={workspaceWithRequiredProps}
         isTemplatePage={false}
         publicDomain={publicDomain}
@@ -81,7 +82,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       <>
         <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
         <SurveysList
-          environmentId={environment.id}
+          workspaceId={workspace.id}
           isReadOnly={isReadOnly}
           publicDomain={publicDomain}
           userId={session.user.id}
@@ -95,11 +96,11 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     content = (
       <>
         <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.no_surveys_created_yet")}
+          {t("workspace.surveys.no_surveys_created_yet")}
         </h1>
 
         <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
+          {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
         </h2>
       </>
     );

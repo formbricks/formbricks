@@ -1,45 +1,36 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TWorkspace } from "@formbricks/types/workspace";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface PersonSecondaryNavigationProps {
   activeId: string;
-  environmentId?: string;
+  workspaceId?: string;
   loading?: boolean;
 }
 
 export const ContactsSecondaryNavigation = async ({
   activeId,
-  environmentId,
+  workspaceId,
   loading,
 }: PersonSecondaryNavigationProps) => {
-  let workspace: TWorkspace | null = null;
   const t = await getTranslate();
-  if (!loading && environmentId) {
-    workspace = await getWorkspaceByEnvironmentId(environmentId);
 
-    if (!workspace) {
-      throw new ResourceNotFoundError(t("common.workspace"), null);
-    }
-  }
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
 
   const navigation = [
     {
       id: "contacts",
       label: t("common.contacts"),
-      href: `/environments/${environmentId}/contacts`,
+      href: `${workspaceBasePath}/contacts`,
     },
     {
       id: "attributes",
       label: t("common.attributes"),
-      href: `/environments/${environmentId}/attributes`,
+      href: `${workspaceBasePath}/attributes`,
     },
     {
       id: "segments",
       label: t("common.segments"),
-      href: `/environments/${environmentId}/segments`,
+      href: `${workspaceBasePath}/segments`,
     },
   ];
 

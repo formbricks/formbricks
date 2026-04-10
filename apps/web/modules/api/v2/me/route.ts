@@ -18,15 +18,10 @@ export const GET = async (request: NextRequest) =>
 
       return responses.successResponse({
         data: {
-          environmentPermissions: authentication.environmentPermissions.map((permission) => ({
-            environmentId: permission.environmentId,
-            environmentType: permission.environmentType,
+          workspacePermissions: authentication.workspacePermissions.map((permission) => ({
             permissions: permission.permission,
             workspaceId: permission.workspaceId,
             workspaceName: permission.workspaceName,
-            // Backwards compat: old consumers expect project fields
-            projectId: permission.workspaceId,
-            projectName: permission.workspaceName,
           })),
           organizationId: authentication.organizationId,
           organizationAccess: authentication.organizationAccess,

@@ -39,7 +39,7 @@ import {
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -229,14 +229,14 @@ export const sendInviteAcceptedEmail = async (
 export const sendResponseFinishedEmail = async (
   email: string,
   locale: TUserLocale,
-  environmentId: string,
+  workspaceId: string,
   survey: TSurvey,
   response: TResponse,
   responseCount: number
 ): Promise<void> => {
   const t = await getTranslate(locale);
   const personEmail = response.contactAttributes?.email;
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
 
   if (!organization) {
     throw new ResourceNotFoundError("Organization", null);
@@ -266,7 +266,7 @@ export const sendResponseFinishedEmail = async (
     responseCount,
     response,
     WEBAPP_URL,
-    environmentId,
+    workspaceId,
     organization,
     elements: elementsWithResolvedUrls,
     t,
@@ -291,7 +291,7 @@ export const sendResponseFinishedEmail = async (
 export const sendEmbedSurveyPreviewEmail = async (
   to: string,
   innerHtml: string,
-  environmentId: string,
+  workspaceId: string,
   locale: TUserLocale,
   logoUrl?: string
 ): Promise<boolean> => {
@@ -300,7 +300,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const html = await renderEmbedSurveyPreviewEmail({
     html: innerHtml,
-    environmentId,
+    workspaceId,
     logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,

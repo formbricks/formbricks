@@ -74,16 +74,16 @@ if (!result.ok) {
     case ErrorCode.CacheValidationError:
     case ErrorCode.RedisOperationError:
     case ErrorCode.CacheCorruptionError:
-      // Handle based on error code
+    // Handle based on error code
   }
   return;
 }
 const data = result.data; // Type-safe access
 
 // ✅ GOOD - withCache never fails, always returns function result
-const environmentData = await cacheService.withCache(
-  () => fetchEnvironmentFromDB(environmentId),
-  createCacheKey.environment.state(environmentId),
+const workspaceData = await cacheService.withCache(
+  () => fetchWorkspaceFromDB(workspaceId),
+  createCacheKey.workspace.state(workspaceId),
   60000
 ); // Returns T directly, handles cache errors internally
 
@@ -126,10 +126,10 @@ export function validateInputs(...pairs: [unknown, ZodType][]): Result<unknown[]
 
 ```typescript
 export const createCacheKey = {
-  environment: {
-    state: (environmentId: string): CacheKey,
-    config: (environmentId: string): CacheKey,
-    segments: (environmentId: string): CacheKey,
+  workspace: {
+    state: (workspaceId: string): CacheKey,
+    config: (workspaceId: string): CacheKey,
+    segments: (workspaceId: string): CacheKey,
   },
   organization: {
     billing: (organizationId: string): CacheKey,
@@ -319,9 +319,9 @@ const result = await cache.get<UserData>(key);
 const success = await cache.set(key, data, ttl);
 
 // Never-failing withCache
-const environmentData = await cache.withCache(
-  () => fetchEnvironmentFromDB(environmentId),
-  createCacheKey.environment.state(environmentId),
+const workspaceData = await cache.withCache(
+  () => fetchWorkspaceFromDB(workspaceId),
+  createCacheKey.workspace.state(workspaceId),
   60000
 );
 

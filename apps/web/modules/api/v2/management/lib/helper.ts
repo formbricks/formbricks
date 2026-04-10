@@ -1,34 +1,31 @@
 import { Result, ok } from "@formbricks/types/error-handlers";
-import {
-  fetchEnvironmentId,
-  fetchEnvironmentIdFromSurveyIds,
-} from "@/modules/api/v2/management/lib/services";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { fetchWorkspaceId, fetchWorkspaceIdFromSurveyIds } from "./services";
 
-export const getEnvironmentId = async (
+export const getWorkspaceId = async (
   id: string,
   isResponseId: boolean
-): Promise<Result<string, ApiErrorResponseV2>> => {
-  const result = await fetchEnvironmentId(id, isResponseId);
+): Promise<Result<{ workspaceId: string }, ApiErrorResponseV2>> => {
+  const result = await fetchWorkspaceId(id, isResponseId);
 
   if (!result.ok) {
     return { ok: false, error: result.error as ApiErrorResponseV2 };
   }
 
-  return ok(result.data.environmentId);
+  return ok({ workspaceId: result.data.workspaceId });
 };
 
 /**
- * Validates that all surveys are in the same environment and return the environment id
- * @param surveyIds array of survey ids from the same environment
- * @returns the common environment id
+ * Validates that all surveys are in the same workspace and return the workspace id
+ * @param surveyIds array of survey ids from the same workspace
+ * @returns the common workspace id
  */
-export const getEnvironmentIdFromSurveyIds = async (
+export const getWorkspaceIdFromSurveyIds = async (
   surveyIds: string[]
 ): Promise<Result<string | null, ApiErrorResponseV2>> => {
   if (surveyIds.length === 0) return ok(null);
 
-  const result = await fetchEnvironmentIdFromSurveyIds(surveyIds);
+  const result = await fetchWorkspaceIdFromSurveyIds(surveyIds);
 
   if (!result.ok) {
     return { ok: false, error: result.error as ApiErrorResponseV2 };
@@ -40,7 +37,7 @@ export const getEnvironmentIdFromSurveyIds = async (
       ok: false,
       error: {
         type: "bad_request",
-        details: [{ field: "surveyIds", issue: "not all surveys are in the same environment" }],
+        details: [{ field: "surveyIds", issue: "not all surveys are in the same workspace" }],
       },
     };
   }

@@ -1,10 +1,10 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -18,13 +18,13 @@ import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-n
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditLogoProps {
-  workspace: Workspace;
-  environmentId: string;
+  workspace: TWorkspace;
+  workspaceId: string;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
 }
 
-export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
+export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
   const { t } = useTranslation();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(workspace.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(workspace.logo?.bgColor || undefined);
@@ -37,14 +37,14 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
   const handleImageUpload = async (file: File) => {
     setIsLoading(true);
     try {
-      const uploadResult = await handleFileUpload(file, environmentId);
+      const uploadResult = await handleFileUpload(file, workspaceId);
       if (uploadResult.error) {
         toast.error(uploadResult.error);
         return;
       }
       setLogoUrl(uploadResult.url);
     } catch (error) {
-      toast.error(t("environments.workspace.look.logo_upload_failed"));
+      toast.error(t("workspace.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +68,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
 
     setIsLoading(true);
     try {
-      const updatedWorkspace: Workspace["logo"] = {
+      const updatedWorkspace = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
@@ -76,13 +76,13 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
         data: updatedWorkspace,
       });
       if (updateWorkspaceResponse?.data) {
-        toast.success(t("environments.workspace.look.logo_updated_successfully"));
+        toast.success(t("workspace.look.logo_updated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.workspace.look.failed_to_update_logo"));
+      toast.error(t("workspace.look.failed_to_update_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -98,7 +98,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
 
     setIsLoading(true);
     try {
-      const updatedWorkspace: Workspace["logo"] = {
+      const updatedWorkspace = {
         logo: { url: undefined, bgColor: undefined },
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
@@ -106,13 +106,13 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
         data: updatedWorkspace,
       });
       if (updateWorkspaceResponse?.data) {
-        toast.success(t("environments.workspace.look.logo_removed_successfully"));
+        toast.success(t("workspace.look.logo_removed_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.workspace.look.failed_to_remove_logo"));
+      toast.error(t("workspace.look.failed_to_remove_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -145,7 +145,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
           <FileInput
             id="logo-input"
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
               if (files?.[0]) {
                 setLogoUrl(files[0]);
@@ -180,22 +180,22 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
                 }}
                 variant="secondary"
                 size="sm">
-                {t("environments.workspace.look.replace_logo")}
+                {t("workspace.look.replace_logo")}
               </Button>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setConfirmRemoveLogoModalOpen(true)}
                 disabled={!isEditing}>
-                {t("environments.workspace.look.remove_logo")}
+                {t("workspace.look.remove_logo")}
               </Button>
             </div>
             <AdvancedOptionToggle
               isChecked={isBgColorEnabled}
               onToggle={toggleBackgroundColor}
               htmlId="addBackgroundColor"
-              title={t("environments.workspace.look.add_background_color")}
-              description={t("environments.workspace.look.add_background_color_description")}
+              title={t("workspace.look.add_background_color")}
+              description={t("workspace.look.add_background_color_description")}
               childBorder
               customContainerClass="p-0"
               childrenContainerClass="overflow-visible"
@@ -221,7 +221,7 @@ export const EditLogo = ({ workspace, environmentId, isReadOnly, isStorageConfig
           open={confirmRemoveLogoModalOpen}
           setOpen={setConfirmRemoveLogoModalOpen}
           deleteWhat={t("common.logo")}
-          text={t("environments.workspace.look.remove_logo_confirmation")}
+          text={t("workspace.look.remove_logo_confirmation")}
           onDelete={removeLogo}
         />
       </div>

@@ -27,14 +27,14 @@ test.describe("API Tests for WorkspaceTeams", () => {
       });
       expect(response.ok()).toBe(true);
       const responseBody = (await response.json()) as {
-        data: { organizationId: string; environmentPermissions: { workspaceId: string }[] };
+        data: { organizationId: string; workspacePermissions: { workspaceId: string }[] };
       };
 
       expect(responseBody.data).toBeTruthy();
       expect(responseBody.data.organizationId).toBeTruthy();
 
       organizationId = responseBody.data.organizationId;
-      workspaceId = responseBody.data.environmentPermissions[0].workspaceId;
+      workspaceId = responseBody.data.workspacePermissions[0].workspaceId;
     });
 
     // Create a team to use for the workspace team

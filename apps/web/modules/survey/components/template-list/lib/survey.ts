@@ -3,19 +3,14 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
-import {
-  getOrganizationByEnvironmentId,
-  subscribeOrganizationMembersToSurveyResponses,
-} from "@/lib/organization/service";
+import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyCreateInput
-): Promise<TSurvey> => {
+export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   try {
     const { createdBy, ...restSurveyBody } = surveyBody;
 
@@ -24,7 +19,11 @@ export const createSurvey = async (
       delete restSurveyBody.languages;
     }
 
-    const actionClasses = await getActionClasses(environmentId);
+    const [organizationId, actionClasses] = await Promise.all([
+      getOrganizationIdFromWorkspaceId(workspaceId),
+      getActionClasses(workspaceId),
+    ]);
+    const organization = await getOrganization(organizationId);
 
     // @ts-expect-error
     let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
@@ -43,8 +42,6 @@ export const createSurvey = async (
         },
       };
     }
-
-    const organization = await getOrganizationByEnvironmentId(environmentId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -70,9 +67,9 @@ export const createSurvey = async (
     const survey = await prisma.survey.create({
       data: {
         ...data,
-        environment: {
+        workspace: {
           connect: {
-            id: environmentId,
+            id: workspaceId,
           },
         },
       },
@@ -86,9 +83,9 @@ export const createSurvey = async (
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
+          workspace: {
             connect: {
-              id: environmentId,
+              id: workspaceId,
             },
           },
         },

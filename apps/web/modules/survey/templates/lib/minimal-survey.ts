@@ -8,7 +8,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   updatedAt: new Date(),
   name: "Minimal Survey",
   type: "app",
-  environmentId: "someEnvId1",
+  workspaceId: "someWorkspaceId1",
   createdBy: null,
   status: "draft",
   displayOption: "displayOnce",

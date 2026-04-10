@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -8,29 +7,34 @@ import { getDisplaysByContactId } from "@/lib/display/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
-import { getWorkspaceByEnvironmentId } from "@/lib/workspace/service";
+import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { ActivityTimeline } from "./activity-timeline";
 
 interface ActivitySectionProps {
-  environment: TEnvironment;
+  workspaceId: string;
   contactId: string;
   environmentTags: TTag[];
 }
 
-export const ActivitySection = async ({ environment, contactId, environmentTags }: ActivitySectionProps) => {
-  const [responses, displays] = await Promise.all([
+export const ActivitySection = async ({ workspaceId, contactId, environmentTags }: ActivitySectionProps) => {
+  const [responses, displays, workspace] = await Promise.all([
     getResponsesByContactId(contactId),
     getDisplaysByContactId(contactId),
+    getWorkspace(workspaceId),
   ]);
+
+  if (!workspace) {
+    throw new ResourceNotFoundError("Workspace", null);
+  }
 
   const allSurveyIds = [
     ...new Set([...(responses?.map((r) => r.surveyId) || []), ...displays.map((d) => d.surveyId)]),
   ];
 
-  const surveys: TSurvey[] = allSurveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
+  const surveys: TSurvey[] = allSurveyIds.length === 0 ? [] : ((await getSurveys(workspace.id)) ?? []);
 
   const session = await getServerSession(authOptions);
   const t = await getTranslate();
@@ -45,12 +49,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
   }
 
   if (!responses) {
-    throw new Error(t("environments.contacts.no_responses_found"));
-  }
-
-  const workspace = await getWorkspaceByEnvironmentId(environment.id);
-  if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    throw new Error(t("workspace.contacts.no_responses_found"));
   }
 
   const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
@@ -62,7 +61,7 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
       surveys={surveys}
       responses={responses}
       displays={displays}
-      environment={environment}
+      workspaceId={workspaceId}
       environmentTags={environmentTags}
       locale={locale}
       workspacePermission={workspacePermission}

@@ -40,16 +40,14 @@ export const ConfirmDeleteSegmentModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("environments.segments.delete_segment")}</DialogTitle>
-          <DialogDescription>
-            {t("environments.workspace.general.this_action_cannot_be_undone")}
-          </DialogDescription>
+          <DialogTitle>{t("workspace.segments.delete_segment")}</DialogTitle>
+          <DialogDescription>{t("workspace.general.this_action_cannot_be_undone")}</DialogDescription>
         </DialogHeader>
 
         {allSurveys.length > 0 && (
           <DialogBody>
             <div className="space-y-2">
-              <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
+              <p>{t("workspace.segments.cannot_delete_segment_used_in_surveys")}</p>
               <ol className="my-2 ml-4 list-decimal">
                 {allSurveys.map((surveyName) => (
                   <li key={surveyName}>{surveyName}</li>
@@ -57,7 +55,7 @@ export const ConfirmDeleteSegmentModal = ({
               </ol>
             </div>
             <p className="mt-2">
-              {t("environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")}
+              {t("workspace.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")}
             </p>
           </DialogBody>
         )}

@@ -2,7 +2,6 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TWorkspace } from "@formbricks/types/workspace";
@@ -23,7 +22,7 @@ const selectWorkspace = {
   placement: true,
   clickOutsideClose: true,
   overlay: true,
-  environments: true,
+  appSetupCompleted: true,
   styling: true,
   logo: true,
   customHeadScripts: true,
@@ -107,35 +106,6 @@ export const getWorkspaces = reactCache(
   }
 );
 
-export const getWorkspaceByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TWorkspace | null> => {
-    validateInputs([environmentId, ZId]);
-
-    let workspacePrisma;
-
-    try {
-      workspacePrisma = await prisma.workspace.findFirst({
-        where: {
-          environments: {
-            some: {
-              id: environmentId,
-            },
-          },
-        },
-        select: selectWorkspace,
-      });
-
-      return workspacePrisma;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting workspace by environment id");
-        throw new DatabaseError(error.message);
-      }
-      throw error;
-    }
-  }
-);
-
 export const getWorkspace = reactCache(async (workspaceId: string): Promise<TWorkspace | null> => {
   let workspacePrisma;
   try {
@@ -174,8 +144,8 @@ export const getOrganizationWorkspacesCount = reactCache(async (organizationId: 
   }
 });
 
-export const getUserWorkspaceEnvironmentsByOrganizationIds = reactCache(
-  async (organizationIds: string[], userId: string): Promise<Pick<TWorkspace, "environments">[]> => {
+export const getUserWorkspacesByOrganizationIds = reactCache(
+  async (organizationIds: string[], userId: string): Promise<Pick<TWorkspace, "id">[]> => {
     validateInputs([organizationIds, ZId.array()], [userId, ZId]);
     try {
       if (organizationIds.length === 0) {
@@ -224,7 +194,7 @@ export const getUserWorkspaceEnvironmentsByOrganizationIds = reactCache(
         where: {
           OR: whereConditions,
         },
-        select: { environments: true },
+        select: { id: true },
       });
 
       return workspaces;

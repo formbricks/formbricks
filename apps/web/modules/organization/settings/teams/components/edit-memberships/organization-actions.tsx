@@ -33,7 +33,6 @@ interface OrganizationActionsProps {
   isInviteDisabled: boolean;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
-  environmentId: string;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
   isStorageConfigured: boolean;
@@ -50,7 +49,6 @@ export const OrganizationActions = ({
   isInviteDisabled,
   isAccessControlAllowed,
   isFormbricksCloud,
-  environmentId,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
   isStorageConfigured,
@@ -77,7 +75,7 @@ export const OrganizationActions = ({
         setLoading(false);
         return;
       }
-      toast.success(t("environments.settings.general.member_deleted_successfully"));
+      toast.success(t("workspace.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
@@ -100,7 +98,7 @@ export const OrganizationActions = ({
       });
       if (inviteUserActionResult?.data) {
         router.refresh();
-        toast.success(t("environments.settings.general.member_invited_successfully"));
+        toast.success(t("workspace.settings.general.member_invited_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(inviteUserActionResult);
         toast.error(errorMessage);
@@ -130,11 +128,11 @@ export const OrganizationActions = ({
         }
       });
       if (failedInvites.length > 0) {
-        toast.error(`${failedInvites.length} ${t("environments.settings.general.invites_failed")}`);
+        toast.error(`${failedInvites.length} ${t("workspace.settings.general.invites_failed")}`);
       }
       if (successInvites.length > 0) {
         toast.success(
-          `${successInvites.length} ${t("environments.settings.general.member_invited_successfully")}`
+          `${successInvites.length} ${t("workspace.settings.general.member_invited_successfully")}`
         );
       }
     }
@@ -145,7 +143,7 @@ export const OrganizationActions = ({
       <div className="mb-4 flex justify-end space-x-2 text-right">
         {role !== "owner" && isMultiOrgEnabled && (
           <Button variant="destructive" size="sm" onClick={() => setIsLeaveOrganizationModalOpen(true)}>
-            {t("environments.settings.general.leave_organization")}
+            {t("workspace.settings.general.leave_organization")}
             <XIcon />
           </Button>
         )}
@@ -157,7 +155,7 @@ export const OrganizationActions = ({
             onClick={() => {
               setIsInviteMemberModalOpen(true);
             }}>
-            {t("environments.settings.teams.invite_member")}
+            {t("workspace.settings.teams.invite_member")}
           </Button>
         )}
       </div>
@@ -168,7 +166,6 @@ export const OrganizationActions = ({
         membershipRole={membershipRole}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
-        environmentId={environmentId}
         teams={teams}
         isStorageConfigured={isStorageConfigured}
         isOwnerOrManager={isOwnerOrManager}
@@ -179,14 +176,14 @@ export const OrganizationActions = ({
       <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setIsLeaveOrganizationModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("environments.settings.general.leave_organization_title")}</DialogTitle>
+            <DialogTitle>{t("workspace.settings.general.leave_organization_title")}</DialogTitle>
             <DialogDescription>
-              {t("environments.settings.general.leave_organization_description")}
+              {t("workspace.settings.general.leave_organization_description")}
             </DialogDescription>
           </DialogHeader>
           {isLeaveOrganizationDisabled && (
             <p className="mt-2 text-sm text-red-700">
-              {t("environments.settings.general.cannot_leave_only_organization")}
+              {t("workspace.settings.general.cannot_leave_only_organization")}
             </p>
           )}
           <DialogFooter>
@@ -198,7 +195,7 @@ export const OrganizationActions = ({
               onClick={handleLeaveOrganization}
               loading={loading}
               disabled={isLeaveOrganizationDisabled}>
-              {t("environments.settings.general.leave_organization_ok_btn_text")}
+              {t("workspace.settings.general.leave_organization_ok_btn_text")}
             </Button>
           </DialogFooter>
         </DialogContent>

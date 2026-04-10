@@ -1,7 +1,7 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
+import { TJsFileUploadParams, type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import type {
   TResponseData,
   TResponseTtc,
@@ -38,7 +38,7 @@ interface VariableStackEntry {
 
 export function Survey({
   appUrl,
-  environmentId,
+  workspaceId,
   isPreviewMode = false,
   userId,
   contactId,
@@ -80,15 +80,15 @@ export function Survey({
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
-  if (appUrl && environmentId) {
+  if (appUrl && workspaceId) {
     apiClient = new ApiClient({
       appUrl,
-      environmentId,
+      workspaceId,
     });
   }
 
   const surveyState = useMemo(() => {
-    if (appUrl && environmentId) {
+    if (appUrl && workspaceId) {
       if (mode === "inline") {
         return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId, contactId);
       }
@@ -96,21 +96,21 @@ export function Survey({
       return new SurveyState(survey.id, null, null, userId, contactId);
     }
     return null;
-  }, [appUrl, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
+  }, [appUrl, workspaceId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
 
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
+  const [localSurvey, setlocalSurvey] = useState<TJsWorkspaceStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
   const responseQueue = useMemo(() => {
-    if (appUrl && environmentId && surveyState) {
+    if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
         {
           appUrl,
-          environmentId,
+          workspaceId,
           retryAttempts: 4,
           onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
@@ -140,7 +140,7 @@ export function Survey({
     }
 
     return null;
-  }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
+  }, [appUrl, workspaceId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
   const questions = useMemo(() => getElementsFromSurveyBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -298,7 +298,7 @@ export function Survey({
   useEffect(() => {
     // call onDisplay when component is mounted
 
-    if (appUrl && environmentId) {
+    if (appUrl && workspaceId) {
       createDisplay();
     } else {
       onDisplay?.();
@@ -544,7 +544,7 @@ export function Survey({
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
-      if (!appUrl || !environmentId) {
+      if (!appUrl || !workspaceId) {
         onResponse?.({
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
@@ -598,7 +598,7 @@ export function Survey({
     },
     [
       appUrl,
-      environmentId,
+      workspaceId,
       isPreviewMode,
       surveyState,
       responseQueue,

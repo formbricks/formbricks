@@ -47,11 +47,11 @@ const getSortOptions = (t: TFunction): TSortOption[] => [
     value: "createdAt",
   },
   {
-    label: t("environments.surveys.alphabetical"),
+    label: t("workspace.surveys.alphabetical"),
     value: "name",
   },
   {
-    label: t("environments.surveys.relevance"),
+    label: t("workspace.surveys.relevance"),
     value: "relevance",
   },
 ];
@@ -117,7 +117,7 @@ export const SurveyFilters = ({
         <SearchBar
           value={name}
           onChange={setName}
-          placeholder={t("environments.surveys.search_by_survey_name")}
+          placeholder={t("workspace.surveys.search_by_survey_name")}
           className="border-slate-700"
         />
         <div>

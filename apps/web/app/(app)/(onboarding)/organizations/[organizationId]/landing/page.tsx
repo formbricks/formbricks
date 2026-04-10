@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
-import { WorkspaceAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/workspace-and-org-switch";
+import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -45,7 +45,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isOwnerOrManager={false}
               isAccessControlAllowed={false}
               isMember={isMember}
-              environments={[]}
             />
           </div>
           <div className="flex h-full flex-col items-center justify-center space-y-12">

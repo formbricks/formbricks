@@ -910,7 +910,6 @@ describe("validation.isSurveyValid", () => {
       id: "survey1",
       name: "Test Survey",
       type: "web",
-      environmentId: "env1",
       status: "draft",
       questions: [],
       blocks: [
@@ -967,7 +966,7 @@ describe("validation.isSurveyValid", () => {
       required: false,
     });
     expect(validation.isSurveyValid(baseSurvey, "de", mockT)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.fallback_missing");
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.fallback_missing");
   });
 
   test("should return false and toast error if response limit is 0", () => {
@@ -976,7 +975,7 @@ describe("validation.isSurveyValid", () => {
       autoComplete: 0,
     };
     expect(validation.isSurveyValid(surveyWithZeroLimit, "en", mockT, 5)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.response_limit_can_t_be_set_to_0");
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.response_limit_can_t_be_set_to_0");
   });
 
   test("should return false and toast error if response limit is less than or equal to response count", () => {
@@ -986,7 +985,7 @@ describe("validation.isSurveyValid", () => {
     };
     expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      "workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
       {
         id: "response-limit-error",
       }
@@ -1000,7 +999,7 @@ describe("validation.isSurveyValid", () => {
     };
     expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      "workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
       {
         id: "response-limit-error",
       }
@@ -1036,9 +1035,7 @@ describe("validation.isSurveyValid", () => {
     } as unknown as TSurvey;
 
     expect(validation.isSurveyValid(surveyWithEmptyClosedMessageHeading, "en", mockT)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.survey_closed_message_heading_required"
-    );
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.survey_closed_message_heading_required");
   });
 
   test("should return false and toast error if a link survey has a whitespace-only custom survey closed message heading", () => {
@@ -1052,9 +1049,7 @@ describe("validation.isSurveyValid", () => {
     } as unknown as TSurvey;
 
     expect(validation.isSurveyValid(surveyWithWhitespaceClosedMessageHeading, "en", mockT)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.survey_closed_message_heading_required"
-    );
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.survey_closed_message_heading_required");
   });
 
   test("should return true if a link survey has a custom survey closed message heading and no subheading", () => {
@@ -1097,12 +1092,11 @@ describe("validation.isSurveyValid", () => {
           title: "temp segment",
           description: "",
           surveyId: "survey1",
-          environmentId: "env1",
         },
       } as unknown as TSurvey;
 
       expect(validation.isSurveyValid(surveyWithInvalidSegment, "en", mockT)).toBe(false); // Zod parse will fail
-      expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.invalid_targeting");
+      expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.invalid_targeting");
     });
 
     test("should return true for app survey with valid segment filters", () => {
@@ -1122,7 +1116,6 @@ describe("validation.isSurveyValid", () => {
           title: "temp segment",
           description: "",
           surveyId: "survey1",
-          environmentId: "env1",
         },
       } as unknown as TSurvey;
       const mockSafeParse = vi.spyOn(ZSegmentFilters, "safeParse");

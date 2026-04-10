@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -28,12 +27,7 @@ const LandingLayout = async (props: {
 
   if (workspaces.length !== 0) {
     const firstWorkspace = workspaces[0];
-    const environments = await getEnvironments(firstWorkspace.id);
-    const prodEnvironment = environments.find((e) => e.type === "production");
-
-    if (prodEnvironment) {
-      return redirect(`/environments/${prodEnvironment.id}/`);
-    }
+    return redirect(`/workspaces/${firstWorkspace.id}/`);
   }
 
   return <>{children}</>;

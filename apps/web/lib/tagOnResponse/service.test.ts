@@ -5,6 +5,8 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { getResponse } from "../response/service";
 import { addTagToRespone, deleteTagOnResponse, getTagsOnResponsesCount } from "./service";
 
+vi.mock("server-only", () => ({}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     tagsOnResponses: {
@@ -33,7 +35,7 @@ describe("TagOnResponse Service", () => {
 
     const mockTagOnResponse = {
       tag: {
-        environmentId: "env1",
+        workspaceId: "workspace1",
       },
     };
 
@@ -55,7 +57,7 @@ describe("TagOnResponse Service", () => {
       select: {
         tag: {
           select: {
-            environmentId: true,
+            workspaceId: true,
           },
         },
       },
@@ -71,7 +73,7 @@ describe("TagOnResponse Service", () => {
 
     const mockDeletedTag = {
       tag: {
-        environmentId: "env1",
+        workspaceId: "workspace1",
       },
     };
 
@@ -95,14 +97,14 @@ describe("TagOnResponse Service", () => {
       select: {
         tag: {
           select: {
-            environmentId: true,
+            workspaceId: true,
           },
         },
       },
     });
   });
 
-  test("getTagsOnResponsesCount should return tag counts for an environment", async () => {
+  test("getTagsOnResponsesCount should return tag counts for a workspace", async () => {
     const mockTagsCount = [
       { tagId: "tag1", _count: { _all: 5 } },
       { tagId: "tag2", _count: { _all: 3 } },
@@ -122,9 +124,7 @@ describe("TagOnResponse Service", () => {
       where: {
         response: {
           survey: {
-            environment: {
-              id: "env1",
-            },
+            workspaceId: "env1",
           },
         },
       },

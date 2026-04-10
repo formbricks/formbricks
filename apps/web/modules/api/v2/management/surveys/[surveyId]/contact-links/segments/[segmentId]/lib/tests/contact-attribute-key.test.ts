@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
+import { getContactAttributeKeys } from "../contact-attribute-key";
+
+vi.mock("react", () => ({
+  cache: vi.fn((fn: Function) => fn),
+}));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -12,7 +16,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("getContactAttributeKeys", () => {
-  const mockEnvironmentId = "mock-env-123";
+  const mockWorkspaceId = "mock-ws-123";
   const mockContactAttributeKeys = [{ key: "email" }, { key: "name" }, { key: "userId" }] as Awaited<
     ReturnType<typeof prisma.contactAttributeKey.findMany>
   >;
@@ -24,10 +28,10 @@ describe("getContactAttributeKeys", () => {
   test("successfully retrieves contact attribute keys", async () => {
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockContactAttributeKeys);
 
-    const result = await getContactAttributeKeys(mockEnvironmentId);
+    const result = await getContactAttributeKeys(mockWorkspaceId);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { environmentId: mockEnvironmentId },
+      where: { workspaceId: mockWorkspaceId },
       select: { key: true },
     });
 
@@ -41,7 +45,7 @@ describe("getContactAttributeKeys", () => {
     const mockError = new Error("Database error");
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(mockError);
 
-    const result = await getContactAttributeKeys(mockEnvironmentId);
+    const result = await getContactAttributeKeys(mockWorkspaceId);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

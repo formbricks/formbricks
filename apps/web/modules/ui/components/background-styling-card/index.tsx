@@ -19,7 +19,7 @@ interface BackgroundStylingCardProps {
   colors: string[];
   isSettingsPage?: boolean;
   disabled?: boolean;
-  environmentId: string;
+  workspaceId: string;
   isUnsplashConfigured: boolean;
   form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   isStorageConfigured: boolean;
@@ -31,7 +31,7 @@ export const BackgroundStylingCard = ({
   colors,
   isSettingsPage = false,
   disabled,
-  environmentId,
+  workspaceId,
   isUnsplashConfigured,
   form,
   isStorageConfigured = true,
@@ -70,12 +70,12 @@ export const BackgroundStylingCard = ({
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-                {t("environments.surveys.edit.background_styling")}
+                {t("workspace.surveys.edit.background_styling")}
               </p>
               {isSettingsPage && <Badge type="gray" size="normal" text={t("common.link_surveys")} />}
             </div>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
-              {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}
+              {t("workspace.surveys.edit.change_the_background_to_a_color_image_or_animation")}
             </p>
           </div>
         </div>
@@ -89,9 +89,9 @@ export const BackgroundStylingCard = ({
             render={({ field }) => (
               <FormItem>
                 <div>
-                  <FormLabel>{t("environments.surveys.edit.change_background")}</FormLabel>
+                  <FormLabel>{t("workspace.surveys.edit.change_background")}</FormLabel>
                   <FormDescription>
-                    {t("environments.surveys.edit.pick_a_background_from_our_library_or_upload_your_own")}
+                    {t("workspace.surveys.edit.pick_a_background_from_our_library_or_upload_your_own")}
                   </FormDescription>
                 </div>
 
@@ -108,7 +108,7 @@ export const BackgroundStylingCard = ({
                     }}
                     colors={colors}
                     bgType={field.value?.bgType ?? "color"}
-                    environmentId={environmentId}
+                    workspaceId={workspaceId}
                     isUnsplashConfigured={isUnsplashConfigured}
                     isStorageConfigured={isStorageConfigured}
                   />
@@ -126,9 +126,9 @@ export const BackgroundStylingCard = ({
                   render={({ field }) => (
                     <FormItem>
                       <div>
-                        <FormLabel>{t("environments.surveys.edit.brightness")}</FormLabel>
+                        <FormLabel>{t("workspace.surveys.edit.brightness")}</FormLabel>
                         <FormDescription>
-                          {t("environments.surveys.edit.darken_or_lighten_background_of_your_choice")}
+                          {t("workspace.surveys.edit.darken_or_lighten_background_of_your_choice")}
                         </FormDescription>
                       </div>
 

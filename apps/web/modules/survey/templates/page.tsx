@@ -2,31 +2,31 @@ import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/workspace";
+import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TemplateContainerWithPreview } from "./components/template-container";
 
 interface SurveyTemplateProps {
   params: Promise<{
-    environmentId: string;
+    workspaceId: string;
   }>;
 }
 
 export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const t = await getTranslate();
   const params = await props.params;
-  const environmentId = params.environmentId;
+  const workspaceId = params.workspaceId;
 
-  const { session, environment, isReadOnly } = await getEnvironmentAuth(environmentId);
+  const { session, isReadOnly } = await getWorkspaceAuth(workspaceId);
 
-  const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(environmentId);
+  const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
   if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (isReadOnly) {
-    return redirect(`/environments/${environment.id}/surveys`);
+    return redirect(`/workspaces/${workspace.id}/surveys`);
   }
 
   const publicDomain = getPublicDomain();
@@ -34,7 +34,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   return (
     <TemplateContainerWithPreview
       userId={session.user.id}
-      environment={environment}
+      appSetupCompleted={workspace.appSetupCompleted}
       workspace={workspace}
       publicDomain={publicDomain}
     />

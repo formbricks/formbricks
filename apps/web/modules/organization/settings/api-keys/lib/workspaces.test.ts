@@ -10,38 +10,10 @@ const mockWorkspaces: TOrganizationWorkspace[] = [
   {
     id: "workspace1",
     name: "Workspace 1",
-    environments: [
-      {
-        id: "env1",
-        type: "production",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        workspaceId: "workspace1",
-        appSetupCompleted: true,
-      },
-      {
-        id: "env2",
-        type: "development",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        workspaceId: "workspace1",
-        appSetupCompleted: true,
-      },
-    ],
   },
   {
     id: "workspace2",
     name: "Workspace 2",
-    environments: [
-      {
-        id: "env3",
-        type: "production",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        workspaceId: "workspace2",
-        appSetupCompleted: true,
-      },
-    ],
   },
 ];
 
@@ -73,7 +45,6 @@ describe("Workspaces Management", () => {
         },
         select: {
           id: true,
-          environments: true,
           name: true,
         },
       });
@@ -91,7 +62,6 @@ describe("Workspaces Management", () => {
         },
         select: {
           id: true,
-          environments: true,
           name: true,
         },
       });

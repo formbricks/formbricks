@@ -71,7 +71,7 @@ const ZSurveyBase = z.object({
   displayProgressBar: z.boolean().nullable().describe("Whether to display the progress bar"),
   pin: z.string().nullable().describe("The pin of the survey"),
   createdBy: z.string().nullable().describe("The user who created the survey"),
-  environmentId: z.cuid2().describe("The environment ID of the survey"),
+  workspaceId: z.cuid2().describe("The workspace ID of the survey"),
   questions: z.array(ZSurveyQuestion).describe("The questions of the survey"),
   blocks: ZSurveyBlocks.prefault([]).describe("The blocks of the survey"),
   endings: z.array(ZSurveyEnding).prefault([]).describe("The endings of the survey"),

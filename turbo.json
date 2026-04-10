@@ -32,7 +32,7 @@
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "../../node_modules/.prisma/client/**"]
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]

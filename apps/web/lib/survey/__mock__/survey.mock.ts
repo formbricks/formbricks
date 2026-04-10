@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -18,7 +17,7 @@ const selectContact = {
   id: true,
   createdAt: true,
   updatedAt: true,
-  environmentId: true,
+  workspaceId: true,
   attributes: {
     select: {
       value: true,
@@ -40,7 +39,7 @@ export const mockId = "ars2tjk8hsi8oqk1uac00mo8";
 const commonMockProperties = {
   createdAt: currentDate,
   updatedAt: currentDate,
-  environmentId: mockId,
+  workspaceId: mockId,
 };
 
 type SurveyMock = Prisma.SurveyGetPayload<{
@@ -86,7 +85,7 @@ export const mockWorkspace: TWorkspace = {
   placement: "bottomRight",
   clickOutsideClose: false,
   overlay: "none",
-  environments: [],
+  appSetupCompleted: false,
   languages: [],
   config: {
     channel: "link",
@@ -105,15 +104,6 @@ export const mockDisplay = {
   personId: null,
   responseId: null,
   status: null,
-};
-
-export const mockEnvironment: TEnvironment = {
-  id: mockId,
-  createdAt: currentDate,
-  updatedAt: currentDate,
-  type: "production",
-  workspaceId: mockId,
-  appSetupCompleted: false,
 };
 
 export const mockUser: TUser = {

@@ -1,5 +1,5 @@
-import { Workspace } from "@prisma/client";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { TWorkspace } from "@formbricks/types/workspace";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
@@ -8,38 +8,37 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 
 interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
-  workspace: Workspace;
-  environmentId: string;
+  workspace: TWorkspace;
   isReadOnly: boolean;
 }
 
 export const BrandingSettingsCard = async ({
   canRemoveBranding,
   workspace,
-  environmentId,
   isReadOnly,
 }: BrandingSettingsCardProps) => {
   const t = await getTranslate();
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
 
   const buttons: [ModalButton, ModalButton] = [
     {
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
     },
     {
       text: t("common.learn_more"),
       href: IS_FORMBRICKS_CLOUD
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/learn-more-self-hosting-license",
     },
   ];
 
   return (
     <SettingsCard
-      title={t("environments.workspace.look.formbricks_branding")}
-      description={t("environments.workspace.look.formbricks_branding_settings_description")}>
+      title={t("workspace.look.formbricks_branding")}
+      description={t("workspace.look.formbricks_branding_settings_description")}>
       {canRemoveBranding ? (
         <div className="space-y-4">
           <EditBranding
@@ -57,8 +56,8 @@ export const BrandingSettingsCard = async ({
         </div>
       ) : (
         <UpgradePrompt
-          title={t("environments.workspace.look.remove_branding_with_a_higher_plan")}
-          description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
+          title={t("workspace.look.remove_branding_with_a_higher_plan")}
+          description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
           buttons={buttons}
           feature="remove_branding"
         />

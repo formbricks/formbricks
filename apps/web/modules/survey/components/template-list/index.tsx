@@ -17,7 +17,7 @@ import { TemplateFilters } from "./components/template-filters";
 
 interface TemplateListProps {
   userId: string;
-  environmentId: string;
+  workspaceId: string;
   workspace: Workspace;
   templateSearch?: string;
   showFilters?: boolean;
@@ -28,12 +28,13 @@ interface TemplateListProps {
 export const TemplateList = ({
   userId,
   workspace,
-  environmentId,
+  workspaceId,
   showFilters = true,
   templateSearch,
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
@@ -60,13 +61,13 @@ export const TemplateList = ({
     };
     const isBlank = activeTemplate.name === customSurveyTemplate(t).name;
     const createSurveyResponse = await createSurveyAction({
-      environmentId: environmentId,
+      workspaceId: workspaceId,
       surveyBody: augmentedTemplate,
       createdFrom: isBlank ? "blank" : "template",
     });
 
     if (createSurveyResponse?.data) {
-      router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit`);
+      router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
       toast.error(errorMessage);

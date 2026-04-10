@@ -48,9 +48,9 @@ export const EnableTwoFactorModal = ({ open, setOpen }: EnableTwoFactorModalProp
     <Dialog open={open} onOpenChange={() => resetState()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("environments.settings.profile.two_factor_authentication")}</DialogTitle>
+          <DialogTitle>{t("workspace.settings.profile.two_factor_authentication")}</DialogTitle>
           <DialogDescription>
-            {t("environments.settings.profile.confirm_your_current_password_to_get_started")}
+            {t("workspace.settings.profile.confirm_your_current_password_to_get_started")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>

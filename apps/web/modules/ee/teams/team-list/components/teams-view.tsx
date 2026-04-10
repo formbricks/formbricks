@@ -1,6 +1,6 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
@@ -14,7 +14,7 @@ interface TeamsViewProps {
   membershipRole?: TOrganizationRole;
   currentUserId: string;
   isAccessControlAllowed: boolean;
-  environmentId: string;
+  workspaceId: string;
 }
 
 export const TeamsView = async ({
@@ -22,9 +22,10 @@ export const TeamsView = async ({
   membershipRole,
   currentUserId,
   isAccessControlAllowed,
-  environmentId,
+  workspaceId,
 }: TeamsViewProps) => {
   const t = await getTranslate();
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
 
   const [teams, orgMembers, orgWorkspaces] = await Promise.all([
     getTeams(currentUserId, organizationId),
@@ -40,7 +41,7 @@ export const TeamsView = async ({
     {
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
     },
     {
@@ -51,8 +52,8 @@ export const TeamsView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.teams.teams")}
-      description={t("environments.settings.teams.teams_description")}>
+      title={t("workspace.settings.teams.teams")}
+      description={t("workspace.settings.teams.teams_description")}>
       {isAccessControlAllowed ? (
         <TeamsTable
           teams={teams}
@@ -64,8 +65,8 @@ export const TeamsView = async ({
         />
       ) : (
         <UpgradePrompt
-          title={t("environments.settings.teams.unlock_teams_title")}
-          description={t("environments.settings.teams.unlock_teams_description")}
+          title={t("workspace.settings.teams.unlock_teams_title")}
+          description={t("workspace.settings.teams.unlock_teams_description")}
           buttons={buttons}
           feature="teams"
         />
