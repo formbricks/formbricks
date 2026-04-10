@@ -26,11 +26,49 @@ export interface ExportableQuestion {
   index: number;
   id: string;
   type: string;
+  elementType: string; // raw enum value for rendering decisions
   headline: string;
   subheader?: string;
   required: boolean;
   details: ExportableQuestionDetail[];
   logic?: ExportableLogicRule[];
+  // Rich rendering data
+  choices?: ExportableChoice[];
+  matrix?: ExportableMatrix;
+  ratingScale?: ExportableRatingScale;
+  npsScale?: ExportableNpsScale;
+  addressFields?: ExportableFieldConfig[];
+  contactFields?: ExportableFieldConfig[];
+  consentLabel?: string;
+  inputConfig?: { type: string; longAnswer: boolean; placeholder?: string };
+}
+
+export interface ExportableChoice {
+  label: string;
+  isOther?: boolean;
+}
+
+export interface ExportableMatrix {
+  rows: string[];
+  columns: string[];
+}
+
+export interface ExportableRatingScale {
+  style: "number" | "smiley" | "star";
+  range: number;
+  lowerLabel?: string;
+  upperLabel?: string;
+}
+
+export interface ExportableNpsScale {
+  lowerLabel?: string;
+  upperLabel?: string;
+}
+
+export interface ExportableFieldConfig {
+  name: string;
+  required: boolean;
+  placeholder?: string;
 }
 
 export interface ExportableQuestionDetail {

@@ -23,24 +23,39 @@ import {
   type ExportableEnding,
   type ExportableLogicRule,
   type ExportableQuestion,
-  type ExportableQuestionDetail,
   type ExportableSection,
   type ExportableSurvey,
 } from "./types";
 
 const lang = "default";
 
+function stripHtml(html: string): string {
+  // Replace <br>, <br/>, </p><p...> with newlines, then strip all remaining tags
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+}
+
 function i18n(str: TI18nString | undefined): string {
   if (!str) return "";
-  return str[lang] || str["default"] || "";
+  const raw = str[lang] || str["default"] || "";
+  return stripHtml(raw);
 }
 
 function getTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     [TSurveyElementTypeEnum.OpenText]: "Open Text",
-    [TSurveyElementTypeEnum.MultipleChoiceSingle]: "Multiple Choice (Single)",
-    [TSurveyElementTypeEnum.MultipleChoiceMulti]: "Multiple Choice (Multi)",
-    [TSurveyElementTypeEnum.NPS]: "Net Promoter Score (NPS)",
+    [TSurveyElementTypeEnum.MultipleChoiceSingle]: "Single Select",
+    [TSurveyElementTypeEnum.MultipleChoiceMulti]: "Multi Select",
+    [TSurveyElementTypeEnum.NPS]: "NPS",
     [TSurveyElementTypeEnum.CTA]: "Call to Action",
     [TSurveyElementTypeEnum.Rating]: "Rating",
     [TSurveyElementTypeEnum.Consent]: "Consent",
@@ -56,181 +71,173 @@ function getTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
-function getElementDetails(el: TSurveyElement): ExportableQuestionDetail[] {
-  const details: ExportableQuestionDetail[] = [];
-
+function extractRichData(el: TSurveyElement, q: ExportableQuestion): void {
   switch (el.type) {
     case TSurveyElementTypeEnum.OpenText: {
-      const q = el as TSurveyOpenTextElement;
-      if (q.inputType && q.inputType !== "text") {
-        details.push({ label: "Input Type", value: q.inputType });
-      }
-      if (q.longAnswer) {
-        details.push({ label: "Format", value: "Long answer (multi-line)" });
-      }
-      if (q.placeholder) {
-        details.push({ label: "Placeholder", value: i18n(q.placeholder) });
-      }
-      if (q.charLimit?.enabled) {
+      const ot = el as TSurveyOpenTextElement;
+      q.inputConfig = {
+        type: ot.inputType || "text",
+        longAnswer: ot.longAnswer || false,
+        placeholder: ot.placeholder ? i18n(ot.placeholder) : undefined,
+      };
+      if (ot.charLimit?.enabled) {
         const parts: string[] = [];
-        if (q.charLimit.min !== undefined) parts.push(`Min: ${q.charLimit.min}`);
-        if (q.charLimit.max !== undefined) parts.push(`Max: ${q.charLimit.max}`);
-        details.push({ label: "Character Limit", value: parts.join(", ") });
+        if (ot.charLimit.min !== undefined) parts.push(`Min: ${ot.charLimit.min}`);
+        if (ot.charLimit.max !== undefined) parts.push(`Max: ${ot.charLimit.max}`);
+        q.details.push({ label: "Character Limit", value: parts.join(", ") });
       }
       break;
     }
 
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-      const q = el as TSurveyMultipleChoiceElement;
-      const choiceLabels = q.choices.map((c) => i18n(c.label));
-      details.push({ label: "Choices", value: choiceLabels.join(", "), items: choiceLabels });
-      if (q.shuffleOption && q.shuffleOption !== "none") {
-        details.push({
+      const mc = el as TSurveyMultipleChoiceElement;
+      q.choices = mc.choices.map((c) => ({ label: i18n(c.label) }));
+      if (mc.otherOptionPlaceholder) {
+        q.choices.push({ label: i18n(mc.otherOptionPlaceholder) || "Other", isOther: true });
+      }
+      if (mc.shuffleOption && mc.shuffleOption !== "none") {
+        q.details.push({
           label: "Shuffle",
-          value: q.shuffleOption === "all" ? "All choices" : "All except last",
+          value: mc.shuffleOption === "all" ? "All choices" : "All except last",
         });
       }
-      if (q.displayType === "dropdown") {
-        details.push({ label: "Display", value: "Dropdown" });
+      if (mc.displayType === "dropdown") {
+        q.details.push({ label: "Display", value: "Dropdown" });
       }
       break;
     }
 
     case TSurveyElementTypeEnum.NPS: {
-      const q = el as TSurveyNPSElement;
-      details.push({ label: "Scale", value: "0 - 10" });
-      if (q.lowerLabel) details.push({ label: "Lower Label", value: i18n(q.lowerLabel) });
-      if (q.upperLabel) details.push({ label: "Upper Label", value: i18n(q.upperLabel) });
+      const nps = el as TSurveyNPSElement;
+      q.npsScale = {
+        lowerLabel: nps.lowerLabel ? i18n(nps.lowerLabel) : undefined,
+        upperLabel: nps.upperLabel ? i18n(nps.upperLabel) : undefined,
+      };
       break;
     }
 
     case TSurveyElementTypeEnum.Rating: {
-      const q = el as TSurveyRatingElement;
-      const scaleNames: Record<string, string> = { number: "Number", smiley: "Smiley", star: "Star" };
-      details.push({ label: "Scale", value: `${scaleNames[q.scale] || q.scale} (1-${q.range})` });
-      if (q.lowerLabel) details.push({ label: "Lower Label", value: i18n(q.lowerLabel) });
-      if (q.upperLabel) details.push({ label: "Upper Label", value: i18n(q.upperLabel) });
+      const rt = el as TSurveyRatingElement;
+      q.ratingScale = {
+        style: rt.scale as "number" | "smiley" | "star",
+        range: rt.range,
+        lowerLabel: rt.lowerLabel ? i18n(rt.lowerLabel) : undefined,
+        upperLabel: rt.upperLabel ? i18n(rt.upperLabel) : undefined,
+      };
       break;
     }
 
     case TSurveyElementTypeEnum.CTA: {
-      const q = el as TSurveyCTAElement;
-      if (q.ctaButtonLabel) details.push({ label: "Button Label", value: i18n(q.ctaButtonLabel) });
-      if (q.buttonExternal && q.buttonUrl) {
-        details.push({ label: "Button URL", value: q.buttonUrl });
+      const cta = el as TSurveyCTAElement;
+      if (cta.ctaButtonLabel) q.details.push({ label: "Button Label", value: i18n(cta.ctaButtonLabel) });
+      if (cta.buttonExternal && cta.buttonUrl) {
+        q.details.push({ label: "Button URL", value: cta.buttonUrl });
       }
       break;
     }
 
     case TSurveyElementTypeEnum.Consent: {
-      const q = el as TSurveyConsentElement;
-      details.push({ label: "Consent Text", value: i18n(q.label) });
+      const con = el as TSurveyConsentElement;
+      q.consentLabel = i18n(con.label);
       break;
     }
 
     case TSurveyElementTypeEnum.PictureSelection: {
-      const q = el as TSurveyPictureSelectionElement;
-      details.push({ label: "Number of Images", value: String(q.choices.length) });
-      details.push({ label: "Allow Multiple", value: q.allowMulti ? "Yes" : "No" });
+      const ps = el as TSurveyPictureSelectionElement;
+      q.details.push({ label: "Images", value: `${ps.choices.length} images` });
+      q.details.push({ label: "Allow Multiple", value: ps.allowMulti ? "Yes" : "No" });
       break;
     }
 
     case TSurveyElementTypeEnum.Date: {
-      const q = el as TSurveyDateElement;
+      const dt = el as TSurveyDateElement;
       const formatLabels: Record<string, string> = {
-        "M-d-y": "Month-Day-Year",
-        "d-M-y": "Day-Month-Year",
-        "y-M-d": "Year-Month-Day",
+        "M-d-y": "MM / DD / YYYY",
+        "d-M-y": "DD / MM / YYYY",
+        "y-M-d": "YYYY / MM / DD",
       };
-      details.push({ label: "Format", value: formatLabels[q.format] || q.format });
-      if (q.dateKind === "monthYear") {
-        details.push({ label: "Date Kind", value: "Month & Year only" });
+      q.details.push({ label: "Format", value: formatLabels[dt.format] || dt.format });
+      if (dt.dateKind === "monthYear") {
+        q.details.push({ label: "Date Kind", value: "Month & Year only" });
       }
       break;
     }
 
     case TSurveyElementTypeEnum.FileUpload: {
-      const q = el as TSurveyFileUploadElement;
-      details.push({ label: "Multiple Files", value: q.allowMultipleFiles ? "Yes" : "No" });
-      if (q.maxSizeInMB) details.push({ label: "Max Size", value: `${q.maxSizeInMB} MB` });
-      if (q.allowedFileExtensions?.length) {
-        details.push({ label: "Allowed Extensions", value: q.allowedFileExtensions.join(", ") });
+      const fu = el as TSurveyFileUploadElement;
+      q.details.push({ label: "Multiple Files", value: fu.allowMultipleFiles ? "Yes" : "No" });
+      if (fu.maxSizeInMB) q.details.push({ label: "Max Size", value: `${fu.maxSizeInMB} MB` });
+      if (fu.allowedFileExtensions?.length) {
+        q.details.push({ label: "Allowed Extensions", value: fu.allowedFileExtensions.join(", ") });
       }
       break;
     }
 
     case TSurveyElementTypeEnum.Cal: {
-      const q = el as TSurveyCalElement;
-      details.push({ label: "Cal.com User", value: q.calUserName });
-      if (q.calHost) details.push({ label: "Cal Host", value: q.calHost });
+      const cal = el as TSurveyCalElement;
+      q.details.push({ label: "Cal.com User", value: cal.calUserName });
+      if (cal.calHost) q.details.push({ label: "Cal Host", value: cal.calHost });
       break;
     }
 
     case TSurveyElementTypeEnum.Matrix: {
-      const q = el as TSurveyMatrixElement;
-      const rowLabels = q.rows.map((r) => i18n(r.label));
-      const colLabels = q.columns.map((c) => i18n(c.label));
-      details.push({ label: "Rows", value: rowLabels.join(", "), items: rowLabels });
-      details.push({ label: "Columns", value: colLabels.join(", "), items: colLabels });
+      const mx = el as TSurveyMatrixElement;
+      q.matrix = {
+        rows: mx.rows.map((r) => i18n(r.label)),
+        columns: mx.columns.map((c) => i18n(c.label)),
+      };
       break;
     }
 
     case TSurveyElementTypeEnum.Address: {
-      const q = el as TSurveyAddressElement;
-      const fields = [
-        { key: "addressLine1", cfg: q.addressLine1 },
-        { key: "addressLine2", cfg: q.addressLine2 },
-        { key: "city", cfg: q.city },
-        { key: "state", cfg: q.state },
-        { key: "zip", cfg: q.zip },
-        { key: "country", cfg: q.country },
+      const addr = el as TSurveyAddressElement;
+      const addrFields = [
+        { key: "Address Line 1", cfg: addr.addressLine1 },
+        { key: "Address Line 2", cfg: addr.addressLine2 },
+        { key: "City", cfg: addr.city },
+        { key: "State", cfg: addr.state },
+        { key: "ZIP", cfg: addr.zip },
+        { key: "Country", cfg: addr.country },
       ];
-      const shown = fields.filter((f) => f.cfg.show);
-      const required = shown.filter((f) => f.cfg.required).map((f) => f.key);
-      details.push({
-        label: "Fields Shown",
-        value: shown.map((f) => f.key).join(", "),
-        items: shown.map((f) => `${f.key}${f.cfg.required ? " *" : ""}`),
-      });
-      if (required.length > 0) {
-        details.push({ label: "Required Sub-fields", value: required.join(", ") });
-      }
+      q.addressFields = addrFields
+        .filter((f) => f.cfg.show)
+        .map((f) => ({
+          name: f.key,
+          required: f.cfg.required,
+          placeholder: i18n(f.cfg.placeholder) || undefined,
+        }));
       break;
     }
 
     case TSurveyElementTypeEnum.ContactInfo: {
-      const q = el as TSurveyContactInfoElement;
-      const fields = [
-        { key: "firstName", cfg: q.firstName },
-        { key: "lastName", cfg: q.lastName },
-        { key: "email", cfg: q.email },
-        { key: "phone", cfg: q.phone },
-        { key: "company", cfg: q.company },
+      const ci = el as TSurveyContactInfoElement;
+      const ciFields = [
+        { key: "First Name", cfg: ci.firstName },
+        { key: "Last Name", cfg: ci.lastName },
+        { key: "Email", cfg: ci.email },
+        { key: "Phone", cfg: ci.phone },
+        { key: "Company", cfg: ci.company },
       ];
-      const shown = fields.filter((f) => f.cfg.show);
-      const required = shown.filter((f) => f.cfg.required).map((f) => f.key);
-      details.push({
-        label: "Fields Shown",
-        value: shown.map((f) => f.key).join(", "),
-        items: shown.map((f) => `${f.key}${f.cfg.required ? " *" : ""}`),
-      });
-      if (required.length > 0) {
-        details.push({ label: "Required Sub-fields", value: required.join(", ") });
-      }
+      q.contactFields = ciFields
+        .filter((f) => f.cfg.show)
+        .map((f) => ({
+          name: f.key,
+          required: f.cfg.required,
+          placeholder: i18n(f.cfg.placeholder) || undefined,
+        }));
       break;
     }
 
     case TSurveyElementTypeEnum.Ranking: {
-      const q = el as TSurveyRankingElement;
-      const choiceLabels = q.choices.map((c) => i18n(c.label));
-      details.push({ label: "Items to Rank", value: choiceLabels.join(", "), items: choiceLabels });
+      const rk = el as TSurveyRankingElement;
+      q.choices = rk.choices.map((c) => ({ label: i18n(c.label) }));
       break;
     }
   }
-
-  return details;
 }
+
+// --- Logic helpers (unchanged) ---
 
 function operatorToString(op: string): string {
   const map: Record<string, string> = {
@@ -275,7 +282,6 @@ function resolveOperandLabel(
   survey: TSurvey
 ): string {
   if (operand.type === "element" || operand.type === "question") {
-    // Find the element/question headline by ID
     const id = operand.value;
     for (const block of survey.blocks) {
       for (const el of block.elements) {
@@ -310,7 +316,6 @@ function conditionToString(cond: TSingleCondition | TConditionGroup, survey: TSu
     return parts.length > 1 ? `(${joined})` : joined;
   }
 
-  // Single condition
   const sc = cond as TSingleCondition;
   const left = resolveOperandLabel(sc.leftOperand, survey);
   const op = operatorToString(sc.operator);
@@ -337,14 +342,12 @@ function blockActionToString(
       return block ? `Jump to "${block.name}"` : `Jump to [${action.target}]`;
     }
     case "jumpToQuestion": {
-      // Legacy
       for (const q of survey.questions) {
         if (q.id === action.target) return `Jump to "${i18n(q.headline)}"`;
       }
       return `Jump to [${action.target}]`;
     }
     case "requireAnswer": {
-      // Find element headline
       for (const block of survey.blocks) {
         for (const el of block.elements) {
           if (el.id === action.target) return `Require answer for "${i18n(el.headline)}"`;
@@ -379,16 +382,21 @@ function logicRulesToExportable(
   });
 }
 
+// --- Build exportable questions ---
+
 function elementToExportableQuestion(el: TSurveyElement, index: number): ExportableQuestion {
-  return {
+  const q: ExportableQuestion = {
     index,
     id: el.id,
     type: getTypeLabel(el.type),
+    elementType: el.type,
     headline: i18n(el.headline),
     subheader: el.subheader ? i18n(el.subheader) : undefined,
     required: el.required,
-    details: getElementDetails(el),
+    details: [],
   };
+  extractRichData(el, q);
+  return q;
 }
 
 function questionToExportableQuestion(
@@ -396,16 +404,17 @@ function questionToExportableQuestion(
   index: number,
   survey: TSurvey
 ): ExportableQuestion {
-  // Legacy questions have the same fields as elements plus logic/buttonLabel
   const exportable: ExportableQuestion = {
     index,
     id: q.id,
     type: getTypeLabel(q.type),
+    elementType: q.type,
     headline: i18n(q.headline),
     subheader: q.subheader ? i18n(q.subheader) : undefined,
     required: q.required,
-    details: getElementDetails(q as unknown as TSurveyElement),
+    details: [],
   };
+  extractRichData(q as unknown as TSurveyElement, exportable);
 
   if (q.logic && q.logic.length > 0) {
     exportable.logic = logicRulesToExportable(
