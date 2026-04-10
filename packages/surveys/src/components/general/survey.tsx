@@ -146,6 +146,8 @@ export function Survey({
           },
           onResponseSendingFinished: () => {
             setIsResponseSendingFinished(true);
+            setShowError(false);
+            setErrorType(undefined);
 
             if (getSetIsResponseSendingFinished) {
               getSetIsResponseSendingFinished((_prev) => {});
@@ -534,19 +536,27 @@ export function Survey({
     void syncPending();
   }, [isOnline, offlinePersistEnabled, responseQueue, progressRestored, survey.id]);
 
-  // --- Offline support: warn before leaving with unsent responses ---
+  // --- Warn before leaving mid-survey or with unsent offline responses ---
   useEffect(() => {
-    if (!offlinePersistEnabled) return;
-
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (responseQueue && (responseQueue.queue.length > 0 || pendingSyncCount > 0)) {
+      // Warn if user has started answering but hasn't finished the survey
+      if (history.length > 0 && !isSurveyFinished) {
+        e.preventDefault();
+        return;
+      }
+      // Warn if there are unsent offline responses
+      if (
+        offlinePersistEnabled &&
+        responseQueue &&
+        (responseQueue.queue.length > 0 || pendingSyncCount > 0)
+      ) {
         e.preventDefault();
       }
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [offlinePersistEnabled, responseQueue, pendingSyncCount]);
+  }, [history.length, isSurveyFinished, offlinePersistEnabled, responseQueue, pendingSyncCount]);
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
