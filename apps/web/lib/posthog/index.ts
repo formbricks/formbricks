@@ -1,0 +1,1 @@
+export { capturePostHogEvent } from "./capture";

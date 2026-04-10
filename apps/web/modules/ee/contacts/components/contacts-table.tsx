@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -220,7 +221,10 @@ export const ContactsTable = ({
   };
 
   const deleteContact = async (contactId: string) => {
-    await deleteContactAction({ contactId });
+    const result = await deleteContactAction({ contactId });
+    if (result?.serverError) {
+      throw new Error(getFormattedErrorMessage(result));
+    }
   };
 
   return (

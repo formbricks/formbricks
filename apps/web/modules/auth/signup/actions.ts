@@ -9,6 +9,7 @@ import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } fr
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
@@ -210,6 +211,13 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         isFormbricksCloud: parsedInput.isFormbricksCloud,
         subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
+      });
+
+      capturePostHogEvent(user.id, "user_signed_up", {
+        auth_provider: "credentials",
+        email_domain: user.email.split("@")[1],
+        signup_source: parsedInput.inviteToken ? "invite" : "direct",
+        invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
       });
     }
 

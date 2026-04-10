@@ -26,6 +26,11 @@ vi.mock("@/lib/utils/action-client", () => ({
 
 vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "https://app.formbricks.com",
+  POSTHOG_KEY: undefined,
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
