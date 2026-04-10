@@ -97,6 +97,7 @@
     "i18next-resources-to-backend": "1.2.1",
     "jiti": "2.4.2",
     "jsonwebtoken": "9.0.2",
+    "jspdf": "4.2.1",
     "lexical": "0.36.2",
     "lodash": "4.17.21",
     "lucide-react": "0.507.0",

@@ -106,7 +106,7 @@ function renderMatrix(matrix: ExportableMatrix): string {
   for (const row of matrix.rows) {
     html += `<tr><td class="matrix-row-label">${esc(row)}</td>`;
     for (let c = 0; c < matrix.columns.length; c++) {
-      html += `<td class="matrix-cell"><span class="radio-marker"></span></td>`;
+      html += `<td class="matrix-cell">○</td>`;
     }
     html += `</tr>`;
   }

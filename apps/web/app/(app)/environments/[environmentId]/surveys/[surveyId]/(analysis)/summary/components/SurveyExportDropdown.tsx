@@ -44,12 +44,10 @@ export const SurveyExportDropdown = ({ survey }: SurveyExportDropdownProps) => {
     try {
       const { surveyToExportable } = await import("../lib/survey-export/transform");
       const { generateSurveyPdf } = await import("../lib/survey-export/generate-pdf");
-      const { downloadBlob } = await import("../lib/survey-export/download");
 
       const data = surveyToExportable(survey);
-      const blob = await generateSurveyPdf(data);
-      downloadBlob(blob, `${survey.name.replace(/[^a-zA-Z0-9]/g, "_")}_survey.pdf`);
-      toast.success("Survey exported as PDF");
+      await generateSurveyPdf(data);
+      toast.success("Print dialog opened — select 'Save as PDF'");
     } catch (err) {
       console.error("PDF export failed:", err);
       toast.error("Failed to export as PDF");
@@ -89,7 +87,7 @@ export const SurveyExportDropdown = ({ survey }: SurveyExportDropdownProps) => {
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={handleExportPdf} disabled={isExporting !== null}>
           <FileImage className="mr-2 h-4 w-4 text-red-500" />
-          Export as PDF
+          Print as PDF
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleExportDocx} disabled={isExporting !== null}>
           <FileText className="mr-2 h-4 w-4 text-blue-500" />

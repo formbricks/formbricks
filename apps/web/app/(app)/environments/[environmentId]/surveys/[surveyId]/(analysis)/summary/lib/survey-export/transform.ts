@@ -303,6 +303,47 @@ function resolveOperandLabel(
   return String(operand.value);
 }
 
+function findChoiceLabel(choiceId: string, elementId: string, survey: TSurvey): string | null {
+  // Look through blocks
+  for (const block of survey.blocks) {
+    for (const el of block.elements) {
+      if (el.id !== elementId) continue;
+      if ("choices" in el && Array.isArray(el.choices)) {
+        const choice = el.choices.find((c: { id: string }) => c.id === choiceId);
+        if (choice && "label" in choice) return i18n(choice.label as TI18nString);
+      }
+    }
+  }
+  // Look through legacy questions
+  for (const q of survey.questions) {
+    if (q.id !== elementId) continue;
+    if ("choices" in q && Array.isArray(q.choices)) {
+      const choice = q.choices.find((c: { id: string }) => c.id === choiceId);
+      if (choice && "label" in choice) return i18n(choice.label as TI18nString);
+    }
+  }
+  return null;
+}
+
+function resolveStaticValue(
+  val: string | number | string[],
+  leftElementId: string,
+  survey: TSurvey
+): string {
+  if (Array.isArray(val)) {
+    const resolved = val.map((v) => {
+      const label = findChoiceLabel(v, leftElementId, survey);
+      return label || v;
+    });
+    return `[${resolved.join(", ")}]`;
+  }
+  if (typeof val === "string") {
+    const label = findChoiceLabel(val, leftElementId, survey);
+    if (label) return `"${label}"`;
+  }
+  return `"${val}"`;
+}
+
 function isConditionGroup(obj: unknown): obj is TConditionGroup {
   return typeof obj === "object" && obj !== null && "connector" in obj && "conditions" in obj;
 }
@@ -324,8 +365,8 @@ function conditionToString(cond: TSingleCondition | TConditionGroup, survey: TSu
   }
   let right: string;
   if (sc.rightOperand.type === "static") {
-    const val = sc.rightOperand.value;
-    right = Array.isArray(val) ? `[${val.join(", ")}]` : `"${val}"`;
+    const leftElementId = sc.leftOperand.value;
+    right = resolveStaticValue(sc.rightOperand.value, leftElementId, survey);
   } else {
     right = resolveOperandLabel(sc.rightOperand as { type: string; value: string }, survey);
   }
