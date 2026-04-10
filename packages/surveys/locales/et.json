@@ -20,6 +20,7 @@
     "question_video": "Küsimuse video",
     "required": "Kohustuslik",
     "respondents_will_not_see_this_card": "Vastajad ei näe seda kaarti",
+    "response_saved_offline": "Sinu vastust pole veel saadetud. See edastatakse automaatselt, kui oled taas võrgus.",
     "retry": "Proovi uuesti",
     "retrying": "Proovin uuesti…",
     "search": "Otsi...",
