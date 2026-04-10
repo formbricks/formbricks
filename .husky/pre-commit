@@ -1,1 +1,13 @@
-pnpm lint-staged
+#!/usr/bin/env sh
+
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm lint-staged
+elif command -v npm >/dev/null 2>&1; then
+  npm exec --yes pnpm@10.32.1 lint-staged
+elif command -v corepack >/dev/null 2>&1; then
+  corepack pnpm lint-staged
+else
+  echo "Error: pnpm, npm, and corepack are unavailable in this Git hook PATH."
+  echo "Install Node.js tooling or update your PATH, then retry the commit."
+  exit 127
+fi
