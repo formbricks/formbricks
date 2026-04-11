@@ -782,6 +782,24 @@ export const getResponsesJson = (
           const choiceIds = extractChoiceIdsFromResponse(answer, element, response.language || "default");
           jsonData[idx][elementHeadline[1]] = choiceIds.join(", ");
         }
+      } else if (element.type === "contactInfo" && answer && typeof answer === "object" && !Array.isArray(answer)) {
+        // Map custom field IDs to human-readable labels
+        const BUILTIN_LABELS: Record<string, string> = {
+          firstName: "First Name",
+          lastName: "Last Name",
+          email: "Email",
+          phone: "Phone",
+          company: "Company",
+        };
+        const customFields = (element as any).customFields ?? [];
+        const formattedString = Object.entries(answer as Record<string, string>)
+          .filter(([_, value]) => value !== "")
+          .map(([key, value]) => {
+            const label = BUILTIN_LABELS[key] ?? customFields.find((cf: any) => cf.id === key)?.label ?? key;
+            return `${label}: ${value}`;
+          })
+          .join("\n");
+        jsonData[idx][elementHeadline[0]] = formattedString;
       } else {
         jsonData[idx][elementHeadline[0]] = processResponseData(answer);
       }
