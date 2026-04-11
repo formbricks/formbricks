@@ -48,6 +48,15 @@ export const formatAddressData = (responseValue: TResponseDataValue): Record<str
 
 // Export for testing
 export const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
+  // Handle new object format (from custom fields feature)
+  if (responseValue && typeof responseValue === "object" && !Array.isArray(responseValue)) {
+    const result: Record<string, string> = {};
+    for (const [key, val] of Object.entries(responseValue)) {
+      result[key] = String(val || "");
+    }
+    return result;
+  }
+  // Handle legacy array format
   const contactInfoKeys = ["firstName", "lastName", "email", "phone", "company"];
   return formatArrayToRecord(responseValue, contactInfoKeys);
 };

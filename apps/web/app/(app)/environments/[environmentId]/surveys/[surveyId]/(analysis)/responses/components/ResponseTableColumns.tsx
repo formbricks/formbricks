@@ -126,8 +126,9 @@ const getElementColumnsData = (
         };
       });
 
-    case "contactInfo":
-      return contactInfoFields.map((contactInfoField) => {
+    case "contactInfo": {
+      // Built-in field columns
+      const builtInColumns = contactInfoFields.map((contactInfoField) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + contactInfoField,
           header: () => {
@@ -140,7 +141,7 @@ const getElementColumnsData = (
               </div>
             );
           },
-          cell: ({ row }) => {
+          cell: ({ row }: { row: { original: TResponseTableData } }) => {
             const responseValue = row.original.responseData[contactInfoField];
             if (typeof responseValue === "string") {
               return <p className="text-slate-900">{responseValue}</p>;
@@ -148,6 +149,30 @@ const getElementColumnsData = (
           },
         };
       });
+
+      // Custom field columns
+      const customFieldColumns = ((element as any).customFields ?? [])
+        .filter((cf: any) => cf.show)
+        .map((cf: any) => ({
+          accessorKey: "ELEMENT_" + element.id + "_" + cf.id,
+          header: () => (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 overflow-hidden">
+                <span className="h-4 w-4">{ELEMENTS_ICON_MAP["contactInfo"]}</span>
+                <span className="truncate">{cf.label}</span>
+              </div>
+            </div>
+          ),
+          cell: ({ row }: { row: { original: TResponseTableData } }) => {
+            const responseValue = row.original.responseData[cf.id];
+            if (typeof responseValue === "string") {
+              return <p className="text-slate-900">{responseValue}</p>;
+            }
+          },
+        }));
+
+      return [...builtInColumns, ...customFieldColumns];
+    }
 
     case "multipleChoiceMulti":
     case "multipleChoiceSingle":
