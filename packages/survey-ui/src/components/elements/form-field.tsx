@@ -139,9 +139,17 @@ function FormField({
                   headline=""
                   inputId={`${fieldInputId}-select`}
                   options={field.options}
-                  value={fieldValue || undefined}
+                  value={
+                    // Value may be stored as label (human-readable), so resolve back to option ID
+                    field.options.find((opt) => opt.id === fieldValue)?.id ??
+                    field.options.find((opt) => opt.label === fieldValue)?.id ??
+                    undefined
+                  }
                   onChange={(val) => {
-                    handleFieldChange(field.id, val);
+                    // Store the display label, not the option ID — contact info
+                    // fields store human-readable values (e.g. "Mr." not an opaque ID)
+                    const selectedOption = field.options?.find((opt) => opt.id === val);
+                    handleFieldChange(field.id, selectedOption?.label ?? val);
                   }}
                   required={fieldRequired}
                   disabled={disabled}
