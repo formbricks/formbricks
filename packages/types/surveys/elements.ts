@@ -276,6 +276,34 @@ const ZToggleInputConfig = z.object({
 
 export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
+// Custom field option (for dropdown type)
+export const ZCustomFieldOption = z.object({
+  id: z.string(),
+  label: ZI18nString,
+});
+
+export type TCustomFieldOption = z.infer<typeof ZCustomFieldOption>;
+
+// Custom field type enum
+export const ZCustomFieldType = z.enum(["text", "number", "date", "email", "phone", "url", "dropdown"]);
+
+export type TCustomFieldType = z.infer<typeof ZCustomFieldType>;
+
+// Custom field definition
+export const ZCustomField = z.object({
+  id: z.string(),
+  label: z.string().min(1),
+  type: ZCustomFieldType,
+  show: z.boolean(),
+  required: z.boolean(),
+  placeholder: ZI18nString,
+  prefillFrom: z.string().optional(),
+  options: z.array(ZCustomFieldOption).optional(),
+  presetId: z.string().optional(),
+});
+
+export type TCustomField = z.infer<typeof ZCustomField>;
+
 export const ZSurveyAddressElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Address),
   addressLine1: ZToggleInputConfig,
@@ -309,6 +337,8 @@ export const ZSurveyContactInfoElement = ZSurveyElementBase.extend({
   email: ZToggleInputConfig,
   phone: ZToggleInputConfig,
   company: ZToggleInputConfig,
+  customFields: z.array(ZCustomField).max(10).default([]),
+  fieldOrder: z.array(z.string()).optional(),
 });
 
 export type TSurveyContactInfoElement = z.infer<typeof ZSurveyContactInfoElement>;

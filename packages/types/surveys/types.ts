@@ -13,6 +13,7 @@ import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import {
   type TSurveyElement,
   TSurveyElementTypeEnum,
+  ZCustomField,
   ZSurveyAddressElement,
   ZSurveyCTAElement,
   ZSurveyCalElement,
@@ -714,6 +715,8 @@ export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   email: ZToggleInputConfig,
   phone: ZToggleInputConfig,
   company: ZToggleInputConfig,
+  customFields: z.array(ZCustomField).max(10).default([]),
+  fieldOrder: z.array(z.string()).optional(),
 });
 
 /**
@@ -1264,7 +1267,7 @@ export const ZSurvey = z
 
         if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
           const { company, email, firstName, lastName, phone } = question;
-          const fields = [
+          const builtInFields = [
             { ...company, label: "Company" },
             { ...email, label: "Email" },
             { ...firstName, label: "First Name" },
@@ -1272,14 +1275,16 @@ export const ZSurvey = z
             { ...phone, label: "Phone" },
           ];
 
-          if (fields.every((field) => !field.show)) {
+          const customFieldsVisible = (question.customFields ?? []).some((cf) => cf.show);
+
+          if (builtInFields.every((field) => !field.show) && !customFieldsVisible) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "At least one field must be shown in the Contact Info question",
               path: ["questions", questionIndex],
             });
           }
-          fields.forEach((field) => {
+          builtInFields.forEach((field) => {
             const multiLangIssueInPlaceholder =
               field.show &&
               validateQuestionLabels(
@@ -1291,6 +1296,21 @@ export const ZSurvey = z
               );
             if (multiLangIssueInPlaceholder) {
               ctx.addIssue(multiLangIssueInPlaceholder);
+            }
+          });
+
+          // Validate custom field placeholders
+          (question.customFields ?? []).forEach((cf) => {
+            if (cf.show) {
+              const multiLangIssue = validateQuestionLabels(
+                `Label for custom field ${cf.label}`,
+                cf.placeholder,
+                languages,
+                questionIndex
+              );
+              if (multiLangIssue) {
+                ctx.addIssue(multiLangIssue);
+              }
             }
           });
         }
@@ -1716,7 +1736,7 @@ export const ZSurvey = z
 
           if (element.type === TSurveyElementTypeEnum.ContactInfo) {
             const { company, email, firstName, lastName, phone } = element;
-            const fields = [
+            const builtInFields = [
               { ...company, label: "Company" },
               { ...email, label: "Email" },
               { ...firstName, label: "First Name" },
@@ -1724,14 +1744,16 @@ export const ZSurvey = z
               { ...phone, label: "Phone" },
             ];
 
-            if (fields.every((field) => !field.show)) {
+            const customFieldsVisible = (element.customFields ?? []).some((cf) => cf.show);
+
+            if (builtInFields.every((field) => !field.show) && !customFieldsVisible) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: `At least one field must be shown in the Contact Info question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
                 path: ["blocks", blockIndex, "elements", elementIndex],
               });
             }
-            fields.forEach((field) => {
+            builtInFields.forEach((field) => {
               const multiLangIssueInPlaceholder =
                 field.show &&
                 validateElementLabels(
@@ -1751,6 +1773,22 @@ export const ZSurvey = z
                   field.label.toLowerCase().replace(" ", ""),
                 ];
                 ctx.addIssue(multiLangIssueInPlaceholder);
+              }
+            });
+
+            // Validate custom field placeholders
+            (element.customFields ?? []).forEach((cf) => {
+              if (cf.show) {
+                const multiLangIssueInPlaceholder = validateElementLabels(
+                  `Label for custom field ${cf.label}`,
+                  cf.placeholder,
+                  languages,
+                  blockIndex,
+                  elementIndex
+                );
+                if (multiLangIssueInPlaceholder) {
+                  ctx.addIssue(multiLangIssueInPlaceholder);
+                }
               }
             });
           }
