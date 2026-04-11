@@ -11,6 +11,7 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { ElementToggleTable } from "@/modules/ui/components/element-toggle-table";
+import { CustomFieldsSection } from "./custom-fields-section";
 
 interface ContactInfoElementFormProps {
   localSurvey: TSurvey;
@@ -155,6 +156,18 @@ export const ContactInfoElementForm = ({
           elementIdx={elementIdx}
           isInvalid={isInvalid}
           updateElement={updateElement}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          locale={locale}
+          isStorageConfigured={isStorageConfigured}
+        />
+
+        <CustomFieldsSection
+          localSurvey={localSurvey}
+          element={element}
+          elementIdx={elementIdx}
+          updateElement={updateElement}
+          isInvalid={isInvalid}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           locale={locale}
