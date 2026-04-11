@@ -75,7 +75,7 @@ export const CustomFieldsSection = ({
     if (customFields.length >= 10) return;
     const newField: TCustomField = {
       id: `cf_${createId()}`,
-      label: "",
+      label: "New Field",
       type: "text",
       show: true,
       required: false,
@@ -89,9 +89,10 @@ export const CustomFieldsSection = ({
   const removeCustomField = (fieldId: string) => {
     const updatedFields = customFields.filter((cf) => cf.id !== fieldId);
     const updatedOrder = (element.fieldOrder ?? []).filter((id) => id !== fieldId);
+    const hasRemainingCustomFields = updatedFields.length > 0;
     updateElement(elementIdx, {
       customFields: updatedFields,
-      fieldOrder: updatedOrder.length > 0 ? updatedOrder : undefined,
+      fieldOrder: hasRemainingCustomFields && updatedOrder.length > 0 ? updatedOrder : undefined,
     });
   };
 
@@ -130,14 +131,21 @@ export const CustomFieldsSection = ({
   };
 
   // --- Field Order ---
-  const getEffectiveFieldOrder = (): string[] => {
-    if (element.fieldOrder) return element.fieldOrder;
-    const builtInVisible = BUILTIN_IDS.filter((id) => {
-      const config = element[id as keyof typeof element];
+  const isFieldVisible = (fieldId: string): boolean => {
+    if (BUILTIN_IDS.includes(fieldId)) {
+      const config = element[fieldId as keyof typeof element];
       return config && typeof config === "object" && "show" in config && (config as any).show;
-    });
-    const customVisible = customFields.filter((cf) => cf.show).map((cf) => cf.id);
-    return [...builtInVisible, ...customVisible];
+    }
+    const cf = customFields.find((c) => c.id === fieldId);
+    return cf?.show ?? false;
+  };
+
+  const getEffectiveFieldOrder = (): string[] => {
+    const base = element.fieldOrder ?? [
+      ...BUILTIN_IDS,
+      ...customFields.map((cf) => cf.id),
+    ];
+    return base.filter(isFieldVisible);
   };
 
   const getFieldLabel = (fieldId: string): string => {
@@ -251,13 +259,13 @@ export const CustomFieldsSection = ({
                   elementIdx={elementIdx}
                   isInvalid={isInvalid}
                   updateElement={(_idx, attrs) => {
-                    // ElementFormInput updates via element path like "cf_xxx.placeholder"
-                    // We need to intercept and route to customFields update
-                    const placeholderKey = `${field.id}.placeholder`;
-                    if (placeholderKey in attrs) {
-                      updateCustomField(field.id, {
-                        placeholder: (attrs as any)[placeholderKey],
-                      });
+                    // ElementFormInput splits on "." and calls updateElement with { [field.id]: { placeholder: ... } }
+                    // We intercept and route to customFields update
+                    if (field.id in attrs) {
+                      const nested = (attrs as any)[field.id];
+                      if (nested && "placeholder" in nested) {
+                        updateCustomField(field.id, { placeholder: nested.placeholder });
+                      }
                     }
                   }}
                   selectedLanguageCode={selectedLanguageCode}

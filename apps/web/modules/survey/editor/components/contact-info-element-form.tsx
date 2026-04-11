@@ -76,7 +76,7 @@ export const ContactInfoElementForm = ({
   ];
 
   useEffect(() => {
-    const allFieldsAreOptional = [
+    const builtInAllOptional = [
       element.firstName,
       element.lastName,
       element.email,
@@ -86,10 +86,12 @@ export const ContactInfoElementForm = ({
       .filter((field) => field.show)
       .every((field) => !field.required);
 
-    updateElement(elementIdx, { required: !allFieldsAreOptional });
+    const customHasRequired = (element.customFields ?? []).some((cf) => cf.show && cf.required);
+
+    updateElement(elementIdx, { required: !builtInAllOptional || customHasRequired });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [element.firstName, element.lastName, element.email, element.phone, element.company]);
+  }, [element.firstName, element.lastName, element.email, element.phone, element.company, element.customFields]);
 
   const [parent] = useAutoAnimate();
 
