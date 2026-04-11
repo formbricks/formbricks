@@ -1,4 +1,5 @@
 import * as React from "react";
+import { SingleSelect } from "@/components/elements/single-select";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
@@ -14,12 +15,14 @@ export interface FormFieldConfig {
   label: string;
   /** Placeholder text for the input */
   placeholder?: string;
-  /** Input type (text, email, tel, number, url, etc.) */
-  type?: "text" | "email" | "tel" | "number" | "url";
+  /** Input type (text, email, tel, number, url, date, dropdown) */
+  type?: "text" | "email" | "tel" | "number" | "url" | "date" | "dropdown";
   /** Whether this field is required */
   required?: boolean;
   /** Whether this field should be shown */
   show?: boolean;
+  /** Options for dropdown type fields */
+  options?: { id: string; label: string }[];
 }
 
 interface FormFieldProps {
@@ -115,8 +118,10 @@ function FormField({
           const fieldValue = currentValues[field.id] ?? "";
           const fieldInputId = `${elementId}-${field.id}`;
 
-          // Determine input type
-          let inputType: "text" | "email" | "tel" | "number" | "url" = field.type ?? "text";
+          // Determine input type (dropdown is handled separately; date falls back to text)
+          const rawType = field.type ?? "text";
+          let inputType: "text" | "email" | "tel" | "number" | "url" =
+            rawType === "date" || rawType === "dropdown" ? "text" : rawType;
           if (field.id === "email" && !field.type) {
             inputType = "email";
           } else if (field.id === "phone" && !field.type) {
@@ -128,18 +133,36 @@ function FormField({
               <Label htmlFor={fieldInputId} variant="default">
                 {fieldRequired ? `${field.label}*` : field.label}
               </Label>
-              <Input
-                id={fieldInputId}
-                type={inputType}
-                value={fieldValue}
-                onChange={(e) => {
-                  handleFieldChange(field.id, e.target.value);
-                }}
-                required={fieldRequired}
-                disabled={disabled}
-                dir={dir}
-                aria-invalid={Boolean(errorMessage) || undefined}
-              />
+              {field.type === "dropdown" && field.options ? (
+                <SingleSelect
+                  elementId={fieldInputId}
+                  headline=""
+                  inputId={`${fieldInputId}-select`}
+                  options={field.options}
+                  value={fieldValue || undefined}
+                  onChange={(val) => {
+                    handleFieldChange(field.id, val);
+                  }}
+                  required={fieldRequired}
+                  disabled={disabled}
+                  dir={dir}
+                  variant="dropdown"
+                  placeholder={field.placeholder || "Select..."}
+                />
+              ) : (
+                <Input
+                  id={fieldInputId}
+                  type={inputType}
+                  value={fieldValue}
+                  onChange={(e) => {
+                    handleFieldChange(field.id, e.target.value);
+                  }}
+                  required={fieldRequired}
+                  disabled={disabled}
+                  dir={dir}
+                  aria-invalid={Boolean(errorMessage) || undefined}
+                />
+              )}
             </div>
           );
         })}
