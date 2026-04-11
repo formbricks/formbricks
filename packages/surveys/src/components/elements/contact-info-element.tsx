@@ -5,9 +5,29 @@ import type { TSurveyContactInfoElement } from "@formbricks/types/surveys/elemen
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
+const BUILTIN_FIELD_IDS = ["firstName", "lastName", "email", "phone", "company"] as const;
+const DEFAULT_FIELD_ORDER = [...BUILTIN_FIELD_IDS];
+
+// Map built-in field IDs to their HTML input types
+const BUILTIN_INPUT_TYPES: Record<string, "text" | "email" | "tel"> = {
+  email: "email",
+  phone: "tel",
+};
+
+// Map custom field types to FormField input types
+const CUSTOM_TYPE_MAP: Record<string, FormFieldConfig["type"]> = {
+  text: "text",
+  number: "number",
+  date: "date",
+  email: "email",
+  phone: "tel",
+  url: "url",
+  dropdown: "dropdown",
+};
+
 interface ContactInfoElementProps {
   element: TSurveyContactInfoElement;
-  value?: string[];
+  value?: string[] | Record<string, string>;
   onChange: (responseData: TResponseData) => void;
   autoFocus?: boolean;
   languageCode: string;
@@ -33,28 +53,27 @@ export function ContactInfoElement({
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
-  // Convert array value to object for FormField
-  const convertToValueObject = (arrayValue: string[] | undefined): Record<string, string> => {
-    if (!Array.isArray(arrayValue)) return {};
-
-    const fieldIds = ["firstName", "lastName", "email", "phone", "company"];
-    const result: Record<string, string> = {};
-
-    fieldIds.forEach((fieldId, index) => {
-      result[fieldId] = arrayValue[index] || "";
-    });
-
-    return result;
+  // Normalize incoming value to object format
+  const normalizeValue = (raw: string[] | Record<string, string> | undefined): Record<string, string> => {
+    if (!raw) return {};
+    if (Array.isArray(raw)) {
+      // Legacy array format
+      return {
+        firstName: raw[0] || "",
+        lastName: raw[1] || "",
+        email: raw[2] || "",
+        phone: raw[3] || "",
+        company: raw[4] || "",
+      };
+    }
+    return raw;
   };
 
-  // Convert object value back to array for onChange
-  const convertToValueArray = (objectValue: Record<string, string>): string[] => {
-    const fieldIds = ["firstName", "lastName", "email", "phone", "company"];
-    return fieldIds.map((fieldId) => objectValue[fieldId] || "");
-  };
+  const currentValues = normalizeValue(value);
 
   const handleChange = (newValue: Record<string, string>) => {
-    onChange({ [element.id]: convertToValueArray(newValue) });
+    // Always write object format
+    onChange({ [element.id]: newValue });
   };
 
   const handleSubmit = (e: Event) => {
@@ -63,46 +82,50 @@ export function ContactInfoElement({
     setTtc(updatedTtc);
   };
 
-  // Convert element fields to FormFieldConfig
-  const formFields: FormFieldConfig[] = [
-    {
-      id: "firstName",
-      label: getLocalizedValue(element.firstName.placeholder, languageCode),
-      placeholder: getLocalizedValue(element.firstName.placeholder, languageCode),
-      required: element.firstName.required,
-      show: element.firstName.show,
-    },
-    {
-      id: "lastName",
-      label: getLocalizedValue(element.lastName.placeholder, languageCode),
-      placeholder: getLocalizedValue(element.lastName.placeholder, languageCode),
-      required: element.lastName.required,
-      show: element.lastName.show,
-    },
-    {
-      id: "email",
-      label: getLocalizedValue(element.email.placeholder, languageCode),
-      placeholder: getLocalizedValue(element.email.placeholder, languageCode),
-      required: element.email.required,
-      show: element.email.show,
-      type: "email",
-    },
-    {
-      id: "phone",
-      label: getLocalizedValue(element.phone.placeholder, languageCode),
-      placeholder: getLocalizedValue(element.phone.placeholder, languageCode),
-      required: element.phone.required,
-      show: element.phone.show,
-      type: "tel",
-    },
-    {
-      id: "company",
-      label: getLocalizedValue(element.company.placeholder, languageCode),
-      placeholder: getLocalizedValue(element.company.placeholder, languageCode),
-      required: element.company.required,
-      show: element.company.show,
-    },
-  ];
+  // Determine field order
+  const fieldOrder = element.fieldOrder ?? DEFAULT_FIELD_ORDER;
+
+  // Build FormFieldConfig array from fieldOrder
+  const formFields: FormFieldConfig[] = fieldOrder
+    .map((fieldId): FormFieldConfig | null => {
+      // Check if it's a built-in field
+      if (BUILTIN_FIELD_IDS.includes(fieldId as (typeof BUILTIN_FIELD_IDS)[number])) {
+        const config = element[fieldId as (typeof BUILTIN_FIELD_IDS)[number]];
+        if (!config || !config.show) return null;
+        return {
+          id: fieldId,
+          label: getLocalizedValue(config.placeholder, languageCode),
+          placeholder: getLocalizedValue(config.placeholder, languageCode),
+          required: config.required,
+          show: config.show,
+          type: BUILTIN_INPUT_TYPES[fieldId] || "text",
+        };
+      }
+
+      // Check if it's a custom field
+      const customField = (element.customFields ?? []).find((cf) => cf.id === fieldId);
+      if (!customField || !customField.show) return null;
+
+      const fieldConfig: FormFieldConfig = {
+        id: customField.id,
+        label: getLocalizedValue(customField.placeholder, languageCode),
+        placeholder: getLocalizedValue(customField.placeholder, languageCode),
+        required: customField.required,
+        show: customField.show,
+        type: CUSTOM_TYPE_MAP[customField.type] || "text",
+      };
+
+      // Add options for dropdown fields
+      if (customField.type === "dropdown" && customField.options) {
+        fieldConfig.options = customField.options.map((opt) => ({
+          id: opt.id,
+          label: getLocalizedValue(opt.label, languageCode),
+        }));
+      }
+
+      return fieldConfig;
+    })
+    .filter((f): f is FormFieldConfig => f !== null);
 
   return (
     <form key={element.id} onSubmit={handleSubmit} className="w-full">
@@ -111,7 +134,7 @@ export function ContactInfoElement({
         headline={getLocalizedValue(element.headline, languageCode)}
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         fields={formFields}
-        value={convertToValueObject(value)}
+        value={currentValues}
         onChange={handleChange}
         required={element.required}
         dir={dir}
