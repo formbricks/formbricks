@@ -82,8 +82,11 @@ export function ContactInfoElement({
     setTtc(updatedTtc);
   };
 
-  // Determine field order
-  const fieldOrder = element.fieldOrder ?? DEFAULT_FIELD_ORDER;
+  // Determine field order — if no explicit order, show built-ins then custom fields
+  const fieldOrder = element.fieldOrder ?? [
+    ...DEFAULT_FIELD_ORDER,
+    ...(element.customFields ?? []).map((cf) => cf.id),
+  ];
 
   // Build FormFieldConfig array from fieldOrder
   const formFields: FormFieldConfig[] = fieldOrder
