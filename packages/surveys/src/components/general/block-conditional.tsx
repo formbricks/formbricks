@@ -250,13 +250,28 @@ export function BlockConditional({
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
     const response = value[element.id];
 
-    if (
-      element.type === TSurveyElementTypeEnum.Address ||
-      element.type === TSurveyElementTypeEnum.ContactInfo
-    ) {
+    if (element.type === TSurveyElementTypeEnum.Address) {
       if (!form.checkValidity()) {
         form.requestSubmit();
         return false;
+      }
+      return true;
+    }
+
+    if (element.type === TSurveyElementTypeEnum.ContactInfo) {
+      if (!form.checkValidity()) {
+        form.requestSubmit();
+        return false;
+      }
+      // Validate required dropdown custom fields (not native inputs, so checkValidity misses them)
+      const customFields = (element as any).customFields ?? [];
+      const responseObj = (typeof response === "object" && !Array.isArray(response) ? response : {}) as Record<string, string>;
+      for (const cf of customFields) {
+        if (cf.show && cf.required && cf.type === "dropdown") {
+          if (!responseObj[cf.id] || responseObj[cf.id].trim() === "") {
+            return false;
+          }
+        }
       }
       return true;
     }
