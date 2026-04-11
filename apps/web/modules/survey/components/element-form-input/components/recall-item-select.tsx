@@ -145,6 +145,22 @@ export const RecallItemSelect = ({
               });
             }
           });
+
+          // Also include custom fields for contactInfo elements
+          if (element.type === TSurveyElementTypeEnum.ContactInfo) {
+            const customFields = (element as any).customFields ?? [];
+            for (const cf of customFields) {
+              if (!cf.show) continue;
+              const subFieldId = `${element.id}.${cf.id}`;
+              if (!recallItemIds.includes(subFieldId)) {
+                result.push({
+                  id: subFieldId,
+                  label: `${headline} > ${cf.label}`,
+                  type: "element" as const,
+                });
+              }
+            }
+          }
         } else if (!recallItemIds.includes(element.id)) {
           result.push({
             id: element.id,

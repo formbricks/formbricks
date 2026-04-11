@@ -135,6 +135,18 @@ export const ElementToggleTable = ({
             });
           }
         }
+        // Include custom fields from contactInfo elements
+        if (el.type === TSurveyElementTypeEnum.ContactInfo) {
+          const customFields = (el as any).customFields ?? [];
+          for (const cf of customFields) {
+            if (cf.show) {
+              sources.push({
+                id: `${el.id}.${cf.id}`,
+                label: `${headline} > ${cf.label}`,
+              });
+            }
+          }
+        }
       }
       // Also allow piping from openText questions
       if (el.type === TSurveyElementTypeEnum.OpenText) {
