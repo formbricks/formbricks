@@ -219,7 +219,14 @@ function extractRichData(el: TSurveyElement, q: ExportableQuestion): void {
         { key: "Phone", cfg: ci.phone },
         { key: "Company", cfg: ci.company },
       ];
-      q.contactFields = ciFields
+      // Add custom fields
+      const customCiFields = ((ci as any).customFields ?? []).map(
+        (cf: { label: string; show: boolean; required: boolean; placeholder?: any }) => ({
+          key: cf.label,
+          cfg: { show: cf.show, required: cf.required, placeholder: cf.placeholder },
+        })
+      );
+      q.contactFields = [...ciFields, ...customCiFields]
         .filter((f) => f.cfg.show)
         .map((f) => ({
           name: f.key,

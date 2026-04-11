@@ -14,6 +14,7 @@ import {
   TResponseVariables,
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
+import { normalizeContactInfoResponse } from "@formbricks/types/surveys/compound-fields";
 import {
   TSurveyElement,
   TSurveyElementChoice,
@@ -983,11 +984,13 @@ export const getElementSummary = async (
         let values: TSurveyElementSummaryContactInfo["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[element.id];
-          if (Array.isArray(answer) && answer.length > 0) {
+          // Handle both array (legacy) and object (new) formats
+          const normalized = normalizeContactInfoResponse(answer);
+          if (normalized && Object.values(normalized).some((v) => v)) {
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
-              value: answer,
+              value: Object.values(normalized),
               contact: response.contact,
               contactAttributes: response.contactAttributes,
             });

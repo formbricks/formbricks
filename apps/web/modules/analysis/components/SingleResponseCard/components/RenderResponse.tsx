@@ -1,6 +1,7 @@
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { TResponseDataValue } from "@formbricks/types/responses";
+import { normalizeContactInfoResponse } from "@formbricks/types/surveys/compound-fields";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -122,9 +123,17 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       }
       break;
     case TSurveyElementTypeEnum.Address:
-    case TSurveyElementTypeEnum.ContactInfo:
       if (Array.isArray(responseData)) {
         return <ArrayResponse value={responseData} />;
+      }
+      break;
+    case TSurveyElementTypeEnum.ContactInfo:
+      if (Array.isArray(responseData) || (typeof responseData === "object" && responseData !== null)) {
+        const normalized = normalizeContactInfoResponse(responseData);
+        if (normalized) {
+          const displayValues = Object.values(normalized).filter((v) => v);
+          return <ArrayResponse value={displayValues} />;
+        }
       }
       break;
 
