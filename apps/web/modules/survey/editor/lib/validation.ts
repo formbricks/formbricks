@@ -93,12 +93,26 @@ const handleI18nCheckForContactAndAddressFields = (
     const { addressLine1, addressLine2, city, state, zip, country } = element;
     fields = [addressLine1, addressLine2, city, state, zip, country];
   }
-  return fields.every((field) => {
+
+  const builtInValid = fields.every((field) => {
     if (field.show) {
       return isLabelValidForAllLanguages(field.placeholder, languages);
     }
     return true;
   });
+
+  // Also validate custom field placeholders for contact info
+  if (element.type === "contactInfo") {
+    const customFieldsValid = (element.customFields ?? []).every((cf) => {
+      if (cf.show) {
+        return isLabelValidForAllLanguages(cf.placeholder, languages);
+      }
+      return true;
+    });
+    return builtInValid && customFieldsValid;
+  }
+
+  return builtInValid;
 };
 
 // Validation rules
