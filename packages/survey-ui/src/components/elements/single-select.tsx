@@ -162,7 +162,7 @@ function SingleSelect({
                   className="rounded-input w-full justify-between"
                   aria-invalid={Boolean(errorMessage)}
                   aria-label={headline}>
-                  <span className="truncate">{displayText}</span>
+                  <span className={cn("truncate", !selectedOption && !isOtherSelected && "opacity-50")}>{displayText}</span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>

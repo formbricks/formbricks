@@ -155,7 +155,7 @@ function FormField({
                   disabled={disabled}
                   dir={dir}
                   variant="dropdown"
-                  placeholder={field.placeholder || "Select..."}
+                  placeholder="Select..."
                 />
               ) : (
                 <Input
