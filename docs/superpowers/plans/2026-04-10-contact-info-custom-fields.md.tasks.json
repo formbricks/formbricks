@@ -1,0 +1,47 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-10-contact-info-custom-fields.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 0: Types & Presets — Schema foundation",
+      "status": "pending",
+      "description": "**Goal:** Define ZCustomField, ZCustomFieldOption, preset lists, normalizer utility, and extend ZSurveyContactInfoElement schema.\n\n**Files:**\n- Create: `packages/types/surveys/contact-field-presets.ts`\n- Modify: `packages/types/surveys/elements.ts`\n- Modify: `packages/types/surveys/compound-fields.ts`\n- Modify: `packages/types/surveys/types.ts`\n\n**Verify:** `pnpm tsc --noEmit -p packages/types/tsconfig.json`\n\n```json:metadata\n{\"files\": [\"packages/types/surveys/contact-field-presets.ts\", \"packages/types/surveys/elements.ts\", \"packages/types/surveys/compound-fields.ts\", \"packages/types/surveys/types.ts\"], \"verifyCommand\": \"pnpm tsc --noEmit -p packages/types/tsconfig.json\", \"acceptanceCriteria\": [\"ZCustomField schema defined\", \"presets file created\", \"normalizer utility exported\", \"schema validation updated\"]}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 1: FormField dropdown support in survey-ui",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Extend FormField component to render dropdown fields using SingleSelect.\n\n**Files:**\n- Modify: `packages/survey-ui/src/components/elements/form-field.tsx`\n\n**Verify:** `pnpm tsc --noEmit -p packages/survey-ui/tsconfig.json`\n\n```json:metadata\n{\"files\": [\"packages/survey-ui/src/components/elements/form-field.tsx\"], \"verifyCommand\": \"pnpm tsc --noEmit -p packages/survey-ui/tsconfig.json\", \"acceptanceCriteria\": [\"FormFieldConfig has options array\", \"dropdown fields render SingleSelect\", \"existing fields unchanged\"]}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 2: Survey renderer — dynamic fields & object responses",
+      "status": "pending",
+      "blockedBy": [1, 2],
+      "description": "**Goal:** Update ContactInfoElement for fieldOrder iteration, custom field resolution, dropdown rendering, object response format.\n\n**Files:**\n- Modify: `packages/surveys/src/components/elements/contact-info-element.tsx`\n\n**Verify:** `pnpm tsc --noEmit -p packages/surveys/tsconfig.json`\n\n```json:metadata\n{\"files\": [\"packages/surveys/src/components/elements/contact-info-element.tsx\"], \"verifyCommand\": \"pnpm tsc --noEmit -p packages/surveys/tsconfig.json\", \"acceptanceCriteria\": [\"fieldOrder iteration works\", \"custom fields resolved\", \"dropdown rendering works\", \"object response format\", \"array backward compat\"]}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 3: Editor UI — CustomFieldsSection component",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Build editor UI for managing custom fields and field ordering.\n\n**Files:**\n- Create: `apps/web/modules/survey/editor/components/custom-fields-section.tsx`\n- Modify: `apps/web/modules/survey/editor/components/contact-info-element-form.tsx`\n- Modify: `apps/web/modules/survey/lib/elements.tsx`\n\n**Verify:** `pnpm tsc --noEmit -p apps/web/tsconfig.json`\n\n```json:metadata\n{\"files\": [\"apps/web/modules/survey/editor/components/custom-fields-section.tsx\", \"apps/web/modules/survey/editor/components/contact-info-element-form.tsx\", \"apps/web/modules/survey/lib/elements.tsx\"], \"verifyCommand\": \"pnpm tsc --noEmit -p apps/web/tsconfig.json\", \"acceptanceCriteria\": [\"custom fields section renders\", \"add/remove fields works\", \"dropdown presets work\", \"field order reorder works\", \"count badge shows\", \"max 10 enforced\"]}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 4: Editor validation — custom fields i18n & visibility",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Update editor validation for custom field placeholders and visibility rules.\n\n**Files:**\n- Modify: `apps/web/modules/survey/editor/lib/validation.ts`\n\n**Verify:** `pnpm tsc --noEmit -p apps/web/tsconfig.json`\n\n```json:metadata\n{\"files\": [\"apps/web/modules/survey/editor/lib/validation.ts\"], \"verifyCommand\": \"pnpm tsc --noEmit -p apps/web/tsconfig.json\", \"acceptanceCriteria\": [\"custom field placeholders validated for i18n\", \"visibility check includes custom fields\"]}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 5: Backward compat — response normalizer across all consumers",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Update all response-reading code to use normalizeContactInfoResponse and handle custom fields.\n\n**Files:**\n- Modify: `RenderResponse.tsx`\n- Modify: `surveySummary.ts`\n- Modify: `transform.ts`\n- Modify: `compound-prefill.ts`\n\n**Verify:** `pnpm tsc --noEmit -p apps/web/tsconfig.json && pnpm tsc --noEmit -p packages/surveys/tsconfig.json`\n\n```json:metadata\n{\"files\": [\"apps/web/modules/analysis/components/SingleResponseCard/components/RenderResponse.tsx\", \"apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary.ts\", \"apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-export/transform.ts\", \"packages/surveys/src/lib/compound-prefill.ts\"], \"verifyCommand\": \"pnpm tsc --noEmit -p apps/web/tsconfig.json\", \"acceptanceCriteria\": [\"RenderResponse handles both formats\", \"survey summary handles both\", \"exports include custom fields\", \"prefill supports custom fields\"]}\n```"
+    }
+  ],
+  "lastUpdated": "2026-04-10T00:00:00Z"
+}
