@@ -316,7 +316,7 @@ export function ElementConditional({
         return (
           <ContactInfoElement
             element={element}
-            value={Array.isArray(value) ? value : undefined}
+            value={Array.isArray(value) || (typeof value === "object" && value !== null) ? (value as string[] | Record<string, string>) : undefined}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
