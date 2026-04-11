@@ -111,8 +111,8 @@ export function ContactInfoElement({
 
       const fieldConfig: FormFieldConfig = {
         id: customField.id,
-        label: getLocalizedValue(customField.placeholder, languageCode),
-        placeholder: getLocalizedValue(customField.placeholder, languageCode),
+        label: customField.label,
+        placeholder: getLocalizedValue(customField.placeholder, languageCode) || `Select ${customField.label}...`,
         required: customField.required,
         show: customField.show,
         type: CUSTOM_TYPE_MAP[customField.type] || "text",
