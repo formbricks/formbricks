@@ -2127,6 +2127,7 @@
         "this_quarter": "Dit kwartaal",
         "this_year": "Dit jaar",
         "time_to_complete": "Tijd om te voltooien",
+        "ttc_survey_tooltip": "Gemiddelde tijd om de enquête te voltooien.",
         "ttc_tooltip": "Gemiddelde tijd om de vraag te beantwoorden.",
         "unknown_question_type": "Onbekend vraagtype",
         "use_personal_links": "Gebruik persoonlijke links",

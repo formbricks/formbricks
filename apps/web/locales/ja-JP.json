@@ -2127,6 +2127,7 @@
         "this_quarter": "今四半期",
         "this_year": "今年",
         "time_to_complete": "完了までの時間",
+        "ttc_survey_tooltip": "アンケートの平均完了時間。",
         "ttc_tooltip": "フォームを完了するまでの平均時間。",
         "unknown_question_type": "不明な質問の種類",
         "use_personal_links": "個人リンクを使用",

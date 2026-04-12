@@ -2127,6 +2127,7 @@
         "this_quarter": "Ez a negyedév",
         "this_year": "Ez az év",
         "time_to_complete": "Kitöltéshez szükséges idő",
+        "ttc_survey_tooltip": "A felmérés kitöltésének átlagos ideje.",
         "ttc_tooltip": "A kérdés megválaszolásának átlagos ideje.",
         "unknown_question_type": "Ismeretlen kérdéstípus",
         "use_personal_links": "Személyes hivatkozások használata",

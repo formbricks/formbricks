@@ -2127,6 +2127,7 @@
         "this_quarter": "本季度",
         "this_year": "今年",
         "time_to_complete": "完成时间",
+        "ttc_survey_tooltip": "完成调查的平均时间。",
         "ttc_tooltip": "完成 本 问题 的 平均 时间",
         "unknown_question_type": "未知 问题 类型",
         "use_personal_links": "使用 个人 链接",

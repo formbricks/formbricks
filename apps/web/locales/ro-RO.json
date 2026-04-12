@@ -2127,6 +2127,7 @@
         "this_quarter": "Trimestrul acesta",
         "this_year": "Anul acesta",
         "time_to_complete": "Timp de finalizare",
+        "ttc_survey_tooltip": "Timpul mediu de finalizare a sondajului.",
         "ttc_tooltip": "Timp mediu pentru a completa întrebarea.",
         "unknown_question_type": "Tip de întrebare necunoscut",
         "use_personal_links": "Folosește linkuri personale",
