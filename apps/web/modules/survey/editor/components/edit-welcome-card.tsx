@@ -128,21 +128,14 @@ export const EditWelcomeCard = ({
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
-                  if (url?.length && url[0]) {
-                    const update =
-                      fileType === "video"
-                        ? { videoUrl: url[0], fileUrl: undefined }
-                        : { fileUrl: url[0], videoUrl: undefined };
-                    updateSurvey(update);
+                onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
+                  if (url?.length) {
+                    updateSurvey({ fileUrl: url[0] });
                   } else {
-                    updateSurvey({ fileUrl: undefined, videoUrl: undefined });
+                    updateSurvey({ fileUrl: undefined });
                   }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
-                videoUrl={localSurvey?.welcomeCard?.videoUrl}
-                isVideoAllowed={true}
-                maxSizeInMB={5}
                 isStorageConfigured={isStorageConfigured}
               />
             </div>
