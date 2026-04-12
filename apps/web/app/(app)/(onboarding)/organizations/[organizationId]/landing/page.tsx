@@ -26,7 +26,7 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  const { isMember, isBilling } = getAccessFlags(membership?.role);
+  const { isBilling } = getAccessFlags(membership?.role);
   const isMembershipPending = membership?.role === undefined;
 
   return (
@@ -45,7 +45,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isLicenseActive={false}
               isOwnerOrManager={false}
               isAccessControlAllowed={false}
-              isMember={isMember}
               isBilling={isBilling}
               isMembershipPending={isMembershipPending}
               environments={[]}

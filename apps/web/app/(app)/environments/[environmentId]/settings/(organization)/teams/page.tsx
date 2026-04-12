@@ -1,3 +1,8 @@
-import { TeamsPage } from "@/modules/organization/settings/teams/page";
+import { redirect } from "next/navigation";
 
-export default TeamsPage;
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/organization/teams`);
+};
+
+export default Page;

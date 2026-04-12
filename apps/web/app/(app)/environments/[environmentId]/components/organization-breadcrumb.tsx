@@ -1,15 +1,8 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  Building2Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Loader2,
-  PlusIcon,
-  SettingsIcon,
-} from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { Building2Icon, ChevronDownIcon, ChevronRightIcon, Loader2, PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
@@ -22,72 +15,46 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useOrganization } from "../context/environment-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
-  currentOrganizationName?: string; // Optional: pass directly if context not available
+  currentOrganizationName?: string;
   isMultiOrgEnabled: boolean;
   currentEnvironmentId?: string;
-  isFormbricksCloud: boolean;
-  isMember: boolean;
-  isOwnerOrManager: boolean;
   isMembershipPending: boolean;
 }
-
-const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
-  // Match /settings/{settingId} or /settings/{settingId}/... but exclude account settings
-  // Exclude paths with /(account)/
-  if (pathname.includes("/(account)/")) {
-    return false;
-  }
-  // Check if path matches /settings/{settingId} (with optional trailing path)
-  const pattern = new RegExp(`/settings/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
-};
 
 export const OrganizationBreadcrumb = ({
   currentOrganizationId,
   currentOrganizationName,
   isMultiOrgEnabled,
   currentEnvironmentId,
-  isFormbricksCloud,
-  isMember,
-  isOwnerOrManager,
   isMembershipPending,
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
-  const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Get current organization name from context OR prop
-  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
   const { organization: currentOrganization } = useOrganization();
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
-  // Lazy-load organizations when dropdown opens
   useEffect(() => {
-    // Only fetch when dropdown opened for first time (and no error state)
     if (isOrganizationDropdownOpen && organizations.length === 0 && !isLoadingOrganizations && !loadError) {
       setIsLoadingOrganizations(true);
-      setLoadError(null); // Clear any previous errors
+      setLoadError(null);
       getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
         if (result?.data) {
-          // Sort organizations by name
           const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
           setOrganizations(sorted);
         } else {
-          // Handle server errors or validation errors
           const errorMessage = getFormattedErrorMessage(result);
           const error = new Error(errorMessage);
           logger.error(error, "Failed to load organizations");
@@ -120,59 +87,7 @@ export const OrganizationBreadcrumb = ({
     });
   };
 
-  // Hide organization dropdown for single org setups (on-premise)
   const showOrganizationDropdown = isMultiOrgEnabled || organizations.length > 1;
-
-  const handleSettingChange = (href: string) => {
-    startTransition(() => {
-      setIsOrganizationDropdownOpen(false);
-      router.push(href);
-    });
-  };
-
-  const organizationSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `/environments/${currentEnvironmentId}/settings/general`,
-    },
-    {
-      id: "teams",
-      label: t("common.members_and_teams"),
-      href: `/environments/${currentEnvironmentId}/settings/teams`,
-    },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      href: `/environments/${currentEnvironmentId}/settings/api-keys`,
-      disabled: isMembershipPending || !isOwnerOrManager,
-      disabledMessage: isMembershipPending
-        ? t("common.loading")
-        : t("common.you_are_not_authorized_to_perform_this_action"),
-    },
-    {
-      id: "domain",
-      label: t("common.domain"),
-      href: `/environments/${currentEnvironmentId}/settings/domain`,
-      hidden: isFormbricksCloud,
-    },
-    {
-      id: "billing",
-      label: t("common.billing"),
-      href: `/environments/${currentEnvironmentId}/settings/billing`,
-      hidden: !isFormbricksCloud,
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `/environments/${currentEnvironmentId}/settings/enterprise`,
-      hidden: isFormbricksCloud,
-      disabled: isMembershipPending || isMember,
-      disabledMessage: isMembershipPending
-        ? t("common.loading")
-        : t("common.you_are_not_authorized_to_perform_this_action"),
-    },
-  ];
 
   return (
     <BreadcrumbItem isActive={isOrganizationDropdownOpen}>
@@ -241,44 +156,6 @@ export const OrganizationBreadcrumb = ({
                 </>
               )}
             </>
-          )}
-          {currentEnvironmentId && (
-            <div>
-              {showOrganizationDropdown && <DropdownMenuSeparator />}
-              <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <SettingsIcon className="mr-2 inline h-4 w-4" />
-                {t("common.organization_settings")}
-              </div>
-
-              {organizationSettings.map((setting) => {
-                return setting.hidden ? null : (
-                  <div key={setting.id}>
-                    {setting.disabled ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button
-                            type="button"
-                            aria-disabled="true"
-                            className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
-                            {setting.label}
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
-                          {setting.disabledMessage}
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <DropdownMenuCheckboxItem
-                        checked={isActiveOrganizationSetting(pathname, setting.id)}
-                        onClick={() => handleSettingChange(setting.href)}
-                        className="cursor-pointer">
-                        {setting.label}
-                      </DropdownMenuCheckboxItem>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

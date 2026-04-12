@@ -1,8 +1,8 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { ChevronDownIcon, ChevronRightIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
@@ -16,7 +16,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -25,7 +24,7 @@ import { useProject } from "../context/environment-context";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
-  currentProjectName?: string; // Optional: pass directly if context not available
+  currentProjectName?: string;
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
@@ -38,16 +37,6 @@ interface ProjectBreadcrumbProps {
   isMembershipPending: boolean;
 }
 
-const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
-  // Match /workspace/{settingId} or /workspace/{settingId}/... but exclude settings paths
-  if (pathname.includes("/settings/")) {
-    return false;
-  }
-  // Check if path matches /workspace/{settingId} (with optional trailing path)
-  const pattern = new RegExp(`/workspace/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
-};
-
 export const ProjectBreadcrumb = ({
   currentProjectId,
   currentProjectName,
@@ -59,7 +48,6 @@ export const ProjectBreadcrumb = ({
   currentEnvironmentId,
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
-  isBilling,
   isMembershipPending,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslation();
@@ -71,26 +59,19 @@ export const ProjectBreadcrumb = ({
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const pathname = usePathname();
 
-  // Get current project name from context OR prop
-  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
   const { project: currentProject } = useProject();
   const projectName = currentProject?.name || currentProjectName || "";
 
-  // Lazy-load projects when dropdown opens
   useEffect(() => {
-    // Only fetch when dropdown opened for first time (and no error state)
     if (isProjectDropdownOpen && projects.length === 0 && !isLoadingProjects && !loadError) {
       setIsLoadingProjects(true);
-      setLoadError(null); // Clear any previous errors
+      setLoadError(null);
       getProjectsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
         if (result?.data) {
-          // Sort projects by name
           const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
           setProjects(sorted);
         } else {
-          // Handle server errors or validation errors
           const errorMessage = getFormattedErrorMessage(result);
           const error = new Error(errorMessage);
           logger.error(error, "Failed to load projects");
@@ -101,48 +82,6 @@ export const ProjectBreadcrumb = ({
       });
     }
   }, [isProjectDropdownOpen, currentOrganizationId, projects.length, isLoadingProjects, loadError, t]);
-
-  const projectSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `/environments/${currentEnvironmentId}/workspace/general`,
-    },
-    {
-      id: "look",
-      label: t("common.look_and_feel"),
-      href: `/environments/${currentEnvironmentId}/workspace/look`,
-    },
-    {
-      id: "app-connection",
-      label: t("common.website_and_app_connection"),
-      href: `/environments/${currentEnvironmentId}/workspace/app-connection`,
-    },
-    {
-      id: "integrations",
-      label: t("common.integrations"),
-      href: `/environments/${currentEnvironmentId}/workspace/integrations`,
-    },
-    {
-      id: "teams",
-      label: t("common.team_access"),
-      href: `/environments/${currentEnvironmentId}/workspace/teams`,
-    },
-    {
-      id: "languages",
-      label: t("common.survey_languages"),
-      href: `/environments/${currentEnvironmentId}/workspace/languages`,
-    },
-    {
-      id: "tags",
-      label: t("common.tags"),
-      href: `/environments/${currentEnvironmentId}/workspace/tags`,
-    },
-  ];
-  const areProjectSettingsDisabled = isMembershipPending || isBilling;
-  const projectSettingsDisabledMessage = isMembershipPending
-    ? t("common.loading")
-    : t("common.you_are_not_authorized_to_perform_this_action");
 
   if (!currentProject) {
     const errorMessage = `Workspace not found for workspace id: ${currentProjectId}`;
@@ -166,18 +105,12 @@ export const ProjectBreadcrumb = ({
     setOpenCreateProjectModal(true);
   };
 
-  const handleProjectSettingsNavigation = (settingId: string) => {
-    startTransition(() => {
-      router.push(`/environments/${currentEnvironmentId}/workspace/${settingId}`);
-    });
-  };
-
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
     if (isFormbricksCloud) {
       return [
         {
           text: t("environments.settings.billing.upgrade"),
-          href: `/environments/${currentEnvironmentId}/settings/billing`,
+          href: `/environments/${currentEnvironmentId}/settings/organization/billing`,
         },
         {
           text: t("common.cancel"),
@@ -190,7 +123,7 @@ export const ProjectBreadcrumb = ({
       {
         text: t("environments.settings.billing.upgrade"),
         href: isLicenseActive
-          ? `/environments/${currentEnvironmentId}/settings/enterprise`
+          ? `/environments/${currentEnvironmentId}/settings/organization/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",
       },
       {
@@ -199,6 +132,7 @@ export const ProjectBreadcrumb = ({
       },
     ];
   };
+
   return (
     <BreadcrumbItem isActive={isProjectDropdownOpen}>
       <DropdownMenu onOpenChange={setIsProjectDropdownOpen}>
@@ -283,42 +217,8 @@ export const ProjectBreadcrumb = ({
               )}
             </>
           )}
-          <DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-              <CogIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-              {t("common.workspace_configuration")}
-            </div>
-            {projectSettings.map((setting) => (
-              <div key={setting.id}>
-                {areProjectSettingsDisabled ? (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        aria-disabled="true"
-                        className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
-                        {setting.label}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
-                      {projectSettingsDisabledMessage}
-                    </PopoverContent>
-                  </Popover>
-                ) : (
-                  <DropdownMenuCheckboxItem
-                    checked={isActiveProjectSetting(pathname, setting.id)}
-                    onClick={() => handleProjectSettingsNavigation(setting.id)}
-                    className="cursor-pointer">
-                    {setting.label}
-                  </DropdownMenuCheckboxItem>
-                )}
-              </div>
-            ))}
-          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* Modals */}
       {openLimitModal && (
         <ProjectLimitModal
           open={openLimitModal}

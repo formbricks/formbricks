@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
-import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -28,9 +27,7 @@ const Loading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar activeId="profile" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.account_settings")} />
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />
       ))}

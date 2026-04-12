@@ -1,3 +1,8 @@
-import { APIKeysPage } from "@/modules/organization/settings/api-keys/page";
+import { redirect } from "next/navigation";
 
-export default APIKeysPage;
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/organization/api-keys`);
+};
+
+export default Page;

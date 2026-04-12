@@ -1,5 +1,4 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
@@ -34,14 +33,7 @@ export const TeamsPage = async (props: { params: Promise<{ environmentId: string
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
-          activeId="teams"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")} />
       <MembersView
         membershipRole={currentUserMembership?.role}
         organization={organization}

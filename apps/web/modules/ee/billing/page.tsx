@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
@@ -40,14 +39,7 @@ export const PricingPage = async (props: { params: Promise<{ environmentId: stri
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
-          activeId="billing"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")} />
 
       <PricingTable
         organization={organizationWithSyncedBilling}

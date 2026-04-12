@@ -1,3 +1,8 @@
-import { ProjectSettingsPage } from "@/modules/projects/settings/page";
+import { redirect } from "next/navigation";
 
-export default ProjectSettingsPage;
+const WorkspacePage = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/workspace/general`);
+};
+
+export default WorkspacePage;

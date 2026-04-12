@@ -72,25 +72,6 @@ interface NavigationProps {
   isAccessControlAllowed: boolean;
 }
 
-const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
-  if (pathname.includes("/settings/")) {
-    return false;
-  }
-
-  const pattern = new RegExp(`/workspace/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
-};
-
-const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
-  const accountSettingsPattern = /\/settings\/(profile|account|notifications|security|appearance)(?:\/|$)/;
-  if (accountSettingsPattern.test(pathname)) {
-    return false;
-  }
-
-  const pattern = new RegExp(`/settings/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
-};
-
 export const MainNavigation = ({
   environment,
   organization,
@@ -168,10 +149,10 @@ export const MainNavigation = ({
         disabled: isMembershipPending || isBilling,
       },
       {
-        name: t("common.configuration"),
-        href: `/environments/${environment.id}/workspace/general`,
+        name: t("common.settings"),
+        href: `/environments/${environment.id}/settings/workspace/general`,
         icon: Cog,
-        isActive: pathname?.includes("/workspace"),
+        isActive: pathname?.includes("/settings/"),
         disabled: isMembershipPending || isBilling,
       },
     ],
@@ -180,9 +161,9 @@ export const MainNavigation = ({
 
   const dropdownNavigation = [
     {
-      label: t("common.account"),
-      href: `/environments/${environment.id}/settings/profile`,
-      icon: UserCircleIcon,
+      label: t("common.settings"),
+      href: `/environments/${environment.id}/settings/account/profile`,
+      icon: SettingsIcon,
     },
     {
       label: t("common.documentation"),
@@ -220,80 +201,8 @@ export const MainNavigation = ({
     </div>
   );
 
-  const projectSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `/environments/${environment.id}/workspace/general`,
-    },
-    {
-      id: "look",
-      label: t("common.look_and_feel"),
-      href: `/environments/${environment.id}/workspace/look`,
-    },
-    {
-      id: "app-connection",
-      label: t("common.website_and_app_connection"),
-      href: `/environments/${environment.id}/workspace/app-connection`,
-    },
-    {
-      id: "integrations",
-      label: t("common.integrations"),
-      href: `/environments/${environment.id}/workspace/integrations`,
-    },
-    {
-      id: "teams",
-      label: t("common.team_access"),
-      href: `/environments/${environment.id}/workspace/teams`,
-    },
-    {
-      id: "languages",
-      label: t("common.survey_languages"),
-      href: `/environments/${environment.id}/workspace/languages`,
-    },
-    {
-      id: "tags",
-      label: t("common.tags"),
-      href: `/environments/${environment.id}/workspace/tags`,
-    },
-  ];
-
-  const organizationSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `/environments/${environment.id}/settings/general`,
-    },
-    {
-      id: "teams",
-      label: t("common.members_and_teams"),
-      href: `/environments/${environment.id}/settings/teams`,
-    },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      href: `/environments/${environment.id}/settings/api-keys`,
-      hidden: !isOwnerOrManager,
-    },
-    {
-      id: "domain",
-      label: t("common.domain"),
-      href: `/environments/${environment.id}/settings/domain`,
-      hidden: isFormbricksCloud,
-    },
-    {
-      id: "billing",
-      label: t("common.billing"),
-      href: `/environments/${environment.id}/settings/billing`,
-      hidden: !isFormbricksCloud,
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `/environments/${environment.id}/settings/enterprise`,
-      hidden: isFormbricksCloud || isMember,
-    },
-  ];
+  const workspaceSettingsHref = `/environments/${environment.id}/settings/workspace/general`;
+  const organizationSettingsHref = `/environments/${environment.id}/settings/organization/general`;
 
   const loadProjects = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -627,19 +536,12 @@ export const MainNavigation = ({
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                      <Cog className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                      {t("common.workspace_configuration")}
-                    </div>
-                    {projectSettings.map((setting) => (
-                      <DropdownMenuCheckboxItem
-                        key={setting.id}
-                        checked={isActiveProjectSetting(pathname, setting.id)}
-                        onClick={() => handleSettingNavigation(setting.href)}
-                        className="cursor-pointer">
-                        {setting.label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                    <DropdownMenuItem
+                      onClick={() => handleSettingNavigation(workspaceSettingsHref)}
+                      className="cursor-pointer">
+                      <SettingsIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                      {t("common.settings")}
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -715,22 +617,12 @@ export const MainNavigation = ({
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                      <SettingsIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                      {t("common.organization_settings")}
-                    </div>
-                    {organizationSettings.map((setting) => {
-                      if (setting.hidden) return null;
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={setting.id}
-                          checked={isActiveOrganizationSetting(pathname, setting.id)}
-                          onClick={() => handleSettingNavigation(setting.href)}
-                          className="cursor-pointer">
-                          {setting.label}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
+                    <DropdownMenuItem
+                      onClick={() => handleSettingNavigation(organizationSettingsHref)}
+                      className="cursor-pointer">
+                      <SettingsIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                      {t("common.settings")}
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>

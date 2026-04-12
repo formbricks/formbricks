@@ -1,3 +1,8 @@
-import { PricingPage } from "@/modules/ee/billing/page";
+import { redirect } from "next/navigation";
 
-export default PricingPage;
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/organization/billing`);
+};
+
+export default Page;

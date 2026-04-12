@@ -17,7 +17,6 @@ interface ProjectAndOrgSwitchProps {
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
   isOwnerOrManager: boolean;
-  isMember: boolean;
   isBilling: boolean;
   isMembershipPending: boolean;
   isAccessControlAllowed: boolean;
@@ -36,7 +35,6 @@ export const ProjectAndOrgSwitch = ({
   isLicenseActive,
   isOwnerOrManager,
   isAccessControlAllowed,
-  isMember,
   isBilling,
   isMembershipPending,
 }: ProjectAndOrgSwitchProps) => {
@@ -51,9 +49,6 @@ export const ProjectAndOrgSwitch = ({
           currentOrganizationName={currentOrganizationName}
           currentEnvironmentId={currentEnvironmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          isFormbricksCloud={isFormbricksCloud}
-          isMember={isMember}
-          isOwnerOrManager={isOwnerOrManager}
           isMembershipPending={isMembershipPending}
         />
         {currentProjectId && currentEnvironmentId && (

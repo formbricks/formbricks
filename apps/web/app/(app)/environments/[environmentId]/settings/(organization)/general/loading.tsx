@@ -1,6 +1,4 @@
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -23,9 +21,7 @@ const Loading = async () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="general" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")} />
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />
       ))}

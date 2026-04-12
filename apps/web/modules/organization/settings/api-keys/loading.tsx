@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -44,13 +43,11 @@ const LoadingCard = () => {
   );
 };
 
-const Loading = ({ isFormbricksCloud }: { isFormbricksCloud: boolean }) => {
+const Loading = () => {
   const { t } = useTranslation();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar isFormbricksCloud={isFormbricksCloud} activeId="api-keys" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")} />
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
       <LoadingCard />
     </PageContentWrapper>

@@ -1,0 +1,139 @@
+import { getServerSession } from "next-auth";
+import { prisma } from "@formbricks/database";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TUserNotificationSettings } from "@formbricks/types/user";
+import { EditAlerts } from "@/app/(app)/environments/[environmentId]/settings/(account)/notifications/components/EditAlerts";
+import { IntegrationsTip } from "@/app/(app)/environments/[environmentId]/settings/(account)/notifications/components/IntegrationsTip";
+import type { Membership } from "@/app/(app)/environments/[environmentId]/settings/(account)/notifications/types";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+
+const setCompleteNotificationSettings = (
+  notificationSettings: TUserNotificationSettings,
+  memberships: Membership[]
+): TUserNotificationSettings => {
+  const newNotificationSettings: TUserNotificationSettings = {
+    alert: {} as Record<string, boolean>,
+    unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
+  };
+  for (const membership of memberships) {
+    for (const project of membership.organization.projects) {
+      for (const environment of project.environments) {
+        for (const survey of environment.surveys) {
+          newNotificationSettings.alert[survey.id] =
+            (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
+              ?.responseFinished ||
+            (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
+            false;
+        }
+      }
+    }
+  }
+  return newNotificationSettings;
+};
+
+const getMemberships = async (userId: string): Promise<Membership[]> => {
+  const memberships = await prisma.membership.findMany({
+    where: {
+      userId,
+      role: { not: "billing" },
+      OR: [
+        { role: { in: ["owner", "manager"] } },
+        {
+          organization: {
+            projects: {
+              some: {
+                projectTeams: { some: { team: { teamUsers: { some: { userId } } } } },
+              },
+            },
+          },
+        },
+      ],
+    },
+    select: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          projects: {
+            where: {
+              OR: [
+                {
+                  organization: {
+                    memberships: { some: { userId, role: { in: ["owner", "manager"] } } },
+                  },
+                },
+                { projectTeams: { some: { team: { teamUsers: { some: { userId } } } } } },
+              ],
+            },
+            select: {
+              id: true,
+              name: true,
+              environments: {
+                where: { type: "production" },
+                select: {
+                  id: true,
+                  surveys: { select: { id: true, name: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  return memberships;
+};
+
+const Page = async (props: {
+  params: Promise<{ environmentId: string }>;
+  searchParams: Promise<Record<string, string>>;
+}) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const t = await getTranslate();
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new AuthenticationError(t("common.not_authenticated"));
+  }
+  const autoDisableNotificationType = searchParams["type"];
+  const autoDisableNotificationElementId = searchParams["elementId"];
+
+  const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
+  if (!user) {
+    throw new AuthenticationError(t("common.not_authenticated"));
+  }
+
+  if (!memberships) {
+    throw new ResourceNotFoundError(t("common.membership"), null);
+  }
+
+  if (user?.notificationSettings) {
+    user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
+  }
+  return (
+    <PageContentWrapper>
+      <PageHeader pageTitle={t("common.account_settings")} />
+      <SettingsCard
+        title={t("environments.settings.notifications.email_alerts_surveys")}
+        description={t(
+          "environments.settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses"
+        )}>
+        <EditAlerts
+          memberships={memberships}
+          user={user}
+          environmentId={params.environmentId}
+          autoDisableNotificationType={autoDisableNotificationType}
+          autoDisableNotificationElementId={autoDisableNotificationElementId}
+        />
+      </SettingsCard>
+      <IntegrationsTip environmentId={params.environmentId} />
+    </PageContentWrapper>
+  );
+};
+
+export default Page;

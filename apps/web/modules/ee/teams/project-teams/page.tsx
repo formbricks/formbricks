@@ -2,7 +2,6 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getTranslate } from "@/lingodotdev/server";
 import { AccessView } from "@/modules/ee/teams/project-teams/components/access-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTeamsByProjectId } from "./lib/team";
@@ -21,9 +20,7 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation environmentId={params.environmentId} activeId="teams" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <AccessView environmentId={params.environmentId} teams={teams} />
     </PageContentWrapper>
   );

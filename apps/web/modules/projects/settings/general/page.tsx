@@ -3,7 +3,6 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -26,9 +25,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation environmentId={params.environmentId} activeId="general" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <SettingsCard
         title={t("common.workspace_name")}
         description={t("environments.workspace.general.workspace_name_settings_description")}>

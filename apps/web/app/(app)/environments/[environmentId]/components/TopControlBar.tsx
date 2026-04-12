@@ -31,7 +31,7 @@ export const TopControlBar = ({
   isAccessControlAllowed,
   membershipRole,
 }: TopControlBarProps) => {
-  const { isMember, isBilling } = getAccessFlags(membershipRole);
+  const { isBilling } = getAccessFlags(membershipRole);
   const isMembershipPending = membershipRole === undefined;
   const { environment } = useEnvironment();
 
@@ -49,7 +49,6 @@ export const TopControlBar = ({
         isFormbricksCloud={isFormbricksCloud}
         isLicenseActive={isLicenseActive}
         isOwnerOrManager={isOwnerOrManager}
-        isMember={isMember}
         isBilling={isBilling}
         isMembershipPending={isMembershipPending}
         isAccessControlAllowed={isAccessControlAllowed}

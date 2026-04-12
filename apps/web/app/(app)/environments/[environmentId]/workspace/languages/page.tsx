@@ -1,3 +1,8 @@
-import { LanguagesPage } from "@/modules/projects/settings/languages/page";
+import { redirect } from "next/navigation";
 
-export default LanguagesPage;
+const WorkspaceLanguagesPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/workspace/languages`);
+};
+
+export default WorkspaceLanguagesPage;

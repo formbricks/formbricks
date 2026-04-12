@@ -7,7 +7,6 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
 import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -33,9 +32,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation environmentId={params.environmentId} activeId="look" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       {!IS_STORAGE_CONFIGURED && (
         <Alert variant="warning">
           <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>

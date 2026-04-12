@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -10,9 +9,7 @@ export const TagsLoading = () => {
   const { t } = useTranslation();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation activeId="tags" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <SettingsCard
         title={t("environments.workspace.tags.manage_tags")}
         description={t("environments.workspace.tags.manage_tags_description")}>

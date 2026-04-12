@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -10,9 +9,7 @@ export const TeamsLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation activeId="teams" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <div className="p-4">
         <div className="mb-4">
           <div className="h-6 w-1/3 animate-pulse rounded bg-slate-200" />

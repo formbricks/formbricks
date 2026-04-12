@@ -1,6 +1,5 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -26,14 +25,7 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
-          activeId="api-keys"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")} />
       <SettingsCard
         title={t("common.api_keys")}
         description={t("environments.settings.api_keys.api_keys_description")}>

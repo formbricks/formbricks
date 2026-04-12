@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -35,9 +34,7 @@ export const AppConnectionLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation activeId="app-connection" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />

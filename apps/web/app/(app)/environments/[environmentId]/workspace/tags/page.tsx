@@ -1,3 +1,8 @@
-import { TagsPage } from "@/modules/projects/settings/tags/page";
+import { redirect } from "next/navigation";
 
-export default TagsPage;
+const WorkspaceTagsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/workspace/tags`);
+};
+
+export default WorkspaceTagsPage;

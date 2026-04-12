@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { LanguageLabels } from "@/modules/survey/multi-language-surveys/components/language-labels";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -17,9 +16,7 @@ export const LanguagesLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation activeId="languages" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <SettingsCard
         title={t("environments.workspace.languages.multi_language_surveys")}
         description={t("environments.workspace.languages.multi_language_surveys_description")}>

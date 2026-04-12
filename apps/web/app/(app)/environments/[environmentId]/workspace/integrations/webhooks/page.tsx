@@ -1,3 +1,8 @@
-import { WebhooksPage } from "@/modules/integrations/webhooks/page";
+import { redirect } from "next/navigation";
 
-export default WebhooksPage;
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  return redirect(`/environments/${params.environmentId}/settings/workspace/integrations/webhooks`);
+};
+
+export default Page;

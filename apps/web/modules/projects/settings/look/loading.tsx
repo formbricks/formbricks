@@ -3,7 +3,6 @@
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -24,9 +23,7 @@ export const ProjectLookSettingsLoading = () => {
   ];
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <ProjectConfigNavigation activeId="look" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_configuration")} />
       <SettingsCard
         title={t("environments.workspace.look.theme")}
         className="max-w-7xl"
