@@ -1,5 +1,5 @@
 // basic regex -- [whitespace](number)(rem)[whitespace or ;]
-const REM_REGEX = /(\d+(\.\d+)?)(rem)/gi;
+const REM_REGEX = /(\d+(\.\d+)?)(rem)/gi;
 const PROCESSED = Symbol("processed");
 
 const remtoEm = (opts = {}) => {
