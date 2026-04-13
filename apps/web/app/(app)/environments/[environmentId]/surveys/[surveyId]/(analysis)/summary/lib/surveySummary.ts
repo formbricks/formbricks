@@ -1009,10 +1009,8 @@ export const getSurveySummary = reactCache(
       ]);
 
       const dropOff = getSurveySummaryDropOff(survey, elements, responses, displayCount);
-      const [meta, elementSummary] = await Promise.all([
-        getSurveySummaryMeta(survey, responses, displayCount, quotas),
-        getElementSummary(survey, elements, responses, dropOff),
-      ]);
+      const meta = getSurveySummaryMeta(survey, responses, displayCount, quotas);
+      const elementSummary = await getElementSummary(survey, elements, responses, dropOff);
 
       return {
         meta,
