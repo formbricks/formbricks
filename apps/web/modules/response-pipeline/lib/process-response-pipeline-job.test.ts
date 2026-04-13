@@ -292,7 +292,7 @@ describe("processResponsePipelineJob", () => {
     expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123");
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledWith(
       "owner@example.com",
-      "en",
+      "en-US",
       "env_123",
       expect.objectContaining({ id: "survey_123" }),
       baseData.response,
