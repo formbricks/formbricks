@@ -121,6 +121,9 @@ vi.mock("@/lib/posthog", () => ({
 }));
 
 describe("handleSsoCallback", () => {
+  const googleVerifiedProfile = { email_verified: true };
+  const googleUnverifiedProfile = { email_verified: false };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
@@ -338,7 +341,41 @@ describe("handleSsoCallback", () => {
       );
     });
 
-    test("should reject verified email users whose SSO provider is not already linked", async () => {
+    test("should grandfather verified email users for legacy Google sign-in when Google verified the email", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue({
+        id: "existing-user-id",
+        email: mockUser.email,
+        emailVerified: new Date(),
+        identityProvider: "email",
+        locale: mockUser.locale,
+        isActive: true,
+      });
+
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+        profile: googleVerifiedProfile,
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "existing-user-id",
+          provider: mockAccount.provider,
+          providerAccountId: mockAccount.providerAccountId,
+        }),
+        undefined
+      );
+      expect(updateUser).not.toHaveBeenCalled();
+      expect(createUser).not.toHaveBeenCalled();
+      expect(createMembership).not.toHaveBeenCalled();
+      expect(createBrevoCustomer).not.toHaveBeenCalled();
+      expect(capturePostHogEvent).not.toHaveBeenCalled();
+    });
+
+    test("should reject verified email users for legacy Google sign-in when Google did not verify the email", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue({
         id: "existing-user-id",
@@ -354,14 +391,12 @@ describe("handleSsoCallback", () => {
           user: mockUser,
           account: mockAccount,
           callbackUrl: "http://localhost:3000",
+          profile: googleUnverifiedProfile,
         })
       ).rejects.toThrow("OAuthAccountNotLinked");
       expect(upsertAccount).not.toHaveBeenCalled();
       expect(updateUser).not.toHaveBeenCalled();
       expect(createUser).not.toHaveBeenCalled();
-      expect(createMembership).not.toHaveBeenCalled();
-      expect(createBrevoCustomer).not.toHaveBeenCalled();
-      expect(capturePostHogEvent).not.toHaveBeenCalled();
     });
 
     test("should reject unverified email users whose SSO provider is not already linked", async () => {
@@ -381,6 +416,7 @@ describe("handleSsoCallback", () => {
           user: mockUser,
           account: mockAccount,
           callbackUrl: "http://localhost:3000",
+          profile: googleVerifiedProfile,
         })
       ).rejects.toThrow("OAuthAccountNotLinked");
       expect(upsertAccount).not.toHaveBeenCalled();
@@ -403,14 +439,49 @@ describe("handleSsoCallback", () => {
         isActive: true,
       });
 
+      const githubAccount = { ...mockAccount, provider: "github" };
+
       await expect(
         handleSsoCallback({
           user: mockUser,
-          account: mockAccount,
+          account: githubAccount,
           callbackUrl: "http://localhost:3000",
+          profile: googleVerifiedProfile,
         })
       ).rejects.toThrow("OAuthAccountNotLinked");
       expect(upsertAccount).not.toHaveBeenCalled();
+      expect(updateUser).not.toHaveBeenCalled();
+      expect(createUser).not.toHaveBeenCalled();
+    });
+
+    test("should grandfather legacy Google users that still have google as identityProvider without an account row", async () => {
+      vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue({
+        id: "existing-user-id",
+        email: mockUser.email,
+        emailVerified: null,
+        identityProvider: "google",
+        locale: mockUser.locale,
+        isActive: true,
+      });
+
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+        profile: googleVerifiedProfile,
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "existing-user-id",
+          provider: mockAccount.provider,
+          providerAccountId: mockAccount.providerAccountId,
+        }),
+        undefined
+      );
       expect(updateUser).not.toHaveBeenCalled();
       expect(createUser).not.toHaveBeenCalled();
     });

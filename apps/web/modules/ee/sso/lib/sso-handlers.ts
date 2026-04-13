@@ -36,6 +36,35 @@ const LINKED_SSO_LOOKUP_SELECT = {
 
 const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
 
+type TSsoProfile = Record<string, unknown> | undefined;
+
+const isGoogleEmailVerified = (account: Account, profile?: TSsoProfile): boolean =>
+  account.provider === "google" && profile?.["email_verified"] === true;
+
+const canGrandfatherLegacySameEmailSso = ({
+  existingUser,
+  account,
+  profile,
+}: {
+  existingUser: Pick<TUser, "emailVerified" | "identityProvider" | "isActive">;
+  account: Account;
+  profile?: TSsoProfile;
+}): boolean => {
+  if (existingUser.isActive === false) {
+    return false;
+  }
+
+  if (!isGoogleEmailVerified(account, profile)) {
+    return false;
+  }
+
+  if (existingUser.identityProvider === "google") {
+    return true;
+  }
+
+  return existingUser.identityProvider === "email" && !!existingUser.emailVerified;
+};
+
 const syncSsoAccount = async (userId: string, account: Account, tx?: Prisma.TransactionClient) => {
   await upsertAccount(
     {
@@ -117,10 +146,12 @@ export const handleSsoCallback = async ({
   user,
   account,
   callbackUrl,
+  profile,
 }: {
   user: TUser;
   account: Account;
   callbackUrl: string;
+  profile?: TSsoProfile;
 }) => {
   const contextLogger = logger.withContext({
     correlationId: crypto.randomUUID(),
@@ -225,10 +256,31 @@ export const handleSsoCallback = async ({
     const existingUserWithEmail = await getUserByEmail(user.email);
 
     if (existingUserWithEmail) {
+      if (
+        canGrandfatherLegacySameEmailSso({
+          existingUser: existingUserWithEmail,
+          account,
+          profile,
+        })
+      ) {
+        await syncSsoAccount(existingUserWithEmail.id, account);
+        contextLogger.debug(
+          {
+            existingUserId: existingUserWithEmail.id,
+            existingIdentityProvider: existingUserWithEmail.identityProvider,
+            grandfatheredProvider: account.provider,
+          },
+          "SSO callback successful: grandfathered legacy same-email SSO account"
+        );
+        return true;
+      }
+
       contextLogger.debug(
         {
           existingUserId: existingUserWithEmail.id,
           existingIdentityProvider: existingUserWithEmail.identityProvider,
+          provider: account.provider,
+          googleEmailVerified: isGoogleEmailVerified(account, profile),
         },
         "SSO callback blocked: existing user found by email without linked provider account"
       );
