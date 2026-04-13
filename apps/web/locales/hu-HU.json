@@ -1360,7 +1360,7 @@
         "audience": "Közönség",
         "auto_close_on_inactivity": "Automatikus lezárás tétlenségnél",
         "auto_progress_rating_and_nps": "Automatikus továbblépés értékelési és NPS kérdéseknél",
-        "auto_progress_rating_and_nps_description": "Automatikus továbblépés, amikor a válaszadók kiválasztanak egy választ az értékelési vagy NPS kérdéseknél. Ez csak az egykérdéses blokkokra vonatkozik. A kötelező kérdések elrejtik a Tovább gombot; az opcionális kérdések továbbra is megjelenítik azt a kihagyás lehetősége érdekében.",
+        "auto_progress_rating_and_nps_description": "Automatikus továbblépés egy kérdést tartalmazó blokkokban. A kötelező kérdések elrejtik a Tovább gombot, kivéve amikor az „Egyéb“ opció van kiválasztva.",
         "auto_save_disabled": "Az automatikus mentés letiltva",
         "auto_save_disabled_tooltip": "A kérdőív csak akkor kerül automatikusan mentésre, ha piszkozatban van. Ez biztosítja, hogy a nyilvános kérdőívek ne legyenek véletlenül frissítve.",
         "auto_save_on": "Automatikus mentés bekapcsolva",

@@ -1360,7 +1360,7 @@
         "audience": "Public",
         "auto_close_on_inactivity": "Închidere automată la inactivitate",
         "auto_progress_rating_and_nps": "Avansare automată pentru întrebări de rating și NPS",
-        "auto_progress_rating_and_nps_description": "Avansează automat când respondenții selectează un răspuns la întrebările de rating sau NPS. Aceasta se aplică doar blocurilor cu o singură întrebare. Întrebările obligatorii ascund butonul Următorul; întrebările opționale îl afișează în continuare pentru a permite omiterea.",
+        "auto_progress_rating_and_nps_description": "Avansare automată în blocurile cu o singură întrebare. Întrebările obligatorii ascund butonul Următorul, cu excepția cazului în care este selectată opțiunea „Altele“.",
         "auto_save_disabled": "Salvare automată dezactivată",
         "auto_save_disabled_tooltip": "Chestionarul dvs. este salvat automat doar când este în ciornă. Acest lucru asigură că sondajele publice nu sunt actualizate neintenționat.",
         "auto_save_on": "Salvare automată activată",

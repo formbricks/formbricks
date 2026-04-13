@@ -1360,7 +1360,7 @@
         "audience": "受眾",
         "auto_close_on_inactivity": "非活動時自動關閉",
         "auto_progress_rating_and_nps": "自動前進評分與 NPS 問題",
-        "auto_progress_rating_and_nps_description": "當受訪者在評分或 NPS 問題中選擇答案時自動前進。此設定僅適用於單一問題區塊。必填問題會隱藏「下一步」按鈕；選填問題仍會顯示該按鈕以便跳過。",
+        "auto_progress_rating_and_nps_description": "在單一問題區塊中自動前進。必填問題會隱藏「下一步」按鈕，除非選擇了「其他」選項。",
         "auto_save_disabled": "自動儲存已停用",
         "auto_save_disabled_tooltip": "您的問卷僅在草稿狀態時自動儲存。這確保公開的問卷不會被意外更新。",
         "auto_save_on": "自動儲存已啟用",

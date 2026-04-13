@@ -1360,7 +1360,7 @@
         "audience": "Audiencia",
         "auto_close_on_inactivity": "Cierre automático por inactividad",
         "auto_progress_rating_and_nps": "Avanzar automáticamente en preguntas de valoración y NPS",
-        "auto_progress_rating_and_nps_description": "Avanza automáticamente cuando los encuestados seleccionen una respuesta en preguntas de valoración o NPS. Esto solo se aplica a bloques de una sola pregunta. Las preguntas obligatorias ocultan el botón Siguiente; las preguntas opcionales aún lo muestran para omitirlas.",
+        "auto_progress_rating_and_nps_description": "Avance automático en bloques de una sola pregunta. Las preguntas obligatorias ocultan Siguiente, excepto cuando se selecciona \"Otro\".",
         "auto_save_disabled": "Guardado automático desactivado",
         "auto_save_disabled_tooltip": "Su encuesta solo se guarda automáticamente cuando está en borrador. Esto asegura que las encuestas públicas no se actualicen involuntariamente.",
         "auto_save_on": "Guardado automático activado",

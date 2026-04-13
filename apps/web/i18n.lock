@@ -1289,7 +1289,7 @@ checksums:
     environments/surveys/edit/audience: a4d9fab4214a641e2d358fbb28f010e0
     environments/surveys/edit/auto_close_on_inactivity: 093db516799315ccd4242a3675693012
     environments/surveys/edit/auto_progress_rating_and_nps: 76b98e95a5b850850baa0ccc3c7fbf7c
-    environments/surveys/edit/auto_progress_rating_and_nps_description: cbf676789b9f3f47e36bdf35fa58282b
+    environments/surveys/edit/auto_progress_rating_and_nps_description: 2a992dd8a5b9532f178f9a21881feb9a
     environments/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     environments/surveys/edit/auto_save_disabled_tooltip: 77322e1e866b7d29f7641a88bbd3b681
     environments/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963
