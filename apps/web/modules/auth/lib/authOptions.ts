@@ -330,7 +330,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       const cookieStore = await cookies();
 
       // get callback url from the cookie store,
@@ -377,7 +377,6 @@ export const authOptions: NextAuthOptions = {
           user: user as TUser,
           account,
           callbackUrl,
-          profile: profile as Record<string, unknown> | undefined,
         });
 
         if (result) {
