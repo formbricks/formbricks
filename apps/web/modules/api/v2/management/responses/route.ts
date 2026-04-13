@@ -1,6 +1,7 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
+import { getResponseSnapshotForPipeline } from "@/lib/response/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -154,11 +155,14 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
+      const responseSnapshot = await getResponseSnapshotForPipeline(createResponseResult.data.id);
+
       scheduleResponsePipelineEvents({
         environmentId,
         events: createResponseResult.data.finished
           ? ["responseCreated", "responseFinished"]
           : ["responseCreated"],
+        response: responseSnapshot ?? undefined,
         responseId: createResponseResult.data.id,
         surveyId: body.surveyId,
       });
