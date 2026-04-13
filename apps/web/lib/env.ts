@@ -1,12 +1,120 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { AI_PROVIDERS } from "@formbricks/types/ai";
 
-export const env = createEnv({
+const ZActiveAIProvider = z.enum(AI_PROVIDERS);
+const ZAIConfigurationEnv = z.object({
+  AI_PROVIDER: ZActiveAIProvider.optional(),
+  AI_MODEL: z.string().optional(),
+  AI_GCP_PROJECT: z.string().optional(),
+  AI_GCP_LOCATION: z.string().optional(),
+  AI_GCP_CREDENTIALS_JSON: z.string().optional(),
+  AI_GCP_APPLICATION_CREDENTIALS: z.string().optional(),
+  AI_AWS_REGION: z.string().optional(),
+  AI_AWS_ACCESS_KEY_ID: z.string().optional(),
+  AI_AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AI_AZURE_API_KEY: z.string().optional(),
+  AI_AZURE_BASE_URL: z.url().optional(),
+  AI_AZURE_RESOURCE_NAME: z.string().optional(),
+});
+
+type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
+
+const addEnvIssue = (ctx: z.RefinementCtx, path: keyof TAIConfigurationEnv, message: string): void => {
+  ctx.addIssue({
+    code: "custom",
+    path: [path],
+    message,
+  });
+};
+
+const validateActiveAIModel = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (values.AI_PROVIDER && !values.AI_MODEL) {
+    addEnvIssue(ctx, "AI_MODEL", "AI_MODEL is required when AI_PROVIDER is set");
+  }
+};
+
+const validateAwsAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AI_AWS_REGION) {
+    addEnvIssue(ctx, "AI_AWS_REGION", "AI_AWS_REGION is required when AI_PROVIDER=aws");
+  }
+
+  if (!values.AI_AWS_ACCESS_KEY_ID) {
+    addEnvIssue(ctx, "AI_AWS_ACCESS_KEY_ID", "AI_AWS_ACCESS_KEY_ID is required when AI_PROVIDER=aws");
+  }
+
+  if (!values.AI_AWS_SECRET_ACCESS_KEY) {
+    addEnvIssue(ctx, "AI_AWS_SECRET_ACCESS_KEY", "AI_AWS_SECRET_ACCESS_KEY is required when AI_PROVIDER=aws");
+  }
+};
+
+const validateGcpAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AI_GCP_PROJECT) {
+    addEnvIssue(ctx, "AI_GCP_PROJECT", "AI_GCP_PROJECT is required when AI_PROVIDER=gcp");
+  }
+
+  if (!values.AI_GCP_LOCATION) {
+    addEnvIssue(ctx, "AI_GCP_LOCATION", "AI_GCP_LOCATION is required when AI_PROVIDER=gcp");
+  }
+
+  if (!values.AI_GCP_CREDENTIALS_JSON && !values.AI_GCP_APPLICATION_CREDENTIALS) {
+    addEnvIssue(
+      ctx,
+      "AI_GCP_CREDENTIALS_JSON",
+      "AI_GCP_CREDENTIALS_JSON or AI_GCP_APPLICATION_CREDENTIALS is required when AI_PROVIDER=gcp"
+    );
+  }
+
+  if (values.AI_GCP_CREDENTIALS_JSON) {
+    try {
+      JSON.parse(values.AI_GCP_CREDENTIALS_JSON);
+    } catch {
+      addEnvIssue(ctx, "AI_GCP_CREDENTIALS_JSON", "AI_GCP_CREDENTIALS_JSON must be valid JSON");
+    }
+  }
+};
+
+const validateAzureAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AI_AZURE_API_KEY) {
+    addEnvIssue(ctx, "AI_AZURE_API_KEY", "AI_AZURE_API_KEY is required when AI_PROVIDER=azure");
+  }
+
+  if (!values.AI_AZURE_BASE_URL && !values.AI_AZURE_RESOURCE_NAME) {
+    addEnvIssue(
+      ctx,
+      "AI_AZURE_BASE_URL",
+      "AI_AZURE_BASE_URL or AI_AZURE_RESOURCE_NAME is required when AI_PROVIDER=azure"
+    );
+  }
+};
+
+const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  validateActiveAIModel(values, ctx);
+
+  if (!values.AI_PROVIDER) {
+    return;
+  }
+
+  const providerValidators: Record<
+    z.infer<typeof ZActiveAIProvider>,
+    (values: TAIConfigurationEnv, ctx: z.RefinementCtx) => void
+  > = {
+    aws: validateAwsAIConfiguration,
+    gcp: validateGcpAIConfiguration,
+    azure: validateAzureAIConfiguration,
+  };
+
+  providerValidators[values.AI_PROVIDER](values, ctx);
+};
+
+const parsedEnv = createEnv({
   /*
    * Serverside Environment variables, not available on the client.
    * Will throw if you access these variables on the client.
    */
   server: {
+    AI_PROVIDER: ZActiveAIProvider.optional(),
+    AI_MODEL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
@@ -15,7 +123,9 @@ export const env = createEnv({
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
+    DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     DEBUG: z.enum(["1", "0"]).optional(),
+    DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
@@ -28,9 +138,21 @@ export const env = createEnv({
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
+    AI_GCP_PROJECT: z.string().optional(),
+    AI_GCP_LOCATION: z.string().optional(),
+    AI_GCP_CREDENTIALS_JSON: z.string().optional(),
+    AI_GCP_APPLICATION_CREDENTIALS: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
+    AI_AWS_REGION: z.string().optional(),
+    AI_AWS_ACCESS_KEY_ID: z.string().optional(),
+    AI_AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    AI_AWS_SESSION_TOKEN: z.string().optional(),
+    AI_AZURE_BASE_URL: z.url().optional(),
+    AI_AZURE_API_KEY: z.string().optional(),
+    AI_AZURE_API_VERSION: z.string().optional(),
+    AI_AZURE_RESOURCE_NAME: z.string().optional(),
     HTTP_PROXY: z.url().optional(),
     HTTPS_PROXY: z.url().optional(),
     IMPRINT_URL: z
@@ -60,11 +182,13 @@ export const env = createEnv({
         ? z.string().optional()
         : z.url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
+    PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
     PRIVACY_URL: z
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
     RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
+    TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     S3_ACCESS_KEY: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
     S3_REGION: z.string().optional(),
@@ -121,7 +245,7 @@ export const env = createEnv({
     AUDIT_LOG_GET_USER_IP: z.enum(["1", "0"]).optional(),
     SESSION_MAX_AGE: z
       .string()
-      .transform((val) => parseInt(val))
+      .transform((val) => Number.parseInt(val, 10))
       .optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
   },
@@ -133,6 +257,8 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    AI_PROVIDER: process.env.AI_PROVIDER,
+    AI_MODEL: process.env.AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
@@ -141,7 +267,9 @@ export const env = createEnv({
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
+    DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
     E2E_TESTING: process.env.E2E_TESTING,
@@ -154,9 +282,21 @@ export const env = createEnv({
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    AI_GCP_PROJECT: process.env.AI_GCP_PROJECT,
+    AI_GCP_LOCATION: process.env.AI_GCP_LOCATION,
+    AI_GCP_CREDENTIALS_JSON: process.env.AI_GCP_CREDENTIALS_JSON,
+    AI_GCP_APPLICATION_CREDENTIALS: process.env.AI_GCP_APPLICATION_CREDENTIALS,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
+    AI_AWS_REGION: process.env.AI_AWS_REGION,
+    AI_AWS_ACCESS_KEY_ID: process.env.AI_AWS_ACCESS_KEY_ID,
+    AI_AWS_SECRET_ACCESS_KEY: process.env.AI_AWS_SECRET_ACCESS_KEY,
+    AI_AWS_SESSION_TOKEN: process.env.AI_AWS_SESSION_TOKEN,
+    AI_AZURE_BASE_URL: process.env.AI_AZURE_BASE_URL,
+    AI_AZURE_API_KEY: process.env.AI_AZURE_API_KEY,
+    AI_AZURE_API_VERSION: process.env.AI_AZURE_API_VERSION,
+    AI_AZURE_RESOURCE_NAME: process.env.AI_AZURE_RESOURCE_NAME,
     HTTP_PROXY: process.env.HTTP_PROXY,
     HTTPS_PROXY: process.env.HTTPS_PROXY,
     IMPRINT_URL: process.env.IMPRINT_URL,
@@ -181,8 +321,10 @@ export const env = createEnv({
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
+    PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
+    TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
     S3_REGION: process.env.S3_REGION,
@@ -221,3 +363,7 @@ export const env = createEnv({
     SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
   },
 });
+
+export const env = ZAIConfigurationEnv.superRefine(validateActiveAIProviderConfiguration)
+  .transform(() => parsedEnv)
+  .parse(parsedEnv);

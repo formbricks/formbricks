@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
-import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
+import { ZUploadPrivateFileRequest } from "@formbricks/types/storage";
+import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -30,33 +30,27 @@ export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ environmentId: string }> }>) => {
     const params = await props.params;
     const { environmentId } = params;
-    let jsonInput: TUploadPrivateFileRequest;
-
-    try {
-      jsonInput = await req.json();
-    } catch (error) {
-      logger.error({ error, url: req.url }, "Error parsing JSON input");
-      return {
-        response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
-      };
-    }
-
-    const parsedInputResult = ZUploadPrivateFileRequest.safeParse({
-      ...jsonInput,
-      environmentId,
+    const parsedInputResult = await parseAndValidateJsonBody({
+      request: req,
+      schema: ZUploadPrivateFileRequest,
+      buildInput: (jsonInput) => ({
+        ...(jsonInput !== null && typeof jsonInput === "object" ? jsonInput : {}),
+        environmentId,
+      }),
     });
 
-    if (!parsedInputResult.success) {
-      const errorDetails = transformErrorToDetails(parsedInputResult.error);
-
-      logger.error({ error: errorDetails }, "Fields are missing or incorrectly formatted");
+    if ("response" in parsedInputResult) {
+      if (parsedInputResult.issue === "invalid_json") {
+        logger.error({ error: parsedInputResult.details, url: req.url }, "Error parsing JSON input");
+      } else {
+        logger.error(
+          { error: parsedInputResult.details, url: req.url },
+          "Fields are missing or incorrectly formatted"
+        );
+      }
 
       return {
-        response: responses.badRequestResponse(
-          "Fields are missing or incorrectly formatted",
-          errorDetails,
-          true
-        ),
+        response: parsedInputResult.response,
       };
     }
 
@@ -105,9 +99,14 @@ export const POST = withV1ApiWrapper({
     if (!signedUrlResponse.ok) {
       logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");
       const errorResponse = getErrorResponseFromStorageError(signedUrlResponse.error, { fileName });
-      return {
-        response: errorResponse,
-      };
+      return errorResponse.status >= 500
+        ? {
+            response: errorResponse,
+            error: signedUrlResponse.error,
+          }
+        : {
+            response: errorResponse,
+          };
     }
 
     return {

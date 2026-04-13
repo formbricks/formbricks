@@ -6,6 +6,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
@@ -22,7 +23,7 @@ const ZPasswordResetForm = z.object({
 type TPasswordResetForm = z.infer<typeof ZPasswordResetForm>;
 
 const passwordInputProps = {
-  autoComplete: "current-password",
+  autoComplete: "new-password",
   placeholder: "*******",
   required: true,
   className:
@@ -57,50 +58,50 @@ export const ResetPasswordForm = () => {
       router.push("/auth/forgot-password/reset/success");
     } else {
       const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
-      toast.error(errorMessage);
+      toast.error(
+        errorMessage === INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE
+          ? t("c.link_expired_description")
+          : errorMessage
+      );
     }
   };
 
   return (
-    <>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-800">
-              {t("auth.forgot-password.reset.new_password")}
-            </label>
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => <PasswordInput {...passwordInputProps} {...field} id="password" />}
-            />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-800">
-              {t("auth.forgot-password.reset.confirm_password")}
-            </label>
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <PasswordInput {...passwordInputProps} {...field} id="confirmPassword" />
-              )}
-            />
-          </div>
-
-          <PasswordChecks password={form.watch("password")} />
-        </div>
-
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <Button
-            type="submit"
-            disabled={!form.formState.isValid}
-            className="w-full justify-center"
-            loading={form.formState.isSubmitting}>
-            {t("auth.forgot-password.reset_password")}
-          </Button>
+          <label htmlFor="password" className="block text-sm font-medium text-slate-800">
+            {t("auth.forgot-password.reset.new_password")}
+          </label>
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => <PasswordInput {...passwordInputProps} {...field} id="password" />}
+          />
         </div>
-      </form>
-    </>
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-800">
+            {t("auth.forgot-password.reset.confirm_password")}
+          </label>
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => <PasswordInput {...passwordInputProps} {...field} id="confirmPassword" />}
+          />
+        </div>
+
+        <PasswordChecks password={form.watch("password")} />
+      </div>
+
+      <div>
+        <Button
+          type="submit"
+          disabled={!form.formState.isValid}
+          className="w-full justify-center"
+          loading={form.formState.isSubmitting}>
+          {t("auth.forgot-password.reset_password")}
+        </Button>
+      </div>
+    </form>
   );
 };

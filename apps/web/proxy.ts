@@ -1,28 +1,29 @@
-import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { WEBAPP_URL } from "@/lib/constants";
-import { isValidCallbackUrl } from "@/lib/utils/url";
+import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
 const handleAuth = async (request: NextRequest): Promise<Response | null> => {
-  const token = await getToken({ req: request as any });
+  const session = await getProxySession(request);
 
-  if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
+  if (isAuthProtectedRoute(request.nextUrl.pathname) && !session) {
     const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(loginUrl);
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
 
-  if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
+  if (callbackUrl && !validatedCallbackUrl) {
     return NextResponse.json({ error: "Invalid callback URL" }, { status: 400 });
   }
 
-  if (token && callbackUrl) {
-    return NextResponse.redirect(callbackUrl);
+  if (session && validatedCallbackUrl) {
+    return NextResponse.redirect(validatedCallbackUrl);
   }
 
   return null;

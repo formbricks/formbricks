@@ -136,6 +136,7 @@ describe("Survey Logic", () => {
     displayPercentage: 0,
     recaptcha: { enabled: false, threshold: 0.5 },
     isBackButtonHidden: false,
+    isAutoProgressingEnabled: false,
     segment: null,
     welcomeCard: {
       enabled: true,

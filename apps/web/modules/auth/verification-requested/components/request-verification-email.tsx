@@ -9,9 +9,10 @@ import { resendVerificationEmailAction } from "../actions";
 
 interface RequestVerificationEmailProps {
   email: string | null;
+  callbackUrl?: string | null;
 }
 
-export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProps) => {
+export const RequestVerificationEmail = ({ email, callbackUrl }: RequestVerificationEmailProps) => {
   const { t } = useTranslation();
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -29,7 +30,7 @@ export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProp
 
   const requestVerificationEmail = async () => {
     if (!email) return toast.error(t("auth.verification-requested.no_email_provided"));
-    const response = await resendVerificationEmailAction({ email });
+    const response = await resendVerificationEmailAction({ email, callbackUrl: callbackUrl ?? undefined });
     if (response?.data) {
       toast.success(t("auth.verification-requested.verification_email_resent_successfully"));
     } else {

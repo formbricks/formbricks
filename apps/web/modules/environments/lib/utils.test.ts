@@ -277,7 +277,8 @@ describe("utils.ts", () => {
           updatedAt: new Date("2024-01-02"),
           name: "Test Organization",
           billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-          isAIEnabled: false,
+          isAISmartToolsEnabled: false,
+          isAIDataAnalysisEnabled: false,
           whitelabel: false,
           memberships: [
             {
@@ -417,7 +418,8 @@ describe("utils.ts", () => {
             updatedAt: new Date("2024-01-02"),
             name: "Test Organization",
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [
               {
@@ -527,7 +529,8 @@ describe("utils.ts", () => {
             updatedAt: new Date("2024-01-02"),
             name: "Test Organization",
             billing: null,
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [
               {
@@ -577,7 +580,8 @@ describe("utils.ts", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [], // No membership
           },
@@ -660,7 +664,8 @@ describe("utils.ts", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: false,
+            isAISmartToolsEnabled: false,
+            isAIDataAnalysisEnabled: false,
             whitelabel: false,
             memberships: [{ userId: "user123", organizationId: "org123", role: "owner", accepted: true }],
           },
@@ -699,7 +704,8 @@ describe("utils.ts", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: new Date() },
-            isAIEnabled: true,
+            isAISmartToolsEnabled: true,
+            isAIDataAnalysisEnabled: true,
             whitelabel: true,
             memberships: [{ userId: "user123", organizationId: "org456", role: "member", accepted: true }],
           },

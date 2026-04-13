@@ -139,3 +139,47 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
     {{- randAlphaNum 32 -}}
 {{- end -}}
 {{- end }}
+
+{{- define "formbricks.envoy.gatewayClassName" -}}
+{{- if .Values.envoy.formbricks.gatewayClass.name -}}
+{{- .Values.envoy.formbricks.gatewayClass.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-envoy" .Release.Name (include "formbricks.namespace" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envoy.gatewayName" -}}
+{{- if .Values.envoy.formbricks.gateway.name -}}
+{{- .Values.envoy.formbricks.gateway.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-envoy-gateway" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envoy.proxyName" -}}
+{{- if .Values.envoy.formbricks.proxy.name -}}
+{{- .Values.envoy.formbricks.proxy.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-envoy-proxy" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envoy.proxyServiceName" -}}
+{{- if .Values.envoy.formbricks.proxy.service.name -}}
+{{- .Values.envoy.formbricks.proxy.service.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-envoy" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envoy.ingressHost" -}}
+{{- if .Values.envoy.formbricks.ingress.host -}}
+{{- tpl .Values.envoy.formbricks.ingress.host $ -}}
+{{- else if and .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) -}}
+{{- tpl (index .Values.ingress.hosts 0).host $ -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envoy.defaultRedisUrl" -}}
+{{- printf "%s-master:6379" .Values.envoyRedis.fullnameOverride -}}
+{{- end }}

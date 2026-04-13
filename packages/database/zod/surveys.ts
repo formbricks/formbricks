@@ -138,6 +138,7 @@ const ZSurveyBase = z.object({
   isSingleResponsePerEmailEnabled: z.boolean().describe("Whether single response per email is enabled"),
   inlineTriggers: z.array(z.any()).nullable().describe("Inline triggers configuration"),
   isBackButtonHidden: z.boolean().describe("Whether the back button is hidden"),
+  isAutoProgressingEnabled: z.boolean().describe("Whether auto-progress is enabled for eligible questions"),
   recaptcha: ZSurveyRecaptcha.describe("Google reCAPTCHA configuration"),
   metadata: ZSurveyMetadata.describe("Custom link metadata for social sharing"),
   displayPercentage: z.number().nullable().describe("The display percentage of the survey"),
