@@ -311,7 +311,11 @@ describe("utils.ts", () => {
     test("returns project styling if allowStyleOverwrite=false", () => {
       const project = {
         id: "p1",
-        styling: { allowStyleOverwrite: false, brandColor: { light: "#fff" } },
+        styling: {
+          allowStyleOverwrite: false,
+          isPageFontInheritedByDefault: false,
+          brandColor: { light: "#fff" },
+        },
       } as TEnvironmentStateProject;
       const survey = {
         styling: {
@@ -322,13 +326,20 @@ describe("utils.ts", () => {
 
       const result = getStyling(project, survey);
       // should get project styling
-      expect(result).toEqual(project.styling);
+      expect(result).toEqual({
+        ...project.styling,
+        isPageFontInherited: false,
+      });
     });
 
     test("returns project styling if allowStyleOverwrite=true but survey overwriteThemeStyling=false", () => {
       const project = {
         id: "p1",
-        styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
+        styling: {
+          allowStyleOverwrite: true,
+          isPageFontInheritedByDefault: false,
+          brandColor: { light: "#fff" },
+        },
       } as TEnvironmentStateProject;
       const survey = {
         styling: {
@@ -339,13 +350,20 @@ describe("utils.ts", () => {
 
       const result = getStyling(project, survey);
       // should get project styling still
-      expect(result).toEqual(project.styling);
+      expect(result).toEqual({
+        ...project.styling,
+        isPageFontInherited: false,
+      });
     });
 
     test("returns survey styling if allowStyleOverwrite=true and survey overwriteThemeStyling=true", () => {
       const project = {
         id: "p1",
-        styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
+        styling: {
+          allowStyleOverwrite: true,
+          isPageFontInheritedByDefault: false,
+          brandColor: { light: "#fff" },
+        },
       } as TEnvironmentStateProject;
       const survey = {
         styling: {
@@ -355,7 +373,53 @@ describe("utils.ts", () => {
       } as TEnvironmentStateSurvey;
 
       const result = getStyling(project, survey);
-      expect(result).toEqual(survey.styling);
+      expect(result).toEqual({
+        ...survey.styling,
+        isPageFontInherited: false,
+      });
+    });
+
+    test("keeps survey font preferences when using project theme", () => {
+      const project = {
+        id: "p1",
+        styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
+      } as TEnvironmentStateProject;
+      const survey = {
+        styling: {
+          overwriteThemeStyling: false,
+          isPageFontInherited: true,
+          fontFamily: "Inter, Noto Sans Arabic, sans-serif",
+        } as TSurveyStyling,
+      } as TEnvironmentStateSurvey;
+
+      const result = getStyling(project, survey);
+      expect(result).toEqual({
+        ...project.styling,
+        isPageFontInherited: true,
+        fontFamily: "Inter, Noto Sans Arabic, sans-serif",
+      });
+    });
+
+    test("inherits workspace default page-font setting when survey does not specify it", () => {
+      const project = {
+        id: "p1",
+        styling: {
+          allowStyleOverwrite: true,
+          isPageFontInheritedByDefault: true,
+          brandColor: { light: "#fff" },
+        },
+      } as TEnvironmentStateProject;
+      const survey = {
+        styling: {
+          overwriteThemeStyling: false,
+        } as TSurveyStyling,
+      } as TEnvironmentStateSurvey;
+
+      const result = getStyling(project, survey);
+      expect(result).toEqual({
+        ...project.styling,
+        isPageFontInherited: true,
+      });
     });
   });
 

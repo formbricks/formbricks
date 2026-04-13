@@ -1784,6 +1784,8 @@
         "upper_label": "上標籤",
         "url_filters": "網址篩選器",
         "url_not_supported": "不支援網址",
+        "use_page_font": "使用頁面字型",
+        "use_page_font_description": "為此問卷使用主應用程式或網站字型。",
         "validate_id_duplicate": "{type} ID 已存在於問題、隱藏欄位或變數中。",
         "validate_id_empty": "請輸入 {type} ID。",
         "validate_id_invalid_chars": "不允許使用此 {type} ID。請僅使用英數字元、連字號或底線。",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "建議顏色",
         "suggested_colors_applied_please_save": "已成功產生建議色彩。請按「Save」以儲存變更。",
         "theme": "主題",
-        "theme_settings_description": "為所有調查建立樣式主題。您可以為每個調查啟用自訂樣式。"
+        "theme_settings_description": "為所有調查建立樣式主題。您可以為每個調查啟用自訂樣式。",
+        "use_page_font_for_new_surveys": "使用頁面字型",
+        "use_page_font_for_new_surveys_description": "在此工作區的所有問卷中套用主應用程式或網站字型。"
       },
       "tags": {
         "add": "新增",

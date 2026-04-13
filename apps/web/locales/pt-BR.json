@@ -1784,6 +1784,8 @@
         "upper_label": "Etiqueta Superior",
         "url_filters": "Filtros de URL",
         "url_not_supported": "URL não suportada",
+        "use_page_font": "Usar fonte da página",
+        "use_page_font_description": "Use a fonte do aplicativo ou site hospedeiro para esta pesquisa.",
         "validate_id_duplicate": "O ID de {type} já existe em perguntas, campos ocultos ou variáveis.",
         "validate_id_empty": "Por favor, insira um ID de {type}.",
         "validate_id_invalid_chars": "O ID de {type} não é permitido. Por favor, use apenas caracteres alfanuméricos, hífens ou underscores.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Sugerir cores",
         "suggested_colors_applied_please_save": "Cores sugeridas geradas com sucesso. Pressione “Salvar” para persistir as alterações.",
         "theme": "Tema",
-        "theme_settings_description": "Crie um tema de estilo para todas as pesquisas. Você pode ativar estilo personalizado para cada pesquisa."
+        "theme_settings_description": "Crie um tema de estilo para todas as pesquisas. Você pode ativar estilo personalizado para cada pesquisa.",
+        "use_page_font_for_new_surveys": "Usar fonte da página",
+        "use_page_font_for_new_surveys_description": "Aplicar a fonte do aplicativo ou site hospedeiro em todas as pesquisas deste espaço de trabalho."
       },
       "tags": {
         "add": "Adicionar",

@@ -163,7 +163,7 @@ export const ThemeStyling = ({
           <div className="relative flex w-1/2 flex-col pr-6">
             <div className="flex flex-1 flex-col gap-4">
               <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col gap-4">
                   <FormField
                     control={form.control}
                     name="allowStyleOverwrite"
@@ -229,6 +229,11 @@ export const ThemeStyling = ({
                   setOpen={setFormStylingOpen}
                   isSettingsPage
                   form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+                  usePageFontFieldName="isPageFontInheritedByDefault"
+                  usePageFontLabel={t("environments.workspace.look.use_page_font_for_new_surveys")}
+                  usePageFontDescription={t(
+                    "environments.workspace.look.use_page_font_for_new_surveys_description"
+                  )}
                 />
 
                 <CardStylingSettings

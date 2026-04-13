@@ -278,6 +278,43 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-border-radius"]).toBe("8px"); // Default roundness
   });
 
+  test("uses the legacy font stack when page-font inheritance is disabled", () => {
+    const styling = getBaseProjectStyling({});
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    expect(variables["--fb-font-family"]).toBe("Inter, Helvetica, Arial, sans-serif");
+    expect(styleElement.innerHTML).toContain("font-family: var(--fb-font-family) !important;");
+  });
+
+  test("inherits host font when page-font inheritance is enabled", () => {
+    const styling: TSurveyStyling = {
+      isPageFontInherited: true,
+    };
+
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    expect(variables["--fb-font-family"]).toBeUndefined();
+    expect(styleElement.innerHTML).not.toContain("font-family: var(--fb-font-family) !important;");
+  });
+
+  test("prefers explicit fontFamily over page-font inheritance", () => {
+    const styling: TSurveyStyling = {
+      isPageFontInherited: true,
+      fontFamily: "Inter, Noto Sans Arabic, sans-serif",
+    };
+
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    expect(variables["--fb-font-family"]).toBe("Inter, Noto Sans Arabic, sans-serif");
+    expect(styleElement.innerHTML).toContain("font-family: var(--fb-font-family) !important;");
+  });
+
   test("should apply brand-text-color as black for light brandColor", () => {
     const styling = getBaseProjectStyling({ brandColor: { light: "#FFFF00" } }); // A light color
     addCustomThemeToDom({ styling });

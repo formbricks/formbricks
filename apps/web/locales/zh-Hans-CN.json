@@ -1784,6 +1784,8 @@
         "upper_label": "上限标签",
         "url_filters": "URL 过滤器",
         "url_not_supported": "URL 不支持",
+        "use_page_font": "使用页面字体",
+        "use_page_font_description": "为此调查问卷使用宿主应用或网站的字体。",
         "validate_id_duplicate": "{type} ID 已存在于问题、隐藏字段或变量中。",
         "validate_id_empty": "请输入 {type} ID。",
         "validate_id_invalid_chars": "{type} ID 不允许使用。请仅使用字母数字字符、连字符或下划线。",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "推荐颜色",
         "suggested_colors_applied_please_save": "已成功生成建议颜色。请点击“保存”以保留更改。",
         "theme": "主题",
-        "theme_settings_description": "为所有问卷创建一个样式主题。你可以为每个问卷启用自定义样式。"
+        "theme_settings_description": "为所有问卷创建一个样式主题。你可以为每个问卷启用自定义样式。",
+        "use_page_font_for_new_surveys": "使用页面字体",
+        "use_page_font_for_new_surveys_description": "在此工作区的所有调查问卷中应用宿主应用或网站的字体。"
       },
       "tags": {
         "add": "添加",

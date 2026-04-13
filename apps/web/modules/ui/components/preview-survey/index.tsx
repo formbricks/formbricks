@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { getStyling as getEffectiveStyling } from "@/lib/utils/styling";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -59,23 +60,7 @@ export const PreviewSurvey = ({
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
-    // allow style overwrite is disabled from the project
-    if (!project.styling.allowStyleOverwrite) {
-      return project.styling;
-    }
-
-    // allow style overwrite is enabled from the project
-    if (project.styling.allowStyleOverwrite) {
-      // survey style overwrite is disabled
-      if (!survey.styling?.overwriteThemeStyling) {
-        return project.styling;
-      }
-
-      // survey style overwrite is enabled
-      return survey.styling;
-    }
-
-    return project.styling;
+    return getEffectiveStyling(project, survey);
   }, [project.styling, survey.styling]);
 
   const updateElementId = useCallback(

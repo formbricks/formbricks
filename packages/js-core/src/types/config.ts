@@ -91,11 +91,12 @@ export interface TConfigInput {
 
 export interface TStylingColor {
   light: string;
-  dark?: string | null | undefined;
+  dark?: string | null;
 }
 
 export interface TBaseStyling {
   brandColor?: TStylingColor | null;
+  fontFamily?: string | null;
   questionColor?: TStylingColor | null;
   inputColor?: TStylingColor | null;
   inputBorderColor?: TStylingColor | null;
@@ -119,10 +120,12 @@ export interface TBaseStyling {
 
 export interface TProjectStyling extends TBaseStyling {
   allowStyleOverwrite: boolean;
+  isPageFontInheritedByDefault?: boolean | null;
 }
 
 export interface TSurveyStyling extends TBaseStyling {
   overwriteThemeStyling?: boolean | null;
+  isPageFontInherited?: boolean | null;
 }
 
 export interface TUpdates {

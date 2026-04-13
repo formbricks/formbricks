@@ -1784,6 +1784,8 @@
         "upper_label": "上限ラベル",
         "url_filters": "URLフィルター",
         "url_not_supported": "URLはサポートされていません",
+        "use_page_font": "ページフォントを使用",
+        "use_page_font_description": "このアンケートにホストアプリまたはウェブサイトのフォントを使用します。",
         "validate_id_duplicate": "{type} IDは質問、非表示フィールド、または変数に既に存在します。",
         "validate_id_empty": "{type} IDを入力してください。",
         "validate_id_invalid_chars": "{type} IDは使用できません。英数字、ハイフン、アンダースコアのみを使用してください。",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "カラーを提案",
         "suggested_colors_applied_please_save": "推奨カラーが正常に生成されました。変更を保存するには“保存”を押してください。",
         "theme": "テーマ",
-        "theme_settings_description": "すべてのアンケート用のスタイルテーマを作成します。各アンケートでカスタムスタイルを有効にできます。"
+        "theme_settings_description": "すべてのアンケート用のスタイルテーマを作成します。各アンケートでカスタムスタイルを有効にできます。",
+        "use_page_font_for_new_surveys": "ページフォントを使用",
+        "use_page_font_for_new_surveys_description": "このワークスペース内のアンケート全体にホストアプリまたはウェブサイトのフォントを適用します。"
       },
       "tags": {
         "add": "追加",

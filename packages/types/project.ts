@@ -5,6 +5,7 @@ import { ZBaseStyling, ZLogo } from "./styling";
 
 export const ZProjectStyling = ZBaseStyling.extend({
   allowStyleOverwrite: z.boolean(),
+  isPageFontInheritedByDefault: z.boolean().nullish(),
 });
 
 export type TProjectStyling = z.infer<typeof ZProjectStyling>;

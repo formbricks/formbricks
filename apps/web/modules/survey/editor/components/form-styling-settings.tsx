@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import {
   ColorField,
   DimensionInput,
@@ -16,6 +17,7 @@ import {
   StylingSection,
   TextField,
 } from "@/modules/ui/components/styling-fields";
+import { Switch } from "@/modules/ui/components/switch";
 
 type FormStylingSettingsProps = {
   open: boolean;
@@ -23,6 +25,9 @@ type FormStylingSettingsProps = {
   isSettingsPage?: boolean;
   disabled?: boolean;
   form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  usePageFontFieldName?: "isPageFontInherited" | "isPageFontInheritedByDefault";
+  usePageFontLabel?: string;
+  usePageFontDescription?: string;
 };
 
 export const FormStylingSettings = ({
@@ -31,6 +36,9 @@ export const FormStylingSettings = ({
   disabled = false,
   setOpen,
   form,
+  usePageFontFieldName,
+  usePageFontLabel,
+  usePageFontDescription,
 }: FormStylingSettingsProps) => {
   const { t } = useTranslation();
 
@@ -86,6 +94,27 @@ export const FormStylingSettings = ({
             open={headlinesOpen}
             setOpen={setHeadlinesOpen}>
             <div className="grid grid-cols-2 gap-4">
+              {usePageFontFieldName && (
+                <FormField
+                  control={form.control}
+                  name={usePageFontFieldName as never}
+                  render={({ field }) => (
+                    <FormItem className="col-span-2 flex w-full items-center gap-2 space-y-0 rounded-lg border border-slate-200 p-3">
+                      <FormControl>
+                        <Switch checked={!!field.value} onCheckedChange={(value) => field.onChange(value)} />
+                      </FormControl>
+                      <div>
+                        <FormLabel>
+                          {usePageFontLabel ?? t("environments.surveys.edit.use_page_font")}
+                        </FormLabel>
+                        <FormDescription>
+                          {usePageFontDescription ?? t("environments.surveys.edit.use_page_font_description")}
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              )}
               <ColorField
                 form={form}
                 name="elementHeadlineColor.light"

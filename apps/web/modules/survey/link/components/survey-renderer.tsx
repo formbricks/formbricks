@@ -189,10 +189,19 @@ function computeStyling(
   projectStyling: TProjectStyling,
   surveyStyling?: TSurveyStyling | null
 ): TProjectStyling | TSurveyStyling {
+  const resolvedIsPageFontInherited =
+    surveyStyling?.isPageFontInherited ?? projectStyling.isPageFontInheritedByDefault ?? false;
+  const fontOverrides = {
+    isPageFontInherited: resolvedIsPageFontInherited,
+    ...(surveyStyling?.fontFamily !== undefined ? { fontFamily: surveyStyling.fontFamily } : {}),
+  };
+
   if (!projectStyling.allowStyleOverwrite) {
-    return projectStyling;
+    return { ...projectStyling, ...fontOverrides };
   }
-  return surveyStyling?.overwriteThemeStyling ? surveyStyling : projectStyling;
+  return surveyStyling?.overwriteThemeStyling
+    ? { ...surveyStyling, isPageFontInherited: resolvedIsPageFontInherited }
+    : { ...projectStyling, ...fontOverrides };
 }
 
 /**

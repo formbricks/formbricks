@@ -1784,6 +1784,8 @@
         "upper_label": "Oberes Label",
         "url_filters": "URL-Filter",
         "url_not_supported": "URL nicht unterstützt",
+        "use_page_font": "Seitenschriftart verwenden",
+        "use_page_font_description": "Verwende die Schriftart der Host-App oder Website für diese Umfrage.",
         "validate_id_duplicate": "{type}-ID existiert bereits in Fragen, versteckten Feldern oder Variablen.",
         "validate_id_empty": "Bitte gib eine {type}-ID ein.",
         "validate_id_invalid_chars": "{type}-ID ist nicht erlaubt. Bitte verwende nur alphanumerische Zeichen, Bindestriche oder Unterstriche.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Farben vorschlagen",
         "suggested_colors_applied_please_save": "Vorgeschlagene Farben erfolgreich generiert. Drücke “Speichern”, um die Änderungen zu übernehmen.",
         "theme": "Theme",
-        "theme_settings_description": "Erstelle ein Style-Theme für alle Umfragen. Du kannst für jede Umfrage individuelles Styling aktivieren."
+        "theme_settings_description": "Erstelle ein Style-Theme für alle Umfragen. Du kannst für jede Umfrage individuelles Styling aktivieren.",
+        "use_page_font_for_new_surveys": "Seitenschriftart verwenden",
+        "use_page_font_for_new_surveys_description": "Wende die Schriftart der Host-App oder Website auf alle Umfragen in diesem Workspace an."
       },
       "tags": {
         "add": "Hinzufügen",

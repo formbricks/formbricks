@@ -329,6 +329,19 @@ test.describe("Survey Styling", async () => {
     // Navigate to Styling tab
     await page.getByRole("button", { name: "Styling" }).click();
 
+    await openAccordion(page, "Survey styling");
+    await openAccordion(page, "Headlines & Descriptions");
+    const usePageFontToggle = page.getByLabel("Use page font");
+    await expect(usePageFontToggle).toBeVisible();
+    await expect(usePageFontToggle).toBeChecked();
+    let fontCss = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
+    expect(fontCss).not.toContain("--fb-font-family");
+
+    await usePageFontToggle.click();
+    await page.waitForTimeout(800);
+    fontCss = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
+    expect(fontCss).toContain("--fb-font-family: Inter, Helvetica, Arial, sans-serif");
+
     // Toggle "Enable custom styling" (Survey override)
     // Note: The label text might be "Add custom styles" in survey editor?
     // Checking previous file: `page.getByLabel("Add custom styles")`

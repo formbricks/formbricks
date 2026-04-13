@@ -239,6 +239,7 @@ export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
 export const ZSurveyStyling = ZBaseStyling.extend({
   overwriteThemeStyling: z.boolean().nullish(),
+  isPageFontInherited: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
