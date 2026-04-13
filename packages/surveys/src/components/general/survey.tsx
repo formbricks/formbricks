@@ -1015,6 +1015,7 @@ export function Survey({
             headline={localSurvey.welcomeCard.headline}
             subheader={localSurvey.welcomeCard.subheader}
             fileUrl={localSurvey.welcomeCard.fileUrl}
+            videoUrl={localSurvey.welcomeCard.videoUrl}
             buttonLabel={localSurvey.welcomeCard.buttonLabel}
             onSubmit={onSubmit}
             survey={localSurvey}
