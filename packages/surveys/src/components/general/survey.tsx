@@ -539,8 +539,8 @@ export function Survey({
   // --- Warn before leaving mid-survey or with unsent offline responses ---
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Warn if user has started answering but hasn't finished the survey
-      if (history.length > 0 && !isSurveyFinished) {
+      // Warn if user has started answering but hasn't finished the survey (only when offline support is active)
+      if (offlinePersistEnabled && history.length > 0 && !isSurveyFinished) {
         e.preventDefault();
         return;
       }
