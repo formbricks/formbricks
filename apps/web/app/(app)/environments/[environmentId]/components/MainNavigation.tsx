@@ -409,16 +409,22 @@ export const MainNavigation = ({
     : `/environments/${environment.id}/surveys/`;
 
   const handleProjectChange = (projectId: string) => {
-    if (projectId === project.id) return;
+    const targetPath =
+      projectId === project.id ? `/environments/${environment.id}/surveys` : `/workspaces/${projectId}/`;
     startTransition(() => {
-      router.push(`/workspaces/${projectId}/`);
+      setIsWorkspaceDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === organization.id) return;
+    const targetPath =
+      organizationId === organization.id
+        ? `/environments/${environment.id}/settings/general`
+        : `/organizations/${organizationId}/`;
     startTransition(() => {
-      router.push(`/organizations/${organizationId}/`);
+      setIsOrganizationDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 

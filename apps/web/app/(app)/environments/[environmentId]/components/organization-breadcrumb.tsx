@@ -114,8 +114,16 @@ export const OrganizationBreadcrumb = ({
   }
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === currentOrganizationId) return;
+    if (organizationId === currentOrganizationId) {
+      if (!currentEnvironmentId) return;
+      startTransition(() => {
+        setIsOrganizationDropdownOpen(false);
+        router.push(`/environments/${currentEnvironmentId}/settings/general`);
+      });
+      return;
+    }
     startTransition(() => {
+      setIsOrganizationDropdownOpen(false);
       router.push(`/organizations/${organizationId}/`);
     });
   };

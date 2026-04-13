@@ -152,9 +152,13 @@ export const ProjectBreadcrumb = ({
   }
 
   const handleProjectChange = (projectId: string) => {
-    if (projectId === currentProjectId) return;
+    const targetPath =
+      projectId === currentProjectId
+        ? `/environments/${currentEnvironmentId}/surveys`
+        : `/workspaces/${projectId}/`;
     startTransition(() => {
-      router.push(`/workspaces/${projectId}/`);
+      setIsProjectDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 
