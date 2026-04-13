@@ -338,7 +338,7 @@ describe("handleSsoCallback", () => {
       );
     });
 
-    test("should reject verified email users whose SSO provider is not already linked", async () => {
+    test("should auto-link verified email users whose SSO provider is not already linked", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue({
         id: "existing-user-id",
@@ -349,22 +349,26 @@ describe("handleSsoCallback", () => {
         isActive: true,
       });
 
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("OAuthAccountNotLinked");
-      expect(upsertAccount).not.toHaveBeenCalled();
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "existing-user-id",
+          provider: mockAccount.provider,
+          providerAccountId: mockAccount.providerAccountId,
+        }),
+        undefined
+      );
       expect(updateUser).not.toHaveBeenCalled();
       expect(createUser).not.toHaveBeenCalled();
-      expect(createMembership).not.toHaveBeenCalled();
-      expect(createBrevoCustomer).not.toHaveBeenCalled();
-      expect(capturePostHogEvent).not.toHaveBeenCalled();
     });
 
-    test("should reject unverified email users whose SSO provider is not already linked", async () => {
+    test("should auto-link unverified email users whose SSO provider is not already linked", async () => {
       vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue({
@@ -376,22 +380,26 @@ describe("handleSsoCallback", () => {
         isActive: true,
       });
 
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("OAuthAccountNotLinked");
-      expect(upsertAccount).not.toHaveBeenCalled();
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "existing-user-id",
+          provider: mockAccount.provider,
+          providerAccountId: mockAccount.providerAccountId,
+        }),
+        undefined
+      );
       expect(updateUser).not.toHaveBeenCalled();
       expect(createUser).not.toHaveBeenCalled();
-      expect(createMembership).not.toHaveBeenCalled();
-      expect(createBrevoCustomer).not.toHaveBeenCalled();
-      expect(capturePostHogEvent).not.toHaveBeenCalled();
     });
 
-    test("should reject existing users from a different SSO provider when no link exists", async () => {
+    test("should auto-link existing users from a different SSO provider when no link exists", async () => {
       vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(getUserByEmail).mockResolvedValue({
@@ -403,14 +411,53 @@ describe("handleSsoCallback", () => {
         isActive: true,
       });
 
-      await expect(
-        handleSsoCallback({
-          user: mockUser,
-          account: mockAccount,
-          callbackUrl: "http://localhost:3000",
-        })
-      ).rejects.toThrow("OAuthAccountNotLinked");
-      expect(upsertAccount).not.toHaveBeenCalled();
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "existing-user-id",
+          provider: mockAccount.provider,
+          providerAccountId: mockAccount.providerAccountId,
+        }),
+        undefined
+      );
+      expect(updateUser).not.toHaveBeenCalled();
+      expect(createUser).not.toHaveBeenCalled();
+    });
+
+    test("should auto-link same-email users even when the stored legacy provider account id is stale", async () => {
+      vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue({
+        id: "existing-user-id",
+        email: mockUser.email,
+        emailVerified: new Date(),
+        identityProvider: "google",
+        identityProviderAccountId: "old-provider-id",
+        locale: mockUser.locale,
+        isActive: true,
+      } as any);
+
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(upsertAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "existing-user-id",
+          provider: mockAccount.provider,
+          providerAccountId: mockAccount.providerAccountId,
+        }),
+        undefined
+      );
       expect(updateUser).not.toHaveBeenCalled();
       expect(createUser).not.toHaveBeenCalled();
     });

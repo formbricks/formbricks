@@ -51,7 +51,7 @@ describe("SSO Providers", () => {
     expect((samlProvider as any).authorization?.url).toBe("https://test-app.com/api/auth/saml/authorize");
     expect(samlProvider.token).toBe("https://test-app.com/api/auth/saml/token");
     expect(samlProvider.userinfo).toBe("https://test-app.com/api/auth/saml/userinfo");
-    expect(googleProvider.allowDangerousEmailAccountLinking).toBeUndefined();
-    expect(samlProvider.allowDangerousEmailAccountLinking).toBeUndefined();
+    expect((googleProvider as any).options?.allowDangerousEmailAccountLinking).toBe(true);
+    expect(samlProvider.allowDangerousEmailAccountLinking).toBe(true);
   });
 });

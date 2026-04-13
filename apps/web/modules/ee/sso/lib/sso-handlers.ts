@@ -34,8 +34,6 @@ const LINKED_SSO_LOOKUP_SELECT = {
   identityProviderAccountId: true,
 } as const;
 
-const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
-
 const syncSsoAccount = async (userId: string, account: Account, tx?: Prisma.TransactionClient) => {
   await upsertAccount(
     {
@@ -219,7 +217,7 @@ export const handleSsoCallback = async ({
     }
 
     // There is no existing linked account for this identity provider / account id
-    // check if a user account with this email already exists and fail closed if so
+    // check if a user account with this email already exists and auto-link it
     contextLogger.debug({ lookupType: "email" }, "No linked SSO account found, checking for user by email");
 
     const existingUserWithEmail = await getUserByEmail(user.email);
@@ -230,9 +228,10 @@ export const handleSsoCallback = async ({
           existingUserId: existingUserWithEmail.id,
           existingIdentityProvider: existingUserWithEmail.identityProvider,
         },
-        "SSO callback blocked: existing user found by email without linked provider account"
+        "SSO callback successful: existing user found by email"
       );
-      throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+      await syncSsoAccount(existingUserWithEmail.id, account);
+      return true;
     }
 
     contextLogger.debug(
