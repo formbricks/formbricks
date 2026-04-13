@@ -13,8 +13,10 @@ import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { ProcessedResponseElement } from "../../src/types/follow-up";
 import { TFunction } from "../../src/types/translations";
 
+type TResponseFinishedEmailSurvey = Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
+
 export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
-  readonly survey: TSurvey;
+  readonly survey: TResponseFinishedEmailSurvey;
   readonly responseCount: number;
   readonly response: TResponse;
   readonly WEBAPP_URL: string;
@@ -24,7 +26,7 @@ export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
   readonly t?: TFunction;
 }
 
-const mockGetElementResponseMapping = (survey: TSurvey, response: TResponse) => {
+const mockGetElementResponseMapping = (survey: TResponseFinishedEmailSurvey, response: TResponse) => {
   // For preview, just return the response data as elements
   return Object.entries(response.data)
     .filter(([key]) => !survey.hiddenFields.fieldIds?.includes(key))

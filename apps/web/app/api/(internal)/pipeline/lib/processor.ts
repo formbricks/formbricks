@@ -3,7 +3,6 @@ import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry";
 import { TPipelineInput, TPipelineJob } from "@/app/lib/types/pipelines";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
@@ -297,7 +296,7 @@ const handleResponseFinishedJob = async (
   ]);
 
   if (integrations.length > 0) {
-    await handleIntegrations(integrations, job, survey as unknown as TSurvey);
+    await handleIntegrations(integrations, job, survey);
   }
 
   if (survey.followUps?.length > 0) {
@@ -315,7 +314,7 @@ const handleResponseFinishedJob = async (
       user.email,
       user.locale,
       job.environmentId,
-      survey as unknown as TSurvey,
+      survey,
       job.response,
       responseCount
     ).catch((error) => {

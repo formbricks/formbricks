@@ -143,7 +143,7 @@ const schedulePipelineDrain = (delayMs: number): void => {
 const moveReadyDelayedJobs = async (redis: TPipelineRedisClient): Promise<number> => {
   const movedJobs = await redis.eval(
     `
-      local jobs = redis.call("ZRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+      local jobs = redis.call("ZRANGE", KEYS[1], 0, ARGV[1], "BYSCORE")
       if #jobs == 0 then
         return 0
       end
@@ -288,14 +288,14 @@ export const drainPipelineQueue = async ({
 
   try {
     const movedReadyJobs = await moveReadyDelayedJobs(redis);
-    const poppedJobs = await popPendingJobs(redis, PIPELINE_BATCH_SIZE);
+    const { jobs, droppedJobs: poppedDroppedJobs } = await popPendingJobs(redis, PIPELINE_BATCH_SIZE);
 
     let processedJobs = 0;
     let requeuedJobs = 0;
-    let droppedJobs = poppedJobs.droppedJobs;
+    let droppedJobs = poppedDroppedJobs;
 
-    for (let index = 0; index < poppedJobs.jobs.length; index += PIPELINE_CONCURRENCY_LIMIT) {
-      const jobChunk = poppedJobs.jobs.slice(index, index + PIPELINE_CONCURRENCY_LIMIT);
+    for (let index = 0; index < jobs.length; index += PIPELINE_CONCURRENCY_LIMIT) {
+      const jobChunk = jobs.slice(index, index + PIPELINE_CONCURRENCY_LIMIT);
       const chunkResults = await Promise.all(jobChunk.map((job) => processQueuedJob(redis, processJob, job)));
 
       chunkResults.forEach((result) => {
