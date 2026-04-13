@@ -28,22 +28,22 @@ export const SkeletonLoader = ({ type }: SkeletonLoaderProps) => {
   if (type === "responseTable") {
     const renderTableCells = () => (
       <>
-        <div className="h-4 w-4 rounded-xl bg-slate-400" />
-        <div className="h-4 w-24 rounded-xl bg-slate-200" />
-        <div className="h-4 w-32 rounded-xl bg-slate-200" />
-        <div className="h-4 w-40 rounded-xl bg-slate-200" />
-        <div className="h-4 w-40 rounded-xl bg-slate-200" />
-        <div className="h-4 w-32 rounded-xl bg-slate-200" />
+        <Skeleton className="h-4 w-4 rounded-xl bg-slate-400" />
+        <Skeleton className="h-4 w-24 rounded-xl bg-slate-200" />
+        <Skeleton className="h-4 w-32 rounded-xl bg-slate-200" />
+        <Skeleton className="h-4 w-40 rounded-xl bg-slate-200" />
+        <Skeleton className="h-4 w-40 rounded-xl bg-slate-200" />
+        <Skeleton className="h-4 w-32 rounded-xl bg-slate-200" />
       </>
     );
 
     return (
       <div className="animate-pulse space-y-4" data-testid="skeleton-loader-response-table">
         <div className="flex items-center justify-between">
-          <div className="h-8 w-48 rounded-md bg-slate-300" />
+          <Skeleton className="h-8 w-48 rounded-md bg-slate-300" />
           <div className="flex gap-2">
-            <div className="h-8 w-8 rounded-md bg-slate-300" />
-            <div className="h-8 w-8 rounded-md bg-slate-300" />
+            <Skeleton className="h-8 w-8 rounded-md bg-slate-300" />
+            <Skeleton className="h-8 w-8 rounded-md bg-slate-300" />
           </div>
         </div>
         <div className="overflow-hidden rounded-xl border border-slate-200">
