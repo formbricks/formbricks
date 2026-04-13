@@ -51,6 +51,8 @@ checksums:
     auth/login/login_with_email: 4198b691f5d2bf2f443a03cc9fffd17f
     auth/login/lost_access: 917c4665b99c37377ed522ba53249006
     auth/login/new_to_formbricks: 1a1d45aca05bb21eb8f795d7d62dc4e3
+    auth/login/oauth_account_not_linked_description: 74627dc30666699b21de093d16d83312
+    auth/login/oauth_account_not_linked_title: 2eb8e132ed37b3b87c1dec392c224933
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc
     auth/signup/captcha_failed: 4e1ed87800585b8c1da1514fa86ab943
@@ -411,6 +413,7 @@ checksums:
     common/team_name: 549d949de4b9adad4afd6427a60a329e
     common/team_role: 66db395781aef64ef3791417b3b67c0b
     common/teams: b63448c05270497973ac4407047dae02
+    common/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     common/text: 4ddccc1974775ed7357f9beaf9361cec
     common/time: b504a03d52e8001bfdc5cb6205364f42
     common/time_to_finish: c8f6abdb886bee3619bb50b08fada5fa
@@ -2021,6 +2024,7 @@ checksums:
     environments/surveys/summary/this_quarter: 9c77d94783dff2269c069389122cd7bd
     environments/surveys/summary/this_year: 1e69651c2ac722f8ce138f43cf2e02f9
     environments/surveys/summary/time_to_complete: ac14edd54df964d2d5ae07b97ae4091f
+    environments/surveys/summary/ttc_survey_tooltip: 9bd3971cb94670c54d74a4e86ee53172
     environments/surveys/summary/ttc_tooltip: 9b1cbe32cc81111314bd3b6fd050c2e7
     environments/surveys/summary/unknown_question_type: e4152a7457d2b94f48dcc70aaba9922f
     environments/surveys/summary/use_personal_links: da2b3e7e1aaf2ea2bd4efed2dda4247c

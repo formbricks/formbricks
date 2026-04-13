@@ -2127,6 +2127,7 @@
         "this_quarter": "Detta kvartal",
         "this_year": "Detta år",
         "time_to_complete": "Tid att slutföra",
+        "ttc_survey_tooltip": "Genomsnittlig tid för att slutföra enkäten.",
         "ttc_tooltip": "Genomsnittlig tid för att slutföra frågan.",
         "unknown_question_type": "Okänd frågetyp",
         "use_personal_links": "Använd personliga länkar",

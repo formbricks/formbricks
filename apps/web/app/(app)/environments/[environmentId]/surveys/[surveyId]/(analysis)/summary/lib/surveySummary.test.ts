@@ -164,7 +164,7 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("calculates meta correctly", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 10, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, mockResponses, 10, mockQuotas);
     expect(meta.displayCount).toBe(10);
     expect(meta.totalResponses).toBe(3);
     expect(meta.startsPercentage).toBe(30);
@@ -178,13 +178,13 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("handles zero display count", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 0, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, mockResponses, 0, mockQuotas);
     expect(meta.startsPercentage).toBe(0);
     expect(meta.completedPercentage).toBe(0);
   });
 
   test("handles zero responses", () => {
-    const meta = getSurveySummaryMeta([], 10, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, [], 10, mockQuotas);
     expect(meta.totalResponses).toBe(0);
     expect(meta.completedResponses).toBe(0);
     expect(meta.dropOffCount).toBe(0);
@@ -274,7 +274,7 @@ describe("getSurveySummaryDropOff", () => {
     expect(dropOff[1].impressions).toBe(2);
     expect(dropOff[1].dropOffCount).toBe(1); // r1 dropped at q2 (last seen element)
     expect(dropOff[1].dropOffPercentage).toBe(50); // (1/2)*100
-    expect(dropOff[1].ttc).toBe(7.5); // avg of r1(5ms) and r2(10ms)
+    expect(dropOff[1].ttc).toBe(10); // block-level TTC uses max block time per response
   });
 
   test("drop-off attributed to last seen element when user doesn't reach next question", () => {

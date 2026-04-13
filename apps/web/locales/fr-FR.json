@@ -2127,6 +2127,7 @@
         "this_quarter": "Ce trimestre",
         "this_year": "Cette année",
         "time_to_complete": "Temps à compléter",
+        "ttc_survey_tooltip": "Temps moyen pour compléter le sondage.",
         "ttc_tooltip": "Temps moyen pour compléter la question.",
         "unknown_question_type": "Type de question inconnu",
         "use_personal_links": "Utilisez des liens personnels",
