@@ -11,6 +11,8 @@ import {
 import { symmetricEncrypt } from "@/lib/crypto";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -96,6 +98,12 @@ export const GET = withV1ApiWrapper({
       const result = await createOrUpdateIntegration(environmentId, notionIntegration);
 
       if (result) {
+        const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+        capturePostHogEvent(authentication.user.id, "integration_connected", {
+          integration_type: "notion",
+          organization_id: organizationId,
+        });
+
         return {
           response: Response.redirect(
             `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion`
