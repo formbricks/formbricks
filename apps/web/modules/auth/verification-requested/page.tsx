@@ -1,18 +1,28 @@
+import { cookies } from "next/headers";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
+import { getAuthCallbackUrlFromCookies, resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
 
 export const VerificationRequestedPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ token: string }>;
+  searchParams: Promise<{ token: string; callbackUrl?: string | string[] }>;
 }) => {
   const t = await getTranslate();
-  const { token } = await searchParams;
+  const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
+  const { token, callbackUrl } = params;
+  const resolvedCallbackUrl = resolveAuthCallbackUrl({
+    searchParamCallbackUrl: callbackUrl,
+    cookieCallbackUrl: getAuthCallbackUrlFromCookies(cookieStore),
+    allowCookieFallback: true,
+    webAppUrl: WEBAPP_URL,
+  });
   try {
     const email = getEmailFromEmailToken(token);
     const parsedEmail = ZUserEmail.safeParse(email);
@@ -29,7 +39,7 @@ export const VerificationRequestedPage = async ({
               {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}
             </p>
             <div className="mt-5">
-              <RequestVerificationEmail email={email.toLowerCase()} />
+              <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
             </div>
           </>
         </FormWrapper>

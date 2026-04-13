@@ -1,6 +1,7 @@
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,10 +9,12 @@ import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { CRON_SECRET } from "@/lib/constants";
+import { cache } from "@/lib/cache";
+import { CRON_SECRET, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
@@ -298,6 +301,27 @@ export const POST = async (request: Request) => {
     }).catch((error) => {
       logger.error({ error, responseId: response.id }, "Failed to record response meter event");
     });
+
+    // Sampled PostHog tracking: first response + every 100th
+    if (POSTHOG_KEY) {
+      const responseCount = await cache.withCache(
+        () => getResponseCountBySurveyId(surveyId),
+        createCacheKey.response.countBySurveyId(surveyId),
+        60 * 1000
+      );
+
+      if (responseCount === 1 || responseCount % 100 === 0) {
+        capturePostHogEvent(organization.id, "survey_response_received", {
+          survey_id: surveyId,
+          survey_type: survey.type,
+          organization_id: organization.id,
+          environment_id: environmentId,
+          response_count: responseCount,
+          is_first_response: responseCount === 1,
+          milestone: responseCount === 1 ? "first" : String(responseCount),
+        });
+      }
+    }
 
     // Send telemetry events
     await sendTelemetryEvents();

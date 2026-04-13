@@ -280,6 +280,7 @@ function DropdownVariant({
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
           aria-required={required}
+          aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -401,6 +402,7 @@ function ListVariant({
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
                   aria-required={required}
+                  aria-invalid={Boolean(errorMessage)}
                   dir={dir}
                   className="mt-2 w-full"
                   ref={otherInputRef}

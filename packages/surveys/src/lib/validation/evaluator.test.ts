@@ -88,6 +88,46 @@ describe("validateElementResponse", () => {
       expect(result.valid).toBe(true);
     });
 
+    test("should return error when required multi-select has other selected but no text", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [{ id: "opt1", label: { default: "Option 1" } }],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, ["opt1", ""], "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("required");
+    });
+
+    test("should return valid when required multi-select has other with text (legacy sentinel)", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [{ id: "opt1", label: { default: "Option 1" } }],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, ["opt1", "", "custom"], "en");
+      expect(result.valid).toBe(true);
+    });
+
+    test("should return valid when required multi-select has other text without sentinel", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [{ id: "opt1", label: { default: "Option 1" } }],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, ["opt1", "custom"], "en");
+      expect(result.valid).toBe(true);
+    });
+
     test("should handle required ranking element - at least one ranked", () => {
       const element: TSurveyElement = {
         id: "rank1",

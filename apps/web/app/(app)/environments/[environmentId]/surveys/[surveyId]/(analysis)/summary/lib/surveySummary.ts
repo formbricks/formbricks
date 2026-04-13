@@ -51,7 +51,32 @@ interface TSurveySummaryResponse {
   finished: boolean;
 }
 
+const getElementIdToBlockIdMap = (survey: TSurvey): Record<string, string> => {
+  return survey.blocks.reduce<Record<string, string>>((acc, block) => {
+    block.elements.forEach((element) => {
+      acc[element.id] = block.id;
+    });
+    return acc;
+  }, {});
+};
+
+const getBlockTimesForResponse = (
+  response: TSurveySummaryResponse,
+  survey: TSurvey
+): Record<string, number> => {
+  return survey.blocks.reduce<Record<string, number>>((acc, block) => {
+    const maxElementTtc = block.elements.reduce((maxTtc, element) => {
+      const elementTtc = response.ttc?.[element.id] ?? 0;
+      return Math.max(maxTtc, elementTtc);
+    }, 0);
+
+    acc[block.id] = maxElementTtc;
+    return acc;
+  }, {});
+};
+
 export const getSurveySummaryMeta = (
+  survey: TSurvey,
   responses: TSurveySummaryResponse[],
   displayCount: number,
   quotas: TSurveySummary["quotas"]
@@ -60,9 +85,15 @@ export const getSurveySummaryMeta = (
 
   let ttcResponseCount = 0;
   const ttcSum = responses.reduce((acc, response) => {
-    if (response.ttc?._total) {
+    const blockTimes = getBlockTimesForResponse(response, survey);
+    const responseBlockTtcTotal = Object.values(blockTimes).reduce((sum, ttc) => sum + ttc, 0);
+
+    // Fallback to _total for malformed surveys with no block mappings.
+    const responseTtcTotal = responseBlockTtcTotal > 0 ? responseBlockTtcTotal : (response.ttc?._total ?? 0);
+
+    if (responseTtcTotal > 0) {
       ttcResponseCount++;
-      return acc + response.ttc._total;
+      return acc + responseTtcTotal;
     }
     return acc;
   }, 0);
@@ -117,12 +148,16 @@ export const getSurveySummaryDropOff = (
   let dropOffArr = new Array(elements.length).fill(0) as number[];
   let impressionsArr = new Array(elements.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(elements.length).fill(0) as number[];
+  const elementIdToBlockId = getElementIdToBlockIdMap(survey);
 
   responses.forEach((response) => {
     // Calculate total time-to-completion per element
+    const blockTimes = getBlockTimesForResponse(response, survey);
     Object.keys(totalTtc).forEach((elementId) => {
-      if (response.ttc && response.ttc[elementId]) {
-        totalTtc[elementId] += response.ttc[elementId];
+      const blockId = elementIdToBlockId[elementId];
+      const blockTtc = blockId ? (blockTimes[blockId] ?? 0) : 0;
+      if (blockTtc > 0) {
+        totalTtc[elementId] += blockTtc;
         responseCounts[elementId]++;
       }
     });
@@ -974,10 +1009,8 @@ export const getSurveySummary = reactCache(
       ]);
 
       const dropOff = getSurveySummaryDropOff(survey, elements, responses, displayCount);
-      const [meta, elementSummary] = await Promise.all([
-        getSurveySummaryMeta(responses, displayCount, quotas),
-        getElementSummary(survey, elements, responses, dropOff),
-      ]);
+      const meta = getSurveySummaryMeta(survey, responses, displayCount, quotas);
+      const elementSummary = await getElementSummary(survey, elements, responses, dropOff);
 
       return {
         meta,

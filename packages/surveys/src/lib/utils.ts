@@ -1,3 +1,4 @@
+import { twMerge } from "tailwind-merge";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -11,8 +12,8 @@ import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/type
 import { type TShuffleOption } from "@formbricks/types/surveys/types";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
-export const cn = (...classes: string[]) => {
-  return classes.filter(Boolean).join(" ");
+export const cn = (...classes: (string | undefined)[]) => {
+  return twMerge(classes.filter(Boolean).join(" "));
 };
 
 export const getSecureRandom = (): number => {

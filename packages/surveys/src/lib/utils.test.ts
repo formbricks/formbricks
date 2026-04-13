@@ -4,6 +4,7 @@ import type { TJsEnvironmentStateSurvey } from "../../../types/js";
 import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
 import type { TSurveyLanguage } from "../../../types/surveys/types";
 import {
+  cn,
   findBlockByElementId,
   getDefaultLanguageCode,
   getElementsFromSurveyBlocks,
@@ -508,5 +509,47 @@ describe("isRTLLanguage", () => {
       ],
     } as TJsEnvironmentStateSurvey;
     expect(isRTLLanguage(survey, "default")).toBe(true);
+  });
+});
+
+describe("cn", () => {
+  test("joins multiple classes", () => {
+    expect(cn("foo", "bar")).toBe("foo bar");
+  });
+
+  test("filters out undefined values", () => {
+    expect(cn("foo", undefined, "bar")).toBe("foo bar");
+  });
+
+  test("filters out empty strings", () => {
+    expect(cn("foo", "", "bar")).toBe("foo bar");
+  });
+
+  test("merges conflicting tailwind classes (last wins)", () => {
+    expect(cn("mb-6", "mb-8")).toBe("mb-8");
+  });
+
+  test("merges conflicting min-h classes", () => {
+    expect(cn("min-h-40", "min-h-0")).toBe("min-h-0");
+  });
+
+  test("merges conflicting padding classes", () => {
+    expect(cn("p-4", "p-2")).toBe("p-2");
+  });
+
+  test("keeps non-conflicting classes", () => {
+    expect(cn("mb-6 block rounded-md", "w-1/4")).toBe("mb-6 block rounded-md w-1/4");
+  });
+
+  test("handles single class", () => {
+    expect(cn("foo")).toBe("foo");
+  });
+
+  test("handles no arguments", () => {
+    expect(cn()).toBe("");
+  });
+
+  test("handles all undefined", () => {
+    expect(cn(undefined, undefined)).toBe("");
   });
 });
