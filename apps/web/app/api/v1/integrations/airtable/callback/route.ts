@@ -89,11 +89,15 @@ export const GET = withV1ApiWrapper({
       };
       await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
 
-      const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-      capturePostHogEvent(authentication.user.id, "integration_connected", {
-        integration_type: "airtable",
-        organization_id: organizationId,
-      });
+      try {
+        const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+        capturePostHogEvent(authentication.user.id, "integration_connected", {
+          integration_type: "airtable",
+          organization_id: organizationId,
+        });
+      } catch (err) {
+        logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
+      }
 
       return {
         response: Response.redirect(

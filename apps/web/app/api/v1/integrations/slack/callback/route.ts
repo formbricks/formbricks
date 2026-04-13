@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import {
   TIntegrationSlackConfig,
   TIntegrationSlackConfigData,
@@ -106,11 +107,15 @@ export const GET = withV1ApiWrapper({
       const result = await createOrUpdateIntegration(environmentId, integration);
 
       if (result) {
-        const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-        capturePostHogEvent(authentication.user.id, "integration_connected", {
-          integration_type: "slack",
-          organization_id: organizationId,
-        });
+        try {
+          const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+          capturePostHogEvent(authentication.user.id, "integration_connected", {
+            integration_type: "slack",
+            organization_id: organizationId,
+          });
+        } catch (err) {
+          logger.error({ error: err }, "Failed to capture PostHog integration_connected event for slack");
+        }
 
         return {
           response: Response.redirect(

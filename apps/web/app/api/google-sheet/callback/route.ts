@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth";
+import { logger } from "@formbricks/logger";
 import { TIntegrationGoogleSheetsConfig } from "@formbricks/types/integration/google-sheet";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -84,11 +85,15 @@ export const GET = async (req: Request) => {
 
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
   if (result) {
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-    capturePostHogEvent(session.user.id, "integration_connected", {
-      integration_type: "googleSheets",
-      organization_id: organizationId,
-    });
+    try {
+      const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+      capturePostHogEvent(session.user.id, "integration_connected", {
+        integration_type: "googleSheets",
+        organization_id: organizationId,
+      });
+    } catch (err) {
+      logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
+    }
 
     return Response.redirect(
       `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/google-sheets`
