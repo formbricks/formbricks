@@ -166,6 +166,11 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
+  capturePostHogEvent(user.id, "organization_created", {
+    organization_id: organization.id,
+    is_first_org: true,
+  });
+
   await updateUser(user.id, {
     notificationSettings: {
       ...user.notificationSettings,

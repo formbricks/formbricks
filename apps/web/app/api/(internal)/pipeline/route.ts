@@ -1,7 +1,6 @@
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
-import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -9,12 +8,10 @@ import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { cache } from "@/lib/cache";
 import { CRON_SECRET, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
@@ -27,6 +24,7 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { handleIntegrations } from "./lib/handleIntegrations";
+import { captureSurveyResponsePostHogEvent } from "./lib/posthog";
 
 export const POST = async (request: Request) => {
   const requestHeaders = await headers();
@@ -302,25 +300,16 @@ export const POST = async (request: Request) => {
       logger.error({ error, responseId: response.id }, "Failed to record response meter event");
     });
 
-    // Sampled PostHog tracking: first response + every 100th
     if (POSTHOG_KEY) {
-      const responseCount = await cache.withCache(
-        () => getResponseCountBySurveyId(surveyId),
-        createCacheKey.response.countBySurveyId(surveyId),
-        60 * 1000
-      );
+      const responseCount = await getResponseCountBySurveyId(surveyId);
 
-      if (responseCount === 1 || responseCount % 100 === 0) {
-        capturePostHogEvent(organization.id, "survey_response_received", {
-          survey_id: surveyId,
-          survey_type: survey.type,
-          organization_id: organization.id,
-          environment_id: environmentId,
-          response_count: responseCount,
-          is_first_response: responseCount === 1,
-          milestone: responseCount === 1 ? "first" : String(responseCount),
-        });
-      }
+      captureSurveyResponsePostHogEvent({
+        organizationId: organization.id,
+        surveyId,
+        surveyType: survey.type,
+        environmentId,
+        responseCount,
+      });
     }
 
     // Send telemetry events
