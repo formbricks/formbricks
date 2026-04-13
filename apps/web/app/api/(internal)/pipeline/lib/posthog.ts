@@ -9,18 +9,9 @@ interface SurveyResponsePostHogEventParams {
 }
 
 /**
- * Determines whether a PostHog event should be captured for the given response count.
- * Fires on the 1st response, then at milestones: 10, 50, 100, 500, and every 500 thereafter.
+ * Captures a PostHog event for survey responses at milestones:
+ * 1st response, then every 100th (100, 200, 300, ...).
  */
-export const shouldCapturePostHogResponseEvent = (responseCount: number): boolean => {
-  if (responseCount === 1) return true;
-  if (responseCount === 10) return true;
-  if (responseCount === 50) return true;
-  if (responseCount === 100) return true;
-  if (responseCount >= 500 && responseCount % 500 === 0) return true;
-  return false;
-};
-
 export const captureSurveyResponsePostHogEvent = ({
   organizationId,
   surveyId,
@@ -28,7 +19,7 @@ export const captureSurveyResponsePostHogEvent = ({
   environmentId,
   responseCount,
 }: SurveyResponsePostHogEventParams): void => {
-  if (!shouldCapturePostHogResponseEvent(responseCount)) return;
+  if (responseCount !== 1 && responseCount % 100 !== 0) return;
 
   capturePostHogEvent(organizationId, "survey_response_received", {
     survey_id: surveyId,
