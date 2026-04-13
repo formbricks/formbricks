@@ -300,7 +300,6 @@ export const POST = async (request: Request) => {
       logger.error({ error, responseId: response.id }, "Failed to record response meter event");
     });
 
-    // Sampled PostHog tracking: fires at milestones (1, 10, 50, 100, 500, 1000, ...)
     if (POSTHOG_KEY) {
       const responseCount = await getResponseCountBySurveyId(surveyId);
 
