@@ -1,6 +1,6 @@
 // Matches a CSS numeric value followed by "rem" — e.g. "1rem", "1.5rem", "16rem".
 // Single character-class + single quantifier: no nested quantifiers, no backtracking risk.
-const REM_REGEX = /([\d.]+)(rem)/gi;
+const REM_REGEX = /([\d.]+)(rem)/gi; // NOSONAR -- single character-class quantifier on trusted CSS input; no backtracking risk
 const PROCESSED = Symbol("processed");
 
 const remtoEm = (opts = {}) => {
