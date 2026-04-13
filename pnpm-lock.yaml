@@ -990,6 +990,9 @@ importers:
       react-i18next:
         specifier: 16.5.8
         version: 16.5.8(i18next@25.8.18(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+      tailwind-merge:
+        specifier: 3.5.0
+        version: 3.5.0
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
