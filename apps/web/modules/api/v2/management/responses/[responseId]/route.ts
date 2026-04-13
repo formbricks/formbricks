@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -220,7 +220,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
-      await enqueueResponsePipelineEvents({
+      scheduleResponsePipelineEvents({
         environmentId: environmentIdResult.data,
         events: response.data.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
         responseId: params.responseId,

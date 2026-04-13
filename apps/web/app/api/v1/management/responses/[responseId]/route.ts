@@ -4,7 +4,7 @@ import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiV1Authentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
@@ -169,7 +169,7 @@ export const PUT = withV1ApiWrapper({
         auditLog.newObject = updated;
       }
 
-      await enqueueResponsePipelineEvents({
+      scheduleResponsePipelineEvents({
         environmentId: result.survey.environmentId,
         events: updated.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
         response: updated,

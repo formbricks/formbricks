@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponse } from "@formbricks/types/responses";
-import { enqueueResponsePipelineEvents } from "./pipelines";
+import { enqueueResponsePipelineEvents, scheduleResponsePipelineEvents } from "./pipelines";
 
 const {
+  mockAfter,
   mockDebug,
   mockEnqueueResponsePipeline,
   mockError,
@@ -10,12 +11,17 @@ const {
   mockGetResponseSnapshotForPipeline,
   mockWarn,
 } = vi.hoisted(() => ({
+  mockAfter: vi.fn(),
   mockDebug: vi.fn(),
   mockEnqueueResponsePipeline: vi.fn(),
   mockError: vi.fn(),
   mockGetJobsQueueingConfig: vi.fn(),
   mockGetResponseSnapshotForPipeline: vi.fn(),
   mockWarn: vi.fn(),
+}));
+
+vi.mock("next/server", () => ({
+  after: mockAfter,
 }));
 
 vi.mock("@formbricks/jobs", () => ({
@@ -62,6 +68,7 @@ const mockResponse = {
 describe("enqueueResponsePipelineEvents", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   test("skips enqueueing when jobs queueing is disabled", async () => {
@@ -90,7 +97,9 @@ describe("enqueueResponsePipelineEvents", () => {
     );
   });
 
-  test("logs and skips when the response snapshot lookup throws", async () => {
+  test("throws when the response snapshot lookup still fails after retries", async () => {
+    vi.useFakeTimers();
+
     const snapshotError = new Error("db down");
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: true,
@@ -98,13 +107,19 @@ describe("enqueueResponsePipelineEvents", () => {
     });
     mockGetResponseSnapshotForPipeline.mockRejectedValue(snapshotError);
 
-    await enqueueResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseCreated"],
-      responseId: "cm9-response-id",
-      surveyId: "cm9-survey-id",
-    });
+    const enqueueExpectation = expect(
+      enqueueResponsePipelineEvents({
+        environmentId: "env_123",
+        events: ["responseCreated"],
+        responseId: "cm9-response-id",
+        surveyId: "cm9-survey-id",
+      })
+    ).rejects.toThrow("db down");
 
+    await vi.runAllTimersAsync();
+
+    await enqueueExpectation;
+    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledTimes(3);
     expect(mockError).toHaveBeenCalledWith(
       {
         environmentId: "env_123",
@@ -115,33 +130,6 @@ describe("enqueueResponsePipelineEvents", () => {
       },
       "Failed to hydrate response snapshot for BullMQ response pipeline"
     );
-    expect(mockEnqueueResponsePipeline).not.toHaveBeenCalled();
-  });
-
-  test("logs and skips when the response snapshot is missing", async () => {
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockGetResponseSnapshotForPipeline.mockResolvedValue(null);
-
-    await enqueueResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseUpdated"],
-      responseId: "cm9-response-id",
-      surveyId: "cm9-survey-id",
-    });
-
-    expect(mockWarn).toHaveBeenCalledWith(
-      {
-        environmentId: "env_123",
-        events: ["responseUpdated"],
-        responseId: "cm9-response-id",
-        surveyId: "cm9-survey-id",
-      },
-      "BullMQ response pipeline enqueue skipped because the response snapshot was not found"
-    );
-    expect(mockEnqueueResponsePipeline).not.toHaveBeenCalled();
   });
 
   test("uses the provided response snapshot without loading it again", async () => {
@@ -239,7 +227,9 @@ describe("enqueueResponsePipelineEvents", () => {
     });
   });
 
-  test("logs enqueue failures without throwing", async () => {
+  test("throws when enqueueing still fails after retries", async () => {
+    vi.useFakeTimers();
+
     const enqueueError = new Error("redis unavailable");
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: true,
@@ -248,15 +238,19 @@ describe("enqueueResponsePipelineEvents", () => {
     mockGetResponseSnapshotForPipeline.mockResolvedValue(mockResponse);
     mockEnqueueResponsePipeline.mockRejectedValue(enqueueError);
 
-    await expect(
+    const enqueueExpectation = expect(
       enqueueResponsePipelineEvents({
         environmentId: "env_123",
         events: ["responseFinished"],
         responseId: "cm9-response-id",
         surveyId: "cm9-survey-id",
       })
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow("Failed to enqueue BullMQ response pipeline events: responseFinished");
 
+    await vi.runAllTimersAsync();
+
+    await enqueueExpectation;
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledTimes(4);
     expect(mockError).toHaveBeenCalledWith(
       {
         environmentId: "env_123",
@@ -267,5 +261,44 @@ describe("enqueueResponsePipelineEvents", () => {
       },
       "Failed to enqueue BullMQ response pipeline job"
     );
+  });
+});
+
+describe("scheduleResponsePipelineEvents", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("defers the BullMQ enqueue work until after the response is sent", async () => {
+    let scheduledCallback: (() => Promise<void>) | undefined;
+
+    mockAfter.mockImplementation((callback: () => Promise<void>) => {
+      scheduledCallback = callback;
+    });
+    mockGetJobsQueueingConfig.mockReturnValue({
+      enabled: true,
+      redisUrl: "redis://localhost:6379",
+    });
+    mockEnqueueResponsePipeline.mockResolvedValue({ jobId: "job-1" });
+
+    scheduleResponsePipelineEvents({
+      environmentId: "env_123",
+      events: ["responseCreated"],
+      response: mockResponse,
+      responseId: mockResponse.id,
+      surveyId: mockResponse.surveyId,
+    });
+
+    expect(mockAfter).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueResponsePipeline).not.toHaveBeenCalled();
+
+    await scheduledCallback?.();
+
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({
+      environmentId: "env_123",
+      event: "responseCreated",
+      response: mockResponse,
+      surveyId: "cm9-survey-id",
+    });
   });
 });

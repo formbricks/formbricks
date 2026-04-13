@@ -27,9 +27,12 @@ const getBullMqWorkerEnabled = (): boolean => {
 };
 
 export const BULLMQ_WORKER_ENABLED = getBullMqWorkerEnabled();
+export const BULLMQ_EXTERNAL_WORKER_ENABLED = env.BULLMQ_EXTERNAL_WORKER_ENABLED === "1";
+
+const hasBullMqConsumer = (): boolean => BULLMQ_WORKER_ENABLED || BULLMQ_EXTERNAL_WORKER_ENABLED;
 
 export const getJobsQueueingConfig = (): JobsQueueingConfig => {
-  if (!env.REDIS_URL) {
+  if (!env.REDIS_URL || !hasBullMqConsumer()) {
     return {
       enabled: false,
       redisUrl: null,

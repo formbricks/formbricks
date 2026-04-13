@@ -6,7 +6,7 @@ const {
   mockCheckSurveyValidity,
   mockCreateQuotaFullObject,
   mockCreateResponseWithQuotaEvaluation,
-  mockEnqueueResponsePipelineEvents,
+  mockScheduleResponsePipelineEvents,
   mockFormatValidationErrorsForV1Api,
   mockGetClientIpFromHeaders,
   mockGetElementsFromBlocks,
@@ -23,7 +23,7 @@ const {
   mockCheckSurveyValidity: vi.fn(),
   mockCreateQuotaFullObject: vi.fn(),
   mockCreateResponseWithQuotaEvaluation: vi.fn(),
-  mockEnqueueResponsePipelineEvents: vi.fn(),
+  mockScheduleResponsePipelineEvents: vi.fn(),
   mockFormatValidationErrorsForV1Api: vi.fn(),
   mockGetClientIpFromHeaders: vi.fn(),
   mockGetElementsFromBlocks: vi.fn(),
@@ -65,7 +65,7 @@ vi.mock("@/app/lib/api/validator", () => ({
 }));
 
 vi.mock("@/app/lib/pipelines", () => ({
-  enqueueResponsePipelineEvents: mockEnqueueResponsePipelineEvents,
+  scheduleResponsePipelineEvents: mockScheduleResponsePipelineEvents,
 }));
 
 vi.mock("@/lib/survey/service", () => ({
@@ -368,7 +368,7 @@ describe("POST /api/v2/client/[environmentId]/responses", () => {
         surveyId,
       })
     );
-    expect(mockEnqueueResponsePipelineEvents).toHaveBeenCalledWith({
+    expect(mockScheduleResponsePipelineEvents).toHaveBeenCalledWith({
       environmentId,
       events: ["responseCreated", "responseFinished"],
       response: expect.objectContaining({

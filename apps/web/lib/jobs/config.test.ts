@@ -12,6 +12,7 @@ describe("jobs runtime config", () => {
     async () => {
       vi.doMock("@/lib/env", () => ({
         env: {
+          BULLMQ_EXTERNAL_WORKER_ENABLED: undefined,
           BULLMQ_WORKER_CONCURRENCY: undefined,
           BULLMQ_WORKER_COUNT: undefined,
           BULLMQ_WORKER_ENABLED: undefined,
@@ -43,6 +44,7 @@ describe("jobs runtime config", () => {
     async () => {
       vi.doMock("@/lib/env", () => ({
         env: {
+          BULLMQ_EXTERNAL_WORKER_ENABLED: undefined,
           BULLMQ_WORKER_CONCURRENCY: undefined,
           BULLMQ_WORKER_COUNT: undefined,
           BULLMQ_WORKER_ENABLED: undefined,
@@ -70,6 +72,7 @@ describe("jobs runtime config", () => {
     async () => {
       vi.doMock("@/lib/env", () => ({
         env: {
+          BULLMQ_EXTERNAL_WORKER_ENABLED: undefined,
           BULLMQ_WORKER_CONCURRENCY: 6,
           BULLMQ_WORKER_COUNT: 3,
           BULLMQ_WORKER_ENABLED: "1",
@@ -97,10 +100,39 @@ describe("jobs runtime config", () => {
   );
 
   test(
-    "keeps queueing enabled when the worker is disabled but redis is configured",
+    "disables queueing when no BullMQ consumer is configured",
     async () => {
       vi.doMock("@/lib/env", () => ({
         env: {
+          BULLMQ_EXTERNAL_WORKER_ENABLED: undefined,
+          BULLMQ_WORKER_CONCURRENCY: 6,
+          BULLMQ_WORKER_COUNT: 3,
+          BULLMQ_WORKER_ENABLED: "0",
+          NODE_ENV: "production",
+          REDIS_URL: "redis://cache.internal:6379",
+        },
+      }));
+
+      const { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } = await import("./config");
+
+      expect(getJobsWorkerBootstrapConfig()).toEqual({
+        enabled: false,
+        runtimeOptions: null,
+      });
+      expect(getJobsQueueingConfig()).toEqual({
+        enabled: false,
+        redisUrl: null,
+      });
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "keeps queueing enabled when an external BullMQ worker is configured",
+    async () => {
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          BULLMQ_EXTERNAL_WORKER_ENABLED: "1",
           BULLMQ_WORKER_CONCURRENCY: 6,
           BULLMQ_WORKER_COUNT: 3,
           BULLMQ_WORKER_ENABLED: "0",
@@ -128,6 +160,7 @@ describe("jobs runtime config", () => {
     async () => {
       vi.doMock("@/lib/env", () => ({
         env: {
+          BULLMQ_EXTERNAL_WORKER_ENABLED: undefined,
           BULLMQ_WORKER_CONCURRENCY: 2,
           BULLMQ_WORKER_COUNT: 1,
           BULLMQ_WORKER_ENABLED: "1",

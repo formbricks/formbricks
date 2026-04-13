@@ -4,7 +4,7 @@ import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/res
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -174,7 +174,7 @@ export const POST = withV1ApiWrapper({
           auditLog.newObject = response;
         }
 
-        await enqueueResponsePipelineEvents({
+        scheduleResponsePipelineEvents({
           environmentId: surveyResult.survey.environmentId,
           events: response.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
           response,

@@ -7,7 +7,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import type { THandlerParams } from "@/app/lib/api/with-api-logging";
-import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
@@ -250,7 +250,7 @@ export const handleUpdateResponseRequest = async ({
 
   const { quotaFull, ...responseData } = updatedResponse;
 
-  await enqueueResponsePipelineEvents({
+  scheduleResponsePipelineEvents({
     environmentId: survey.environmentId,
     events: updatedResponse.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
     response: responseData,

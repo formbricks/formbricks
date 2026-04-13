@@ -1,6 +1,6 @@
 import "server-only";
 import { PipelineTriggers, type Webhook } from "@prisma/client";
-import { v7 as uuidv7 } from "uuid";
+import { createHash } from "crypto";
 import { prisma } from "@formbricks/database";
 import type { JobHandler, TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
@@ -40,6 +40,16 @@ const getPipelineLogContext = (
 
 const toError = (error: unknown, fallbackMessage: string): Error =>
   error instanceof Error ? error : new Error(fallbackMessage);
+
+const createWebhookMessageId = ({
+  event,
+  jobId,
+  webhookId,
+}: {
+  event: TResponsePipelineJobData["event"];
+  jobId: string;
+  webhookId: string;
+}): string => createHash("sha256").update(`${jobId}:${webhookId}:${event}`).digest("hex");
 
 const fetchWithTimeout = async (
   url: string,
@@ -106,7 +116,11 @@ const createWebhookDeliveryTask = async ({
       },
     });
 
-    const webhookMessageId = uuidv7();
+    const webhookMessageId = createWebhookMessageId({
+      event: data.event,
+      jobId: logContext.jobId,
+      webhookId: webhook.id,
+    });
     const webhookTimestamp = Math.floor(Date.now() / 1000);
     const requestHeaders: Record<string, string> = {
       "content-type": "application/json",
@@ -198,10 +212,33 @@ const runResponseFinishedSideEffects = async ({
   organizationId: string;
   survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
 }) => {
-  const [integrations, responseCount] = await Promise.all([
+  const [integrationsResult, responseCountResult] = await Promise.allSettled([
     getIntegrations(data.environmentId),
     getResponseCountBySurveyId(data.surveyId),
   ]);
+
+  const integrations = integrationsResult.status === "fulfilled" ? integrationsResult.value : [];
+  const responseCount = responseCountResult.status === "fulfilled" ? responseCountResult.value : null;
+
+  if (integrationsResult.status === "rejected") {
+    logger.error(
+      {
+        ...logContext,
+        err: integrationsResult.reason,
+      },
+      "Response pipeline integration lookup failed"
+    );
+  }
+
+  if (responseCountResult.status === "rejected") {
+    logger.error(
+      {
+        ...logContext,
+        err: responseCountResult.reason,
+      },
+      "Response pipeline response count lookup failed"
+    );
+  }
 
   if (integrations.length > 0) {
     try {
@@ -217,41 +254,45 @@ const runResponseFinishedSideEffects = async ({
     }
   }
 
-  const usersWithNotifications = await prisma.user.findMany({
-    where: {
-      memberships: {
-        some: {
-          organization: {
-            workspaces: {
-              some: {
-                environments: {
-                  some: { id: data.environmentId },
+  let usersWithNotifications: Array<{ email: string; locale: string }> = [];
+
+  try {
+    usersWithNotifications = await prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            organization: {
+              workspaces: {
+                some: {
+                  environments: {
+                    some: { id: data.environmentId },
+                  },
                 },
               },
             },
           },
         },
-      },
-      OR: [
-        {
-          memberships: {
-            every: {
-              role: {
-                in: ["owner", "manager"],
+        OR: [
+          {
+            memberships: {
+              every: {
+                role: {
+                  in: ["owner", "manager"],
+                },
               },
             },
           },
-        },
-        {
-          teamUsers: {
-            some: {
-              team: {
-                workspaceTeams: {
-                  some: {
-                    workspace: {
-                      environments: {
-                        some: {
-                          id: data.environmentId,
+          {
+            teamUsers: {
+              some: {
+                team: {
+                  workspaceTeams: {
+                    some: {
+                      workspace: {
+                        environments: {
+                          some: {
+                            id: data.environmentId,
+                          },
                         },
                       },
                     },
@@ -260,53 +301,94 @@ const runResponseFinishedSideEffects = async ({
               },
             },
           },
+        ],
+        notificationSettings: {
+          path: ["alert", data.surveyId],
+          equals: true,
         },
-      ],
-      notificationSettings: {
-        path: ["alert", data.surveyId],
-        equals: true,
       },
-    },
-    select: { email: true, locale: true },
-  });
+      select: { email: true, locale: true },
+    });
+  } catch (error) {
+    logger.error(
+      {
+        ...logContext,
+        err: error,
+      },
+      "Response pipeline notification recipient lookup failed"
+    );
+  }
 
   if (survey.followUps?.length > 0) {
-    const followUpsResult = await sendFollowUpsForResponse(data.response.id);
-    if (!followUpsResult.ok && followUpsResult.error.code !== FollowUpSendError.FOLLOW_UP_NOT_ALLOWED) {
+    try {
+      const followUpsResult = await sendFollowUpsForResponse(data.response.id);
+      if (!followUpsResult.ok && followUpsResult.error.code !== FollowUpSendError.FOLLOW_UP_NOT_ALLOWED) {
+        logger.error(
+          {
+            ...logContext,
+            error: followUpsResult.error,
+          },
+          "Response pipeline follow-up delivery failed"
+        );
+      }
+    } catch (error) {
       logger.error(
         {
           ...logContext,
-          error: followUpsResult.error,
+          err: error,
         },
         "Response pipeline follow-up delivery failed"
       );
     }
   }
 
-  const emailTasks = usersWithNotifications.map(async (user) => {
-    try {
-      await sendResponseFinishedEmail(
-        user.email,
-        user.locale,
-        data.environmentId,
-        survey,
-        data.response,
-        responseCount
-      );
-    } catch (error) {
+  if (responseCount === null) {
+    if (usersWithNotifications.length > 0) {
       logger.error(
         {
           ...logContext,
-          err: error,
-          userEmail: user.email,
+          notificationRecipientCount: usersWithNotifications.length,
         },
-        "Response pipeline notification email failed"
+        "Response pipeline notification emails skipped because the response count could not be loaded"
       );
-      throw error;
     }
-  });
 
-  if (survey.autoComplete && responseCount >= survey.autoComplete) {
+    if (survey.autoComplete) {
+      logger.error(
+        {
+          ...logContext,
+          autoCompleteThreshold: survey.autoComplete,
+        },
+        "Response pipeline survey auto-complete skipped because the response count could not be loaded"
+      );
+    }
+  } else {
+    await Promise.all(
+      usersWithNotifications.map(async (user) => {
+        try {
+          await sendResponseFinishedEmail(
+            user.email,
+            user.locale,
+            data.environmentId,
+            survey,
+            data.response,
+            responseCount
+          );
+        } catch (error) {
+          logger.error(
+            {
+              ...logContext,
+              err: error,
+              userEmail: user.email,
+            },
+            "Response pipeline notification email failed"
+          );
+        }
+      })
+    );
+  }
+
+  if (responseCount !== null && survey.autoComplete && responseCount >= survey.autoComplete) {
     let logStatus: TAuditStatus = "success";
 
     try {
@@ -323,7 +405,9 @@ const runResponseFinishedSideEffects = async ({
         },
         "Response pipeline survey auto-complete update failed"
       );
-    } finally {
+    }
+
+    try {
       await queueAuditEventWithoutRequest({
         status: logStatus,
         action: "updated",
@@ -336,10 +420,17 @@ const runResponseFinishedSideEffects = async ({
           status: "completed",
         },
       });
+    } catch (error) {
+      logger.error(
+        {
+          ...logContext,
+          auditStatus: logStatus,
+          err: error,
+        },
+        "Response pipeline survey auto-complete audit log failed"
+      );
     }
   }
-
-  await Promise.allSettled(emailTasks);
 };
 
 const runResponseCreatedSideEffects = async ({

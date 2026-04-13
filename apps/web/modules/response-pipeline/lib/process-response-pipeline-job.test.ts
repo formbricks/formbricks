@@ -231,6 +231,24 @@ describe("processResponsePipelineJob", () => {
     expect(mockHandleIntegrations).not.toHaveBeenCalled();
   });
 
+  test("uses a stable webhook id for the same BullMQ job across retry attempts", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
+    await expect(processResponsePipelineJob(baseData, finalAttemptContext)).resolves.toBeUndefined();
+
+    const firstHeaders = mockFetch.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    const secondHeaders = mockFetch.mock.calls[1]?.[1]?.headers as Record<string, string>;
+
+    expect(firstHeaders["webhook-id"]).toBe(secondHeaders["webhook-id"]);
+  });
+
   test("processes responseFinished jobs and preserves legacy side effects", async () => {
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
     mockGetSurvey.mockResolvedValue({
@@ -466,6 +484,74 @@ describe("processResponsePipelineJob", () => {
         jobId: "job_123",
       }),
       "Response pipeline integration handling failed"
+    );
+  });
+
+  test("does not retry a successful webhook when later responseFinished side effects fail", async () => {
+    const auditError = new Error("audit offline");
+    mockGetSurvey.mockResolvedValue({
+      ...survey,
+      autoComplete: 1,
+    });
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+    mockQueueAuditEventWithoutRequest.mockRejectedValue(auditError);
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: auditError,
+        event: "responseFinished",
+        jobId: "job_123",
+      }),
+      "Response pipeline survey auto-complete audit log failed"
+    );
+  });
+
+  test("logs response count lookup failures without retrying successful webhooks", async () => {
+    const responseCountError = new Error("count offline");
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+    mockGetResponseCountBySurveyId.mockRejectedValue(responseCountError);
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: responseCountError,
+        event: "responseFinished",
+        jobId: "job_123",
+      }),
+      "Response pipeline response count lookup failed"
     );
   });
 

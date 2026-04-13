@@ -9,7 +9,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import type { THandlerParams } from "@/app/lib/api/with-api-logging";
-import { enqueueResponsePipelineEvents } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -225,7 +225,7 @@ export const handleCreateResponseRequest = async ({
 
   const { quotaFull, ...responseData } = response;
 
-  await enqueueResponsePipelineEvents({
+  scheduleResponsePipelineEvents({
     environmentId: survey.environmentId,
     events: response.finished ? ["responseCreated", "responseFinished"] : ["responseCreated"],
     response: responseData,
