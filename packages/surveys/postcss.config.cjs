@@ -1,5 +1,7 @@
-// basic regex -- [whitespace](number)(rem)[whitespace or ;]
-const REM_REGEX = /(\d+(\.\d+)?)(rem)/gi;
+// Matches a CSS numeric value followed by "rem" — e.g. "1rem", "1.5rem", "16rem".
+// Uses a single character-class quantifier [\d.]* to avoid nested quantifiers that
+// could cause super-linear backtracking (SonarCloud rule S5852).
+const REM_REGEX = /(\d[\d.]*)(rem)/gi;
 const PROCESSED = Symbol("processed");
 
 const remtoEm = (opts = {}) => {
