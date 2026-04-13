@@ -1080,7 +1080,7 @@ export function Survey({
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
-              isAutoProgressingEnabled={Boolean(localSurvey.isAutoProgressingEnabled)}
+              isAutoProgressingEnabled={localSurvey.isAutoProgressingEnabled}
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}
               fullSizeCards={fullSizeCards}
