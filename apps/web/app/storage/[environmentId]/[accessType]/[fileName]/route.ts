@@ -6,6 +6,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { isRouteRateLimitedByEnvoy } from "@/modules/core/rate-limit/envoy-rate-limit-coverage";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { deleteFile, getFileStreamForDownload } from "@/modules/storage/service";
@@ -104,7 +105,15 @@ export const DELETE = async (
   if (authResult.ok) {
     try {
       if (authResult.data.authType === "apiKey") {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
+        if (
+          !isRouteRateLimitedByEnvoy({
+            pathname: request.nextUrl.pathname,
+            method: request.method,
+            authType: "apiKey",
+          })
+        ) {
+          await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
+        }
       } else {
         await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
       }
