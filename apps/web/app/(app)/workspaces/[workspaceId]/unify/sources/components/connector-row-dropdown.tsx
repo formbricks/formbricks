@@ -64,7 +64,7 @@ export function ConnectorRowDropdown({
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
           <div className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
-            <span className="sr-only">{t("environments.surveys.open_options")}</span>
+            <span className="sr-only">{t("workspace.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>

@@ -153,7 +153,7 @@ export const FeedbackRecordsTable = ({
       {!isEmpty && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-500">
-            {t("workspace.unify.showing_count_loaded", { count: records.length })}
+            {t("workspace.unify.showing_count", { count: records.length })}
           </p>
           <Button
             variant="secondary"
