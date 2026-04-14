@@ -57,6 +57,36 @@
   color: var(--fb-subheading-color) !important;
 }
 
+/*
+ * Restore list styling for rich text (questions/descriptions).
+ * Preflight resets ul/ol with list-style:none; these overrides restore bullets/numbers.
+ */
+#fbjs .htmlbody ul,
+#fbjs .htmlbody ol,
+#fbjs [data-variant="headline"] ul,
+#fbjs [data-variant="headline"] ol,
+#fbjs [data-variant="description"] ul,
+#fbjs [data-variant="description"] ol {
+  list-style-position: outside;
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+#fbjs .htmlbody ul,
+#fbjs [data-variant="headline"] ul,
+#fbjs [data-variant="description"] ul {
+  list-style-type: disc;
+}
+#fbjs .htmlbody ol,
+#fbjs [data-variant="headline"] ol,
+#fbjs [data-variant="description"] ol {
+  list-style-type: decimal;
+}
+#fbjs .htmlbody li,
+#fbjs [data-variant="headline"] li,
+#fbjs [data-variant="description"] li {
+  margin: 0.25em 0;
+}
+
 /* without this, it wont override the color */
 #fbjs p.editor-paragraph {
   overflow-wrap: break-word;

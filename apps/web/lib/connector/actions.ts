@@ -20,10 +20,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getOrganizationIdFromConnectorId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromConnectorId,
-  getProjectIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { listFeedbackRecords } from "@/modules/hub/service";
@@ -41,7 +39,7 @@ import {
 
 const ZDeleteConnectorAction = z.object({
   connectorId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const deleteConnectorAction = authenticatedActionClient
@@ -64,14 +62,14 @@ export const deleteConnectorAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
 
-      return deleteConnector(parsedInput.connectorId, parsedInput.environmentId);
+      return deleteConnector(parsedInput.connectorId, parsedInput.workspaceId);
     }
   );
 
@@ -119,7 +117,7 @@ const ZFormbricksSurveyMapping = z.object({
 
 const ZCreateConnectorWithMappingsAction = z
   .object({
-    environmentId: ZId,
+    workspaceId: ZId,
     connectorInput: ZConnectorCreateInput,
     formbricksMappings: z.array(ZFormbricksSurveyMapping).optional(),
     fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
@@ -154,7 +152,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZCreateConnectorWithMappingsAction>;
     }): Promise<TConnectorWithMappings> => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -164,9 +162,9 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
@@ -191,7 +189,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
       }
 
       return createConnectorWithMappings(
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         { ...parsedInput.connectorInput, createdBy: ctx.user.id },
         mappingsInput
       );
@@ -200,7 +198,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
 const ZUpdateConnectorWithMappingsAction = z.object({
   connectorId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
   connectorInput: ZConnectorUpdateInput,
   formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
   fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
@@ -226,9 +224,9 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
@@ -252,7 +250,7 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
 
       return updateConnectorWithMappings(
         parsedInput.connectorId,
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         parsedInput.connectorInput,
         mappingsInput
       );
@@ -261,7 +259,7 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
 
 const ZDuplicateConnectorAction = z.object({
   connectorId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const duplicateConnectorAction = authenticatedActionClient
@@ -284,14 +282,14 @@ export const duplicateConnectorAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
 
-      const source = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.environmentId);
+      const source = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.workspaceId);
       if (!source) {
         throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
       }
@@ -320,7 +318,7 @@ export const duplicateConnectorAction = authenticatedActionClient
       }
 
       return createConnectorWithMappings(
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         { name: `${source.name} (copy)`, type: source.type, createdBy: ctx.user.id },
         mappingsInput
       );
@@ -329,7 +327,7 @@ export const duplicateConnectorAction = authenticatedActionClient
 
 const ZGetResponseCountAction = z.object({
   surveyId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const getResponseCountAction = authenticatedActionClient
@@ -352,9 +350,9 @@ export const getResponseCountAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
@@ -365,7 +363,7 @@ export const getResponseCountAction = authenticatedActionClient
 
 const ZImportHistoricalResponsesAction = z.object({
   connectorId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
   surveyId: ZId,
 });
 
@@ -389,17 +387,14 @@ export const importHistoricalResponsesAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
 
-      const connector = await getConnectorWithMappingsById(
-        parsedInput.connectorId,
-        parsedInput.environmentId
-      );
+      const connector = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.workspaceId);
       if (!connector) {
         throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
       }
@@ -415,7 +410,7 @@ export const importHistoricalResponsesAction = authenticatedActionClient
 
 const ZImportCsvDataAction = z.object({
   connectorId: ZId,
-  environmentId: ZId,
+  workspaceId: ZId,
   csvData: z.array(z.record(z.string())).min(1),
 });
 
@@ -439,17 +434,14 @@ export const importCsvDataAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromConnectorId(parsedInput.connectorId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
 
-      const connector = await getConnectorWithMappingsById(
-        parsedInput.connectorId,
-        parsedInput.environmentId
-      );
+      const connector = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.workspaceId);
       if (!connector) {
         throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
       }
@@ -457,7 +449,7 @@ export const importCsvDataAction = authenticatedActionClient
       const result = await importCsvData(connector, parsedInput.csvData);
 
       if (result.successes > 0) {
-        await updateConnector(parsedInput.connectorId, parsedInput.environmentId, {
+        await updateConnector(parsedInput.connectorId, parsedInput.workspaceId, {
           lastSyncAt: new Date(),
         });
       }
@@ -467,7 +459,7 @@ export const importCsvDataAction = authenticatedActionClient
   );
 
 const ZListFeedbackRecordsAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   limit: z.number().min(1).max(1000).optional(),
   offset: z.number().min(0).optional(),
   sourceType: z.string().optional(),
@@ -486,7 +478,7 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZListFeedbackRecordsAction>;
     }): Promise<FeedbackRecordListResponse> => {
-      const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -496,15 +488,15 @@ export const listFeedbackRecordsAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "read",
-            projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+            workspaceId: parsedInput.workspaceId,
           },
         ],
       });
 
       const params: FeedbackRecordListParams = {
-        tenant_id: parsedInput.environmentId,
+        tenant_id: parsedInput.workspaceId,
         limit: parsedInput.limit ?? 50,
         offset: parsedInput.offset ?? 0,
       };
@@ -517,7 +509,7 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       if (result.error || !result.data) {
         logger.warn({ error: result.error }, "Failed to list feedback records");
         const t = await getTranslate();
-        throw new Error(result.error?.message ?? t("environments.unify.failed_to_load_feedback_records"));
+        throw new Error(result.error?.message ?? t("workspace.unify.failed_to_load_feedback_records"));
       }
 
       return result.data;

@@ -6,15 +6,24 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
-interface ConfirmationPageProps {
-  environmentId: string;
-}
+const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
 
-export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
+export const ConfirmationPage = () => {
   const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [resolvedWorkspaceId, setResolvedWorkspaceId] = useState<string | null>(null);
+
   useEffect(() => {
     setShowConfetti(true);
+
+    if (globalThis.window === undefined) {
+      return;
+    }
+
+    const storedWorkspaceId = globalThis.window.sessionStorage.getItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY);
+    if (storedWorkspaceId) {
+      setResolvedWorkspaceId(storedWorkspaceId);
+    }
   }, []);
 
   return (
@@ -30,7 +39,7 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
           </p>
         </div>
         <Button asChild className="w-full justify-center">
-          <Link href={`/environments/${environmentId}/settings/billing`}>
+          <Link href={resolvedWorkspaceId ? `/workspaces/${resolvedWorkspaceId}/settings/billing` : "/"}>
             {t("billing_confirmation.back_to_billing_overview")}
           </Link>
         </Button>

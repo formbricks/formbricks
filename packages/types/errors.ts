@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RESET_TOKEN";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;
@@ -87,9 +89,25 @@ class AuthorizationError extends Error {
 
 class TooManyRequestsError extends Error {
   statusCode = 429;
-  constructor(message: string) {
+  retryAfter?: number;
+  constructor(message: string, retryAfter?: number) {
     super(message);
     this.name = "TooManyRequestsError";
+    this.retryAfter = retryAfter;
+  }
+}
+
+class InvalidPasswordResetTokenError extends Error {
+  statusCode = 400;
+  code: string;
+  reason?: string;
+  userId?: string;
+  constructor(code = INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE, reason?: string, userId?: string) {
+    super(code);
+    this.name = "InvalidPasswordResetTokenError";
+    this.code = code;
+    this.reason = reason;
+    this.userId = userId;
   }
 }
 
@@ -111,7 +129,7 @@ interface ForbiddenError {
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
 }
 
-export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
+export const ZErrorHandler = z.function({ input: [z.any()], output: z.void() });
 
 export {
   ResourceNotFoundError,
@@ -125,6 +143,7 @@ export {
   AuthenticationError,
   AuthorizationError,
   TooManyRequestsError,
+  InvalidPasswordResetTokenError,
 };
 export type { NetworkError, ForbiddenError };
 
@@ -140,6 +159,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",
+  "InvalidPasswordResetTokenError",
 ]);
 
 /**

@@ -52,6 +52,14 @@ We are using SonarQube to identify code smells and security hotspots.
 - Translations are in `apps/web/locales/`. Default is `en-US.json`.
 - Lingo.dev is automatically translating strings from en-US into other languages on commit. Run `pnpm i18n` to generate missing translations and validate keys.
 
+## Date and Time Rendering
+
+- All user-facing dates and times must use shared formatting helpers instead of ad hoc `date-fns`, `Intl`, or `toLocale*` calls in components.
+- Locale for display must come from the app language source of truth (`user.locale`, `getLocale()`, or `i18n.resolvedLanguage`), not browser defaults or implicit `undefined` locale behavior.
+- Locale and time zone are different concerns: locale controls formatting, time zone controls the represented clock/calendar moment.
+- Never infer a time zone from locale. If a product-level time zone source of truth exists, use it explicitly; otherwise preserve the existing semantic meaning of the stored value and avoid introducing browser-dependent conversions.
+- Machine-facing values for storage, APIs, exports, integrations, and logs must remain stable and non-localized (`ISO 8601` / UTC where applicable).
+
 ## Database & Prisma Performance
 
 - Multi-tenancy: All data must be scoped by Organization or Environment.

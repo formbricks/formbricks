@@ -20,7 +20,8 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "formbricks.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "formbricks.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/component: migration
     spec:
       restartPolicy: Never

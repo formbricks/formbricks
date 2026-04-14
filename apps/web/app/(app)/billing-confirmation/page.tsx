@@ -3,13 +3,10 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 
 export const dynamic = "force-dynamic";
 
-const Page = async (props) => {
-  const searchParams = await props.searchParams;
-  const { environmentId } = searchParams;
-
+const Page = async () => {
   return (
     <PageContentWrapper>
-      <ConfirmationPage environmentId={environmentId?.toString()} />
+      <ConfirmationPage />
     </PageContentWrapper>
   );
 };

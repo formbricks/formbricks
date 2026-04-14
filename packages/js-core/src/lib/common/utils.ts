@@ -1,12 +1,12 @@
 import { Logger } from "@/lib/common/logger";
 import type {
-  TEnvironmentState,
-  TEnvironmentStateActionClass,
-  TEnvironmentStateProject,
-  TEnvironmentStateSurvey,
-  TProjectStyling,
   TSurveyStyling,
   TUserState,
+  TWorkspaceState,
+  TWorkspaceStateActionClass,
+  TWorkspaceStateSettings,
+  TWorkspaceStateSurvey,
+  TWorkspaceStyling,
 } from "@/types/config";
 import type { Result } from "@/types/error";
 import {
@@ -55,21 +55,18 @@ export const wrapThrowsAsync =
 
 /**
  * Filters surveys based on the displayOption, recontactDays, and segments
- * @param environmentSate -  The environment state
+ * @param workspace -  The workspace state
  * @param userState - The user state
  * @returns The filtered surveys
  */
 
-// takes the environment and user state and returns the filtered surveys
-export const filterSurveys = (
-  environmentState: TEnvironmentState,
-  userState: TUserState
-): TEnvironmentStateSurvey[] => {
-  const { project, surveys } = environmentState.data;
+// takes the workspace and user state and returns the filtered surveys
+export const filterSurveys = (workspace: TWorkspaceState, userState: TUserState): TWorkspaceStateSurvey[] => {
+  const { settings, surveys } = workspace.data;
   const { displays, responses, lastDisplayAt, segments, userId } = userState.data;
 
   // Function to filter surveys based on displayOption criteria
-  let filteredSurveys = surveys.filter((survey: TEnvironmentStateSurvey) => {
+  let filteredSurveys = surveys.filter((survey: TWorkspaceStateSurvey) => {
     switch (survey.displayOption) {
       case "respondMultiple":
         return true;
@@ -110,9 +107,9 @@ export const filterSurveys = (
       return diffInDays(new Date(), new Date(lastDisplayAt)) >= survey.recontactDays;
     }
 
-    // use recontactDays of the project if survey does not have recontactDays
-    if (project.recontactDays) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= project.recontactDays;
+    // use recontactDays of the workspace if survey does not have recontactDays
+    if (settings.recontactDays) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= settings.recontactDays;
     }
 
     // if no recontactDays is set, show the survey
@@ -139,32 +136,32 @@ export const filterSurveys = (
 };
 
 export const getStyling = (
-  project: TEnvironmentStateProject,
-  survey: TEnvironmentStateSurvey
-): TProjectStyling | TSurveyStyling => {
-  // allow style overwrite is enabled from the project
-  if (project.styling.allowStyleOverwrite) {
+  settings: TWorkspaceStateSettings,
+  survey: TWorkspaceStateSurvey
+): TWorkspaceStyling | TSurveyStyling => {
+  // allow style overwrite is enabled from the workspace
+  if (settings.styling.allowStyleOverwrite) {
     // survey style overwrite is disabled
     if (!survey.styling?.overwriteThemeStyling) {
-      return project.styling;
+      return settings.styling;
     }
 
     // survey style overwrite is enabled
     return survey.styling;
   }
 
-  // allow style overwrite is disabled from the project
-  return project.styling;
+  // allow style overwrite is disabled from the workspace
+  return settings.styling;
 };
 
-export const getDefaultLanguageCode = (survey: TEnvironmentStateSurvey): string | undefined => {
+export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | undefined => {
   const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
     return surveyLanguage.default;
   });
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: string): string | undefined => {
+export const getLanguageCode = (survey: TWorkspaceStateSurvey, language?: string): string | undefined => {
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
 
@@ -261,7 +258,7 @@ export const handleUrlFilters = (
 };
 
 export const handleHiddenFields = (
-  hiddenFieldsConfig: TEnvironmentStateSurvey["hiddenFields"],
+  hiddenFieldsConfig: TWorkspaceStateSurvey["hiddenFields"],
   hiddenFields?: TTrackProperties["hiddenFields"]
 ): TTrackProperties["hiddenFields"] => {
   const logger = Logger.getInstance();
@@ -294,7 +291,7 @@ export const handleHiddenFields = (
 
 export const evaluateNoCodeConfigClick = (
   targetElement: HTMLElement,
-  action: TEnvironmentStateActionClass
+  action: TWorkspaceStateActionClass
 ): boolean => {
   if (action.noCodeConfig?.type !== "click") return false;
 
@@ -304,19 +301,27 @@ export const evaluateNoCodeConfigClick = (
 
   if (!innerHtml && !cssSelector) return false;
 
-  if (innerHtml && targetElement.innerHTML !== innerHtml) return false;
+  // Resolve the element to test: prefer the direct click target, but walk up to
+  // the nearest ancestor that matches the CSS selector (event delegation for nested markup,
+  // e.g. <svg> or <span> inside a <button class="my-btn">).
+  let matchedElement: HTMLElement = targetElement;
 
   if (cssSelector) {
-    // Split selectors that start with a . or # including the . or #
-    const individualSelectors = cssSelector
-      .split(/(?=[.#])/) // split before each . or #
-      .map((sel) => sel.trim()); // remove leftover whitespace
-    for (const selector of individualSelectors) {
-      if (!targetElement.matches(selector)) {
-        return false;
-      }
+    let matchesDirectly = false;
+    try {
+      matchesDirectly = targetElement.matches(cssSelector);
+    } catch {
+      matchesDirectly = false;
+    }
+    if (!matchesDirectly) {
+      const ancestor = targetElement.closest(cssSelector);
+      if (!ancestor) return false;
+      matchedElement = ancestor as HTMLElement;
     }
   }
+
+  // Check innerHtml against the resolved element, not the raw click target
+  if (innerHtml && matchedElement.innerHTML !== innerHtml) return false;
 
   const connector = action.noCodeConfig.urlFiltersConnector ?? "or";
   const isValidUrl = handleUrlFilters(urlFilters, connector);

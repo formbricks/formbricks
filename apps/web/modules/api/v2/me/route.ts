@@ -18,12 +18,10 @@ export const GET = async (request: NextRequest) =>
 
       return responses.successResponse({
         data: {
-          environmentPermissions: authentication.environmentPermissions.map((permission) => ({
-            environmentId: permission.environmentId,
-            environmentType: permission.environmentType,
+          workspacePermissions: authentication.workspacePermissions.map((permission) => ({
             permissions: permission.permission,
-            projectId: permission.projectId,
-            projectName: permission.projectName,
+            workspaceId: permission.workspaceId,
+            workspaceName: permission.workspaceName,
           })),
           organizationId: authentication.organizationId,
           organizationAccess: authentication.organizationAccess,

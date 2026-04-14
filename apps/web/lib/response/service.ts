@@ -22,7 +22,8 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
@@ -73,7 +74,7 @@ export const responseSelection = {
           createdAt: true,
           updatedAt: true,
           name: true,
-          environmentId: true,
+          workspaceId: true,
         },
       },
     },
@@ -266,7 +267,7 @@ export const getResponses = reactCache(
       [limit, ZOptionalNumber],
       [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.string().cuid2().optional()]
+      [cursor, z.cuid2().optional()]
     );
 
     limit = limit ?? RESPONSES_PER_PAGE;
@@ -375,17 +376,17 @@ export const getResponseDownloadFile = async (
       responses
     );
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(survey.workspaceId);
     if (!organizationId) {
-      throw new Error("Organization ID not found");
+      throw new ResourceNotFoundError("Organization", null);
     }
 
     const organizationBilling = await getOrganizationBilling(organizationId);
 
     if (!organizationBilling) {
-      throw new Error("Organization billing not found");
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
-    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
     const headers = [
       "No.",
@@ -396,7 +397,6 @@ export const getResponseDownloadFile = async (
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",
-      "Notes",
       "Tags",
       ...metaDataFields,
       ...elements.flat(),
@@ -408,9 +408,10 @@ export const getResponseDownloadFile = async (
     if (survey.isVerifyEmailEnabled) {
       headers.push("Verified Email");
     }
+    const resolvedResponses = responses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }));
     const jsonData = getResponsesJson(
       survey,
-      responses,
+      resolvedResponses,
       elements,
       userAttributes,
       hiddenFields,
@@ -440,15 +441,15 @@ export const getResponseDownloadFile = async (
   }
 };
 
-export const getResponsesByEnvironmentId = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+export const getResponsesByWorkspaceId = reactCache(
+  async (workspaceId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const responses = await prisma.response.findMany({
         where: {
           survey: {
-            environmentId,
+            workspaceId,
           },
         },
         select: responseSelection,
@@ -568,13 +569,13 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
       const { pathname } = new URL(fileUrl);
-      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
 
-      if (!environmentId || !accessType || !fileName) {
+      if (!storageId || !accessType || !fileName) {
         throw new Error(`Invalid file path: ${pathname}`);
       }
 
-      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+      return deleteFile(storageId, accessType as "private" | "public", fileName, survey.workspaceId);
     } catch (error) {
       logger.error(error, `Failed to delete file ${fileUrl}`);
     }

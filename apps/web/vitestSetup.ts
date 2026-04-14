@@ -181,7 +181,7 @@ afterEach(() => {
 export const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
   test("throws a ValidationError if the inputs are invalid", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
-  });
+  }, 15000);
 };
 
 vi.mock("@/lib/constants", () => ({
@@ -200,7 +200,8 @@ vi.mock("@/lib/constants", () => ({
   OIDC_ISSUER: "test-oidc-issuer",
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
-  WEBAPP_URL: "test-webapp-url",
+  WEBAPP_URL: "https://test-webapp-url.com",
+  STRIPE_API_VERSION: "2026-01-28.clover",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
   SENTRY_RELEASE: "mock-sentry-release",
@@ -227,18 +228,8 @@ vi.mock("@/lib/constants", () => ({
   DEFAULT_LOCALE: "en-US",
   BREVO_API_KEY: "mock-brevo-api-key",
   ITEMS_PER_PAGE: 30,
-  PROJECT_FEATURE_KEYS: {
-    FREE: "free",
-  },
   FB_LOGO_URL: "mock-fb-logo-url",
   NOTION_RICH_TEXT_LIMIT: 1000,
-  BILLING_LIMITS: {
-    FREE: {
-      PROJECTS: 3,
-      RESPONSES: 1500,
-      MIU: 2000,
-    },
-  },
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "587",
   SMTP_SECURE_ENABLED: false,
@@ -249,5 +240,7 @@ vi.mock("@/lib/constants", () => ({
   MAIL_FROM: "mock@mail.com",
   MAIL_FROM_NAME: "Mock Mail",
   RATE_LIMITING_DISABLED: false,
+  TELEMETRY_DISABLED: false,
+  PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: 30,
   CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
 }));

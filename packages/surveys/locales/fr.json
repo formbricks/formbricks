@@ -9,6 +9,7 @@
     "finish": "Terminer",
     "language_switch": "Changement de langue",
     "next": "Suivant",
+    "no_results_found": "Aucun résultat trouvé",
     "open_in_new_tab": "Ouvrir dans un nouvel onglet",
     "people_responded": "{count, plural, one {1 personne a répondu} other {{count} personnes ont répondu}}",
     "please_retry_now_or_try_again_later": "Veuillez réessayer maintenant ou réessayer plus tard.",
@@ -21,6 +22,7 @@
     "respondents_will_not_see_this_card": "Les répondants ne verront pas cette carte",
     "retry": "Réessayer",
     "retrying": "Nouvelle tentative...",
+    "search": "Rechercher...",
     "select_option": "Sélectionner une option",
     "select_options": "Sélectionner des options",
     "sending_responses": "Envoi des réponses...",
@@ -43,7 +45,9 @@
       "file_size_exceeded_alert": "Le fichier doit être inférieur à {maxSizeInMB} Mo",
       "no_valid_file_types_selected": "Aucun type de fichier valide sélectionné. Veuillez sélectionner un type de fichier valide.",
       "only_one_file_can_be_uploaded_at_a_time": "Un seul fichier peut être téléchargé à la fois.",
+      "placeholder_text": "Cliquez ou glissez pour télécharger des fichiers",
       "upload_failed": "Échec du téléchargement ! Veuillez réessayer.",
+      "uploading": "Téléchargement en cours...",
       "you_can_only_upload_a_maximum_of_files": "Vous ne pouvez télécharger qu'un maximum de {FILE_LIMIT} fichiers."
     },
     "invalid_device_error": {

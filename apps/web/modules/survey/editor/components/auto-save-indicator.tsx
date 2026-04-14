@@ -28,14 +28,14 @@ export const AutoSaveIndicator = ({ isDraft, lastSaved }: AutoSaveIndicatorProps
 
   const text = useMemo(() => {
     if (!isDraft) {
-      return t("environments.surveys.edit.auto_save_disabled");
+      return t("workspace.surveys.edit.auto_save_disabled");
     }
 
     if (showSaved) {
-      return t("environments.surveys.edit.progress_saved");
+      return t("workspace.surveys.edit.progress_saved");
     }
 
-    return t("environments.surveys.edit.auto_save_on");
+    return t("workspace.surveys.edit.auto_save_on");
   }, [isDraft, showSaved, t]);
 
   const badge = (
@@ -53,7 +53,7 @@ export const AutoSaveIndicator = ({ isDraft, lastSaved }: AutoSaveIndicatorProps
   return (
     <TooltipRenderer
       shouldRender={!isDraft}
-      tooltipContent={t("environments.surveys.edit.auto_save_disabled_tooltip")}
+      tooltipContent={t("workspace.surveys.edit.auto_save_disabled_tooltip")}
       className="max-w-64 text-center">
       {badge}
     </TooltipRenderer>

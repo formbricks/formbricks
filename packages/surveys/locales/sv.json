@@ -9,6 +9,7 @@
     "finish": "Slutför",
     "language_switch": "Språkväxlare",
     "next": "Nästa",
+    "no_results_found": "Inga resultat hittades",
     "open_in_new_tab": "Öppna i ny flik",
     "people_responded": "{count, plural, one {1 person har svarat} other {{count} personer har svarat}}",
     "please_retry_now_or_try_again_later": "Försök igen nu eller försök igen senare.",
@@ -21,6 +22,7 @@
     "respondents_will_not_see_this_card": "Respondenter kommer inte att se detta kort",
     "retry": "Försök igen",
     "retrying": "Försöker igen...",
+    "search": "Sök...",
     "select_option": "Välj ett alternativ",
     "select_options": "Välj alternativ",
     "sending_responses": "Skickar svar...",
@@ -43,7 +45,9 @@
       "file_size_exceeded_alert": "Filen måste vara mindre än {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Inga giltiga filtyper valda. Vänligen välj en giltig filtyp.",
       "only_one_file_can_be_uploaded_at_a_time": "Endast en fil kan laddas upp åt gången.",
+      "placeholder_text": "Klicka eller dra för att ladda upp filer",
       "upload_failed": "Uppladdning misslyckades! Försök igen.",
+      "uploading": "Laddar upp...",
       "you_can_only_upload_a_maximum_of_files": "Du kan ladda upp maximalt {FILE_LIMIT} filer."
     },
     "invalid_device_error": {

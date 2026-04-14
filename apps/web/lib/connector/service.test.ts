@@ -48,7 +48,7 @@ const mockConnector = {
   name: "Test Connector",
   type: "formbricks" as const,
   status: "active" as const,
-  environmentId: ENV_ID,
+  workspaceId: ENV_ID,
   lastSyncAt: null,
   createdBy: null,
 };
@@ -61,7 +61,7 @@ const mockConnectorWithMappingsFromDb = {
       id: "mapping-1",
       createdAt: NOW,
       connectorId: CONNECTOR_ID,
-      environmentId: ENV_ID,
+      workspaceId: ENV_ID,
       surveyId: SURVEY_ID,
       elementId: "el-1",
       hubFieldType: "text",
@@ -90,7 +90,7 @@ describe("getConnectorsWithMappings", () => {
 
     expect(prisma.connector.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { environmentId: ENV_ID },
+        where: { workspaceId: ENV_ID },
         orderBy: { createdAt: "desc" },
       })
     );
@@ -184,7 +184,7 @@ describe("updateConnector", () => {
 
     expect(prisma.connector.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: CONNECTOR_ID, environmentId: ENV_ID },
+        where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
         data: expect.objectContaining({ name: "Renamed" }),
       })
     );
@@ -240,7 +240,7 @@ describe("deleteConnector", () => {
 
     expect(prisma.connector.delete).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: CONNECTOR_ID, environmentId: ENV_ID },
+        where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
       })
     );
     expect(result.id).toBe(CONNECTOR_ID);
@@ -297,14 +297,14 @@ describe("createConnectorWithMappings", () => {
 
   test("creates connector without mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, environmentId: ENV_ID });
+    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
     tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
     const result = await createConnectorWithMappings(ENV_ID, { name: "New", type: "formbricks" });
 
     expect(tx.connector.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { name: "New", type: "formbricks", environmentId: ENV_ID },
+        data: { name: "New", type: "formbricks", workspaceId: ENV_ID },
       })
     );
     expect(tx.connectorFormbricksMapping.create).not.toHaveBeenCalled();
@@ -314,7 +314,7 @@ describe("createConnectorWithMappings", () => {
 
   test("creates connector with formbricks mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, environmentId: ENV_ID });
+    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
     tx.connectorFormbricksMapping.create.mockResolvedValue({});
     tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
@@ -335,7 +335,7 @@ describe("createConnectorWithMappings", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           connectorId: CONNECTOR_ID,
-          environmentId: ENV_ID,
+          workspaceId: ENV_ID,
           surveyId: SURVEY_ID,
           elementId: "el-1",
           hubFieldType: "text",
@@ -346,7 +346,7 @@ describe("createConnectorWithMappings", () => {
 
   test("creates connector with field mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, environmentId: ENV_ID });
+    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
     tx.connectorFieldMapping.create.mockResolvedValue({});
     tx.connector.findUniqueOrThrow.mockResolvedValue({
       ...mockConnector,
@@ -368,7 +368,7 @@ describe("createConnectorWithMappings", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           connectorId: CONNECTOR_ID,
-          environmentId: ENV_ID,
+          workspaceId: ENV_ID,
           sourceFieldId: "col-1",
           targetFieldId: "value_text",
         }),
@@ -440,7 +440,7 @@ describe("updateConnectorWithMappings", () => {
 
     expect(tx.connector.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: CONNECTOR_ID, environmentId: ENV_ID },
+        where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
         data: expect.objectContaining({ name: "Updated" }),
       })
     );
@@ -467,7 +467,7 @@ describe("updateConnectorWithMappings", () => {
     );
 
     expect(tx.connectorFormbricksMapping.deleteMany).toHaveBeenCalledWith({
-      where: { connectorId: CONNECTOR_ID, environmentId: ENV_ID },
+      where: { connectorId: CONNECTOR_ID, workspaceId: ENV_ID },
     });
     expect(tx.connectorFormbricksMapping.create).toHaveBeenCalledTimes(1);
   });
@@ -494,7 +494,7 @@ describe("updateConnectorWithMappings", () => {
     );
 
     expect(tx.connectorFieldMapping.deleteMany).toHaveBeenCalledWith({
-      where: { connectorId: CONNECTOR_ID, environmentId: ENV_ID },
+      where: { connectorId: CONNECTOR_ID, workspaceId: ENV_ID },
     });
     expect(tx.connectorFieldMapping.create).toHaveBeenCalledTimes(1);
   });

@@ -1,10 +1,13 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import {
+  addLegacyProjectOverwrites,
+  normaliseProjectOverwritesToWorkspace,
+} from "@/app/lib/api/api-backwards-compat";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -12,10 +15,11 @@ import {
   validateSurveyInput,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
 const fetchAndAuthorizeSurvey = async (
   surveyId: string,
@@ -26,7 +30,7 @@ const fetchAndAuthorizeSurvey = async (
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", surveyId) };
   }
-  if (!hasPermission(authentication.environmentPermissions, survey.environmentId, requiredPermission)) {
+  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -34,13 +38,11 @@ const fetchAndAuthorizeSurvey = async (
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    props,
-    authentication,
-  }: {
-    props: { params: Promise<{ surveyId: string }> };
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ props, authentication }: THandlerParams<{ params: Promise<{ surveyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
 
     try {
@@ -58,16 +60,22 @@ export const GET = withV1ApiWrapper({
 
       if (shouldTransformToQuestions) {
         return {
-          response: responses.successResponse({
-            ...result.survey,
-            questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
-            blocks: [],
-          }),
+          response: responses.successResponse(
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject({
+                ...result.survey,
+                questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
+                blocks: [],
+              })
+            )
+          ),
         };
       }
 
       return {
-        response: responses.successResponse(result.survey),
+        response: responses.successResponse(
+          addLegacyProjectOverwrites(resolveStorageUrlsInObject(result.survey))
+        ),
       };
     } catch (error) {
       return {
@@ -82,13 +90,15 @@ export const DELETE = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    props: { params: Promise<{ surveyId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ surveyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.surveyId;
+    if (auditLog) {
+      auditLog.targetId = params.surveyId;
+    }
     try {
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
       if (result.error) {
@@ -96,7 +106,9 @@ export const DELETE = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.survey;
+      if (auditLog) {
+        auditLog.oldObject = result.survey;
+      }
 
       const deletedSurvey = await deleteSurvey(params.surveyId);
       return {
@@ -118,14 +130,15 @@ export const PUT = withV1ApiWrapper({
     props,
     auditLog,
     authentication,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ surveyId: string }> };
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ surveyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const params = await props.params;
-    auditLog.targetId = params.surveyId;
+    if (auditLog) {
+      auditLog.targetId = params.surveyId;
+    }
     try {
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "PUT");
       if (result.error) {
@@ -133,9 +146,11 @@ export const PUT = withV1ApiWrapper({
           response: result.error,
         };
       }
-      auditLog.oldObject = result.survey;
+      if (auditLog) {
+        auditLog.oldObject = result.survey;
+      }
 
-      const organization = await getOrganizationByEnvironmentId(result.survey.environmentId);
+      const organization = await getOrganizationByWorkspaceId(result.survey.workspaceId);
       if (!organization) {
         return {
           response: responses.notFoundResponse("Organization", null),
@@ -151,6 +166,9 @@ export const PUT = withV1ApiWrapper({
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
+
+      // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
+      surveyUpdate = normaliseProjectOverwritesToWorkspace(surveyUpdate);
 
       const validateResult = validateSurveyInput({ ...surveyUpdate, updateOnly: true });
       if (!validateResult.ok) {
@@ -183,7 +201,7 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization);
+      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization, result.survey);
       if (featureCheckResult) {
         return {
           response: featureCheckResult,
@@ -192,7 +210,9 @@ export const PUT = withV1ApiWrapper({
 
       try {
         const updatedSurvey = await updateSurvey({ ...inputValidation.data, id: params.surveyId });
-        auditLog.newObject = updatedSurvey;
+        if (auditLog) {
+          auditLog.newObject = updatedSurvey;
+        }
 
         if (hasQuestions) {
           const surveyWithQuestions = {
@@ -202,12 +222,16 @@ export const PUT = withV1ApiWrapper({
           };
 
           return {
-            response: responses.successResponse(surveyWithQuestions),
+            response: responses.successResponse(
+              addLegacyProjectOverwrites(resolveStorageUrlsInObject(surveyWithQuestions))
+            ),
           };
         }
 
         return {
-          response: responses.successResponse(updatedSurvey),
+          response: responses.successResponse(
+            addLegacyProjectOverwrites(resolveStorageUrlsInObject(updatedSurvey))
+          ),
         };
       } catch (error) {
         return {

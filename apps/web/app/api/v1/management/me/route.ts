@@ -13,7 +13,7 @@ const apiKeySelect = {
   id: true,
   organizationId: true,
   lastUsedAt: true,
-  apiKeyEnvironments: {
+  apiKeyWorkspaces: {
     select: {
       environment: {
         select: {
@@ -21,9 +21,9 @@ const apiKeySelect = {
           type: true,
           createdAt: true,
           updatedAt: true,
-          projectId: true,
+          workspaceId: true,
           appSetupCompleted: true,
-          project: {
+          workspace: {
             select: {
               id: true,
               name: true,
@@ -42,16 +42,16 @@ type ApiKeyData = {
   hashedKey: string;
   organizationId: string;
   lastUsedAt: Date | null;
-  apiKeyEnvironments: Array<{
+  apiKeyWorkspaces: Array<{
     permission: string;
     environment: {
       id: string;
       type: string;
       createdAt: Date;
       updatedAt: Date;
-      projectId: string;
+      workspaceId: string;
       appSetupCompleted: boolean;
-      project: {
+      workspace: {
         id: string;
         name: string;
       };
@@ -102,7 +102,9 @@ const checkRateLimit = async (userId: string) => {
   try {
     await applyRateLimit(rateLimitConfigs.api.v1, userId);
   } catch (error) {
-    return responses.tooManyRequestsResponse(error.message);
+    return responses.tooManyRequestsResponse(
+      error instanceof Error ? error.message : "Unknown error occurred"
+    );
   }
   return null;
 };
@@ -115,25 +117,28 @@ const updateApiKeyUsage = async (apiKeyId: string) => {
 };
 
 const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
-  const env = apiKeyData.apiKeyEnvironments[0].environment;
+  const env = apiKeyData.apiKeyWorkspaces[0].environment;
   return Response.json({
     id: env.id,
     type: env.type,
     createdAt: env.createdAt,
     updatedAt: env.updatedAt,
     appSetupCompleted: env.appSetupCompleted,
-    project: {
-      id: env.projectId,
-      name: env.project.name,
+    workspace: {
+      id: env.workspaceId,
+      name: env.workspace.name,
     },
+    // Backwards compat: old consumers expect project fields
+    projectId: env.workspaceId,
+    projectName: env.workspace.name,
   });
 };
 
 const isValidApiKeyEnvironment = (apiKeyData: ApiKeyData): boolean => {
   return (
-    apiKeyData.apiKeyEnvironments.length === 1 &&
+    apiKeyData.apiKeyWorkspaces.length === 1 &&
     ALLOWED_PERMISSIONS.includes(
-      apiKeyData.apiKeyEnvironments[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
+      apiKeyData.apiKeyWorkspaces[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
     )
   );
 };

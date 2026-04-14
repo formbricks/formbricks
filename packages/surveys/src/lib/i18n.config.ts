@@ -2,9 +2,11 @@ import i18n from "i18next";
 import ICU from "i18next-icu";
 import { initReactI18next } from "react-i18next";
 import arTranslations from "../../locales/ar.json";
+import daTranslations from "../../locales/da.json";
 import deTranslations from "../../locales/de.json";
 import enTranslations from "../../locales/en.json";
 import esTranslations from "../../locales/es.json";
+import etTranslations from "../../locales/et.json";
 import frTranslations from "../../locales/fr.json";
 import hiTranslations from "../../locales/hi.json";
 import huTranslations from "../../locales/hu.json";
@@ -25,9 +27,11 @@ i18n
     fallbackLng: "en",
     supportedLngs: [
       "ar",
+      "da",
       "de",
       "en",
       "es",
+      "et",
       "fr",
       "hi",
       "hu",
@@ -44,9 +48,11 @@ i18n
 
     resources: {
       ar: { translation: arTranslations },
+      da: { translation: daTranslations },
       de: { translation: deTranslations },
       en: { translation: enTranslations },
       es: { translation: esTranslations },
+      et: { translation: etTranslations },
       fr: { translation: frTranslations },
       hi: { translation: hiTranslations },
       hu: { translation: huTranslations },

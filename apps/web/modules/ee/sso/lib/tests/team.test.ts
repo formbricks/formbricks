@@ -68,8 +68,8 @@ describe("Team Management", () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_DEFAULT_TEAM);
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
         vi.mocked(prisma.team.findUnique).mockResolvedValue({
-          projectTeams: { projectId: ["test-project-id"] },
-        });
+          workspaceTeams: { workspaceId: ["test-workspace-id"] },
+        } as any);
         vi.mocked(prisma.teamUser.create).mockResolvedValue(MOCK_DEFAULT_TEAM_USER);
 
         await createDefaultTeamMembership(MOCK_IDS.userId);

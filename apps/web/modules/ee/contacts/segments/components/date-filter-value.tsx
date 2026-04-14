@@ -43,7 +43,7 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
           onChange={(e) => {
             const amount = Number.parseInt(e.target.value, 10);
             if (Number.isNaN(amount) || amount < 1) {
-              setError(t("environments.segments.value_must_be_positive"));
+              setError(t("workspace.segments.value_must_be_positive"));
               return;
             }
             setError("");

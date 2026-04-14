@@ -1,8 +1,13 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
+import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import {
+  addLegacyProjectOverwrites,
+  addLegacyProjectOverwritesToList,
+  normaliseProjectOverwritesToWorkspace,
+} from "@/app/lib/api/api-backwards-compat";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -10,30 +15,29 @@ import {
   validateSurveyInput,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const searchParams = new URL(req.url).searchParams;
       const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
       const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const surveys = await getSurveys(environmentIds, limit, offset);
+      const surveys = await getSurveys(workspaceIds, limit, offset);
 
       const surveysWithQuestions = surveys.map((survey) => {
         // If the survey has blocks and each block has ONLY ONE element, we can transform the blocks to questions
@@ -55,7 +59,9 @@ export const GET = withV1ApiWrapper({
       });
 
       return {
-        response: responses.successResponse(surveysWithQuestions),
+        response: responses.successResponse(
+          addLegacyProjectOverwritesToList(resolveStorageUrlsInObject(surveysWithQuestions))
+        ),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -69,15 +75,11 @@ export const GET = withV1ApiWrapper({
 });
 
 export const POST = withV1ApiWrapper({
-  handler: async ({
-    req,
-    auditLog,
-    authentication,
-  }: {
-    req: NextRequest;
-    auditLog: TApiAuditLog;
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  handler: async ({ req, auditLog, authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       let surveyInput;
       try {
@@ -89,7 +91,15 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const inputValidation = ZSurveyCreateInputWithEnvironmentId.safeParse(surveyInput);
+      // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
+      surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);
+
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveBodyIds(surveyInput, authentication.workspacePermissions, "POST");
+      if (!resolved.ok) return { response: resolved.response };
+      surveyInput = resolved.body;
+
+      const inputValidation = ZSurveyCreateInputWithWorkspaceId.safeParse(surveyInput);
 
       if (!inputValidation.success) {
         return {
@@ -101,22 +111,23 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const { environmentId } = inputValidation.data;
+      const { workspaceId } = inputValidation.data;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-        return {
-          response: responses.unauthorizedResponse(),
-        };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.workspacePermissions, workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
       }
 
-      const organization = await getOrganizationByEnvironmentId(environmentId);
+      const organization = await getOrganizationByWorkspaceId(workspaceId);
       if (!organization) {
         return {
           response: responses.notFoundResponse("Organization", null),
         };
       }
 
-      const surveyData = { ...inputValidation.data, environmentId };
+      const surveyData = { ...inputValidation.data };
 
       const validateResult = validateSurveyInput(surveyData);
       if (!validateResult.ok) {
@@ -139,9 +150,12 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const survey = await createSurvey(environmentId, { ...surveyData, environmentId: undefined });
-      auditLog.targetId = survey.id;
-      auditLog.newObject = survey;
+      const { workspaceId: __, ...surveyCreateInput } = surveyData;
+      const survey = await createSurvey(workspaceId, surveyCreateInput);
+      if (auditLog) {
+        auditLog.targetId = survey.id;
+        auditLog.newObject = survey;
+      }
 
       if (hasQuestions) {
         const surveyWithQuestions = {
@@ -151,12 +165,12 @@ export const POST = withV1ApiWrapper({
         };
 
         return {
-          response: responses.successResponse(surveyWithQuestions),
+          response: responses.successResponse(addLegacyProjectOverwrites(surveyWithQuestions)),
         };
       }
 
       return {
-        response: responses.successResponse(survey),
+        response: responses.successResponse(addLegacyProjectOverwrites(survey)),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {

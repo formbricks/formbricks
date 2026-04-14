@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
+import { Language, Workspace } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -27,7 +27,6 @@ import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
-import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
@@ -53,6 +52,7 @@ import {
   isUsedInRecall,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { MultiLanguageCard } from "@/modules/survey/multi-language-surveys/components/multi-language-card";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
@@ -61,13 +61,12 @@ interface ElementsViewProps {
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
-  project: Project;
-  projectLanguages: Language[];
+  workspace: Workspace;
+  workspaceLanguages: Language[];
   invalidElements: string[] | null;
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -83,13 +82,12 @@ export const ElementsView = ({
   setActiveElementId,
   localSurvey,
   setLocalSurvey,
-  project,
-  projectLanguages,
+  workspace,
+  workspaceLanguages,
   invalidElements,
   setInvalidElements,
   setSelectedLanguageCode,
   selectedLanguageCode,
-  isMultiLanguageAllowed,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -114,7 +112,7 @@ export const ElementsView = ({
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const internalElementIdMap = useMemo(() => {
-    return elements.reduce((acc, element) => {
+    return elements.reduce<Record<string, string>>((acc, element) => {
       acc[element.id] = createId();
       return acc;
     }, {});
@@ -366,12 +364,12 @@ export const ElementsView = ({
   const validateElementDeletion = (elementId: string, elementIdx: number): boolean => {
     const recallElementIdx = isUsedInRecall(localSurvey, elementId);
     if (recallElementIdx === elements.length) {
-      toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
+      toast.error(t("workspace.surveys.edit.question_used_in_recall_ending_card"));
       return false;
     }
     if (recallElementIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.question_used_in_recall", { questionIndex: recallElementIdx + 1 })
+        t("workspace.surveys.edit.question_used_in_recall", { questionIndex: recallElementIdx + 1 })
       );
       return false;
     }
@@ -379,7 +377,7 @@ export const ElementsView = ({
     const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { elementId: elementId }));
     if (quotaIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.question_used_in_quota", {
+        t("workspace.surveys.edit.question_used_in_quota", {
           questionIndex: elementIdx + 1,
           quotaName: quotas[quotaIdx].name,
         })
@@ -436,7 +434,7 @@ export const ElementsView = ({
 
     handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
-    toast.success(t("environments.surveys.edit.question_deleted"));
+    toast.success(t("workspace.surveys.edit.question_deleted"));
   };
 
   const deleteElement = (elementIdx: number) => {
@@ -480,7 +478,7 @@ export const ElementsView = ({
     internalElementIdMap[newElementId] = createId();
 
     setLocalSurvey(result.data);
-    toast.success(t("environments.surveys.edit.question_duplicated"));
+    toast.success(t("workspace.surveys.edit.question_duplicated"));
   };
 
   const addElement = (element: TSurveyElement, index?: number) => {
@@ -553,7 +551,7 @@ export const ElementsView = ({
     }
 
     if (!sourceBlock || !elementToMove) {
-      toast.error(t("environments.surveys.edit.element_not_found"));
+      toast.error(t("workspace.surveys.edit.element_not_found"));
       return;
     }
 
@@ -571,7 +569,7 @@ export const ElementsView = ({
     // Add element to target block at the end
     const targetBlock = updatedSurvey.blocks.find((b) => b.id === targetBlockId);
     if (!targetBlock) {
-      toast.error(t("environments.surveys.edit.target_block_not_found"));
+      toast.error(t("workspace.surveys.edit.target_block_not_found"));
       return;
     }
 
@@ -651,7 +649,7 @@ export const ElementsView = ({
     }
 
     setLocalSurvey(result.data);
-    toast.success(t("environments.surveys.edit.block_duplicated"));
+    toast.success(t("workspace.surveys.edit.block_duplicated"));
   };
 
   const executeBlockDeletion = (blockId: string) => {
@@ -791,7 +789,7 @@ export const ElementsView = ({
     if (elementWithEmptyFallback) {
       setActiveElementId(elementWithEmptyFallback.id);
       if (activeElementId === elementWithEmptyFallback.id) {
-        toast.error(t("environments.surveys.edit.fallback_missing"));
+        toast.error(t("workspace.surveys.edit.fallback_missing"));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -869,7 +867,7 @@ export const ElementsView = ({
         <BlocksDroppable
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
-          project={project}
+          workspace={workspace}
           moveElement={moveElement}
           updateElement={updateElement}
           updateBlockLogic={updateBlockLogic}
@@ -898,7 +896,7 @@ export const ElementsView = ({
         />
       </DndContext>
 
-      <AddElementButton addElement={addElement} project={project} isCxMode={isCxMode} />
+      <AddElementButton addElement={addElement} workspace={workspace} isCxMode={isCxMode} />
       <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext
@@ -954,12 +952,10 @@ export const ElementsView = ({
 
             <MultiLanguageCard
               localSurvey={localSurvey}
-              projectLanguages={projectLanguages}
+              workspaceLanguages={workspaceLanguages}
               setLocalSurvey={setLocalSurvey}
               setActiveElementId={setActiveElementId}
               activeElementId={activeElementId}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
-              isFormbricksCloud={isFormbricksCloud}
               setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
             />
@@ -970,9 +966,9 @@ export const ElementsView = ({
       <ConfirmationModal
         open={logicDeletionWarning.open}
         setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
-        title={t("environments.surveys.edit.question_used_in_logic_warning_title")}
-        body={t("environments.surveys.edit.question_used_in_logic_warning_text")}
-        buttonText={t("environments.surveys.edit.delete_anyways")}
+        title={t("workspace.surveys.edit.question_used_in_logic_warning_title")}
+        body={t("workspace.surveys.edit.question_used_in_logic_warning_text")}
+        buttonText={t("workspace.surveys.edit.delete_anyways")}
         onConfirm={() => {
           if (logicDeletionWarning.type === "element") {
             executeDeletion(logicDeletionWarning.elementIdx);

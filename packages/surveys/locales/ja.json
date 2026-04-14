@@ -9,6 +9,7 @@
     "finish": "完了",
     "language_switch": "言語切替",
     "next": "次へ",
+    "no_results_found": "結果が見つかりません",
     "open_in_new_tab": "新しいタブで開く",
     "people_responded": "{count, plural, other {{count}人が回答しました}}",
     "please_retry_now_or_try_again_later": "今すぐ再試行するか、後でもう一度お試しください。",
@@ -21,6 +22,7 @@
     "respondents_will_not_see_this_card": "回答者はこのカードを見ることができません",
     "retry": "再試行",
     "retrying": "再試行中...",
+    "search": "検索...",
     "select_option": "オプションを選択",
     "select_options": "オプションを選択",
     "sending_responses": "回答を送信中...",
@@ -43,7 +45,9 @@
       "file_size_exceeded_alert": "ファイルは{maxSizeInMB}MB未満である必要があります",
       "no_valid_file_types_selected": "有効なファイルタイプが選択されていません。有効なファイルタイプを選択してください。",
       "only_one_file_can_be_uploaded_at_a_time": "一度にアップロードできるファイルは1つだけです。",
+      "placeholder_text": "クリックまたはドラッグしてファイルをアップロード",
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
+      "uploading": "アップロード中...",
       "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
     },
     "invalid_device_error": {

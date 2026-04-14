@@ -83,7 +83,7 @@ function CTA({
       />
 
       {/* CTA Button */}
-      <div className="relative space-y-2">
+      <div className="relative space-y-2" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         {buttonExternal ? (
@@ -93,8 +93,9 @@ function CTA({
               type="button"
               onClick={handleButtonClick}
               disabled={disabled}
-              className="flex items-center gap-2"
-              variant={buttonVariant}>
+              className="text-button font-button-weight flex items-center gap-2"
+              variant={buttonVariant}
+              size="custom">
               {buttonLabel}
               <SquareArrowOutUpRightIcon className="size-4" />
             </Button>

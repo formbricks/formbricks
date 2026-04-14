@@ -8,9 +8,10 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
-  getOrganizationByEnvironmentId,
+  getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -22,22 +23,13 @@ import {
   validateMediaAndPrepareBlocks,
 } from "./utils";
 
-interface TriggerUpdate {
-  create?: Array<{ actionClassId: string }>;
-  deleteMany?: {
-    actionClassId: {
-      in: string[];
-    };
-  };
-}
-
 export const selectSurvey = {
   id: true,
   createdAt: true,
   updatedAt: true,
   name: true,
   type: true,
-  environmentId: true,
+  workspaceId: true,
   createdBy: true,
   status: true,
   welcomeCard: true,
@@ -58,7 +50,7 @@ export const selectSurvey = {
   isBackButtonHidden: true,
   isCaptureIpEnabled: true,
   redirectUrl: true,
-  projectOverwrites: true,
+  workspaceOverwrites: true,
   styling: true,
   surveyClosedMessage: true,
   singleUse: true,
@@ -79,7 +71,7 @@ export const selectSurvey = {
           alias: true,
           createdAt: true,
           updatedAt: true,
-          projectId: true,
+          workspaceId: true,
         },
       },
     },
@@ -91,7 +83,7 @@ export const selectSurvey = {
           id: true,
           createdAt: true,
           updatedAt: true,
-          environmentId: true,
+          workspaceId: true,
           name: true,
           description: true,
           type: true,
@@ -114,18 +106,31 @@ export const selectSurvey = {
   slug: true,
 } satisfies Prisma.SurveySelect;
 
+const getTriggerIds = (triggers: TSurvey["triggers"]): string[] | null => {
+  if (!triggers) return null;
+  if (!Array.isArray(triggers)) {
+    throw new InvalidInputError("Invalid trigger id");
+  }
+
+  return triggers.map((trigger) => {
+    const actionClassId = trigger?.actionClass?.id;
+    if (typeof actionClassId !== "string") {
+      throw new InvalidInputError("Invalid trigger id");
+    }
+    return actionClassId;
+  });
+};
+
 export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
-  if (!triggers) return;
+  const triggerIds = getTriggerIds(triggers);
+  if (!triggerIds) return;
 
   // check if all the triggers are valid
-  triggers.forEach((trigger) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
+  triggerIds.forEach((triggerId) => {
+    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
       throw new InvalidInputError("Invalid trigger id");
     }
   });
-
-  // check if all the triggers are unique
-  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
 
   if (new Set(triggerIds).size !== triggerIds.length) {
     throw new InvalidInputError("Duplicate trigger id");
@@ -137,36 +142,33 @@ export const handleTriggerUpdates = (
   currentTriggers: TSurvey["triggers"],
   actionClasses: ActionClass[]
 ) => {
-  if (!updatedTriggers) return {};
+  const updatedTriggerIds = getTriggerIds(updatedTriggers);
+  if (!updatedTriggerIds) return {};
+
   checkTriggersValidity(updatedTriggers, actionClasses);
 
-  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
-  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
+  const currentTriggerIds = getTriggerIds(currentTriggers) ?? [];
 
   // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggers = updatedTriggers.filter(
-    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
-  );
+  const addedTriggerIds = updatedTriggerIds.filter((triggerId) => !currentTriggerIds.includes(triggerId));
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter(
-    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
-  );
+  const deletedTriggerIds = currentTriggerIds.filter((triggerId) => !updatedTriggerIds.includes(triggerId));
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
-  if (addedTriggers.length > 0) {
-    triggersUpdate.create = addedTriggers.map((trigger) => ({
-      actionClassId: trigger.actionClass.id,
+  if (addedTriggerIds.length > 0) {
+    triggersUpdate.create = addedTriggerIds.map((triggerId) => ({
+      actionClassId: triggerId,
     }));
   }
 
-  if (deletedTriggers.length > 0) {
+  if (deletedTriggerIds.length > 0) {
     // disconnect the public triggers from the survey
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
+        in: deletedTriggerIds,
       },
     };
   }
@@ -241,13 +243,13 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+  async (workspaceId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
+    validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const surveysPrisma = await prisma.survey.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         select: selectSurvey,
         orderBy: {
@@ -268,12 +270,12 @@ export const getSurveys = reactCache(
   }
 );
 
-export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, ZId]);
+export const getSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
+  validateInputs([workspaceId, ZId]);
   try {
     const surveyCount = await prisma.survey.count({
       where: {
-        environmentId: environmentId,
+        workspaceId,
       },
     });
 
@@ -300,15 +302,14 @@ export const updateSurveyInternal = async (
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+    const actionClasses = await getActionClasses(updatedSurvey.workspaceId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
-      updatedSurvey;
+    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
@@ -404,7 +405,6 @@ export const updateSurveyInternal = async (
             data: updatedInput,
             select: {
               surveys: { select: { id: true } },
-              environmentId: true,
               id: true,
             },
           });
@@ -447,6 +447,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
+        const workspaceId = updatedSurvey.workspaceId;
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -455,8 +456,8 @@ export const updateSurveyInternal = async (
             segment: {
               connectOrCreate: {
                 where: {
-                  environmentId_title: {
-                    environmentId,
+                  workspaceId_title: {
+                    workspaceId,
                     title: surveyId,
                   },
                 },
@@ -464,9 +465,9 @@ export const updateSurveyInternal = async (
                   title: surveyId,
                   isPrivate: true,
                   filters: [],
-                  environment: {
+                  workspace: {
                     connect: {
-                      id: environmentId,
+                      id: workspaceId,
                     },
                   },
                 },
@@ -508,6 +509,7 @@ export const updateSurveyInternal = async (
           newFollowUps.length > 0
             ? {
                 data: newFollowUps.map((followUp) => ({
+                  id: followUp.id,
                   name: followUp.name,
                   trigger: followUp.trigger,
                   action: followUp.action,
@@ -534,7 +536,7 @@ export const updateSurveyInternal = async (
       data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
     }
 
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const organization = await getOrganizationByWorkspaceId(updatedSurvey.workspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -589,31 +591,24 @@ export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey
   return updateSurveyInternal(updatedSurvey, true);
 };
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyCreateInput
-): Promise<TSurvey> => {
-  const [parsedEnvironmentId, parsedSurveyBody] = validateInputs(
-    [environmentId, ZId],
+export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
+  const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
+    [workspaceId, ZId],
     [surveyBody, ZSurveyCreateInput]
   );
 
   try {
-    const { createdBy, ...restSurveyBody } = parsedSurveyBody;
+    const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
 
-    // empty languages array
-    if (!restSurveyBody.languages?.length) {
-      delete restSurveyBody.languages;
-    }
+    const actionClasses = await getActionClasses(parsedWorkspaceId);
 
-    const actionClasses = await getActionClasses(parsedEnvironmentId);
-
-    // @ts-expect-error
-    let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
+    let data: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
-      // TODO: Create with attributeFilters
+      // @ts-expect-error - languages would be undefined in case of empty array
+      languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers
-        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
+        ? // @ts-expect-error - triggers' createdAt and updatedAt are actually dates
+          handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
@@ -626,7 +621,7 @@ export const createSurvey = async (
       };
     }
 
-    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -656,9 +651,9 @@ export const createSurvey = async (
     const survey = await prisma.survey.create({
       data: {
         ...data,
-        environment: {
+        workspace: {
           connect: {
-            id: parsedEnvironmentId,
+            id: parsedWorkspaceId,
           },
         },
       },
@@ -672,9 +667,9 @@ export const createSurvey = async (
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
+          workspace: {
             connect: {
-              id: parsedEnvironmentId,
+              id: parsedWorkspaceId,
             },
           },
         },
@@ -764,7 +759,6 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
           id: currentSurveySegment.id,
         },
         select: {
-          environmentId: true,
           surveys: {
             select: {
               id: true,
@@ -782,15 +776,13 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       };
     }
 
-    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
-    // @ts-expect-error
-    const modifiedSurvey: TSurvey = {
-      ...prismaSurvey, // Properties from prismaSurvey
+    const modifiedSurvey = {
+      ...prismaSurvey,
       segment: surveySegment,
       customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
     };
 
-    return modifiedSurvey;
+    return modifiedSurvey as TSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

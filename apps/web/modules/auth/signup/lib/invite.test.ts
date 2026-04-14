@@ -19,7 +19,6 @@ const mockInvite = {
   acceptorId: null,
   createdAt: new Date(),
   expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-  deprecatedRole: null,
   role: "member" as const,
   teamIds: ["team-1"],
   creator: {
@@ -195,7 +194,9 @@ describe("Invite Management", () => {
         ...mockInvite,
         expiresAt: null,
       };
-      vi.mocked(prisma.invite.findUnique).mockResolvedValue(invalidInvite);
+      vi.mocked(prisma.invite.findUnique).mockResolvedValue(
+        invalidInvite as unknown as Awaited<ReturnType<typeof prisma.invite.findUnique>>
+      );
 
       const result = await getIsValidInviteToken(mockInviteId);
 

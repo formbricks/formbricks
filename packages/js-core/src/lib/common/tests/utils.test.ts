@@ -1,6 +1,6 @@
 // utils.test.ts
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { mockProjectId, mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
+import { mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
   diffInDays,
@@ -19,12 +19,12 @@ import {
   wrapThrowsAsync,
 } from "@/lib/common/utils";
 import type {
-  TEnvironmentState,
-  TEnvironmentStateActionClass,
-  TEnvironmentStateProject,
-  TEnvironmentStateSurvey,
   TSurveyStyling,
   TUserState,
+  TWorkspaceState,
+  TWorkspaceStateActionClass,
+  TWorkspaceStateSettings,
+  TWorkspaceStateSurvey,
 } from "@/types/config";
 import { type TActionClassNoCodeConfig, type TActionClassPageUrlRule } from "@/types/survey";
 
@@ -151,10 +151,10 @@ describe("utils.ts", () => {
   // filterSurveys
   // ---------------------------------------------------------------------------------
   describe("filterSurveys()", () => {
-    // We'll create a minimal environment state
-    let environment: TEnvironmentState;
+    // We'll create a minimal workspace state
+    let workspace: TWorkspaceState;
     let user: TUserState;
-    const baseSurvey: Partial<TEnvironmentStateSurvey> = {
+    const baseSurvey: Partial<TWorkspaceStateSurvey> = {
       id: mockSurveyId,
       displayOption: "displayOnce",
       displayLimit: 1,
@@ -163,18 +163,17 @@ describe("utils.ts", () => {
     };
 
     beforeEach(() => {
-      environment = {
+      workspace = {
         expiresAt: new Date(),
         data: {
-          project: {
-            id: mockProjectId,
+          settings: {
             recontactDays: 7, // fallback if survey doesn't have it
             clickOutsideClose: false,
             overlay: "none",
             placement: "bottomRight",
             inAppSurveyBranding: true,
             styling: { allowStyleOverwrite: false },
-          } as TEnvironmentStateProject,
+          } as TWorkspaceStateSettings,
           surveys: [],
           actionClasses: [],
         },
@@ -194,72 +193,72 @@ describe("utils.ts", () => {
 
     test("returns no surveys if user has no segments and userId is set", () => {
       user.data.userId = "user_abc";
-      // environment has a single survey
-      environment.data.surveys = [
-        { ...baseSurvey, id: mockSurveyId1, segment: { id: mockSegmentId1 } } as TEnvironmentStateSurvey,
+      // workspace has a single survey
+      workspace.data.surveys = [
+        { ...baseSurvey, id: mockSurveyId1, segment: { id: mockSegmentId1 } } as TWorkspaceStateSurvey,
       ];
 
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toEqual([]); // no segments => none pass
     });
 
     test("returns surveys if user has no userId but displayOnce and no displays yet", () => {
       // userId is null => it won't segment filter
-      environment.data.surveys = [
-        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TEnvironmentStateSurvey,
+      workspace.data.surveys = [
+        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TWorkspaceStateSurvey,
       ];
 
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(mockSurveyId1);
     });
 
     test("skips surveys that already displayed if displayOnce is used", () => {
-      environment.data.surveys = [
-        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TEnvironmentStateSurvey,
+      workspace.data.surveys = [
+        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TWorkspaceStateSurvey,
       ];
       user.data.displays = [{ surveyId: mockSurveyId1, createdAt: new Date() }];
 
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toEqual([]);
     });
 
     test("skips surveys if user responded to them and displayOption=displayMultiple", () => {
-      environment.data.surveys = [
-        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayMultiple" } as TEnvironmentStateSurvey,
+      workspace.data.surveys = [
+        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayMultiple" } as TWorkspaceStateSurvey,
       ];
       user.data.responses = [mockSurveyId1];
 
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toEqual([]);
     });
 
     test("handles displaySome logic with displayLimit", () => {
-      environment.data.surveys = [
+      workspace.data.surveys = [
         {
           ...baseSurvey,
           id: mockSurveyId1,
           displayOption: "displaySome",
           displayLimit: 2,
-        } as TEnvironmentStateSurvey,
+        } as TWorkspaceStateSurvey,
       ];
       // user has 1 display of s1
       user.data.displays = [{ surveyId: mockSurveyId1, createdAt: new Date() }];
 
       // No responses => so it's still allowed
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(1);
     });
 
     test("filters out surveys if recontactDays not met", () => {
-      // Suppose survey uses project fallback (7 days)
-      environment.data.surveys = [
-        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TEnvironmentStateSurvey,
+      // Suppose survey uses workspace fallback (7 days)
+      workspace.data.surveys = [
+        { ...baseSurvey, id: mockSurveyId1, displayOption: "displayOnce" } as TWorkspaceStateSurvey,
       ];
       // user last displayAt is only 3 days ago
       user.data.lastDisplayAt = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(0);
     });
 
@@ -267,37 +266,37 @@ describe("utils.ts", () => {
       // user last displayAt is 8 days ago
       user.data.lastDisplayAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
 
-      environment.data.surveys = [
+      workspace.data.surveys = [
         {
           ...baseSurvey,
           id: mockSurveyId1,
           displayOption: "respondMultiple",
           recontactDays: null,
-        } as TEnvironmentStateSurvey,
+        } as TWorkspaceStateSurvey,
       ];
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       expect(result).toHaveLength(1);
     });
 
     test("filters by segment if userId is set and user has segments", () => {
       user.data.userId = "user_abc";
       user.data.segments = [mockSegmentId1];
-      environment.data.surveys = [
+      workspace.data.surveys = [
         {
           ...baseSurvey,
           id: mockSurveyId1,
           segment: { id: mockSegmentId1 },
           displayOption: "respondMultiple",
-        } as TEnvironmentStateSurvey,
+        } as TWorkspaceStateSurvey,
         {
           ...baseSurvey,
           id: mockSurveyId2,
           segment: { id: mockSegmentId2 },
           displayOption: "respondMultiple",
-        } as TEnvironmentStateSurvey,
+        } as TWorkspaceStateSurvey,
       ];
 
-      const result = filterSurveys(environment, user);
+      const result = filterSurveys(workspace, user);
       // only the one that matches user's segment
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(mockSurveyId1);
@@ -308,53 +307,50 @@ describe("utils.ts", () => {
   // getStyling
   // ---------------------------------------------------------------------------------
   describe("getStyling()", () => {
-    test("returns project styling if allowStyleOverwrite=false", () => {
-      const project = {
-        id: "p1",
+    test("returns workspace styling if allowStyleOverwrite=false", () => {
+      const settings = {
         styling: { allowStyleOverwrite: false, brandColor: { light: "#fff" } },
-      } as TEnvironmentStateProject;
+      } as TWorkspaceStateSettings;
       const survey = {
         styling: {
           overwriteThemeStyling: true,
           brandColor: { light: "#000" },
         } as TSurveyStyling,
-      } as TEnvironmentStateSurvey;
+      } as TWorkspaceStateSurvey;
 
-      const result = getStyling(project, survey);
-      // should get project styling
-      expect(result).toEqual(project.styling);
+      const result = getStyling(settings, survey);
+      // should get workspace styling
+      expect(result).toEqual(settings.styling);
     });
 
-    test("returns project styling if allowStyleOverwrite=true but survey overwriteThemeStyling=false", () => {
-      const project = {
-        id: "p1",
+    test("returns workspace styling if allowStyleOverwrite=true but survey overwriteThemeStyling=false", () => {
+      const settings = {
         styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
-      } as TEnvironmentStateProject;
+      } as TWorkspaceStateSettings;
       const survey = {
         styling: {
           overwriteThemeStyling: false,
           brandColor: { light: "#000" },
         } as TSurveyStyling,
-      } as TEnvironmentStateSurvey;
+      } as TWorkspaceStateSurvey;
 
-      const result = getStyling(project, survey);
-      // should get project styling still
-      expect(result).toEqual(project.styling);
+      const result = getStyling(settings, survey);
+      // should get workspace styling still
+      expect(result).toEqual(settings.styling);
     });
 
     test("returns survey styling if allowStyleOverwrite=true and survey overwriteThemeStyling=true", () => {
-      const project = {
-        id: "p1",
+      const settings = {
         styling: { allowStyleOverwrite: true, brandColor: { light: "#fff" } },
-      } as TEnvironmentStateProject;
+      } as TWorkspaceStateSettings;
       const survey = {
         styling: {
           overwriteThemeStyling: true,
           brandColor: { light: "#000" },
         } as TSurveyStyling,
-      } as TEnvironmentStateSurvey;
+      } as TWorkspaceStateSurvey;
 
-      const result = getStyling(project, survey);
+      const result = getStyling(settings, survey);
       expect(result).toEqual(survey.styling);
     });
   });
@@ -377,7 +373,7 @@ describe("utils.ts", () => {
             enabled: true,
           },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
       expect(getDefaultLanguageCode(survey)).toBe("fr");
     });
 
@@ -387,7 +383,7 @@ describe("utils.ts", () => {
           { language: { code: "en" }, default: false, enabled: true },
           { language: { code: "fr" }, default: false, enabled: true },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
       expect(getDefaultLanguageCode(survey)).toBeUndefined();
     });
   });
@@ -399,7 +395,7 @@ describe("utils.ts", () => {
     test("returns 'default' if no language param is passed", () => {
       const survey = {
         languages: [{ language: { code: "en" }, default: true, enabled: true }],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
       const code = getLanguageCode(survey, undefined);
       expect(code).toBe("default");
     });
@@ -410,7 +406,7 @@ describe("utils.ts", () => {
           { language: { code: "en" }, default: true, enabled: true },
           { language: { code: "fr" }, default: false, enabled: true },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
       const code = getLanguageCode(survey, "en");
       expect(code).toBe("default");
     });
@@ -421,7 +417,7 @@ describe("utils.ts", () => {
           { language: { code: "en" }, default: true, enabled: true },
           { language: { code: "fr" }, default: false, enabled: false },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
       const code = getLanguageCode(survey, "fr");
       expect(code).toBeUndefined();
     });
@@ -432,7 +428,7 @@ describe("utils.ts", () => {
           { language: { code: "en", alias: "English" }, default: true, enabled: true },
           { language: { code: "fr", alias: "fr-FR" }, default: false, enabled: true },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
       expect(getLanguageCode(survey, "fr")).toBe("fr");
       expect(getLanguageCode(survey, "fr-FR")).toBe("fr");
     });
@@ -819,7 +815,7 @@ describe("utils.ts", () => {
     test("returns false if type is not click", () => {
       const targetElement = document.createElement("div");
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -838,7 +834,7 @@ describe("utils.ts", () => {
       const targetElement = document.createElement("div");
       targetElement.innerHTML = "Test";
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -863,7 +859,7 @@ describe("utils.ts", () => {
 
       targetElement.matches = vi.fn(() => true);
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -887,8 +883,9 @@ describe("utils.ts", () => {
       targetElement.className = "other";
 
       targetElement.matches = vi.fn(() => false);
+      targetElement.closest = vi.fn(() => null); // no ancestor matches either
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -909,7 +906,7 @@ describe("utils.ts", () => {
     test("returns false if neither innerHtml nor cssSelector is provided", () => {
       const targetElement = document.createElement("div");
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -936,7 +933,7 @@ describe("utils.ts", () => {
         },
       });
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -970,7 +967,7 @@ describe("utils.ts", () => {
         },
       });
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",
@@ -993,15 +990,95 @@ describe("utils.ts", () => {
       expect(result).toBe(true);
     });
 
+    // --- Regression tests for nested child click target (issue #7314) ---
+    // In this test environment document.createElement() returns a plain mock object,
+    // so we set .matches and .closest as vi.fn() — the same pattern used by existing tests.
+    // This exercises the exact code path of the fix: matches() fails → closest() succeeds.
+
+    test("returns true when clicking a child element inside a button matched by cssSelector", () => {
+      const button = document.createElement("button");
+      const icon = document.createElement("span");
+
+      // Simulate: icon does NOT directly match ".my-btn", but its closest ancestor does
+      (icon as unknown as { matches: ReturnType<typeof vi.fn> }).matches = vi.fn(() => false);
+      (icon as unknown as { closest: ReturnType<typeof vi.fn> }).closest = vi.fn(() => button);
+
+      const action: TWorkspaceStateActionClass = {
+        id: "clabc123abc",
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector: ".my-btn" },
+        },
+      };
+
+      // Before fix: matches() → false → returns false (bug)
+      // After fix:  matches() → false → closest() → button → returns true (correct)
+      const result = evaluateNoCodeConfigClick(icon as unknown as HTMLElement, action);
+      expect(result).toBe(true);
+    });
+
+    test("returns false when clicking a child element with no matching ancestor", () => {
+      const other = document.createElement("div");
+
+      // Simulate: element doesn't match, and no ancestor matches either
+      (other as unknown as { matches: ReturnType<typeof vi.fn> }).matches = vi.fn(() => false);
+      (other as unknown as { closest: ReturnType<typeof vi.fn> }).closest = vi.fn(() => null);
+
+      const action: TWorkspaceStateActionClass = {
+        id: "clabc123abc",
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector: ".my-btn" },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(other as unknown as HTMLElement, action);
+      expect(result).toBe(false);
+    });
+
+    test("uses direct target (not closest) when target directly matches cssSelector", () => {
+      const button = document.createElement("button");
+
+      // Simulate: click on the button itself — matches() succeeds, closest() should NOT be called
+      (button as unknown as { matches: ReturnType<typeof vi.fn> }).matches = vi.fn(() => true);
+      const closestSpy = vi.fn();
+      (button as unknown as { closest: ReturnType<typeof vi.fn> }).closest = closestSpy;
+
+      const action: TWorkspaceStateActionClass = {
+        id: "clabc123abc",
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector: ".my-btn" },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(button as unknown as HTMLElement, action);
+      expect(result).toBe(true);
+      expect(closestSpy).not.toHaveBeenCalled(); // closest() is only a fallback
+    });
+
     test("handles multiple cssSelectors correctly", () => {
       const targetElement = document.createElement("div");
       targetElement.className = "test other";
 
       targetElement.matches = vi.fn((selector) => {
-        return selector === ".test" || selector === ".other";
+        return selector === ".test" || selector === ".other" || selector === ".test .other";
       });
+      targetElement.closest = vi.fn(() => null); // not needed but consistent with mock environment
 
-      const action: TEnvironmentStateActionClass = {
+      const action: TWorkspaceStateActionClass = {
         id: "clabc123abc",
         name: "Test Action",
         type: "noCode",

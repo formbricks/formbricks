@@ -120,10 +120,10 @@ export const QuotaModal = ({
     defaultValues,
     resolver: zodResolver(
       quotaResponseCount > 0
-        ? ZSurveyQuotaInput.innerType().extend({
+        ? ZSurveyQuotaInput.safeExtend({
             limit: z.number().min(quotaResponseCount, {
-              message: t(
-                "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses",
+              error: t(
+                "workspace.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses",
                 { value: quotaResponseCount }
               ),
             }),
@@ -157,7 +157,7 @@ export const QuotaModal = ({
         quota: quota,
       });
       if (createQuotaActionResult?.data) {
-        toast.success(t("environments.surveys.edit.quotas.quota_created_successfull_toast"));
+        toast.success(t("workspace.surveys.edit.quotas.quota_created_successfull_toast"));
         router.refresh();
         onClose();
       } else {
@@ -175,7 +175,7 @@ export const QuotaModal = ({
         quota: updatedQuota,
       });
       if (updateQuotaActionResult?.data) {
-        toast.success(t("environments.surveys.edit.quotas.quota_updated_successfull_toast"));
+        toast.success(t("workspace.surveys.edit.quotas.quota_updated_successfull_toast"));
         router.refresh();
         onClose();
       } else {
@@ -191,14 +191,14 @@ export const QuotaModal = ({
     if (data.limit < quotaResponseCount) {
       form.setError("limit", {
         message: t(
-          "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses"
+          "workspace.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses"
         ),
       });
       return;
     }
 
     let payload = {
-      name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
+      name: trimmedName || t("workspace.surveys.edit.quotas.new_quota"),
       limit: data.limit,
       logic: data.logic,
       action: data.action,
@@ -236,11 +236,11 @@ export const QuotaModal = ({
 
   const quotaActions = [
     {
-      label: t("environments.surveys.edit.quotas.end_survey_for_matching_participants"),
+      label: t("workspace.surveys.edit.quotas.end_survey_for_matching_participants"),
       value: ZSurveyQuotaAction.enum.endSurvey,
     },
     {
-      label: t("environments.surveys.edit.quotas.continue_survey_normally"),
+      label: t("workspace.surveys.edit.quotas.continue_survey_normally"),
       value: ZSurveyQuotaAction.enum.continueSurvey,
     },
   ];
@@ -264,8 +264,8 @@ export const QuotaModal = ({
                 <div className="flex flex-col">
                   <DialogTitle>
                     {isEditing
-                      ? t("environments.surveys.edit.quotas.edit_quota")
-                      : t("environments.surveys.edit.quotas.new_quota")}
+                      ? t("workspace.surveys.edit.quotas.edit_quota")
+                      : t("workspace.surveys.edit.quotas.new_quota")}
                   </DialogTitle>
                   <DialogDescription>{t("common.quotas_description")}</DialogDescription>
                 </div>
@@ -285,8 +285,8 @@ export const QuotaModal = ({
                         {...field}
                         placeholder={
                           isEditing
-                            ? t("environments.surveys.edit.quotas.quota_name_placeholder")
-                            : t("environments.surveys.edit.quotas.new_quota")
+                            ? t("workspace.surveys.edit.quotas.quota_name_placeholder")
+                            : t("workspace.surveys.edit.quotas.new_quota")
                         }
                         className="bg-white"
                         autoFocus={!isEditing}
@@ -303,7 +303,7 @@ export const QuotaModal = ({
                 name="limit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("environments.surveys.edit.quotas.response_limit")}</FormLabel>
+                    <FormLabel>{t("workspace.surveys.edit.quotas.response_limit")}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -328,7 +328,7 @@ export const QuotaModal = ({
                   <FormItem>
                     <div className="space-y-4 rounded-lg bg-slate-50 p-3">
                       <label className="text-sm font-medium text-slate-800">
-                        {t("environments.surveys.edit.quotas.inclusion_criteria")}
+                        {t("workspace.surveys.edit.quotas.inclusion_criteria")}
                       </label>
                       <FormControl>
                         {field.value && (
@@ -352,7 +352,7 @@ export const QuotaModal = ({
                 name="action"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel>{t("environments.surveys.edit.quotas.when_quota_has_been_reached")}</FormLabel>
+                    <FormLabel>{t("workspace.surveys.edit.quotas.when_quota_has_been_reached")}</FormLabel>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                       <div className="space-y-2">
                         <FormControl>
@@ -414,10 +414,10 @@ export const QuotaModal = ({
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="cursor-pointer">
-                        {t("environments.surveys.edit.quotas.count_partial_submissions")}
+                        {t("workspace.surveys.edit.quotas.count_partial_submissions")}
                       </FormLabel>
                       <FormDescription>
-                        {t("environments.surveys.edit.quotas.count_partial_submissions_description")}
+                        {t("workspace.surveys.edit.quotas.count_partial_submissions_description")}
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -452,7 +452,7 @@ export const QuotaModal = ({
               </div>
             </DialogFooter>
             <ConfirmationModal
-              title={t("environments.surveys.edit.quotas.confirm_quota_changes")}
+              title={t("workspace.surveys.edit.quotas.confirm_quota_changes")}
               open={openConfirmationModal}
               buttonVariant="default"
               buttonLoading={isSubmitting}
@@ -461,7 +461,7 @@ export const QuotaModal = ({
                 setOpenConfirmationModal(false);
                 form.handleSubmit(submitQuota)();
               }}
-              body={t("environments.surveys.edit.quotas.confirm_quota_changes_body")}
+              body={t("workspace.surveys.edit.quotas.confirm_quota_changes_body")}
               buttonText={t("common.save")}
               cancelButtonText={t("common.discard")}
               onCancel={() => {
@@ -472,14 +472,14 @@ export const QuotaModal = ({
             <ConfirmationModal
               open={openConfirmChangesInInclusionCriteria}
               setOpen={setOpenConfirmChangesInInclusionCriteria}
-              title={t("environments.surveys.edit.quotas.change_quota_for_public_survey")}
-              description={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
-              body={t("environments.surveys.edit.quotas.save_changes_confirmation_body")}
+              title={t("workspace.surveys.edit.quotas.change_quota_for_public_survey")}
+              description={t("workspace.surveys.edit.quotas.save_changes_confirmation_text")}
+              body={t("workspace.surveys.edit.quotas.save_changes_confirmation_body")}
               buttonText={t("common.continue")}
               buttonVariant="default"
               onConfirm={form.handleSubmit(submitQuota)}
               secondaryButton={{
-                text: t("environments.surveys.edit.quotas.duplicate_quota"),
+                text: t("workspace.surveys.edit.quotas.duplicate_quota"),
                 variant: "secondary",
                 onAction: () => {
                   if (quota) {

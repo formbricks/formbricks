@@ -372,7 +372,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
         await applyRateLimit(config, identifier);
         return { success: true, error: null };
       } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: (error as Error).message };
       }
     });
 

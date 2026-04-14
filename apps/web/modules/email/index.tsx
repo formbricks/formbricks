@@ -15,7 +15,7 @@ import {
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
 import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -39,7 +39,7 @@ import {
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -157,17 +157,19 @@ export const sendVerificationEmail = async ({
   }
 };
 
-export const sendForgotPasswordEmail = async (user: {
-  id: string;
+export const sendPasswordResetLinkEmail = async (user: {
   email: TUserEmail;
   locale: TUserLocale;
+  verifyLink: string;
+  linkValidityInMinutes: number;
 }): Promise<boolean> => {
   const t = await getTranslate(user.locale);
-  const token = createToken(user.id, {
-    expiresIn: "1d",
+  const html = await renderForgotPasswordEmail({
+    verifyLink: user.verifyLink,
+    linkValidityInMinutes: user.linkValidityInMinutes,
+    t,
+    ...legalProps,
   });
-  const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await renderForgotPasswordEmail({ verifyLink, t, ...legalProps });
   return await sendEmail({
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),
@@ -227,17 +229,17 @@ export const sendInviteAcceptedEmail = async (
 export const sendResponseFinishedEmail = async (
   email: string,
   locale: TUserLocale,
-  environmentId: string,
+  workspaceId: string,
   survey: TSurvey,
   response: TResponse,
   responseCount: number
 ): Promise<void> => {
   const t = await getTranslate(locale);
   const personEmail = response.contactAttributes?.email;
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", null);
   }
 
   // Pre-process the element response mapping before passing to email
@@ -264,7 +266,7 @@ export const sendResponseFinishedEmail = async (
     responseCount,
     response,
     WEBAPP_URL,
-    environmentId,
+    workspaceId,
     organization,
     elements: elementsWithResolvedUrls,
     t,
@@ -289,7 +291,7 @@ export const sendResponseFinishedEmail = async (
 export const sendEmbedSurveyPreviewEmail = async (
   to: string,
   innerHtml: string,
-  environmentId: string,
+  workspaceId: string,
   locale: TUserLocale,
   logoUrl?: string
 ): Promise<boolean> => {
@@ -298,7 +300,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const html = await renderEmbedSurveyPreviewEmail({
     html: innerHtml,
-    environmentId,
+    workspaceId,
     logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,

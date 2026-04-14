@@ -36,20 +36,20 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
       {
         id: "respect",
         value: null,
-        name: t("environments.surveys.edit.respect_global_waiting_time"),
-        description: t("environments.surveys.edit.respect_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.respect_global_waiting_time"),
+        description: t("workspace.surveys.edit.respect_global_waiting_time_description"),
       },
       {
         id: "ignore",
         value: 0,
-        name: t("environments.surveys.edit.ignore_global_waiting_time"),
-        description: t("environments.surveys.edit.ignore_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.ignore_global_waiting_time"),
+        description: t("workspace.surveys.edit.ignore_global_waiting_time_description"),
       },
       {
         id: "overwrite",
         value: 1,
-        name: t("environments.surveys.edit.overwrite_global_waiting_time"),
-        description: t("environments.surveys.edit.overwrite_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.overwrite_global_waiting_time"),
+        description: t("workspace.surveys.edit.overwrite_global_waiting_time_description"),
       },
     ],
     [t]
@@ -59,27 +59,23 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
     () => [
       {
         id: "displayOnce",
-        name: t("environments.surveys.edit.show_only_once"),
-        description: t(
-          "environments.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond"
-        ),
+        name: t("workspace.surveys.edit.show_only_once"),
+        description: t("workspace.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond"),
       },
       {
         id: "displaySome",
-        name: t("environments.surveys.edit.show_multiple_times"),
-        description: t(
-          "environments.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond"
-        ),
+        name: t("workspace.surveys.edit.show_multiple_times"),
+        description: t("workspace.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond"),
       },
       {
         id: "displayMultiple",
-        name: t("environments.surveys.edit.until_they_submit_a_response"),
-        description: t("environments.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it"),
+        name: t("workspace.surveys.edit.until_they_submit_a_response"),
+        description: t("workspace.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it"),
       },
       {
         id: "respondMultiple",
-        name: t("environments.surveys.edit.keep_showing_while_conditions_match"),
-        description: t("environments.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box"),
+        name: t("workspace.surveys.edit.keep_showing_while_conditions_match"),
+        description: t("workspace.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box"),
       },
     ],
     [t]
@@ -113,7 +109,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
     }
   };
 
-  const handleOverwriteDaysChange = (event) => {
+  const handleOverwriteDaysChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(event.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
@@ -126,7 +122,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleDisplayLimitChange = (event) => {
+  const handleDisplayLimitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let value = Number(event.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
@@ -169,10 +165,10 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           </div>
           <div>
             <p className="font-semibold text-slate-800">
-              {t("environments.surveys.edit.visibility_and_recontact")}
+              {t("workspace.surveys.edit.visibility_and_recontact")}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.visibility_and_recontact_description")}
+              {t("workspace.surveys.edit.visibility_and_recontact_description")}
             </p>
           </div>
         </div>
@@ -183,10 +179,10 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           {/* Waiting Time Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
-              {t("environments.surveys.edit.waiting_time_across_surveys")}
+              {t("workspace.surveys.edit.waiting_time_across_surveys")}
             </h3>
             <p className="text-sm text-slate-500">
-              {t("environments.surveys.edit.waiting_time_across_surveys_description")}
+              {t("workspace.surveys.edit.waiting_time_across_surveys_description")}
             </p>
           </div>
 
@@ -203,7 +199,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                   <RadioGroupItem
                     value={option.id}
                     id={`waiting-time-${option.id}`}
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                   />
                   <div>
                     <p className="font-semibold text-slate-700">{option.name}</p>
@@ -214,7 +210,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                   <div className="border-t-none -mt-1.5 w-full rounded-b-lg border bg-slate-50 p-4">
                     <label htmlFor="overwriteDays">
                       <p className="text-sm text-slate-700">
-                        {t("environments.surveys.edit.wait")}
+                        {t("workspace.surveys.edit.wait")}
                         <Input
                           type="number"
                           min="1"
@@ -224,7 +220,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                           onChange={handleOverwriteDaysChange}
                           className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                         />
-                        {t("environments.surveys.edit.days_before_showing_this_survey_again")}
+                        {t("workspace.surveys.edit.days_before_showing_this_survey_again")}
                       </p>
                     </label>
                   </div>
@@ -240,10 +236,10 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           {/* Recontact Options Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
-              {t("environments.surveys.edit.recontact_options_section")}
+              {t("workspace.surveys.edit.recontact_options_section")}
             </h3>
             <p className="text-sm text-slate-500">
-              {t("environments.surveys.edit.recontact_options_section_description")}
+              {t("workspace.surveys.edit.recontact_options_section_description")}
             </p>
           </div>
 
@@ -273,7 +269,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                   <RadioGroupItem
                     value={option.id}
                     id={`recontact-option-${option.id}`}
-                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                   />
                   <div>
                     <p className="font-semibold text-slate-700">{option.name}</p>
@@ -285,7 +281,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                   <div className="border-t-none -mt-1.5 w-full rounded-b-lg border bg-slate-50 p-4">
                     <label htmlFor="displayLimit">
                       <p className="text-sm text-slate-700">
-                        {t("environments.surveys.edit.show_survey_maximum_of")}
+                        {t("workspace.surveys.edit.show_survey_maximum_of")}
                         <Input
                           type="number"
                           min="1"
@@ -294,7 +290,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                           onChange={(e) => handleDisplayLimitChange(e)}
                           className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                         />
-                        {t("environments.surveys.edit.times")}.
+                        {t("workspace.surveys.edit.times")}.
                       </p>
                     </label>
                   </div>

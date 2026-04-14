@@ -9,7 +9,7 @@ import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/co
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
-  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
 import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
@@ -18,11 +18,11 @@ import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 
 export const getResponses = async (
-  environmentIds: string[],
+  workspaceIds: string[],
   params: TGetResponsesFilter
 ): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
-    const query = getResponsesQuery(environmentIds, params);
+    const query = getResponsesQuery(workspaceIds, params);
     const whereClause = query.where;
 
     const [responses, totalCount] = await Promise.all([
@@ -39,12 +39,17 @@ export const getResponses = async (
       },
     });
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "responses", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "responses", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 
 export const createResponse = async (
-  environmentId: string,
+  workspaceId: string,
   responseInput: TResponseInput,
   tx?: Prisma.TransactionClient
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
@@ -69,7 +74,7 @@ export const createResponse = async (
 
     // If userId is provided, look up the contact by userId
     if (userId) {
-      const contactResult = await getContactByUserId(environmentId, userId);
+      const contactResult = await getContactByUserId(workspaceId, userId);
       if (!contactResult.ok) {
         return err(contactResult.error);
       }
@@ -112,7 +117,7 @@ export const createResponse = async (
       endingId,
     };
 
-    const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationIdResult = await getOrganizationIdFromWorkspaceId(workspaceId);
     if (!organizationIdResult.ok) {
       return err(organizationIdResult.error as ApiErrorResponseV2);
     }
@@ -139,16 +144,21 @@ export const createResponse = async (
 
     return ok(response);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 };
 
 export const createResponseWithQuotaEvaluation = async (
-  environmentId: string,
+  workspaceId: string,
   responseInput: TResponseInput
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
-    const responseResult = await createResponse(environmentId, responseInput, tx);
+    const responseResult = await createResponse(workspaceId, responseInput, tx);
     if (!responseResult.ok) {
       return responseResult;
     }

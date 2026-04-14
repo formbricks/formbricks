@@ -9,28 +9,28 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 }));
 
 describe("getWebhooksQuery", () => {
-  const environmentId = "env-123";
+  const workspaceId = "ws-123";
 
   test("adds surveyIds condition when provided", () => {
     const params = { surveyIds: ["survey1"] } as TGetWebhooksFilter;
-    const result = getWebhooksQuery([environmentId], params);
+    const result = getWebhooksQuery([workspaceId], params);
     expect(result).toBeDefined();
     expect(result?.where).toMatchObject({
-      environmentId: { in: [environmentId] },
+      workspaceId: { in: [workspaceId] },
       surveyIds: { hasSome: ["survey1"] },
     });
   });
 
   test("calls pickCommonFilter and buildCommonFilterQuery when baseFilter is present", () => {
     vi.mocked(pickCommonFilter).mockReturnValue({ someFilter: "test" } as any);
-    getWebhooksQuery([environmentId], { surveyIds: ["survey1"] } as TGetWebhooksFilter);
+    getWebhooksQuery([workspaceId], { surveyIds: ["survey1"] } as TGetWebhooksFilter);
     expect(pickCommonFilter).toHaveBeenCalled();
     expect(buildCommonFilterQuery).toHaveBeenCalled();
   });
 
   test("buildCommonFilterQuery is not called if no baseFilter is picked", () => {
     vi.mocked(pickCommonFilter).mockReturnValue(undefined as any);
-    getWebhooksQuery([environmentId], {} as any);
+    getWebhooksQuery([workspaceId], {} as any);
     expect(buildCommonFilterQuery).not.toHaveBeenCalled();
   });
 });

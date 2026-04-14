@@ -1,12 +1,12 @@
-import { TFunction } from "react-i18next";
+import { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { buildActionObject, buildCodeAction, buildNoCodeAction } from "./action-builder";
 
 const mockT = vi.fn((key: string) => {
   const translations: Record<string, string> = {
-    "environments.actions.invalid_action_type_no_code": "Invalid action type for noCode action",
-    "environments.actions.invalid_action_type_code": "Invalid action type for code action",
+    "workspace.actions.invalid_action_type_no_code": "Invalid action type for noCode action",
+    "workspace.actions.invalid_action_type_code": "Invalid action type for code action",
   };
   return translations[key] || key;
 }) as unknown as TFunction;
@@ -17,7 +17,7 @@ describe("action-builder", () => {
       const data: TActionClassInput = {
         name: "Click Button",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "click",
           urlFilters: [],
@@ -28,12 +28,12 @@ describe("action-builder", () => {
         },
       };
 
-      const result = buildActionObject(data, "env1", mockT);
+      const result = buildActionObject(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Click Button",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "click",
           urlFilters: [],
@@ -50,16 +50,16 @@ describe("action-builder", () => {
         name: "Track Event",
         type: "code",
         key: "track_event",
-        environmentId: "env1",
+        workspaceId: "ws1",
       };
 
-      const result = buildActionObject(data, "env1", mockT);
+      const result = buildActionObject(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Track Event",
         type: "code",
         key: "track_event",
-        environmentId: "env1",
+        workspaceId: "ws1",
       });
     });
   });
@@ -69,7 +69,7 @@ describe("action-builder", () => {
       const data: TActionClassInput = {
         name: "Click Button",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "click",
           urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
@@ -80,12 +80,12 @@ describe("action-builder", () => {
         },
       };
 
-      const result = buildNoCodeAction(data, "env1", mockT);
+      const result = buildNoCodeAction(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Click Button",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "click",
           urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
@@ -101,19 +101,19 @@ describe("action-builder", () => {
       const data: TActionClassInput = {
         name: "Page Visit",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "pageView",
           urlFilters: [{ rule: "contains", value: "/dashboard" }],
         },
       };
 
-      const result = buildNoCodeAction(data, "env1", mockT);
+      const result = buildNoCodeAction(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Page Visit",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "pageView",
           urlFilters: [{ rule: "contains", value: "/dashboard" }],
@@ -125,10 +125,10 @@ describe("action-builder", () => {
       const data = {
         name: "Invalid Action",
         type: "code",
-        environmentId: "env1",
+        workspaceId: "ws1",
       } as any;
 
-      expect(() => buildNoCodeAction(data, "env1", mockT)).toThrow("Invalid action type for noCode action");
+      expect(() => buildNoCodeAction(data, "ws1", mockT)).toThrow("Invalid action type for noCode action");
     });
 
     test("includes optional fields when provided", () => {
@@ -136,7 +136,7 @@ describe("action-builder", () => {
         name: "Click Button",
         description: "Click the submit button",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "click",
           urlFilters: [],
@@ -147,13 +147,13 @@ describe("action-builder", () => {
         },
       };
 
-      const result = buildNoCodeAction(data, "env1", mockT);
+      const result = buildNoCodeAction(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Click Button",
         description: "Click the submit button",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
         noCodeConfig: {
           type: "click",
           urlFilters: [],
@@ -172,16 +172,16 @@ describe("action-builder", () => {
         name: "Track Event",
         type: "code",
         key: "track_event",
-        environmentId: "env1",
+        workspaceId: "ws1",
       };
 
-      const result = buildCodeAction(data, "env1", mockT);
+      const result = buildCodeAction(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Track Event",
         type: "code",
         key: "track_event",
-        environmentId: "env1",
+        workspaceId: "ws1",
       });
     });
 
@@ -191,17 +191,17 @@ describe("action-builder", () => {
         description: "Track when user makes a purchase",
         type: "code",
         key: "track_purchase",
-        environmentId: "env1",
+        workspaceId: "ws1",
       };
 
-      const result = buildCodeAction(data, "env1", mockT);
+      const result = buildCodeAction(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Track Purchase",
         description: "Track when user makes a purchase",
         type: "code",
         key: "track_purchase",
-        environmentId: "env1",
+        workspaceId: "ws1",
       });
     });
 
@@ -209,10 +209,10 @@ describe("action-builder", () => {
       const data = {
         name: "Invalid Action",
         type: "noCode",
-        environmentId: "env1",
+        workspaceId: "ws1",
       } as any;
 
-      expect(() => buildCodeAction(data, "env1", mockT)).toThrow("Invalid action type for code action");
+      expect(() => buildCodeAction(data, "ws1", mockT)).toThrow("Invalid action type for code action");
     });
 
     test("handles null key", () => {
@@ -220,16 +220,16 @@ describe("action-builder", () => {
         name: "Track Event",
         type: "code",
         key: null,
-        environmentId: "env1",
+        workspaceId: "ws1",
       };
 
-      const result = buildCodeAction(data, "env1", mockT);
+      const result = buildCodeAction(data, "ws1", mockT);
 
       expect(result).toEqual({
         name: "Track Event",
         type: "code",
         key: null,
-        environmentId: "env1",
+        workspaceId: "ws1",
       });
     });
   });

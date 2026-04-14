@@ -1,15 +1,18 @@
-import { Organization, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Mocked, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "./organization";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
+import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "./organization";
 
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    workspace: {
+      findUnique: vi.fn(),
+    },
     organization: {
-      findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
   },
@@ -20,9 +23,10 @@ vi.mock("react", () => ({
   cache: vi.fn((fn) => fn), // reactCache(fn) returns fn, which is then invoked
 }));
 
+const mockPrismaWorkspace = prisma.workspace as Mocked<typeof prisma.workspace>;
 const mockPrismaOrganization = prisma.organization as Mocked<typeof prisma.organization>;
 
-describe("getOrganizationIdFromEnvironmentId", () => {
+describe("getOrganizationIdFromWorkspaceId", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -32,43 +36,32 @@ describe("getOrganizationIdFromEnvironmentId", () => {
   });
 
   test("should return organization ID if found", async () => {
-    const mockEnvId = "env_test123";
+    const mockWorkspaceId = "ws_test123";
     const mockOrgId = "org_test456";
-    mockPrismaOrganization.findFirst.mockResolvedValueOnce({ id: mockOrgId } as Organization);
+    mockPrismaWorkspace.findUnique.mockResolvedValueOnce({ organizationId: mockOrgId } as any);
 
-    const result = await getOrganizationIdFromEnvironmentId(mockEnvId);
+    const result = await getOrganizationIdFromWorkspaceId(mockWorkspaceId);
 
     expect(result).toBe(mockOrgId);
-    expect(mockPrismaOrganization.findFirst).toHaveBeenCalledWith({
-      where: {
-        projects: {
-          some: {
-            environments: {
-              some: { id: mockEnvId },
-            },
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
+    expect(mockPrismaWorkspace.findUnique).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      select: { organizationId: true },
     });
   });
 
-  test("should throw ResourceNotFoundError if organization not found", async () => {
-    const mockEnvId = "env_test123_notfound";
-    mockPrismaOrganization.findFirst.mockResolvedValueOnce(null);
+  test("should throw ResourceNotFoundError if workspace not found", async () => {
+    const mockWorkspaceId = "ws_test123_notfound";
+    mockPrismaWorkspace.findUnique.mockResolvedValueOnce(null);
 
-    await expect(getOrganizationIdFromEnvironmentId(mockEnvId)).rejects.toThrow(ResourceNotFoundError);
-    await expect(getOrganizationIdFromEnvironmentId(mockEnvId)).rejects.toThrow("Organization not found");
+    await expect(getOrganizationIdFromWorkspaceId(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should propagate prisma error", async () => {
-    const mockEnvId = "env_test123_dberror";
+    const mockWorkspaceId = "ws_test123_dberror";
     const errorMessage = "Database connection lost";
-    mockPrismaOrganization.findFirst.mockRejectedValueOnce(new Error(errorMessage));
+    mockPrismaWorkspace.findUnique.mockRejectedValueOnce(new Error(errorMessage));
 
-    await expect(getOrganizationIdFromEnvironmentId(mockEnvId)).rejects.toThrow(Error);
+    await expect(getOrganizationIdFromWorkspaceId(mockWorkspaceId)).rejects.toThrow(Error);
   });
 });
 
@@ -82,24 +75,25 @@ describe("getOrganizationAIKeys", () => {
   });
 
   const mockOrgId = "org_test789";
-  const mockOrganizationData: Pick<Organization, "isAIEnabled" | "billing"> = {
-    isAIEnabled: true,
+  const mockOrganizationData: {
+    isAISmartToolsEnabled: boolean;
+    isAIDataAnalysisEnabled: boolean;
+    billing: TOrganizationBilling;
+  } = {
+    isAISmartToolsEnabled: true,
+    isAIDataAnalysisEnabled: true,
     billing: {
-      plan: "free",
       stripeCustomerId: null,
-      period: "monthly",
-      periodStart: new Date(),
+      usageCycleAnchor: new Date(),
       limits: {
-        monthly: { responses: null, miu: null },
-        projects: null,
+        monthly: { responses: null },
+        workspaces: null,
       },
     }, // Prisma.JsonValue compatible
   };
 
   test("should return organization AI keys if found", async () => {
-    mockPrismaOrganization.findUnique.mockResolvedValueOnce(
-      mockOrganizationData as Organization // Cast to full Organization for mock purposes
-    );
+    mockPrismaOrganization.findUnique.mockResolvedValueOnce(mockOrganizationData as any);
 
     const result = await getOrganizationAIKeys(mockOrgId);
 
@@ -109,8 +103,16 @@ describe("getOrganizationAIKeys", () => {
         id: mockOrgId,
       },
       select: {
-        isAIEnabled: true,
-        billing: true,
+        isAISmartToolsEnabled: true,
+        isAIDataAnalysisEnabled: true,
+        billing: {
+          select: {
+            stripeCustomerId: true,
+            limits: true,
+            usageCycleAnchor: true,
+            stripe: true,
+          },
+        },
       },
     });
   });

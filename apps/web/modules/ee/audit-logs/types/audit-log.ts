@@ -9,14 +9,14 @@ export const ZAuditTarget = z.enum([
   "webhook",
   "user",
   "contactAttributeKey",
-  "projectTeam",
+  "workspaceTeam",
   "team",
   "actionClass",
   "response",
   "contact",
   "organization",
   "tag",
-  "project",
+  "workspace",
   "language",
   "invite",
   "membership",
@@ -25,6 +25,7 @@ export const ZAuditTarget = z.enum([
   "integration",
   "file",
   "quota",
+  "feedbackRecordDirectory",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -34,7 +35,7 @@ export const ZAuditAction = z.enum([
   "merged",
   "verificationEmailSent",
   "createdFromCSV",
-  "copiedToOtherEnvironment",
+  "copiedToOtherWorkspace",
   "addedToResponse",
   "removedFromResponse",
   "createdUpdated",
@@ -73,12 +74,12 @@ export const ZAuditLogEventSchema = z.object({
     type: ZAuditTarget,
   }),
   status: ZAuditStatus,
-  timestamp: z.string().datetime(),
+  timestamp: z.iso.datetime(),
   organizationId: z.string(),
   ipAddress: z.string().optional(), // Not using the .ip() here because if we don't enabled it we want to put UNKNOWN_DATA string, to keep the same pattern as the other fields
-  changes: z.record(z.any()).optional(),
+  changes: z.record(z.string(), z.any()).optional(),
   eventId: z.string().optional(),
-  apiUrl: z.string().url().optional(),
+  apiUrl: z.url().optional(),
 });
 
 export type TAuditLogEvent = z.infer<typeof ZAuditLogEventSchema>;

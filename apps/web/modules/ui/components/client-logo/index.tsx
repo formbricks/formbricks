@@ -1,30 +1,31 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TLogo } from "@formbricks/types/styling";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 
 interface ClientLogoProps {
-  environmentId?: string;
-  projectLogo: Project["logo"] | null;
+  workspaceLogo: Workspace["logo"] | null;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
   dir?: "ltr" | "rtl" | "auto";
 }
 
 export const ClientLogo = ({
-  environmentId,
-  projectLogo,
+  workspaceLogo,
   surveyLogo,
   previewSurvey = false,
   dir = "auto",
 }: ClientLogoProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
-  const logoToUse = surveyLogo?.url ? surveyLogo : projectLogo;
+  const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
 
   let positionClasses = "";
   if (!previewSurvey) {
@@ -39,14 +40,14 @@ export const ClientLogo = ({
     <div
       className={cn(positionClasses, "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: logoToUse?.bgColor }}>
-      {previewSurvey && environmentId && (
+      {previewSurvey && workspaceBasePath && (
         <Link
-          href={`/environments/${environmentId}/workspace/look`}
+          href={`${workspaceBasePath}/look`}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
             size={24}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-white/80 p-0.5 text-slate-700 opacity-0 transition-all duration-200 ease-in-out group-hover/link:opacity-100"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-white/80 p-0.5 text-slate-700 opacity-0 transition-all duration-200 ease-in-out group-hover/link:opacity-100"
           />
         </Link>
       )}
@@ -63,13 +64,13 @@ export const ClientLogo = ({
         />
       ) : (
         <Link
-          href={`/environments/${environmentId}/workspace/look`}
+          href={workspaceBasePath ? `${workspaceBasePath}/look` : "#"}
           onClick={(e) => {
-            if (!environmentId) {
+            if (!workspaceBasePath) {
               e.preventDefault();
             }
           }}
-          className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-sm hover:cursor-pointer hover:border-slate-600"
+          className="whitespace-nowrap rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs text-slate-900 opacity-50 backdrop-blur-sm hover:cursor-pointer hover:border-slate-600"
           target="_blank">
           {t("common.add_logo")}
         </Link>

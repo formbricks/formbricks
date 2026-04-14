@@ -12,6 +12,7 @@ export const exampleData = {
 
   forgotPasswordEmail: {
     verifyLink: "https://app.formbricks.com/auth/forgot-password/reset?token=example-reset-token",
+    linkValidityInMinutes: 30,
   },
 
   newEmailVerification: {
@@ -41,7 +42,7 @@ export const exampleData = {
 
   embedSurveyPreviewEmail: {
     html: '<div style="padding: 20px; background-color: #f3f4f6; border-radius: 8px;"><h3 style="margin-top: 0;">Example Survey Embed</h3><p>This is a preview of how your survey will look when embedded in an email.</p></div>',
-    environmentId: "clxyz123456789",
+    workspaceId: "clxyz123456789",
   },
 
   responseFinishedEmail: {
@@ -106,14 +107,13 @@ export const exampleData = {
         url: "https://example.com",
       },
       tags: [],
-      notes: [],
       ttc: {},
       singleUseId: null,
       language: "default",
       displayId: null,
     } as unknown as TResponse,
     WEBAPP_URL: "https://app.formbricks.com",
-    environmentId: "env-123",
+    workspaceId: "workspace-123",
     organization: {
       id: "org-123",
       name: "Acme Corporation",
@@ -130,11 +130,11 @@ export const exampleData = {
         limits: {
           monthly: {
             responses: 1000,
-            miu: 10000,
           },
         },
       },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     } as unknown as TOrganization,
   },
 

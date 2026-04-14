@@ -1,4 +1,4 @@
-import cuid2 from "@paralleldrive/cuid2";
+import * as cuid2 from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as crypto from "@/lib/crypto";
 import { env } from "@/lib/env";

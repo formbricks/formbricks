@@ -38,9 +38,10 @@ describe("deleteWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
+      secret: null,
     };
 
     vi.mocked(prisma.webhook.delete).mockResolvedValueOnce(mockedWebhook);
@@ -63,9 +64,10 @@ describe("deleteWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
+      secret: null,
     };
 
     vi.mocked(prisma.webhook.delete).mockResolvedValueOnce(mockedWebhook);
@@ -134,9 +136,10 @@ describe("getWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
+      secret: null,
     };
 
     vi.mocked(prisma.webhook.findUnique).mockResolvedValueOnce(mockedWebhook);
@@ -200,9 +203,10 @@ describe("getWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
+      secret: null,
     };
 
     vi.mocked(prisma.webhook.findUnique).mockResolvedValueOnce(mockedWebhook);

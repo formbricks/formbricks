@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export function responseWithMetaSchema<T extends z.ZodTypeAny>(contentSchema: T) {
+export function responseWithMetaSchema<T extends z.ZodType>(contentSchema: T) {
   return z.object({
     data: z.array(contentSchema).optional(),
     meta: z

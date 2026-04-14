@@ -35,7 +35,9 @@ export const ZSurveyStylingBackground = z
 
       return true;
     },
-    { message: "Invalid background" }
+    {
+      error: "Invalid background",
+    }
   );
 
 export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
@@ -71,6 +73,7 @@ export const ZBaseStyling = z.object({
   // Options
   optionBgColor: ZStylingColor.nullish(),
   optionLabelColor: ZStylingColor.nullish(),
+  optionBorderColor: ZStylingColor.nullish(),
   optionBorderRadius: z.union([z.number(), z.string()]).nullish(),
   optionPaddingX: z.union([z.number(), z.string()]).nullish(),
   optionPaddingY: z.union([z.number(), z.string()]).nullish(),

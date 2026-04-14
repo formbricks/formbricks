@@ -1,0 +1,346 @@
+{{- if and .Values.envoy.enabled .Values.envoy.formbricks.policies.enabled }}
+{{- $namespace := include "formbricks.namespace" . -}}
+{{- $proxyServiceName := include "formbricks.envoy.proxyServiceName" . -}}
+{{- if and .Values.envoy.formbricks.routes.authCallback .Values.envoy.formbricks.policies.authCallback }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ printf "%s-auth-rate-limit" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-auth-callback" $proxyServiceName }}
+  rateLimit:
+    global:
+      rules:
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: POST
+              path:
+                type: Exact
+                value: /api/auth/callback/credentials
+          limit:
+            requests: 40
+            unit: Hour
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: POST
+              path:
+                type: Exact
+                value: /api/auth/callback/credentials
+          limit:
+            requests: 40
+            unit: Hour
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: POST
+              path:
+                type: Exact
+                value: /api/auth/callback/token
+          limit:
+            requests: 10
+            unit: Hour
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: POST
+              path:
+                type: Exact
+                value: /api/auth/callback/token
+          limit:
+            requests: 10
+            unit: Hour
+{{- end }}
+{{- if and .Values.envoy.formbricks.routes.v1Client .Values.envoy.formbricks.policies.v1Client }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ printf "%s-v1-client-rate-limit" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-v1-client" $proxyServiceName }}
+  rateLimit:
+    global:
+      rules:
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: POST
+              path:
+                type: RegularExpression
+                value: ^/api/v1/client/[^/]+/storage$
+          limit:
+            requests: 5
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: POST
+              path:
+                type: RegularExpression
+                value: ^/api/v1/client/[^/]+/storage$
+          limit:
+            requests: 5
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: GET
+                - value: POST
+                - value: PUT
+                - value: PATCH
+                - value: DELETE
+              path:
+                type: RegularExpression
+                value: ^/api/v1/client/[^/]+/(environment|responses(?:/[^/]+)?|displays|user)$
+          limit:
+            requests: 100
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: GET
+                - value: POST
+                - value: PUT
+                - value: PATCH
+                - value: DELETE
+              path:
+                type: RegularExpression
+                value: ^/api/v1/client/[^/]+/(environment|responses(?:/[^/]+)?|displays|user)$
+          limit:
+            requests: 100
+            unit: Minute
+{{- end }}
+{{- if and .Values.envoy.formbricks.routes.v2Client .Values.envoy.formbricks.policies.v2Client }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ printf "%s-v2-client-rate-limit" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-v2-client" $proxyServiceName }}
+  rateLimit:
+    global:
+      rules:
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: POST
+                - value: PUT
+              path:
+                type: RegularExpression
+                value: ^/api/v2/client/[^/]+/responses(?:/[^/]+)?$
+          limit:
+            requests: 100
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: POST
+                - value: PUT
+              path:
+                type: RegularExpression
+                value: ^/api/v2/client/[^/]+/responses(?:/[^/]+)?$
+          limit:
+            requests: 100
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: POST
+              path:
+                type: RegularExpression
+                value: ^/api/v2/client/[^/]+/displays$
+          limit:
+            requests: 100
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: POST
+              path:
+                type: RegularExpression
+                value: ^/api/v2/client/[^/]+/displays$
+          limit:
+            requests: 100
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+              methods:
+                - value: POST
+              path:
+                type: RegularExpression
+                value: ^/api/v2/client/[^/]+/storage$
+          limit:
+            requests: 5
+            unit: Minute
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: ::/0
+              methods:
+                - value: POST
+              path:
+                type: RegularExpression
+                value: ^/api/v2/client/[^/]+/storage$
+          limit:
+            requests: 5
+            unit: Minute
+{{- end }}
+{{- if and .Values.envoy.formbricks.routes.v1Management .Values.envoy.formbricks.policies.v1Management }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ printf "%s-v1-management-rate-limit" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-v1-management" $proxyServiceName }}
+  rateLimit:
+    global:
+      rules:
+        - clientSelectors:
+            - headers:
+                - name: x-api-key
+                  type: Distinct
+              methods:
+                - value: POST
+              path:
+                type: Exact
+                value: /api/v1/management/storage
+          limit:
+            requests: 5
+            unit: Minute
+        - clientSelectors:
+            - headers:
+                - name: x-api-key
+                  type: Distinct
+              methods:
+                - value: GET
+                - value: POST
+                - value: PUT
+                - value: PATCH
+                - value: DELETE
+              path:
+                type: PathPrefix
+                value: /api/v1/management/
+          limit:
+            requests: 100
+            unit: Minute
+{{- end }}
+{{- if and .Values.envoy.formbricks.routes.v1Webhooks .Values.envoy.formbricks.policies.v1Webhooks }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ printf "%s-v1-webhooks-rate-limit" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-v1-webhooks" $proxyServiceName }}
+  rateLimit:
+    global:
+      rules:
+        - clientSelectors:
+            - headers:
+                - name: x-api-key
+                  type: Distinct
+              methods:
+                - value: GET
+                - value: POST
+                - value: PUT
+                - value: PATCH
+                - value: DELETE
+              path:
+                type: PathPrefix
+                value: /api/v1/webhooks/
+          limit:
+            requests: 100
+            unit: Minute
+{{- end }}
+{{- if and .Values.envoy.formbricks.routes.storage .Values.envoy.formbricks.policies.storage }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ printf "%s-storage-rate-limit" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-storage" $proxyServiceName }}
+  rateLimit:
+    global:
+      rules:
+        - clientSelectors:
+            - headers:
+                - name: x-api-key
+                  type: Distinct
+              methods:
+                - value: DELETE
+              path:
+                type: RegularExpression
+                value: ^/storage/[^/]+/(public|private)/.+$
+          limit:
+            requests: 5
+            unit: Minute
+{{- end }}
+{{- end }}

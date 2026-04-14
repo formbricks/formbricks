@@ -20,19 +20,19 @@ describe("ZTtlMs", () => {
   });
 
   test("should reject non-integer values", () => {
-    expect(() => ZTtlMs.parse(1000.5)).toThrow("Expected integer, received float");
-    expect(() => ZTtlMs.parse(1500.25)).toThrow("Expected integer, received float");
+    expect(() => ZTtlMs.parse(1000.5)).toThrow(/expected int/i);
+    expect(() => ZTtlMs.parse(1500.25)).toThrow(/expected int/i);
   });
 
   test("should reject non-finite values", () => {
-    expect(() => ZTtlMs.parse(NaN)).toThrow("Expected number, received nan");
-    expect(() => ZTtlMs.parse(Infinity)).toThrow("TTL must be finite");
-    expect(() => ZTtlMs.parse(-Infinity)).toThrow("TTL must be finite");
+    expect(() => ZTtlMs.parse(NaN)).toThrow(/expected number.*nan/i);
+    expect(() => ZTtlMs.parse(Infinity)).toThrow(/expected number|finite/i);
+    expect(() => ZTtlMs.parse(-Infinity)).toThrow(/expected number|finite/i);
   });
 
   test("should reject non-numeric values", () => {
-    expect(() => ZTtlMs.parse("1000")).toThrow("Expected number, received string");
-    expect(() => ZTtlMs.parse(null)).toThrow("Expected number, received null");
-    expect(() => ZTtlMs.parse(undefined)).toThrow("Required");
+    expect(() => ZTtlMs.parse("1000")).toThrow(/expected number/i);
+    expect(() => ZTtlMs.parse(null)).toThrow(/expected number/i);
+    expect(() => ZTtlMs.parse(undefined)).toThrow(/expected number|required/i);
   });
 });

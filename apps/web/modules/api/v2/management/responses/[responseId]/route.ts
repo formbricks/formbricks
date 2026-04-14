@@ -5,7 +5,7 @@ import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { getWorkspaceId } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteResponse,
   getResponse,
@@ -15,7 +15,7 @@ import {
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -35,12 +35,12 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         });
       }
 
-      const environmentIdResult = await getEnvironmentId(params.responseId, true);
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error);
+      const workspaceIdResult = await getWorkspaceId(params.responseId, true);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
         });
@@ -51,7 +51,10 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, response.error as ApiErrorResponseV2);
       }
 
-      return responses.successResponse(response);
+      return responses.successResponse({
+        ...response,
+        data: { ...response.data, data: resolveStorageUrlsInObject(response.data.data) },
+      });
     },
   });
 
@@ -80,12 +83,12 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         );
       }
 
-      const environmentIdResult = await getEnvironmentId(params.responseId, true);
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error, auditLog);
+      const workspaceIdResult = await getWorkspaceId(params.responseId, true);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "DELETE")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "DELETE")) {
         return handleApiError(
           request,
           {
@@ -133,12 +136,12 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         );
       }
 
-      const environmentIdResult = await getEnvironmentId(params.responseId, true);
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error, auditLog);
+      const workspaceIdResult = await getWorkspaceId(params.responseId, true);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "PUT")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
@@ -198,7 +201,6 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         questionsResponse.data.blocks,
         body.data,
         body.language ?? "en",
-        body.finished,
         questionsResponse.data.questions
       );
 
@@ -224,7 +226,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       if (updatedResponseForPipeline.ok) {
         sendToPipeline({
           event: "responseUpdated",
-          environmentId: environmentIdResult.data,
+          workspaceId: workspaceIdResult.data.workspaceId,
           surveyId: existingResponse.data.surveyId,
           response: updatedResponseForPipeline.data,
         });
@@ -232,7 +234,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         if (response.data.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId: environmentIdResult.data,
+            workspaceId: workspaceIdResult.data.workspaceId,
             surveyId: existingResponse.data.surveyId,
             response: updatedResponseForPipeline.data,
           });
@@ -244,7 +246,10 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         auditLog.newObject = response.data;
       }
 
-      return responses.successResponse(response);
+      return responses.successResponse({
+        ...response,
+        data: { ...response.data, data: resolveStorageUrlsInObject(response.data.data) },
+      });
     },
     action: "updated",
     targetType: "response",

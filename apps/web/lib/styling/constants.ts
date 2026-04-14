@@ -1,5 +1,5 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
-import { TProjectStyling } from "@formbricks/types/project";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { isLight, mixColor } from "@/lib/utils/colors";
 
 export const COLOR_DEFAULTS = {
@@ -17,7 +17,7 @@ const DEFAULT_BRAND_COLOR = "#64748b";
 /**
  * Derives a complete set of suggested color values from a single brand color.
  *
- * Used by the project-level "Suggest Colors" button **and** to build
+ * Used by the workspace-level "Suggest Colors" button **and** to build
  * `STYLE_DEFAULTS` so that a fresh install always has colours that are
  * visually cohesive with the default brand.
  *
@@ -60,6 +60,7 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
     // Options (Radio / Checkbox)
     "optionBgColor.light": inputBg,
     "optionLabelColor.light": questionColor,
+    "optionBorderColor.light": inputBorder,
 
     // Card
     "cardBackgroundColor.light": cardBg,
@@ -90,7 +91,7 @@ const _colors = getSuggestedColors(DEFAULT_BRAND_COLOR);
  * Used everywhere: form defaults, preview rendering, email templates,
  * and as the reset target for "Restore defaults".
  */
-export const STYLE_DEFAULTS: TProjectStyling = {
+export const STYLE_DEFAULTS: TWorkspaceStyling = {
   allowStyleOverwrite: true,
   brandColor: { light: _colors["brandColor.light"] },
   questionColor: { light: _colors["questionColor.light"] },
@@ -138,6 +139,7 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   // Options
   optionBgColor: { light: _colors["optionBgColor.light"] },
   optionLabelColor: { light: _colors["optionLabelColor.light"] },
+  optionBorderColor: { light: _colors["optionBorderColor.light"] },
   optionBorderRadius: 8,
   optionPaddingX: 16,
   optionPaddingY: 16,
@@ -169,6 +171,7 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
   const q = light("questionColor");
   const b = light("brandColor");
   const i = light("inputColor");
+  const inputBorder = light("inputBorderColor");
 
   return {
     ...(q && !saved.elementHeadlineColor && { elementHeadlineColor: { light: q } }),
@@ -179,13 +182,14 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
     ...(b && !saved.buttonBgColor && { buttonBgColor: { light: b } }),
     ...(b && !saved.buttonTextColor && { buttonTextColor: { light: isLight(b) ? "#0f172a" : "#ffffff" } }),
     ...(i && !saved.optionBgColor && { optionBgColor: { light: i } }),
+    ...(inputBorder && !saved.optionBorderColor && { optionBorderColor: { light: inputBorder } }),
     ...(b && !saved.progressIndicatorBgColor && { progressIndicatorBgColor: { light: b } }),
     ...(b && !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
   };
 };
 
 /**
- * Builds a complete TProjectStyling object from a single brand color.
+ * Builds a complete TWorkspaceStyling object from a single brand color.
  *
  * Uses STYLE_DEFAULTS for all non-color properties (dimensions, weights, etc.)
  * and derives every color from the given brand color via getSuggestedColors().
@@ -193,7 +197,7 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
  * Useful when only a brand color is known (e.g. onboarding) and a fully
  * coherent styling object is needed for both preview rendering and persistence.
  */
-export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TProjectStyling => {
+export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TWorkspaceStyling => {
   const colors = getSuggestedColors(brandColor);
 
   return {
@@ -210,6 +214,7 @@ export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_CO
     inputTextColor: { light: colors["inputTextColor.light"] },
     optionBgColor: { light: colors["optionBgColor.light"] },
     optionLabelColor: { light: colors["optionLabelColor.light"] },
+    optionBorderColor: { light: colors["optionBorderColor.light"] },
     cardBackgroundColor: { light: colors["cardBackgroundColor.light"] },
     cardBorderColor: { light: colors["cardBorderColor.light"] },
     highlightBorderColor: { light: colors["highlightBorderColor.light"] },

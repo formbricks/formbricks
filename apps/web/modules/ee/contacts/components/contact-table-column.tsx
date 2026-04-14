@@ -1,6 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { TFunction } from "i18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { HighlightedText } from "@/modules/ui/components/highlighted-text";
@@ -10,12 +12,14 @@ import { TContactTableData } from "../types/contact";
 export const generateContactTableColumns = (
   searchValue: string,
   data: TContactTableData[],
-  isReadOnly: boolean
+  isReadOnly: boolean,
+  locale: TUserLocale,
+  t: TFunction
 ): ColumnDef<TContactTableData>[] => {
   const userColumn: ColumnDef<TContactTableData> = {
     id: "contactsTableUser",
     accessorKey: "contactsTableUser",
-    header: "ID",
+    header: t("common.id"),
     cell: ({ row }) => {
       const contactId = row.original.id;
       return <HighlightedText value={contactId} searchValue={searchValue} />;
@@ -25,7 +29,7 @@ export const generateContactTableColumns = (
   const userIdColumn: ColumnDef<TContactTableData> = {
     id: "userId",
     accessorKey: "userId",
-    header: "User ID",
+    header: t("common.user_id"),
     cell: ({ row }) => {
       const userId = row.original.userId;
       return <IdBadge id={userId} />;
@@ -35,7 +39,7 @@ export const generateContactTableColumns = (
   const emailColumn: ColumnDef<TContactTableData> = {
     id: "email",
     accessorKey: "email",
-    header: "Email",
+    header: t("common.email"),
     cell: ({ row }) => {
       const email = row.original.email;
       if (email) {
@@ -47,7 +51,7 @@ export const generateContactTableColumns = (
   const firstNameColumn: ColumnDef<TContactTableData> = {
     id: "firstName",
     accessorKey: "firstName",
-    header: "First Name",
+    header: t("common.first_name"),
     cell: ({ row }) => {
       const firstName = row.original.firstName;
       return <HighlightedText value={firstName} searchValue={searchValue} />;
@@ -57,7 +61,7 @@ export const generateContactTableColumns = (
   const lastNameColumn: ColumnDef<TContactTableData> = {
     id: "lastName",
     accessorKey: "lastName",
-    header: "Last Name",
+    header: t("common.last_name"),
     cell: ({ row }) => {
       const lastName = row.original.lastName;
       return <HighlightedText value={lastName} searchValue={searchValue} />;
@@ -70,10 +74,10 @@ export const generateContactTableColumns = (
           id: attr.key,
           accessorKey: attr.key,
           header: attr.name ?? attr.key,
-          cell: ({ row }) => {
+          cell: ({ row }: { row: { original: TContactTableData } }) => {
             const attribute = row.original.attributes.find((a) => a.key === attr.key);
             if (!attribute) return null;
-            const formattedValue = formatAttributeValue(attribute.value, attribute.dataType);
+            const formattedValue = formatAttributeValue(attribute.value, attribute.dataType, locale);
             return <HighlightedText value={formattedValue} searchValue={searchValue} />;
           },
         };

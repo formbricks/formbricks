@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createQuotaAction,
@@ -56,7 +57,7 @@ const AddQuotaButton = ({
           setActiveQuota(null);
         }
       }}>
-      {t("environments.surveys.edit.quotas.add_quota")}
+      {t("workspace.surveys.edit.quotas.add_quota")}
     </Button>
   );
 };
@@ -69,10 +70,11 @@ export const QuotasCard = ({
   hasResponses,
 }: QuotasCardProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [activeQuota, setActiveQuota] = useState<TSurveyQuota | null>(null);
-  const environmentId = localSurvey.environmentId;
   const [quotaToDelete, setQuotaToDelete] = useState<TSurveyQuota | null>(null);
   const [quotaResponseCount, setQuotaResponseCount] = useState(0);
   const [isDeletingQuota, setIsDeletingQuota] = useState(false);
@@ -85,10 +87,9 @@ export const QuotasCard = ({
     setIsDeletingQuota(true);
     const deleteQuotaActionResult = await deleteQuotaAction({
       quotaId: quotaId,
-      surveyId: localSurvey.id,
     });
     if (deleteQuotaActionResult?.data) {
-      toast.success(t("environments.surveys.edit.quotas.quota_deleted_successfull_toast"));
+      toast.success(t("workspace.surveys.edit.quotas.quota_deleted_successfull_toast"));
       // Clear activeQuota if we're deleting the currently active quota
       if (activeQuota?.id === quotaId) {
         setActiveQuota(null);
@@ -115,7 +116,7 @@ export const QuotasCard = ({
       quota: quotaInput,
     });
     if (duplicateQuotaActionResult?.data) {
-      toast.success(t("environments.surveys.edit.quotas.quota_duplicated_successfull_toast"));
+      toast.success(t("workspace.surveys.edit.quotas.quota_duplicated_successfull_toast"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(duplicateQuotaActionResult);
@@ -170,21 +171,20 @@ export const QuotasCard = ({
           <div className="px-3 pb-3 pt-1">
             {!isQuotasAllowed ? (
               <UpgradePrompt
-                title={t("environments.surveys.edit.quotas.upgrade_prompt_title")}
+                title={t("workspace.surveys.edit.quotas.upgrade_prompt_title")}
                 description={t("common.quotas_description")}
+                feature="quotas"
                 buttons={[
                   {
-                    text: isFormbricksCloud
-                      ? t("common.start_free_trial")
-                      : t("common.request_trial_license"),
+                    text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
+                      ? `${workspaceBasePath}/settings/billing`
                       : "https://formbricks.com/upgrade-self-hosting-license",
                   },
                   {
                     text: t("common.learn_more"),
                     href: isFormbricksCloud
-                      ? `/environments/${environmentId}/settings/billing`
+                      ? `${workspaceBasePath}/settings/billing`
                       : "https://formbricks.com/learn-more-self-hosting-license",
                   },
                 ]}
@@ -249,16 +249,16 @@ export const QuotasCard = ({
         open={!!quotaToDelete}
         setOpen={(open) => !open && setQuotaToDelete(null)}
         deleteWhat={t("common.quota")}
-        text={t("environments.surveys.edit.quotas.delete_quota_confirmation_text", {
+        text={t("workspace.surveys.edit.quotas.delete_quota_confirmation_text", {
           quotaName: `"${quotaToDelete?.name}"`,
         })}
         onDelete={() => quotaToDelete && handleQuotaDelete(quotaToDelete.id)}
         isDeleting={isDeletingQuota}
       />
       <ConfirmationModal
-        title={t("environments.surveys.edit.quotas.create_quota_for_public_survey")}
-        description={t("environments.surveys.edit.quotas.create_quota_for_public_survey_description")}
-        body={t("environments.surveys.edit.quotas.create_quota_for_public_survey_text")}
+        title={t("workspace.surveys.edit.quotas.create_quota_for_public_survey")}
+        description={t("workspace.surveys.edit.quotas.create_quota_for_public_survey_description")}
+        body={t("workspace.surveys.edit.quotas.create_quota_for_public_survey_text")}
         open={openCreateQuotaConfirmationModal}
         setOpen={setOpenCreateQuotaConfirmationModal}
         onConfirm={() => {

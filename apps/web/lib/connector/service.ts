@@ -25,7 +25,7 @@ const selectConnectorWithMappings = {
   name: true,
   type: true,
   status: true,
-  environmentId: true,
+  workspaceId: true,
   lastSyncAt: true,
   createdBy: true,
   creator: { select: { name: true } },
@@ -34,7 +34,7 @@ const selectConnectorWithMappings = {
       id: true,
       createdAt: true,
       connectorId: true,
-      environmentId: true,
+      workspaceId: true,
       surveyId: true,
       elementId: true,
       hubFieldType: true,
@@ -46,7 +46,7 @@ const selectConnectorWithMappings = {
       id: true,
       createdAt: true,
       connectorId: true,
-      environmentId: true,
+      workspaceId: true,
       sourceFieldId: true,
       targetFieldId: true,
       staticValue: true,
@@ -61,7 +61,7 @@ const selectConnector = {
   name: true,
   type: true,
   status: true,
-  environmentId: true,
+  workspaceId: true,
   lastSyncAt: true,
   createdBy: true,
 } satisfies Prisma.ConnectorSelect;
@@ -74,13 +74,13 @@ const mapConnectorWithMappings = (connector: PrismaConnectorWithCreator): TConne
 };
 
 export const getConnectorsWithMappings = reactCache(
-  async (environmentId: string, page?: number): Promise<TConnectorWithMappings[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+  async (workspaceId: string, page?: number): Promise<TConnectorWithMappings[]> => {
+    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const connectors = await prisma.connector.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         select: selectConnectorWithMappings,
         orderBy: {
@@ -101,14 +101,14 @@ export const getConnectorsWithMappings = reactCache(
 );
 
 export const getConnectorWithMappingsById = reactCache(
-  async (connectorId: string, environmentId: string): Promise<TConnectorWithMappings | null> => {
-    validateInputs([connectorId, ZId], [environmentId, ZId]);
+  async (connectorId: string, workspaceId: string): Promise<TConnectorWithMappings | null> => {
+    validateInputs([connectorId, ZId], [workspaceId, ZId]);
 
     try {
       const connector = await prisma.connector.findUnique({
         where: {
           id: connectorId,
-          environmentId,
+          workspaceId,
         },
         select: selectConnectorWithMappings,
       });
@@ -153,16 +153,16 @@ export const getConnectorsBySurveyId = reactCache(
 
 export const updateConnector = async (
   connectorId: string,
-  environmentId: string,
+  workspaceId: string,
   data: TConnectorUpdateInput
 ): Promise<TConnector> => {
-  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [environmentId, ZId]);
+  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [workspaceId, ZId]);
 
   try {
     const connector = await prisma.connector.update({
       where: {
         id: connectorId,
-        environmentId,
+        workspaceId,
       },
       data: {
         name: data.name,
@@ -184,14 +184,14 @@ export const updateConnector = async (
   }
 };
 
-export const deleteConnector = async (connectorId: string, environmentId: string): Promise<TConnector> => {
-  validateInputs([connectorId, ZId], [environmentId, ZId]);
+export const deleteConnector = async (connectorId: string, workspaceId: string): Promise<TConnector> => {
+  validateInputs([connectorId, ZId], [workspaceId, ZId]);
 
   try {
     const connector = await prisma.connector.delete({
       where: {
         id: connectorId,
-        environmentId,
+        workspaceId,
       },
       select: selectConnector,
     });
@@ -223,11 +223,11 @@ export type TFieldMappingsInput = {
 export type TMappingsInput = TFormbricksMappingsInput | TFieldMappingsInput;
 
 export const createConnectorWithMappings = async (
-  environmentId: string,
+  workspaceId: string,
   data: TConnectorCreateInput,
   mappingsInput?: TMappingsInput
 ): Promise<TConnectorWithMappings> => {
-  validateInputs([environmentId, ZId], [data, ZConnectorCreateInput]);
+  validateInputs([workspaceId, ZId], [data, ZConnectorCreateInput]);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -235,7 +235,7 @@ export const createConnectorWithMappings = async (
         data: {
           name: data.name,
           type: data.type,
-          environmentId,
+          workspaceId,
           createdBy: data.createdBy,
         },
       });
@@ -246,7 +246,7 @@ export const createConnectorWithMappings = async (
             tx.connectorFormbricksMapping.create({
               data: {
                 connectorId: connector.id,
-                environmentId,
+                workspaceId,
                 surveyId: mapping.surveyId,
                 elementId: mapping.elementId,
                 hubFieldType: mapping.hubFieldType,
@@ -261,7 +261,7 @@ export const createConnectorWithMappings = async (
             tx.connectorFieldMapping.create({
               data: {
                 connectorId: connector.id,
-                environmentId,
+                workspaceId,
                 sourceFieldId: mapping.sourceFieldId,
                 targetFieldId: mapping.targetFieldId,
                 staticValue: mapping.staticValue,
@@ -291,16 +291,16 @@ export const createConnectorWithMappings = async (
 
 export const updateConnectorWithMappings = async (
   connectorId: string,
-  environmentId: string,
+  workspaceId: string,
   data: TConnectorUpdateInput,
   mappingsInput?: TMappingsInput
 ): Promise<TConnectorWithMappings> => {
-  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [environmentId, ZId]);
+  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [workspaceId, ZId]);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
       await tx.connector.update({
-        where: { id: connectorId, environmentId },
+        where: { id: connectorId, workspaceId },
         data: {
           name: data.name,
           status: data.status,
@@ -310,7 +310,7 @@ export const updateConnectorWithMappings = async (
 
       if (mappingsInput?.type === "formbricks") {
         await tx.connectorFormbricksMapping.deleteMany({
-          where: { connectorId, environmentId },
+          where: { connectorId, workspaceId },
         });
 
         await Promise.all(
@@ -318,7 +318,7 @@ export const updateConnectorWithMappings = async (
             tx.connectorFormbricksMapping.create({
               data: {
                 connectorId,
-                environmentId,
+                workspaceId,
                 surveyId: mapping.surveyId,
                 elementId: mapping.elementId,
                 hubFieldType: mapping.hubFieldType,
@@ -329,7 +329,7 @@ export const updateConnectorWithMappings = async (
         );
       } else if (mappingsInput?.type === "field") {
         await tx.connectorFieldMapping.deleteMany({
-          where: { connectorId, environmentId },
+          where: { connectorId, workspaceId },
         });
 
         await Promise.all(
@@ -337,7 +337,7 @@ export const updateConnectorWithMappings = async (
             tx.connectorFieldMapping.create({
               data: {
                 connectorId,
-                environmentId,
+                workspaceId,
                 sourceFieldId: mapping.sourceFieldId,
                 targetFieldId: mapping.targetFieldId,
                 staticValue: mapping.staticValue,

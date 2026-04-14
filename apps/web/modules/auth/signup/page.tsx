@@ -29,7 +29,11 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { SignupForm } from "./components/signup-form";
 
-export const SignupPage = async ({ searchParams: searchParamsProps }) => {
+export const SignupPage = async ({
+  searchParams: searchParamsProps,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
   const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([

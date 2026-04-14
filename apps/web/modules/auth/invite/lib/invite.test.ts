@@ -73,7 +73,9 @@ describe("invite", () => {
         },
       };
 
-      vi.mocked(prisma.invite.findUnique).mockResolvedValue(mockInvite);
+      vi.mocked(prisma.invite.findUnique).mockResolvedValue(
+        mockInvite as unknown as Awaited<ReturnType<typeof prisma.invite.findUnique>>
+      );
 
       const result = await getInvite("test-id");
 

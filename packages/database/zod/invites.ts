@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const ZInvite = z.object({
   id: z.string(),
-  email: z.string().email(),
+  email: z.email(),
   name: z.string().nullable(),
   organizationId: z.string(),
   creatorId: z.string(),

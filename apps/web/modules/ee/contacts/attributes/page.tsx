@@ -1,38 +1,38 @@
 import { getLocale } from "@/lingodotdev/language";
+import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { AttributesTable } from "./components/attributes-table";
 import { CreateAttributeModal } from "./components/create-attribute-modal";
 
 export const AttributesPage = async ({
   params: paramsProps,
 }: {
-  params: Promise<{ environmentId: string }>;
+  params: Promise<{ workspaceId: string }>;
 }) => {
   const params = await paramsProps;
   const locale = await getLocale();
+  const t = await getTranslate();
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const [{ isReadOnly }, contactAttributeKeys] = await Promise.all([
-    getEnvironmentAuth(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
-  ]);
+  const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
 
-  const isContactsEnabled = await getIsContactsEnabled();
+  const isContactsEnabled = await getIsContactsEnabled(organization.id);
 
   return (
     <ContactsPageLayout
-      pageTitle="Contacts"
+      pageTitle={t("common.contacts")}
       activeId="attributes"
-      environmentId={params.environmentId}
+      workspaceId={params.workspaceId}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
-      cta={<CreateAttributeModal environmentId={params.environmentId} />}>
+      cta={<CreateAttributeModal workspaceId={workspace.id} />}>
       <AttributesTable
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
-        environmentId={params.environmentId}
+        workspaceId={params.workspaceId}
         locale={locale}
       />
     </ContactsPageLayout>

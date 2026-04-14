@@ -42,7 +42,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -50,8 +50,8 @@ test.describe("Survey Styling", async () => {
       await addCustomStyles.click();
     }
 
-    // --- Form styling ---
-    await openAccordion(page, "Form styling");
+    // --- Survey styling ---
+    await openAccordion(page, "Survey styling");
 
     // 1. Headlines & Descriptions
     await openAccordion(page, "Headlines & Descriptions");
@@ -132,6 +132,7 @@ test.describe("Survey Styling", async () => {
     await openAccordion(page, "Options (Radio/Checkbox)");
     await setColor(page, "Background", "dddddd");
     await setColor(page, "Label Color", "111111");
+    await setColor(page, "Border Color", "999999");
     // Note: Border Radius is reused, but we can set it here to be sure
     await setDimension(page, "Border Radius", "6");
     await setDimension(page, "Padding X", "12");
@@ -142,6 +143,7 @@ test.describe("Survey Styling", async () => {
     css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
     expect(css).toContain("--fb-option-bg-color: #dddddd");
     expect(css).toContain("--fb-option-label-color: #111111");
+    expect(css).toContain("--fb-option-border-color: #999999");
     expect(css).toContain("--fb-option-border-radius: 6px");
     expect(css).toContain("--fb-option-padding-x: 12px");
     expect(css).toContain("--fb-option-padding-y: 8px");
@@ -173,7 +175,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -182,7 +184,7 @@ test.describe("Survey Styling", async () => {
     }
 
     // Set some non-color properties BEFORE suggesting colors, so we can verify they aren't overwritten
-    await openAccordion(page, "Form styling");
+    await openAccordion(page, "Survey styling");
     await openAccordion(page, "Inputs");
     await setDimension(page, "Border Radius", "12");
     await setDimension(page, "Padding Y", "20");
@@ -262,7 +264,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Look & Feel settings
     await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/workspace\/look/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -298,12 +300,12 @@ test.describe("Survey Styling", async () => {
   test("Survey Specific Styling (Survey Editor Override)", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     // Create a new survey
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
     // Ensure Welcome Card is active so we can see it
     await page.locator("p", { hasText: "Welcome card" }).first().click({ force: true });
@@ -341,7 +343,7 @@ test.describe("Survey Styling", async () => {
     }
 
     // Apply Overrides
-    await openAccordion(page, "Form styling");
+    await openAccordion(page, "Survey styling");
     await openAccordion(page, "Headlines & Descriptions");
 
     // Override Headline Color (Blue)

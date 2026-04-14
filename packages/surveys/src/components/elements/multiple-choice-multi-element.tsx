@@ -268,6 +268,8 @@ export function MultipleChoiceMultiElement({
         exclusiveOptionIds={noneOption ? [noneOption.id] : []}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        searchPlaceholder={t("common.search")}
+        searchNoResultsText={t("common.no_results_found")}
       />
     </form>
   );

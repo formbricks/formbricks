@@ -46,7 +46,7 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   updatedAt: new Date(),
   name: "Test Survey",
   type: "link",
-  environmentId: "env-1",
+  workspaceId: "ws-1",
   createdBy: null,
   status: "draft",
   displayOption: "respondMultiple",
@@ -73,7 +73,7 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   isSingleResponsePerEmailEnabled: false,
   singleUse: null,
   pin: null,
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   surveyClosedMessage: null,
   followUps: [],
   delay: 0,
@@ -82,6 +82,8 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   recaptcha: null,
   isBackButtonHidden: false,
   metadata: {},
+  isCaptureIpEnabled: false,
+  slug: null,
 });
 
 describe("renumberBlocks", () => {

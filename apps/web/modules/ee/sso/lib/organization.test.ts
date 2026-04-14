@@ -25,22 +25,10 @@ describe("getFirstOrganization", () => {
       id: "org-1",
       name: "Test Org",
       createdAt: new Date(),
-      whitelabel: true,
+      whitelabel: null,
       updatedAt: new Date(),
-      billing: {
-        plan: "free",
-        period: "monthly",
-        periodStart: new Date(),
-        stripeCustomerId: "cus_123",
-        limits: {
-          monthly: {
-            miu: 100,
-            responses: 1000,
-          },
-          projects: 3,
-        },
-      },
-      isAIEnabled: false,
+      isAISmartToolsEnabled: false,
+      isAIDataAnalysisEnabled: false,
     };
     vi.mocked(prisma.organization.findFirst).mockResolvedValue(org);
     const result = await getFirstOrganization();

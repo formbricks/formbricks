@@ -79,7 +79,7 @@ function OpenText({
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} />
         {/* Input or Textarea */}
         <div className="space-y-1">

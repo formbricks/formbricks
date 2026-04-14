@@ -8,7 +8,7 @@ import {
   TEvaluateSegmentUserData,
   TSegmentCreateInput,
   TSegmentUpdateInput,
-  TSegmentWithSurveyNames,
+  TSegmentWithSurveyRefs,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -37,6 +37,7 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       delete: vi.fn(),
       update: vi.fn(),
+      upsert: vi.fn(),
       findFirst: vi.fn(),
     },
     survey: {
@@ -61,7 +62,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 // Helper data
-const environmentId = "test-env-id";
+const workspaceId = "workspace-id-mock";
 const segmentId = "test-segment-id";
 const surveyId = "test-survey-id";
 const attributeKey = "email";
@@ -72,21 +73,21 @@ const mockSegmentPrisma = {
   updatedAt: new Date(),
   title: "Test Segment",
   description: "This is a test segment",
-  environmentId,
+  workspaceId,
   filters: [],
   isPrivate: false,
   surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
 };
 
-const mockSegment: TSegmentWithSurveyNames = {
+const mockSegment: TSegmentWithSurveyRefs = {
   ...mockSegmentPrisma,
   surveys: [surveyId],
-  activeSurveys: ["Test Survey"],
+  activeSurveys: [{ id: surveyId, name: "Test Survey" }],
   inactiveSurveys: [],
 };
 
 const mockSegmentCreateInput = {
-  environmentId,
+  workspaceId,
   title: "New Segment",
   isPrivate: false,
   filters: [],
@@ -94,7 +95,7 @@ const mockSegmentCreateInput = {
 
 const mockSurvey = {
   id: surveyId,
-  environmentId,
+  workspaceId,
   name: "Test Survey",
   status: "inProgress",
 };
@@ -145,24 +146,24 @@ describe("Segment Service Tests", () => {
   describe("getSegments", () => {
     test("should return a list of segments", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([mockSegmentPrisma]);
-      const segments = await getSegments(environmentId);
+      const segments = await getSegments("workspace-id-mock");
       expect(segments).toEqual([mockSegment]);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId },
+        where: { workspaceId: "workspace-id-mock" },
         select: selectSegment,
       });
-      expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
+      expect(validateInputs).toHaveBeenCalledWith(["workspace-id-mock", expect.any(Object)]);
     });
 
     test("should return an empty array if no segments found", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
-      const segments = await getSegments(environmentId);
+      const segments = await getSegments("workspace-id-mock");
       expect(segments).toEqual([]);
     });
 
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
-      await expect(getSegments(environmentId)).rejects.toThrow(Error);
+      await expect(getSegments("workspace-id-mock")).rejects.toThrow(Error);
     });
   });
 
@@ -173,7 +174,7 @@ describe("Segment Service Tests", () => {
       expect(segment).toEqual(mockSegment);
       expect(prisma.segment.create).toHaveBeenCalledWith({
         data: {
-          environmentId,
+          workspaceId,
           title: mockSegmentCreateInput.title,
           description: undefined,
           isPrivate: false,
@@ -191,7 +192,7 @@ describe("Segment Service Tests", () => {
       expect(segment).toEqual(mockSegment);
       expect(prisma.segment.create).toHaveBeenCalledWith({
         data: {
-          environmentId,
+          workspaceId,
           title: inputWithSurvey.title,
           description: undefined,
           isPrivate: false,
@@ -206,6 +207,73 @@ describe("Segment Service Tests", () => {
       vi.mocked(prisma.segment.create).mockRejectedValue(new Error("DB error"));
       await expect(createSegment(mockSegmentCreateInput)).rejects.toThrow(Error);
     });
+
+    test("should upsert a private segment without surveyId", async () => {
+      const privateInput: TSegmentCreateInput = {
+        ...mockSegmentCreateInput,
+        isPrivate: true,
+      };
+      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
+      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
+      const segment = await createSegment(privateInput);
+      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
+      expect(prisma.segment.upsert).toHaveBeenCalledWith({
+        where: {
+          workspaceId_title: {
+            workspaceId,
+            title: privateInput.title,
+          },
+        },
+        create: {
+          workspaceId,
+          title: privateInput.title,
+          description: undefined,
+          isPrivate: true,
+          filters: [],
+        },
+        update: {
+          description: undefined,
+          filters: [],
+        },
+        select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
+    });
+
+    test("should upsert a private segment with surveyId", async () => {
+      const privateInputWithSurvey: TSegmentCreateInput = {
+        ...mockSegmentCreateInput,
+        isPrivate: true,
+        surveyId,
+      };
+      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
+      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
+      const segment = await createSegment(privateInputWithSurvey);
+      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
+      expect(prisma.segment.upsert).toHaveBeenCalledWith({
+        where: {
+          workspaceId_title: {
+            workspaceId,
+            title: privateInputWithSurvey.title,
+          },
+        },
+        create: {
+          workspaceId,
+          title: privateInputWithSurvey.title,
+          description: undefined,
+          isPrivate: true,
+          filters: [],
+          surveys: { connect: { id: surveyId } },
+        },
+        update: {
+          description: undefined,
+          filters: [],
+          surveys: { connect: { id: surveyId } },
+        },
+        select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("cloneSegment", () => {
@@ -219,7 +287,7 @@ describe("Segment Service Tests", () => {
       ...mockSegment,
       id: clonedSegmentId,
       title: "Copy of Test Segment (1)",
-      activeSurveys: ["Test Survey"],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
       inactiveSurveys: [],
     };
 
@@ -237,7 +305,7 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId },
+        where: { workspaceId: "workspace-id-mock" },
         select: selectSegment,
       });
       expect(prisma.segment.create).toHaveBeenCalledWith({
@@ -245,7 +313,7 @@ describe("Segment Service Tests", () => {
           title: "Copy of Test Segment (1)",
           description: mockSegment.description,
           isPrivate: mockSegment.isPrivate,
-          environmentId: mockSegment.environmentId,
+          workspaceId: mockSegment.workspaceId,
           filters: mockSegment.filters,
           surveys: { connect: { id: surveyId } },
         },
@@ -259,7 +327,7 @@ describe("Segment Service Tests", () => {
       const clonedSegment2 = {
         ...clonedSegment,
         title: "Copy of Test Segment (2)",
-        activeSurveys: ["Test Survey"],
+        activeSurveys: [{ id: surveyId, name: "Test Survey" }],
         inactiveSurveys: [],
       };
 
@@ -347,7 +415,7 @@ describe("Segment Service Tests", () => {
       title: surveyId,
       isPrivate: true,
       filters: [],
-      activeSurveys: ["Test Survey"],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
       inactiveSurveys: [],
     };
 
@@ -397,7 +465,7 @@ describe("Segment Service Tests", () => {
           isPrivate: true,
           filters: [],
           surveys: { connect: { id: surveyId } },
-          environment: { connect: { id: environmentId } },
+          workspaceId,
         },
         select: selectSegment,
       });
@@ -419,7 +487,7 @@ describe("Segment Service Tests", () => {
     const updatedSegment = {
       ...mockSegment,
       title: "Updated Segment",
-      activeSurveys: ["Test Survey"],
+      activeSurveys: [{ id: surveyId, name: "Test Survey" }],
       inactiveSurveys: [],
     };
     const updateData: TSegmentUpdateInput = { title: "Updated Segment" };
@@ -463,7 +531,7 @@ describe("Segment Service Tests", () => {
         ...updatedSegment,
         surveys: [newSurveyId],
         activeSurveys: [],
-        inactiveSurveys: ["New Survey"],
+        inactiveSurveys: [{ id: newSurveyId, name: "New Survey" }],
       };
 
       vi.mocked(prisma.segment.update).mockResolvedValue(updatedSegmentPrismaWithSurvey);
@@ -533,20 +601,20 @@ describe("Segment Service Tests", () => {
     });
 
     test("should return segments containing the attribute key", async () => {
-      const result = await getSegmentsByAttributeKey(environmentId, attributeKey);
+      const result = await getSegmentsByAttributeKey("workspace-id-mock", attributeKey);
       expect(result).toEqual([segmentWithAttrPrisma]);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { environmentId },
+        where: { workspaceId: "workspace-id-mock" },
         select: selectSegment,
       });
       expect(validateInputs).toHaveBeenCalledWith(
-        [environmentId, expect.any(Object)],
+        ["workspace-id-mock", expect.any(Object)],
         [attributeKey, expect.any(Object)]
       );
     });
 
     test("should return empty array if no segments match", async () => {
-      const result = await getSegmentsByAttributeKey(environmentId, "nonexistentKey");
+      const result = await getSegmentsByAttributeKey("workspace-id-mock", "nonexistentKey");
       expect(result).toEqual([]);
     });
 
@@ -572,13 +640,13 @@ describe("Segment Service Tests", () => {
       } as unknown as PrismaSegment;
       vi.mocked(prisma.segment.findMany).mockResolvedValue([nestedSegmentPrisma, segmentWithoutAttrPrisma]);
 
-      const result = await getSegmentsByAttributeKey(environmentId, attributeKey);
+      const result = await getSegmentsByAttributeKey("workspace-id-mock", attributeKey);
       expect(result).toEqual([nestedSegmentPrisma]);
     });
 
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
-      await expect(getSegmentsByAttributeKey(environmentId, attributeKey)).rejects.toThrow(Error);
+      await expect(getSegmentsByAttributeKey("workspace-id-mock", attributeKey)).rejects.toThrow(Error);
     });
   });
 
@@ -824,7 +892,7 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
@@ -872,7 +940,7 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
@@ -903,7 +971,7 @@ describe("Segment Service Tests", () => {
       const nonExistentSegmentId = "non-existent-segment";
 
       // Mock findUnique to return null, which causes getSegment to throw
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args) => {
+      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
         if (args?.where?.id === nonExistentSegmentId) {
           return null;
         }
@@ -1185,7 +1253,7 @@ describe("Segment Service Tests", () => {
       // compareValues will attempt ('30' as string).startsWith('3'), which should throw a TypeError
       // This TypeError should be caught by the try...catch in evaluateSegment
       await expect(evaluateSegment(userData, filters)).rejects.toThrow(TypeError); // Expect a TypeError specifically
-      expect(logger.error).toHaveBeenCalledWith("Error evaluating segment", expect.any(TypeError));
+      expect(logger.error).toHaveBeenCalledWith(expect.any(TypeError), "Error evaluating segment");
     });
   });
 });

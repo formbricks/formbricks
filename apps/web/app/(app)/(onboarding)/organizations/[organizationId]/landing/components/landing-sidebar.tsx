@@ -42,9 +42,9 @@ export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
   return (
     <aside
       className={cn(
-        "w-sidebar-collapsed z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100"
+        "z-40 flex w-sidebar-collapsed flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100"
       )}>
-      <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
+      <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
 
       <div className="flex items-center">
         <DropdownMenu>
@@ -105,7 +105,6 @@ export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
                   organizationId: organization.id,
                   redirect: true,
                   callbackUrl: "/auth/login",
-                  clearEnvironmentId: true,
                 });
               }}
               icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>

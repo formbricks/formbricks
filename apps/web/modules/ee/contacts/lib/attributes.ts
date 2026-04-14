@@ -100,7 +100,7 @@ const deleteAttributes = async (
  *
  * @param contactId - The ID of the contact to update
  * @param userId - The user ID of the contact
- * @param environmentId - The environment ID
+ * @param workspaceId - The workspace ID
  * @param contactAttributesParam - The attributes to update/create
  * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
  * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
@@ -108,7 +108,7 @@ const deleteAttributes = async (
 export const updateAttributes = async (
   contactId: string,
   userId: string,
-  environmentId: string,
+  workspaceId: string,
   contactAttributesParam: TContactAttributesInput,
   deleteRemovedAttributes: boolean = false
 ): Promise<{
@@ -121,7 +121,7 @@ export const updateAttributes = async (
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
-    [environmentId, ZId],
+    [workspaceId, ZId],
     [contactAttributesParam, ZContactAttributesInput]
   );
 
@@ -130,7 +130,12 @@ export const updateAttributes = async (
   const messages: TAttributeUpdateMessage[] = [];
   const errors: TAttributeUpdateMessage[] = [];
 
-  // Convert email and userId to strings for lookup (they should always be strings, but handle numbers gracefully)
+  // Coerce boolean values to strings (SDK may send booleans for string attributes)
+  const coercedAttributes: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(contactAttributesParam)) {
+    coercedAttributes[key] = typeof value === "boolean" ? String(value) : value;
+  }
+
   const emailValue =
     contactAttributesParam.email === null || contactAttributesParam.email === undefined
       ? null
@@ -144,9 +149,9 @@ export const updateAttributes = async (
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
       getContactAttributes(contactId),
-      getContactAttributeKeys(environmentId),
-      emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
+      getContactAttributeKeys(workspaceId),
+      emailValue ? hasEmailAttribute(emailValue, workspaceId, contactId) : Promise.resolve(null),
+      userIdValue ? hasUserIdAttribute(userIdValue, workspaceId, contactId) : Promise.resolve(null),
     ]);
 
   // Process email and userId existence early
@@ -154,7 +159,7 @@ export const updateAttributes = async (
   const userIdExists = !!existingUserIdAttribute;
 
   // Remove email and/or userId from attributes if they already exist on another contact
-  let contactAttributes = { ...contactAttributesParam };
+  let contactAttributes = { ...coercedAttributes };
 
   // Determine what the final email and userId values will be after this update
   // Only consider a value as "submitted" if it was explicitly included in the attributes
@@ -315,7 +320,7 @@ export const updateAttributes = async (
         params: { keys: invalidKeys.join(", ") },
       });
       logger.warn(
-        { environmentId, invalidKeys },
+        { workspaceId, invalidKeys },
         "SDK tried to create attributes with invalid keys - skipping"
       );
     }
@@ -341,7 +346,7 @@ export const updateAttributes = async (
 
         // Log new attribute creation with their types
         for (const { key, dataType } of preparedNewAttributes) {
-          logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
+          logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
           messages.push({ code: "new_attribute_created", params: { key, dataType } });
         }
 
@@ -354,7 +359,7 @@ export const updateAttributes = async (
                 name: formatSnakeCaseToTitleCase(key),
                 type: "custom",
                 dataType,
-                environment: { connect: { id: environmentId } },
+                workspaceId,
                 attributes: {
                   create: {
                     contactId,

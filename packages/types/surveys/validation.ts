@@ -1,5 +1,5 @@
 import { parse } from "node-html-parser";
-import { z } from "zod";
+import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
@@ -118,7 +118,7 @@ export const validateQuestionLabels = (
   languages: TSurveyLanguage[],
   questionIndex: number,
   skipArticle = false
-): z.IssueData | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
@@ -129,7 +129,8 @@ export const validateQuestionLabels = (
       fieldLabel[language.language.code] === undefined
     ) {
       return {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
+        input: fieldLabel,
         message: `The ${field} in question ${String(questionIndex + 1)} is not present for the following languages: ${language.language.code}`,
         path: ["questions", questionIndex, field],
       };
@@ -149,7 +150,8 @@ export const validateQuestionLabels = (
 
   if (invalidLanguageCodes.length) {
     return {
-      code: z.ZodIssueCode.custom,
+      code: "custom",
+      input: fieldLabel,
       message,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
@@ -166,7 +168,7 @@ export const validateCardFieldsForAllLanguages = (
   cardType: "welcome" | "end",
   endingCardIndex?: number,
   skipArticle = false
-): z.IssueData | null => {
+): z.core.$ZodRawIssue | null => {
   // fieldLabel should contain all the keys present in languages
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
@@ -182,7 +184,8 @@ export const validateCardFieldsForAllLanguages = (
       fieldLabel[language.language.code] === undefined
     ) {
       return {
-        code: z.ZodIssueCode.custom,
+        code: "custom",
+        input: fieldLabel,
         message: `The ${field} in ${cardTypeLabel} is not present for the following languages: ${language.language.code}`,
         path,
       };
@@ -202,7 +205,8 @@ export const validateCardFieldsForAllLanguages = (
 
   if (invalidLanguageCodes.length) {
     return {
-      code: z.ZodIssueCode.custom,
+      code: "custom",
+      input: fieldLabel,
       message,
       path,
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
@@ -224,7 +228,10 @@ export const findLanguageCodesForDuplicateLabels = (
   const duplicateLabels = new Set<string>();
 
   for (const language of languagesToCheck) {
-    const labelTexts = labels.map((label) => label[language].trim()).filter(Boolean);
+    const labelTexts = labels
+      .map((label) => label[language])
+      .filter((text): text is string => typeof text === "string" && text.trim().length > 0)
+      .map((text) => text.trim());
     const uniqueLabels = new Set(labelTexts);
 
     if (uniqueLabels.size !== labelTexts.length) {

@@ -47,13 +47,13 @@ export type THubTargetField = z.infer<typeof ZHubTargetField>;
 
 // Base connector schema
 export const ZConnector = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string().min(1),
   type: ZConnectorType,
   status: ZConnectorStatus,
-  environmentId: z.string().cuid2(),
+  workspaceId: z.cuid2(),
   lastSyncAt: z.date().nullable(),
   createdBy: z.string().nullable(),
 });
@@ -61,11 +61,11 @@ export type TConnector = z.infer<typeof ZConnector>;
 
 // Formbricks element mapping
 export const ZConnectorFormbricksMapping = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
-  connectorId: z.string().cuid2(),
-  environmentId: z.string().cuid2(),
-  surveyId: z.string().cuid2(),
+  connectorId: z.cuid2(),
+  workspaceId: z.cuid2(),
+  surveyId: z.cuid2(),
   elementId: z.string(),
   hubFieldType: ZHubFieldType,
   customFieldLabel: z.string().nullable(),
@@ -73,10 +73,10 @@ export const ZConnectorFormbricksMapping = z.object({
 export type TConnectorFormbricksMapping = z.infer<typeof ZConnectorFormbricksMapping>;
 
 export const ZConnectorFieldMapping = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
-  connectorId: z.string().cuid2(),
-  environmentId: z.string().cuid2(),
+  connectorId: z.cuid2(),
+  workspaceId: z.cuid2(),
   sourceFieldId: z.string(),
   targetFieldId: ZHubTargetField,
   staticValue: z.string().nullable(),
@@ -94,13 +94,13 @@ export type TConnectorWithMappings = z.infer<typeof ZConnectorWithMappings>;
 export const ZConnectorCreateInput = z.object({
   name: z.string().min(1),
   type: ZConnectorType,
-  createdBy: z.string().cuid2().optional(),
+  createdBy: z.cuid2().optional(),
 });
 export type TConnectorCreateInput = z.infer<typeof ZConnectorCreateInput>;
 
 // Create Formbricks mapping input
 export const ZConnectorFormbricksMappingCreateInput = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   elementId: z.string(),
   hubFieldType: ZHubFieldType,
   customFieldLabel: z.string().optional(),

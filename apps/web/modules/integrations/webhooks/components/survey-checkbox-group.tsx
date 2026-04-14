@@ -41,9 +41,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
               onCheckedChange={onSelectAllSurveys}
               disabled={!allowChanges}
             />
-            <span className="ml-2">
-              {t("environments.integrations.webhooks.all_current_and_new_surveys")}
-            </span>
+            <span className="ml-2">{t("workspace.integrations.webhooks.all_current_and_new_surveys")}</span>
           </label>
         </div>
         {surveys.map((survey) => (

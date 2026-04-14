@@ -2,10 +2,11 @@ import { Prisma, WebhookSource } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import { createWebhook } from "@/app/api/v1/webhooks/lib/webhook";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { validateInputs } from "@/lib/utils/validate";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import { createWebhook } from "./webhook";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -23,6 +24,10 @@ vi.mock("@/lib/crypto", () => ({
   generateWebhookSecret: vi.fn(() => "whsec_test_secret_1234567890"),
 }));
 
+vi.mock("@/lib/utils/validate-webhook-url", () => ({
+  validateWebhookUrl: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("createWebhook", () => {
   afterEach(() => {
     cleanup();
@@ -30,17 +35,17 @@ describe("createWebhook", () => {
 
   test("should create a webhook", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
       triggers: ["responseCreated"],
+      workspaceId: "workspace-id-mock",
       surveyIds: ["survey1", "survey2"],
     };
 
     const createdWebhook = {
       id: "webhook-id",
-      environmentId: "test-env-id",
+
       name: "Test Webhook",
       url: "https://example.com",
       source: "user" as WebhookSource,
@@ -64,20 +69,50 @@ describe("createWebhook", () => {
         surveyIds: webhookInput.surveyIds,
         triggers: webhookInput.triggers,
         secret: "whsec_test_secret_1234567890",
-        environment: {
-          connect: {
-            id: webhookInput.environmentId,
-          },
-        },
+        workspaceId: webhookInput.workspaceId,
       },
     });
 
     expect(result).toEqual(createdWebhook);
   });
 
+  test("should call validateWebhookUrl with the provided URL", async () => {
+    const webhookInput: TWebhookInput = {
+      name: "Test Webhook",
+      url: "https://example.com",
+      source: "user",
+      triggers: ["responseCreated"],
+      surveyIds: ["survey1"],
+      workspaceId: "workspace-id-mock",
+    };
+
+    vi.mocked(prisma.webhook.create).mockResolvedValueOnce({} as any);
+
+    await createWebhook(webhookInput);
+
+    expect(validateWebhookUrl).toHaveBeenCalledWith("https://example.com");
+  });
+
+  test("should throw InvalidInputError and skip Prisma create when URL fails SSRF validation", async () => {
+    const webhookInput: TWebhookInput = {
+      name: "Test Webhook",
+      url: "http://169.254.169.254/latest/meta-data/",
+      source: "user",
+      triggers: ["responseCreated"],
+      surveyIds: ["survey1"],
+      workspaceId: "workspace-id-mock",
+    };
+
+    vi.mocked(validateWebhookUrl).mockRejectedValueOnce(
+      new InvalidInputError("Webhook URL must not point to private or internal IP addresses")
+    );
+
+    await expect(createWebhook(webhookInput)).rejects.toThrow(InvalidInputError);
+    expect(prisma.webhook.create).not.toHaveBeenCalled();
+  });
+
   test("should throw a ValidationError if the input data does not match the ZWebhookInput schema", async () => {
     const invalidWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: 123, // Invalid URL
       source: "user" as WebhookSource,
@@ -94,12 +129,12 @@ describe("createWebhook", () => {
 
   test("should throw a DatabaseError if a PrismaClientKnownRequestError occurs", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["survey1", "survey2"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(
@@ -114,12 +149,12 @@ describe("createWebhook", () => {
 
   test("should throw a DatabaseError when provided with invalid surveyIds", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "https://example.com",
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["invalid-survey-id"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(new Error("Foreign key constraint violation"));
@@ -129,12 +164,12 @@ describe("createWebhook", () => {
 
   test("should handle edge case URLs that are technically valid but problematic", async () => {
     const webhookInput: TWebhookInput = {
-      environmentId: "test-env-id",
       name: "Test Webhook",
       url: "http://localhost:3000", // Example of a potentially problematic URL
       source: "user",
       triggers: ["responseCreated"],
       surveyIds: ["survey1", "survey2"],
+      workspaceId: "workspace-id-mock",
     };
 
     vi.mocked(prisma.webhook.create).mockRejectedValueOnce(new DatabaseError("Invalid URL"));
@@ -150,11 +185,7 @@ describe("createWebhook", () => {
         surveyIds: webhookInput.surveyIds,
         triggers: webhookInput.triggers,
         secret: "whsec_test_secret_1234567890",
-        environment: {
-          connect: {
-            id: webhookInput.environmentId,
-          },
-        },
+        workspaceId: webhookInput.workspaceId,
       },
     });
   });

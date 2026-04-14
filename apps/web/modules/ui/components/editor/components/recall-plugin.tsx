@@ -68,7 +68,7 @@ export const RecallPlugin = ({
           }
         }
       } catch (error) {
-        logger.error("Error traversing node:", error);
+        logger.error(error instanceof Error ? error : new Error(String(error)), "Error traversing node");
       }
     };
 
@@ -124,7 +124,7 @@ export const RecallPlugin = ({
       }
       node.remove();
     } catch (error) {
-      logger.error("Error replacing text node:", error);
+      logger.error(error instanceof Error ? error : new Error(String(error)), "Error replacing text node");
     }
   }, []);
 
@@ -145,7 +145,10 @@ export const RecallPlugin = ({
           recallNodes.push(...childRecallNodes);
         }
       } catch (error) {
-        logger.error("Error getting children from node:", error);
+        logger.error(
+          error instanceof Error ? error : new Error(String(error)),
+          "Error getting children from node"
+        );
       }
     }
 

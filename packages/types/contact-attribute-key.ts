@@ -9,16 +9,16 @@ export const ZContactAttributeDataType = z.enum(["string", "number", "date"]);
 export type TContactAttributeDataType = z.infer<typeof ZContactAttributeDataType>;
 
 export const ZContactAttributeKey = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  isUnique: z.boolean().default(false),
+  isUnique: z.boolean().prefault(false),
   key: z.string(),
   name: z.string().nullable(),
   description: z.string().nullable(),
   type: ZContactAttributeKeyType,
-  dataType: ZContactAttributeDataType.default("string"),
-  environmentId: z.string(),
+  dataType: ZContactAttributeDataType.prefault("string"),
+  workspaceId: z.cuid2(),
 });
 
 export type TContactAttributeKey = z.infer<typeof ZContactAttributeKey>;

@@ -24,7 +24,7 @@ export const getTeam = reactCache(async (organizationId: string, teamId: string)
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "team", issue: error.message }],
+      details: [{ field: "team", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
     });
   }
 });
@@ -40,9 +40,9 @@ export const deleteTeam = async (
         organizationId,
       },
       include: {
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
+            workspaceId: true,
           },
         },
       },
@@ -64,7 +64,7 @@ export const deleteTeam = async (
 
     return err({
       type: "internal_server_error",
-      details: [{ field: "team", issue: error.message }],
+      details: [{ field: "team", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
     });
   }
 };
@@ -82,7 +82,7 @@ export const updateTeam = async (
       },
       data: teamInput,
       include: {
-        projectTeams: { select: { projectId: true } },
+        workspaceTeams: { select: { workspaceId: true } },
       },
     });
 
@@ -101,7 +101,7 @@ export const updateTeam = async (
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "team", issue: error.message }],
+      details: [{ field: "team", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
     });
   }
 };

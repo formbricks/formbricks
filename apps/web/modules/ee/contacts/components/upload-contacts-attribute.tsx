@@ -36,7 +36,7 @@ export const UploadContactsAttributes = ({
 
   // Create a mapping of attribute IDs to their names/keys
   const attributeKeyMap: Record<string, string> = useMemo(() => {
-    return keys.reduce((acc, tag) => {
+    return keys.reduce<Record<string, string>>((acc, tag) => {
       acc[tag.value] = tag.label;
       return acc;
     }, {});
@@ -150,7 +150,7 @@ export const UploadContactsAttributes = ({
             size="normal"
             type="success"
             className="rounded-md"
-            text={t("environments.contacts.upload_contacts_modal_attributes_new")}
+            text={t("workspace.contacts.upload_contacts_modal_attributes_new")}
           />
         ) : null}
       </div>

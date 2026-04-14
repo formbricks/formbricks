@@ -6,7 +6,6 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -22,7 +21,7 @@ export const checkWhiteLabelPermission = async (organizationId: string) => {
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isWhiteLabelAllowed = await getWhiteLabelPermission(organization.billing.plan);
+  const isWhiteLabelAllowed = await getWhiteLabelPermission(organizationId);
 
   if (!isWhiteLabelAllowed) {
     throw new OperationNotAllowedError("White label is not allowed for this organization");
@@ -35,35 +34,25 @@ const ZUpdateOrganizationEmailLogoUrlAction = z.object({
 });
 
 export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient
-  .schema(ZUpdateOrganizationEmailLogoUrlAction)
+  .inputSchema(ZUpdateOrganizationEmailLogoUrlAction)
   .action(
-    withAuditLogging(
-      "updated",
-      "organization",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: Record<string, any>;
-      }) => {
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId: parsedInput.organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-          ],
-        });
+    withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
 
-        await checkWhiteLabelPermission(parsedInput.organizationId);
-        ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-        ctx.auditLoggingCtx.newObject = parsedInput.logoUrl;
-        return await updateOrganizationEmailLogoUrl(parsedInput.organizationId, parsedInput.logoUrl);
-      }
-    )
+      await checkWhiteLabelPermission(parsedInput.organizationId);
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.newObject = { logoUrl: parsedInput.logoUrl };
+      return await updateOrganizationEmailLogoUrl(parsedInput.organizationId, parsedInput.logoUrl);
+    })
   );
 
 const ZRemoveOrganizationEmailLogoUrlAction = z.object({
@@ -71,30 +60,20 @@ const ZRemoveOrganizationEmailLogoUrlAction = z.object({
 });
 
 export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
-  .schema(ZRemoveOrganizationEmailLogoUrlAction)
+  .inputSchema(ZRemoveOrganizationEmailLogoUrlAction)
   .action(
-    withAuditLogging(
-      "updated",
-      "organization",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: Record<string, any>;
-      }) => {
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId: parsedInput.organizationId,
-          access: [{ type: "organization", roles: ["owner", "manager"] }],
-        });
+    withAuditLogging("updated", "organization", async ({ ctx, parsedInput }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [{ type: "organization", roles: ["owner", "manager"] }],
+      });
 
-        await checkWhiteLabelPermission(parsedInput.organizationId);
-        ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-        ctx.auditLoggingCtx.oldObject = { logoUrl: "" };
-        return await removeOrganizationEmailLogoUrl(parsedInput.organizationId);
-      }
-    )
+      await checkWhiteLabelPermission(parsedInput.organizationId);
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.oldObject = { logoUrl: "" };
+      return await removeOrganizationEmailLogoUrl(parsedInput.organizationId);
+    })
   );
 
 const ZSendTestEmailAction = z.object({
@@ -102,7 +81,7 @@ const ZSendTestEmailAction = z.object({
 });
 
 export const sendTestEmailAction = authenticatedActionClient
-  .schema(ZSendTestEmailAction)
+  .inputSchema(ZSendTestEmailAction)
   .action(async ({ ctx, parsedInput }) => {
     const organization = await getOrganization(parsedInput.organizationId);
 

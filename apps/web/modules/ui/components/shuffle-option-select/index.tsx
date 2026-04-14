@@ -25,6 +25,8 @@ interface ShuffleOptionsTypes {
   none?: ShuffleOptionType;
   all?: ShuffleOptionType;
   exceptLast?: ShuffleOptionType;
+  reverseOrderOccasionally?: ShuffleOptionType;
+  reverseOrderExceptLast?: ShuffleOptionType;
 }
 
 interface ShuffleOptionSelectProps {
@@ -52,7 +54,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
         updateElement(elementIdx, { shuffleOption: e });
       }}>
       <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
-        <SelectValue placeholder={t("environments.surveys.edit.select_ordering")} />
+        <SelectValue placeholder={t("workspace.surveys.edit.select_ordering")} />
       </SelectTrigger>
       <SelectContent>
         {Object.values(shuffleOptionsTypes).map(

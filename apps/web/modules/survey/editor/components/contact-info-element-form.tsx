@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyContactInfoElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyContactInfoElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -17,7 +17,7 @@ interface ContactInfoElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyContactInfoElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyContactInfoElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;
@@ -45,12 +45,12 @@ export const ContactInfoElementForm = ({
   const fields = [
     {
       id: "firstName",
-      label: t("environments.surveys.edit.first_name"),
+      label: t("workspace.surveys.edit.first_name"),
       ...element.firstName,
     },
     {
       id: "lastName",
-      label: t("environments.surveys.edit.last_name"),
+      label: t("workspace.surveys.edit.last_name"),
       ...element.lastName,
     },
     {
@@ -65,7 +65,7 @@ export const ContactInfoElementForm = ({
     },
     {
       id: "company",
-      label: t("environments.surveys.edit.company"),
+      label: t("workspace.surveys.edit.company"),
       ...element.company,
     },
   ];
@@ -93,7 +93,7 @@ export const ContactInfoElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -140,7 +140,7 @@ export const ContactInfoElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
 

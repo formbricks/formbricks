@@ -1,6 +1,7 @@
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,17 +9,23 @@ import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { cache } from "@/lib/cache";
 import { handleConnectorPipeline } from "@/lib/connector/pipeline-handler";
-import { CRON_SECRET } from "@/lib/constants";
+import { CRON_SECRET, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { sendResponseFinishedEmail } from "@/modules/email";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { handleIntegrations } from "./lib/handleIntegrations";
@@ -35,7 +42,6 @@ export const POST = async (request: Request) => {
     jsonInput,
     new Set(["contactAttributes", "variables", "data", "meta"])
   );
-
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
   if (!inputValidation.success) {
@@ -50,9 +56,10 @@ export const POST = async (request: Request) => {
     );
   }
 
-  const { environmentId, surveyId, event, response } = inputValidation.data;
+  const { workspaceId, surveyId, event, response } = inputValidation.data;
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  const organization = await getOrganization(organizationId);
   if (!organization) {
     throw new ResourceNotFoundError("Organization", "Organization not found");
   }
@@ -65,19 +72,19 @@ export const POST = async (request: Request) => {
     return responses.notFoundResponse("Survey", surveyId, true);
   }
 
-  if (survey.environmentId !== environmentId) {
+  if (survey.workspaceId !== workspaceId) {
     logger.error(
-      { url: request.url, surveyId, environmentId, surveyEnvironmentId: survey.environmentId },
-      `Survey ${surveyId} does not belong to environment ${environmentId}`
+      { url: request.url, surveyId, workspaceId, surveyWorkspaceId: survey.workspaceId },
+      `Survey ${surveyId} does not belong to workspace ${workspaceId}`
     );
-    return responses.badRequestResponse("Survey not found in this environment");
+    return responses.badRequestResponse("Survey not found in this workspace");
   }
 
   // Fetch webhooks
-  const getWebhooksForPipeline = async (environmentId: string, event: PipelineTriggers, surveyId: string) => {
+  const getWebhooksForPipeline = async (workspaceId: string, event: PipelineTriggers, surveyId: string) => {
     const webhooks = await prisma.webhook.findMany({
       where: {
-        environmentId,
+        workspaceId,
         triggers: { has: event },
         OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
       },
@@ -85,7 +92,7 @@ export const POST = async (request: Request) => {
     return webhooks;
   };
 
-  const webhooks: Webhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
+  const webhooks: Webhook[] = await getWebhooksForPipeline(workspaceId, event, surveyId);
   // Prepare webhook and email promises
 
   // Fetch with timeout of 5 seconds to prevent hanging
@@ -96,12 +103,15 @@ export const POST = async (request: Request) => {
     ]);
   };
 
+  const resolvedResponseData = resolveStorageUrlsInObject(response.data);
+
   const webhookPromises = webhooks.map((webhook) => {
     const body = JSON.stringify({
       webhookId: webhook.id,
       event,
       data: {
         ...response,
+        data: resolvedResponseData,
         survey: {
           title: survey.name,
           type: survey.type,
@@ -132,27 +142,31 @@ export const POST = async (request: Request) => {
       );
     }
 
-    return fetchWithTimeout(webhook.url, {
-      method: "POST",
-      headers: requestHeaders,
-      body,
-    }).catch((error) => {
-      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
-    });
+    return validateWebhookUrl(webhook.url)
+      .then(() =>
+        fetchWithTimeout(webhook.url, {
+          method: "POST",
+          headers: requestHeaders,
+          body,
+        })
+      )
+      .catch((error) => {
+        logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
+      });
   });
 
   if (event === "responseFinished") {
     // Handle connector pipeline for Hub integration (only on responseFinished to avoid duplicates)
     // This sends response data to the Hub for configured connectors
     try {
-      await handleConnectorPipeline(response, survey, environmentId);
+      await handleConnectorPipeline(response, survey, workspaceId);
     } catch (error) {
       // Log but don't throw - connector failures shouldn't break the main pipeline
       logger.error({ error, surveyId, responseId: response.id }, "Connector pipeline failed");
     }
     // Fetch integrations and responseCount in parallel
     const [integrations, responseCount] = await Promise.all([
-      getIntegrations(environmentId),
+      getIntegrations(workspaceId),
       getResponseCountBySurveyId(surveyId),
     ]);
 
@@ -161,17 +175,14 @@ export const POST = async (request: Request) => {
     }
 
     // Fetch users with notifications in a single query
-    // TODO: add cache for this query. Not possible at the moment since we can't get the membership cache by environmentId
     const usersWithNotifications = await prisma.user.findMany({
       where: {
         memberships: {
           some: {
             organization: {
-              projects: {
+              workspaces: {
                 some: {
-                  environments: {
-                    some: { id: environmentId },
-                  },
+                  id: workspaceId,
                 },
               },
             },
@@ -191,14 +202,10 @@ export const POST = async (request: Request) => {
             teamUsers: {
               some: {
                 team: {
-                  projectTeams: {
+                  workspaceTeams: {
                     some: {
-                      project: {
-                        environments: {
-                          some: {
-                            id: environmentId,
-                          },
-                        },
+                      workspace: {
+                        id: workspaceId,
                       },
                     },
                   },
@@ -227,19 +234,14 @@ export const POST = async (request: Request) => {
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(
-        user.email,
-        user.locale,
-        environmentId,
-        survey,
-        response,
-        responseCount
-      ).catch((error) => {
-        logger.error(
-          { error, url: request.url, userEmail: user.email },
-          `Failed to send email to ${user.email}`
-        );
-      })
+      sendResponseFinishedEmail(user.email, user.locale, workspaceId, survey, response, responseCount).catch(
+        (error) => {
+          logger.error(
+            { error, url: request.url, userEmail: user.email },
+            `Failed to send email to ${user.email}`
+          );
+        }
+      )
     );
 
     // Update survey status if necessary
@@ -290,6 +292,35 @@ export const POST = async (request: Request) => {
     });
   }
   if (event === "responseCreated") {
+    recordResponseCreatedMeterEvent({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      responseId: response.id,
+      createdAt: response.createdAt,
+    }).catch((error) => {
+      logger.error({ error, responseId: response.id }, "Failed to record response meter event");
+    });
+
+    // Sampled PostHog tracking: first response + every 100th
+    if (POSTHOG_KEY) {
+      const responseCount = await cache.withCache(
+        () => getResponseCountBySurveyId(surveyId),
+        createCacheKey.response.countBySurveyId(surveyId),
+        60 * 1000
+      );
+
+      if (responseCount === 1 || responseCount % 100 === 0) {
+        capturePostHogEvent(organization.id, "survey_response_received", {
+          survey_id: surveyId,
+          survey_type: survey.type,
+          organization_id: organization.id,
+          environment_id: workspaceId,
+          response_count: responseCount,
+          is_first_response: responseCount === 1,
+          milestone: responseCount === 1 ? "first" : String(responseCount),
+        });
+      }
+    }
+
     // Send telemetry events
     await sendTelemetryEvents();
   }

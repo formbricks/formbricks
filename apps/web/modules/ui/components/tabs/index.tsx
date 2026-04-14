@@ -63,12 +63,10 @@ function Tabs({ className, ...props }: TabsProps) {
 }
 
 interface TabsListProps
-  extends React.ComponentProps<typeof TabsPrimitive.List>,
-    VariantProps<typeof tabsVariants> {}
+  extends React.ComponentProps<typeof TabsPrimitive.List>, VariantProps<typeof tabsVariants> {}
 
 interface TabsTriggerProps
-  extends React.ComponentProps<typeof TabsPrimitive.Trigger>,
-    VariantProps<typeof tabsTriggerVariants> {
+  extends React.ComponentProps<typeof TabsPrimitive.Trigger>, VariantProps<typeof tabsTriggerVariants> {
   readonly icon?: React.ReactNode;
   readonly showIcon?: boolean;
 }

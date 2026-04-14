@@ -9,6 +9,7 @@
     "finish": "Finalizar",
     "language_switch": "Cambio de idioma",
     "next": "Siguiente",
+    "no_results_found": "No se encontraron resultados",
     "open_in_new_tab": "Abrir en nueva pestaña",
     "people_responded": "{count, plural, one {1 persona respondió} other {{count} personas respondieron}}",
     "please_retry_now_or_try_again_later": "Por favor, inténtalo ahora o prueba más tarde.",
@@ -21,6 +22,7 @@
     "respondents_will_not_see_this_card": "Los encuestados no verán esta tarjeta",
     "retry": "Reintentar",
     "retrying": "Reintentando...",
+    "search": "Buscar...",
     "select_option": "Selecciona una opción",
     "select_options": "Selecciona opciones",
     "sending_responses": "Enviando respuestas...",
@@ -43,7 +45,9 @@
       "file_size_exceeded_alert": "El archivo debe ser menor de {maxSizeInMB} MB",
       "no_valid_file_types_selected": "No se han seleccionado tipos de archivo válidos. Por favor, selecciona un tipo de archivo válido.",
       "only_one_file_can_be_uploaded_at_a_time": "Solo se puede subir un archivo a la vez.",
+      "placeholder_text": "Haz clic o arrastra para subir archivos",
       "upload_failed": "¡Subida fallida! Por favor, inténtalo de nuevo.",
+      "uploading": "Subiendo...",
       "you_can_only_upload_a_maximum_of_files": "Solo puedes subir un máximo de {FILE_LIMIT} archivos."
     },
     "invalid_device_error": {

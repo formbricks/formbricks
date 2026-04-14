@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
+import type { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
-import { TProject } from "@formbricks/types/project";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TTemplate } from "@formbricks/types/templates";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -12,12 +12,12 @@ vi.mock("@/lib/pollyfills/structuredClone", () => ({
 }));
 
 describe("Template utils", () => {
-  test("replacePresetPlaceholders replaces project name in template with blocks", () => {
+  test("replacePresetPlaceholders replaces workspace name in template with blocks", () => {
     const mockTemplate: TTemplate = {
       name: "Test Template",
       description: "Template description",
       preset: {
-        name: "$[projectName] Feedback",
+        name: "$[workspaceName] Feedback",
         welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
         blocks: [
           {
@@ -28,7 +28,7 @@ describe("Template utils", () => {
                 id: "elem1",
                 type: "openText",
                 headline: {
-                  default: "How would you rate $[projectName]?",
+                  default: "How would you rate $[workspaceName]?",
                 },
                 required: false,
                 inputType: "text",
@@ -41,11 +41,11 @@ describe("Template utils", () => {
       } as any,
     };
 
-    const mockProject = {
+    const mockWorkspace = {
       name: "TestProject",
     };
 
-    const result = replacePresetPlaceholders(mockTemplate, mockProject);
+    const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
 
     expect(structuredClone).toHaveBeenCalledWith(mockTemplate.preset);
     expect(result.preset.name).toBe("TestProject Feedback");
@@ -53,7 +53,7 @@ describe("Template utils", () => {
   });
 
   test("getChannelMapping returns correct channel mappings", () => {
-    const mockT = vi.fn((key) => key);
+    const mockT = vi.fn((key: string) => key) as unknown as TFunction;
 
     const result = getChannelMapping(mockT);
 
@@ -68,7 +68,7 @@ describe("Template utils", () => {
   });
 
   test("getIndustryMapping returns correct industry mappings", () => {
-    const mockT = vi.fn((key) => key);
+    const mockT = vi.fn((key: string) => key) as unknown as TFunction;
 
     const result = getIndustryMapping(mockT);
 
@@ -83,7 +83,7 @@ describe("Template utils", () => {
   });
 
   test("getRoleMapping returns correct role mappings", () => {
-    const mockT = vi.fn((key) => key);
+    const mockT = vi.fn((key: string) => key) as unknown as TFunction;
 
     const result = getRoleMapping(mockT);
 

@@ -7,7 +7,24 @@
   },
   "locale": {
     "source": "en",
-    "targets": ["ar", "de", "es", "fr", "hi", "hu", "it", "ja", "nl", "pt", "ro", "ru", "sv", "uz", "zh-Hans"]
+    "targets": [
+      "ar",
+      "da",
+      "de",
+      "es",
+      "fr",
+      "hi",
+      "hu",
+      "it",
+      "ja",
+      "nl",
+      "pt",
+      "ro",
+      "ru",
+      "sv",
+      "uz",
+      "zh-Hans"
+    ]
   },
   "version": 1.8
 }

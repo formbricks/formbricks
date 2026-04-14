@@ -51,11 +51,9 @@ packages/surveys/
 ### Step-by-Step Setup
 
 1. **Join the Formbricks Team**
-
    - Join the Formbricks team on Lingo.dev
 
 2. **Get Your API Key**
-
    - In the sidebar, go to **Projects** and open the default project
    - Navigate to the **Settings** tab
    - Copy the API key
@@ -66,7 +64,7 @@ packages/surveys/
 
    ```bash
    # packages/surveys/.env
-   LINGODOTDEV_API_KEY=<YOUR_API_KEY>
+   LINGO_API_KEY=<YOUR_API_KEY>
    ```
 
 4. **Generate Translations**

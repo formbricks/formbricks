@@ -5,7 +5,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const getContactByUserId = async (
-  environmentId: string,
+  workspaceId: string,
   userId: string
 ): Promise<
   Result<
@@ -23,7 +23,7 @@ export const getContactByUserId = async (
           some: {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },
@@ -44,10 +44,10 @@ export const getContactByUserId = async (
       return ok(null);
     }
 
-    const contactAttributes = contact.attributes.reduce((acc, attr) => {
+    const contactAttributes = contact.attributes.reduce<TContactAttributes>((acc, attr) => {
       acc[attr.attributeKey.key] = attr.value;
       return acc;
-    }, {}) as TContactAttributes;
+    }, {});
 
     return ok({
       id: contact.id,
@@ -56,7 +56,9 @@ export const getContactByUserId = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "contact", issue: error.message }],
+      details: [
+        { field: "contact", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

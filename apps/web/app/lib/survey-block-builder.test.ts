@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { createI18nString } from "@/lib/i18n/utils";
 import { buildBlock } from "./survey-block-builder";
 
@@ -15,16 +15,16 @@ const mockT = vi.fn((key: string) => {
 
 describe("survey-block-builder", () => {
   describe("buildBlock", () => {
-    const mockElements = [
+    const mockElements: TSurveyElement[] = [
       {
         id: "element-1",
         type: TSurveyElementTypeEnum.OpenText,
         headline: createI18nString("Test Question", []),
         required: false,
-        inputType: "text",
+        inputType: "text" as const,
         longAnswer: false,
         charLimit: { enabled: false },
-      },
+      } as TSurveyElement,
     ];
 
     test("should use getDefaultButtonLabel when buttonLabel is provided", () => {

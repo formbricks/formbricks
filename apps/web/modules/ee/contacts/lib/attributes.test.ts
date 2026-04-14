@@ -37,7 +37,7 @@ vi.mock("@formbricks/database", () => ({
 
 const contactId = "contact-1";
 const userId = "user-1";
-const environmentId = "env-1";
+const workspaceId = "workspace-1";
 
 const attributeKeys: TContactAttributeKey[] = [
   {
@@ -49,7 +49,8 @@ const attributeKeys: TContactAttributeKey[] = [
     name: "Name",
     description: null,
     type: "default",
-    environmentId,
+    dataType: "string",
+    workspaceId: workspaceId,
   },
   {
     id: "key-2",
@@ -60,7 +61,8 @@ const attributeKeys: TContactAttributeKey[] = [
     name: "Email",
     description: null,
     type: "default",
-    environmentId,
+    dataType: "string",
+    workspaceId: workspaceId,
   },
   {
     id: "key-3",
@@ -71,7 +73,8 @@ const attributeKeys: TContactAttributeKey[] = [
     name: "Custom Attribute",
     description: null,
     type: "custom",
-    environmentId,
+    dataType: "string",
+    workspaceId: workspaceId,
   },
 ];
 
@@ -93,7 +96,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.success).toBe(true);
     expect(result.messages).toBeUndefined();
@@ -107,7 +110,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -126,7 +129,8 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
@@ -136,7 +140,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", userId: "duplicate-user-id" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -156,7 +160,8 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
@@ -170,7 +175,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "duplicate@example.com", userId: "duplicate-user-id" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -190,7 +195,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -206,7 +211,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     // Include email to satisfy the "at least one of email or userId" requirement
     const attributes = { name: "John", email: "john@example.com", new_attr: "val" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages?.[0]).toEqual(
       expect.objectContaining({
@@ -224,7 +229,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { email: "updated@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages).toBeUndefined();
   });
@@ -245,7 +250,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 1 });
     const attributes = { name: "John", email: "john@example.com" };
     // Pass deleteRemovedAttributes: true to enable deletion behavior
-    const result = await updateAttributes(contactId, userId, environmentId, attributes, true);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes, true);
     // Only customAttr (key-3) should be deleted, not name (key-1) or email (key-2)
     expect(prisma.contactAttribute.deleteMany).toHaveBeenCalledWith({
       where: {
@@ -273,7 +278,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     const attributes = { name: "John", email: "john@example.com" };
     // Default behavior (deleteRemovedAttributes: false) should NOT delete existing attributes
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     // deleteMany should NOT be called since we're merging, not replacing
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
     expect(result.success).toBe(true);
@@ -295,7 +300,8 @@ describe("updateAttributes", () => {
         name: "Email",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
       {
         id: "key-4",
@@ -306,7 +312,8 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
       {
         id: "key-5",
@@ -317,7 +324,8 @@ describe("updateAttributes", () => {
         name: "First Name",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
       {
         id: "key-3",
@@ -328,7 +336,8 @@ describe("updateAttributes", () => {
         name: "Custom Attribute",
         description: null,
         type: "custom",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithDefaults);
@@ -343,7 +352,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { customAttr: "value" };
     // Pass deleteRemovedAttributes: true to test that default attributes are still preserved
-    const result = await updateAttributes(contactId, userId, environmentId, attributes, true);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes, true);
     // Should not delete default attributes (email, userId, firstName) - deleteMany should not be called
     // since all current attributes are default attributes
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
@@ -360,7 +369,7 @@ describe("updateAttributes", () => {
 
     // Attempt to clear email by submitting empty string
     const attributes = { name: "John", email: "" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     // Verify that the transaction was called with the preserved email
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -382,7 +391,8 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
@@ -394,7 +404,7 @@ describe("updateAttributes", () => {
 
     // Clear userId by submitting empty string - this should be allowed
     const attributes = { name: "John", userId: "" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     // Verify that the transaction was called
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -416,7 +426,8 @@ describe("updateAttributes", () => {
         name: "User ID",
         description: null,
         type: "default",
-        environmentId,
+        dataType: "string",
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithBoth);
@@ -432,9 +443,27 @@ describe("updateAttributes", () => {
 
     // Attempt to clear both email and userId
     const attributes = { name: "John", email: "", userId: "" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     expect(result.success).toBe(true);
     expect(result.messages).toContainEqual({ code: "email_or_userid_required", params: {} });
+  });
+
+  test("coerces boolean attribute values to strings", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    const attributes = { name: true, email: "john@example.com" };
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
+
+    expect(result.success).toBe(true);
+    expect(prisma.$transaction).toHaveBeenCalled();
+    const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
+    // Both name (coerced from boolean) and email should be upserted
+    expect(transactionCall).toHaveLength(2);
   });
 });

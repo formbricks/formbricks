@@ -5,8 +5,8 @@ import { Logger } from "@/lib/common/logger";
 import {
   mockAppUrl,
   mockAttributes,
-  mockEnvironmentId,
   mockUserId,
+  mockWorkspaceId,
 } from "@/lib/user/tests/__mocks__/update.mock";
 import { sendUpdates, sendUpdatesToBackend } from "@/lib/user/update";
 import { type TUpdates } from "@/types/config";
@@ -34,9 +34,9 @@ vi.mock("@/lib/common/utils", () => ({
 }));
 
 vi.mock("@/lib/common/api", () => ({
-  ApiClient: vi.fn().mockImplementation(() => ({
-    createOrUpdateUserUser: vi.fn(),
-  })),
+  ApiClient: vi.fn(function MockApiClient(this: { createOrUpdateUser: ReturnType<typeof vi.fn> }) {
+    this.createOrUpdateUser = vi.fn();
+  }),
 }));
 
 describe("sendUpdatesToBackend", () => {
@@ -57,13 +57,15 @@ describe("sendUpdatesToBackend", () => {
       },
     };
 
-    (ApiClient as Mock).mockImplementation(() => ({
-      createOrUpdateUser: vi.fn().mockResolvedValue(mockResponse),
-    }));
+    (ApiClient as Mock).mockImplementation(function MockApiClient() {
+      return {
+        createOrUpdateUser: vi.fn().mockResolvedValue(mockResponse),
+      };
+    });
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       updates: { userId: mockUserId, attributes: mockAttributes },
     });
 
@@ -76,16 +78,18 @@ describe("sendUpdatesToBackend", () => {
   test("returns network error if API call fails", async () => {
     const mockUpdates: TUpdates = { userId: mockUserId, attributes: mockAttributes };
 
-    (ApiClient as Mock).mockImplementation(() => ({
-      createOrUpdateUser: vi.fn().mockResolvedValue({
-        ok: false,
-        error: { code: "network_error", message: "Request failed", status: 500 },
-      }),
-    }));
+    (ApiClient as Mock).mockImplementation(function MockApiClient() {
+      return {
+        createOrUpdateUser: vi.fn().mockResolvedValue({
+          ok: false,
+          error: { code: "network_error", message: "Request failed", status: 500 },
+        }),
+      };
+    });
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       updates: mockUpdates,
     });
 
@@ -99,13 +103,15 @@ describe("sendUpdatesToBackend", () => {
   test("returns error if network request fails", async () => {
     const mockUpdates: TUpdates = { userId: mockUserId, attributes: { plan: "premium" } };
 
-    (ApiClient as Mock).mockImplementation(() => ({
-      createOrUpdateUser: vi.fn().mockRejectedValue(new Error("Network error")),
-    }));
+    (ApiClient as Mock).mockImplementation(function MockApiClient() {
+      return {
+        createOrUpdateUser: vi.fn().mockRejectedValue(new Error("Network error")),
+      };
+    });
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       updates: mockUpdates,
     });
 
@@ -122,8 +128,8 @@ describe("sendUpdates", () => {
     (Config.getInstance as Mock).mockImplementation(() => ({
       get: vi.fn().mockReturnValue({
         appUrl: mockAppUrl,
-        environmentId: mockEnvironmentId,
-        environment: {
+        workspaceId: mockWorkspaceId,
+        workspace: {
           data: {
             surveys: [],
           },
@@ -151,9 +157,11 @@ describe("sendUpdates", () => {
       },
     };
 
-    (ApiClient as Mock).mockImplementation(() => ({
-      createOrUpdateUser: vi.fn().mockResolvedValue(mockResponse),
-    }));
+    (ApiClient as Mock).mockImplementation(function MockApiClient() {
+      return {
+        createOrUpdateUser: vi.fn().mockResolvedValue(mockResponse),
+      };
+    });
 
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
 
@@ -173,9 +181,11 @@ describe("sendUpdates", () => {
       },
     };
 
-    (ApiClient as Mock).mockImplementation(() => ({
-      createOrUpdateUser: vi.fn().mockResolvedValue(mockErrorResponse),
-    }));
+    (ApiClient as Mock).mockImplementation(function MockApiClient() {
+      return {
+        createOrUpdateUser: vi.fn().mockResolvedValue(mockErrorResponse),
+      };
+    });
 
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
 
@@ -186,9 +196,11 @@ describe("sendUpdates", () => {
   });
 
   test("handles unexpected errors", async () => {
-    (ApiClient as Mock).mockImplementation(() => ({
-      createOrUpdateUser: vi.fn().mockRejectedValue(new Error("Unexpected error")),
-    }));
+    (ApiClient as Mock).mockImplementation(function MockApiClient() {
+      return {
+        createOrUpdateUser: vi.fn().mockRejectedValue(new Error("Unexpected error")),
+      };
+    });
 
     const result = await sendUpdates({ updates: { userId: mockUserId, attributes: mockAttributes } });
 

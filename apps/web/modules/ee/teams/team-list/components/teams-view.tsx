@@ -1,10 +1,11 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
-import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
+import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 import { getMembersByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
@@ -13,7 +14,7 @@ interface TeamsViewProps {
   membershipRole?: TOrganizationRole;
   currentUserId: string;
   isAccessControlAllowed: boolean;
-  environmentId: string;
+  workspaceId: string;
 }
 
 export const TeamsView = async ({
@@ -21,25 +22,26 @@ export const TeamsView = async ({
   membershipRole,
   currentUserId,
   isAccessControlAllowed,
-  environmentId,
+  workspaceId,
 }: TeamsViewProps) => {
   const t = await getTranslate();
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
 
-  const [teams, orgMembers, orgProjects] = await Promise.all([
+  const [teams, orgMembers, orgWorkspaces] = await Promise.all([
     getTeams(currentUserId, organizationId),
     getMembersByOrganizationId(organizationId),
-    getProjectsByOrganizationId(organizationId),
+    getWorkspacesByOrganizationId(organizationId),
   ]);
 
   if (!teams) {
-    throw new Error(t("common.teams_not_found"));
+    throw new ResourceNotFoundError(t("common.teams"), null);
   }
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
+      text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
     },
     {
@@ -50,22 +52,23 @@ export const TeamsView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.teams.teams")}
-      description={t("environments.settings.teams.teams_description")}>
+      title={t("workspace.settings.teams.teams")}
+      description={t("workspace.settings.teams.teams_description")}>
       {isAccessControlAllowed ? (
         <TeamsTable
           teams={teams}
           membershipRole={membershipRole}
           organizationId={organizationId}
           orgMembers={orgMembers}
-          orgProjects={orgProjects}
+          orgWorkspaces={orgWorkspaces}
           currentUserId={currentUserId}
         />
       ) : (
         <UpgradePrompt
-          title={t("environments.settings.teams.unlock_teams_title")}
-          description={t("environments.settings.teams.unlock_teams_description")}
+          title={t("workspace.settings.teams.unlock_teams_title")}
+          description={t("workspace.settings.teams.unlock_teams_description")}
           buttons={buttons}
+          feature="teams"
         />
       )}
     </SettingsCard>

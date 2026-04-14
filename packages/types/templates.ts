@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ZProjectConfigChannel, ZProjectConfigIndustry } from "./project";
 import { ZSurveyBlocks } from "./surveys/blocks";
 import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyStyling, ZSurveyWelcomeCard } from "./surveys/types";
+import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "./workspace";
 
 export const ZTemplateRole = z.enum([
   "productManager",
@@ -22,7 +22,7 @@ export const ZTemplate = z.object({
   preset: z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,
-    blocks: ZSurveyBlocks.default([]),
+    blocks: ZSurveyBlocks.prefault([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
   }),
@@ -40,8 +40,8 @@ export const ZXMTemplate = z.object({
 export type TXMTemplate = z.infer<typeof ZXMTemplate>;
 
 export const ZTemplateFilter = z.union([
-  ZProjectConfigChannel,
-  ZProjectConfigIndustry,
+  ZWorkspaceConfigChannel,
+  ZWorkspaceConfigIndustry,
   ZTemplateRole,
   z.null(),
 ]);

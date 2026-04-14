@@ -1,7 +1,7 @@
 import "server-only";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
@@ -13,15 +13,13 @@ import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/t
 import { isValidVideoUrl } from "@/lib/utils/video-upload";
 import { isValidImageFile } from "@/modules/storage/utils";
 
-export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
-  surveyPrisma: any
-): T => {
+export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurvey>(surveyPrisma: any): T => {
   let segment: TSegment | null = null;
 
   if (surveyPrisma.segment) {
     segment = {
       ...surveyPrisma.segment,
-      surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+      surveys: surveyPrisma.segment.surveys.map((survey: { id: string }) => survey.id),
     };
   }
 

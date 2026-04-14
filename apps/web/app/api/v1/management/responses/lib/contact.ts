@@ -5,7 +5,7 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 
 export const getContactByUserId = reactCache(
   async (
-    environmentId: string,
+    workspaceId: string,
     userId: string
   ): Promise<{
     id: string;
@@ -17,7 +17,7 @@ export const getContactByUserId = reactCache(
           some: {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },
@@ -38,10 +38,10 @@ export const getContactByUserId = reactCache(
       return null;
     }
 
-    const contactAttributes = contact.attributes.reduce((acc, attr) => {
+    const contactAttributes = contact.attributes.reduce<TContactAttributes>((acc, attr) => {
       acc[attr.attributeKey.key] = attr.value;
       return acc;
-    }, {}) as TContactAttributes;
+    }, {});
 
     return {
       id: contact.id,

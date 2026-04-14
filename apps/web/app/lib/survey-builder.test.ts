@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import {
   buildSurvey,
@@ -7,7 +8,8 @@ import {
   hiddenFieldsDefault,
 } from "./survey-builder";
 
-const mockT = (props: any): string => (typeof props === "string" ? props : props.key);
+const mockT = ((props: string | { key: string }): string =>
+  typeof props === "string" ? props : props.key) as unknown as TFunction;
 
 describe("Survey Builder", () => {
   describe("Helper Functions", () => {
@@ -38,8 +40,7 @@ describe("Survey Builder", () => {
     });
 
     test("getDefaultEndingCard returns expected ending card", () => {
-      const languages: string[] = [];
-      const endingCard = getDefaultEndingCard(languages, mockT);
+      const endingCard = getDefaultEndingCard([], mockT);
       expect(endingCard).toMatchObject({
         type: "endScreen",
         headline: { default: "templates.default_ending_card_headline" },

@@ -3,13 +3,13 @@ import { ZodIssue, z } from "zod";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { type TOrganizationRole } from "@formbricks/types/memberships";
 import { getMembershipRole } from "@/lib/membership/hooks/actions";
-import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
-import { type TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { getTeamRoleByTeamIdUserId, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { type TTeamRole } from "@/modules/ee/teams/team-list/types/team";
+import { type TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
   return {
-    ...issues.reduce((acc, issue) => {
+    ...issues.reduce<Record<string, { _errors: string[] }>>((acc, issue) => {
       acc[issue.path.join(".")] = {
         _errors: [issue.message],
       };
@@ -26,9 +26,9 @@ export type TAccess<T extends z.ZodRawShape> =
       roles: TOrganizationRole[];
     }
   | {
-      type: "projectTeam";
+      type: "workspaceTeam";
       minPermission?: TTeamPermission;
-      projectId: string;
+      workspaceId: string;
     }
   | {
       type: "team";
@@ -63,13 +63,14 @@ const checkOrganizationAccess = <T extends z.ZodRawShape>(
   return accessItem.roles.includes(role);
 };
 
-const checkProjectTeamAccess = async (accessItem: any, userId: string) => {
-  if (accessItem.type !== "projectTeam") return false;
-  const projectPermission = await getProjectPermissionByUserId(userId, accessItem.projectId);
-  if (!projectPermission) return false;
+const checkWorkspaceTeamAccess = async (accessItem: any, userId: string) => {
+  if (accessItem.type !== "workspaceTeam") return false;
+  const workspacePermission = await getWorkspacePermissionByUserId(userId, accessItem.workspaceId);
+  if (!workspacePermission) return false;
   if (
     accessItem.minPermission !== undefined &&
-    teamPermissionWeight[projectPermission] < teamPermissionWeight[accessItem.minPermission]
+    teamPermissionWeight[workspacePermission as keyof typeof teamPermissionWeight] <
+      teamPermissionWeight[accessItem.minPermission as keyof typeof teamPermissionWeight]
   ) {
     return false;
   }
@@ -82,7 +83,8 @@ const checkTeamAccess = async (accessItem: any, userId: string) => {
   if (!teamRole) return false;
   if (
     accessItem.minPermission !== undefined &&
-    teamRoleWeight[teamRole] < teamRoleWeight[accessItem.minPermission]
+    teamRoleWeight[teamRole as keyof typeof teamRoleWeight] <
+      teamRoleWeight[accessItem.minPermission as keyof typeof teamRoleWeight]
   ) {
     return false;
   }
@@ -107,7 +109,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
       if (orgResult) return orgResult; // validation error
     }
 
-    if (accessItem.type === "projectTeam" && (await checkProjectTeamAccess(accessItem, userId))) {
+    if (accessItem.type === "workspaceTeam" && (await checkWorkspaceTeamAccess(accessItem, userId))) {
       return true;
     }
 

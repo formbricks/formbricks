@@ -278,11 +278,12 @@ export function BlockConditional({
     if (hasValidationErrors) {
       setElementErrors(errorMap);
 
-      // Find the first element with an error and scroll to it
+      // Find the first element with an error and scroll to its input area (not the headline)
       const firstErrorElementId = Object.keys(errorMap)[0];
       const form = elementFormRefs.current.get(firstErrorElementId);
       if (form) {
-        form.scrollIntoView({ behavior: "smooth", block: "center" });
+        const scrollTarget = form.querySelector("[data-element-input]") ?? form;
+        scrollTarget.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       return;
     }
@@ -290,7 +291,8 @@ export function BlockConditional({
     // Also run legacy validation for elements not yet migrated to centralized validation
     const firstInvalidForm = findFirstInvalidForm();
     if (firstInvalidForm) {
-      firstInvalidForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      const scrollTarget = firstInvalidForm.querySelector("[data-element-input]") ?? firstInvalidForm;
+      scrollTarget.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 

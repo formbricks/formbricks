@@ -123,7 +123,7 @@ export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.
 // Attribute filter -> root will always have type "attribute"
 export const ZSegmentAttributeFilter = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   root: z.object({
     type: z.literal("attribute"),
     contactAttributeKey: z.string(),
@@ -137,7 +137,7 @@ export type TSegmentAttributeFilter = z.infer<typeof ZSegmentAttributeFilter>;
 
 // Person filter -> root will always have type "person"
 export const ZSegmentPersonFilter = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   root: z.object({
     type: z.literal("person"),
     personIdentifier: z.string(),
@@ -151,7 +151,7 @@ export type TSegmentPersonFilter = z.infer<typeof ZSegmentPersonFilter>;
 
 // Segment filter -> root will always have type "segment"
 export const ZSegmentSegmentFilter = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   root: z.object({
     type: z.literal("segment"),
     segmentId: z.string(),
@@ -165,7 +165,7 @@ export type TSegmentSegmentFilter = z.infer<typeof ZSegmentSegmentFilter>;
 
 // Device filter -> root will always have type "device"
 export const ZSegmentDeviceFilter = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   root: z.object({
     type: z.literal("device"),
     deviceType: z.string(),
@@ -226,7 +226,7 @@ export const ZSegmentFilter = z
       return true;
     },
     {
-      message:
+      error:
         "Value must be a string for string operators, a number for arithmetic operators, and an object for relative date operators",
     }
   )
@@ -272,7 +272,7 @@ export const ZSegmentFilter = z
       return true;
     },
     {
-      message: "Invalid value for filters: please check your filter values",
+      error: "Invalid value for filters: please check your filter values",
     }
   );
 
@@ -292,7 +292,7 @@ export type TBaseFilters = TBaseFilter[];
 
 export const ZBaseFilter: z.ZodType<TBaseFilter> = z.lazy(() =>
   z.object({
-    id: z.string().cuid2(),
+    id: z.cuid2(),
     connector: ZSegmentConnector,
     resource: z.union([ZSegmentFilter, ZBaseFilters]),
   })
@@ -321,55 +321,61 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 
 // The filters can be nested, so we need to use z.lazy to define the type
 // more on recusrsive types -> https://zod.dev/?id=recursive-types
-
-// TODO: Figure out why this is not working, and then remove the ts-ignore
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .array(
     z.object({
-      id: z.string().cuid2(),
+      id: z.cuid2(),
       connector: ZSegmentConnector,
       resource: z.union([ZSegmentFilter, z.lazy(() => ZSegmentFilters)]),
     })
   )
   .refine(refineFilters, {
-    message: "Invalid filters applied",
+    error: "Invalid filters applied",
   });
+
+const ZRequiredSegmentFilters = ZSegmentFilters.refine((filters) => filters.length > 0, {
+  error: "At least one filter is required",
+});
 
 export const ZSegment = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable(),
-  isPrivate: z.boolean().default(true),
+  isPrivate: z.boolean().prefault(true),
   filters: ZSegmentFilters,
-  environmentId: z.string(),
+  workspaceId: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   surveys: z.array(z.string()),
 });
 
 export const ZSegmentCreateInput = z.object({
-  environmentId: z.string(),
+  workspaceId: z.string(),
   title: z.string(),
   description: z.string().optional(),
-  isPrivate: z.boolean().default(true),
-  filters: ZSegmentFilters,
+  isPrivate: z.boolean().prefault(true),
+  filters: ZRequiredSegmentFilters,
   surveyId: z.string(),
 });
 
 export type TSegmentCreateInput = z.infer<typeof ZSegmentCreateInput>;
 
 export type TSegment = z.infer<typeof ZSegment>;
-export type TSegmentWithSurveyNames = TSegment & {
-  activeSurveys: string[];
-  inactiveSurveys: string[];
+export interface TSegmentSurveyReference {
+  id: string;
+  name: string;
+}
+export type TSegmentWithSurveyRefs = TSegment & {
+  activeSurveys: TSegmentSurveyReference[];
+  inactiveSurveys: TSegmentSurveyReference[];
 };
 
 export const ZSegmentUpdateInput = z
   .object({
     title: z.string(),
     description: z.string().nullable(),
-    isPrivate: z.boolean().default(true),
-    filters: ZSegmentFilters,
+    isPrivate: z.boolean().prefault(true),
+    filters: ZRequiredSegmentFilters,
     surveys: z.array(z.string()),
   })
   .partial();
@@ -382,7 +388,6 @@ export type TEvaluateSegmentUserAttributeData = Record<string, string | number>;
 export interface TEvaluateSegmentUserData {
   contactId: string;
   userId: string;
-  environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   deviceType: "phone" | "desktop";
 }

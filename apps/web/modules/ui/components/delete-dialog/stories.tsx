@@ -161,7 +161,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-type Story = StoryObj<typeof DeleteDialog> & { args: StoryOptions };
+type Story = StoryObj<StoryProps>;
 
 // Create a render function for interactive dialogs
 const RenderDeleteDialog = (args: StoryProps) => {
@@ -274,9 +274,9 @@ export const Deleting: Story = {
 export const Disabled: Story = {
   render: RenderDeleteDialog,
   args: {
-    triggerText: "Delete Project",
-    deleteWhat: "Project",
-    text: "This project cannot be deleted because it has active surveys.",
+    triggerText: "Delete Workspace",
+    deleteWhat: "Workspace",
+    text: "This workspace cannot be deleted because it has active surveys.",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",

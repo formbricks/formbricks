@@ -11,7 +11,7 @@ const ZGetOrganizationBillingInfoAction = z.object({
 });
 
 export const getOrganizationBillingInfoAction = authenticatedActionClient
-  .schema(ZGetOrganizationBillingInfoAction)
+  .inputSchema(ZGetOrganizationBillingInfoAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

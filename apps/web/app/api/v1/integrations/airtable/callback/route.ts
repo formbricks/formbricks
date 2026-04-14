@@ -1,12 +1,11 @@
-import { NextRequest } from "next/server";
 import * as z from "zod";
 import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
-import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -21,21 +20,19 @@ const getEmail = async (token: string) => {
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TSessionAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }) => {
+    if (!authentication || !("user" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
     const code = queryParams.get("code");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid workspaceId"),
       };
     }
 
@@ -44,18 +41,19 @@ export const GET = withV1ApiWrapper({
         response: responses.badRequestResponse("`code` is missing"),
       };
     }
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
+    const basePath = `/workspaces/${workspaceId}`;
+
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-    const code_verifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
-      "base64"
-    );
+    const code_verifier = Buffer.from(workspaceId + authentication.user.id + workspaceId).toString("base64");
 
     if (!client_id)
       return {
@@ -81,23 +79,22 @@ export const GET = withV1ApiWrapper({
 
       const airtableIntegrationInput = {
         type: "airtable" as "airtable",
-        environment: environmentId,
         config: {
           key,
           data: [],
           email,
         },
       };
-      await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
+      await createOrUpdateIntegration(workspaceId, airtableIntegrationInput);
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/airtable`
-        ),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/airtable`),
       };
     } catch (error) {
       logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
       return {
-        response: responses.internalServerErrorResponse(error),
+        response: responses.internalServerErrorResponse(
+          error instanceof Error ? error.message : String(error)
+        ),
       };
     }
   },

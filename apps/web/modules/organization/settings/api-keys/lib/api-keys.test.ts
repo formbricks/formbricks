@@ -30,9 +30,9 @@ const mockApiKey: ApiKey = {
 
 const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
   ...mockApiKey,
-  apiKeyEnvironments: [
+  apiKeyWorkspaces: [
     {
-      environmentId: "env123",
+      workspaceId: "workspace123",
       permission: ApiKeyPermission.manage,
     },
   ],
@@ -109,10 +109,10 @@ describe("API Key Management", () => {
           organizationId: "clj28r6va000409j3ep7h8xzk",
         },
         select: {
-          apiKeyEnvironments: {
+          apiKeyWorkspaces: {
             select: {
-              environmentId: true,
               permission: true,
+              workspaceId: true,
             },
           },
           createdAt: true,
@@ -376,11 +376,11 @@ describe("API Key Management", () => {
 
     const mockApiKeyWithEnvironments = {
       ...mockApiKey,
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
           id: "env-perm-123",
           apiKeyId: "apikey123",
-          environmentId: "env123",
+          workspaceId: "workspace123",
           permission: ApiKeyPermission.manage,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -402,7 +402,7 @@ describe("API Key Management", () => {
           createdBy: "user123",
         }),
         include: {
-          apiKeyEnvironments: true,
+          apiKeyWorkspaces: true,
         },
       });
     });
@@ -412,7 +412,7 @@ describe("API Key Management", () => {
 
       const result = await createApiKey("org123", "user123", {
         ...mockApiKeyData,
-        environmentPermissions: [{ environmentId: "env123", permission: ApiKeyPermission.manage }],
+        workspacePermissions: [{ workspaceId: "workspace123", permission: ApiKeyPermission.manage }],
       });
 
       expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "fbk_testSecret123" });

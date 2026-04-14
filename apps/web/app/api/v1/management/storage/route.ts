@@ -1,10 +1,10 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { TUploadPublicFileRequest, ZUploadPublicFileRequest } from "@formbricks/types/storage";
+import { ZUploadPublicFileRequest } from "@formbricks/types/storage";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
@@ -15,8 +15,8 @@ import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 // use this to get a signed url for uploading a public file for a specific resource, e.g. a survey's background image
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiV1Authentication }) => {
-    let storageInput: TUploadPublicFileRequest;
+  handler: async ({ req, authentication }) => {
+    let storageInput;
 
     try {
       storageInput = await req.json();
@@ -25,6 +25,16 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
       };
+    }
+
+    // Accept workspaceId
+    if (authentication && "apiKeyId" in authentication) {
+      // API key auth: resolveBodyIds handles resolution + permission check
+      const resolved = await resolveBodyIds(storageInput, authentication.workspacePermissions, "POST");
+      if (!resolved.ok) return { response: resolved.response };
+      storageInput = resolved.body;
+    } else if (!storageInput.workspaceId) {
+      return { response: responses.badRequestResponse("workspaceId must be provided") };
     }
 
     const parsedInputResult = ZUploadPublicFileRequest.safeParse(storageInput);
@@ -43,9 +53,9 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, environmentId } = parsedInputResult.data;
+    const { fileName, fileType, workspaceId } = parsedInputResult.data;
 
-    const authResponse = await checkAuth(authentication, environmentId);
+    const authResponse = await checkAuth(authentication, workspaceId);
     if (authResponse) {
       return {
         response: authResponse,
@@ -57,7 +67,7 @@ export const POST = withV1ApiWrapper({
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
-      environmentId,
+      workspaceId,
       fileType,
       "public",
       maxFileUploadSize

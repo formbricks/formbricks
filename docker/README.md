@@ -32,8 +32,8 @@ That's it! After running the command and providing the required information, vis
 
 The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`). Hub shares the same database as Formbricks by default.
 
-- **Migrations**: A `hub-migrate` service runs Hub’s database migrations (goose + river) before the Hub API starts. It runs on every `docker compose up` and is idempotent.
-- **Production** (`docker/docker-compose.yml`): Set `HUB_API_KEY` (required). Override `HUB_DATABASE_URL` only if you want Hub to use a separate database (default is the same Formbricks Postgres URL).
-- **Development** (`docker-compose.dev.yml`): Hub uses the same Postgres database; `API_KEY` defaults to `dev-api-key` (override with `HUB_API_KEY`).
+- **Migrations**: A `hub-migrate` service runs Hub's database migrations (goose + river) before the Hub API starts. It runs on every `docker compose up` and is idempotent.
+- **Production** (`docker/docker-compose.yml`): Set `HUB_API_KEY` (required). `HUB_API_URL` defaults to `http://hub:8080` so the Formbricks app can reach Hub inside the compose network. Override `HUB_DATABASE_URL` only if you want Hub to use a separate database.
+- **Development** (`docker-compose.dev.yml`): Hub uses the same Postgres database; `HUB_API_KEY` defaults to `dev-api-key` (override with `HUB_API_KEY`) and the local Hub URL is `http://localhost:8080`.
 
-Hub listens on port **8080**.
+In development, Hub is exposed locally on port **8080**. In production Docker Compose, Hub stays internal to the compose network and is reached via `http://hub:8080`.

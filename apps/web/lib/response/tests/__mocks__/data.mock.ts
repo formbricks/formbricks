@@ -13,7 +13,7 @@ type ResponseMock = Prisma.ResponseGetPayload<{
   include: typeof responseSelection;
 }>;
 
-export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
+export const mockWorkspaceId = "wksp2tjk8hsi8oqk1uac00mo";
 export const mockContactId = "lhwy39ga2zy8by1ol1bnaiso";
 export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
@@ -33,10 +33,10 @@ export const mockMeta = {
 
 export const mockContact = {
   id: mockContactId,
+  workspaceId: mockWorkspaceId,
   userId: mockUserId,
   createdAt: new Date(2000, 1, 1, 19),
   updatedAt: new Date(2000, 1, 1, 19),
-  environmentId: mockEnvironmentId,
   attributes: [],
 };
 
@@ -47,7 +47,7 @@ export const mockTags = [
       name: "tag1",
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
     },
   },
 ];
@@ -58,8 +58,6 @@ export const mockDisplay: TDisplay = {
   updatedAt: new Date(),
   surveyId: mockSurveyId,
   contactId: mockContactId,
-  responseId: mockResponseId,
-  status: null,
 };
 
 export const mockResponse: ResponseMock = {
@@ -67,17 +65,19 @@ export const mockResponse: ResponseMock = {
   surveyId: mockSurveyId,
   singleUseId: mockSingleUseId,
   data: {},
-  person: null,
-  personAttributes: {},
+  contactAttributes: {},
   createdAt: new Date(),
   finished: constantsForTests.boolean,
   meta: mockMeta,
   tags: mockTags,
-  personId: mockContactId,
+  contactId: mockContactId,
+  contact: null,
   updatedAt: new Date(),
   language: "English",
   ttc: {},
   variables: {},
+  endingId: null,
+  displayId: null,
 };
 
 const mockSurveyQuota: TSurveyQuota = {
@@ -116,7 +116,7 @@ const getMockTags = (tags: string[]): { tag: TTag }[] => {
       name: tag,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
     },
   }));
 };
@@ -170,10 +170,12 @@ export const mockResponses: ResponseMock[] = [
       "Init Attribute 2": "four",
     },
     singleUseId: mockSingleUseId,
-    personId: mockContactId,
-    person: null,
+    contactId: mockContactId,
+    contact: null,
     language: null,
     tags: getMockTags(["tag1", "tag2"]),
+    endingId: null,
+    displayId: null,
   },
   {
     id: "clsk7b15p001fk8iu04qpvo2f",
@@ -187,16 +189,18 @@ export const mockResponses: ResponseMock[] = [
     meta: mockMeta,
     ttc: {},
     variables: {},
-    personAttributes: {
+    contactAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
       "Init Attribute 2": "four",
     },
     singleUseId: mockSingleUseId,
-    personId: mockContactId,
-    person: null,
+    contactId: mockContactId,
+    contact: null,
     tags: getMockTags(["tag2", "tag3"]),
     language: null,
+    endingId: null,
+    displayId: null,
   },
   {
     id: "clsk6bk1l0017k8iut9dp0uxt",
@@ -210,16 +214,18 @@ export const mockResponses: ResponseMock[] = [
     meta: mockMeta,
     ttc: {},
     variables: {},
-    personAttributes: {
+    contactAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "eight",
       "Init Attribute 2": "two",
     },
     singleUseId: mockSingleUseId,
-    personId: mockContactId,
-    person: null,
+    contactId: mockContactId,
+    contact: null,
     tags: getMockTags(["tag1", "tag4"]),
     language: null,
+    endingId: null,
+    displayId: null,
   },
   {
     id: "clsk5tgkm000uk8iueqoficwc",
@@ -233,16 +239,18 @@ export const mockResponses: ResponseMock[] = [
     meta: mockMeta,
     ttc: {},
     variables: {},
-    personAttributes: {
+    contactAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "eight",
       "Init Attribute 2": "two",
     },
     singleUseId: mockSingleUseId,
-    personId: mockContactId,
-    person: null,
+    contactId: mockContactId,
+    contact: null,
     tags: getMockTags(["tag4", "tag5"]),
     language: null,
+    endingId: null,
+    displayId: null,
   },
 ];
 
@@ -320,11 +328,13 @@ export const getFilteredMockResponses = (
           case "lessEqual":
             return Number(response.data?.[key]) <= value.value;
           case "includesAll":
-            return value.value.every((val: string) => (response.data?.[key] as string[])?.includes(val));
+            return value.value.every((val: string | number) =>
+              (response.data?.[key] as string[])?.includes(String(val))
+            );
           case "includesOne":
-            return value.value.some((val: string) => {
+            return value.value.some((val: string | number) => {
               if (Array.isArray(response.data?.[key]))
-                return (response.data?.[key] as string[])?.includes(val);
+                return (response.data?.[key] as string[])?.includes(String(val));
               return response.data?.[key] === val;
             });
           case "notEquals":
@@ -419,7 +429,6 @@ export const mockSurvey: TSurvey = {
   updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   name: "New Survey",
   type: "link",
-  environmentId: "envId",
   createdBy: "creatorId",
   status: "draft",
   welcomeCard: mockWelcomeCard,
@@ -513,7 +522,7 @@ export const mockSurvey: TSurvey = {
   displayPercentage: null,
   autoComplete: null,
   isVerifyEmailEnabled: false,
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   recaptcha: null,
   styling: null,
   surveyClosedMessage: null,

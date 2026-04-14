@@ -165,21 +165,21 @@ export function AddFilterModal({
     { id: "all", label: t("common.all") },
     {
       id: "attributes",
-      label: t("environments.segments.person_and_attributes"),
+      label: t("workspace.segments.person_and_attributes"),
       icon: <TagIcon className="h-4 w-4" />,
     },
     { id: "segments", label: t("common.segments"), icon: <Users2Icon className="h-4 w-4" /> },
     {
       id: "devices",
-      label: t("environments.segments.devices"),
+      label: t("workspace.segments.devices"),
       icon: <MonitorSmartphoneIcon className="h-4 w-4" />,
     },
   ];
 
   const devices = useMemo(
     () => [
-      { id: "phone", name: t("environments.segments.phone") },
-      { id: "desktop", name: t("environments.segments.desktop") },
+      { id: "phone", name: t("workspace.segments.phone") },
+      { id: "desktop", name: t("workspace.segments.desktop") },
     ],
     [t]
   );
@@ -241,7 +241,7 @@ export function AddFilterModal({
           );
         }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>{t("environments.segments.no_filters_yet")}</p>
+            <p>{t("workspace.segments.no_filters_yet")}</p>
           </div>
         ) : null}
 
@@ -384,7 +384,7 @@ export function AddFilterModal({
       <>
         {segmentsFiltered.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>{t("environments.segments.no_segments_yet")}</p>
+            <p>{t("workspace.segments.no_segments_yet")}</p>
           </div>
         )}
         {segmentsFiltered

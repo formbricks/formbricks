@@ -97,7 +97,7 @@ export const organizations = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      projectName: "My Workspace",
+      workspaceName: "My Workspace",
     },
   ],
 };

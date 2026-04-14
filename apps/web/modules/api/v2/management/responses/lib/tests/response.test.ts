@@ -1,5 +1,4 @@
 import {
-  environmentId,
   organizationBilling,
   organizationId,
   response,
@@ -8,6 +7,7 @@ import {
   responseInputNotFinished,
   responseInputWithoutDisplay,
   responseInputWithoutTtc,
+  workspaceId,
 } from "./__mocks__/response.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -15,12 +15,12 @@ import { err, ok } from "@formbricks/types/error-handlers";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
-  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
 import { createResponse, getResponses } from "../response";
 
 vi.mock("@/modules/api/v2/management/responses/lib/organization", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   getOrganizationBilling: vi.fn(),
   getMonthlyOrganizationResponseCount: vi.fn(),
 }));
@@ -35,11 +35,15 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: true,
-  IS_PRODUCTION: false,
-  ENCRYPTION_KEY: "test",
-}));
+vi.mock("@/lib/constants", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/constants")>("@/lib/constants");
+  return {
+    ...actual,
+    IS_FORMBRICKS_CLOUD: true,
+    IS_PRODUCTION: false,
+    ENCRYPTION_KEY: "test",
+  };
+});
 
 describe("Response Lib", () => {
   beforeEach(() => {
@@ -50,11 +54,11 @@ describe("Response Lib", () => {
     test("create a response successfully", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
       expect(prisma.response.create).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -65,11 +69,11 @@ describe("Response Lib", () => {
     test("handle response for initialTtc not finished", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
-      const result = await createResponse(environmentId, responseInputNotFinished);
+      const result = await createResponse(workspaceId, responseInputNotFinished);
       expect(prisma.response.create).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -80,11 +84,11 @@ describe("Response Lib", () => {
     test("handle response for initialTtc not provided", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
-      const result = await createResponse(environmentId, responseInputWithoutTtc);
+      const result = await createResponse(workspaceId, responseInputWithoutTtc);
       expect(prisma.response.create).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -95,11 +99,11 @@ describe("Response Lib", () => {
     test("handle response for display not provided", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
-      const result = await createResponse(environmentId, responseInputWithoutDisplay);
+      const result = await createResponse(workspaceId, responseInputWithoutDisplay);
       expect(prisma.response.create).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -107,11 +111,11 @@ describe("Response Lib", () => {
       }
     });
 
-    test("return error if getOrganizationIdFromEnvironmentId fails", async () => {
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(
+    test("return error if getOrganizationIdFromWorkspaceId fails", async () => {
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(
         err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] })
       );
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -122,11 +126,11 @@ describe("Response Lib", () => {
     });
 
     test("return error if getOrganizationBilling fails", async () => {
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
       vi.mocked(getOrganizationBilling).mockResolvedValue(
         err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] })
       );
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -139,13 +143,13 @@ describe("Response Lib", () => {
     test("send plan limit event when in cloud and responses limit is reached", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
 
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
 
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
 
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -156,7 +160,7 @@ describe("Response Lib", () => {
     test("handle error getting monthly organization response count", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
 
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
 
@@ -164,7 +168,7 @@ describe("Response Lib", () => {
         err({ type: "internal_server_error", details: [{ field: "organization", issue: "Aggregate error" }] })
       );
 
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -177,13 +181,13 @@ describe("Response Lib", () => {
     test("handle error sending plan limits reached event", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
 
       vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
 
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
 
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(response);
@@ -193,7 +197,7 @@ describe("Response Lib", () => {
     test("return an internal_server_error error if prisma create fails", async () => {
       vi.mocked(prisma.response.create).mockRejectedValue(new Error("Internal server error"));
 
-      const result = await createResponse(environmentId, responseInput);
+      const result = await createResponse(workspaceId, responseInput);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toEqual("internal_server_error");
@@ -206,7 +210,7 @@ describe("Response Lib", () => {
       (prisma.response.findMany as any).mockResolvedValue([response]);
       (prisma.response.count as any).mockResolvedValue(1);
 
-      const result = await getResponses([environmentId], responseFilter);
+      const result = await getResponses([workspaceId], responseFilter);
       expect(prisma.response.findMany).toHaveBeenCalled();
       expect(prisma.response.count).toHaveBeenCalled();
       expect(result.ok).toBe(true);
@@ -226,7 +230,7 @@ describe("Response Lib", () => {
       (prisma.response.findMany as any).mockRejectedValue(new Error("Internal server error"));
       (prisma.response.count as any).mockResolvedValue(0);
 
-      const result = await getResponses([environmentId], responseFilter);
+      const result = await getResponses([workspaceId], responseFilter);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -240,7 +244,7 @@ describe("Response Lib", () => {
       (prisma.response.findMany as any).mockResolvedValue([response]);
       (prisma.response.count as any).mockRejectedValue(new Error("Internal server error"));
 
-      const result = await getResponses([environmentId], responseFilter);
+      const result = await getResponses([workspaceId], responseFilter);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({

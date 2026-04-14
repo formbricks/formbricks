@@ -5,24 +5,27 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
+import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 
 interface PendingDowngradeBannerProps {
   lastChecked: Date;
   active: boolean;
   isPendingDowngrade: boolean;
-  environmentId: string;
   locale: TUserLocale;
-  status: "active" | "expired" | "unreachable" | "no-license" | "invalid_license";
+  status: TLicenseStatus;
 }
 
 export const PendingDowngradeBanner = ({
   lastChecked,
   active,
   isPendingDowngrade,
-  environmentId,
   locale,
   status,
 }: PendingDowngradeBannerProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslation();
   const isLastCheckedWithin72Hours = lastChecked
@@ -30,7 +33,7 @@ export const PendingDowngradeBanner = ({
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
-  const formattedDate = scheduledDowngradeDate.toLocaleDateString(locale, {
+  const formattedDate = formatDateForDisplay(scheduledDowngradeDate, locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -76,7 +79,7 @@ export const PendingDowngradeBanner = ({
               <div className="relative flex flex-col">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
+                    <TriangleAlertIcon className="h-6 w-6 text-error" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-slate-900">
@@ -84,7 +87,7 @@ export const PendingDowngradeBanner = ({
                     </p>
                     <p className="mt-1 text-sm text-slate-500">{getDescription()}</p>
 
-                    <Link href={`/environments/${environmentId}/settings/enterprise`}>
+                    <Link href={`${workspaceBasePath}/settings/enterprise`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>

@@ -3,7 +3,11 @@ import { getTranslate } from "@/lingodotdev/server";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 
-export const SignupWithoutVerificationSuccessPage = async ({ searchParams }) => {
+export const SignupWithoutVerificationSuccessPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ token: string }>;
+}) => {
   const t = await getTranslate();
   const { token } = await searchParams;
   const email = getEmailFromEmailToken(token);

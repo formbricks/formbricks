@@ -84,7 +84,7 @@ describe("helpers", () => {
     test("should allow request when rate limit check passes", async () => {
       (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
 
-      await expect(applyRateLimit(mockConfig, mockIdentifier)).resolves.toBeUndefined();
+      await expect(applyRateLimit(mockConfig, mockIdentifier)).resolves.toEqual({ allowed: true });
 
       expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, mockIdentifier);
     });
@@ -127,7 +127,7 @@ describe("helpers", () => {
 
       (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
 
-      await expect(applyRateLimit(customConfig, "api-key-identifier")).resolves.toBeUndefined();
+      await expect(applyRateLimit(customConfig, "api-key-identifier")).resolves.toEqual({ allowed: true });
 
       expect(checkRateLimit).toHaveBeenCalledWith(customConfig, "api-key-identifier");
     });
@@ -138,7 +138,7 @@ describe("helpers", () => {
       const identifiers = ["user-123", "ip-192.168.1.1", "auth-login-hashedip", "api-key-abc123"];
 
       for (const identifier of identifiers) {
-        await expect(applyRateLimit(mockConfig, identifier)).resolves.toBeUndefined();
+        await expect(applyRateLimit(mockConfig, identifier)).resolves.toEqual({ allowed: true });
         expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, identifier);
       }
 
@@ -161,7 +161,7 @@ describe("helpers", () => {
       (hashString as any).mockReturnValue("hashed-ip-123");
       (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
 
-      await expect(applyIPRateLimit(mockConfig)).resolves.toBeUndefined();
+      await expect(applyIPRateLimit(mockConfig)).resolves.toEqual({ allowed: true });
 
       expect(getClientIpFromHeaders).toHaveBeenCalledTimes(1);
       expect(hashString).toHaveBeenCalledWith("192.168.1.1");

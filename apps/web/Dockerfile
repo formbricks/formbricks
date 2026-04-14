@@ -18,7 +18,7 @@ FROM node:24-alpine3.23 AS base
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN npm install --ignore-scripts -g corepack@latest 
+RUN npm install --ignore-scripts -g corepack@latest
 RUN corepack enable
 RUN corepack prepare pnpm@10.28.2 --activate
 
@@ -67,6 +67,7 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
     --mount=type=secret,id=redis_url \
     --mount=type=secret,id=sentry_auth_token \
+    --mount=type=secret,id=posthog_key \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 #
@@ -74,9 +75,10 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Update npm to latest, then create user
+# Upgrade Alpine system packages to pick up security patches, update npm to latest, then create user
 # Note: npm's bundled tar has a known vulnerability but npm is only used during build, not at runtime
-RUN npm install --ignore-scripts -g npm@latest \
+RUN apk update && apk upgrade --no-cache \
+    && npm install --ignore-scripts -g npm@latest \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
@@ -101,6 +103,9 @@ RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 # Create packages/database directory structure with proper ownership for runtime migrations
 RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages/database
 
+COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
+RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
+
 COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
 RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
 
@@ -117,8 +122,11 @@ RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 
-COPY --from=installer /app/node_modules/uuid ./node_modules/uuid
-RUN chmod -R 755 ./node_modules/uuid
+# Runtime migrations import uuid v7 from the database package, so copy the
+# database package's resolved install instead of the repo-root hoisted version.
+COPY --from=installer /app/packages/database/node_modules/uuid ./node_modules/uuid
+RUN chmod -R 755 ./node_modules/uuid \
+    && node --input-type=module -e "import('uuid').then((module) => { if (typeof module.v7 !== 'function') throw new Error('uuid v7 missing in runtime image'); })"
 
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes

@@ -1,24 +1,19 @@
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
-
-extendZodWithOpenApi(z);
 
 export const ZContactLinksBySegmentParams = z.object({
   surveyId: z
-    .string()
     .cuid2()
-    .openapi({
-      description: "The ID of the survey",
+    .meta({
       param: { name: "surveyId", in: "path" },
-    }),
+    })
+    .describe("The ID of the survey"),
   segmentId: z
-    .string()
     .cuid2()
-    .openapi({
-      description: "The ID of the segment",
+    .meta({
       param: { name: "segmentId", in: "path" },
-    }),
+    })
+    .describe("The ID of the segment"),
 });
 
 export const ZContactLinksBySegmentQuery = ZGetFilter.pick({
@@ -30,7 +25,7 @@ export const ZContactLinksBySegmentQuery = ZGetFilter.pick({
     .min(1)
     .max(365)
     .nullish()
-    .default(null)
+    .prefault(null)
     .describe("Number of days until the generated JWT expires. If not provided, there is no expiration."),
   attributeKeys: z
     .string()
@@ -52,7 +47,7 @@ export type TContactWithAttributes = {
 
 export const ZContactLinkResponse = z.object({
   contactId: z.string().describe("The ID of the contact"),
-  surveyUrl: z.string().url().describe("Personalized survey link"),
+  surveyUrl: z.url().describe("Personalized survey link"),
   expiresAt: z.string().nullable().describe("The date and time the link expires, null if no expiration"),
   attributes: z.record(z.string(), z.string()).describe("The attributes of the contact"),
 });

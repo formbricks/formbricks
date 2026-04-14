@@ -9,6 +9,7 @@ interface NumberFieldProps {
   label: string;
   description?: string;
   step?: number;
+  min?: number;
   max?: number;
   placeholder?: string;
 }
@@ -20,6 +21,7 @@ export const NumberField = ({
   description,
   placeholder,
   step = 1,
+  min,
   max,
 }: NumberFieldProps) => (
   <FormField
@@ -38,6 +40,7 @@ export const NumberField = ({
               field.onChange(Number.isNaN(val) ? null : val);
             }}
             step={step}
+            min={min}
             max={max}
             placeholder={placeholder}
           />

@@ -4,8 +4,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
 import {
+  TSurveyElement,
   TSurveyElementChoice,
   TSurveyMultipleChoiceElement,
   TSurveyRankingElement,
@@ -23,7 +23,7 @@ interface ChoiceProps {
   choice: TSurveyElementChoice;
   choiceIdx: number;
   elementIdx: number;
-  updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
+  updateChoice: (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => void;
   deleteChoice: (choiceIdx: number) => void;
   addChoice: (choiceIdx: number) => void;
   isInvalid: boolean;
@@ -32,10 +32,7 @@ interface ChoiceProps {
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
   element: TSurveyMultipleChoiceElement | TSurveyRankingElement;
-  updateElement: (
-    elementIdx: number,
-    updatedAttributes: Partial<TSurveyMultipleChoiceElement> | Partial<TSurveyRankingElement>
-  ) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   surveyLanguageCodes: string[];
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -85,7 +82,7 @@ export const ElementOptionChoice = ({
   const getPlaceholder = () => {
     if (choice.id === "other") return t("common.other");
     if (choice.id === "none") return t("common.none_of_the_above");
-    return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
+    return t("workspace.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
   };
 
   const normalChoice = element.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
@@ -146,12 +143,12 @@ export const ElementOptionChoice = ({
           <ElementFormInput
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
-            placeholder={t("environments.surveys.edit.please_specify")}
+            placeholder={t("workspace.surveys.edit.please_specify")}
             label={""}
             elementIdx={elementIdx}
             value={
               element.otherOptionPlaceholder ??
-              createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
+              createI18nString(t("workspace.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateElement={updateElement}
             selectedLanguageCode={selectedLanguageCode}
@@ -167,7 +164,7 @@ export const ElementOptionChoice = ({
       </div>
       <div className="flex gap-2">
         {(normalChoice.length > 1 || isSpecialChoice) && (
-          <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
+          <TooltipRenderer tooltipContent={t("workspace.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
               size="icon"
@@ -181,7 +178,7 @@ export const ElementOptionChoice = ({
           </TooltipRenderer>
         )}
         {!isSpecialChoice && (
-          <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
+          <TooltipRenderer tooltipContent={t("workspace.surveys.edit.add_choice_below")}>
             <Button
               variant="secondary"
               size="icon"

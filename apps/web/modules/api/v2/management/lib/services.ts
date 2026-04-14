@@ -4,12 +4,12 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
 
-export const fetchEnvironmentId = reactCache(async (id: string, isResponseId: boolean) => {
+export const fetchWorkspaceId = reactCache(async (id: string, isResponseId: boolean) => {
   try {
     const result = await prisma.survey.findFirst({
       where: isResponseId ? { responses: { some: { id } } } : { id },
       select: {
-        environmentId: true,
+        workspaceId: true,
       },
     });
 
@@ -20,21 +20,26 @@ export const fetchEnvironmentId = reactCache(async (id: string, isResponseId: bo
       });
     }
 
-    return ok({ environmentId: result.environmentId });
+    return ok({ workspaceId: result.workspaceId });
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: isResponseId ? "response" : "survey", issue: error.message }],
+      details: [
+        {
+          field: isResponseId ? "response" : "survey",
+          issue: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+      ],
     });
   }
 });
 
-export const fetchEnvironmentIdFromSurveyIds = reactCache(async (surveyIds: string[]) => {
+export const fetchWorkspaceIdFromSurveyIds = reactCache(async (surveyIds: string[]) => {
   try {
     const results = await prisma.survey.findMany({
       where: { id: { in: surveyIds } },
       select: {
-        environmentId: true,
+        workspaceId: true,
       },
     });
 
@@ -45,11 +50,13 @@ export const fetchEnvironmentIdFromSurveyIds = reactCache(async (surveyIds: stri
       });
     }
 
-    return ok(results.map((result) => result.environmentId));
+    return ok(results.map((result) => result.workspaceId));
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "survey", issue: error.message }],
+      details: [
+        { field: "survey", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });

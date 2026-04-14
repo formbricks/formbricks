@@ -81,7 +81,7 @@ export function transformResponseToFeedbackRecords(
   response: TResponse,
   survey: TSurvey,
   mappings: TConnectorFormbricksMapping[],
-  tenantId?: string
+  tenantId: string
 ): FeedbackRecordCreateParams[] {
   const responseData = response.data;
   if (!responseData) return [];
@@ -102,6 +102,7 @@ export function transformResponseToFeedbackRecords(
       collected_at:
         response.createdAt instanceof Date ? response.createdAt.toISOString() : String(response.createdAt),
       source_type: "formbricks",
+      submission_id: response.id,
       field_id: mapping.elementId,
       field_type: mapping.hubFieldType,
       source_id: survey.id,
@@ -114,9 +115,7 @@ export function transformResponseToFeedbackRecords(
       feedbackRecord.language = response.language;
     }
 
-    if (tenantId) {
-      feedbackRecord.tenant_id = tenantId;
-    }
+    feedbackRecord.tenant_id = tenantId;
 
     if (response.contact?.userId) {
       feedbackRecord.user_identifier = response.contact.userId;

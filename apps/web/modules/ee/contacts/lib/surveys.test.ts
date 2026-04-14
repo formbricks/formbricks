@@ -12,7 +12,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const environmentId = "cm123456789012345678901237";
+const workspaceId = "cm123456789012345678901237";
 
 describe("getPublishedLinkSurveys", () => {
   beforeEach(() => {
@@ -26,9 +26,9 @@ describe("getPublishedLinkSurveys", () => {
       { id: "survey3", name: "NPS Survey" },
     ];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    const result = await getPublishedLinkSurveys(environmentId);
+    const result = await getPublishedLinkSurveys(workspaceId);
 
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(3);
@@ -37,7 +37,7 @@ describe("getPublishedLinkSurveys", () => {
     expect(result[2]).toEqual({ id: "survey3", name: "NPS Survey" });
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, status: "inProgress", type: "link" },
+      where: { workspaceId: workspaceId, status: "inProgress", type: "link" },
       select: {
         id: true,
         name: true,
@@ -48,7 +48,7 @@ describe("getPublishedLinkSurveys", () => {
   test("returns empty array if no published link surveys", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
 
-    const result = await getPublishedLinkSurveys(environmentId);
+    const result = await getPublishedLinkSurveys(workspaceId);
 
     expect(result).toEqual([]);
     expect(Array.isArray(result)).toBe(true);
@@ -63,8 +63,8 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValue(prismaError);
 
-    await expect(getPublishedLinkSurveys(environmentId)).rejects.toThrow(DatabaseError);
-    await expect(getPublishedLinkSurveys(environmentId)).rejects.toThrow("DB error");
+    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow("DB error");
   });
 
   test("throws original error on unknown error", async () => {
@@ -72,16 +72,16 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValue(genericError);
 
-    await expect(getPublishedLinkSurveys(environmentId)).rejects.toThrow(genericError);
-    await expect(getPublishedLinkSurveys(environmentId)).rejects.toThrow("Unknown error");
+    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow(genericError);
+    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow("Unknown error");
   });
 
   test("filters surveys by status inProgress", async () => {
     const mockSurveys = [{ id: "survey1", name: "Active Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    await getPublishedLinkSurveys(environmentId);
+    await getPublishedLinkSurveys(workspaceId);
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -95,9 +95,9 @@ describe("getPublishedLinkSurveys", () => {
   test("filters surveys by type link", async () => {
     const mockSurveys = [{ id: "survey1", name: "Link Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    await getPublishedLinkSurveys(environmentId);
+    await getPublishedLinkSurveys(workspaceId);
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -111,9 +111,9 @@ describe("getPublishedLinkSurveys", () => {
   test("only selects id and name fields", async () => {
     const mockSurveys = [{ id: "survey1", name: "Test Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    const result = await getPublishedLinkSurveys(environmentId);
+    const result = await getPublishedLinkSurveys(workspaceId);
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

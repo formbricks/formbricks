@@ -6,7 +6,7 @@ import { loginAndGetApiKey } from "../lib/utils";
 
 test.describe("API Tests for Roles", () => {
   test("Retrieve Roles via API", async ({ page, users, request }) => {
-    let apiKey;
+    let apiKey: string;
 
     try {
       ({ apiKey } = await loginAndGetApiKey(page, users));

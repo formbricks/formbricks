@@ -3,11 +3,12 @@ import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
-import { createAccount } from "@/lib/account/service";
+import { upsertAccount } from "@/lib/account/service";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { redactPII } from "@/lib/utils/logger-helpers";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
@@ -22,6 +23,21 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
+
+const syncSsoAccount = async (userId: string, account: Account) => {
+  await upsertAccount({
+    userId,
+    type: account.type,
+    provider: account.provider,
+    providerAccountId: account.providerAccountId,
+    ...(account.access_token !== undefined ? { access_token: account.access_token } : {}),
+    ...(account.refresh_token !== undefined ? { refresh_token: account.refresh_token } : {}),
+    ...(account.expires_at !== undefined ? { expires_at: account.expires_at } : {}),
+    ...(account.scope !== undefined ? { scope: account.scope } : {}),
+    ...(account.token_type !== undefined ? { token_type: account.token_type } : {}),
+    ...(account.id_token !== undefined ? { id_token: account.id_token } : {}),
+  });
+};
 
 export const handleSsoCallback = async ({
   user,
@@ -108,6 +124,7 @@ export const handleSsoCallback = async ({
       // User with this provider found
       // check if email still the same
       if (existingUserWithAccount.email === user.email) {
+        await syncSsoAccount(existingUserWithAccount.id, account);
         contextLogger.debug(
           { existingUserId: existingUserWithAccount.id },
           "SSO callback successful: existing user, email matches"
@@ -133,6 +150,7 @@ export const handleSsoCallback = async ({
         );
 
         await updateUser(existingUserWithAccount.id, { email: user.email });
+        await syncSsoAccount(existingUserWithAccount.id, account);
         return true;
       }
 
@@ -154,6 +172,7 @@ export const handleSsoCallback = async ({
     const existingUserWithEmail = await getUserByEmail(user.email);
 
     if (existingUserWithEmail) {
+      await syncSsoAccount(existingUserWithEmail.id, account);
       contextLogger.debug(
         { existingUserId: existingUserWithEmail.id, action: "existing_user_login" },
         "SSO callback successful: existing user found by email"
@@ -305,7 +324,7 @@ export const handleSsoCallback = async ({
         return false;
       }
 
-      const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+      const isAccessControlAllowed = await getAccessControlPermission(organization.id);
       if (!isAccessControlAllowed && !callbackUrl) {
         contextLogger.debug(
           {
@@ -343,6 +362,15 @@ export const handleSsoCallback = async ({
     // send new user to brevo
     createBrevoCustomer({ id: userProfile.id, email: userProfile.email });
 
+    capturePostHogEvent(userProfile.id, "user_signed_up", {
+      auth_provider: provider,
+      email_domain: userProfile.email.split("@")[1],
+      signup_source: callbackUrl?.includes("token=") ? "invite" : "direct",
+      invite_organization_id: organization?.id ?? null,
+    });
+
+    await syncSsoAccount(userProfile.id, account);
+
     if (isMultiOrgEnabled) {
       contextLogger.debug(
         { isMultiOrgEnabled, newUserId: userProfile.id },
@@ -358,10 +386,6 @@ export const handleSsoCallback = async ({
         "Assigning user to organization"
       );
       await createMembership(organization.id, userProfile.id, { role: "member", accepted: true });
-      await createAccount({
-        ...account,
-        userId: userProfile.id,
-      });
 
       if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
         contextLogger.debug(

@@ -20,17 +20,17 @@ const selectActionClass = {
   type: true,
   key: true,
   noCodeConfig: true,
-  environmentId: true,
+  workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
 export const getActionClasses = reactCache(
-  async (environmentId: string, page?: number): Promise<TActionClass[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+  async (workspaceId: string, page?: number): Promise<TActionClass[]> => {
+    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       return await prisma.actionClass.findMany({
         where: {
-          environmentId: environmentId,
+          workspaceId,
         },
         select: selectActionClass,
         take: page ? ITEMS_PER_PAGE : undefined,
@@ -40,21 +40,21 @@ export const getActionClasses = reactCache(
         },
       });
     } catch (error) {
-      throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+      throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceId}`);
     }
   }
 );
 
-// This function is used to get an action by its name and environmentId(it can return private actions as well)
-export const getActionClassByEnvironmentIdAndName = reactCache(
-  async (environmentId: string, name: string): Promise<TActionClass | null> => {
-    validateInputs([environmentId, ZId], [name, ZString]);
+// This function is used to get an action by its name and workspaceId(it can return private actions as well)
+export const getActionClassByWorkspaceIdAndName = reactCache(
+  async (workspaceId: string, name: string): Promise<TActionClass | null> => {
+    validateInputs([workspaceId, ZId], [name, ZString]);
 
     try {
       const actionClass = await prisma.actionClass.findFirst({
         where: {
           name,
-          environmentId,
+          workspaceId,
         },
         select: selectActionClass,
       });
@@ -104,19 +104,16 @@ export const deleteActionClass = async (actionClassId: string): Promise<TActionC
   }
 };
 
-export const createActionClass = async (
-  environmentId: string,
-  actionClass: TActionClassInput
-): Promise<ActionClass> => {
-  validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
+export const createActionClass = async (actionClass: TActionClassInput): Promise<ActionClass> => {
+  validateInputs([actionClass, ZActionClassInput]);
 
-  const { environmentId: _, ...actionClassInput } = actionClass;
+  const { workspaceId, ...actionClassInput } = actionClass;
 
   try {
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
           actionClassInput.type === "noCode"
@@ -134,23 +131,24 @@ export const createActionClass = async (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
+      const targetField = (error.meta?.target as string[] | undefined)?.[0];
       throw new DatabaseError(
-        `Action with ${error.meta?.target?.[0]} ${actionClass[error.meta?.target?.[0]]} already exists`
+        `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
 
-    throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
+    throw new DatabaseError(`Database error when creating an action for workspace ${workspaceId}`);
   }
 };
 
 export const updateActionClass = async (
-  environmentId: string,
+  workspaceId: string,
   actionClassId: string,
-  inputActionClass: Partial<TActionClassInput>
+  inputActionClass: TActionClassInput
 ): Promise<TActionClass> => {
-  validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput]);
+  validateInputs([workspaceId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput]);
 
-  const { environmentId: _, ...actionClassInput } = inputActionClass;
+  const { workspaceId: __, ...actionClassInput } = inputActionClass;
   try {
     const result = await prisma.actionClass.update({
       where: {
@@ -158,7 +156,6 @@ export const updateActionClass = async (
       },
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
           actionClassInput.type === "noCode"
@@ -183,8 +180,9 @@ export const updateActionClass = async (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
+      const targetField = (error.meta?.target as string[] | undefined)?.[0];
       throw new DatabaseError(
-        `Action with ${error.meta?.target?.[0]} ${inputActionClass[error.meta?.target?.[0]]} already exists`
+        `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
 

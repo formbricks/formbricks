@@ -22,7 +22,7 @@ export const importCsvData = async (
   const { records, skipped } = transformCsvRowsToFeedbackRecords(
     csvRows,
     connector.fieldMappings,
-    connector.environmentId
+    connector.workspaceId
   );
 
   let successes = 0;

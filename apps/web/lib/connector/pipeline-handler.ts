@@ -35,13 +35,13 @@ const processConnector = async (
   connector: TConnectorWithMappings,
   response: TResponse,
   survey: TSurvey,
-  environmentId: string
+  workspaceId: string
 ): Promise<void> => {
   const feedbackRecords = transformResponseToFeedbackRecords(
     response,
     survey,
     connector.formbricksMappings,
-    environmentId
+    workspaceId
   );
 
   if (feedbackRecords.length === 0) {
@@ -78,7 +78,7 @@ const processConnector = async (
   }
 
   if (successes > 0) {
-    await updateConnector(connector.id, environmentId, { lastSyncAt: new Date() });
+    await updateConnector(connector.id, workspaceId, { lastSyncAt: new Date() });
   }
 };
 
@@ -90,12 +90,12 @@ const processConnector = async (
  *
  * @param response - The survey response
  * @param survey - The survey
- * @param environmentId - The environment ID (used as tenant_id)
+ * @param workspaceId - The workspace ID (used as tenant_id)
  */
 export const handleConnectorPipeline = async (
   response: TResponse,
   survey: TSurvey,
-  environmentId: string
+  workspaceId: string
 ): Promise<void> => {
   try {
     const connectors = await getConnectorsBySurveyId(survey.id);
@@ -106,7 +106,7 @@ export const handleConnectorPipeline = async (
 
     for (const connector of connectors) {
       try {
-        await processConnector(connector, response, survey, environmentId);
+        await processConnector(connector, response, survey, workspaceId);
       } catch (error) {
         logger.error(
           {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const ZTeamRole = z.enum(["admin", "contributor"]);
 export type TTeamRole = z.infer<typeof ZTeamRole>;
@@ -24,7 +24,7 @@ export const ZOtherTeam = z.object({
 export type TOtherTeam = z.infer<typeof ZOtherTeam>;
 
 export const ZOrganizationTeam = z.object({
-  id: z.string().cuid2(),
+  id: z.cuid2(),
   name: z.string(),
 });
 
@@ -41,10 +41,10 @@ export const ZTeamDetails = z.object({
       role: ZTeamRole,
     })
   ),
-  projects: z.array(
+  workspaces: z.array(
     z.object({
-      projectId: ZId,
-      projectName: z.string(),
+      workspaceId: ZId,
+      workspaceName: z.string(),
       permission: ZTeamPermission,
     })
   ),
@@ -69,15 +69,19 @@ export const ZTeamSettingsFormSchema = z.object({
         role: ZTeamRole,
       })
     )
-    .min(1, { message: "Please add at least one member" }),
-  projects: z
+    .min(1, {
+      error: "Please add at least one member",
+    }),
+  workspaces: z
     .array(
       z.object({
-        projectId: z.string().trim().min(1, "Please select a project"),
+        workspaceId: z.string().trim().min(1, "Please select a workspace"),
         permission: ZTeamPermission,
       })
     )
-    .min(1, { message: "Please add at least one project" }),
+    .min(1, {
+      error: "Please add at least one workspace",
+    }),
 });
 
 export type TTeamSettingsFormSchema = z.infer<typeof ZTeamSettingsFormSchema>;
@@ -94,9 +98,14 @@ export type TTeamMember = z.infer<typeof ZTeamMember>;
 
 export const ZTeam = z.object({
   id: z.string(),
-  name: z.string({ message: "Team name is required" }).trim().min(1, {
-    message: "Team name must be at least 1 character long",
-  }),
+  name: z
+    .string({
+      error: "Team name is required",
+    })
+    .trim()
+    .min(1, {
+      error: "Team name must be at least 1 character long",
+    }),
   teamUsers: z.array(ZTeamMember),
 });
 

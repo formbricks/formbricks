@@ -7,38 +7,20 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
-import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
-
-export const surveySelect: Prisma.SurveySelect = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  name: true,
-  type: true,
-  creator: {
-    select: {
-      name: true,
-    },
-  },
-  status: true,
-  singleUse: true,
-  environmentId: true,
-  _count: {
-    select: { responses: true },
-  },
-};
+import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
+import { TSurvey, TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
+import { mapSurveyRowToSurvey, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
 
 export const getSurveys = reactCache(
   async (
-    environmentId: string,
+    workspaceId: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
@@ -46,13 +28,13 @@ export const getSurveys = reactCache(
     try {
       if (filterCriteria?.sortBy === "relevance") {
         // Call the sortByRelevance function
-        return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
+        return await getSurveysSortedByRelevance(workspaceId, limit, offset ?? 0, filterCriteria);
       }
 
       // Fetch surveys normally with pagination and include response count
       const surveysPrisma = await prisma.survey.findMany({
         where: {
-          environmentId,
+          workspaceId,
           ...buildWhereClause(filterCriteria),
         },
         select: surveySelect,
@@ -61,12 +43,7 @@ export const getSurveys = reactCache(
         skip: offset,
       });
 
-      return surveysPrisma.map((survey) => {
-        return {
-          ...survey,
-          responseCount: survey._count.responses,
-        };
-      });
+      return mapSurveyRowsToSurveys(surveysPrisma);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         logger.error(error, "Error getting surveys");
@@ -79,7 +56,7 @@ export const getSurveys = reactCache(
 
 export const getSurveysSortedByRelevance = reactCache(
   async (
-    environmentId: string,
+    workspaceId: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
@@ -89,7 +66,7 @@ export const getSurveysSortedByRelevance = reactCache(
 
       const inProgressSurveyCount = await prisma.survey.count({
         where: {
-          environmentId,
+          workspaceId,
           status: "inProgress",
           ...buildWhereClause(filterCriteria),
         },
@@ -101,7 +78,7 @@ export const getSurveysSortedByRelevance = reactCache(
           ? []
           : await prisma.survey.findMany({
               where: {
-                environmentId,
+                workspaceId,
                 status: "inProgress",
                 ...buildWhereClause(filterCriteria),
               },
@@ -111,12 +88,7 @@ export const getSurveysSortedByRelevance = reactCache(
               skip: offset,
             });
 
-      surveys = inProgressSurveys.map((survey) => {
-        return {
-          ...survey,
-          responseCount: survey._count.responses,
-        };
-      });
+      surveys = mapSurveyRowsToSurveys(inProgressSurveys);
 
       // Determine if additional surveys are needed
       if (offset !== undefined && limit && inProgressSurveys.length < limit) {
@@ -124,7 +96,7 @@ export const getSurveysSortedByRelevance = reactCache(
         const newOffset = Math.max(0, offset - inProgressSurveyCount);
         const additionalSurveys = await prisma.survey.findMany({
           where: {
-            environmentId,
+            workspaceId,
             status: { not: "inProgress" },
             ...buildWhereClause(filterCriteria),
           },
@@ -134,15 +106,7 @@ export const getSurveysSortedByRelevance = reactCache(
           skip: newOffset,
         });
 
-        surveys = [
-          ...surveys,
-          ...additionalSurveys.map((survey) => {
-            return {
-              ...survey,
-              responseCount: survey._count.responses,
-            };
-          }),
-        ];
+        surveys = [...surveys, ...mapSurveyRowsToSurveys(additionalSurveys)];
       }
 
       return surveys;
@@ -177,7 +141,7 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
     return null;
   }
 
-  return { ...surveyPrisma, responseCount: surveyPrisma?._count.responses };
+  return mapSurveyRowToSurvey(surveyPrisma);
 });
 
 export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
@@ -188,7 +152,6 @@ export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
       },
       select: {
         id: true,
-        environmentId: true,
         segment: {
           select: {
             id: true,
@@ -255,7 +218,7 @@ const getExistingSurvey = async (surveyId: string) => {
       hiddenFields: true,
       surveyClosedMessage: true,
       singleUse: true,
-      projectOverwrites: true,
+      workspaceOverwrites: true,
       styling: true,
       segment: true,
       followUps: true,
@@ -268,7 +231,6 @@ const getExistingSurvey = async (surveyId: string) => {
             select: {
               id: true,
               name: true,
-              environmentId: true,
               description: true,
               type: true,
               key: true,
@@ -281,63 +243,62 @@ const getExistingSurvey = async (surveyId: string) => {
   });
 };
 
-export const copySurveyToOtherEnvironment = async (
-  environmentId: string,
+export const copySurveyToOtherWorkspace = async (
+  workspaceId: string,
   surveyId: string,
-  targetEnvironmentId: string,
+  targetWorkspaceId: string,
   userId: string
 ) => {
   try {
-    const isSameEnvironment = environmentId === targetEnvironmentId;
+    const isSameWorkspace = workspaceId === targetWorkspaceId;
 
     // Fetch required resources
-    const [existingEnvironment, existingProject, existingSurvey, existingQuotas, organization] =
+    const [existingWorkspaceCheck, existingWorkspace, existingSurvey, existingQuotas, organization] =
       await Promise.all([
-        doesEnvironmentExist(environmentId),
-        getProjectWithLanguagesByEnvironmentId(environmentId),
+        doesWorkspaceExist(workspaceId),
+        getWorkspaceWithLanguages(workspaceId),
         getExistingSurvey(surveyId),
         getQuotas(surveyId),
-        getOrganizationByEnvironmentId(environmentId),
+        getOrganizationByWorkspaceId(workspaceId),
       ]);
 
-    if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
-    if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
+    if (!existingWorkspaceCheck) throw new ResourceNotFoundError("Workspace", workspaceId);
+    if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", workspaceId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+    if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
 
-    const isQuotasAllowed = await getIsQuotasEnabled(organization?.billing.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-    let targetEnvironment: string | null = null;
-    let targetProject: TProjectWithLanguages | null = null;
+    let targetWorkspace: TWorkspaceWithLanguages | null = null;
 
-    if (isSameEnvironment) {
-      targetEnvironment = existingEnvironment;
-      targetProject = existingProject;
+    if (isSameWorkspace) {
+      targetWorkspace = existingWorkspace;
     } else {
-      [targetEnvironment, targetProject] = await Promise.all([
-        doesEnvironmentExist(targetEnvironmentId),
-        getProjectWithLanguagesByEnvironmentId(targetEnvironmentId),
+      [, targetWorkspace] = await Promise.all([
+        doesWorkspaceExist(targetWorkspaceId),
+        getWorkspaceWithLanguages(targetWorkspaceId),
       ]);
 
-      if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
-      if (!targetProject) throw new ResourceNotFoundError("Project", targetEnvironmentId);
+      if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetWorkspaceId);
     }
 
-    // Fetch existing action classes in target environment for name conflict checks
-    const existingActionClasses = !isSameEnvironment
+    // Fetch existing action classes in target workspace for name conflict checks
+    const existingActionClasses = !isSameWorkspace
       ? await prisma.actionClass.findMany({
-          where: { environmentId: targetEnvironmentId },
+          where: { workspaceId: targetWorkspace.id },
           select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
         })
       : [];
 
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
+    const t = await getTranslate();
 
     // Prepare survey data
     const surveyData: Prisma.SurveyCreateInput = {
       ...restExistingSurvey,
       id: createId(),
-      name: `${existingSurvey.name} (copy)`,
+      name: `${existingSurvey.name} ${t("common.duplicate_copy")}`,
       type: existingSurvey.type,
       status: "draft",
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
@@ -351,12 +312,12 @@ export const copySurveyToOtherEnvironment = async (
               language: {
                 connectOrCreate: {
                   where: {
-                    projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
+                    workspaceId_code: { code: surveyLanguage.language.code, workspaceId: targetWorkspace.id },
                   },
                   create: {
                     code: surveyLanguage.language.code,
                     alias: surveyLanguage.language.alias,
-                    projectId: targetProject.id,
+                    workspaceId: targetWorkspace.id,
                   },
                 },
               },
@@ -393,18 +354,17 @@ export const copySurveyToOtherEnvironment = async (
           const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
 
           // Check if an action class with the same name but different type already exists
-          const hasNameConflict =
-            !isSameEnvironment && existingActionClassNames.has(trigger.actionClass.name);
+          const hasNameConflict = !isSameWorkspace && existingActionClassNames.has(trigger.actionClass.name);
 
           let modifiedName = trigger.actionClass.name;
           if (hasNameConflict) {
             // Find a unique name by appending (copy), (copy 2), (copy 3), etc.
             let copyNumber = 1;
-            let candidateName = `${trigger.actionClass.name} (copy)`;
+            let candidateName = `${trigger.actionClass.name} ${t("common.duplicate_copy")}`;
 
             while (existingActionClassNames.has(candidateName)) {
               copyNumber++;
-              candidateName = `${trigger.actionClass.name} (copy ${copyNumber})`;
+              candidateName = `${trigger.actionClass.name} ${t("common.duplicate_copy_number", { copyNumber })}`;
             }
 
             modifiedName = candidateName;
@@ -412,12 +372,12 @@ export const copySurveyToOtherEnvironment = async (
 
           const baseActionClassData = {
             name: modifiedName,
-            environment: { connect: { id: targetEnvironmentId } },
+            workspace: { connect: { id: targetWorkspace.id } },
             description: trigger.actionClass.description,
             type: trigger.actionClass.type,
           };
 
-          if (isSameEnvironment) {
+          if (isSameWorkspace) {
             return {
               actionClass: { connect: { id: trigger.actionClass.id } },
             };
@@ -426,9 +386,9 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    key_environmentId: {
+                    key_workspaceId: {
                       key: trigger.actionClass.key!,
-                      environmentId: targetEnvironmentId,
+                      workspaceId: targetWorkspace.id,
                     },
                   },
                   create: {
@@ -455,9 +415,9 @@ export const copySurveyToOtherEnvironment = async (
               actionClass: {
                 connectOrCreate: {
                   where: {
-                    name_environmentId: {
+                    name_workspaceId: {
                       name: trigger.actionClass.name,
-                      environmentId: targetEnvironmentId,
+                      workspaceId: targetWorkspace.id,
                     },
                   },
                   create: {
@@ -472,9 +432,9 @@ export const copySurveyToOtherEnvironment = async (
           }
         }),
       },
-      environment: {
+      workspace: {
         connect: {
-          id: targetEnvironmentId,
+          id: targetWorkspace!.id,
         },
       },
       creator: {
@@ -486,8 +446,8 @@ export const copySurveyToOtherEnvironment = async (
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
       singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-      projectOverwrites: existingSurvey.projectOverwrites
-        ? structuredClone(existingSurvey.projectOverwrites)
+      workspaceOverwrites: existingSurvey.workspaceOverwrites
+        ? structuredClone(existingSurvey.workspaceOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,
@@ -525,17 +485,17 @@ export const copySurveyToOtherEnvironment = async (
             title: surveyData.id!,
             isPrivate: true,
             filters: existingSurvey.segment.filters,
-            environment: { connect: { id: targetEnvironmentId } },
+            workspace: { connect: { id: targetWorkspace!.id } },
           },
         };
-      } else if (isSameEnvironment) {
+      } else if (isSameWorkspace) {
         surveyData.segment = { connect: { id: existingSurvey.segment.id } };
       } else {
         const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
           where: {
             title: existingSurvey.segment.title,
             isPrivate: false,
-            environmentId: targetEnvironmentId,
+            workspaceId: targetWorkspace.id,
           },
         });
 
@@ -546,7 +506,7 @@ export const copySurveyToOtherEnvironment = async (
               : existingSurvey.segment.title,
             isPrivate: false,
             filters: existingSurvey.segment.filters,
-            environment: { connect: { id: targetEnvironmentId } },
+            workspace: { connect: { id: targetWorkspace!.id } },
           },
         };
       }
@@ -563,7 +523,7 @@ export const copySurveyToOtherEnvironment = async (
       data: surveyData,
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         segment: {
           select: {
             id: true,
@@ -575,7 +535,7 @@ export const copySurveyToOtherEnvironment = async (
               select: {
                 id: true,
                 name: true,
-                environmentId: true,
+                workspaceId: true,
               },
             },
           },
@@ -595,29 +555,33 @@ export const copySurveyToOtherEnvironment = async (
     return newSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error copying survey to other environment");
+      logger.error(error, "Error copying survey to other workspace");
       throw new DatabaseError(error.message);
     }
     throw error;
   }
 };
 
-export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, z.string().cuid2()]);
-  try {
-    const surveyCount = await prisma.survey.count({
-      where: {
-        environmentId: environmentId,
-      },
-    });
+/** Count surveys in a workspace, optionally with the same filter as getSurveys (so total matches list). */
+export const getSurveyCount = reactCache(
+  async (workspaceId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> => {
+    validateInputs([workspaceId, z.cuid2()]);
+    try {
+      const surveyCount = await prisma.survey.count({
+        where: {
+          workspaceId,
+          ...buildWhereClause(filterCriteria),
+        },
+      });
 
-    return surveyCount;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting survey count");
-      throw new DatabaseError(error.message);
+      return surveyCount;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error getting survey count");
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-});
+);

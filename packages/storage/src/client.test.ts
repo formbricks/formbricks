@@ -3,10 +3,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the AWS SDK S3Client
 vi.mock("@aws-sdk/client-s3", () => ({
-  S3Client: vi.fn().mockImplementation((config: S3ClientConfig) => ({
-    config,
-    send: vi.fn(),
-  })),
+  S3Client: vi.fn(function MockS3Client(
+    this: { config: S3ClientConfig; send: ReturnType<typeof vi.fn> },
+    config: S3ClientConfig
+  ) {
+    this.config = config;
+    this.send = vi.fn();
+  }),
 }));
 
 const mockS3Client = vi.mocked(S3Client);

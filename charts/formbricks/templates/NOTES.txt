@@ -118,11 +118,39 @@ Scaling:
    kubectl get hpa -n {{ .Release.Namespace }} {{ include "formbricks.name" . }}
    ```
 {{- else }}
-   HPA is **not enabled**. Your deployment has a fixed number of `{{ .Values.replicaCount }}` replicas.
+   HPA is **not enabled**. Your deployment has a fixed number of `{{ .Values.deployment.replicas }}` replicas.
    Manually scale using:
    ```sh
    kubectl scale deployment -n {{ .Release.Namespace }} {{ include "formbricks.name" . }} --replicas=<desired_number>
    ```
+{{- end }}
+
+---
+
+Pod Disruption Budget:
+
+{{- if .Values.pdb.enabled }}
+   A PodDisruptionBudget is active to protect against voluntary disruptions.
+   {{- if not (kindIs "invalid" .Values.pdb.minAvailable) }}
+   - **Min Available**: `{{ .Values.pdb.minAvailable }}`
+   {{- end }}
+   {{- if not (kindIs "invalid" .Values.pdb.maxUnavailable) }}
+   - **Max Unavailable**: `{{ .Values.pdb.maxUnavailable }}`
+   {{- end }}
+
+   Check PDB status:
+   ```sh
+   kubectl get pdb -n {{ .Release.Namespace }} {{ include "formbricks.name" . }}
+   ```
+   {{- if and .Values.autoscaling.enabled (eq (int .Values.autoscaling.minReplicas) 1) }}
+
+   WARNING: autoscaling.minReplicas is 1. With minAvailable: 1, the PDB
+   will block all node drains when only 1 replica is running. Set
+   autoscaling.minReplicas to at least 2 for proper HA protection.
+   {{- end }}
+{{- else }}
+   PDB is **not enabled**. Voluntary disruptions (node drains, upgrades) may
+   take down all pods simultaneously.
 {{- end }}
 
 ---

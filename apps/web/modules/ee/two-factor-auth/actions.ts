@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./lib/two-factor-auth";
@@ -12,11 +11,10 @@ const ZSetupTwoFactorAuthAction = z.object({
   password: z.string(),
 });
 
-export const setupTwoFactorAuthAction = authenticatedActionClient.schema(ZSetupTwoFactorAuthAction).action(
-  withAuditLogging(
-    "updated",
-    "twoFactorAuth",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+export const setupTwoFactorAuthAction = authenticatedActionClient
+  .inputSchema(ZSetupTwoFactorAuthAction)
+  .action(
+    withAuditLogging("updated", "twoFactorAuth", async ({ ctx, parsedInput }) => {
       const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
       if (!isTwoFactorAuthEnabled) {
         throw new OperationNotAllowedError("Two factor auth is not available on your instance");
@@ -25,19 +23,17 @@ export const setupTwoFactorAuthAction = authenticatedActionClient.schema(ZSetupT
       ctx.auditLoggingCtx.userId = ctx.user.id;
       ctx.auditLoggingCtx.newObject = { twoFactorAuth: "setup" };
       return result;
-    }
-  )
-);
+    })
+  );
 
 const ZEnableTwoFactorAuthAction = z.object({
   code: z.string(),
 });
 
-export const enableTwoFactorAuthAction = authenticatedActionClient.schema(ZEnableTwoFactorAuthAction).action(
-  withAuditLogging(
-    "updated",
-    "twoFactorAuth",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
+export const enableTwoFactorAuthAction = authenticatedActionClient
+  .inputSchema(ZEnableTwoFactorAuthAction)
+  .action(
+    withAuditLogging("updated", "twoFactorAuth", async ({ ctx, parsedInput }) => {
       const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
       if (!isTwoFactorAuthEnabled) {
         throw new OperationNotAllowedError("Two factor auth is not available on your instance");
@@ -46,9 +42,8 @@ export const enableTwoFactorAuthAction = authenticatedActionClient.schema(ZEnabl
       ctx.auditLoggingCtx.userId = ctx.user.id;
       ctx.auditLoggingCtx.newObject = { twoFactorAuth: "enabled" };
       return result;
-    }
-  )
-);
+    })
+  );
 
 const ZDisableTwoFactorAuthAction = z
   .object({
@@ -62,22 +57,12 @@ const ZDisableTwoFactorAuthAction = z
   );
 
 export const disableTwoFactorAuthAction = authenticatedActionClient
-  .schema(ZDisableTwoFactorAuthAction)
+  .inputSchema(ZDisableTwoFactorAuthAction)
   .action(
-    withAuditLogging(
-      "updated",
-      "twoFactorAuth",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZDisableTwoFactorAuthAction>;
-      }) => {
-        const result = await disableTwoFactorAuth(ctx.user.id, parsedInput);
-        ctx.auditLoggingCtx.userId = ctx.user.id;
-        ctx.auditLoggingCtx.newObject = { twoFactorAuth: "disabled" };
-        return result;
-      }
-    )
+    withAuditLogging("updated", "twoFactorAuth", async ({ ctx, parsedInput }) => {
+      const result = await disableTwoFactorAuth(ctx.user.id, parsedInput);
+      ctx.auditLoggingCtx.userId = ctx.user.id;
+      ctx.auditLoggingCtx.newObject = { twoFactorAuth: "disabled" };
+      return result;
+    })
   );

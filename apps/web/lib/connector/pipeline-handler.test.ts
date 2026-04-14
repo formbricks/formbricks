@@ -53,14 +53,14 @@ function createConnector(
     name: "Test Connector",
     type: "formbricks",
     status: "active",
-    environmentId: "env-1",
+    workspaceId: "env-1",
     lastSyncAt: null,
     formbricksMappings: [
       {
         id: "map-1",
         createdAt: new Date(),
         connectorId: "conn-1",
-        environmentId: "env-1",
+        workspaceId: "env-1",
         surveyId: "survey-1",
         elementId: "el-1",
         hubFieldType: "rating",
@@ -170,7 +170,7 @@ describe("handleConnectorPipeline", () => {
     const baseMapping = {
       createdAt: new Date(),
       connectorId: "conn-1",
-      environmentId: "env-1",
+      workspaceId: "env-1",
       surveyId: "survey-1",
       hubFieldType: "rating" as const,
       customFieldLabel: null as string | null,

@@ -1,7 +1,7 @@
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TLanguage } from "@formbricks/types/project";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { TLanguage } from "@formbricks/types/workspace";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 // Helper function to create an i18nString from a regular string.
@@ -84,7 +84,9 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 
 export const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
   if (!surveyLanguages?.length || !languageCode) return "default";
-  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+  const language = surveyLanguages.find(
+    (surveyLanguage) => surveyLanguage.language.code.toLowerCase() === languageCode.toLowerCase()
+  );
   return language?.default ? "default" : language?.language.code || "default";
 };
 
@@ -107,12 +109,13 @@ export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[
     if (Array.isArray(obj)) {
       obj.forEach((item) => processObject(item));
     } else if (obj && typeof obj === "object") {
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          if (key === "default" && typeof obj[key] === "string") {
-            addLanguageKeys(obj as { default: string; [key: string]: string });
+      const record = obj as Record<string, unknown>;
+      for (const key in record) {
+        if (record.hasOwnProperty(key)) {
+          if (key === "default" && typeof record[key] === "string") {
+            addLanguageKeys(record as unknown as { default: string; [key: string]: string });
           } else {
-            processObject(obj[key]);
+            processObject(record[key]);
           }
         }
       }
@@ -130,84 +133,102 @@ export const appLanguages = [
     code: "de-DE",
     label: {
       "en-US": "German",
+      native: "Deutsch",
     },
   },
   {
     code: "en-US",
     label: {
       "en-US": "English (US)",
+      native: "English (US)",
     },
   },
   {
     code: "es-ES",
     label: {
       "en-US": "Spanish",
+      native: "Español",
     },
   },
   {
     code: "fr-FR",
     label: {
       "en-US": "French",
+      native: "Français",
     },
   },
   {
     code: "hu-HU",
     label: {
       "en-US": "Hungarian",
+      native: "Magyar",
     },
   },
   {
     code: "ja-JP",
     label: {
       "en-US": "Japanese",
+      native: "日本語",
     },
   },
   {
     code: "nl-NL",
     label: {
       "en-US": "Dutch",
+      native: "Nederlands",
     },
   },
   {
     code: "pt-BR",
     label: {
       "en-US": "Portuguese (Brazil)",
+      native: "Português (Brasil)",
     },
   },
   {
     code: "pt-PT",
     label: {
       "en-US": "Portuguese (Portugal)",
+      native: "Português (Portugal)",
     },
   },
   {
     code: "ro-RO",
     label: {
       "en-US": "Romanian",
+      native: "Română",
     },
   },
   {
     code: "ru-RU",
     label: {
       "en-US": "Russian",
+      native: "Русский",
     },
   },
   {
     code: "sv-SE",
     label: {
       "en-US": "Swedish",
+      native: "Svenska",
     },
   },
   {
     code: "zh-Hans-CN",
     label: {
       "en-US": "Chinese (Simplified)",
+      native: "简体中文",
     },
   },
   {
     code: "zh-Hant-TW",
     label: {
       "en-US": "Chinese (Traditional)",
+      native: "繁體中文",
     },
   },
 ];
+
+export const sortedAppLanguages = [...appLanguages].sort((a, b) =>
+  a.label["en-US"].localeCompare(b.label["en-US"])
+);

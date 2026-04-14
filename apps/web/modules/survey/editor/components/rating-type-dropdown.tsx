@@ -25,7 +25,7 @@ export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: 
     setSelectedOption(options.filter((option) => option.value === defaultValue)[0] || options[0]);
   }, [defaultValue, options]);
 
-  const handleSelect = (option) => {
+  const handleSelect = (option: Option) => {
     setSelectedOption(option);
     onSelect(option);
   };

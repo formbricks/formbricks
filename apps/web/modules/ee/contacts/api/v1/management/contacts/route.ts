@@ -1,13 +1,17 @@
 import { DatabaseError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
-import { TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getContacts } from "./lib/contacts";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
+  handler: async ({ authentication }) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
           response: responses.forbiddenResponse(
@@ -16,11 +20,11 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const contacts = await getContacts(environmentIds);
+      const contacts = await getContacts(workspaceIds);
 
       return {
         response: responses.successResponse(contacts),

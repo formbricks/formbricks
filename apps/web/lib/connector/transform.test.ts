@@ -62,7 +62,7 @@ const createMapping = (
   id: `mapping-${overrides.elementId}`,
   createdAt: NOW,
   connectorId: "conn-1",
-  environmentId: "env-1",
+  workspaceId: "env-1",
   surveyId: "survey-1",
   customFieldLabel: null,
   ...overrides,

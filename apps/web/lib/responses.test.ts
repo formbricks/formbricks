@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { convertResponseValue, getElementResponseMapping, processResponseData } from "./responses";
 
 // Mock the recall and i18n utils
@@ -8,12 +9,17 @@ vi.mock("@/lib/utils/recall", () => ({
 }));
 
 vi.mock("./i18n/utils", () => ({
-  getLocalizedValue: vi.fn((obj, lang) => obj[lang] || obj.default),
-  getLanguageCode: vi.fn((surveyLanguages, languageCode) => {
-    if (!surveyLanguages?.length || !languageCode) return null; // Changed from "default" to null
-    const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
-    return language?.default ? "default" : language?.language.code || "default";
-  }),
+  getLocalizedValue: vi.fn((obj: Record<string, string>, lang: string) => obj[lang] || obj.default),
+  getLanguageCode: vi.fn(
+    (surveyLanguages: { default: boolean; language: { code: string } }[], languageCode: string) => {
+      if (!surveyLanguages?.length || !languageCode) return null;
+      const language = surveyLanguages.find(
+        (surveyLanguage: { default: boolean; language: { code: string } }) =>
+          surveyLanguage.language.code === languageCode
+      );
+      return language?.default ? "default" : language?.language.code || "default";
+    }
+  ),
 }));
 
 describe("Response Processing", () => {
@@ -182,7 +188,6 @@ describe("Response Processing", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       name: "Test Survey",
-      environmentId: "env1",
       createdBy: null,
       blocks: [
         {
@@ -228,7 +233,7 @@ describe("Response Processing", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             alias: null,
-            projectId: "proj1",
+            workspaceId: "proj1",
           },
           default: true,
           enabled: true,
@@ -251,7 +256,7 @@ describe("Response Processing", () => {
       isSingleResponsePerEmailEnabled: false,
       displayPercentage: 100,
       styling: null,
-      projectOverwrites: null,
+      workspaceOverwrites: null,
       inlineTriggers: [],
       pin: null,
       triggers: [],
@@ -264,7 +269,7 @@ describe("Response Processing", () => {
         isEncrypted: false,
       },
       metadata: {},
-    };
+    } as unknown as TSurvey;
 
     const mockResponse = {
       id: "response1",
@@ -369,7 +374,7 @@ describe("Response Processing", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               alias: null,
-              projectId: "proj1",
+              workspaceId: "proj1",
             },
             default: true,
             enabled: true,
@@ -381,7 +386,7 @@ describe("Response Processing", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               alias: null,
-              projectId: "proj1",
+              workspaceId: "proj1",
             },
             default: false,
             enabled: true,

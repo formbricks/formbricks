@@ -12,6 +12,10 @@ import {
   quotaConditionsToGeneric,
 } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
+import type {
+  TConditionsEditorCallbacks,
+  TConditionsEditorConfig,
+} from "@/modules/ui/components/conditions-editor/types";
 
 interface QuotaConditionBuilderProps {
   survey: TSurvey;
@@ -65,8 +69,8 @@ export const QuotaConditionBuilder = ({
     <div className="max-h-[150px] space-y-4 overflow-y-auto">
       <ConditionsEditor
         conditions={genericConditions}
-        config={config}
-        callbacks={callbacks}
+        config={config as TConditionsEditorConfig}
+        callbacks={callbacks as TConditionsEditorCallbacks}
         quotaErrors={quotaErrors}
         isSubmitted={isSubmitted}
       />

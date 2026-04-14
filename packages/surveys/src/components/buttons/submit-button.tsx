@@ -74,7 +74,7 @@ export function SubmitButton({
       tabIndex={tabIndex}
       autoFocus={focus}
       className={cn(
-        "border-submit-button-border focus:ring-focus shadow-xs focus:outline-hidden mb-1 flex items-center justify-center border leading-4 hover:opacity-90 focus:ring-2 focus:ring-offset-2",
+        "border-submit-button-border focus:ring-focus mb-1 flex items-center justify-center border leading-4 shadow-xs hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
         "button-custom"
       )}
       style={{

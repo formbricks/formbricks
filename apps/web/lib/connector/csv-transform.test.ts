@@ -12,7 +12,7 @@ const makeMapping = (
   id: `mapping-${targetFieldId}`,
   createdAt: NOW,
   connectorId: "conn-1",
-  environmentId: "env-1",
+  workspaceId: "env-1",
   sourceFieldId,
   targetFieldId: targetFieldId as TConnectorFieldMapping["targetFieldId"],
   staticValue: staticValue ?? null,

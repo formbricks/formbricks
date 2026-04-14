@@ -44,7 +44,7 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err instanceof Error ? err.message : "Unknown error occurred");
     }
   };
 
@@ -52,10 +52,10 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
     <div>
       <div className="p-6">
         <h1 className="text-lg font-semibold">
-          {t("environments.settings.profile.enable_two_factor_authentication")}
+          {t("workspace.settings.profile.enable_two_factor_authentication")}
         </h1>
         <h3 className="text-sm text-slate-700">
-          {t("environments.settings.profile.enter_the_code_from_your_authenticator_app_below")}
+          {t("workspace.settings.profile.enter_the_code_from_your_authenticator_app_below")}
         </h3>
       </div>
 

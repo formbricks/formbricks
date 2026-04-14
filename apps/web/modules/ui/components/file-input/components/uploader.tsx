@@ -1,5 +1,6 @@
 import { ArrowUpFromLineIcon } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
@@ -33,6 +34,7 @@ export const Uploader = ({
   disabled = false,
   isStorageConfigured = true,
 }: UploaderProps) => {
+  const { t } = useTranslation();
   return (
     <label // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
       htmlFor={`${id}-${name}`}
@@ -82,7 +84,7 @@ export const Uploader = ({
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
         <ArrowUpFromLineIcon className="h-6 text-slate-500" />
         <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
-          <span className="font-semibold">Click or drag to upload files.</span>
+          <span className="font-semibold">{t("common.upload_input_description")}</span>
         </p>
         <input
           data-testid="upload-file-input"

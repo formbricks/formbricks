@@ -1,6 +1,7 @@
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -12,8 +13,13 @@ export const PUT = async (request: Request) =>
     schemas: {
       body: ZContactBulkUploadRequest,
     },
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "PUT");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
+    },
     handler: async ({ authentication, parsedInput, auditLog }) => {
-      const isContactsEnabled = await getIsContactsEnabled();
+      const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return handleApiError(
           request,
@@ -25,14 +31,14 @@ export const PUT = async (request: Request) =>
         );
       }
 
-      const environmentId = parsedInput.body?.environmentId;
+      const workspaceId = parsedInput.body?.workspaceId;
 
-      if (!environmentId) {
+      if (!workspaceId) {
         return handleApiError(
           request,
           {
             type: "bad_request",
-            details: [{ field: "environmentId", issue: "missing" }],
+            details: [{ field: "workspaceId", issue: "missing" }],
           },
           auditLog
         );
@@ -40,15 +46,16 @@ export const PUT = async (request: Request) =>
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "PUT")) {
+      const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
+      if (!perm || !hasPermission(authentication.workspacePermissions, perm.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
             type: "forbidden",
             details: [
               {
-                field: "environmentId",
-                issue: "insufficient permissions to create contact in this environment",
+                field: "workspaceId",
+                issue: "insufficient permissions to create contact in this workspace",
               },
             ],
           },
@@ -60,7 +67,7 @@ export const PUT = async (request: Request) =>
         (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!
       );
 
-      const upsertBulkContactsResult = await upsertBulkContacts(contacts, environmentId, emails);
+      const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, emails);
 
       if (!upsertBulkContactsResult.ok) {
         return handleApiError(request, upsertBulkContactsResult.error, auditLog);

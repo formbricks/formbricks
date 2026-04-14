@@ -3,7 +3,7 @@ import { ZWebhook } from "@formbricks/database/zod/webhooks";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetWebhooksFilter = ZGetFilter.extend({
-  surveyIds: z.array(z.string().cuid2()).optional(),
+  surveyIds: z.array(z.cuid2()).optional(),
 }).refine(
   (data) => {
     if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -22,9 +22,22 @@ export const ZWebhookInput = ZWebhook.pick({
   name: true,
   url: true,
   source: true,
-  environmentId: true,
+  workspaceId: true,
   triggers: true,
   surveyIds: true,
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;
+
+// Route-level schema — workspaceId is required.
+export const ZWebhookCreateInput = ZWebhook.pick({
+  name: true,
+  url: true,
+  source: true,
+  triggers: true,
+  surveyIds: true,
+}).extend({
+  workspaceId: z.cuid2(),
+});
+
+export type TWebhookCreateInput = z.infer<typeof ZWebhookCreateInput>;

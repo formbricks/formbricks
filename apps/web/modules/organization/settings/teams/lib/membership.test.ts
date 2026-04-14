@@ -26,7 +26,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
-vi.mock("react", () => ({ cache: (fn) => fn }));
+vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 
 const organizationId = "org-1";
@@ -35,11 +35,18 @@ const teamId = "team-1";
 const mockMember = {
   user: { name: "Test", email: "test@example.com", isActive: true },
   userId,
+  organizationId,
   accepted: true,
-  role: "member",
+  role: "member" as const,
 };
-const mockMembership = { userId, organizationId, role: "member", accepted: true };
-const mockTeamMembership = { userId, role: "contributor", teamId };
+const mockMembership = { userId, organizationId, role: "member" as const, accepted: true };
+const mockTeamMembership = {
+  userId,
+  role: "contributor" as const,
+  teamId,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
 describe("getMembershipByOrganizationId", () => {
   beforeEach(() => {
@@ -146,7 +153,7 @@ describe("getMembersByOrganizationId", () => {
   test("returns members", async () => {
     vi.mocked(prisma.membership.findMany).mockResolvedValue([
       { user: { name: "Test" }, role: "member", userId },
-    ]);
+    ] as unknown as Awaited<ReturnType<typeof prisma.membership.findMany>>);
     const result = await getMembersByOrganizationId(organizationId);
     expect(result[0].id).toBe(userId);
     expect(result[0].name).toBe("Test");

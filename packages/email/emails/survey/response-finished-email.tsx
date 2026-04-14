@@ -18,7 +18,7 @@ export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
   readonly responseCount: number;
   readonly response: TResponse;
   readonly WEBAPP_URL: string;
-  readonly environmentId: string;
+  readonly workspaceId: string;
   readonly organization: TOrganization;
   readonly elements: ProcessedResponseElement[]; // Pre-processed data, not a function
   readonly t?: TFunction;
@@ -40,7 +40,7 @@ export function ResponseFinishedEmail({
   responseCount,
   response,
   WEBAPP_URL,
-  environmentId,
+  workspaceId,
   organization,
   elements,
   t = mockT,
@@ -90,7 +90,7 @@ export function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 font-medium break-words whitespace-pre-wrap">
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-medium">
                         {variableResponse}
                       </Text>
                     </Column>
@@ -110,7 +110,7 @@ export function ResponseFinishedEmail({
                       <Text className="mb-2 flex items-center gap-2 text-sm">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 text-sm break-words whitespace-pre-wrap">
+                      <Text className="mt-0 whitespace-pre-wrap break-words text-sm">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>
@@ -118,7 +118,7 @@ export function ResponseFinishedEmail({
                 );
               })}
             <EmailButton
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
+              href={`${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={
                 responseCount > 1
                   ? t("emails.survey_response_finished_email_view_more_responses", {
@@ -135,14 +135,14 @@ export function ResponseFinishedEmail({
               <Text className="mb-0">
                 <Link
                   className="text-sm text-black underline"
-                  href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
+                  href={`${WEBAPP_URL}/workspaces/${workspaceId}/settings/notifications?type=alert&elementId=${survey.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">
                 <Link
                   className="text-sm text-black underline"
-                  href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
+                  href={`${WEBAPP_URL}/workspaces/${workspaceId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms")}
                 </Link>
               </Text>
