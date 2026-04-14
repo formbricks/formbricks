@@ -1,7 +1,7 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { TActionClassPageUrlRule } from "@formbricks/types/action-classes";
-import { isStringUrl, isValidCallbackUrl, testURLmatch } from "./url";
+import { getValidatedCallbackUrl, isStringUrl, testURLmatch } from "./url";
 
 afterEach(() => {
   cleanup();
@@ -72,23 +72,25 @@ describe("testURLmatch", () => {
   });
 });
 
-describe("isValidCallbackUrl", () => {
+describe("getValidatedCallbackUrl", () => {
   const WEBAPP_URL = "https://webapp.example.com";
 
-  test("returns true for valid callback URL", () => {
-    expect(isValidCallbackUrl("https://webapp.example.com/callback", WEBAPP_URL)).toBe(true);
+  test("returns the normalized callback URL for a valid callback", () => {
+    expect(getValidatedCallbackUrl("https://webapp.example.com/callback", WEBAPP_URL)).toBe(
+      "https://webapp.example.com/callback"
+    );
   });
 
-  test("returns false for invalid scheme", () => {
-    expect(isValidCallbackUrl("ftp://webapp.example.com/callback", WEBAPP_URL)).toBe(false);
+  test("returns null for invalid scheme", () => {
+    expect(getValidatedCallbackUrl("ftp://webapp.example.com/callback", WEBAPP_URL)).toBeNull();
   });
 
-  test("returns false for invalid domain", () => {
-    expect(isValidCallbackUrl("https://malicious.com/callback", WEBAPP_URL)).toBe(false);
+  test("returns null for invalid domain", () => {
+    expect(getValidatedCallbackUrl("https://malicious.com/callback", WEBAPP_URL)).toBeNull();
   });
 
-  test("returns false for malformed URL", () => {
-    expect(isValidCallbackUrl("not-a-valid-url", WEBAPP_URL)).toBe(false);
+  test("returns null for malformed URL", () => {
+    expect(getValidatedCallbackUrl("not-a-valid-url", WEBAPP_URL)).toBeNull();
   });
 });
 

@@ -11,6 +11,11 @@ import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ElementConditional } from "@/components/general/element-conditional";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import {
+  getAutoProgressElement,
+  shouldHideSubmitButtonForAutoProgress,
+  shouldTriggerAutoProgress,
+} from "@/lib/auto-progress";
 import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
@@ -32,6 +37,7 @@ interface BlockConditionalProps {
   surveyId: string;
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
+  isAutoProgressingEnabled: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
@@ -55,6 +61,7 @@ export function BlockConditional({
   onFileUpload,
   autoFocusEnabled,
   isBackButtonHidden,
+  isAutoProgressingEnabled,
   onOpenExternalURL,
   dir,
   fullSizeCards,
@@ -71,6 +78,12 @@ export function BlockConditional({
 
   // Ref to collect TTC values synchronously (state updates are async)
   const ttcCollectorRef = useRef<TResponseTtc>({});
+  const autoProgressingInFlightRef = useRef(false);
+  const autoProgressElement = getAutoProgressElement(block.elements, isAutoProgressingEnabled);
+  const shouldHideSubmitButton = shouldHideSubmitButtonForAutoProgress(
+    block.elements,
+    isAutoProgressingEnabled
+  );
 
   // Handle change for an individual element
   const handleElementChange = (elementId: string, responseData: TResponseData) => {
@@ -86,8 +99,37 @@ export function BlockConditional({
         return updated;
       });
     }
+    const mergedValue = { ...value, ...responseData };
+    const blockResponses = block.elements.reduce<TResponseData>((acc, element) => {
+      const elementValue = mergedValue[element.id];
+      if (elementValue !== undefined) {
+        acc[element.id] = elementValue;
+      }
+      return acc;
+    }, {});
+
     // Merge with existing block data to preserve other element values
-    onChange({ ...value, ...responseData });
+    onChange(mergedValue);
+
+    if (
+      shouldTriggerAutoProgress({
+        changedElementId: elementId,
+        mergedValue,
+        autoProgressElement,
+        isAlreadyInFlight: autoProgressingInFlightRef.current,
+      })
+    ) {
+      autoProgressingInFlightRef.current = true;
+      // Defer submission so element-level change handlers can finalize TTC updates first.
+      setTimeout(() => {
+        try {
+          const blockTtc = collectTtcValues();
+          onSubmit(blockResponses, blockTtc);
+        } finally {
+          autoProgressingInFlightRef.current = false;
+        }
+      }, 0);
+    }
   };
 
   // Handler to collect TTC values synchronously (called from element form submissions)
@@ -218,9 +260,7 @@ export function BlockConditional({
     for (const element of block.elements) {
       const form = elementFormRefs.current.get(element.id);
       if (form && !validateElementForm(element, form)) {
-        if (!firstInvalidForm) {
-          firstInvalidForm = form;
-        }
+        firstInvalidForm ??= form;
       }
     }
 
@@ -350,14 +390,19 @@ export function BlockConditional({
               fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
             )}>
             <div>
-              <SubmitButton
-                buttonLabel={
-                  block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
-                }
-                isLastQuestion={isLastBlock}
-                onClick={handleBlockSubmit}
-                tabIndex={0}
-              />
+              {shouldHideSubmitButton ? (
+                // Keep layout symmetry for Back button positioning (LTR/RTL).
+                <div aria-hidden="true" className="mb-1 h-(--fb-button-height)" />
+              ) : (
+                <SubmitButton
+                  buttonLabel={
+                    block.buttonLabel ? getLocalizedValue(block.buttonLabel, languageCode) : undefined
+                  }
+                  isLastQuestion={isLastBlock}
+                  onClick={handleBlockSubmit}
+                  tabIndex={0}
+                />
+              )}
             </div>
             {!isFirstBlock && !isBackButtonHidden && (
               <BackButton

@@ -12,10 +12,13 @@ import {
   ENTERPRISE_LICENSE_KEY,
   POSTHOG_KEY,
   SESSION_MAX_AGE,
+  WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
 import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import {
   logAuthAttempt,
@@ -332,9 +335,7 @@ export const authOptions: NextAuthOptions = {
 
       // get callback url from the cookie store,
       const callbackUrl =
-        cookieStore.get("__Secure-next-auth.callback-url")?.value ||
-        cookieStore.get("next-auth.callback-url")?.value ||
-        "";
+        getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
 
       const userEmail = user.email ?? "";
       const userId = user.id as string;

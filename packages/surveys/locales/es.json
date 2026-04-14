@@ -20,6 +20,7 @@
     "question_video": "Video de la pregunta",
     "required": "Obligatorio",
     "respondents_will_not_see_this_card": "Los encuestados no verán esta tarjeta",
+    "response_saved_offline": "Tu respuesta aún no se ha enviado. Se enviará automáticamente cuando vuelvas a estar en línea.",
     "retry": "Reintentar",
     "retrying": "Reintentando...",
     "search": "Buscar...",
@@ -32,6 +33,7 @@
     "terms_of_service": "Términos de servicio",
     "the_servers_cannot_be_reached_at_the_moment": "Los servidores no pueden ser alcanzados en este momento.",
     "they_will_be_redirected_immediately": "Serán redirigidos inmediatamente",
+    "welcome_video": "Vídeo de la tarjeta de bienvenida",
     "your_feedback_is_stuck": "Tu feedback está atascado :("
   },
   "errors": {

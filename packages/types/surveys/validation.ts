@@ -305,17 +305,29 @@ const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpTo
   return actions.filter((action): action is TActionJumpToQuestion => action.objective === "jumpToQuestion");
 };
 
+export enum TValidateIdErrorCode {
+  Empty = "empty",
+  Duplicate = "duplicate",
+  Reserved = "reserved",
+  HasSpaces = "has_spaces",
+  InvalidChars = "invalid_chars",
+}
+
+export interface TValidateIdError {
+  code: TValidateIdErrorCode;
+  field: string;
+}
+
 // function to validate hidden field or question id or element id
 export const validateId = (
-  type: "Hidden field" | "Question", // TODO: Change this to "Element" when we're ready to change the UI
   field: string,
   existingElementIds: string[],
   existingEndingCardIds: string[],
   existingHiddenFieldIds: string[],
   existingVariableNames: string[] = []
-): string | null => {
+): TValidateIdError | null => {
   if (field.trim() === "") {
-    return `Please enter a ${type} Id.`;
+    return { code: TValidateIdErrorCode.Empty, field };
   }
 
   const combinedIds = [
@@ -326,19 +338,19 @@ export const validateId = (
   ];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
-    return `${type} ID already exists in questions, hidden fields, or variables`;
+    return { code: TValidateIdErrorCode.Duplicate, field };
   }
 
   if (FORBIDDEN_IDS.includes(field)) {
-    return `${type} ID is not allowed.`;
+    return { code: TValidateIdErrorCode.Reserved, field };
   }
 
   if (field.includes(" ")) {
-    return `${type} ID cannot contain spaces. Please remove spaces.`;
+    return { code: TValidateIdErrorCode.HasSpaces, field };
   }
 
   if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
-    return `${type} ID is not allowed. Please use only alphanumeric characters, hyphens, or underscores.`;
+    return { code: TValidateIdErrorCode.InvalidChars, field };
   }
 
   return null;

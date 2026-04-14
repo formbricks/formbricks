@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const ConfigLayout = async (props: {
@@ -9,10 +11,10 @@ const ConfigLayout = async (props: {
 
   const { children } = props;
 
-  const { isBilling, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isBilling } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(`/workspaces/${workspace.id}/settings/billing`);
+    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
   }
 
   return children;

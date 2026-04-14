@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth";
+import { logger } from "@formbricks/logger";
 import { TIntegrationGoogleSheetsConfig } from "@formbricks/types/integration/google-sheet";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -9,6 +10,8 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
@@ -79,7 +82,17 @@ export const GET = async (req: Request) => {
 
   const result = await createOrUpdateIntegration(workspaceId, googleSheetIntegration);
   if (result) {
-    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
+    try {
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+      capturePostHogEvent(session.user.id, "integration_connected", {
+        integration_type: "googleSheets",
+        organization_id: organizationId,
+      });
+    } catch (err) {
+      logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
+    }
+
+    return Response.redirect(`${WEBAPP_URL}/${basePath}/integrations/google-sheets`);
   }
 
   return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");

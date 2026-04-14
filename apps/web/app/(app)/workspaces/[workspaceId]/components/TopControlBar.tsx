@@ -26,8 +26,9 @@ export const TopControlBar = ({
   isAccessControlAllowed,
   membershipRole,
 }: TopControlBarProps) => {
-  const { isMember } = getAccessFlags(membershipRole);
+  const { isMember, isBilling } = getAccessFlags(membershipRole);
   const { workspace } = useWorkspaceContext();
+  const isMembershipPending = membershipRole === undefined;
 
   return (
     <div
@@ -42,6 +43,8 @@ export const TopControlBar = ({
         isLicenseActive={isLicenseActive}
         isOwnerOrManager={isOwnerOrManager}
         isMember={isMember}
+        isBilling={isBilling}
+        isMembershipPending={isMembershipPending}
         isAccessControlAllowed={isAccessControlAllowed}
       />
     </div>

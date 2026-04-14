@@ -5,6 +5,8 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 const getEmail = async (token: string) => {
@@ -86,6 +88,17 @@ export const GET = withV1ApiWrapper({
         },
       };
       await createOrUpdateIntegration(workspaceId, airtableIntegrationInput);
+
+      try {
+        const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+        capturePostHogEvent(authentication.user.id, "integration_connected", {
+          integration_type: "airtable",
+          organization_id: organizationId,
+        });
+      } catch (err) {
+        logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
+      }
+
       return {
         response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/airtable`),
       };

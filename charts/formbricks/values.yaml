@@ -404,6 +404,7 @@ envoy:
       service:
         name: ""
         type: ClusterIP
+        annotations: {}
       logging:
         defaultLevel: info
       telemetry:

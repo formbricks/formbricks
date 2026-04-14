@@ -78,4 +78,5 @@ export const mockSurvey: TWorkspaceStateSurvey = {
     brandColor: { light: "#2B6CB0" },
   },
   isBackButtonHidden: false,
+  isAutoProgressingEnabled: false,
 };

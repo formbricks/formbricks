@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -7,11 +7,15 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TUserCreateInput, TUserUpdateInput, ZUserEmail, ZUserUpdateInput } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
 
-export const updateUser = async (id: string, data: TUserUpdateInput) => {
+type TUserDbClient = PrismaClient | Prisma.TransactionClient;
+
+const getDbClient = (tx?: Prisma.TransactionClient): TUserDbClient => tx ?? prisma;
+
+export const updateUser = async (id: string, data: TUserUpdateInput, tx?: Prisma.TransactionClient) => {
   validateInputs([id, ZId], [data, ZUserUpdateInput.partial()]);
 
   try {
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await getDbClient(tx).user.update({
       where: {
         id,
       },
@@ -113,10 +117,10 @@ export const getUser = reactCache(async (id: string) => {
   }
 });
 
-export const createUser = async (data: TUserCreateInput) => {
+export const createUser = async (data: TUserCreateInput, tx?: Prisma.TransactionClient) => {
   validateInputs([data, ZUserUpdateInput]);
   try {
-    const user = await prisma.user.create({
+    const user = await getDbClient(tx).user.create({
       data: data,
       select: {
         name: true,

@@ -3,8 +3,9 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
+import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
@@ -40,7 +41,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const { session, isBilling, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(`/workspaces/${workspace.id}/settings/billing`);
+    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
   }
 
   const surveyCount = await getSurveyCount(params.workspaceId);
@@ -48,16 +49,14 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
   const workspaceBasePath = `/workspaces/${workspace.id}`;
-  const CreateSurveyButton = () => {
-    return (
-      <Button size="sm" asChild>
-        <Link href={`${workspaceBasePath}/surveys/templates`}>
-          {t("workspace.surveys.new_survey")}
-          <PlusIcon />
-        </Link>
-      </Button>
-    );
-  };
+  const createSurveyButton = (
+    <Button size="sm" asChild>
+      <Link href={`${workspaceBasePath}/surveys/templates`}>
+        {t("workspace.surveys.new_survey")}
+        <PlusIcon />
+      </Link>
+    </Button>
+  );
 
   const workspaceWithRequiredProps = {
     ...workspace,
@@ -80,7 +79,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   if (surveyCount > 0) {
     content = (
       <>
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
+        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
         <SurveysList
           workspaceId={workspace.id}
           isReadOnly={isReadOnly}

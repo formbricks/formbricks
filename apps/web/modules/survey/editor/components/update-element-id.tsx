@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
+import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -42,11 +43,11 @@ export const UpdateElementId = ({
     const endingCardIds = localSurvey.endings.map((e) => e.id);
     const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
 
-    const validateIdError = validateId("Question", currentValue, elementIds, endingCardIds, hiddenFieldIds);
+    const validateIdError = validateId(currentValue, elementIds, endingCardIds, hiddenFieldIds);
 
     if (validateIdError) {
       setIsInputInvalid(true);
-      toast.error(validateIdError);
+      toast.error(getValidateIdErrorMessage(validateIdError, "question", t));
       setCurrentValue(prevValue);
       return;
     }

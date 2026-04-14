@@ -3,15 +3,15 @@
 import { signIn } from "next-auth/react";
 import { useEffect } from "react";
 
-export const SignIn = ({ token, webAppUrl }: { token: string; webAppUrl: string }) => {
+export const SignIn = ({ token, callbackUrl }: { token: string; callbackUrl: string }) => {
   useEffect(() => {
     if (token) {
       signIn("token", {
         token: token,
-        callbackUrl: webAppUrl,
+        callbackUrl,
       });
     }
-  }, [token, webAppUrl]);
+  }, [callbackUrl, token]);
 
   return <></>;
 };

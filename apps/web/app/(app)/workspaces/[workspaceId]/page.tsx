@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -12,11 +13,7 @@ const WorkspacePage = async (props: { params: Promise<{ workspaceId: string }> }
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (isBilling) {
-    if (IS_FORMBRICKS_CLOUD) {
-      return redirect(`/workspaces/${params.workspaceId}/settings/billing`);
-    } else {
-      return redirect(`/workspaces/${params.workspaceId}/settings/enterprise`);
-    }
+    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
   }
 
   return redirect(`/workspaces/${params.workspaceId}/surveys`);

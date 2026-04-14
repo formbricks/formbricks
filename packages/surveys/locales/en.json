@@ -20,6 +20,7 @@
     "question_video": "Question Video",
     "required": "Required",
     "respondents_will_not_see_this_card": "Respondents will not see this card",
+    "response_saved_offline": "Your response hasn't been sent yet. It will be submitted automatically once you're back online.",
     "retry": "Retry",
     "retrying": "Retrying…",
     "search": "Search...",
@@ -32,6 +33,7 @@
     "terms_of_service": "Terms of Service",
     "the_servers_cannot_be_reached_at_the_moment": "The servers cannot be reached at the moment.",
     "they_will_be_redirected_immediately": "They will be redirected immediately",
+    "welcome_video": "Welcome Card video",
     "your_feedback_is_stuck": "Your feedback is stuck :("
   },
   "errors": {

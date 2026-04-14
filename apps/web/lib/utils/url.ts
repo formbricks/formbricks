@@ -35,18 +35,43 @@ export const testURLmatch = (
 };
 
 // Helper function to validate callback URLs
-export const isValidCallbackUrl = (url: string, WEBAPP_URL: string): boolean => {
+export const getValidatedCallbackUrl = (
+  url: string | null | undefined,
+  WEBAPP_URL: string
+): string | null => {
+  if (!url) {
+    return null;
+  }
+
   try {
-    const parsedUrl = new URL(url);
-    const allowedSchemes = ["https:", "http:"];
-
-    // Extract the domain from WEBAPP_URL
     const parsedWebAppUrl = new URL(WEBAPP_URL);
-    const allowedDomains = [parsedWebAppUrl.hostname];
+    const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
+    const isRootRelativePath = url.startsWith("/");
 
-    return allowedSchemes.includes(parsedUrl.protocol) && allowedDomains.includes(parsedUrl.hostname);
-  } catch (err) {
-    return false;
+    // Reject ambiguous non-URL values like "foo" while still allowing safe root-relative paths.
+    if (!isAbsoluteUrl && !isRootRelativePath) {
+      return null;
+    }
+
+    const parsedUrl = isAbsoluteUrl ? new URL(url) : new URL(url, parsedWebAppUrl.origin);
+    const allowedSchemes = ["https:", "http:"];
+    const allowedOrigins = new Set([parsedWebAppUrl.origin]);
+
+    if (!allowedSchemes.includes(parsedUrl.protocol)) {
+      return null;
+    }
+
+    if (!allowedOrigins.has(parsedUrl.origin)) {
+      return null;
+    }
+
+    if (parsedUrl.username || parsedUrl.password) {
+      return null;
+    }
+
+    return parsedUrl.toString();
+  } catch {
+    return null;
   }
 };
 

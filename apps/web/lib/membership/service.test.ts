@@ -68,6 +68,33 @@ describe("Membership Service", () => {
 
       await expect(getMembershipByUserIdOrganizationId(mockUserId, mockOrgId)).rejects.toThrow(UnknownError);
     });
+
+    test("uses the transaction client directly when provided", async () => {
+      const mockMembership: TMembership = {
+        organizationId: mockOrgId,
+        userId: mockUserId,
+        accepted: true,
+        role: "owner",
+      };
+      const tx = {
+        membership: {
+          findUnique: vi.fn().mockResolvedValue(mockMembership),
+        },
+      } as any;
+
+      const result = await getMembershipByUserIdOrganizationId(mockUserId, mockOrgId, tx);
+
+      expect(result).toEqual(mockMembership);
+      expect(tx.membership.findUnique).toHaveBeenCalledWith({
+        where: {
+          userId_organizationId: {
+            userId: mockUserId,
+            organizationId: mockOrgId,
+          },
+        },
+      });
+      expect(prisma.membership.findUnique).not.toHaveBeenCalled();
+    });
   });
 
   describe("createMembership", () => {
