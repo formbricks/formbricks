@@ -3,29 +3,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { isI18nObject } from "@/lib/i18n/utils";
-
-export interface TranslatableString {
-  path: string;
-  displayId: string;
-  fieldLabel: string;
-  value: TI18nString;
-  isRichText: boolean;
-  elementId: string;
-}
-
-export interface TranslationProgress {
-  translated: number;
-  total: number;
-  percentage: number;
-}
-
-export interface DeduplicatedString {
-  key: string;
-  displayId: string;
-  fieldLabel: string;
-  value: TI18nString;
-  duplicatePaths: string[];
-}
+import { type DeduplicatedString, type TranslatableString, type TranslationProgress } from "./types";
 
 const RICH_TEXT_FIELDS = new Set(["headline", "subheader", "html"]);
 
@@ -40,7 +18,7 @@ const pushIfI18n = (
 ) => {
   const val = (obj as Record<string, unknown>)?.[field];
   if (val && isI18nObject(val)) {
-    const defaultText = (val as TI18nString).default ?? "";
+    const defaultText = val.default ?? "";
     const isRichText = RICH_TEXT_FIELDS.has(field);
     const hasContent = isRichText ? getTextContent(defaultText).trim() !== "" : defaultText.trim() !== "";
     if (!hasContent) return;
@@ -299,6 +277,10 @@ export const deduplicateStrings = (strings: TranslatableString[]): DeduplicatedS
   return Array.from(map.values());
 };
 
+type Traversable = Record<string, unknown> | unknown[];
+
+const isTraversable = (val: unknown): val is Traversable => val !== null && typeof val === "object";
+
 export const setTranslationAtPath = (
   survey: TSurvey,
   path: string,
@@ -307,22 +289,22 @@ export const setTranslationAtPath = (
 ): TSurvey => {
   const clone = structuredClone(survey);
   const parts = path.split(".");
-  let current: unknown = clone;
+  if (parts.length === 0) return survey;
+
+  let current: Traversable = clone;
 
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
-    const idx = Number(part);
-    if (!isNaN(idx) && Array.isArray(current)) {
-      current = current[idx];
-    } else {
-      current = (current as Record<string, unknown>)[part];
-    }
-    if (current === undefined || current === null) return survey;
+    const next: unknown = Array.isArray(current) ? current[Number(part)] : current[part];
+    if (!isTraversable(next)) return survey;
+    current = next;
   }
 
-  const lastPart = parts[parts.length - 1];
-  const target = (current as Record<string, unknown>)[lastPart];
-  if (target && typeof target === "object" && "default" in target) {
+  const lastPart = parts.at(-1);
+  if (!lastPart || Array.isArray(current)) return survey;
+
+  const target = current[lastPart];
+  if (isTraversable(target) && !Array.isArray(target) && "default" in target) {
     (target as Record<string, string>)[languageCode] = value;
   }
 

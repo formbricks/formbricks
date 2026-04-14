@@ -124,7 +124,7 @@ export const RecallItemSelect = ({
       .map((element) => {
         return {
           id: element.id,
-          label: element.headline[selectedLanguageCode] || element.headline["default"] || "",
+          label: element.headline[selectedLanguageCode],
           type: "element" as const,
         };
       });

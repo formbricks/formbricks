@@ -18,13 +18,13 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Editor } from "@/modules/ui/components/editor";
 import { Input } from "@/modules/ui/components/input";
+import { type TranslatableString } from "../lib/types";
 import {
-  type TranslatableString,
   extractTranslatableStrings,
   getProgressColor,
   getProgressTextColor,
   setTranslationAtPath,
-} from "../lib/translation-utils";
+} from "../lib/utils";
 
 interface ManageTranslationsModalProps {
   open: boolean;
@@ -205,7 +205,6 @@ const TranslationRow = ({
   localSurvey: TSurvey;
   languageCode: string;
 }) => {
-  const isEmpty = !value.trim();
   return (
     <tr className="border-b last:border-b-0">
       <td className="py-2 pr-2 align-top">
@@ -230,14 +229,13 @@ const TranslationRow = ({
             path={s.path}
             value={value}
             onChange={onChange}
-            isEmpty={isEmpty}
             localSurvey={localSurvey}
             languageCode={languageCode}
             elementId={s.elementId}
           />
         ) : (
           <Input
-            className={cn("text-sm", isEmpty && "border-orange-400 focus:border-orange-500")}
+            className="text-sm"
             value={value}
             onChange={(e) => onChange(s.path, e.target.value)}
             placeholder=""
@@ -252,7 +250,6 @@ const RichTextTranslationInput = ({
   path,
   value,
   onChange,
-  isEmpty,
   localSurvey,
   languageCode,
   elementId,
@@ -260,7 +257,6 @@ const RichTextTranslationInput = ({
   path: string;
   value: string;
   onChange: (path: string, value: string) => void;
-  isEmpty: boolean;
   localSurvey: TSurvey;
   languageCode: string;
   elementId: string;
@@ -268,7 +264,7 @@ const RichTextTranslationInput = ({
   const [firstRender, setFirstRender] = useState(true);
 
   return (
-    <div className={cn("rounded-md", isEmpty && "ring-1 ring-orange-400")}>
+    <div className="rounded-md">
       <Editor
         key={path}
         disableLists

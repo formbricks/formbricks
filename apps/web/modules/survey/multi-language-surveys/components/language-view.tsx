@@ -34,7 +34,7 @@ import {
   extractTranslatableStrings,
   getProgressColor,
   getProgressTextColor,
-} from "../lib/translation-utils";
+} from "../lib/utils";
 import { ManageTranslationsModal } from "./manage-translations-modal";
 
 interface LanguageViewProps {
