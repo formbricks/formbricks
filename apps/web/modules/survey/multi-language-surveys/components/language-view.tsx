@@ -446,7 +446,10 @@ export const LanguageView = ({
         buttonVariant={confirmationModalInfo.buttonVariant}
         onConfirm={confirmationModalInfo.onConfirm}
         open={confirmationModalInfo.open}
-        setOpen={(open) => setConfirmationModalInfo((prev) => ({ ...prev, open }))}
+        setOpen={(value) => {
+          const open = typeof value === "function" ? value(confirmationModalInfo.open) : value;
+          setConfirmationModalInfo((prev) => ({ ...prev, open }));
+        }}
         body={confirmationModalInfo.body}
         title={confirmationModalInfo.title}
       />
