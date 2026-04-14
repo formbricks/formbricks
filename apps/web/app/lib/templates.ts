@@ -971,7 +971,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
-              headline: t("templates.improve_trial_conversion_question_2_headline"),
+              headline: t("templates.improve_trial_conversion_question_3_headline"),
               required: true,
               inputType: "text",
             }),
