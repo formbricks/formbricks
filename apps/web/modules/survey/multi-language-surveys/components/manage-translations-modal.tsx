@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDownIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -14,6 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -30,6 +37,7 @@ interface ManageTranslationsModalProps {
   setLocalSurvey: (survey: TSurvey) => void;
   languageCode: string;
   languageName: string;
+  defaultLanguageName: string;
 }
 
 export const ManageTranslationsModal = ({
@@ -39,6 +47,7 @@ export const ManageTranslationsModal = ({
   setLocalSurvey,
   languageCode,
   languageName,
+  defaultLanguageName,
 }: ManageTranslationsModalProps) => {
   const { t } = useTranslation();
 
@@ -121,37 +130,46 @@ export const ManageTranslationsModal = ({
 
   const progressColor = getProgressColor(progress.percentage);
   const progressTextColor = getProgressTextColor(progress.percentage);
-  const isIncomplete = progress.percentage < 100;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent width="wide" className="max-h-[85dvh]">
         <DialogHeader>
-          <DialogTitle>
-            {t("environments.surveys.edit.manage_translations")} — {languageName}
-          </DialogTitle>
-          <div className="mt-2 space-y-2">
-            <div className="flex items-center justify-between text-sm text-slate-600">
-              <span className={cn("font-medium", progressTextColor)}>
-                {progress.translated}/{progress.total} ({progress.percentage}%)
+          <DialogTitle>{t("environments.surveys.edit.manage_translations")}</DialogTitle>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className={cn("h-full rounded-full transition-all", progressColor)}
+                  style={{ width: `${progress.percentage}%` }}
+                />
+              </div>
+              <span className={cn("text-sm font-medium", progressTextColor)}>
+                {progress.translated}/{progress.total}
               </span>
-              {isIncomplete && (
-                <Button
-                  variant="ghost"
-                  className="text-xs text-slate-500 underline hover:text-slate-700"
-                  onClick={() => setMissingFirst(!missingFirst)}>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="sm" className="text-xs">
                   {missingFirst
-                    ? t("environments.surveys.edit.show_in_order")
-                    : t("environments.surveys.edit.missing_first")}
+                    ? t("environments.surveys.edit.missing_first")
+                    : t("environments.surveys.edit.show_in_order")}
+                  <ChevronDownIcon className="ml-1 h-3.5 w-3.5" />
                 </Button>
-              )}
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className={cn("h-full rounded-full transition-all", progressColor)}
-                style={{ width: `${progress.percentage}%` }}
-              />
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="text-xs">
+                <DropdownMenuItem
+                  className={cn(!missingFirst && "font-semibold", "text-xs")}
+                  onSelect={() => setMissingFirst(false)}>
+                  {t("environments.surveys.edit.show_in_order")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className={cn(missingFirst && "font-semibold", "text-xs")}
+                  onSelect={() => setMissingFirst(true)}>
+                  {t("environments.surveys.edit.missing_first")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </DialogHeader>
 
@@ -160,8 +178,8 @@ export const ManageTranslationsModal = ({
             <thead>
               <tr className="border-b text-left text-slate-500">
                 <th className="w-16 py-2 pr-2 font-medium">ID</th>
-                <th className="w-1/3 py-2 pr-2 font-medium">{t("environments.surveys.edit.default_text")}</th>
-                <th className="py-2 font-medium">{t("environments.surveys.edit.translation")}</th>
+                <th className="w-1/3 py-2 pr-2 font-medium">{defaultLanguageName}</th>
+                <th className="py-2 font-medium">{languageName}</th>
               </tr>
             </thead>
             <tbody>

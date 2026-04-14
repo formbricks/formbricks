@@ -459,6 +459,9 @@ export const LanguageView = ({
         setLocalSurvey={setLocalSurvey}
         languageCode={activeLanguageCode}
         languageName={getLanguageLabel(activeLanguageCode, locale) ?? activeLanguageCode}
+        defaultLanguageName={
+          defaultLanguage ? (getLanguageLabel(defaultLanguage.code, locale) ?? defaultLanguage.code) : ""
+        }
       />
     </div>
   );
