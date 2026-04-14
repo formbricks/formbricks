@@ -14,7 +14,7 @@ describe("captureSurveyResponsePostHogEvent", () => {
     organizationId: "org-1",
     surveyId: "survey-1",
     surveyType: "link",
-    environmentId: "env-1",
+    workspaceId: "ws-1",
     responseCount,
   });
 
@@ -27,7 +27,7 @@ describe("captureSurveyResponsePostHogEvent", () => {
       survey_id: "survey-1",
       survey_type: "link",
       organization_id: "org-1",
-      environment_id: "env-1",
+      workspace_id: "ws-1",
       response_count: 1,
       is_first_response: true,
       milestone: "first",
