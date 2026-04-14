@@ -149,7 +149,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
       const errorsIndexes: number[] = [];
 
       results.forEach((result, index) => {
-        if (result?.data) {
+        if (result?.data && !result?.serverError) {
           successCount++;
         } else {
           errorsIndexes.push(index);
