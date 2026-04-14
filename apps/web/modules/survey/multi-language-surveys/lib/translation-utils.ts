@@ -1,6 +1,7 @@
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { isI18nObject } from "@/lib/i18n/utils";
 
 export interface TranslatableString {
@@ -39,12 +40,17 @@ const pushIfI18n = (
 ) => {
   const val = (obj as Record<string, unknown>)?.[field];
   if (val && isI18nObject(val)) {
+    const defaultText = (val as TI18nString).default ?? "";
+    const isRichText = RICH_TEXT_FIELDS.has(field);
+    const hasContent = isRichText ? getTextContent(defaultText).trim() !== "" : defaultText.trim() !== "";
+    if (!hasContent) return;
+
     result.push({
       path: `${path}.${field}`,
       displayId,
       fieldLabel,
       value: val as TI18nString,
-      isRichText: RICH_TEXT_FIELDS.has(field),
+      isRichText,
       elementId,
     });
   }
@@ -247,7 +253,9 @@ export const computeTranslationProgress = (
   if (total === 0) return { translated: 0, total: 0, percentage: 100 };
   const translated = strings.filter((s) => {
     const val = s.value[languageCode];
-    return val !== undefined && val.trim() !== "";
+    if (val === undefined || val === "") return false;
+    const text = s.isRichText ? getTextContent(val) : val;
+    return text.trim() !== "";
   }).length;
   const percentage = Math.round((translated / total) * 100);
   return { translated, total, percentage };
@@ -297,7 +305,7 @@ export const setTranslationAtPath = (
   languageCode: string,
   value: string
 ): TSurvey => {
-  const clone = JSON.parse(JSON.stringify(survey)) as TSurvey;
+  const clone = structuredClone(survey);
   const parts = path.split(".");
   let current: unknown = clone;
 

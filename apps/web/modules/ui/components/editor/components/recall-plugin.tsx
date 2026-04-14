@@ -17,7 +17,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { getFallbackValues, getRecallItems } from "@/lib/utils/recall";
+import { getFallbackValues, getRecallItemLabel, getRecallItems } from "@/lib/utils/recall";
 import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
 import { $createRecallNode, RecallNode } from "./recall-node";
 
@@ -305,6 +305,22 @@ export const RecallPlugin = ({
       convertTextToRecallNodes();
     });
   }, [editor, convertTextToRecallNodes]);
+
+  // Sync recall node labels when the survey data changes (e.g. headline edited in translations modal)
+  useEffect(() => {
+    editor.update(() => {
+      const root = $getRoot();
+      const allRecallNodes = findAllRecallNodes(root);
+      for (const recallNode of allRecallNodes) {
+        const recallItem = recallNode.getRecallItem();
+        const currentLabel =
+          getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
+        if (currentLabel !== recallItem.label) {
+          recallNode.setRecallItemLabel(currentLabel);
+        }
+      }
+    });
+  }, [editor, localSurvey, selectedLanguageCode, findAllRecallNodes]);
 
   useEffect(() => {
     const removeUpdateListener = editor.registerUpdateListener(handleEditorUpdate);

@@ -122,7 +122,11 @@ export const RecallItemSelect = ({
         return !recallItemIds.includes(element.id) && !notAllowed && element.id !== elementId && idx > index;
       })
       .map((element) => {
-        return { id: element.id, label: element.headline[selectedLanguageCode], type: "element" as const };
+        return {
+          id: element.id,
+          label: element.headline[selectedLanguageCode] || element.headline["default"] || "",
+          type: "element" as const,
+        };
       });
 
     return filteredElements;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { md } from "@/lib/markdownIt";
@@ -59,27 +60,48 @@ export const ManageTranslationsModal = ({
     }
   }, [open, strings, languageCode]);
 
+  const isDraftEmpty = useCallback(
+    (s: TranslatableString) => {
+      const val = draftTranslations[s.path];
+      if (val === undefined || val === "") return true;
+      // Rich text editors output HTML like "<p></p>" when empty — strip tags before checking
+      const text = s.isRichText ? getTextContent(val) : val;
+      return !text.trim();
+    },
+    [draftTranslations]
+  );
+
   const progress = useMemo(() => {
     const total = strings.length;
     if (total === 0) return { translated: 0, total: 0, percentage: 100 };
-    const translated = strings.filter((s) => {
-      const val = draftTranslations[s.path];
-      return val !== undefined && val.trim() !== "";
-    }).length;
+    const translated = strings.filter((s) => !isDraftEmpty(s)).length;
     const percentage = Math.round((translated / total) * 100);
     return { translated, total, percentage };
-  }, [draftTranslations, strings]);
+  }, [isDraftEmpty, strings]);
 
   const displayStrings = useMemo(() => {
     if (!missingFirst) return strings;
     return [...strings].sort((a, b) => {
-      const aEmpty = !draftTranslations[a.path]?.trim();
-      const bEmpty = !draftTranslations[b.path]?.trim();
+      const aEmpty = isDraftEmpty(a);
+      const bEmpty = isDraftEmpty(b);
       if (aEmpty && !bEmpty) return -1;
       if (!aEmpty && bEmpty) return 1;
       return 0;
     });
-  }, [strings, missingFirst, draftTranslations]);
+  }, [strings, missingFirst, isDraftEmpty]);
+
+  // Merge draft translations into localSurvey so that the recall dropdown
+  // can see in-progress translations (e.g. translated headlines).
+  const mergedSurvey = useMemo(() => {
+    let survey = localSurvey;
+    for (const s of strings) {
+      const val = draftTranslations[s.path] ?? "";
+      if (val) {
+        survey = setTranslationAtPath(survey, s.path, languageCode, val);
+      }
+    }
+    return survey;
+  }, [localSurvey, strings, draftTranslations, languageCode]);
 
   const handleDraftChange = useCallback((path: string, value: string) => {
     setDraftTranslations((prev) => ({ ...prev, [path]: value }));
@@ -149,7 +171,7 @@ export const ManageTranslationsModal = ({
                   s={s}
                   value={draftTranslations[s.path] ?? ""}
                   onChange={handleDraftChange}
-                  localSurvey={localSurvey}
+                  localSurvey={mergedSurvey}
                   languageCode={languageCode}
                 />
               ))}
