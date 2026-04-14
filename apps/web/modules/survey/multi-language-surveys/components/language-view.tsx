@@ -207,30 +207,29 @@ export const LanguageView = ({
 
   return (
     <div className="mt-12 space-y-6 p-5">
-      {/* Activation toggle */}
-      <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
-        <Switch
-          checked={isMultiLanguageActivated}
-          onCheckedChange={handleActivationSwitch}
-          disabled={projectLanguages.length === 0}
-          id="activate-translations-toggle"
-        />
-        <div>
-          <Label htmlFor="activate-translations-toggle" className="text-base font-semibold text-slate-900">
-            {t("environments.surveys.edit.activate_translations")}
-          </Label>
-          <p className="text-sm text-slate-500">
-            {t("environments.surveys.edit.present_your_survey_in_multiple_languages")}
-          </p>
+      {/* Activation toggle — only show when workspace has languages */}
+      {projectLanguages.length > 0 && (
+        <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
+          <Switch
+            checked={isMultiLanguageActivated}
+            onCheckedChange={handleActivationSwitch}
+            id="activate-translations-toggle"
+          />
+          <div>
+            <Label htmlFor="activate-translations-toggle" className="text-base font-semibold text-slate-900">
+              {t("environments.surveys.edit.activate_translations")}
+            </Label>
+            <p className="text-sm text-slate-500">
+              {t("environments.surveys.edit.present_your_survey_in_multiple_languages")}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {isMultiLanguageActivated && (
         <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t("environments.surveys.edit.survey_language")}
-            </h3>
+            <h3 className="text-base font-semibold text-slate-900">{t("common.survey_languages")}</h3>
           </div>
 
           {/* Default language select */}
@@ -269,7 +268,33 @@ export const LanguageView = ({
                     </SelectContent>
                   </Select>
                 </div>
-                {defaultLanguage && <Badge type="gray" size="normal" text={t("common.default")} />}
+                {defaultLanguage && (
+                  <>
+                    <Badge type="gray" size="normal" text={t("common.default")} />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => {
+                        setConfirmationModalInfo({
+                          open: true,
+                          title: t("environments.surveys.edit.remove_translations"),
+                          body: t(
+                            "environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"
+                          ),
+                          buttonText: t("environments.surveys.edit.remove_translations"),
+                          buttonVariant: "destructive",
+                          onConfirm: () => {
+                            updateSurveyTranslations(localSurvey, []);
+                            setIsMultiLanguageActivated(false);
+                            setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
+                          },
+                        });
+                      }}>
+                      {t("environments.surveys.edit.change_default")}
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -426,7 +451,7 @@ export const LanguageView = ({
         </div>
       )}
 
-      {!isMultiLanguageActivated && projectLanguages.length === 0 && (
+      {projectLanguages.length === 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 text-center">
           <p className="text-sm text-slate-500">
             {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}

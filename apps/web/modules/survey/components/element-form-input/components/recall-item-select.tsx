@@ -212,7 +212,8 @@ export const RecallItemSelect = ({
                 }}>
                 <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
                 <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                  {getTextContentWithRecallTruncated(recallItem.label)}
+                  {getTextContentWithRecallTruncated(recallItem.label).trim() ||
+                    t("environments.surveys.edit.no_text_found")}
                 </p>
               </DropdownMenuItem>
             );
