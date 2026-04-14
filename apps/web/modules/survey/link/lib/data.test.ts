@@ -79,6 +79,7 @@ describe("data", () => {
       redirectUrl: null,
       pin: null,
       isBackButtonHidden: false,
+      isAutoProgressingEnabled: true,
       singleUse: null,
       projectOverwrites: null,
       styling: null,
@@ -116,6 +117,11 @@ describe("data", () => {
           type: true,
         }),
       });
+      expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
+        expect.objectContaining({
+          isAutoProgressingEnabled: true,
+        })
+      );
       expect(transformPrismaSurvey).toHaveBeenCalledWith(mockSurveyData);
     });
 
@@ -196,6 +202,7 @@ describe("data", () => {
         redirectUrl: null,
         pin: null,
         isBackButtonHidden: false,
+        isAutoProgressingEnabled: true,
         singleUse: null,
         projectOverwrites: null,
         surveyClosedMessage: null,

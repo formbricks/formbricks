@@ -6,6 +6,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { ZCloudBillingInterval } from "@formbricks/types/organizations";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -218,6 +219,11 @@ export const startHobbyAction = authenticatedActionClient
 
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+
+    capturePostHogEvent(ctx.user.id, "stayed_on_hobby_plan", {
+      organization_id: parsedInput.organizationId,
+    });
+
     return { success: true };
   });
 
@@ -250,6 +256,17 @@ export const startProTrialAction = authenticatedActionClient
     await createProTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+
+    capturePostHogEvent(ctx.user.id, "free_trial_started", {
+      plan: "pro",
+      organization_id: parsedInput.organizationId,
+      trial_duration_days: 14,
+    });
+
+    capturePostHogEvent(ctx.user.id, "reverse_trial_started", {
+      organization_id: parsedInput.organizationId,
+    });
+
     return { success: true };
   });
 

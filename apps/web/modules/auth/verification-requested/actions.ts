@@ -3,7 +3,9 @@
 import { z } from "zod";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
+import { WEBAPP_URL } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
+import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -12,6 +14,7 @@ import { sendVerificationEmail } from "@/modules/email";
 
 const ZResendVerificationEmailAction = z.object({
   email: ZUserEmail,
+  callbackUrl: z.string().max(2000).optional(),
 });
 
 export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVerificationEmailAction).action(
@@ -28,7 +31,12 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
       };
     }
     ctx.auditLoggingCtx.userId = user.id;
-    await sendVerificationEmail({ id: user.id, email: user.email, locale: user.locale });
+    await sendVerificationEmail({
+      id: user.id,
+      email: user.email,
+      locale: user.locale,
+      callbackUrl: getValidatedCallbackUrl(parsedInput.callbackUrl, WEBAPP_URL) ?? undefined,
+    });
     return {
       success: true,
     };

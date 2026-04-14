@@ -18,6 +18,8 @@ interface ProjectAndOrgSwitchProps {
   isLicenseActive: boolean;
   isOwnerOrManager: boolean;
   isMember: boolean;
+  isBilling: boolean;
+  isMembershipPending: boolean;
   isAccessControlAllowed: boolean;
 }
 
@@ -35,6 +37,8 @@ export const ProjectAndOrgSwitch = ({
   isOwnerOrManager,
   isAccessControlAllowed,
   isMember,
+  isBilling,
+  isMembershipPending,
 }: ProjectAndOrgSwitchProps) => {
   const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
   const showEnvironmentBreadcrumb = currentEnvironment?.type === "development";
@@ -50,6 +54,7 @@ export const ProjectAndOrgSwitch = ({
           isFormbricksCloud={isFormbricksCloud}
           isMember={isMember}
           isOwnerOrManager={isOwnerOrManager}
+          isMembershipPending={isMembershipPending}
         />
         {currentProjectId && currentEnvironmentId && (
           <ProjectBreadcrumb
@@ -63,6 +68,8 @@ export const ProjectAndOrgSwitch = ({
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
             isEnvironmentBreadcrumbVisible={showEnvironmentBreadcrumb}
+            isBilling={isBilling}
+            isMembershipPending={isMembershipPending}
           />
         )}
         {showEnvironmentBreadcrumb && (

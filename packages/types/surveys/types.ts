@@ -914,6 +914,7 @@ export const ZSurveyBase = z.object({
   recaptcha: ZSurveyRecaptcha.nullable(),
   isSingleResponsePerEmailEnabled: z.boolean(),
   isBackButtonHidden: z.boolean(),
+  isAutoProgressingEnabled: z.boolean().optional().prefault(false),
   isCaptureIpEnabled: z.boolean(),
   pin: z
     .string()
@@ -3798,6 +3799,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     endings: ZSurveyEndings.prefault([]),
     type: ZSurveyType.prefault("link"),
     followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).prefault([]),
+    isAutoProgressingEnabled: z.boolean().prefault(false),
   })
   .superRefine((survey, ctx) => {
     surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
@@ -3846,6 +3848,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     endings: ZSurveyEndings.prefault([]),
     type: ZSurveyType.prefault("link"),
     followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).prefault([]),
+    isAutoProgressingEnabled: z.boolean().prefault(false),
   })
   .superRefine((survey, ctx) => {
     surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);

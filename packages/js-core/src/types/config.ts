@@ -20,6 +20,7 @@ export type TEnvironmentStateSurvey = Pick<
   | "delay"
   | "projectOverwrites"
   | "isBackButtonHidden"
+  | "isAutoProgressingEnabled"
   | "recaptcha"
 > & {
   languages: (SurveyLanguage & { language: Language })[];

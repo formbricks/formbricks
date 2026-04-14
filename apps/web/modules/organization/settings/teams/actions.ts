@@ -10,6 +10,7 @@ import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
@@ -326,6 +327,11 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
     if (inviteId) {
       await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
     }
+
+    capturePostHogEvent(ctx.user.id, "team_member_invited", {
+      organization_id: parsedInput.organizationId,
+      invitee_role: parsedInput.role,
+    });
 
     return inviteId;
   })

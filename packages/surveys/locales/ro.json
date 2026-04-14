@@ -20,6 +20,7 @@
     "question_video": "Video întrebare",
     "required": "Obligatoriu",
     "respondents_will_not_see_this_card": "Respondenții nu vor vedea acest card",
+    "response_saved_offline": "Răspunsul tău nu a fost trimis încă. Va fi transmis automat când vei reveni online.",
     "retry": "Reîncearcă",
     "retrying": "Se reîncearcă...",
     "search": "Căutare...",
@@ -32,6 +33,7 @@
     "terms_of_service": "Termeni și condiții",
     "the_servers_cannot_be_reached_at_the_moment": "Serverele nu pot fi accesate momentan.",
     "they_will_be_redirected_immediately": "Vor fi redirecționați imediat",
+    "welcome_video": "Videoclip Card de bun venit",
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {

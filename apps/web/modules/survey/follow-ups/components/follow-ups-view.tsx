@@ -46,6 +46,7 @@ export const FollowUpsView = ({
         <UpgradePrompt
           title={t("environments.surveys.edit.follow_ups_empty_heading")}
           description={t("environments.surveys.edit.follow_ups_empty_description")}
+          feature="follow_ups"
           buttons={[
             {
               text: isFormbricksCloud
