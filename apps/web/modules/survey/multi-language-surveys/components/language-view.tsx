@@ -171,6 +171,26 @@ export const LanguageView = ({
     updateSurveyTranslations(localSurvey, updatedLanguages);
   };
 
+  const removeLanguage = (code: string) => {
+    const updatedLanguages = localSurvey.languages.filter((lang) => lang.language.code !== code);
+    updateSurveyTranslations(localSurvey, updatedLanguages);
+  };
+
+  const confirmRemoveLanguage = (code: string) => {
+    const label = getLanguageLabel(code, locale) ?? code;
+    setConfirmationModalInfo({
+      open: true,
+      title: `${t("environments.workspace.languages.remove_language")}: ${label}`,
+      body: t("environments.surveys.edit.this_will_remove_the_language_and_all_its_translations"),
+      buttonText: t("common.remove"),
+      buttonVariant: "destructive",
+      onConfirm: () => {
+        removeLanguage(code);
+        setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
+      },
+    });
+  };
+
   const handleLanguageSwitchToggle = () => {
     setLocalSurvey({ ...localSurvey, showLanguageSwitch: !localSurvey.showLanguageSwitch });
   };
@@ -344,8 +364,10 @@ export const LanguageView = ({
                                 <DropdownMenuItem onClick={() => openTranslationModal(lang.code)}>
                                   {t("environments.surveys.edit.manage_translations")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toggleLanguageEnabled(lang.code)}>
-                                  {surveyLang.enabled ? t("common.disable") : t("common.enable")}
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={() => confirmRemoveLanguage(lang.code)}>
+                                  {t("common.remove")}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
