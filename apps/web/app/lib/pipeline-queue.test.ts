@@ -9,9 +9,13 @@ import {
 } from "@/app/lib/pipeline-queue";
 import { TPipelineInput } from "@/app/lib/types/pipelines";
 
-const { mockGetRedisClient, mockTryLock } = vi.hoisted(() => ({
+const { mockGetRedisClient, mockTryLock, mockConstants } = vi.hoisted(() => ({
   mockGetRedisClient: vi.fn(),
   mockTryLock: vi.fn(),
+  mockConstants: {
+    CRON_SECRET: "test-cron-secret" as string | undefined,
+    WEBAPP_URL: "https://test.formbricks.com" as string | undefined,
+  },
 }));
 
 vi.mock("@/lib/cache", () => ({
@@ -21,10 +25,7 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
-vi.mock("@/lib/constants", () => ({
-  CRON_SECRET: "test-cron-secret",
-  WEBAPP_URL: "https://test.formbricks.com",
-}));
+vi.mock("@/lib/constants", () => mockConstants);
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -143,6 +144,8 @@ describe("pipeline-queue", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
     vi.clearAllMocks();
+    mockConstants.CRON_SECRET = "test-cron-secret";
+    mockConstants.WEBAPP_URL = "https://test.formbricks.com";
   });
 
   afterEach(async () => {
@@ -290,6 +293,52 @@ describe("pipeline-queue", () => {
 
     expect(result.movedReadyJobs).toBe(1);
     expect(processJob).toHaveBeenCalledWith(expect.objectContaining({ jobId: queuedJob.jobId }));
+  });
+
+  test("schedulePipelineDrain skips drain when CRON_SECRET is missing", async () => {
+    mockConstants.CRON_SECRET = undefined;
+
+    const mockRedis = createMockRedis();
+    const mockFetch = vi.fn();
+
+    mockGetRedisClient.mockResolvedValue(mockRedis.client);
+    mockTryLock.mockResolvedValue({ ok: true, data: true });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await enqueuePipelineJob(createPipelineInput("response-1"));
+
+    const processJob = vi.fn().mockRejectedValue(new Error("boom"));
+
+    await drainPipelineQueue({ processJob });
+    await vi.advanceTimersByTimeAsync(PIPELINE_RETRY_BASE_DELAY_MS);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Skipping pipeline drain trigger because CRON_SECRET or WEBAPP_URL is not configured"
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  test("schedulePipelineDrain skips drain when WEBAPP_URL is missing", async () => {
+    mockConstants.WEBAPP_URL = undefined;
+
+    const mockRedis = createMockRedis();
+    const mockFetch = vi.fn();
+
+    mockGetRedisClient.mockResolvedValue(mockRedis.client);
+    mockTryLock.mockResolvedValue({ ok: true, data: true });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await enqueuePipelineJob(createPipelineInput("response-1"));
+
+    const processJob = vi.fn().mockRejectedValue(new Error("boom"));
+
+    await drainPipelineQueue({ processJob });
+    await vi.advanceTimersByTimeAsync(PIPELINE_RETRY_BASE_DELAY_MS);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Skipping pipeline drain trigger because CRON_SECRET or WEBAPP_URL is not configured"
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   test("logs non-2xx responses from the drain trigger endpoint", async () => {
