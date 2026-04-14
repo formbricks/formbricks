@@ -21,8 +21,9 @@ export const OrganizationSettingsNavbar = ({
   loading,
 }: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isMember, isOwner } = getAccessFlags(membershipRole);
-  const isPricingDisabled = isMember;
+  const { isMember, isOwner, isManager } = getAccessFlags(membershipRole);
+  const isOwnerOrManager = isOwner || isManager;
+  const isMembershipPending = membershipRole === undefined || loading;
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -53,7 +54,10 @@ export const OrganizationSettingsNavbar = ({
       label: t("common.api_keys"),
       href: `${workspaceBasePath}/settings/api-keys`,
       current: pathname?.includes("/api-keys"),
-      hidden: !isOwner,
+      disabled: isMembershipPending || !isOwnerOrManager,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
     },
     {
       id: "domain",
@@ -66,14 +70,18 @@ export const OrganizationSettingsNavbar = ({
       id: "billing",
       label: t("common.billing"),
       href: `${workspaceBasePath}/settings/billing`,
-      hidden: !isFormbricksCloud || loading,
+      hidden: !isFormbricksCloud,
       current: pathname?.includes("/billing"),
     },
     {
       id: "enterprise",
       label: t("common.enterprise_license"),
       href: `${workspaceBasePath}/settings/enterprise`,
-      hidden: isFormbricksCloud || isPricingDisabled,
+      hidden: isFormbricksCloud,
+      disabled: isMembershipPending || isMember,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
       current: pathname?.includes("/enterprise"),
     },
   ];

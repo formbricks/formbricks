@@ -4,11 +4,11 @@ import { signIn } from "next-auth/react";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
+import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 
 interface OpenIdButtonProps {
-  inviteUrl?: string;
+  returnToUrl?: string;
   lastUsed?: boolean;
   directRedirect?: boolean;
   text?: string;
@@ -16,7 +16,7 @@ interface OpenIdButtonProps {
 }
 
 export const OpenIdButton = ({
-  inviteUrl,
+  returnToUrl,
   lastUsed,
   directRedirect = false,
   text,
@@ -27,13 +27,13 @@ export const OpenIdButton = ({
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "OpenID");
     }
-    const callbackUrlWithSource = getCallbackUrl(inviteUrl, source);
+    const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
     await signIn("openid", {
       redirect: true,
-      callbackUrl: callbackUrlWithSource,
+      callbackUrl: returnToUrlWithSource,
     });
-  }, [inviteUrl, source]);
+  }, [returnToUrl, source]);
 
   useEffect(() => {
     if (directRedirect) {

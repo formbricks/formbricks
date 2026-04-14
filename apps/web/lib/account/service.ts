@@ -1,8 +1,12 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { TAccount, TAccountInput, ZAccountInput } from "@formbricks/types/account";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
+
+type TAccountDbClient = PrismaClient | Prisma.TransactionClient;
+
+const getDbClient = (tx?: Prisma.TransactionClient): TAccountDbClient => tx ?? prisma;
 
 export const createAccount = async (accountData: TAccountInput): Promise<TAccount> => {
   validateInputs([accountData, ZAccountInput]);
@@ -21,7 +25,10 @@ export const createAccount = async (accountData: TAccountInput): Promise<TAccoun
   }
 };
 
-export const upsertAccount = async (accountData: TAccountInput): Promise<TAccount> => {
+export const upsertAccount = async (
+  accountData: TAccountInput,
+  tx?: Prisma.TransactionClient
+): Promise<TAccount> => {
   const [validatedAccountData] = validateInputs([accountData, ZAccountInput]);
   const updateAccountData: Omit<TAccountInput, "userId" | "type" | "provider" | "providerAccountId"> = {
     access_token: validatedAccountData.access_token,
@@ -33,7 +40,7 @@ export const upsertAccount = async (accountData: TAccountInput): Promise<TAccoun
   };
 
   try {
-    const account = await prisma.account.upsert({
+    const account = await getDbClient(tx).account.upsert({
       where: {
         provider_providerAccountId: {
           provider: validatedAccountData.provider,

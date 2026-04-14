@@ -113,6 +113,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             displayOption: true,
             hiddenFields: true,
             isBackButtonHidden: true,
+            isAutoProgressingEnabled: true,
             triggers: {
               select: {
                 actionClass: {

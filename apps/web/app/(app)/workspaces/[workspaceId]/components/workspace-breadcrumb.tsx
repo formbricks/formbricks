@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { CreateWorkspaceModal } from "@/modules/workspaces/components/create-workspace-modal";
 import { WorkspaceLimitModal } from "@/modules/workspaces/components/workspace-limit-modal";
@@ -32,6 +33,8 @@ interface WorkspaceBreadcrumbProps {
   currentOrganizationId: string;
   isAccessControlAllowed: boolean;
   isEnvironmentBreadcrumbVisible: boolean;
+  isBilling: boolean;
+  isMembershipPending: boolean;
 }
 
 const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
@@ -54,6 +57,8 @@ export const WorkspaceBreadcrumb = ({
   currentOrganizationId,
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
+  isBilling,
+  isMembershipPending,
 }: WorkspaceBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
@@ -140,6 +145,11 @@ export const WorkspaceBreadcrumb = ({
     },
   ];
 
+  const areWorkspaceSettingsDisabled = isMembershipPending || isBilling;
+  const workspaceSettingsDisabledMessage = isMembershipPending
+    ? t("common.loading")
+    : t("common.you_are_not_authorized_to_perform_this_action");
+
   if (!currentWorkspace) {
     const errorMessage = `Workspace not found for workspace id: ${currentWorkspaceId}`;
     logger.error(errorMessage);
@@ -195,6 +205,7 @@ export const WorkspaceBreadcrumb = ({
       },
     ];
   };
+
   return (
     <BreadcrumbItem isActive={isWorkspaceDropdownOpen}>
       <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
@@ -237,19 +248,36 @@ export const WorkspaceBreadcrumb = ({
           {!isLoadingWorkspaces && !loadError && (
             <>
               <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                {workspaces.map((proj) => (
+                {workspaces.map((ws) => (
                   <DropdownMenuCheckboxItem
-                    key={proj.id}
-                    checked={proj.id === currentWorkspaceId}
-                    onClick={() => handleWorkspaceChange(proj.id)}
+                    key={ws.id}
+                    checked={ws.id === currentWorkspaceId}
+                    onClick={() => handleWorkspaceChange(ws.id)}
                     className="cursor-pointer">
                     <div className="flex items-center gap-2">
-                      <span>{proj.name}</span>
+                      <span>{ws.name}</span>
                     </div>
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuGroup>
-              {isOwnerOrManager && (
+              {isMembershipPending || !isOwnerOrManager ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-disabled="true"
+                      className="relative flex w-full cursor-not-allowed select-none items-center justify-between rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                      <span>{t("common.add_new_workspace")}</span>
+                      <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                    {isMembershipPending
+                      ? t("common.loading")
+                      : t("common.you_are_not_authorized_to_perform_this_action")}
+                  </PopoverContent>
+                </Popover>
+              ) : (
                 <DropdownMenuCheckboxItem
                   onClick={handleAddWorkspace}
                   className="w-full cursor-pointer justify-between">
@@ -266,13 +294,30 @@ export const WorkspaceBreadcrumb = ({
               {t("common.workspace_configuration")}
             </div>
             {workspaceSettings.map((setting) => (
-              <DropdownMenuCheckboxItem
-                key={setting.id}
-                checked={isActiveWorkspaceSetting(pathname, setting.id)}
-                onClick={() => handleWorkspaceSettingsNavigation(setting.id)}
-                className="cursor-pointer">
-                {setting.label}
-              </DropdownMenuCheckboxItem>
+              <div key={setting.id}>
+                {areWorkspaceSettingsDisabled ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-disabled="true"
+                        className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                        {setting.label}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                      {workspaceSettingsDisabledMessage}
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <DropdownMenuCheckboxItem
+                    checked={isActiveWorkspaceSetting(pathname, setting.id)}
+                    onClick={() => handleWorkspaceSettingsNavigation(setting.id)}
+                    className="cursor-pointer">
+                    {setting.label}
+                  </DropdownMenuCheckboxItem>
+                )}
+              </div>
             ))}
           </DropdownMenuGroup>
         </DropdownMenuContent>

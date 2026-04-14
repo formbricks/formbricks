@@ -13,7 +13,9 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getTranslate } from "@/lingodotdev/server";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -53,7 +55,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
     integrations.some((integration) => integration.type === type);
 
   if (isBilling) {
-    return redirect(`/workspaces/${params.workspaceId}/settings/billing`);
+    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
   }
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");

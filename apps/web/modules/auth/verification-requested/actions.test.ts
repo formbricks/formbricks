@@ -29,6 +29,10 @@ vi.mock("@/modules/email", () => ({
   sendVerificationEmail: vi.fn(),
 }));
 
+vi.mock("@/lib/constants", () => ({
+  WEBAPP_URL: "http://localhost:3000",
+}));
+
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
 }));
@@ -143,8 +147,47 @@ describe("resendVerificationEmailAction", () => {
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
-      expect(sendVerificationEmail).toHaveBeenCalledWith(mockUser);
+      expect(sendVerificationEmail).toHaveBeenCalledWith({
+        ...mockUser,
+        callbackUrl: undefined,
+      });
       expect(result).toEqual({ success: true });
+    });
+
+    test("should preserve a valid callback URL when resending the verification email", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+
+      await resendVerificationEmailAction({
+        ctx: mockCtx,
+        parsedInput: {
+          ...validInput,
+          callbackUrl: "http://localhost:3000/invite?token=invite-token",
+        },
+      } as any);
+
+      expect(sendVerificationEmail).toHaveBeenCalledWith({
+        ...mockUser,
+        callbackUrl: "http://localhost:3000/invite?token=invite-token",
+      });
+    });
+
+    test("should discard invalid callback URLs when resending the verification email", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+
+      await resendVerificationEmailAction({
+        ctx: mockCtx,
+        parsedInput: {
+          ...validInput,
+          callbackUrl: "https://evil.example/phish",
+        },
+      } as any);
+
+      expect(sendVerificationEmail).toHaveBeenCalledWith({
+        ...mockUser,
+        callbackUrl: undefined,
+      });
     });
 
     test("should return success without sending email when user email is already verified", async () => {

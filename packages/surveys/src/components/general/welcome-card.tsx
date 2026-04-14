@@ -147,8 +147,10 @@ export function WelcomeCard({
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div>
-        {fileUrl || videoUrl ? (
-          <ElementMedia imgUrl={fileUrl} videoUrl={videoUrl} altText={t("common.company_logo")} />
+        {fileUrl ? (
+          <ElementMedia imgUrl={fileUrl} altText={t("common.company_logo")} className="mb-8 min-h-0 w-1/4" />
+        ) : videoUrl ? (
+          <ElementMedia videoUrl={videoUrl} altText={t("common.welcome_video")} />
         ) : null}
 
         <Headline

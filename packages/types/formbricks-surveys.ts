@@ -65,4 +65,10 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   isSpamProtectionEnabled?: boolean;
   recaptchaSiteKey?: string;
   getRecaptchaToken?: () => Promise<string | null>;
+  offlineSupport?: boolean;
+  onOfflineStatusChange?: (status: {
+    isOnline: boolean;
+    isSyncing: boolean;
+    pendingSyncCount: number;
+  }) => void;
 }

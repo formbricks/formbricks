@@ -34,6 +34,7 @@ import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/
 import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
@@ -112,6 +113,10 @@ export const MainNavigation = ({
 
   const [isPending, startTransition] = useTransition();
   const { isManager, isOwner, isBilling, isMember } = getAccessFlags(membershipRole);
+  const isMembershipPending = membershipRole === undefined;
+  const disabledNavigationMessage = isMembershipPending
+    ? t("common.loading")
+    : t("common.you_are_not_authorized_to_perform_this_action");
 
   const isOwnerOrManager = isManager || isOwner;
 
@@ -148,6 +153,7 @@ export const MainNavigation = ({
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
         isHidden: false,
+        disabled: isMembershipPending || isBilling,
       },
       {
         href: `/workspaces/${workspace.id}/contacts`,
@@ -157,6 +163,7 @@ export const MainNavigation = ({
           pathname?.includes("/contacts") ||
           pathname?.includes("/segments") ||
           pathname?.includes("/attributes"),
+        disabled: isMembershipPending || isBilling,
       },
       {
         name: t("workspace.unify.unify_feedback"),
@@ -176,9 +183,10 @@ export const MainNavigation = ({
           pathname?.includes("/teams") ||
           pathname?.includes("/languages") ||
           pathname?.includes("/tags"),
+        disabled: isMembershipPending || isBilling,
       },
     ],
-    [t, workspace.id, pathname]
+    [t, workspace.id, pathname, isMembershipPending, isBilling]
   );
 
   const dropdownNavigation = [
@@ -407,7 +415,9 @@ export const MainNavigation = ({
     organization.billing?.stripe?.trialEnd,
   ]);
 
-  const mainNavigationLink = `/workspaces/${workspace.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
+  const mainNavigationLink = isBilling
+    ? getBillingFallbackPath(workspace.id, isFormbricksCloud)
+    : `/workspaces/${workspace.id}/surveys/`;
 
   const handleWorkspaceChange = (workspaceId: string) => {
     if (workspaceId === workspace.id) return;
@@ -518,24 +528,24 @@ export const MainNavigation = ({
             </div>
 
             {/* Main Nav Switch */}
-            {!isBilling && (
-              <ul>
-                {mainNavigation.map(
-                  (item) =>
-                    !item.isHidden && (
-                      <NavigationLink
-                        key={item.name}
-                        href={item.href}
-                        isActive={item.isActive}
-                        isCollapsed={isCollapsed}
-                        isTextVisible={isTextVisible}
-                        linkText={item.name}>
-                        <item.icon strokeWidth={1.5} />
-                      </NavigationLink>
-                    )
-                )}
-              </ul>
-            )}
+            <ul>
+              {mainNavigation.map(
+                (item) =>
+                  !item.isHidden && (
+                    <NavigationLink
+                      key={item.name}
+                      href={item.href}
+                      isActive={item.isActive}
+                      isCollapsed={isCollapsed}
+                      isTextVisible={isTextVisible}
+                      disabled={item.disabled}
+                      disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
+                      linkText={item.name}>
+                      <item.icon strokeWidth={1.5} />
+                    </NavigationLink>
+                  )
+              )}
+            </ul>
           </div>
 
           <div>

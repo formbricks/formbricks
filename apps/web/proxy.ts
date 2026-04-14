@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { WEBAPP_URL } from "@/lib/constants";
-import { isValidCallbackUrl } from "@/lib/utils/url";
+import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
 const handleAuth = async (request: NextRequest): Promise<Response | null> => {
@@ -16,13 +16,14 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
 
-  if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
+  if (callbackUrl && !validatedCallbackUrl) {
     return NextResponse.json({ error: "Invalid callback URL" }, { status: 400 });
   }
 
-  if (session && callbackUrl) {
-    return NextResponse.redirect(callbackUrl);
+  if (session && validatedCallbackUrl) {
+    return NextResponse.redirect(validatedCallbackUrl);
   }
 
   return null;

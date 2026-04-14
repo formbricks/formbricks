@@ -41,6 +41,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   variables: [],
   followUps: [],
   isBackButtonHidden: false,
+  isAutoProgressingEnabled: true,
   metadata: {},
   slug: null,
   isCaptureIpEnabled: false,

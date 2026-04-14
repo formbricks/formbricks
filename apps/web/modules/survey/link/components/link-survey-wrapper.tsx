@@ -22,6 +22,7 @@ interface LinkSurveyWrapperProps {
   handleResetSurvey: () => void;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   publicDomain: string;
   isBrandingEnabled: boolean;
@@ -40,6 +41,7 @@ export const LinkSurveyWrapper = ({
   handleResetSurvey,
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
   publicDomain,
   isBrandingEnabled,
@@ -101,6 +103,7 @@ export const LinkSurveyWrapper = ({
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
+          TERMS_URL={TERMS_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           surveyUrl={publicDomain + "/s/" + surveyId}
         />

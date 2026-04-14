@@ -20,6 +20,7 @@ export type TWorkspaceStateSurvey = Pick<
   | "delay"
   | "workspaceOverwrites"
   | "isBackButtonHidden"
+  | "isAutoProgressingEnabled"
   | "recaptcha"
 > & {
   languages: (SurveyLanguage & { language: Language })[];

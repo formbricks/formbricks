@@ -28,6 +28,7 @@ import { ResponseTableCell } from "@/app/(app)/workspaces/[workspaceId]/surveys/
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -198,7 +199,13 @@ export const ResponseTable = ({
   };
 
   const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
-    await deleteResponseAction({ responseId, decrementQuotas: params?.decrementQuotas ?? false });
+    const result = await deleteResponseAction({
+      responseId,
+      decrementQuotas: params?.decrementQuotas ?? false,
+    });
+    if (result?.serverError) {
+      throw new Error(getFormattedErrorMessage(result));
+    }
   };
 
   // Handle downloading selected responses
