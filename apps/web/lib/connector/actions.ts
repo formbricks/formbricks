@@ -411,7 +411,7 @@ export const importHistoricalResponsesAction = authenticatedActionClient
 const ZImportCsvDataAction = z.object({
   connectorId: ZId,
   workspaceId: ZId,
-  csvData: z.array(z.record(z.string())).min(1),
+  csvData: z.array(z.record(z.string(), z.string())).min(1),
 });
 
 export const importCsvDataAction = authenticatedActionClient
@@ -461,15 +461,17 @@ export const importCsvDataAction = authenticatedActionClient
 const ZListFeedbackRecordsAction = z.object({
   workspaceId: ZId,
   limit: z.number().min(1).max(1000).optional(),
-  offset: z.number().min(0).optional(),
+  cursor: z.string().optional(),
   sourceType: z.string().optional(),
-  fieldType: z.string().optional(),
+  fieldType: z
+    .enum(["text", "categorical", "nps", "csat", "ces", "rating", "number", "boolean", "date"])
+    .optional(),
   since: z.string().optional(),
   until: z.string().optional(),
 });
 
 export const listFeedbackRecordsAction = authenticatedActionClient
-  .schema(ZListFeedbackRecordsAction)
+  .inputSchema(ZListFeedbackRecordsAction)
   .action(
     async ({
       ctx,
@@ -498,8 +500,8 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       const params: FeedbackRecordListParams = {
         tenant_id: parsedInput.workspaceId,
         limit: parsedInput.limit ?? 50,
-        offset: parsedInput.offset ?? 0,
       };
+      if (parsedInput.cursor) params.cursor = parsedInput.cursor;
       if (parsedInput.sourceType) params.source_type = parsedInput.sourceType;
       if (parsedInput.fieldType) params.field_type = parsedInput.fieldType;
       if (parsedInput.since) params.since = parsedInput.since;

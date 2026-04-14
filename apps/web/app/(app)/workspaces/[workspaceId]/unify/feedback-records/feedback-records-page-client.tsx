@@ -10,13 +10,13 @@ import { FeedbackRecordsTable } from "./feedback-records-table";
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
-  initialTotal: number;
+  initialNextCursor?: string;
 }
 
 export function FeedbackRecordsPageClient({
   workspaceId,
   initialRecords,
-  initialTotal,
+  initialNextCursor,
 }: FeedbackRecordsPageClientProps) {
   const { t } = useTranslation();
 
@@ -29,7 +29,7 @@ export function FeedbackRecordsPageClient({
       <FeedbackRecordsTable
         workspaceId={workspaceId}
         initialRecords={initialRecords}
-        initialTotal={initialTotal}
+        initialNextCursor={initialNextCursor}
       />
     </PageContentWrapper>
   );

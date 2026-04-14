@@ -60,7 +60,7 @@ export function CsvImportModal({
         const result = createFeedbackCSVDataSchema(t).safeParse(records);
 
         if (!result.success) {
-          setCsvError(result.error.errors[0].message);
+          setCsvError(result.error.issues[0].message);
           return;
         }
 

@@ -32,11 +32,6 @@ export const ContactsSecondaryNavigation = async ({
       label: t("common.segments"),
       href: `${workspaceBasePath}/segments`,
     },
-    {
-      id: "segments",
-      label: t("common.segments"),
-      href: `/environments/${environmentId}/segments`,
-    },
   ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;

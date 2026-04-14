@@ -59,31 +59,31 @@ function truncate(str: string, maxLen: number): string {
 interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
-  initialTotal: number;
+  initialNextCursor?: string;
 }
 
 export const FeedbackRecordsTable = ({
   workspaceId,
   initialRecords,
-  initialTotal,
+  initialNextCursor,
 }: FeedbackRecordsTableProps) => {
   const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
-  const [total, setTotal] = useState(initialTotal);
+  const [nextCursor, setNextCursor] = useState<string | undefined>(initialNextCursor);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRecords = useCallback(
-    async (offset: number, append: boolean) => {
-      const setLoading = offset === 0 ? setIsRefreshing : setIsLoadingMore;
+    async (cursor: string | undefined, append: boolean) => {
+      const setLoading = append ? setIsLoadingMore : setIsRefreshing;
       setLoading(true);
       setError(null);
 
       const result = await listFeedbackRecordsAction({
         workspaceId,
         limit: RECORDS_PER_PAGE,
-        offset,
+        cursor,
       });
 
       if (!result?.data) {
@@ -94,14 +94,14 @@ export const FeedbackRecordsTable = ({
 
       const response = result.data;
       setRecords((prev) => (append ? [...prev, ...response.data] : response.data));
-      setTotal(response.total);
+      setNextCursor(response.next_cursor);
       setLoading(false);
     },
     [workspaceId, t]
   );
 
   const handleLoadMore = () => {
-    fetchRecords(records.length, true);
+    fetchRecords(nextCursor, true);
   };
 
   const handleRefresh = async () => {
@@ -114,7 +114,6 @@ export const FeedbackRecordsTable = ({
     const result = await listFeedbackRecordsAction({
       workspaceId,
       limit: RECORDS_PER_PAGE,
-      offset: 0,
     });
 
     if (!result?.data) {
@@ -126,12 +125,12 @@ export const FeedbackRecordsTable = ({
     }
 
     setRecords(result.data.data);
-    setTotal(result.data.total);
+    setNextCursor(result.data.next_cursor);
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
   };
 
-  const hasMore = records.length < total;
+  const hasMore = !!nextCursor;
 
   if (error) {
     return (
@@ -154,7 +153,7 @@ export const FeedbackRecordsTable = ({
       {!isEmpty && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-500">
-            {t("workspace.unify.showing_count", { count: records.length, total })}
+            {t("workspace.unify.showing_count_loaded", { count: records.length })}
           </p>
           <Button
             variant="secondary"

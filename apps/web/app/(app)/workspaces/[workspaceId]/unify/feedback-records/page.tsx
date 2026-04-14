@@ -25,20 +25,19 @@ export default async function UnifyFeedbackRecordsPage(props: { params: Promise<
   const result = await listFeedbackRecords({
     tenant_id: params.workspaceId,
     limit: INITIAL_PAGE_SIZE,
-    offset: 0,
   });
 
   if (result.error) {
     throw new Error(t("workspace.unify.failed_to_load_feedback_records"));
   }
 
-  const initialData = result.data ?? { data: [], total: 0, limit: INITIAL_PAGE_SIZE, offset: 0 };
+  const initialData = result.data ?? { data: [], limit: INITIAL_PAGE_SIZE };
 
   return (
     <FeedbackRecordsPageClient
       workspaceId={params.workspaceId}
       initialRecords={initialData.data}
-      initialTotal={initialData.total}
+      initialNextCursor={initialData.next_cursor}
     />
   );
 }

@@ -98,30 +98,23 @@ export function transformResponseToFeedbackRecords(
     const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(elementMap.get(mapping.elementId));
     const valueFields = convertValueToHubFields(value, mapping.hubFieldType);
 
-    const feedbackRecord: FeedbackRecordCreateParams = {
+    const feedbackRecord = {
       collected_at:
         response.createdAt instanceof Date ? response.createdAt.toISOString() : String(response.createdAt),
       source_type: "formbricks",
       submission_id: response.id,
+      tenant_id: tenantId,
       field_id: mapping.elementId,
       field_type: mapping.hubFieldType,
       source_id: survey.id,
       source_name: survey.name,
       field_label: fieldLabel,
+      ...(response.language && response.language !== "default" ? { language: response.language } : {}),
+      ...(response.contact?.userId ? { user_identifier: response.contact.userId } : {}),
       ...valueFields,
     };
 
-    if (response.language && response.language !== "default") {
-      feedbackRecord.language = response.language;
-    }
-
-    feedbackRecord.tenant_id = tenantId;
-
-    if (response.contact?.userId) {
-      feedbackRecord.user_identifier = response.contact.userId;
-    }
-
-    feedbackRecords.push(feedbackRecord);
+    feedbackRecords.push(feedbackRecord as FeedbackRecordCreateParams);
   }
 
   return feedbackRecords;

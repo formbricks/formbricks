@@ -315,14 +315,14 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ worksp
 });
 
 export const getConnector = reactCache(
-  async (connectorId: string): Promise<{ environmentId: string } | null> => {
+  async (connectorId: string): Promise<{ workspaceId: string } | null> => {
     validateInputs([connectorId, ZId]);
     try {
       const connector = await prisma.connector.findUnique({
         where: {
           id: connectorId,
         },
-        select: { environmentId: true },
+        select: { workspaceId: true },
       });
 
       return connector;
