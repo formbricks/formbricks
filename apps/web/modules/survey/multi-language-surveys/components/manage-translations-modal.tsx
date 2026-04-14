@@ -29,6 +29,7 @@ interface ManageTranslationsModalProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   languageCode: string;
+  languageName: string;
 }
 
 export const ManageTranslationsModal = ({
@@ -37,6 +38,7 @@ export const ManageTranslationsModal = ({
   localSurvey,
   setLocalSurvey,
   languageCode,
+  languageName,
 }: ManageTranslationsModalProps) => {
   const { t } = useTranslation();
 
@@ -125,21 +127,23 @@ export const ManageTranslationsModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent width="wide" className="max-h-[85dvh]">
         <DialogHeader>
-          <DialogTitle>{t("environments.surveys.edit.manage_translations")}</DialogTitle>
+          <DialogTitle>
+            {t("environments.surveys.edit.manage_translations")} — {languageName}
+          </DialogTitle>
           <div className="mt-2 space-y-2">
             <div className="flex items-center justify-between text-sm text-slate-600">
               <span className={cn("font-medium", progressTextColor)}>
                 {progress.translated}/{progress.total} ({progress.percentage}%)
               </span>
               {isIncomplete && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   className="text-xs text-slate-500 underline hover:text-slate-700"
                   onClick={() => setMissingFirst(!missingFirst)}>
                   {missingFirst
                     ? t("environments.surveys.edit.show_in_order")
                     : t("environments.surveys.edit.missing_first")}
-                </button>
+                </Button>
               )}
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">

@@ -424,7 +424,7 @@ export const LanguageView = ({
         buttonVariant={confirmationModalInfo.buttonVariant}
         onConfirm={confirmationModalInfo.onConfirm}
         open={confirmationModalInfo.open}
-        setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
+        setOpen={(open) => setConfirmationModalInfo((prev) => ({ ...prev, open }))}
         body={confirmationModalInfo.body}
         title={confirmationModalInfo.title}
       />
@@ -436,6 +436,7 @@ export const LanguageView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         languageCode={activeLanguageCode}
+        languageName={getLanguageLabel(activeLanguageCode, locale) ?? activeLanguageCode}
       />
     </div>
   );

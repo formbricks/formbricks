@@ -469,6 +469,7 @@ const LanguageSelector = ({
   setLanguageCode: (code: string) => void;
   locale?: TUserLocale;
 }) => {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -488,7 +489,7 @@ const LanguageSelector = ({
               className={cn("text-xs", languageCode === code && "font-semibold")}
               onSelect={() => setLanguageCode(code)}>
               {getLanguageLabel(surveyLang.language.code, locale ?? "en")}
-              {surveyLang.default && " (default)"}
+              {surveyLang.default && ` (${t("common.default")})`}
             </DropdownMenuItem>
           );
         })}

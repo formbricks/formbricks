@@ -27,7 +27,7 @@ const pushIfI18n = (
       path: `${path}.${field}`,
       displayId,
       fieldLabel,
-      value: val as TI18nString,
+      value: val,
       isRichText,
       elementId,
     });
@@ -94,7 +94,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
             otherOptionPlaceholder?: TI18nString;
           };
           el.choices?.forEach((choice, ci) => {
-            if (isI18nObject(choice.label)) {
+            if (isI18nObject(choice.label) && (choice.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.choices.${ci}.label`,
                 displayId: did,
@@ -125,7 +125,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
             columns?: Array<{ label: TI18nString }>;
           };
           matEl.rows?.forEach((row, ri) => {
-            if (isI18nObject(row.label)) {
+            if (isI18nObject(row.label) && (row.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.rows.${ri}.label`,
                 displayId: did,
@@ -137,7 +137,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
             }
           });
           matEl.columns?.forEach((col, ci) => {
-            if (isI18nObject(col.label)) {
+            if (isI18nObject(col.label) && (col.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.columns.${ci}.label`,
                 displayId: did,
@@ -154,7 +154,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
           const addrFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"] as const;
           addrFields.forEach((f) => {
             const sub = (element as unknown as Record<string, { placeholder?: TI18nString }>)[f];
-            if (sub?.placeholder && isI18nObject(sub.placeholder)) {
+            if (sub?.placeholder && isI18nObject(sub.placeholder) && (sub.placeholder.default ?? "").trim()) {
               result.push({
                 path: `${base}.${f}.placeholder`,
                 displayId: did,
@@ -171,7 +171,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
           const contactFields = ["firstName", "lastName", "email", "phone", "company"] as const;
           contactFields.forEach((f) => {
             const sub = (element as unknown as Record<string, { placeholder?: TI18nString }>)[f];
-            if (sub?.placeholder && isI18nObject(sub.placeholder)) {
+            if (sub?.placeholder && isI18nObject(sub.placeholder) && (sub.placeholder.default ?? "").trim()) {
               result.push({
                 path: `${base}.${f}.placeholder`,
                 displayId: did,
@@ -190,7 +190,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
             otherOptionPlaceholder?: TI18nString;
           };
           rankEl.choices?.forEach((choice, ci) => {
-            if (isI18nObject(choice.label)) {
+            if (isI18nObject(choice.label) && (choice.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.choices.${ci}.label`,
                 displayId: did,
