@@ -242,5 +242,8 @@ vi.mock("@/lib/constants", () => ({
   RATE_LIMITING_DISABLED: false,
   TELEMETRY_DISABLED: false,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: 30,
+  POSTHOG_KEY: undefined,
+  AUDIT_LOG_ENABLED: false,
+  AUDIT_LOG_GET_USER_IP: false,
   CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
 }));
