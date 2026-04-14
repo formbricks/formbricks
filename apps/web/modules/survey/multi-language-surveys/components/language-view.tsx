@@ -300,9 +300,8 @@ export const LanguageView = ({
                         </td>
                         <td className="px-4 py-3 text-slate-600">{lang.code}</td>
                         <td className="px-4 py-3">
-                          {isDefault ? (
-                            <Badge type="gray" size="normal" text={t("common.default")} />
-                          ) : progress ? (
+                          {isDefault && <Badge type="gray" size="normal" text={t("common.default")} />}
+                          {!isDefault && progress && (
                             <div className="flex items-center gap-2">
                               <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
                                 <div
@@ -321,7 +320,7 @@ export const LanguageView = ({
                                 {progress.translated}/{progress.total}
                               </span>
                             </div>
-                          ) : null}
+                          )}
                         </td>
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           {isDefault ? (
@@ -437,7 +436,6 @@ export const LanguageView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         languageCode={activeLanguageCode}
-        locale={locale}
       />
     </div>
   );

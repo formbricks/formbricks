@@ -4,9 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { md } from "@/lib/markdownIt";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -16,8 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { Editor } from "@/modules/ui/components/editor";
-import { Input } from "@/modules/ui/components/input";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -25,6 +21,7 @@ import {
   getProgressTextColor,
   setTranslationAtPath,
 } from "../lib/utils";
+import { TranslationRow } from "./translation-row";
 
 interface ManageTranslationsModalProps {
   open: boolean;
@@ -32,7 +29,6 @@ interface ManageTranslationsModalProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   languageCode: string;
-  locale: TUserLocale;
 }
 
 export const ManageTranslationsModal = ({
@@ -189,94 +185,5 @@ export const ManageTranslationsModal = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
-
-const TranslationRow = ({
-  s,
-  value,
-  onChange,
-  localSurvey,
-  languageCode,
-}: {
-  s: TranslatableString;
-  value: string;
-  onChange: (path: string, value: string) => void;
-  localSurvey: TSurvey;
-  languageCode: string;
-}) => {
-  return (
-    <tr className="border-b last:border-b-0">
-      <td className="py-2 pr-2 align-top">
-        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
-          {s.displayId}
-        </span>
-        <div className="mt-0.5 text-[10px] text-slate-400">{s.fieldLabel}</div>
-      </td>
-      <td className="py-2 pr-2 align-top">
-        {s.isRichText ? (
-          <div
-            className="text-sm text-slate-700"
-            dangerouslySetInnerHTML={{ __html: s.value.default || "" }}
-          />
-        ) : (
-          <div className="text-sm text-slate-700">{s.value.default || ""}</div>
-        )}
-      </td>
-      <td className="py-2 align-top">
-        {s.isRichText ? (
-          <RichTextTranslationInput
-            path={s.path}
-            value={value}
-            onChange={onChange}
-            localSurvey={localSurvey}
-            languageCode={languageCode}
-            elementId={s.elementId}
-          />
-        ) : (
-          <Input
-            className="text-sm"
-            value={value}
-            onChange={(e) => onChange(s.path, e.target.value)}
-            placeholder=""
-          />
-        )}
-      </td>
-    </tr>
-  );
-};
-
-const RichTextTranslationInput = ({
-  path,
-  value,
-  onChange,
-  localSurvey,
-  languageCode,
-  elementId,
-}: {
-  path: string;
-  value: string;
-  onChange: (path: string, value: string) => void;
-  localSurvey: TSurvey;
-  languageCode: string;
-  elementId: string;
-}) => {
-  const [firstRender, setFirstRender] = useState(true);
-
-  return (
-    <div className="rounded-md">
-      <Editor
-        key={path}
-        disableLists
-        excludedToolbarItems={["blockType"]}
-        firstRender={firstRender}
-        setFirstRender={setFirstRender}
-        getText={() => md.render(value)}
-        setText={(v: string) => onChange(path, v)}
-        localSurvey={localSurvey}
-        elementId={elementId}
-        selectedLanguageCode={languageCode}
-      />
-    </div>
   );
 };
