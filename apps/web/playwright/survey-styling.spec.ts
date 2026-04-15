@@ -60,9 +60,9 @@ test.describe("Survey Styling", async () => {
     await setDimension(page, "Headline Font Size", "24");
     await setDimension(page, "Description Font Size", "18");
     await setDimension(page, "Headline Font Weight", "700");
-    await setColor(page, "Headline Label Color", "0000aa"); // Blue-ish
-    await setDimension(page, "Headline Label Font Size", "14");
-    await setDimension(page, "Headline Label Font Weight", "600");
+    await setColor(page, "Label Color", "0000aa"); // Blue-ish
+    await setDimension(page, "Label Font Size", "14");
+    await setDimension(page, "Label Font Weight", "600");
 
     // Verify Typography Variables
     await page.waitForTimeout(1000);
