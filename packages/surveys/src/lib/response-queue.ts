@@ -32,23 +32,28 @@ export const delay = (ms: number): Promise<void> => {
   });
 };
 
-// Module-level sync lock keyed by surveyId.
-// Survives ResponseQueue instance recreation (e.g. React useMemo recomputation)
-// so that only one sync runs at a time per survey, even across instances.
+// Module-level locks keyed by surveyId.
+// Survive ResponseQueue instance recreation (e.g. React useMemo recomputation)
+// so that only one sync/send runs at a time per survey, even across instances.
 const syncingBySurvey = new Map<string, boolean>();
+const requestInProgressBySurvey = new Map<string, boolean>();
 
 /** @internal Exposed for tests only. */
 export const _syncLocks = {
-  clear: () => syncingBySurvey.clear(),
+  clear: () => {
+    syncingBySurvey.clear();
+    requestInProgressBySurvey.clear();
+  },
   set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
   get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
+  setRequestInProgress: (surveyId: string, value: boolean) => requestInProgressBySurvey.set(surveyId, value),
+  getRequestInProgress: (surveyId: string) => requestInProgressBySurvey.get(surveyId) ?? false,
 };
 
 export class ResponseQueue {
   readonly queue: TResponseUpdate[] = [];
   readonly config: QueueConfig;
   private surveyState: SurveyState;
-  private isRequestInProgress = false;
   readonly api: ApiClient;
   private responseRecaptchaToken?: string;
   // Maps in-memory queue index → IndexedDB id for cleanup after successful send
@@ -70,6 +75,16 @@ export class ResponseQueue {
   private set isSyncing(value: boolean) {
     if (this.config.surveyId) {
       syncingBySurvey.set(this.config.surveyId, value);
+    }
+  }
+
+  private get isRequestInProgress(): boolean {
+    return this.config.surveyId ? (requestInProgressBySurvey.get(this.config.surveyId) ?? false) : false;
+  }
+
+  private set isRequestInProgress(value: boolean) {
+    if (this.config.surveyId) {
+      requestInProgressBySurvey.set(this.config.surveyId, value);
     }
   }
 
@@ -139,8 +154,8 @@ export class ResponseQueue {
     if (this.config.persistOffline && this.config.surveyId) {
       const pendingCount = await countPendingResponses(this.config.surveyId);
 
-      // Re-check after await — syncPersistedResponses may have started during the yield
-      if (this.isSyncing) {
+      // Re-check after await — another processQueue/sync may have started during the yield
+      if (this.isSyncing || this.isRequestInProgress || this.queue.length === 0) {
         return { success: false };
       }
 
