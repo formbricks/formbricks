@@ -24,22 +24,63 @@ services:
     volumes:
       - valkey-data:/data
 
-  minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    command: server /data --console-address ":9001"
+  rustfs-perms:
+    image: busybox:1.36.1
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data && chown -R 10001:10001 /data"]
+    volumes:
+      - rustfs-data:/data
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-alpha.93
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    command: /data
     environment:
-      - MINIO_ROOT_USER=devminio
-      - MINIO_ROOT_PASSWORD=devminio123
+      - RUSTFS_ACCESS_KEY=devrustfs
+      - RUSTFS_SECRET_KEY=devrustfs123
+      - RUSTFS_ADDRESS=:9000
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_CONSOLE_ADDRESS=:9001
     ports:
       - "9000:9000" # S3 API direct access
       - "9001:9001" # Web console
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
+
+  rustfs-init:
+    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    depends_on:
+      - rustfs
+    environment:
+      - RUSTFS_ADMIN_USER=devrustfs
+      - RUSTFS_ADMIN_PASSWORD=devrustfs123
+      - RUSTFS_BUCKET_NAME=formbricks
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo 'Waiting for RustFS to be ready...'
+        attempts=0
+        max_attempts=30
+        until mc alias set rustfs http://rustfs:9000 "$$RUSTFS_ADMIN_USER" "$$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+          && mc ls rustfs >/dev/null 2>&1; do
+          attempts=$$((attempts + 1))
+          if [ "$$attempts" -ge "$$max_attempts" ]; then
+            echo "RustFS did not become ready within $${max_attempts} attempts"
+            exit 1
+          fi
+          sleep 2
+        done
+
+        mc mb rustfs/"$$RUSTFS_BUCKET_NAME" --ignore-existing
+        echo 'RustFS bucket bootstrap complete.'
 
 volumes:
   postgres:
     driver: local
   valkey-data:
     driver: local
-  minio-data:
+  rustfs-data:
     driver: local
