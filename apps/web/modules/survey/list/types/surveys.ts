@@ -26,17 +26,6 @@ export const ZSurvey = z.object({
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCopyFormValidation = z.object({
-  projects: z.array(
-    z.object({
-      project: z.string(),
-      environments: z.array(z.string()),
-    })
-  ),
-});
-
-export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
-
 export interface TProjectWithLanguages extends Pick<Project, "id"> {
   languages: Pick<Language, "code" | "alias">[];
 }

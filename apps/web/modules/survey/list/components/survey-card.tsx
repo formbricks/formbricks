@@ -8,28 +8,18 @@ import { cn } from "@/lib/cn";
 import { timeSince } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
-import { TSurvey } from "@/modules/survey/list/types/surveys";
+import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
-  survey: TSurvey;
+  survey: TSurveyListItem;
   environmentId: string;
   isReadOnly: boolean;
-  publicDomain: string;
-  deleteSurvey: (surveyId: string) => void;
+  deleteSurvey: (surveyId: string) => Promise<void>;
   locale: TUserLocale;
-  onSurveysCopied?: () => void;
 }
-export const SurveyCard = ({
-  survey,
-  environmentId,
-  isReadOnly,
-  publicDomain,
-  deleteSurvey,
-  locale,
-  onSurveysCopied,
-}: SurveyCardProps) => {
+export const SurveyCard = ({ survey, environmentId, isReadOnly, deleteSurvey, locale }: SurveyCardProps) => {
   const { t } = useTranslation();
   const surveyStatusLabel = (() => {
     switch (survey.status) {
@@ -92,18 +82,16 @@ export const SurveyCard = ({
           {survey.creator ? survey.creator.name : "-"}
         </div>
       </div>
-      <button className="absolute right-3 top-3.5" onClick={(e) => e.stopPropagation()}>
+      <div className="absolute right-3 top-3.5" onClick={(e) => e.stopPropagation()}>
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
           environmentId={environmentId}
-          publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           deleteSurvey={deleteSurvey}
-          onSurveysCopied={onSurveysCopied}
         />
-      </button>
+      </div>
     </>
   );
 
