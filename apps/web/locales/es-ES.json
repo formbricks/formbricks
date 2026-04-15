@@ -1784,6 +1784,8 @@
         "upper_label": "Etiqueta superior",
         "url_filters": "Filtros de URL",
         "url_not_supported": "URL no compatible",
+        "use_page_font": "Usar fuente de la página",
+        "use_page_font_description": "Utiliza la fuente de la aplicación o sitio web anfitrión para esta encuesta.",
         "validate_id_duplicate": "El ID de {type} ya existe en preguntas, campos ocultos o variables.",
         "validate_id_empty": "Por favor, introduce un ID de {type}.",
         "validate_id_invalid_chars": "El ID de {type} no está permitido. Por favor, utiliza solo caracteres alfanuméricos, guiones o guiones bajos.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Sugerir colores",
         "suggested_colors_applied_please_save": "Colores sugeridos generados correctamente. Pulsa “Guardar” para conservar los cambios.",
         "theme": "Tema",
-        "theme_settings_description": "Crea un tema de estilo para todas las encuestas. Puedes activar el estilo personalizado para cada encuesta."
+        "theme_settings_description": "Crea un tema de estilo para todas las encuestas. Puedes activar el estilo personalizado para cada encuesta.",
+        "use_page_font_for_new_surveys": "Usar fuente de la página",
+        "use_page_font_for_new_surveys_description": "Aplica la fuente de la aplicación o sitio web anfitrión en todas las encuestas de este espacio de trabajo."
       },
       "tags": {
         "add": "Añadir",

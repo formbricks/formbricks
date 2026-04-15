@@ -1784,6 +1784,8 @@
         "upper_label": "Etichetă superioară",
         "url_filters": "Filtre URL",
         "url_not_supported": "URL nesuportat",
+        "use_page_font": "Folosește fontul paginii",
+        "use_page_font_description": "Folosește fontul aplicației sau site-ului gazdă pentru acest chestionar.",
         "validate_id_duplicate": "ID-ul {type} există deja în întrebări, câmpuri ascunse sau variabile.",
         "validate_id_empty": "Te rugăm să introduci un ID {type}.",
         "validate_id_invalid_chars": "ID-ul {type} nu este permis. Te rugăm să folosești doar caractere alfanumerice, cratimă sau liniuță de subliniere.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Sugerează culori",
         "suggested_colors_applied_please_save": "Culorile sugerate au fost generate cu succes. Apăsați „Save” pentru a salva modificările.",
         "theme": "Temă",
-        "theme_settings_description": "Creează o temă de stil pentru toate sondajele. Poți activa stilizare personalizată pentru fiecare sondaj."
+        "theme_settings_description": "Creează o temă de stil pentru toate sondajele. Poți activa stilizare personalizată pentru fiecare sondaj.",
+        "use_page_font_for_new_surveys": "Folosește fontul paginii",
+        "use_page_font_for_new_surveys_description": "Aplică fontul aplicației sau site-ului gazdă pentru chestionarele din acest spațiu de lucru."
       },
       "tags": {
         "add": "Adaugă",

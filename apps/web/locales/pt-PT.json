@@ -1784,6 +1784,8 @@
         "upper_label": "Etiqueta Superior",
         "url_filters": "Filtros de URL",
         "url_not_supported": "URL não suportado",
+        "use_page_font": "Usar tipo de letra da página",
+        "use_page_font_description": "Utilizar o tipo de letra da aplicação ou website anfitrião para este inquérito.",
         "validate_id_duplicate": "O ID {type} já existe em perguntas, campos ocultos ou variáveis.",
         "validate_id_empty": "Por favor, introduza um ID {type}.",
         "validate_id_invalid_chars": "O ID {type} não é permitido. Por favor, utilize apenas caracteres alfanuméricos, hífenes ou underscores.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Sugerir cores",
         "suggested_colors_applied_please_save": "Cores sugeridas geradas com sucesso. Prima “Guardar” para persistir as alterações.",
         "theme": "Tema",
-        "theme_settings_description": "Crie um tema de estilo para todos os inquéritos. Pode ativar estilos personalizados para cada inquérito."
+        "theme_settings_description": "Crie um tema de estilo para todos os inquéritos. Pode ativar estilos personalizados para cada inquérito.",
+        "use_page_font_for_new_surveys": "Usar tipo de letra da página",
+        "use_page_font_for_new_surveys_description": "Aplicar o tipo de letra da aplicação ou website anfitrião em todos os inquéritos desta área de trabalho."
       },
       "tags": {
         "add": "Adicionar",

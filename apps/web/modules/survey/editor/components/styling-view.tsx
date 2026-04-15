@@ -64,25 +64,39 @@ export const StylingView = ({
   const { t } = useTranslation();
 
   const savedProjectStyling = project.styling as Partial<TProjectStyling> | null;
+  const { isPageFontInheritedByDefault: styleDefaultIsPageFontInheritedByDefault, ...surveyStyleDefaults } =
+    STYLE_DEFAULTS;
 
   // Strip null/undefined values so they don't override STYLE_DEFAULTS.
-  const cleanProject = savedProjectStyling
-    ? Object.fromEntries(Object.entries(savedProjectStyling).filter(([, v]) => v != null))
+  const cleanProject: Partial<TProjectStyling> = savedProjectStyling
+    ? (Object.fromEntries(
+        Object.entries(savedProjectStyling).filter(([, v]) => v != null)
+      ) as Partial<TProjectStyling>)
     : {};
-  const cleanSurvey = localSurvey.styling
-    ? Object.fromEntries(Object.entries(localSurvey.styling).filter(([, v]) => v != null))
+  const {
+    isPageFontInheritedByDefault: projectIsPageFontInheritedByDefault,
+    ...cleanProjectWithoutFontDefault
+  } = cleanProject;
+  const cleanSurvey: Partial<TSurveyStyling> = localSurvey.styling
+    ? (Object.fromEntries(
+        Object.entries(localSurvey.styling).filter(([, v]) => v != null)
+      ) as Partial<TSurveyStyling>)
     : {};
 
-  const projectLegacyFills = deriveNewFieldsFromLegacy(cleanProject);
+  const projectLegacyFills = deriveNewFieldsFromLegacy(cleanProjectWithoutFontDefault);
   const surveyLegacyFills = deriveNewFieldsFromLegacy(cleanSurvey);
 
   const form = useForm<TSurveyStyling>({
     defaultValues: {
-      ...STYLE_DEFAULTS,
+      ...surveyStyleDefaults,
       ...projectLegacyFills,
-      ...cleanProject,
+      ...cleanProjectWithoutFontDefault,
       ...surveyLegacyFills,
       ...cleanSurvey,
+      isPageFontInherited:
+        cleanSurvey.isPageFontInherited ??
+        projectIsPageFontInheritedByDefault ??
+        styleDefaultIsPageFontInheritedByDefault,
     },
   });
 
@@ -110,16 +124,19 @@ export const StylingView = ({
   };
 
   const onResetThemeStyling = () => {
-    const { allowStyleOverwrite, ...baseStyling } = project.styling ?? {};
+    const { allowStyleOverwrite, isPageFontInheritedByDefault, ...baseStyling } = project.styling ?? {};
+    const isPageFontInherited = form.getValues("isPageFontInherited") ?? false;
 
     setStyling({
       ...baseStyling,
       overwriteThemeStyling: true,
+      isPageFontInherited,
     });
 
     form.reset({
       ...baseStyling,
       overwriteThemeStyling: true,
+      isPageFontInherited,
     });
 
     setConfirmResetStylingModalOpen(false);
@@ -151,7 +168,7 @@ export const StylingView = ({
 
   const defaultProjectStyling = useMemo(() => {
     const { styling: projectStyling } = project;
-    const { allowStyleOverwrite, ...baseStyling } = projectStyling ?? {};
+    const { allowStyleOverwrite, isPageFontInheritedByDefault, ...baseStyling } = projectStyling ?? {};
 
     return baseStyling;
   }, [project]);
@@ -166,9 +183,11 @@ export const StylingView = ({
     if (value) {
       if (!styling) {
         // copy the project styling to the survey styling
+        const isPageFontInherited = form.getValues("isPageFontInherited") ?? false;
         setStyling({
           ...defaultProjectStyling,
           overwriteThemeStyling: true,
+          isPageFontInherited,
         });
         return;
       }
@@ -179,9 +198,11 @@ export const StylingView = ({
       }
       // if there are no local styling changes, we set the styling to the project styling
       else {
+        const isPageFontInherited = form.getValues("isPageFontInherited") ?? false;
         setStyling({
           ...defaultProjectStyling,
           overwriteThemeStyling: true,
+          isPageFontInherited,
         });
       }
     }
@@ -192,9 +213,11 @@ export const StylingView = ({
       setLocalStylingChanges(styling);
 
       // copy the project styling to the survey styling
+      const isPageFontInherited = form.getValues("isPageFontInherited") ?? false;
       setStyling({
         ...defaultProjectStyling,
         overwriteThemeStyling: false,
+        isPageFontInherited,
       });
     }
   };
@@ -205,30 +228,36 @@ export const StylingView = ({
         <div className="mt-12 space-y-3 p-5">
           {!isCxMode && (
             <div className="flex items-center gap-4 py-4">
-              <FormField
-                control={form.control}
-                name="overwriteThemeStyling"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <Switch
-                        id="overwrite-theme-styling"
-                        checked={!!field.value}
-                        onCheckedChange={handleOverwriteToggle}
-                      />
-                    </FormControl>
+              <div className="flex w-full flex-col gap-4">
+                <FormField
+                  control={form.control}
+                  name="overwriteThemeStyling"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Switch
+                          id="overwrite-theme-styling"
+                          checked={!!field.value}
+                          onCheckedChange={handleOverwriteToggle}
+                        />
+                      </FormControl>
 
-                    <div>
-                      <FormLabel htmlFor="overwrite-theme-styling" className="text-base font-semibold text-slate-900">
-                        {t("environments.surveys.edit.add_custom_styles")}
-                      </FormLabel>
-                      <FormDescription className="text-sm text-slate-800">
-                        {t("environments.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+                      <div>
+                        <FormLabel
+                          htmlFor="overwrite-theme-styling"
+                          className="text-base font-semibold text-slate-900">
+                          {t("environments.surveys.edit.add_custom_styles")}
+                        </FormLabel>
+                        <FormDescription className="text-sm text-slate-800">
+                          {t(
+                            "environments.surveys.edit.override_theme_with_individual_styles_for_this_survey"
+                          )}
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           )}
 
@@ -269,6 +298,9 @@ export const StylingView = ({
             setOpen={setFormStylingOpen}
             disabled={!overwriteThemeStyling}
             form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+            usePageFontFieldName="isPageFontInherited"
+            usePageFontLabel={t("environments.surveys.edit.use_page_font")}
+            usePageFontDescription={t("environments.surveys.edit.use_page_font_description")}
           />
 
           <CardStylingSettings

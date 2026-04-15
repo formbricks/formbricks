@@ -1784,6 +1784,8 @@
         "upper_label": "Felső címke",
         "url_filters": "URL szűrők",
         "url_not_supported": "Az URL nem támogatott",
+        "use_page_font": "Oldal betűtípusának használata",
+        "use_page_font_description": "A gazda alkalmazás vagy webhely betűtípusának használata ehhez a felméréshez.",
         "validate_id_duplicate": "A(z) {type} azonosító már létezik a kérdések, rejtett mezők vagy változók között.",
         "validate_id_empty": "Kérjük, adjon meg egy {type} azonosítót.",
         "validate_id_invalid_chars": "A(z) {type} azonosító nem engedélyezett. Kérjük, csak alfanumerikus karaktereket, kötőjeleket vagy aláhúzásjeleket használjon.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Színek ajánlása",
         "suggested_colors_applied_please_save": "Az ajánlott színek sikeresen előállítva. Nyomja meg a „Mentés” gombot a változtatások mentéséhez.",
         "theme": "Téma",
-        "theme_settings_description": "Stílustéma létrehozása az összes kérdőívhez. Egyéni stílust engedélyezhet minden egyes kérdőívhez."
+        "theme_settings_description": "Stílustéma létrehozása az összes kérdőívhez. Egyéni stílust engedélyezhet minden egyes kérdőívhez.",
+        "use_page_font_for_new_surveys": "Oldal betűtípusának használata",
+        "use_page_font_for_new_surveys_description": "A gazda alkalmazás vagy webhely betűtípusának alkalmazása a munkaterület felmérésein."
       },
       "tags": {
         "add": "Hozzáadás",

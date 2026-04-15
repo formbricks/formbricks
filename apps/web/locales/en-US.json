@@ -1784,6 +1784,8 @@
         "upper_label": "Upper Label",
         "url_filters": "URL Filters",
         "url_not_supported": "URL not supported",
+        "use_page_font": "Use page font",
+        "use_page_font_description": "Use the host app or website font for this survey.",
         "validate_id_duplicate": "{type} ID already exists in questions, hidden fields, or variables.",
         "validate_id_empty": "Please enter a {type} ID.",
         "validate_id_invalid_chars": "{type} ID is not allowed. Please use only alphanumeric characters, hyphens, or underscores.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Suggest colors",
         "suggested_colors_applied_please_save": "Suggested colors generated successfully. Press “Save” to persist the changes.",
         "theme": "Theme",
-        "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey."
+        "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey.",
+        "use_page_font_for_new_surveys": "Use page font",
+        "use_page_font_for_new_surveys_description": "Apply the host app or website font across surveys in this workspace."
       },
       "tags": {
         "add": "Add",

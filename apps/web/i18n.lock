@@ -1711,6 +1711,8 @@ checksums:
     environments/surveys/edit/upper_label: 1fa48bce3fade6ffc1a52d9fdddf9e17
     environments/surveys/edit/url_filters: e524879d2eb74463d7fd06a7e0f53421
     environments/surveys/edit/url_not_supported: af8a753467c617b596aadef1aaaed664
+    environments/surveys/edit/use_page_font: 327c0c42a128a99af13510c24c813cf8
+    environments/surveys/edit/use_page_font_description: ffb511ce099a5ca25832228a85e2b4d8
     environments/surveys/edit/validate_id_duplicate: f88ec35a9bd4921fb096817b9263b59a
     environments/surveys/edit/validate_id_empty: 3ee25d429ed5ca9e047f9aee95496323
     environments/surveys/edit/validate_id_invalid_chars: 50239938a408c04b02d77b8cd096d767
@@ -2224,6 +2226,8 @@ checksums:
     environments/workspace/look/suggested_colors_applied_please_save: a440b8e29a327822a94d9bbf8c52e2ed
     environments/workspace/look/theme: 21fe00b7a518089576fb83c08631107a
     environments/workspace/look/theme_settings_description: 9fc45322818c3774ab4a44ea14d7836e
+    environments/workspace/look/use_page_font_for_new_surveys: 327c0c42a128a99af13510c24c813cf8
+    environments/workspace/look/use_page_font_for_new_surveys_description: 010ae8817cc6c9b2aa17ba804e6ff393
     environments/workspace/tags/add: 87c4a663507f2bcbbf79934af8164e13
     environments/workspace/tags/add_tag: 2cfa04ceea966149f2b5d40d9c131141
     environments/workspace/tags/count: 9c5848662eb8024ddf360f7e4001a968

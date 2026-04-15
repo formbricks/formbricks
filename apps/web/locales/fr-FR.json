@@ -1784,6 +1784,8 @@
         "upper_label": "Étiquette supérieure",
         "url_filters": "Filtres d'URL",
         "url_not_supported": "URL non supportée",
+        "use_page_font": "Utiliser la police de la page",
+        "use_page_font_description": "Utiliser la police de l'application hôte ou du site web pour ce sondage.",
         "validate_id_duplicate": "L'ID {type} existe déjà dans les questions, champs masqués ou variables.",
         "validate_id_empty": "Veuillez saisir un ID {type}.",
         "validate_id_invalid_chars": "L'ID {type} n'est pas autorisé. Veuillez utiliser uniquement des caractères alphanumériques, des traits d'union ou des underscores.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Suggérer des couleurs",
         "suggested_colors_applied_please_save": "Couleurs suggérées générées avec succès. Appuyez sur “Enregistrer” pour conserver les modifications.",
         "theme": "Thème",
-        "theme_settings_description": "Créez un thème de style pour toutes les enquêtes. Vous pouvez activer un style personnalisé pour chaque enquête."
+        "theme_settings_description": "Créez un thème de style pour toutes les enquêtes. Vous pouvez activer un style personnalisé pour chaque enquête.",
+        "use_page_font_for_new_surveys": "Utiliser la police de la page",
+        "use_page_font_for_new_surveys_description": "Appliquer la police de l'application hôte ou du site web à tous les sondages de cet espace de travail."
       },
       "tags": {
         "add": "Ajouter",

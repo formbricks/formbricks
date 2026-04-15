@@ -10,7 +10,7 @@
   border-color: theme("borderColor.DEFAULT", currentColor);
   /* 2 */
 
-  font-family: Inter, Helvetica, Arial, sans-serif;
+  font-family: inherit;
   font-size: 1em;
 }
 

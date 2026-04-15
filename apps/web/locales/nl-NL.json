@@ -1784,6 +1784,8 @@
         "upper_label": "Bovenste etiket",
         "url_filters": "URL-filters",
         "url_not_supported": "URL niet ondersteund",
+        "use_page_font": "Gebruik paginafont",
+        "use_page_font_description": "Gebruik het lettertype van de host-app of website voor deze enquête.",
         "validate_id_duplicate": "{type}-ID bestaat al in vragen, verborgen velden of variabelen.",
         "validate_id_empty": "Voer een {type}-ID in.",
         "validate_id_invalid_chars": "{type}-ID is niet toegestaan. Gebruik alleen alfanumerieke tekens, koppeltekens of underscores.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Kleuren voorstellen",
         "suggested_colors_applied_please_save": "Voorgestelde kleuren succesvol gegenereerd. Druk op “Opslaan” om de wijzigingen te behouden.",
         "theme": "Thema",
-        "theme_settings_description": "Maak een stijlthema voor alle enquêtes. Je kunt aangepaste styling inschakelen voor elke enquête."
+        "theme_settings_description": "Maak een stijlthema voor alle enquêtes. Je kunt aangepaste styling inschakelen voor elke enquête.",
+        "use_page_font_for_new_surveys": "Gebruik paginafont",
+        "use_page_font_for_new_surveys_description": "Pas het lettertype van de host-app of website toe op alle enquêtes in deze workspace."
       },
       "tags": {
         "add": "Toevoegen",

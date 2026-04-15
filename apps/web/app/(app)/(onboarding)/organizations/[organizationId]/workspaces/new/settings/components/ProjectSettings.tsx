@@ -75,7 +75,10 @@ export const ProjectSettings = ({
         organizationId,
         data: {
           ...data,
-          styling: fullStyling,
+          styling: {
+            ...fullStyling,
+            isPageFontInheritedByDefault: true,
+          },
           config: { channel, industry },
           teamIds: data.teamIds,
         },
@@ -112,7 +115,11 @@ export const ProjectSettings = ({
   const form = useForm<TProjectUpdateInput>({
     defaultValues: {
       name: "",
-      styling: { allowStyleOverwrite: true, brandColor: { light: defaultBrandColor } },
+      styling: {
+        allowStyleOverwrite: true,
+        isPageFontInheritedByDefault: true,
+        brandColor: { light: defaultBrandColor },
+      },
       teamIds: [],
     },
     resolver: zodResolver(ZProjectUpdateInput),

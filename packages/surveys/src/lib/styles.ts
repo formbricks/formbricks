@@ -7,6 +7,8 @@ import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 
+const LEGACY_FONT_FAMILY_STACK = "Inter, Helvetica, Arial, sans-serif";
+
 // Store the nonce globally for style elements
 let styleNonce: string | undefined;
 
@@ -80,6 +82,14 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   // Start the innerHTML string with #fbjs
   let cssVariables = "#fbjs {\n";
+
+  const explicitFontFamily = styling.fontFamily?.trim();
+  const isPageFontInherited =
+    (styling as TSurveyStyling).isPageFontInherited ??
+    (styling as TProjectStyling).isPageFontInheritedByDefault ??
+    false;
+  const resolvedFontFamily =
+    explicitFontFamily || (isPageFontInherited ? undefined : LEGACY_FONT_FAMILY_STACK);
 
   // Helper function to append the variable if it's not undefined
   const appendCssVariable = (variableName: string, value?: string | null) => {
@@ -299,6 +309,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     "progress-indicator-bg-color",
     styling.progressIndicatorBgColor?.light ?? styling.brandColor?.light
   );
+  appendCssVariable("font-family", resolvedFontFamily);
 
   // Close the #fbjs variable block
   cssVariables += "}\n";
@@ -319,6 +330,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   };
 
   // --- Headlines ---
+  if (resolvedFontFamily) {
+    addRule("#fbjs", "  font-family: var(--fb-font-family) !important;\n");
+  }
+
   let headlineDecls = "";
   if (styling.elementHeadlineFontSize !== undefined)
     headlineDecls += "  font-size: var(--fb-element-headline-font-size) !important;\n";

@@ -93,6 +93,7 @@ const _colors = getSuggestedColors(DEFAULT_BRAND_COLOR);
  */
 export const STYLE_DEFAULTS: TProjectStyling = {
   allowStyleOverwrite: true,
+  isPageFontInheritedByDefault: false,
   brandColor: { light: _colors["brandColor.light"] },
   questionColor: { light: _colors["questionColor.light"] },
   inputColor: { light: _colors["inputColor.light"] },

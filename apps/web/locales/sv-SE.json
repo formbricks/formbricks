@@ -1784,6 +1784,8 @@
         "upper_label": "Övre etikett",
         "url_filters": "URL-filter",
         "url_not_supported": "URL stöds inte",
+        "use_page_font": "Använd sidans typsnitt",
+        "use_page_font_description": "Använd värdappens eller webbplatsens typsnitt för den här enkäten.",
         "validate_id_duplicate": "{type}-ID finns redan i frågor, dolda fält eller variabler.",
         "validate_id_empty": "Vänligen ange ett {type}-ID.",
         "validate_id_invalid_chars": "{type}-ID är inte tillåtet. Använd endast alfanumeriska tecken, bindestreck eller understreck.",
@@ -2340,7 +2342,9 @@
         "suggest_colors": "Föreslå färger",
         "suggested_colors_applied_please_save": "Föreslagna färger har genererats. Tryck på ”Spara” för att spara ändringarna.",
         "theme": "Tema",
-        "theme_settings_description": "Skapa ett stilmall för alla undersökningar. Du kan aktivera anpassad stil för varje undersökning."
+        "theme_settings_description": "Skapa ett stilmall för alla undersökningar. Du kan aktivera anpassad stil för varje undersökning.",
+        "use_page_font_for_new_surveys": "Använd sidans typsnitt",
+        "use_page_font_for_new_surveys_description": "Tillämpa värdappens eller webbplatsens typsnitt för alla enkäter i den här arbetsytan."
       },
       "tags": {
         "add": "Lägg till",
