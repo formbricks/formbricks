@@ -20,12 +20,20 @@ var mockTxWidget: {
   aggregate: ReturnType<typeof vi.fn>;
   findMany: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  deleteMany: ReturnType<typeof vi.fn>;
 };
 
 vi.mock("@formbricks/database", () => {
   const txDash = { findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
   const txChart = { findFirst: vi.fn() };
-  const txWidget = { aggregate: vi.fn(), findMany: vi.fn(), create: vi.fn() };
+  const txWidget = {
+    aggregate: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    deleteMany: vi.fn(),
+  };
   mockTxDashboard = txDash;
   mockTxChart = txChart;
   mockTxWidget = txWidget;
@@ -447,6 +455,94 @@ describe("Dashboard Service", () => {
       const { getDashboards } = await import("./dashboards");
 
       await expect(getDashboards(mockProjectId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+  });
+
+  describe("updateWidgetLayouts", () => {
+    const existingWidgets = [{ id: "widget-1" }, { id: "widget-2" }, { id: "widget-3" }];
+
+    const widgetUpdates = [
+      { id: "widget-1", layout: { x: 0, y: 0, w: 6, h: 3 }, order: 0 },
+      { id: "widget-2", layout: { x: 6, y: 0, w: 6, h: 3 }, order: 1 },
+    ];
+
+    test("updates layouts and removes widgets not in the update list", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue({
+        ...mockDashboard,
+        widgets: existingWidgets,
+      });
+      mockTxWidget.update.mockResolvedValue(undefined);
+      mockTxWidget.deleteMany.mockResolvedValue({ count: 1 });
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      const result = await updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates);
+
+      expect(result).toEqual({ widgetCount: 2 });
+      expect(mockTxWidget.update).toHaveBeenCalledTimes(2);
+      expect(mockTxWidget.update).toHaveBeenCalledWith({
+        where: { id: "widget-1" },
+        data: { layout: { x: 0, y: 0, w: 6, h: 3 }, order: 0 },
+      });
+      expect(mockTxWidget.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ["widget-3"] } },
+      });
+    });
+
+    test("skips deleteMany when no widgets are removed", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue({
+        ...mockDashboard,
+        widgets: [{ id: "widget-1" }],
+      });
+      mockTxWidget.update.mockResolvedValue(undefined);
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await updateWidgetLayouts(mockDashboardId, mockProjectId, [
+        { id: "widget-1", layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
+      ]);
+
+      expect(mockTxWidget.deleteMany).not.toHaveBeenCalled();
+    });
+
+    test("throws ResourceNotFoundError when dashboard does not exist", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue(null);
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates)).rejects.toMatchObject({
+        name: "ResourceNotFoundError",
+        resourceType: "Dashboard",
+        resourceId: mockDashboardId,
+      });
+      expect(mockTxWidget.update).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when widget IDs do not belong to dashboard", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue({
+        ...mockDashboard,
+        widgets: [{ id: "widget-1" }],
+      });
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(
+        updateWidgetLayouts(mockDashboardId, mockProjectId, [
+          { id: "widget-1", layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
+          { id: "widget-unknown", layout: { x: 4, y: 0, w: 4, h: 3 }, order: 1 },
+        ])
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+      expect(mockTxWidget.update).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(makePrismaError("P9999"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
