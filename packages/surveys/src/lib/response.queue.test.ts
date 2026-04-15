@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vit
 import { err, ok } from "@formbricks/types/error-handlers";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
-import { ResponseQueue, delay } from "./response-queue";
+import { ResponseQueue, _syncLocks, delay } from "./response-queue";
 import { SurveyState } from "./survey-state";
 
 // Suppress noisy console output from retry logic during tests
@@ -86,6 +86,7 @@ describe("ResponseQueue", () => {
     queue = new ResponseQueue(config, surveyState);
     apiMock = queue.api;
     vi.clearAllMocks();
+    _syncLocks.clear();
   });
 
   test("constructor initializes properties", () => {
@@ -309,9 +310,13 @@ describe("ResponseQueue", () => {
   });
 
   test("processQueue returns false when isSyncing is true", async () => {
-    queue.queue.push(responseUpdate);
-    queue["isSyncing"] = true;
-    const result = await queue.processQueue();
+    const offlineQueue = new ResponseQueue(
+      getConfig({ persistOffline: true, surveyId: "s1" }),
+      getSurveyState()
+    );
+    offlineQueue.queue.push(responseUpdate);
+    _syncLocks.set("s1", true);
+    const result = await offlineQueue.processQueue();
     expect(result.success).toBe(false);
   });
 
@@ -347,7 +352,7 @@ describe("ResponseQueue", () => {
       getConfig({ persistOffline: true, surveyId: "s1" }),
       getSurveyState()
     );
-    offlineQueue["isSyncing"] = true;
+    _syncLocks.set("s1", true);
     const result = await offlineQueue.syncPersistedResponses();
     expect(result).toEqual({ success: false, syncedCount: 0 });
   });
@@ -382,7 +387,7 @@ describe("ResponseQueue", () => {
     expect(result).toEqual({ success: true, syncedCount: 1 });
     expect(removePendingResponse).toHaveBeenCalledWith(10);
     expect(offlineQueue.queue.length).toBe(0);
-    expect(offlineQueue["isSyncing"]).toBe(false);
+    expect(_syncLocks.get("s1")).toBe(false);
   });
 
   test("syncPersistedResponses stops on server error", async () => {
@@ -415,7 +420,7 @@ describe("ResponseQueue", () => {
 
     const result = await offlineQueue.syncPersistedResponses();
     expect(result).toEqual({ success: false, syncedCount: 0 });
-    expect(offlineQueue["isSyncing"]).toBe(false);
+    expect(_syncLocks.get("s1")).toBe(false);
   });
 
   test("syncPersistedResponses retries 404 as createResponse by resetting responseId", async () => {
