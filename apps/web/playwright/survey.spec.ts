@@ -409,13 +409,15 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator("#activate-translations-toggle").click();
 
     // Select English as default language
-    await page.locator("button", { hasText: "Select a language" }).click();
+    await page.locator("button", { hasText: "Select Language" }).click();
     await page.getByText("English (en)", { exact: true }).click();
     await page.getByRole("button", { name: "Confirm" }).click();
 
-    // Add German as secondary language
-    await page.getByRole("button", { name: "Add Language" }).click();
-    await page.getByRole("menuitem", { name: /German/ }).click();
+    // Enable German by toggling its switch in the language table
+    await page
+      .getByRole("row", { name: /German/ })
+      .getByRole("switch")
+      .click();
 
     // Open translation modal for German by clicking the German row
     await page.getByRole("cell", { name: "German" }).click();
@@ -453,8 +455,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 1 - Single-select question
-    await helper.fillModalTranslation(page, "blocks.1.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.1.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.1.elements.0.headline",
@@ -472,8 +472,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 2 - Multi-select question
-    await helper.fillModalTranslation(page, "blocks.2.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.2.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.2.elements.0.headline",
@@ -496,8 +494,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 3 - Picture selection question
-    await helper.fillModalTranslation(page, "blocks.3.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.3.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.3.elements.0.headline",
@@ -505,8 +501,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 4 - Rating question
-    await helper.fillModalTranslation(page, "blocks.4.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.4.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.4.elements.0.headline",
@@ -524,8 +518,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 5 - NPS question
-    await helper.fillModalTranslation(page, "blocks.5.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.5.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.5.elements.0.headline",
@@ -543,8 +535,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 6 - Date question
-    await helper.fillModalTranslation(page, "blocks.6.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.6.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.6.elements.0.headline",
@@ -552,8 +542,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 7 - File upload question
-    await helper.fillModalTranslation(page, "blocks.7.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.7.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.7.elements.0.headline",
@@ -561,8 +549,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 8 - Matrix question
-    await helper.fillModalTranslation(page, "blocks.8.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.8.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.8.elements.0.headline",
@@ -605,8 +591,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 9 - Address question
-    await helper.fillModalTranslation(page, "blocks.9.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.9.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.9.elements.0.headline",
@@ -644,8 +628,6 @@ test.describe("Multi Language Survey Create", async () => {
     );
 
     // Block 10 - Ranking question
-    await helper.fillModalTranslation(page, "blocks.10.buttonLabel", surveys.germanCreate.next);
-    await helper.fillModalTranslation(page, "blocks.10.backButtonLabel", surveys.germanCreate.back);
     await helper.fillModalRichTranslation(
       page,
       "blocks.10.elements.0.headline",

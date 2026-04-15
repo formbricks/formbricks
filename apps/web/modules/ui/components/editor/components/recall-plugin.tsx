@@ -308,7 +308,10 @@ export const RecallPlugin = ({
 
   // Sync recall node labels when the survey data changes (e.g. headline edited in translations modal)
   useEffect(() => {
-    editor.update(() => {
+    // Check if any labels actually need updating before calling editor.update().
+    // This avoids unnecessary updates that steal focus and trigger cascading re-renders.
+    let needsUpdate = false;
+    editor.getEditorState().read(() => {
       const root = $getRoot();
       const allRecallNodes = findAllRecallNodes(root);
       for (const recallNode of allRecallNodes) {
@@ -316,10 +319,48 @@ export const RecallPlugin = ({
         const currentLabel =
           getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
         if (currentLabel !== recallItem.label) {
-          recallNode.setRecallItemLabel(currentLabel);
+          needsUpdate = true;
+          break;
         }
       }
     });
+
+    if (!needsUpdate) return;
+
+    const rootElement = editor.getRootElement();
+    const editorHasFocus = rootElement?.contains(document.activeElement) ?? false;
+
+    // Save the full DOM selection so we can restore the exact cursor position if stolen
+    const domSelection = editorHasFocus ? null : globalThis.getSelection();
+    const savedRange =
+      domSelection && domSelection.rangeCount > 0 ? domSelection.getRangeAt(0).cloneRange() : null;
+
+    editor.update(
+      () => {
+        const root = $getRoot();
+        const allRecallNodes = findAllRecallNodes(root);
+        for (const recallNode of allRecallNodes) {
+          const recallItem = recallNode.getRecallItem();
+          const currentLabel =
+            getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
+          if (currentLabel !== recallItem.label) {
+            recallNode.setRecallItemLabel(currentLabel);
+          }
+        }
+      },
+      {
+        onUpdate: () => {
+          // Restore the full selection (including cursor position) after reconciliation
+          if (!editorHasFocus && savedRange) {
+            const sel = globalThis.getSelection();
+            if (sel) {
+              sel.removeAllRanges();
+              sel.addRange(savedRange);
+            }
+          }
+        },
+      }
+    );
   }, [editor, localSurvey, selectedLanguageCode, findAllRecallNodes]);
 
   useEffect(() => {

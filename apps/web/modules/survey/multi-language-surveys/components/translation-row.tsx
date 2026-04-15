@@ -50,7 +50,7 @@ export const TranslationRow = ({ s, value, onChange, localSurvey, languageCode }
         <DefaultTextCell
           text={defaultText}
           isRichText={s.isRichText}
-          noTextLabel={t("environments.surveys.edit.no_text_found")}
+          noTextLabel={t("common.no_text_found")}
         />
       </td>
       <td className="py-2 align-top">

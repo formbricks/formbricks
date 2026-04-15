@@ -1,7 +1,7 @@
 "use client";
 
 import { Language } from "@prisma/client";
-import { ArrowUpRight, EllipsisVerticalIcon, PlusIcon } from "lucide-react";
+import { ArrowUpRight, EllipsisVerticalIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,6 +34,7 @@ import {
   extractTranslatableStrings,
   getProgressColor,
   getProgressTextColor,
+  removeLanguageKeysFromSurvey,
 } from "../lib/utils";
 import { ManageTranslationsModal } from "./manage-translations-modal";
 
@@ -156,36 +157,72 @@ export const LanguageView = ({
     setLocalSurvey({ ...localSurvey, languages: newLanguages });
   };
 
-  const addLanguage = (language: Language) => {
-    const updatedLanguages: TSurveyLanguage[] = [
-      ...localSurvey.languages,
-      { enabled: true, default: false, language },
-    ];
-    updateSurveyTranslations(localSurvey, updatedLanguages);
+  const handleToggleLanguage = (code: string) => {
+    const surveyLang = localSurvey.languages.find((l) => l.language.code === code);
+
+    if (surveyLang) {
+      if (surveyLang.enabled) {
+        // Disabling
+        const progress = computeTranslationProgress(translatableStrings, code);
+        if (progress.translated > 0) {
+          // Has translations — just disable, keep translations in survey object
+          const updatedLanguages = localSurvey.languages.map((l) =>
+            l.language.code === code ? { ...l, enabled: false } : l
+          );
+          setLocalSurvey({ ...localSurvey, languages: updatedLanguages });
+        } else {
+          // No translations — remove from survey object and clean up i18n keys
+          const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, code);
+          const updatedLanguages = localSurvey.languages.filter((l) => l.language.code !== code);
+          setLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
+        }
+      } else {
+        // Re-enabling — ensure i18n keys exist for any new translatable strings
+        const updatedLanguages = localSurvey.languages.map((l) =>
+          l.language.code === code ? { ...l, enabled: true } : l
+        );
+        updateSurveyTranslations(localSurvey, updatedLanguages);
+      }
+    } else {
+      // Language not in survey — add it with enabled: true
+      const language = projectLanguages.find((l) => l.code === code);
+      if (language) {
+        const updatedLanguages: TSurveyLanguage[] = [
+          ...localSurvey.languages,
+          { enabled: true, default: false, language },
+        ];
+        updateSurveyTranslations(localSurvey, updatedLanguages);
+      }
+    }
   };
 
-  const toggleLanguageEnabled = (code: string) => {
-    const updatedLanguages = localSurvey.languages.map((lang) =>
-      lang.language.code === code ? { ...lang, enabled: !lang.enabled } : lang
-    );
-    updateSurveyTranslations(localSurvey, updatedLanguages);
-  };
-
-  const removeLanguage = (code: string) => {
-    const updatedLanguages = localSurvey.languages.filter((lang) => lang.language.code !== code);
-    updateSurveyTranslations(localSurvey, updatedLanguages);
-  };
-
-  const confirmRemoveLanguage = (code: string) => {
+  const handleRemoveTranslations = (code: string) => {
     const label = getLanguageLabel(code, locale) ?? code;
     setConfirmationModalInfo({
       open: true,
-      title: `${t("environments.workspace.languages.remove_language")}: ${label}`,
+      title: `${t("environments.surveys.edit.remove_translations")}: ${label}`,
       body: t("environments.surveys.edit.this_will_remove_the_language_and_all_its_translations"),
-      buttonText: t("common.remove"),
+      buttonText: t("environments.surveys.edit.remove_translations"),
       buttonVariant: "destructive",
       onConfirm: () => {
-        removeLanguage(code);
+        const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, code);
+        const updatedLanguages = localSurvey.languages.filter((l) => l.language.code !== code);
+        setLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
+        setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
+      },
+    });
+  };
+
+  const handleChangeDefault = () => {
+    setConfirmationModalInfo({
+      open: true,
+      title: t("environments.surveys.edit.remove_translations"),
+      body: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
+      buttonText: t("environments.surveys.edit.remove_translations"),
+      buttonVariant: "destructive",
+      onConfirm: () => {
+        updateSurveyTranslations(localSurvey, []);
+        setIsMultiLanguageActivated(false);
         setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
       },
     });
@@ -199,11 +236,6 @@ export const LanguageView = ({
     setActiveLanguageCode(code);
     setTranslationModalOpen(true);
   };
-
-  // Languages not yet added to the survey
-  const availableLanguages = projectLanguages.filter(
-    (pl) => !localSurvey.languages.some((sl) => sl.language.code === pl.code)
-  );
 
   return (
     <div className="mt-12 space-y-6 p-5">
@@ -232,75 +264,44 @@ export const LanguageView = ({
             <h3 className="text-base font-semibold text-slate-900">{t("common.survey_languages")}</h3>
           </div>
 
-          {/* Default language select */}
-          {projectLanguages.length > 0 && (
+          {/* Default language select — only show when no default is set yet */}
+          {projectLanguages.length > 0 && !defaultLanguage && (
             <div className="space-y-2">
               <Label>{t("environments.surveys.edit.default_language")}</Label>
-              <div className="flex items-center gap-2">
-                <div className="w-56">
-                  <Select
-                    value={defaultLanguage?.code}
-                    disabled={Boolean(defaultLanguage)}
-                    onValueChange={(code) => {
-                      setConfirmationModalInfo({
-                        open: true,
-                        title:
-                          t("environments.surveys.edit.confirm_default_language") +
-                          ": " +
-                          getLanguageLabel(code, locale),
-                        body: t(
-                          "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
-                        ),
-                        buttonText: t("common.confirm"),
-                        buttonVariant: "default",
-                        onConfirm: () => handleDefaultLanguageChange(code),
-                      });
-                    }}>
-                    <SelectTrigger className="w-full text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projectLanguages.map((lang) => (
-                        <SelectItem key={lang.id} value={lang.code}>
-                          {getLanguageLabel(lang.code, locale)} ({lang.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {defaultLanguage && (
-                  <>
-                    <Badge type="gray" size="normal" text={t("common.default")} />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      onClick={() => {
-                        setConfirmationModalInfo({
-                          open: true,
-                          title: t("environments.surveys.edit.remove_translations"),
-                          body: t(
-                            "environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"
-                          ),
-                          buttonText: t("environments.surveys.edit.remove_translations"),
-                          buttonVariant: "destructive",
-                          onConfirm: () => {
-                            updateSurveyTranslations(localSurvey, []);
-                            setIsMultiLanguageActivated(false);
-                            setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
-                          },
-                        });
-                      }}>
-                      {t("environments.surveys.edit.change_default")}
-                    </Button>
-                  </>
-                )}
+              <div className="w-56">
+                <Select
+                  onValueChange={(code) => {
+                    setConfirmationModalInfo({
+                      open: true,
+                      title:
+                        t("environments.surveys.edit.confirm_default_language") +
+                        ": " +
+                        getLanguageLabel(code, locale),
+                      body: t(
+                        "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
+                      ),
+                      buttonText: t("common.confirm"),
+                      buttonVariant: "default",
+                      onConfirm: () => handleDefaultLanguageChange(code),
+                    });
+                  }}>
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue placeholder={t("common.select_language")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projectLanguages.map((lang) => (
+                      <SelectItem key={lang.id} value={lang.code}>
+                        {getLanguageLabel(lang.code, locale)} ({lang.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
 
-          {/* Languages table */}
-          {defaultLanguage && localSurvey.languages.length > 0 && (
+          {/* Languages table — show all workspace languages */}
+          {defaultLanguage && projectLanguages.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
@@ -315,141 +316,151 @@ export const LanguageView = ({
                       {t("environments.surveys.edit.translated")}
                     </th>
                     <th className="px-4 py-2.5 text-left font-medium text-slate-600">
-                      {t("environments.surveys.edit.enabled")}
+                      {t("environments.surveys.edit.visible")}
                     </th>
                     <th className="w-12 px-4 py-2.5" />
                   </tr>
                 </thead>
                 <tbody>
-                  {localSurvey.languages.map((surveyLang) => {
-                    const isDefault = surveyLang.default;
-                    const lang = surveyLang.language;
-                    const progress = isDefault
-                      ? null
-                      : computeTranslationProgress(translatableStrings, lang.code);
+                  {/* Default language row */}
+                  <tr className="border-t border-slate-200">
+                    <td className="px-4 py-3 font-medium text-slate-800">
+                      {getLanguageLabel(defaultLanguage.code, locale)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{defaultLanguage.code}</td>
+                    <td className="px-4 py-3">
+                      <Badge type="gray" size="normal" text={t("common.default")} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Switch checked disabled />
+                    </td>
+                    <td className="px-4 py-3">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button type="button" className="rounded p-1 hover:bg-slate-100">
+                            <EllipsisVerticalIcon className="h-4 w-4 text-slate-500" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={handleChangeDefault}>
+                            {t("environments.surveys.edit.change_default")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
 
-                    return (
-                      <tr
-                        key={lang.code}
-                        className={cn(
-                          "border-t border-slate-200",
-                          !isDefault && "cursor-pointer hover:bg-slate-50"
-                        )}
-                        onClick={() => {
-                          if (!isDefault) {
-                            openTranslationModal(lang.code);
-                          }
-                        }}>
-                        <td className="px-4 py-3 font-medium text-slate-800">
-                          {getLanguageLabel(lang.code, locale)}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">{lang.code}</td>
-                        <td className="px-4 py-3">
-                          {isDefault && <Badge type="gray" size="normal" text={t("common.default")} />}
-                          {!isDefault && progress && (
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
-                                <div
+                  {/* Non-default language rows — all workspace languages except default */}
+                  {projectLanguages
+                    .filter((pl) => pl.code !== defaultLanguage.code)
+                    .map((pl) => {
+                      const surveyLang = localSurvey.languages.find((sl) => sl.language.code === pl.code);
+                      const inSurvey = !!surveyLang;
+                      const enabled = surveyLang?.enabled ?? false;
+                      const progress = inSurvey
+                        ? computeTranslationProgress(translatableStrings, pl.code)
+                        : null;
+
+                      return (
+                        <tr
+                          key={pl.code}
+                          className={cn(
+                            "border-t border-slate-200",
+                            inSurvey && "cursor-pointer hover:bg-slate-50"
+                          )}
+                          onClick={() => {
+                            if (inSurvey) {
+                              openTranslationModal(pl.code);
+                            }
+                          }}>
+                          <td className="px-4 py-3 font-medium text-slate-800">
+                            {getLanguageLabel(pl.code, locale)}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">{pl.code}</td>
+                          <td className="px-4 py-3">
+                            {inSurvey && progress && (
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all",
+                                      getProgressColor(progress.percentage)
+                                    )}
+                                    style={{ width: `${progress.percentage}%` }}
+                                  />
+                                </div>
+                                <span
                                   className={cn(
-                                    "h-full rounded-full transition-all",
-                                    getProgressColor(progress.percentage)
-                                  )}
-                                  style={{ width: `${progress.percentage}%` }}
-                                />
+                                    "text-xs font-medium",
+                                    getProgressTextColor(progress.percentage)
+                                  )}>
+                                  {progress.translated}/{progress.total}
+                                </span>
                               </div>
-                              <span
-                                className={cn(
-                                  "text-xs font-medium",
-                                  getProgressTextColor(progress.percentage)
-                                )}>
-                                {progress.translated}/{progress.total}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {isDefault ? (
-                            <Switch checked disabled />
-                          ) : (
-                            <Switch
-                              checked={surveyLang.enabled}
-                              onCheckedChange={() => toggleLanguageEnabled(lang.code)}
-                            />
-                          )}
-                        </td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {!isDefault && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button type="button" className="rounded p-1 hover:bg-slate-100">
-                                  <EllipsisVerticalIcon className="h-4 w-4 text-slate-500" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openTranslationModal(lang.code)}>
-                                  {t("environments.surveys.edit.manage_translations")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600 focus:text-red-600"
-                                  onClick={() => confirmRemoveLanguage(lang.code)}>
-                                  {t("common.remove")}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            )}
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <Switch checked={enabled} onCheckedChange={() => handleToggleLanguage(pl.code)} />
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            {inSurvey && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button type="button" className="rounded p-1 hover:bg-slate-100">
+                                    <EllipsisVerticalIcon className="h-4 w-4 text-slate-500" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openTranslationModal(pl.code)}>
+                                    {t("environments.surveys.edit.manage_translations")}
+                                  </DropdownMenuItem>
+                                  {progress && progress.translated > 0 && (
+                                    <DropdownMenuItem
+                                      className="text-red-600 focus:text-red-600"
+                                      onClick={() => handleRemoveTranslations(pl.code)}>
+                                      {t("environments.surveys.edit.remove_translations")}
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
           )}
-
-          {/* Add language button */}
-          {defaultLanguage && availableLanguages.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="sm">
-                  <PlusIcon className="mr-1 h-4 w-4" />
-                  {t("environments.surveys.edit.add_language")}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {availableLanguages.map((lang) => (
-                  <DropdownMenuItem key={lang.id} onClick={() => addLanguage(lang)}>
-                    {getLanguageLabel(lang.code, locale)} ({lang.code})
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Show language switcher toggle */}
-          {isMultiLanguageActivated && (
-            <AdvancedOptionToggle
-              customContainerClass="px-0 pt-0"
-              htmlId="languageSwitch"
-              disabled={enabledLanguages.length <= 1}
-              isChecked={!!localSurvey.showLanguageSwitch}
-              onToggle={handleLanguageSwitchToggle}
-              title={t("environments.surveys.edit.show_language_switch")}
-              description={t(
-                "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
-              )}
-              childBorder={true}
-            />
-          )}
-
-          {/* Manage workspace languages link */}
-          <Button asChild size="sm" variant="secondary">
-            <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
-              {t("environments.surveys.edit.manage_languages")}
-              <ArrowUpRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
         </div>
       )}
+      <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6">
+        {/* Manage workspace languages link */}
+        <Button asChild size="sm" variant="secondary">
+          <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
+            {t("environments.surveys.edit.manage_languages")}
+            <ArrowUpRight className="ml-1 h-4 w-4" />
+          </Link>
+        </Button>
+
+        {/* Show language switcher toggle */}
+        {isMultiLanguageActivated && (
+          <AdvancedOptionToggle
+            customContainerClass="px-0 pt-0"
+            htmlId="languageSwitch"
+            disabled={enabledLanguages.length <= 1}
+            isChecked={!!localSurvey.showLanguageSwitch}
+            onToggle={handleLanguageSwitchToggle}
+            title={t("environments.surveys.edit.show_language_switch")}
+            description={t(
+              "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
+            )}
+            childBorder={true}
+          />
+        )}
+      </div>
 
       {projectLanguages.length === 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 text-center">

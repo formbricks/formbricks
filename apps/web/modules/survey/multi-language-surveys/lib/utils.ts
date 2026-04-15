@@ -277,6 +277,31 @@ export const deduplicateStrings = (strings: TranslatableString[]): DeduplicatedS
   return Array.from(map.values());
 };
 
+export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: string): TSurvey => {
+  const clone = structuredClone(survey);
+
+  function processObject(obj: unknown) {
+    if (Array.isArray(obj)) {
+      obj.forEach(processObject);
+    } else if (obj && typeof obj === "object") {
+      const record = obj as Record<string, unknown>;
+      for (const key in record) {
+        if (record.hasOwnProperty(key)) {
+          if (key === "default" && typeof record[key] === "string") {
+            delete record[languageCode];
+            return;
+          } else {
+            processObject(record[key]);
+          }
+        }
+      }
+    }
+  }
+
+  processObject(clone);
+  return clone;
+};
+
 type Traversable = Record<string, unknown> | unknown[];
 
 const isTraversable = (val: unknown): val is Traversable => val !== null && typeof val === "object";
