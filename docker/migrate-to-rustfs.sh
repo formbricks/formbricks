@@ -339,6 +339,177 @@ add_rustfs_volume() {
   fi
 }
 
+ensure_service_dependency() {
+  local service="$1"
+  local dependency="$2"
+  local condition="${3:-}"
+  local optional="${4:-false}"
+
+  if ! grep -q "^  $service:[[:space:]]*$" docker-compose.yml; then
+    if [[ "$optional" == "true" ]]; then
+      print_info "$service service not found - skipping dependency addition."
+      return 0
+    fi
+
+    print_error "$service service not found in docker-compose.yml!"
+    print_info "Please ensure the $service service is properly configured before running this migration."
+    exit 1
+  fi
+
+  if awk -v srv="$service" -v dep="$dependency" '
+    BEGIN { in_svc=0; in_dep=0; found=0 }
+    $0 ~ "^  " srv ":[[:space:]]*$" {
+      in_svc=1
+      next
+    }
+    in_svc && $0 ~ /^  [A-Za-z0-9_-]+:[[:space:]]*$/ && $0 !~ "^  " srv ":[[:space:]]*$" {
+      in_svc=0
+      in_dep=0
+    }
+    in_svc && $0 ~ /^    depends_on:[[:space:]]*$/ {
+      in_dep=1
+      next
+    }
+    in_dep && $0 ~ "^[[:space:]]*-[[:space:]]*" dep "[[:space:]]*$" {
+      found=1
+      next
+    }
+    in_dep && $0 ~ "^[[:space:]]*" dep ":[[:space:]]*$" {
+      found=1
+      next
+    }
+    in_dep && $0 !~ /^      / {
+      in_dep=0
+    }
+    END { exit(found ? 0 : 1) }
+  ' docker-compose.yml; then
+    print_info "$dependency dependency already present in $service service."
+    return 0
+  fi
+
+  local awk_script_tmp
+  awk_script_tmp=$(mktemp)
+  cat > "$awk_script_tmp" << 'AWK_EOF'
+function print_dep_entry(style, dep, cond) {
+  if (style == "list") {
+    print "      - " dep
+  } else {
+    print "      " dep ":"
+    if (cond != "") {
+      print "        condition: " cond
+    }
+  }
+}
+
+function print_dep_block(style, dep, cond) {
+  print "    depends_on:"
+  if (style == "list") {
+    print "      - " dep
+  } else {
+    print_dep_entry("map", dep, cond)
+  }
+}
+
+{
+  lines[NR] = $0
+}
+
+END {
+  for (i = 1; i <= NR; i++) {
+    if (lines[i] ~ "^  " srv ":[[:space:]]*$") {
+      in_target = 1
+    } else if (in_target && lines[i] ~ /^  [A-Za-z0-9_-]+:[[:space:]]*$/ && lines[i] !~ "^  " srv ":[[:space:]]*$") {
+      in_target = 0
+    } else if (in_target) {
+      if (lines[i] ~ /^    depends_on:[[:space:]]*$/) {
+        has_depends_on = 1
+        in_dep = 1
+      } else if (in_dep && lines[i] ~ /^      - /) {
+        if (dep_style == "") {
+          dep_style = "list"
+        }
+      } else if (in_dep && lines[i] ~ /^      [A-Za-z0-9_-]+:[[:space:]]*$/) {
+        if (dep_style == "") {
+          dep_style = "map"
+        }
+      } else if (in_dep && lines[i] !~ /^      /) {
+        in_dep = 0
+      }
+    }
+  }
+
+  if (dep_style == "") {
+    dep_style = (cond != "" ? "map" : "list")
+  }
+
+  in_svc = 0
+  in_dep = 0
+  added = 0
+
+  for (i = 1; i <= NR; i++) {
+    line = lines[i]
+
+    if (line ~ "^  " srv ":[[:space:]]*$") {
+      in_svc = 1
+      print line
+      continue
+    }
+
+    if (in_svc && line ~ /^  [A-Za-z0-9_-]+:[[:space:]]*$/ && line !~ "^  " srv ":[[:space:]]*$") {
+      if (in_dep && !added) {
+        print_dep_entry(dep_style, dep, cond)
+        added = 1
+        in_dep = 0
+      } else if (!has_depends_on && !added) {
+        print_dep_block(dep_style, dep, cond)
+        added = 1
+      }
+      in_svc = 0
+      print line
+      continue
+    }
+
+    if (in_svc && line ~ /^    depends_on:[[:space:]]*$/) {
+      in_dep = 1
+      print line
+      continue
+    }
+
+    if (in_svc && in_dep && line !~ /^      /) {
+      if (!added) {
+        print_dep_entry(dep_style, dep, cond)
+        added = 1
+      }
+      in_dep = 0
+      print line
+      continue
+    }
+
+    if (in_svc && !has_depends_on && !added && line ~ /^    [A-Za-z0-9_-]+:/) {
+      print_dep_block(dep_style, dep, cond)
+      added = 1
+      print line
+      continue
+    }
+
+    print line
+  }
+
+  if (in_dep && !added) {
+    print_dep_entry(dep_style, dep, cond)
+  } else if (in_svc && !has_depends_on && !added) {
+    print_dep_block(dep_style, dep, cond)
+  }
+}
+AWK_EOF
+
+  awk -v srv="$service" -v dep="$dependency" -v cond="$condition" -f "$awk_script_tmp" docker-compose.yml > tmp.yml &&
+    mv tmp.yml docker-compose.yml
+  rm -f "$awk_script_tmp"
+
+  print_status "Added $dependency dependency to $service service"
+}
+
 wait_for_rustfs_ready() {
   print_info "Waiting for RustFS to be ready..."
   local max_attempts=30
@@ -681,6 +852,9 @@ migrate_to_rustfs() {
     add_rustfs_services "$files_domain" "$main_domain" "$https_setup"
     add_rustfs_volume
   fi
+
+  ensure_service_dependency "formbricks" "rustfs-init" "service_completed_successfully"
+  ensure_service_dependency "traefik" "rustfs" "service_started" "true"
 
   echo ""
   echo -n "Restart Docker Compose now to provision RustFS and continue the migration? [Y/n]: "

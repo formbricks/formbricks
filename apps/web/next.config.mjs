@@ -7,10 +7,40 @@ const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 jiti("./lib/env");
 
+const LOOPBACK_HOSTS = ["localhost", "127.0.0.1"];
+const LOOPBACK_WILDCARD_ORIGINS = LOOPBACK_HOSTS.map((host) => `http://${host}:*`);
+
+const getLoopbackOriginVariants = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const url = new URL(value);
+
+    if (!["http:", "https:"].includes(url.protocol) || !LOOPBACK_HOSTS.includes(url.hostname)) {
+      return [];
+    }
+
+    const portSuffix = url.port ? `:${url.port}` : "";
+    const alternateHost = url.hostname === "localhost" ? "127.0.0.1" : "localhost";
+
+    return [
+      `${url.protocol}//${url.hostname}${portSuffix}`,
+      `${url.protocol}//${alternateHost}${portSuffix}`,
+    ];
+  } catch {
+    return [];
+  }
+};
+
+const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
+
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
+  allowedDevOrigins: process.env.NODE_ENV === "production" ? undefined : LOOPBACK_HOSTS,
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
@@ -74,6 +104,10 @@ const nextConfig = {
       {
         protocol: "http",
         hostname: "localhost",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
       },
       {
         protocol: "https",
@@ -157,8 +191,17 @@ const nextConfig = {
   async headers() {
     const isProduction = process.env.NODE_ENV === "production";
     const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
+    const devLoopbackSources = isProduction
+      ? []
+      : getUniqueValues([
+          ...LOOPBACK_WILDCARD_ORIGINS,
+          ...getLoopbackOriginVariants(process.env.WEBAPP_URL),
+          ...getLoopbackOriginVariants(process.env.NEXTAUTH_URL),
+          ...getLoopbackOriginVariants(process.env.S3_ENDPOINT_URL),
+        ]);
+    const devLoopbackSourceList = devLoopbackSources.length > 0 ? ` ${devLoopbackSources.join(" ")}` : "";
 
-    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data: http://localhost:9000 https:; font-src 'self' data: https:; connect-src 'self' http://localhost:9000 https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
+    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
 
     return [
       {
@@ -496,6 +539,5 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
-
 
 export default exportConfig;

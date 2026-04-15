@@ -3,6 +3,74 @@
 set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 
+write_rustfs_init_script() {
+  local target_path="${1:-rustfs-init.sh}"
+
+  cat >"$target_path" << 'RUSTFS_SCRIPT_EOF'
+#!/bin/sh
+echo '⏳ Waiting for RustFS to be ready...'
+attempts=0
+max_attempts=30
+until mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+  && mc ls rustfs >/dev/null 2>&1; do
+  attempts=$((attempts + 1))
+  if [ $attempts -ge $max_attempts ]; then
+    printf '❌ Failed to connect to RustFS after %s attempts\n' $max_attempts
+    exit 1
+  fi
+  printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
+  sleep 2
+done
+echo '🔗 RustFS reachable; alias configured.'
+
+echo '🪣 Creating bucket (idempotent)...';
+mc mb rustfs/$RUSTFS_BUCKET_NAME --ignore-existing;
+
+echo '📄 Creating JSON policy file...';
+cat > /tmp/formbricks-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME"]
+    }
+  ]
+}
+EOF
+
+echo '🔒 Creating policy (idempotent)...';
+if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+  mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json;
+  echo 'Policy created successfully.';
+else
+  echo 'Policy already exists, skipping creation.';
+fi
+
+echo '👤 Creating service user (idempotent)...';
+if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+  mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD";
+  echo 'User created successfully.';
+else
+  echo 'User already exists, skipping creation.';
+fi
+
+echo '🔗 Attaching policy to user (idempotent)...';
+mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
+
+echo '✅ RustFS setup complete!';
+exit 0;
+RUSTFS_SCRIPT_EOF
+
+  chmod +x "$target_path"
+}
+
 install_formbricks() {
   # Friendly welcome
   echo "🧱 Welcome to the Formbricks Setup Script"
@@ -624,68 +692,7 @@ EOF
 
   # Create rustfs-init script outside heredoc to avoid variable expansion issues
   if [[ $rustfs_storage == "y" ]]; then
-    cat > rustfs-init.sh << 'RUSTFS_SCRIPT_EOF'
-#!/bin/sh
-echo '⏳ Waiting for RustFS to be ready...'
-attempts=0
-max_attempts=30
-until mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
-  && mc ls rustfs >/dev/null 2>&1; do
-  attempts=$((attempts + 1))
-  if [ $attempts -ge $max_attempts ]; then
-    printf '❌ Failed to connect to RustFS after %s attempts\n' $max_attempts
-    exit 1
-  fi
-  printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
-  sleep 2
-done
-echo '🔗 RustFS reachable; alias configured.'
-
-echo '🪣 Creating bucket (idempotent)...';
-mc mb rustfs/$RUSTFS_BUCKET_NAME --ignore-existing;
-
-echo '📄 Creating JSON policy file...';
-cat > /tmp/formbricks-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
-      "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME"]
-    }
-  ]
-}
-EOF
-
-echo '🔒 Creating policy (idempotent)...';
-if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-  mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json;
-  echo 'Policy created successfully.';
-else
-  echo 'Policy already exists, skipping creation.';
-fi
-
-echo '👤 Creating service user (idempotent)...';
-if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-  mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD";
-  echo 'User created successfully.';
-else
-  echo 'User already exists, skipping creation.';
-fi
-
-echo '🔗 Attaching policy to user (idempotent)...';
-mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
-
-echo '✅ RustFS setup complete!';
-exit 0;
-RUSTFS_SCRIPT_EOF
-    chmod +x rustfs-init.sh
+    write_rustfs_init_script "rustfs-init.sh"
   fi
 
   newgrp docker <<END
@@ -798,33 +805,35 @@ cleanup_minio_init() {
   cleanup_rustfs_init
 }
 
-case "$1" in
-install)
-  install_formbricks
-  ;;
-update)
-  update_formbricks
-  ;;
-stop)
-  stop_formbricks
-  ;;
-restart)
-  restart_formbricks
-  ;;
-logs)
-  get_logs
-  ;;
-cleanup-rustfs-init)
-  cleanup_rustfs_init
-  ;;
-cleanup-minio-init)
-  cleanup_minio_init
-  ;;
-uninstall)
-  uninstall_formbricks
-  ;;
-*)
-  echo "🚀 Executing default step of installing Formbricks"
-  install_formbricks
-  ;;
-esac
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  case "$1" in
+  install)
+    install_formbricks
+    ;;
+  update)
+    update_formbricks
+    ;;
+  stop)
+    stop_formbricks
+    ;;
+  restart)
+    restart_formbricks
+    ;;
+  logs)
+    get_logs
+    ;;
+  cleanup-rustfs-init)
+    cleanup_rustfs_init
+    ;;
+  cleanup-minio-init)
+    cleanup_minio_init
+    ;;
+  uninstall)
+    uninstall_formbricks
+    ;;
+  *)
+    echo "🚀 Executing default step of installing Formbricks"
+    install_formbricks
+    ;;
+  esac
+fi
