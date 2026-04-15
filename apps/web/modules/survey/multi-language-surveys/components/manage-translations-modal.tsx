@@ -86,6 +86,8 @@ export const ManageTranslationsModal = ({
     return { translated, total, percentage };
   }, [isDraftEmpty, strings]);
 
+  // Snapshot the sort order so rows don't jump while the user is typing.
+  // Re-sort only when the sort mode is toggled or the underlying strings change.
   const displayStrings = useMemo(() => {
     if (!missingFirst) return strings;
     return [...strings].sort((a, b) => {
@@ -95,7 +97,8 @@ export const ManageTranslationsModal = ({
       if (!aEmpty && bEmpty) return 1;
       return 0;
     });
-  }, [strings, missingFirst, isDraftEmpty]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strings, missingFirst]);
 
   // Merge draft translations into localSurvey so that the recall dropdown
   // can see in-progress translations (e.g. translated headlines).
