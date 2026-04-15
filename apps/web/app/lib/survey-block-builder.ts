@@ -3,7 +3,9 @@ import type { TFunction } from "i18next";
 import type { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type {
   TSurveyCTAElement,
+  TSurveyCesElement,
   TSurveyConsentElement,
+  TSurveyCsatElement,
   TSurveyElement,
   TSurveyMultipleChoiceElement,
   TSurveyNPSElement,
@@ -205,6 +207,74 @@ export const buildNPSElement = ({
     type: TSurveyElementTypeEnum.NPS,
     subheader: subheader ? createI18nString(subheader, []) : undefined,
     headline: createI18nString(headline, []),
+    required: required ?? false,
+    isColorCodingEnabled,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
+  };
+};
+
+export const buildCsatElement = ({
+  id,
+  headline,
+  subheader,
+  scale = "smiley",
+  lowerLabel,
+  upperLabel,
+  required,
+  isColorCodingEnabled = false,
+}: {
+  id?: string;
+  headline: string;
+  scale?: TSurveyCsatElement["scale"];
+  lowerLabel?: string;
+  upperLabel?: string;
+  subheader?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): TSurveyCsatElement => {
+  return {
+    id: id ?? createId(),
+    type: TSurveyElementTypeEnum.CSAT,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    scale,
+    range: 5,
+    required: required ?? false,
+    isColorCodingEnabled,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
+  };
+};
+
+export const buildCesElement = ({
+  id,
+  headline,
+  subheader,
+  scale = "number",
+  range = 5,
+  lowerLabel,
+  upperLabel,
+  required,
+  isColorCodingEnabled = false,
+}: {
+  id?: string;
+  headline: string;
+  scale?: TSurveyCesElement["scale"];
+  range?: TSurveyCesElement["range"];
+  lowerLabel?: string;
+  upperLabel?: string;
+  subheader?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): TSurveyCesElement => {
+  return {
+    id: id ?? createId(),
+    type: TSurveyElementTypeEnum.CES,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    scale,
+    range,
     required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,

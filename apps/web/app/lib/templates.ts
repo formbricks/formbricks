@@ -7,7 +7,9 @@ import type { TTemplate } from "@formbricks/types/templates";
 import {
   buildBlock,
   buildCTAElement,
+  buildCesElement,
   buildConsentElement,
+  buildCsatElement,
   buildMultipleChoiceElement,
   buildNPSElement,
   buildOpenTextElement,
@@ -1319,8 +1321,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
-              range: 5,
+            buildCsatElement({
               scale: "star",
               headline: t("templates.employee_satisfaction_question_1_headline"),
               required: true,
@@ -2723,7 +2724,7 @@ const customerEffortScore = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
+            buildCesElement({
               range: 5,
               scale: "number",
               headline: t("templates.customer_effort_score_question_1_headline"),
@@ -3828,9 +3829,8 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
+            buildCsatElement({
               id: reusableElementIds[0],
-              range: 5,
               scale: "smiley",
               headline: t("templates.improve_newsletter_content_question_1_headline"),
               required: true,
@@ -4409,8 +4409,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_9"),
           elements: [
-            buildRatingElement({
-              range: 5,
+            buildCsatElement({
               scale: "smiley",
               headline: t("templates.long_term_retention_check_in_question_9_headline"),
               required: true,
