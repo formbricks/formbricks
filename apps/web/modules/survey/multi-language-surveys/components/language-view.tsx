@@ -238,10 +238,10 @@ export const LanguageView = ({
   };
 
   return (
-    <div className="mt-12 space-y-6 p-5">
+    <div className="mt-12 space-y-3 p-5">
       {/* Activation toggle — only show when workspace has languages */}
       {projectLanguages.length > 0 && (
-        <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
+        <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
           <Switch
             checked={isMultiLanguageActivated}
             onCheckedChange={handleActivationSwitch}
@@ -259,7 +259,7 @@ export const LanguageView = ({
       )}
 
       {isMultiLanguageActivated && (
-        <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6">
+        <div className="space-y-6 rounded-lg border border-slate-300 bg-white p-6">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-slate-900">{t("common.survey_languages")}</h3>
           </div>
@@ -302,7 +302,7 @@ export const LanguageView = ({
 
           {/* Languages table — show all workspace languages */}
           {defaultLanguage && projectLanguages.length > 0 && (
-            <div className="overflow-hidden rounded-lg border border-slate-200">
+            <div className="overflow-hidden rounded-lg border border-slate-300">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
                   <tr>
@@ -434,19 +434,16 @@ export const LanguageView = ({
               </table>
             </div>
           )}
-        </div>
-      )}
-      <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6">
-        {/* Manage workspace languages link */}
-        <Button asChild size="sm" variant="secondary">
-          <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
-            {t("environments.surveys.edit.manage_languages")}
-            <ArrowUpRight className="ml-1 h-4 w-4" />
-          </Link>
-        </Button>
 
-        {/* Show language switcher toggle */}
-        {isMultiLanguageActivated && (
+          {/* Manage workspace languages link */}
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
+              {t("environments.surveys.edit.manage_languages")}
+              <ArrowUpRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+
+          {/* Show language switcher toggle */}
           <AdvancedOptionToggle
             customContainerClass="px-0 pt-0"
             htmlId="languageSwitch"
@@ -459,11 +456,11 @@ export const LanguageView = ({
             )}
             childBorder={true}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {projectLanguages.length === 0 && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 text-center">
+        <div className="rounded-lg border border-slate-300 bg-white p-6 text-center">
           <p className="text-sm text-slate-500">
             {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
           </p>
