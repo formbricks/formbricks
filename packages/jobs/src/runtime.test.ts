@@ -22,7 +22,9 @@ let workerConnections: MockRedisConnection[] = [];
 let workerMocks: MockWorker[] = [];
 
 const mockLogger = createMockLogger();
-const mockProcessJob = vi.fn<(job: unknown) => Promise<void>>().mockResolvedValue(undefined);
+const mockProcessJob = vi
+  .fn<(job: unknown, handlerOverrides?: unknown) => Promise<void>>()
+  .mockResolvedValue(undefined);
 const mockCloseRedisConnection = vi.fn<(connection: unknown) => Promise<void>>().mockResolvedValue(undefined);
 const mockCreateProducerConnection = vi.fn((_: unknown) => asRedisConnection(producerConnection));
 const mockCreateWorkerConnection = vi.fn((_: unknown) => {
@@ -61,7 +63,7 @@ vi.mock("./connection", () => ({
 }));
 
 vi.mock("./processors/registry", () => ({
-  processJob: (job: unknown) => mockProcessJob(job),
+  processJob: (job: unknown, handlerOverrides?: unknown) => mockProcessJob(job, handlerOverrides),
 }));
 
 vi.mock("./queue", async () => {
@@ -116,7 +118,7 @@ describe("@formbricks/jobs runtime", () => {
     };
     await processor(job);
 
-    expect(mockProcessJob).toHaveBeenCalledWith(job);
+    expect(mockProcessJob).toHaveBeenCalledWith(job, undefined);
 
     const registeredWorkerEvents = new Map<string, (...args: unknown[]) => void>(
       worker.on.mock.calls.map(([event, handler]) => [event, handler as (...args: unknown[]) => void])
@@ -206,6 +208,32 @@ describe("@formbricks/jobs runtime", () => {
 
     expect(workerMocks[0]?.close).toHaveBeenCalledTimes(1);
     expect(workerMocks[1]?.close).toHaveBeenCalledTimes(1);
+  });
+
+  test("passes handler overrides into the processor bridge", async () => {
+    const overrideHandler = vi.fn().mockResolvedValue(undefined);
+    const runtime = await startJobsRuntime({
+      redisUrl: "redis://localhost:6379",
+      jobHandlerOverrides: {
+        [JOB_NAMES.responsePipeline]: overrideHandler,
+      },
+    });
+
+    const processor = mockWorkerConstructor.mock.calls[0]?.[1] as (job: unknown) => Promise<void>;
+    const job = {
+      attemptsMade: 0,
+      id: "job-override",
+      name: JOB_NAMES.responsePipeline,
+      queueName: JOBS_QUEUE_NAME,
+    };
+
+    await processor(job);
+
+    expect(mockProcessJob).toHaveBeenCalledWith(job, {
+      [JOB_NAMES.responsePipeline]: overrideHandler,
+    });
+
+    await runtime.close();
   });
 
   test("rejects invalid runtime tuning values", async () => {

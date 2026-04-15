@@ -177,6 +177,53 @@ export const queueAuditEvent = async ({
 };
 
 /**
+ * Logs an audit event without reading request headers.
+ * Use this from background workers or other contexts without a request lifecycle.
+ */
+export const queueAuditEventWithoutRequest = async ({
+  action,
+  targetType,
+  userId,
+  userType,
+  targetId,
+  organizationId,
+  oldObject,
+  newObject,
+  status,
+  eventId,
+  apiUrl,
+  ipAddress = UNKNOWN_DATA,
+}: {
+  action: TAuditAction;
+  targetType: TAuditTarget;
+  userId: string;
+  userType: TActor;
+  targetId: string;
+  organizationId: string;
+  oldObject?: Record<string, unknown> | null;
+  newObject?: Record<string, unknown> | null;
+  status: TAuditStatus;
+  eventId?: string;
+  apiUrl?: string;
+  ipAddress?: string;
+}) => {
+  await buildAndLogAuditEvent({
+    action,
+    targetType,
+    userId,
+    userType,
+    targetId,
+    organizationId,
+    ipAddress,
+    status,
+    oldObject,
+    newObject,
+    eventId,
+    apiUrl,
+  });
+};
+
+/**
  * Wraps a handler function with audit logging.
  * Logs audit events for server actions. Specifically for server actions that use next-server-action library middleware and its context.
  * The audit logging runs in the background to avoid blocking the main request.

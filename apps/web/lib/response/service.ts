@@ -93,6 +93,14 @@ export const getResponseContact = (
   };
 };
 
+const mapResponsePrismaToResponse = (
+  responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
+): TResponse => ({
+  ...responsePrisma,
+  contact: getResponseContact(responsePrisma),
+  tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+});
+
 export const getResponsesByContactId = reactCache(
   async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
     validateInputs([contactId, ZId], [page, ZOptionalNumber]);
@@ -172,13 +180,7 @@ export const getResponseBySingleUseId = reactCache(
         return null;
       }
 
-      const response: TResponse = {
-        ...responsePrisma,
-        contact: getResponseContact(responsePrisma),
-        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-      };
-
-      return response;
+      return mapResponsePrismaToResponse(responsePrisma);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -204,13 +206,7 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
       return null;
     }
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: getResponseContact(responsePrisma),
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return mapResponsePrismaToResponse(responsePrisma);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -219,6 +215,31 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
     throw error;
   }
 });
+
+export const getResponseSnapshotForPipeline = async (responseId: string): Promise<TResponse | null> => {
+  validateInputs([responseId, ZId]);
+
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: responseSelection,
+    });
+
+    if (!responsePrisma) {
+      return null;
+    }
+
+    return mapResponsePrismaToResponse(responsePrisma);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);

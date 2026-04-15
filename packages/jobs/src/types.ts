@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZResponse } from "@formbricks/types/responses";
+import { ZTag } from "@formbricks/types/tags";
 
 export const ZTestLogJobData = z.object({
   message: z.string().min(1),
@@ -13,9 +14,20 @@ export const ZResponsePipelineEvent = z.enum(["responseFinished", "responseCreat
 
 export type TResponsePipelineEvent = z.infer<typeof ZResponsePipelineEvent>;
 
+const ZResponsePipelineJobTag = ZTag.extend({
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+const ZResponsePipelineJobResponse = ZResponse.extend({
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  tags: z.array(ZResponsePipelineJobTag),
+});
+
 export const ZResponsePipelineJobData = z.object({
   event: ZResponsePipelineEvent,
-  response: ZResponse,
+  response: ZResponsePipelineJobResponse,
   environmentId: z.string().min(1),
   surveyId: z.string().min(1),
 });

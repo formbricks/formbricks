@@ -10,6 +10,11 @@ export interface JobsWorkerBootstrapConfig {
   runtimeOptions: JobsRuntimeOptions | null;
 }
 
+export interface JobsQueueingConfig {
+  enabled: boolean;
+  redisUrl: string | null;
+}
+
 export const BULLMQ_WORKER_CONCURRENCY = env.BULLMQ_WORKER_CONCURRENCY ?? DEFAULT_BULLMQ_WORKER_CONCURRENCY;
 export const BULLMQ_WORKER_COUNT = env.BULLMQ_WORKER_COUNT ?? DEFAULT_BULLMQ_WORKER_COUNT;
 
@@ -22,6 +27,23 @@ const getBullMqWorkerEnabled = (): boolean => {
 };
 
 export const BULLMQ_WORKER_ENABLED = getBullMqWorkerEnabled();
+export const BULLMQ_EXTERNAL_WORKER_ENABLED = env.BULLMQ_EXTERNAL_WORKER_ENABLED === "1";
+
+const hasBullMqConsumer = (): boolean => BULLMQ_WORKER_ENABLED || BULLMQ_EXTERNAL_WORKER_ENABLED;
+
+export const getJobsQueueingConfig = (): JobsQueueingConfig => {
+  if (!env.REDIS_URL || !hasBullMqConsumer()) {
+    return {
+      enabled: false,
+      redisUrl: null,
+    };
+  }
+
+  return {
+    enabled: true,
+    redisUrl: env.REDIS_URL,
+  };
+};
 
 export const getJobsWorkerBootstrapConfig = (): JobsWorkerBootstrapConfig => {
   if (!BULLMQ_WORKER_ENABLED) {

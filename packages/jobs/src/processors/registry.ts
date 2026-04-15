@@ -1,6 +1,6 @@
 import type { Job } from "bullmq";
 import { logger } from "@formbricks/logger";
-import type { AnyBackgroundJobDefinition } from "@/src/contracts";
+import type { AnyBackgroundJobDefinition, JobHandlerOverrides } from "@/src/contracts";
 import { backgroundJobDefinitions, getBackgroundJobDefinition } from "@/src/definitions";
 
 export const jobProcessors: Record<string, AnyBackgroundJobDefinition> = backgroundJobDefinitions;
@@ -8,7 +8,7 @@ export const jobProcessors: Record<string, AnyBackgroundJobDefinition> = backgro
 export const getJobProcessor = (jobName: string): AnyBackgroundJobDefinition | undefined =>
   getBackgroundJobDefinition(jobName);
 
-export const processJob = async (job: Job): Promise<void> => {
+export const processJob = async (job: Job, handlerOverrides?: JobHandlerOverrides): Promise<void> => {
   const definition = getJobProcessor(job.name);
 
   if (!definition) {
@@ -18,11 +18,14 @@ export const processJob = async (job: Job): Promise<void> => {
   }
 
   const data = definition.schema.parse(job.data);
+  const handler = handlerOverrides?.[job.name] ?? definition.handle;
+  const maxAttempts = typeof job.opts.attempts === "number" && job.opts.attempts > 0 ? job.opts.attempts : 1;
 
-  await definition.handle(data, {
+  await handler(data, {
     attempt: job.attemptsMade + 1,
     jobId: String(job.id),
     jobName: job.name,
+    maxAttempts,
     queueName: job.queueName,
   });
 };

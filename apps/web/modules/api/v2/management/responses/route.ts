@@ -1,13 +1,13 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
-import { sendToPipeline } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
+import { getResponseSnapshotForPipeline } from "@/lib/response/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
-import { getResponseForPipeline } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -155,25 +155,17 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
-      // Fetch created response with relations for pipeline
-      const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
-      if (createdResponseForPipeline.ok) {
-        sendToPipeline({
-          event: "responseCreated",
-          environmentId: environmentId,
-          surveyId: body.surveyId,
-          response: createdResponseForPipeline.data,
-        });
+      const responseSnapshot = await getResponseSnapshotForPipeline(createResponseResult.data.id);
 
-        if (createResponseResult.data.finished) {
-          sendToPipeline({
-            event: "responseFinished",
-            environmentId: environmentId,
-            surveyId: body.surveyId,
-            response: createdResponseForPipeline.data,
-          });
-        }
-      }
+      scheduleResponsePipelineEvents({
+        environmentId,
+        events: createResponseResult.data.finished
+          ? ["responseCreated", "responseFinished"]
+          : ["responseCreated"],
+        response: responseSnapshot ?? undefined,
+        responseId: createResponseResult.data.id,
+        surveyId: body.surveyId,
+      });
 
       if (auditLog) {
         auditLog.targetId = createResponseResult.data.id;

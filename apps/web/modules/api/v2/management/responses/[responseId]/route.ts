@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { sendToPipeline } from "@/app/lib/pipelines";
+import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
+import { getResponseSnapshotForPipeline } from "@/lib/response/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -9,7 +10,6 @@ import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteResponse,
   getResponse,
-  getResponseForPipeline,
   updateResponseWithQuotaEvaluation,
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
@@ -221,25 +221,15 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
-      // Fetch updated response with relations for pipeline
-      const updatedResponseForPipeline = await getResponseForPipeline(params.responseId);
-      if (updatedResponseForPipeline.ok) {
-        sendToPipeline({
-          event: "responseUpdated",
-          environmentId: environmentIdResult.data,
-          surveyId: existingResponse.data.surveyId,
-          response: updatedResponseForPipeline.data,
-        });
+      const responseSnapshot = await getResponseSnapshotForPipeline(response.data.id);
 
-        if (response.data.finished) {
-          sendToPipeline({
-            event: "responseFinished",
-            environmentId: environmentIdResult.data,
-            surveyId: existingResponse.data.surveyId,
-            response: updatedResponseForPipeline.data,
-          });
-        }
-      }
+      scheduleResponsePipelineEvents({
+        environmentId: environmentIdResult.data,
+        events: response.data.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
+        response: responseSnapshot ?? undefined,
+        responseId: params.responseId,
+        surveyId: existingResponse.data.surveyId,
+      });
 
       if (auditLog) {
         auditLog.oldObject = existingResponse.data;

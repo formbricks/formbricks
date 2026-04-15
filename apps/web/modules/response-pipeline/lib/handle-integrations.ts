@@ -1,3 +1,4 @@
+import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
@@ -9,7 +10,6 @@ import { TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
 import { writeData } from "@/lib/googleSheet/service";
@@ -38,19 +38,38 @@ const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   return result.join("\n");
 };
 
+interface TIntegrationFieldSelection {
+  elementIds: string[];
+  includeCreatedAt: boolean;
+  includeHiddenFields: boolean;
+  includeMetadata: boolean;
+  includeVariables: boolean;
+}
+
+const toIntegrationFieldSelection = (config: {
+  elementIds: string[];
+  includeCreatedAt?: boolean | null;
+  includeHiddenFields?: boolean | null;
+  includeMetadata?: boolean | null;
+  includeVariables?: boolean | null;
+}): TIntegrationFieldSelection => ({
+  elementIds: config.elementIds,
+  includeCreatedAt: Boolean(config.includeCreatedAt),
+  includeHiddenFields: Boolean(config.includeHiddenFields),
+  includeMetadata: Boolean(config.includeMetadata),
+  includeVariables: Boolean(config.includeVariables),
+});
+
 const processDataForIntegration = async (
   integrationType: TIntegrationType,
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   survey: TSurvey,
-  includeVariables: boolean,
-  includeMetadata: boolean,
-  includeHiddenFields: boolean,
-  includeCreatedAt: boolean,
-  elementIds: string[]
+  selection: TIntegrationFieldSelection
 ): Promise<{
   responses: string[];
   elements: string[];
 }> => {
+  const { elementIds, includeCreatedAt, includeHiddenFields, includeMetadata, includeVariables } = selection;
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...elementIds, ...survey.hiddenFields.fieldIds]
@@ -84,12 +103,12 @@ const processDataForIntegration = async (
 
 export const handleIntegrations = async (
   integrations: TIntegration[],
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   survey: TSurvey
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
-      case "googleSheets":
+      case "googleSheets": {
         const googleResult = await handleGoogleSheetsIntegration(
           integration as TIntegrationGoogleSheets,
           data,
@@ -99,13 +118,15 @@ export const handleIntegrations = async (
           logger.error(googleResult.error, "Error in google sheets integration");
         }
         break;
-      case "slack":
+      }
+      case "slack": {
         const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
         if (!slackResult.ok) {
           logger.error(slackResult.error, "Error in slack integration");
         }
         break;
-      case "airtable":
+      }
+      case "airtable": {
         const airtableResult = await handleAirtableIntegration(
           integration as TIntegrationAirtable,
           data,
@@ -115,19 +136,21 @@ export const handleIntegrations = async (
           logger.error(airtableResult.error, "Error in airtable integration");
         }
         break;
-      case "notion":
+      }
+      case "notion": {
         const notionResult = await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
         if (!notionResult.ok) {
           logger.error(notionResult.error, "Error in notion integration");
         }
         break;
+      }
     }
   }
 };
 
 const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -138,11 +161,7 @@ const handleAirtableIntegration = async (
             "airtable",
             data,
             survey,
-            !!element.includeVariables,
-            !!element.includeMetadata,
-            !!element.includeHiddenFields,
-            !!element.includeCreatedAt,
-            element.elementIds
+            toIntegrationFieldSelection(element)
           );
           await airtableWriteData(integration.config.key, element, values.responses, values.elements);
         }
@@ -163,7 +182,7 @@ const handleAirtableIntegration = async (
 
 const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -174,11 +193,7 @@ const handleGoogleSheetsIntegration = async (
             "googleSheets",
             data,
             survey,
-            !!element.includeVariables,
-            !!element.includeMetadata,
-            !!element.includeHiddenFields,
-            !!element.includeCreatedAt,
-            element.elementIds
+            toIntegrationFieldSelection(element)
           );
           const integrationData = structuredClone(integration);
           integrationData.config.data.forEach((data) => {
@@ -204,7 +219,7 @@ const handleGoogleSheetsIntegration = async (
 
 const handleSlackIntegration = async (
   integration: TIntegrationSlack,
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -215,11 +230,7 @@ const handleSlackIntegration = async (
             "slack",
             data,
             survey,
-            !!element.includeVariables,
-            !!element.includeMetadata,
-            !!element.includeHiddenFields,
-            !!element.includeCreatedAt,
-            element.elementIds
+            toIntegrationFieldSelection(element)
           );
           await writeDataToSlack(
             integration.config.key,
@@ -283,7 +294,7 @@ const createEmptyResponseObject = (responseData: Record<string, unknown>): Recor
 
 const extractResponses = async (
   integrationType: TIntegrationType,
-  pipelineData: TPipelineInput,
+  pipelineData: TResponsePipelineJobData,
   elementIds: string[],
   survey: TSurvey
 ): Promise<{
@@ -329,7 +340,7 @@ const extractResponses = async (
 
 const handleNotionIntegration = async (
   integration: TIntegrationNotion,
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   surveyData: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -356,27 +367,36 @@ const handleNotionIntegration = async (
 
 const buildNotionPayloadProperties = (
   mapping: TIntegrationNotionConfigData["mapping"],
-  data: TPipelineInput,
+  data: TResponsePipelineJobData,
   surveyData: TSurvey
 ) => {
   const properties: any = {};
-  const responses = data.response.data;
+  const normalizedResponses = { ...data.response.data };
 
   const surveyElements = getElementsFromBlocks(surveyData.blocks);
+  const surveyElementsById = new Map(surveyElements.map((element) => [element.id, element] as const));
+  const pictureSelectionElementIds = new Set(
+    mapping.filter((m) => m.element.type === TSurveyElementTypeEnum.PictureSelection).map((m) => m.element.id)
+  );
 
-  const mappingElementIds = mapping
-    .filter((m) => m.element.type === TSurveyElementTypeEnum.PictureSelection)
-    .map((m) => m.element.id);
-
-  Object.keys(responses).forEach((resp) => {
-    if (mappingElementIds.find((elementId) => elementId === resp)) {
-      const selectedChoiceIds = responses[resp] as string[];
-      const pictureElement = surveyElements.find((el) => el.id === resp);
-
-      responses[resp] = (pictureElement as any)?.choices
-        .filter((choice: { id: string; imageUrl: string }) => selectedChoiceIds.includes(choice.id))
-        .map((choice: { id: string; imageUrl: string }) => resolveStorageUrlAuto(choice.imageUrl));
+  Object.keys(normalizedResponses).forEach((responseKey) => {
+    if (!pictureSelectionElementIds.has(responseKey)) {
+      return;
     }
+
+    const selectedChoiceIds = normalizedResponses[responseKey];
+    if (!Array.isArray(selectedChoiceIds)) {
+      return;
+    }
+
+    const pictureElement = surveyElementsById.get(responseKey);
+    if (pictureElement?.type !== TSurveyElementTypeEnum.PictureSelection) {
+      return;
+    }
+
+    normalizedResponses[responseKey] = pictureElement.choices
+      .filter((choice) => selectedChoiceIds.includes(choice.id))
+      .map((choice) => resolveStorageUrlAuto(choice.imageUrl));
   });
 
   mapping.forEach((map) => {
@@ -389,7 +409,7 @@ const buildNotionPayloadProperties = (
         [map.column.type]: getValue(map.column.type, data.response.createdAt) || null,
       };
     } else {
-      const value = responses[map.element.id];
+      const value = normalizedResponses[map.element.id];
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, value) || null,
       };
@@ -401,64 +421,115 @@ const buildNotionPayloadProperties = (
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-const getValue = (
-  colType: string,
-  value: string | string[] | Date | number | Record<string, string> | undefined
-) => {
+type TNotionValueInput = string | string[] | Date | number | Record<string, string> | undefined;
+
+const coerceToNotionString = (
+  value: TNotionValueInput,
+  options?: { allowArrays?: boolean }
+): string | null => {
+  if (value == null) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    if (!options?.allowArrays) {
+      return null;
+    }
+
+    return value.join("\n");
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+};
+
+const getSelectValue = (value: TNotionValueInput) => {
+  if (typeof value !== "string" || value.length === 0) {
+    return null;
+  }
+
+  return {
+    name: value.replaceAll(",", ""),
+  };
+};
+
+const getMultiSelectValue = (value: TNotionValueInput) => {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  return value.map((entry: string) => ({ name: entry.replaceAll(",", "") }));
+};
+
+const getTitleValue = (value: TNotionValueInput) => {
+  const content = coerceToNotionString(value, { allowArrays: true });
+  if (!content) {
+    return null;
+  }
+
+  return [
+    {
+      text: {
+        content,
+      },
+    },
+  ];
+};
+
+const getRichTextValue = (value: TNotionValueInput) => {
+  const content = coerceToNotionString(value, { allowArrays: true });
+  if (!content) {
+    return null;
+  }
+
+  return [
+    {
+      text: {
+        content:
+          content.length > NOTION_RICH_TEXT_LIMIT ? truncateText(content, NOTION_RICH_TEXT_LIMIT) : content,
+      },
+    },
+  ];
+};
+
+const getUrlValue = (value: TNotionValueInput) => {
+  if (Array.isArray(value)) {
+    if (value.length !== 1) {
+      return null;
+    }
+
+    return coerceToNotionString(value[0]);
+  }
+
+  const content = coerceToNotionString(value);
+  if (!content) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+  return content;
+};
+
+const getValue = (colType: string, value: TNotionValueInput) => {
   try {
     switch (colType) {
       case "select":
-        if (!value) return null;
-        if (typeof value === "string") {
-          // Replace commas
-          const sanitizedValue = value.replace(/,/g, "");
-          return {
-            name: sanitizedValue,
-          };
-        }
+        return getSelectValue(value);
       case "multi_select":
-        if (Array.isArray(value)) {
-          return value.map((v: string) => ({ name: v.replace(/,/g, "") }));
-        }
+        return getMultiSelectValue(value);
       case "title":
-        return [
-          {
-            text: {
-              content: value,
-            },
-          },
-        ];
+        return getTitleValue(value);
       case "rich_text":
-        if (typeof value === "string") {
-          return [
-            {
-              text: {
-                content:
-                  value.length > NOTION_RICH_TEXT_LIMIT ? truncateText(value, NOTION_RICH_TEXT_LIMIT) : value,
-              },
-            },
-          ];
-        }
-        if (Array.isArray(value)) {
-          const content = value.join("\n");
-          return [
-            {
-              text: {
-                content:
-                  content.length > NOTION_RICH_TEXT_LIMIT
-                    ? truncateText(content, NOTION_RICH_TEXT_LIMIT)
-                    : content,
-              },
-            },
-          ];
-        }
-        return [
-          {
-            text: {
-              content: value,
-            },
-          },
-        ];
+        return getRichTextValue(value);
       case "status":
         return {
           name: value,
@@ -472,11 +543,13 @@ const getValue = (
       case "email":
         return value;
       case "number":
-        return parseInt(value as string);
+        return Number.parseInt(value as string, 10);
       case "phone_number":
         return value;
       case "url":
-        return typeof value === "string" ? value : (value as string[]).join(", ");
+        return getUrlValue(value);
+      default:
+        return null;
     }
   } catch (error) {
     logger.error(error, "Payload build failed!");
