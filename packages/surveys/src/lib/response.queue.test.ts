@@ -338,7 +338,7 @@ describe("ResponseQueue", () => {
     const result = await offlineQueue.processQueue();
     expect(result.success).toBe(false);
     expect(syncSpy).toHaveBeenCalled();
-    expect(offlineQueue["isRequestInProgress"]).toBe(false);
+    expect(_syncLocks.getRequestInProgress("s1")).toBe(false);
   });
 
   test("processQueue bails out if syncPersistedResponses starts during countPendingResponses await", async () => {
@@ -417,12 +417,24 @@ describe("ResponseQueue", () => {
   });
 
   test("syncPersistedResponses returns early when a processQueue request is in flight", async () => {
+    _syncLocks.setRequestInProgress("s1", true);
     const offlineQueue = new ResponseQueue(
       getConfig({ persistOffline: true, surveyId: "s1" }),
       getSurveyState()
     );
-    offlineQueue["isRequestInProgress"] = true;
     const result = await offlineQueue.syncPersistedResponses();
+    expect(result).toEqual({ success: false, syncedCount: 0 });
+  });
+
+  test("syncPersistedResponses on a new instance sees isRequestInProgress from an old instance", async () => {
+    // Simulate instance A having a request in flight (module-level lock)
+    _syncLocks.setRequestInProgress("s1", true);
+    // Instance B is newly created (e.g. React useMemo recomputation)
+    const instanceB = new ResponseQueue(
+      getConfig({ persistOffline: true, surveyId: "s1" }),
+      getSurveyState()
+    );
+    const result = await instanceB.syncPersistedResponses();
     expect(result).toEqual({ success: false, syncedCount: 0 });
   });
 
