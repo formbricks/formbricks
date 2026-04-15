@@ -42,6 +42,13 @@ Use cloud storage services for production deployments:
   `files.yourdomain.com` that points to your server so browser uploads can reach the object storage endpoint.
 </Warning>
 
+<Warning>
+  Bundled RustFS is a convenience-oriented single-server option. It fits small-scale or lower-complexity
+  self-hosted deployments, but it is not the ideal RustFS architecture for high-availability or larger-scale
+  production storage. For stricter production requirements, prefer external object storage or a dedicated
+  RustFS deployment.
+</Warning>
+
 RustFS provides a self-hosted S3-compatible storage solution that runs alongside Formbricks. This option:
 
 - Runs in a Docker container alongside Formbricks

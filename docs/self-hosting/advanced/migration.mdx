@@ -254,6 +254,11 @@ This helper:
 - Copies legacy local uploads into the RustFS bucket
 - Removes legacy local upload configuration only after the copy succeeds
 
+<Note>
+  This helper targets a convenient single-server RustFS setup. If you need higher availability or a
+  larger-scale storage architecture, prefer external object storage or a dedicated RustFS deployment.
+</Note>
+
 <Info>
   This helper does **not** migrate MinIO-backed installs to RustFS. It is designed only for setups that still
   use local uploads.

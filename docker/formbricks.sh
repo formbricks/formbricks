@@ -470,7 +470,6 @@ EOF
       RUSTFS_ACCESS_KEY: "$rustfs_admin_user"
       RUSTFS_SECRET_KEY: "$rustfs_admin_password"
       RUSTFS_ADDRESS: ":9000"
-      RUSTFS_SERVER_DOMAINS: "$files_domain"
     volumes:
       - rustfs-data:/data
     labels:

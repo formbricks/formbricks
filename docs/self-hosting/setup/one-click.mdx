@@ -14,6 +14,14 @@ If you’re looking to quickly set up a production instance of Formbricks on an 
   automatic SSL management via Let’s Encrypt.
 </Note>
 
+<Warning>
+  The bundled RustFS option in this one-click setup is designed for convenience on a single server. It is a
+  good fit for small-scale or low-complexity self-hosted deployments, but it is not the ideal RustFS
+  architecture for high-availability or larger production environments. For stricter production requirements,
+  use external object storage or run a dedicated RustFS deployment separately from the Formbricks one-click
+  stack.
+</Warning>
+
 For other operating systems or a more customized installation, please refer to the advanced installation guide with [Docker](/self-hosting/setup/docker).
 
 ### Requirements

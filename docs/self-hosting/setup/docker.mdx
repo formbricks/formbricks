@@ -135,6 +135,13 @@ keeping the existing `S3_*` environment variables.
   local setups.
 </Warning>
 
+<Warning>
+  The bundled RustFS examples on this page are convenience-oriented single-server setups. They work well for
+  development, evaluation, and smaller self-hosted deployments, but they are not the ideal RustFS architecture
+  for high-availability or larger-scale production storage. For stricter production requirements, use external
+  object storage or run a dedicated RustFS deployment separately.
+</Warning>
+
 ### Quick Start: Using docker-compose.dev.yml
 
 The fastest way to test file uploads locally is to use the included `docker-compose.dev.yml`, which already
@@ -291,6 +298,12 @@ automatically configures:
 
 The production setup from [formbricks.sh](https://github.com/formbricks/formbricks/blob/main/docker/formbricks.sh)
 adds the reverse proxy wiring and bootstrap automation needed for long-lived deployments.
+
+<Note>
+  Even in the one-click flow, bundled RustFS remains a convenience-oriented single-server deployment. For
+  higher availability, stricter operational requirements, or larger storage footprints, prefer external object
+  storage or a dedicated RustFS deployment managed separately from Formbricks.
+</Note>
 
 ## Debug
 
