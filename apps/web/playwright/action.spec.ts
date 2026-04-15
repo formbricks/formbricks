@@ -14,7 +14,7 @@ const createNoCodeClickAction = async ({
   selector: string;
 }) => {
   await page.goto("/");
-  await page.getByText("My Workspace").click();
+  await page.locator("#workspaceDropdownTrigger").click();
   await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -62,7 +62,7 @@ const createNoCodePageViewAction = async ({
   noCodeType: string;
 }) => {
   await page.goto("/");
-  await page.getByText("My Workspace").click();
+  await page.locator("#workspaceDropdownTrigger").click();
   await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -111,7 +111,7 @@ const createNoCodeAction = async ({
   noCodeType: string;
 }) => {
   await page.goto("/");
-  await page.getByText("My Workspace").click();
+  await page.locator("#workspaceDropdownTrigger").click();
   await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -149,7 +149,7 @@ const createCodeAction = async ({
   description: string;
   key: string;
 }) => {
-  await page.getByText("My Workspace").click();
+  await page.locator("#workspaceDropdownTrigger").click();
   await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -189,7 +189,7 @@ test.describe("Create and Edit No Code Click Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.getByText("My Workspace").click();
+    await page.locator("#workspaceDropdownTrigger").click();
     await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
   });
@@ -247,7 +247,7 @@ test.describe("Create and Edit No Code Page view Action", async () => {
     });
 
     await test.step("Edit No Code Page view Action", async () => {
-      await page.getByText("My Workspace").click();
+      await page.locator("#workspaceDropdownTrigger").click();
       await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -300,7 +300,7 @@ test.describe("Create and Edit No Code Exit Intent Action", async () => {
     });
 
     await test.step("Edit No Code Exit Intent Action", async () => {
-      await page.getByText("My Workspace").click();
+      await page.locator("#workspaceDropdownTrigger").click();
       await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -326,7 +326,7 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.getByText("My Workspace").click();
+    await page.locator("#workspaceDropdownTrigger").click();
     await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
   });
@@ -342,7 +342,7 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
     });
 
     await test.step("Edit No Code 50% scroll Action", async () => {
-      await page.getByText("My Workspace").click();
+      await page.locator("#workspaceDropdownTrigger").click();
       await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -368,7 +368,7 @@ test.describe("Create and Edit Code Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.getByText("My Workspace").click();
+    await page.locator("#workspaceDropdownTrigger").click();
     await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
   });
@@ -384,7 +384,7 @@ test.describe("Create and Edit Code Action", async () => {
     });
 
     await test.step("Edit Code Action", async () => {
-      await page.getByText("My Workspace").click();
+      await page.locator("#workspaceDropdownTrigger").click();
       await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 
@@ -407,7 +407,7 @@ test.describe("Create and Delete Action", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.getByText("My Workspace").click();
+    await page.locator("#workspaceDropdownTrigger").click();
     await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
   });
@@ -423,7 +423,7 @@ test.describe("Create and Delete Action", async () => {
     });
 
     await test.step("Delete Action", async () => {
-      await page.getByText("My Workspace").click();
+      await page.locator("#workspaceDropdownTrigger").click();
       await page.getByRole("menuitemcheckbox", { name: "Website & App Connection" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/workspace\/app-connection/);
 

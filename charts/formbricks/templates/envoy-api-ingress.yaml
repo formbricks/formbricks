@@ -1,0 +1,85 @@
+{{- if and .Values.envoy.enabled .Values.envoy.formbricks.ingress.enabled }}
+{{- $explicitHost := "" -}}
+{{- if .Values.envoy.formbricks.ingress.host -}}
+{{- $explicitHost = tpl .Values.envoy.formbricks.ingress.host $ | trim -}}
+{{- end -}}
+{{- if and .Values.ingress.enabled .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) (not $explicitHost) -}}
+{{- fail "envoy.formbricks.ingress.host must be set explicitly when ingress.enabled and envoy.formbricks.ingress.enabled are both true" -}}
+{{- end -}}
+{{- $host := include "formbricks.envoy.ingressHost" . -}}
+{{- $proxyServiceName := include "formbricks.envoy.proxyServiceName" . -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ printf "%s-envoy-api" (include "formbricks.name" .) }}
+  namespace: {{ include "formbricks.namespace" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+  {{- if .Values.envoy.formbricks.ingress.annotations }}
+  annotations:
+    {{- include "formbricks.tplvalues.render" (dict "value" .Values.envoy.formbricks.ingress.annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.envoy.formbricks.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.envoy.formbricks.ingress.ingressClassName }}
+  {{- end }}
+  rules:
+    - host: {{ $host }}
+      http:
+        paths:
+          {{- if .Values.envoy.formbricks.routes.authCallback }}
+          - path: /api/auth/callback
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
+          {{- if .Values.envoy.formbricks.routes.v1Client }}
+          - path: /api/v1/client
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
+          {{- if .Values.envoy.formbricks.routes.v2Client }}
+          - path: /api/v2/client
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
+          {{- if .Values.envoy.formbricks.routes.v1Management }}
+          - path: /api/v1/management
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
+          {{- if .Values.envoy.formbricks.routes.v1Webhooks }}
+          - path: /api/v1/webhooks
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
+          {{- if .Values.envoy.formbricks.routes.storage }}
+          - path: /storage
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
+{{- end }}

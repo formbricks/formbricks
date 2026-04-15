@@ -19,6 +19,7 @@ interface PinScreenProps {
   publicDomain: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
@@ -40,6 +41,7 @@ export const PinScreen = (props: PinScreenProps) => {
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
+    TERMS_URL,
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
@@ -134,6 +136,7 @@ export const PinScreen = (props: PinScreenProps) => {
       verifiedEmail={verifiedEmail}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
+      TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );

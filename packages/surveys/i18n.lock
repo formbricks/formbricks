@@ -21,6 +21,7 @@ checksums:
     common/question_video: cc554b661fd62ac59db500307b3ba44e
     common/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     common/respondents_will_not_see_this_card: 18c3dd44d6ff6ca2310ad196b84f30d3
+    common/response_saved_offline: 7c06127ffc49fe30c5c1d8ca792c7a0d
     common/retry: 6e44d18639560596569a1278f9c83676
     common/retrying: 40989361ea5f6b95897b95ac928b5bd9
     common/search: fe877a75eac472fc5b188c135c78a558
@@ -33,6 +34,7 @@ checksums:
     common/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     common/the_servers_cannot_be_reached_at_the_moment: f8adbeccac69f9230a55b5b3af52b081
     common/they_will_be_redirected_immediately: 936bc99cb575cba95ea8f04d82bb353b
+    common/welcome_video: 1f87e84c0a563c2522eef5cb71a1f95c
     common/your_feedback_is_stuck: db2b6aba26723b01aee0fc918d3ca052
     errors/all_options_must_be_ranked: 360a2edff623496f7047907bad115ea1
     errors/all_rows_must_be_answered: 295f41a0ef04cbb3491c798053c61abd

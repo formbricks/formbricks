@@ -118,6 +118,10 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, isBackButtonHidden: !localSurvey.isBackButtonHidden });
   };
 
+  const handleAutoProgressToggle = () => {
+    setLocalSurvey({ ...localSurvey, isAutoProgressingEnabled: !localSurvey.isAutoProgressingEnabled });
+  };
+
   const handleCaptureIpToggle = () => {
     setCaptureIpToggle(!captureIpToggle);
     setLocalSurvey({ ...localSurvey, isCaptureIpEnabled: !localSurvey.isCaptureIpEnabled });
@@ -384,6 +388,13 @@ export const ResponseOptionsCard = ({
               </AdvancedOptionToggle>
             </>
           )}
+          <AdvancedOptionToggle
+            htmlId="autoProgressRatingNps"
+            isChecked={Boolean(localSurvey.isAutoProgressingEnabled)}
+            onToggle={handleAutoProgressToggle}
+            title={t("environments.surveys.edit.auto_progress_rating_and_nps")}
+            description={t("environments.surveys.edit.auto_progress_rating_and_nps_description")}
+          />
           <AdvancedOptionToggle
             htmlId="hideBackButton"
             isChecked={localSurvey.isBackButtonHidden}
