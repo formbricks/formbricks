@@ -131,7 +131,7 @@ export const createResponse = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         const target = (error.meta?.target as string[]) ?? [];
-        if (target && target.includes("singleUseId")) {
+        if (target?.includes("singleUseId")) {
           throw new UniqueConstraintError("Response already submitted for this single-use link");
         }
       }
