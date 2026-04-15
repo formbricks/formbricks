@@ -87,7 +87,7 @@ export const DashboardDropdownMenu = ({
               icon={<SquarePenIcon className="size-4" />}
               onClick={() => {
                 setIsDropDownOpen(false);
-                router.push(`/environments/${environmentId}/analysis/dashboards/${dashboardId}`);
+                router.push(`/environments/${environmentId}/dashboards/${dashboardId}`);
               }}>
               {t("common.edit")}
             </DropdownMenuItem>

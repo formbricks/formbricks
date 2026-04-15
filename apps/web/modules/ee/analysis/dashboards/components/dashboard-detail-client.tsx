@@ -1,6 +1,5 @@
 "use client";
 
-import { Delay } from "@suspensive/react";
 import { useRouter } from "next/navigation";
 import { Suspense, memo, useCallback, useMemo, useState, useTransition } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
@@ -99,12 +98,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
 }>) {
   if (widget.chart && dataPromise) {
     return (
-      <Suspense
-        fallback={
-          <Delay ms={200}>
-            <DashboardWidgetSkeleton />
-          </Delay>
-        }>
+      <Suspense fallback={<DashboardWidgetSkeleton />}>
         <DashboardWidgetData
           dataPromise={dataPromise}
           chartType={widget.chart.type}
@@ -245,7 +239,7 @@ export function DashboardDetailClient({
 
   return (
     <PageContentWrapper>
-      <GoBackButton url={`/environments/${environmentId}/analysis/dashboards`} />
+      <GoBackButton url={`/environments/${environmentId}/dashboards`} />
       <DashboardPageHeader
         name={name}
         isEditing={isEditing}

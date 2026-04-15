@@ -49,7 +49,7 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
 
       toast.success(t("environments.analysis.dashboards.create_success"));
       handleOpenChange(false);
-      router.push(`/environments/${environmentId}/analysis/dashboards/${result.data.id}`);
+      router.push(`/environments/${environmentId}/dashboards/${result.data.id}`);
     } catch {
       toast.error(t("environments.analysis.dashboards.create_failed"));
     } finally {

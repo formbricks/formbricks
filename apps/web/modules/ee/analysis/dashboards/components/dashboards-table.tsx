@@ -39,7 +39,7 @@ export const DashboardsTable = async ({
               key={dashboard.id}
               className="grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
               <Link
-                href={`/environments/${environmentId}/analysis/dashboards/${dashboard.id}`}
+                href={`/environments/${environmentId}/dashboards/${dashboard.id}`}
                 className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">
                 <div className="col-span-3 flex items-center pl-6 text-sm">
                   <div className="flex items-center gap-4">

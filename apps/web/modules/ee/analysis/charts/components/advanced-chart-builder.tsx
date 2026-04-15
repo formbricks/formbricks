@@ -114,6 +114,22 @@ export function AdvancedChartBuilder({
       toast.error(t("environments.analysis.charts.please_select_at_least_one_measure"));
       return;
     }
+
+    if (dimensionsOpen && state.selectedDimensions.length === 0) {
+      toast.error(t("environments.analysis.charts.please_select_at_least_one_dimension"));
+      return;
+    }
+
+    if (filtersOpen && state.filters.length > 0) {
+      const hasEmptyFilterValue = state.filters.some(
+        (f) => f.operator !== "set" && f.operator !== "notSet" && (f.values === null || f.values.length === 0)
+      );
+      if (hasEmptyFilterValue) {
+        toast.error(t("environments.analysis.charts.please_enter_filter_values"));
+        return;
+      }
+    }
+
     const result = await runQuery(buildCubeQuery(state));
     if (result) {
       onChartGenerated?.({ ...result, chartType });

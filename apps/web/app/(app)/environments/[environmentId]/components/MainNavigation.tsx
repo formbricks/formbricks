@@ -117,9 +117,9 @@ export const MainNavigation = ({
       },
       {
         name: t("common.analysis"),
-        href: `/environments/${environment.id}/analysis`,
+        href: `/environments/${environment.id}/dashboards`,
         icon: ChartBar,
-        isActive: pathname?.includes("/analysis"),
+        isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
         isHidden: false,
       },
       {

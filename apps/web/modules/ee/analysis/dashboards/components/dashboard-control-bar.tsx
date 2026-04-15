@@ -49,7 +49,7 @@ export const DashboardControlBar = ({
     try {
       const result = await deleteDashboardAction({ environmentId, dashboardId });
       if (result?.data) {
-        router.push(`/environments/${environmentId}/analysis/dashboards`);
+        router.push(`/environments/${environmentId}/dashboards`);
         toast.success(t("environments.analysis.dashboards.delete_success"));
       } else {
         const errorMessage = getFormattedErrorMessage(result);

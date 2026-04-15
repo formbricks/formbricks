@@ -48,7 +48,7 @@ export const createDashboardAction = authenticatedActionClient.schema(ZCreateDas
         createdBy: ctx.user.id,
       });
 
-      revalidatePath(`/environments/${parsedInput.environmentId}/analysis/dashboards`);
+      revalidatePath(`/environments/${parsedInput.environmentId}/dashboards`);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
@@ -168,7 +168,7 @@ export const deleteDashboardAction = authenticatedActionClient.schema(ZDeleteDas
 
       const dashboard = await deleteDashboard(parsedInput.dashboardId, projectId);
 
-      revalidatePath(`/environments/${parsedInput.environmentId}/analysis/dashboards`);
+      revalidatePath(`/environments/${parsedInput.environmentId}/dashboards`);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
@@ -203,7 +203,7 @@ export const duplicateDashboardAction = authenticatedActionClient.schema(ZDuplic
 
       const dashboard = await duplicateDashboard(parsedInput.dashboardId, projectId, ctx.user.id);
 
-      revalidatePath(`/environments/${parsedInput.environmentId}/analysis/dashboards`);
+      revalidatePath(`/environments/${parsedInput.environmentId}/dashboards`);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.projectId = projectId;
