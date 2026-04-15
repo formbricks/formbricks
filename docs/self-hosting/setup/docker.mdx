@@ -213,8 +213,8 @@ services:
         condition: service_completed_successfully
     command: /data
     environment:
-      RUSTFS_ACCESS_KEY: "formbricks-root"
-      RUSTFS_SECRET_KEY: "change-this-secure-password"
+      RUSTFS_ACCESS_KEY: "${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_SECRET_KEY: "${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
       RUSTFS_ADDRESS: ":9000"
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
@@ -229,9 +229,9 @@ services:
     depends_on:
       - rustfs
     environment:
-      RUSTFS_ADMIN_USER: "formbricks-root"
-      RUSTFS_ADMIN_PASSWORD: "change-this-secure-password"
-      RUSTFS_BUCKET_NAME: "formbricks"
+      RUSTFS_ADMIN_USER: "${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_ADMIN_PASSWORD: "${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_BUCKET_NAME: "${FORMBRICKS_RUSTFS_BUCKET_NAME}"
     entrypoint:
       - /bin/sh
       - -c
@@ -251,33 +251,50 @@ volumes:
     driver: local
 ```
 
-Then configure Formbricks to use the RustFS credentials:
+Store the generated RustFS credentials in a local `.env` file instead of hardcoding them in Compose:
 
 ```bash
-S3_ACCESS_KEY="formbricks-root"
-S3_SECRET_KEY="change-this-secure-password"
-S3_REGION="us-east-1"
-S3_BUCKET_NAME="formbricks"
+FORMBRICKS_RUSTFS_ADMIN_USER=formbricks-root
+FORMBRICKS_RUSTFS_ADMIN_PASSWORD=change-this-secure-password
+FORMBRICKS_RUSTFS_SERVICE_USER=formbricks-service
+FORMBRICKS_RUSTFS_SERVICE_PASSWORD=change-this-service-password
+FORMBRICKS_RUSTFS_BUCKET_NAME=formbricks
+FORMBRICKS_RUSTFS_POLICY_NAME=formbricks-policy
+FORMBRICKS_RUSTFS_REGION=us-east-1
+```
+
+Then configure Formbricks to use the RustFS service credentials:
+
+```bash
+S3_ACCESS_KEY="${FORMBRICKS_RUSTFS_SERVICE_USER}"
+S3_SECRET_KEY="${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+S3_REGION="${FORMBRICKS_RUSTFS_REGION}"
+S3_BUCKET_NAME="${FORMBRICKS_RUSTFS_BUCKET_NAME}"
 S3_ENDPOINT_URL="http://rustfs:9000"
 S3_FORCE_PATH_STYLE="1"
 ```
 
 <Note>
-  Using the RustFS admin credentials directly is acceptable for local development and testing. For production,
-  prefer the [one-click setup script](/self-hosting/setup/one-click), which creates a separate least-privilege
-  service account automatically.
+  Restrict the `.env` file to `0600` and do not commit it to source control. For production, prefer the
+  [one-click setup script](/self-hosting/setup/one-click), which creates a separate least-privilege service
+  account automatically.
 </Note>
 
 #### Tips & Common Gotchas
 
 - **Permission denied on `/data`**: Ensure the mounted directory or volume is owned by UID `10001`. The
   `rustfs-perms` helper handles this for Compose-managed volumes.
+- **Storage medium matters**: Prefer local SSD or NVMe storage for `rustfs-data`, use XFS on dedicated
+  host-managed disks where possible, and avoid NFS or other network filesystems for RustFS data.
 - **Connection refused**: Ensure the `rustfs` container is running and port `9000` is reachable from the
   Formbricks container.
 - **Bucket not found**: Confirm that `rustfs-init` completed successfully or create the bucket manually with
   `mc`.
 - **Auth failed**: Confirm that `S3_ACCESS_KEY` and `S3_SECRET_KEY` match the RustFS credentials configured on
   the server.
+- **Backups**: Back up the `rustfs-data` volume regularly, especially for single-server deployments.
+- **Console exposure**: Do not expose the RustFS console port publicly in production. Keep it on a private
+  network or behind admin-only controls.
 - **Health check**: From the Formbricks container:
 
   ```bash

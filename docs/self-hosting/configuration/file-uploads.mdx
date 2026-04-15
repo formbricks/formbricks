@@ -106,6 +106,7 @@ The script will automatically:
 - Create the storage bucket
 - Configure SSL certificates for the files subdomain
 - Configure Traefik routing for the subdomain
+- Store the generated RustFS credentials in a local `.env` file with restricted permissions
 
 ### Option 2: Manual Environment Variables
 
@@ -340,10 +341,16 @@ Configure CORS on your S3 bucket with the following settings:
 When using bundled RustFS:
 
 - Credentials are auto-generated and secure
+- Generated RustFS credentials are written to a local `.env` file; keep it private and restrict it to `0600`
 - Access is restricted through Traefik proxy
 - CORS is automatically configured
 - Rate limiting is applied to prevent abuse
 - A bucket policy with the least privileges is applied to the bucket
+- Prefer local SSD or NVMe-backed storage for `rustfs-data`, use XFS on dedicated host-managed disks when
+  possible, and avoid NFS or other network filesystems for RustFS data
+- Back up the `rustfs-data` volume regularly, especially for single-server deployments
+- Ship RustFS and Formbricks container logs into your normal logging and alerting stack; the bundled setup
+  does not provision centralized audit-log export or alerting for you
 
 ## Troubleshooting
 

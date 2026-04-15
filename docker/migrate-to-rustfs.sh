@@ -45,6 +45,76 @@ read_compose_value() {
   echo "$val"
 }
 
+read_dotenv_value() {
+  local key="$1"
+  local env_file="${2:-.env}"
+
+  if [[ ! -f "$env_file" ]]; then
+    return 0
+  fi
+
+  sed -n "s/^${key}=\(.*\)$/\1/p" "$env_file" | head -n 1
+}
+
+resolve_compose_reference() {
+  local value="$1"
+
+  if [[ "$value" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$ ]]; then
+    read_dotenv_value "${BASH_REMATCH[1]}"
+    return 0
+  fi
+
+  if [[ "$value" =~ ^\$([A-Za-z_][A-Za-z0-9_]*)$ ]]; then
+    read_dotenv_value "${BASH_REMATCH[1]}"
+    return 0
+  fi
+
+  echo "$value"
+}
+
+read_compose_resolved_value() {
+  local key="$1"
+  resolve_compose_reference "$(read_compose_value "$key")"
+}
+
+upsert_dotenv_var() {
+  local key="$1"
+  local value="$2"
+  local env_file="${3:-.env}"
+  local tmp_file
+
+  touch "$env_file"
+  chmod 600 "$env_file"
+  tmp_file=$(mktemp)
+
+  awk -v insert_key="$key" -v insert_val="$value" '
+    BEGIN { updated=0 }
+    $0 ~ "^" insert_key "=" {
+      print insert_key "=" insert_val
+      updated=1
+      next
+    }
+    { print }
+    END {
+      if (!updated) {
+        print insert_key "=" insert_val
+      }
+    }
+  ' "$env_file" >"$tmp_file" && mv "$tmp_file" "$env_file"
+}
+
+write_rustfs_env_file() {
+  local env_file="${1:-.env}"
+
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_ADMIN_USER" "$rustfs_admin_user" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_ADMIN_PASSWORD" "$rustfs_admin_password" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_SERVICE_USER" "$rustfs_service_user" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_SERVICE_PASSWORD" "$rustfs_service_password" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_BUCKET_NAME" "$rustfs_bucket_name" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_POLICY_NAME" "$rustfs_policy_name" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
+}
+
 has_service() {
   grep -q "^  $1:[[:space:]]*$" docker-compose.yml
 }
@@ -129,8 +199,8 @@ add_or_replace_env_var() {
 
 external_s3_guard() {
   local acc sec
-  acc=$(read_compose_value "S3_ACCESS_KEY")
-  sec=$(read_compose_value "S3_SECRET_KEY")
+  acc=$(read_compose_resolved_value "S3_ACCESS_KEY")
+  sec=$(read_compose_resolved_value "S3_SECRET_KEY")
 
   if has_service minio; then
     print_warning "Detected bundled MinIO in docker-compose.yml."
@@ -151,12 +221,12 @@ generate_rustfs_credentials() {
   local existing_s3_access existing_s3_secret existing_bucket existing_endpoint
   local existing_admin_user existing_admin_password
 
-  existing_s3_access=$(read_compose_value "S3_ACCESS_KEY")
-  existing_s3_secret=$(read_compose_value "S3_SECRET_KEY")
-  existing_bucket=$(read_compose_value "S3_BUCKET_NAME")
-  existing_endpoint=$(read_compose_value "S3_ENDPOINT_URL")
-  existing_admin_user=$(read_compose_value "RUSTFS_ACCESS_KEY")
-  existing_admin_password=$(read_compose_value "RUSTFS_SECRET_KEY")
+  existing_s3_access=$(read_compose_resolved_value "S3_ACCESS_KEY")
+  existing_s3_secret=$(read_compose_resolved_value "S3_SECRET_KEY")
+  existing_bucket=$(read_compose_resolved_value "S3_BUCKET_NAME")
+  existing_endpoint=$(read_compose_resolved_value "S3_ENDPOINT_URL")
+  existing_admin_user=$(read_compose_resolved_value "RUSTFS_ACCESS_KEY")
+  existing_admin_password=$(read_compose_resolved_value "RUSTFS_SECRET_KEY")
 
   rustfs_service_user="${existing_s3_access:-formbricks-service-$(openssl rand -hex 4)}"
   rustfs_service_password="${existing_s3_secret:-$(openssl rand -base64 20)}"
@@ -178,14 +248,16 @@ add_rustfs_environment_variables() {
     s3_endpoint_url="http://$files_domain"
   fi
 
-  add_or_replace_env_var "S3_ACCESS_KEY" "$rustfs_service_user"
-  add_or_replace_env_var "S3_SECRET_KEY" "$rustfs_service_password"
-  add_or_replace_env_var "S3_REGION" "us-east-1"
-  add_or_replace_env_var "S3_BUCKET_NAME" "$rustfs_bucket_name"
+  write_rustfs_env_file ".env"
+  add_or_replace_env_var "S3_ACCESS_KEY" '${FORMBRICKS_RUSTFS_SERVICE_USER}'
+  add_or_replace_env_var "S3_SECRET_KEY" '${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}'
+  add_or_replace_env_var "S3_REGION" '${FORMBRICKS_RUSTFS_REGION}'
+  add_or_replace_env_var "S3_BUCKET_NAME" '${FORMBRICKS_RUSTFS_BUCKET_NAME}'
   add_or_replace_env_var "S3_ENDPOINT_URL" "$s3_endpoint_url"
   add_or_replace_env_var "S3_FORCE_PATH_STYLE" "1"
 
   print_status "S3 environment variables ensured in docker-compose.yml"
+  print_status "RustFS credentials stored in .env with permissions set to 600"
 }
 
 add_rustfs_services() {
@@ -226,8 +298,8 @@ add_rustfs_services() {
         condition: service_completed_successfully
     command: /data
     environment:
-      RUSTFS_ACCESS_KEY: "$rustfs_admin_user"
-      RUSTFS_SECRET_KEY: "$rustfs_admin_password"
+      RUSTFS_ACCESS_KEY: "\${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_SECRET_KEY: "\${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
       RUSTFS_ADDRESS: ":9000"
     volumes:
       - rustfs-data:/data
@@ -252,12 +324,12 @@ $tls_block
     depends_on:
       - rustfs
     environment:
-      RUSTFS_ADMIN_USER: "$rustfs_admin_user"
-      RUSTFS_ADMIN_PASSWORD: "$rustfs_admin_password"
-      RUSTFS_SERVICE_USER: "$rustfs_service_user"
-      RUSTFS_SERVICE_PASSWORD: "$rustfs_service_password"
-      RUSTFS_BUCKET_NAME: "$rustfs_bucket_name"
-      RUSTFS_POLICY_NAME: "$rustfs_policy_name"
+      RUSTFS_ADMIN_USER: "\${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_ADMIN_PASSWORD: "\${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_SERVICE_USER: "\${FORMBRICKS_RUSTFS_SERVICE_USER}"
+      RUSTFS_SERVICE_PASSWORD: "\${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+      RUSTFS_BUCKET_NAME: "\${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+      RUSTFS_POLICY_NAME: "\${FORMBRICKS_RUSTFS_POLICY_NAME}"
     entrypoint:
       - /bin/sh
       - -c
@@ -928,9 +1000,8 @@ migrate_to_rustfs() {
   echo ""
   print_status "RustFS migration complete."
   print_info "Files domain: $files_domain"
-  print_info "S3 Access Key: $rustfs_service_user"
   print_info "S3 Bucket: $rustfs_bucket_name"
-  print_info "RustFS admin user: $rustfs_admin_user"
+  print_info "Generated RustFS credentials were written to .env with 600 permissions."
   print_info "Cleanup note: keep rustfs-init if you want idempotent bootstrap on future restarts."
 }
 

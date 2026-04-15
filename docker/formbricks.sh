@@ -71,6 +71,44 @@ RUSTFS_SCRIPT_EOF
   chmod +x "$target_path"
 }
 
+upsert_dotenv_var() {
+  local key="$1"
+  local value="$2"
+  local env_file="${3:-.env}"
+  local tmp_file
+
+  touch "$env_file"
+  chmod 600 "$env_file"
+  tmp_file=$(mktemp)
+
+  awk -v insert_key="$key" -v insert_val="$value" '
+    BEGIN { updated=0 }
+    $0 ~ "^" insert_key "=" {
+      print insert_key "=" insert_val
+      updated=1
+      next
+    }
+    { print }
+    END {
+      if (!updated) {
+        print insert_key "=" insert_val
+      }
+    }
+  ' "$env_file" >"$tmp_file" && mv "$tmp_file" "$env_file"
+}
+
+write_rustfs_env_file() {
+  local env_file="${1:-.env}"
+
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_ADMIN_USER" "$rustfs_admin_user" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_ADMIN_PASSWORD" "$rustfs_admin_password" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_SERVICE_USER" "$rustfs_service_user" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_SERVICE_PASSWORD" "$rustfs_service_password" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_BUCKET_NAME" "$rustfs_bucket_name" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_POLICY_NAME" "$rustfs_policy_name" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
+}
+
 install_formbricks() {
   # Friendly welcome
   echo "🧱 Welcome to the Formbricks Setup Script"
@@ -423,10 +461,11 @@ EOT
     echo "🚗 External S3 configuration updated successfully!"
   elif [[ $rustfs_storage == "y" ]]; then
     echo "🚗 Configuring bundled RustFS..."
-    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$rustfs_service_user\"|" docker-compose.yml
-    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$rustfs_service_password\"|" docker-compose.yml
-    sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
-    sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$rustfs_bucket_name\"|" docker-compose.yml
+    write_rustfs_env_file ".env"
+    sed -i 's|# S3_ACCESS_KEY:|S3_ACCESS_KEY: "${FORMBRICKS_RUSTFS_SERVICE_USER}"|' docker-compose.yml
+    sed -i 's|# S3_SECRET_KEY:|S3_SECRET_KEY: "${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"|' docker-compose.yml
+    sed -i 's|# S3_REGION:|S3_REGION: "${FORMBRICKS_RUSTFS_REGION}"|' docker-compose.yml
+    sed -i 's|# S3_BUCKET_NAME:|S3_BUCKET_NAME: "${FORMBRICKS_RUSTFS_BUCKET_NAME}"|' docker-compose.yml
     if [[ $https_setup == "y" ]]; then
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
     else
@@ -535,8 +574,8 @@ EOF
         condition: service_completed_successfully
     command: /data
     environment:
-      RUSTFS_ACCESS_KEY: "$rustfs_admin_user"
-      RUSTFS_SECRET_KEY: "$rustfs_admin_password"
+      RUSTFS_ACCESS_KEY: "\${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_SECRET_KEY: "\${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
       RUSTFS_ADDRESS: ":9000"
     volumes:
       - rustfs-data:/data
@@ -568,12 +607,12 @@ EOF
     depends_on:
       - rustfs
     environment:
-      RUSTFS_ADMIN_USER: "$rustfs_admin_user"
-      RUSTFS_ADMIN_PASSWORD: "$rustfs_admin_password"
-      RUSTFS_SERVICE_USER: "$rustfs_service_user"
-      RUSTFS_SERVICE_PASSWORD: "$rustfs_service_password"
-      RUSTFS_BUCKET_NAME: "$rustfs_bucket_name"
-      RUSTFS_POLICY_NAME: "$rustfs_policy_name"
+      RUSTFS_ADMIN_USER: "\${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_ADMIN_PASSWORD: "\${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_SERVICE_USER: "\${FORMBRICKS_RUSTFS_SERVICE_USER}"
+      RUSTFS_SERVICE_PASSWORD: "\${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+      RUSTFS_BUCKET_NAME: "\${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+      RUSTFS_POLICY_NAME: "\${FORMBRICKS_RUSTFS_POLICY_NAME}"
     entrypoint: ["/bin/sh", "/tmp/rustfs-init.sh"]
     volumes:
       - ./rustfs-init.sh:/tmp/rustfs-init.sh:ro
@@ -706,8 +745,8 @@ echo ""
 
 if [[ $rustfs_storage == "y" ]]; then
     echo "🗄️  RustFS Storage Setup Complete:"
-    echo "   • Access Key: $rustfs_service_user (least privilege)"
     echo "   • Bucket: $rustfs_bucket_name (✅ created and secured)"
+    echo "   • Generated credentials stored in ./formbricks/.env (permissions set to 600)"
     echo ""
 fi
 
