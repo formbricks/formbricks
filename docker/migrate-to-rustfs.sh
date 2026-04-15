@@ -853,7 +853,11 @@ migrate_to_rustfs() {
     add_rustfs_volume
   fi
 
-  ensure_service_dependency "formbricks" "rustfs-init" "service_completed_successfully"
+  if has_service rustfs-init; then
+    ensure_service_dependency "formbricks" "rustfs-init" "service_completed_successfully"
+  else
+    print_info "No rustfs-init service detected; leaving formbricks startup order unchanged."
+  fi
   ensure_service_dependency "traefik" "rustfs" "service_started" "true"
 
   echo ""
@@ -888,8 +892,10 @@ migrate_to_rustfs() {
 
   if [[ -z "$sources" ]]; then
     print_warning "No uploads directory was detected."
-    cleanup_uploads_from_compose
-    print_status "RustFS is configured. No local files were found to migrate."
+    print_info "Skipping cleanup so the existing local uploads configuration remains intact."
+    print_info "If your uploads live in a non-standard path, rerun this helper and provide it manually."
+    print_status "RustFS is configured. Legacy local uploads settings were left unchanged."
+    exit 0
   else
     echo -n "Proceed with the migration from the sources above? [Y/n]: "
     read -r do_migration
