@@ -3,7 +3,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { flattenSurveyPages, surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
-import { TSurveyListPage, listSurveys } from "../lib/v3-surveys-client";
+import { listSurveys } from "../lib/v3-surveys-client";
 
 export const useSurveys = ({
   workspaceId,

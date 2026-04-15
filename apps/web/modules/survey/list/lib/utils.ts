@@ -9,6 +9,7 @@ import {
 const allowedStatus = new Set(["draft", "inProgress", "paused", "completed"] as const);
 const allowedType = new Set(["app", "link"] as const);
 const allowedSort = new Set(["createdAt", "updatedAt", "name", "relevance"] as const);
+const compareNormalizedFilterValues = (left: string, right: string) => left.localeCompare(right);
 
 function getNormalizedStatus(value: unknown): TSurveyOverviewFilters["status"] {
   if (!Array.isArray(value)) {
@@ -21,7 +22,7 @@ function getNormalizedStatus(value: unknown): TSurveyOverviewFilters["status"] {
         allowedStatus.has(status as never)
       )
     ),
-  ].sort();
+  ].sort(compareNormalizedFilterValues);
 }
 
 function getNormalizedType(
@@ -34,7 +35,7 @@ function getNormalizedType(
 
   return [
     ...new Set(value.filter((type): type is TSurveyOverviewType => allowedType.has(type as never))),
-  ].sort();
+  ].sort(compareNormalizedFilterValues);
 }
 
 function getNormalizedSort(value: unknown): TSurveyOverviewSort {

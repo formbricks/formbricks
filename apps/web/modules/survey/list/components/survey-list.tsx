@@ -53,15 +53,15 @@ export const SurveysList = ({
   const [parent] = useAutoAnimate();
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof globalThis.window === "undefined") {
       return;
     }
 
-    const storedFilters = localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
+    const storedFilters = globalThis.window.localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
     const parsedFilters = parseStoredSurveyFilters(storedFilters, currentProjectChannel);
 
     if (storedFilters && !parsedFilters) {
-      localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
+      globalThis.window.localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
       setSurveyFilters(initialFilters);
     } else if (parsedFilters) {
       setSurveyFilters(parsedFilters);
@@ -76,11 +76,14 @@ export const SurveysList = ({
   );
 
   useEffect(() => {
-    if (!isFilterInitialized || typeof window === "undefined") {
+    if (!isFilterInitialized || typeof globalThis.window === "undefined") {
       return;
     }
 
-    localStorage.setItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS, JSON.stringify(normalizedFilters));
+    globalThis.window.localStorage.setItem(
+      FORMBRICKS_SURVEYS_FILTERS_KEY_LS,
+      JSON.stringify(normalizedFilters)
+    );
   }, [normalizedFilters, isFilterInitialized]);
 
   const {
@@ -166,6 +169,64 @@ export const SurveysList = ({
     );
   }
 
+  let surveyContent = (
+    <div className="flex h-full w-full">
+      <div className="flex w-full flex-col items-center justify-center text-slate-600">
+        <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
+        {t("common.no_surveys_found")}
+      </div>
+    </div>
+  );
+
+  if (isError && surveys.length === 0) {
+    surveyContent = (
+      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+        <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
+        <Button variant="secondary" size="sm" onClick={() => refetch()}>
+          {t("common.try_again")}
+        </Button>
+      </div>
+    );
+  } else if (surveys.length > 0) {
+    surveyContent = (
+      <div>
+        <div className="flex-col space-y-3" ref={parent}>
+          <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
+            <div className="col-span-2 place-self-start">{t("common.name")}</div>
+            <div className="col-span-1">{t("common.status")}</div>
+            <div className="col-span-1">{t("common.responses")}</div>
+            <div className="col-span-1">{t("common.type")}</div>
+            <div className="col-span-1">{t("common.created_at")}</div>
+            <div className="col-span-1">{t("common.updated_at")}</div>
+            <div className="col-span-1">{t("common.created_by")}</div>
+          </div>
+          {surveys.map((survey) => (
+            <SurveyCard
+              key={survey.id}
+              survey={survey}
+              environmentId={environment.id}
+              isReadOnly={isReadOnly}
+              deleteSurvey={handleDeleteSurvey}
+              locale={locale}
+            />
+          ))}
+        </div>
+
+        {hasNextPage && (
+          <div className="flex justify-center py-5">
+            <Button
+              onClick={() => fetchNextPage()}
+              variant="secondary"
+              size="sm"
+              loading={isFetchingNextPage}>
+              {t("common.load_more")}
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
@@ -175,58 +236,7 @@ export const SurveysList = ({
           setSurveyFilters={setSurveyFilters}
           currentProjectChannel={currentProjectChannel}
         />
-
-        {isError && surveys.length === 0 ? (
-          <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
-            <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
-            <Button variant="secondary" size="sm" onClick={() => refetch()}>
-              {t("common.try_again")}
-            </Button>
-          </div>
-        ) : surveys.length > 0 ? (
-          <div>
-            <div className="flex-col space-y-3" ref={parent}>
-              <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
-                <div className="col-span-2 place-self-start">{t("common.name")}</div>
-                <div className="col-span-1">{t("common.status")}</div>
-                <div className="col-span-1">{t("common.responses")}</div>
-                <div className="col-span-1">{t("common.type")}</div>
-                <div className="col-span-1">{t("common.created_at")}</div>
-                <div className="col-span-1">{t("common.updated_at")}</div>
-                <div className="col-span-1">{t("common.created_by")}</div>
-              </div>
-              {surveys.map((survey) => (
-                <SurveyCard
-                  key={survey.id}
-                  survey={survey}
-                  environmentId={environment.id}
-                  isReadOnly={isReadOnly}
-                  deleteSurvey={handleDeleteSurvey}
-                  locale={locale}
-                />
-              ))}
-            </div>
-
-            {hasNextPage && (
-              <div className="flex justify-center py-5">
-                <Button
-                  onClick={() => fetchNextPage()}
-                  variant="secondary"
-                  size="sm"
-                  loading={isFetchingNextPage}>
-                  {t("common.load_more")}
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex h-full w-full">
-            <div className="flex w-full flex-col items-center justify-center text-slate-600">
-              <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
-              {t("common.no_surveys_found")}
-            </div>
-          </div>
-        )}
+        {surveyContent}
       </div>
     </PageContentWrapper>
   );

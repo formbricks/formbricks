@@ -8,7 +8,6 @@ import {
   getEnvironmentIdFromSurveyId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";

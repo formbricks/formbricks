@@ -332,18 +332,16 @@ function queueV3AuditLog(
     return;
   }
 
-  try {
-    const queuedAuditEvent = queueAuditEvent({
-      ...auditLog,
-      ...(auditLog.status === "failure" ? { eventId: auditLog.eventId ?? requestId } : {}),
-    });
-
-    void Promise.resolve(queuedAuditEvent).catch((error) => {
+  void Promise.resolve()
+    .then(() =>
+      queueAuditEvent({
+        ...auditLog,
+        ...(auditLog.status === "failure" ? { eventId: auditLog.eventId ?? requestId } : {}),
+      })
+    )
+    .catch((error) => {
       log.error({ error }, "Failed to queue V3 audit event");
     });
-  } catch (error) {
-    log.error({ error }, "Failed to queue V3 audit event");
-  }
 }
 
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
