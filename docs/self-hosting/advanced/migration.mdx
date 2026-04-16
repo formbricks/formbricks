@@ -456,7 +456,7 @@ Please make sure to set up a storage bucket with one of these solutions and then
   S3_REGION: us-east-1
   S3_BUCKET_NAME: formbricks-uploads
   S3_ENDPOINT_URL: https://files.yourdomain.com # not needed for AWS S3
-  S3_FORCE_PATH_STYLE: 1
+  S3_FORCE_PATH_STYLE: 1 # set this only for custom endpoints like RustFS, MinIO, or LocalStack; omit for AWS S3
 ```
 
 #### Upgrade Process

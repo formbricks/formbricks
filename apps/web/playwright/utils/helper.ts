@@ -13,7 +13,7 @@ type MockStorageFileFixture = {
   name: string;
   mimeType: string;
   buffer: Buffer;
-  publicUrl?: string;
+  publicAssetPath?: string;
 };
 
 export const PLAYWRIGHT_PICTURE_SELECTION_FILES: MockStorageFileFixture[] = [
@@ -21,13 +21,13 @@ export const PLAYWRIGHT_PICTURE_SELECTION_FILES: MockStorageFileFixture[] = [
     name: "playwright-choice-1.png",
     mimeType: "image/png",
     buffer: readFileSync(resolve(process.cwd(), "apps/web/public/logo-transparent.png")),
-    publicUrl: "http://localhost:3000/logo-transparent.png",
+    publicAssetPath: "/logo-transparent.png",
   },
   {
     name: "playwright-choice-2.png",
     mimeType: "image/png",
     buffer: readFileSync(resolve(process.cwd(), "apps/web/public/favicon/android-chrome-192x192.png")),
-    publicUrl: "http://localhost:3000/favicon/android-chrome-192x192.png",
+    publicAssetPath: "/favicon/android-chrome-192x192.png",
   },
 ];
 
@@ -44,12 +44,16 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
   ),
 };
 
-const getMockStorageFileUrl = (fileName: string, accessType: "public" | "private"): string => {
+const getMockStorageFileUrl = (
+  appOrigin: string,
+  fileName: string,
+  accessType: "public" | "private"
+): string => {
   if (accessType === "public") {
     const fixture = PLAYWRIGHT_STORAGE_FILE_FIXTURES.get(fileName);
 
-    if (fixture?.publicUrl) {
-      return fixture.publicUrl;
+    if (fixture?.publicAssetPath) {
+      return new URL(fixture.publicAssetPath, appOrigin).toString();
     }
   }
 
@@ -71,17 +75,18 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
 
     const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
     const fileName = payload?.fileName ?? "uploaded-file.bin";
+    const appOrigin = new URL(route.request().url()).origin;
 
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         data: {
-          signedUrl: `http://localhost:3000${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
+          signedUrl: `${appOrigin}${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
           presignedFields: {
             key: fileName,
           },
-          fileUrl: getMockStorageFileUrl(fileName, "public"),
+          fileUrl: getMockStorageFileUrl(appOrigin, fileName, "public"),
           signingData: null,
           updatedFileName: fileName,
         },
@@ -110,17 +115,18 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
 
       const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
       const fileName = payload?.fileName ?? "uploaded-file.bin";
+      const appOrigin = new URL(route.request().url()).origin;
 
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           data: {
-            signedUrl: `http://localhost:3000${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
+            signedUrl: `${appOrigin}${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
             presignedFields: {
               key: fileName,
             },
-            fileUrl: getMockStorageFileUrl(fileName, "private"),
+            fileUrl: getMockStorageFileUrl(appOrigin, fileName, "private"),
             signingData: null,
             updatedFileName: fileName,
           },

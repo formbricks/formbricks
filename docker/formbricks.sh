@@ -8,6 +8,7 @@ write_rustfs_init_script() {
 
   cat >"$target_path" << 'RUSTFS_SCRIPT_EOF'
 #!/bin/sh
+set -e
 echo '⏳ Waiting for RustFS to be ready...'
 attempts=0
 max_attempts=30
@@ -23,10 +24,10 @@ until mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN
 done
 echo '🔗 RustFS reachable; alias configured.'
 
-echo '🪣 Creating bucket (idempotent)...';
-mc mb rustfs/$RUSTFS_BUCKET_NAME --ignore-existing;
+echo '🪣 Creating bucket (idempotent)...'
+mc mb rustfs/$RUSTFS_BUCKET_NAME --ignore-existing
 
-echo '📄 Creating JSON policy file...';
+echo '📄 Creating JSON policy file...'
 cat > /tmp/formbricks-policy.json << EOF
 {
   "Version": "2012-10-17",
@@ -45,27 +46,27 @@ cat > /tmp/formbricks-policy.json << EOF
 }
 EOF
 
-echo '🔒 Creating policy (idempotent)...';
+echo '🔒 Creating policy (idempotent)...'
 if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-  mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json;
-  echo 'Policy created successfully.';
+  mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
+    mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+  echo 'Policy created successfully.'
 else
-  echo 'Policy already exists, skipping creation.';
+  echo 'Policy already exists, skipping creation.'
 fi
 
-echo '👤 Creating service user (idempotent)...';
+echo '👤 Creating service user (idempotent)...'
 if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-  mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD";
-  echo 'User created successfully.';
+  mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+  echo 'User created successfully.'
 else
-  echo 'User already exists, skipping creation.';
+  echo 'User already exists, skipping creation.'
 fi
 
-echo '🔗 Attaching policy to user (idempotent)...';
-mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
+echo '🔗 Attaching policy to user (idempotent)...'
+mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
 
-echo '✅ RustFS setup complete!';
-exit 0;
+echo '✅ RustFS setup complete!'
 RUSTFS_SCRIPT_EOF
 
   chmod +x "$target_path"

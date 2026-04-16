@@ -57,25 +57,14 @@ services:
       - RUSTFS_ADMIN_USER=devrustfs
       - RUSTFS_ADMIN_PASSWORD=devrustfs123
       - RUSTFS_BUCKET_NAME=formbricks
+      - RUSTFS_POLICY_NAME=formbricks-policy
+      - RUSTFS_SERVICE_USER=devrustfs-service
+      - RUSTFS_SERVICE_PASSWORD=devrustfs-service123
+    volumes:
+      - ./docker/rustfs-init.sh:/usr/local/bin/rustfs-init.sh:ro
     entrypoint:
       - /bin/sh
-      - -c
-      - |
-        echo 'Waiting for RustFS to be ready...'
-        attempts=0
-        max_attempts=30
-        until mc alias set rustfs http://rustfs:9000 "$$RUSTFS_ADMIN_USER" "$$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
-          && mc ls rustfs >/dev/null 2>&1; do
-          attempts=$$((attempts + 1))
-          if [ "$$attempts" -ge "$$max_attempts" ]; then
-            echo "RustFS did not become ready within $${max_attempts} attempts"
-            exit 1
-          fi
-          sleep 2
-        done
-
-        mc mb rustfs/"$$RUSTFS_BUCKET_NAME" --ignore-existing
-        echo 'RustFS bucket bootstrap complete.'
+      - /usr/local/bin/rustfs-init.sh
 
 volumes:
   postgres:

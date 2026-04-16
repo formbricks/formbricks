@@ -14,6 +14,9 @@ test.beforeEach(async ({ page }) => {
   await helper.mockStorageUploads(page);
 });
 
+const firstPictureChoiceAlt = "logo-transparent.png";
+const secondPictureChoiceAlt = "android-chrome-192x192.png";
+
 test.describe("Survey Create & Submit Response without logic", async () => {
   // 5 minutes
   test.setTimeout(1000 * 60 * 5);
@@ -160,11 +163,13 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Picture Select Question
       await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.question)).toBeVisible();
       await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.description)).toBeVisible();
-      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
-      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.locator("#questionCard-7 img")).toHaveCount(2);
-      await page.locator("#questionCard-7 img").first().click();
-      await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
+      const pictureSelectQuestion = page.locator("#questionCard-7");
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
+      await pictureSelectQuestion.getByRole("radio", { name: firstPictureChoiceAlt }).click();
+      await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
       await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
@@ -840,11 +845,13 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.getByText(surveys.createWithLogicAndSubmit.pictureSelectQuestion.description)
       ).toBeVisible();
-      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
-      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.locator("#questionCard-3 img")).toHaveCount(2);
-      await page.locator("#questionCard-3 img").first().click();
-      await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
+      const pictureSelectQuestion = page.locator("#questionCard-3");
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
+      await pictureSelectQuestion.getByRole("radio", { name: firstPictureChoiceAlt }).click();
+      await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // Rating Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.ratingQuestion.question)).toBeVisible();

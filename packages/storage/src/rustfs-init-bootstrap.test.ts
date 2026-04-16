@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test } from "vitest";
 
 const formbricksScriptPath = fileURLToPath(new URL("../../../docker/formbricks.sh", import.meta.url));
+const rustfsInitTemplatePath = fileURLToPath(new URL("../../../docker/rustfs-init.sh", import.meta.url));
 
 const tempDirs: string[] = [];
 
@@ -31,6 +32,9 @@ capture_dir="\${MC_CAPTURE_DIR:?}"
 printf '%s\\n' "$*" >> "$log_file"
 
 if [ "$1" = "alias" ] && [ "$2" = "set" ] && [ "$3" = "rustfs" ]; then
+  if [ "\${MC_ALIAS_SET_ALWAYS_FAIL:-0}" = "1" ]; then
+    exit 1
+  fi
   exit 0
 fi
 
@@ -47,6 +51,14 @@ if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "info" ]; then
 fi
 
 if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "create" ]; then
+  if [ "\${MC_POLICY_CREATE_FAIL:-0}" = "1" ]; then
+    exit 1
+  fi
+  cp "$6" "$capture_dir/policy.json"
+  exit 0
+fi
+
+if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "add" ]; then
   cp "$6" "$capture_dir/policy.json"
   exit 0
 fi
@@ -68,6 +80,15 @@ exit 1
 `
   );
   chmodSync(mockMcPath, 0o755);
+
+  const mockSleepPath = join(binDir, "sleep");
+  writeFileSync(
+    mockSleepPath,
+    `#!/bin/sh
+exit 0
+`
+  );
+  chmodSync(mockSleepPath, 0o755);
 };
 
 const writeRustfsInitScript = (targetPath: string): void => {
@@ -86,6 +107,15 @@ afterEach(() => {
 });
 
 describe("docker/formbricks.sh RustFS bootstrap", () => {
+  test("generated init script stays in sync with the checked-in dev bootstrap script", () => {
+    const tempDir = createTempDir();
+    const generatedScriptPath = join(tempDir, "rustfs-init.sh");
+
+    writeRustfsInitScript(generatedScriptPath);
+
+    expect(readFileSync(generatedScriptPath, "utf8")).toBe(readFileSync(rustfsInitTemplatePath, "utf8"));
+  });
+
   test("generated init script provisions a bucket-scoped policy for the service user", () => {
     const tempDir = createTempDir();
     const generatedScriptPath = join(tempDir, "rustfs-init.sh");
@@ -146,5 +176,70 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
         },
       ],
     });
+  });
+
+  test("generated init script falls back to policy add when policy create is unavailable", () => {
+    const tempDir = createTempDir();
+    const generatedScriptPath = join(tempDir, "rustfs-init.sh");
+    const logFile = join(tempDir, "mc.log");
+    const captureDir = join(tempDir, "capture");
+
+    mkdirSync(captureDir, { recursive: true });
+    writeMockMc(tempDir);
+    writeRustfsInitScript(generatedScriptPath);
+
+    execFileSync(generatedScriptPath, {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${join(tempDir, "bin")}:${process.env.PATH ?? ""}`,
+        MC_LOG_FILE: logFile,
+        MC_CAPTURE_DIR: captureDir,
+        MC_POLICY_CREATE_FAIL: "1",
+        RUSTFS_ADMIN_USER: "admin-user",
+        RUSTFS_ADMIN_PASSWORD: "admin-password",
+        RUSTFS_SERVICE_USER: "service-user",
+        RUSTFS_SERVICE_PASSWORD: "service-password",
+        RUSTFS_BUCKET_NAME: "formbricks",
+        RUSTFS_POLICY_NAME: "formbricks-app-policy",
+      },
+    });
+
+    const mcCalls = readFileSync(logFile, "utf8").trim().split("\n");
+
+    expect(mcCalls).toContain("admin policy create rustfs formbricks-app-policy /tmp/formbricks-policy.json");
+    expect(mcCalls).toContain("admin policy add rustfs formbricks-app-policy /tmp/formbricks-policy.json");
+  });
+
+  test("generated init script exits non-zero when RustFS never becomes ready", () => {
+    const tempDir = createTempDir();
+    const generatedScriptPath = join(tempDir, "rustfs-init.sh");
+    const logFile = join(tempDir, "mc.log");
+    const captureDir = join(tempDir, "capture");
+
+    mkdirSync(captureDir, { recursive: true });
+    writeMockMc(tempDir);
+    writeRustfsInitScript(generatedScriptPath);
+
+    expect(() =>
+      execFileSync(generatedScriptPath, {
+        cwd: tempDir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${join(tempDir, "bin")}:${process.env.PATH ?? ""}`,
+          MC_LOG_FILE: logFile,
+          MC_CAPTURE_DIR: captureDir,
+          MC_ALIAS_SET_ALWAYS_FAIL: "1",
+          RUSTFS_ADMIN_USER: "admin-user",
+          RUSTFS_ADMIN_PASSWORD: "admin-password",
+          RUSTFS_SERVICE_USER: "service-user",
+          RUSTFS_SERVICE_PASSWORD: "service-password",
+          RUSTFS_BUCKET_NAME: "formbricks",
+          RUSTFS_POLICY_NAME: "formbricks-app-policy",
+        },
+      })
+    ).toThrow();
   });
 });

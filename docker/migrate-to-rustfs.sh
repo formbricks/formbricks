@@ -334,6 +334,7 @@ $tls_block
       - /bin/sh
       - -c
       - |
+        set -e
         attempts=0
         max_attempts=30
         until mc alias set rustfs http://rustfs:9000 "$rustfs_admin_user" "$rustfs_admin_password" >/dev/null 2>&1 \
@@ -345,7 +346,7 @@ $tls_block
           fi
           sleep 2
         done
-        mc mb rustfs/$rustfs_bucket_name --ignore-existing
+        mc mb rustfs/"$rustfs_bucket_name" --ignore-existing
         cat > /tmp/formbricks-policy.json << 'POLICY_EOF'
         {
           "Version": "2012-10-17",
@@ -363,13 +364,14 @@ $tls_block
           ]
         }
         POLICY_EOF
-        if ! mc admin policy info rustfs $rustfs_policy_name >/dev/null 2>&1; then
-          mc admin policy create rustfs $rustfs_policy_name /tmp/formbricks-policy.json || mc admin policy add rustfs $rustfs_policy_name /tmp/formbricks-policy.json
+        if ! mc admin policy info rustfs "$rustfs_policy_name" >/dev/null 2>&1; then
+          mc admin policy create rustfs "$rustfs_policy_name" /tmp/formbricks-policy.json || \
+            mc admin policy add rustfs "$rustfs_policy_name" /tmp/formbricks-policy.json
         fi
         if ! mc admin user info rustfs "$rustfs_service_user" >/dev/null 2>&1; then
           mc admin user add rustfs "$rustfs_service_user" "$rustfs_service_password"
         fi
-        mc admin policy attach rustfs $rustfs_policy_name --user "$rustfs_service_user" || true
+        mc admin policy attach rustfs "$rustfs_policy_name" --user "$rustfs_service_user"
 EOF
 
   awk '
