@@ -6,7 +6,7 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { updateSurveyInternal } from "@/lib/survey/service";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { checkTriggersValidity, handleTriggerUpdates, updateSurvey, updateSurveyDraft } from "./survey";
 
@@ -36,7 +36,7 @@ vi.mock("@/modules/survey/lib/action-class", () => ({
 }));
 
 vi.mock("@/modules/survey/lib/organization", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   getOrganizationAIKeys: vi.fn(),
 }));
 
@@ -48,7 +48,7 @@ vi.mock("@/modules/survey/lib/survey", () => ({
     updatedAt: true,
     name: true,
     type: true,
-    environmentId: true,
+    workspaceId: true,
   },
 }));
 
@@ -70,7 +70,7 @@ describe("Survey Editor Library Tests", () => {
       updatedAt: new Date(),
       name: "Test Survey",
       type: "app",
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdBy: "user123",
       status: "draft",
       displayOption: "displayOnce",
@@ -94,7 +94,7 @@ describe("Survey Editor Library Tests", () => {
       hiddenFields: { enabled: false },
       delay: 0,
       autoComplete: null,
-      projectOverwrites: null,
+      workspaceOverwrites: null,
       styling: null,
       showLanguageSwitch: false,
       segment: null,
@@ -114,7 +114,7 @@ describe("Survey Editor Library Tests", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             alias: null,
-            projectId: "project1",
+            workspaceId: "workspace1",
           },
           default: true,
           enabled: true,
@@ -131,7 +131,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Code Action",
         description: "Action from code",
         type: "code" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -157,13 +157,13 @@ describe("Survey Editor Library Tests", () => {
       vi.mocked(prisma.survey.update).mockResolvedValue(mockSurvey as any);
       vi.mocked(prisma.segment.update).mockResolvedValue({
         id: "segment1",
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         surveys: [{ id: "survey123" }],
       } as any);
 
       vi.mocked(getSurvey).mockResolvedValue(mockCurrentSurvey);
       vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses);
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(mockOrganizationId);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganizationId);
       vi.mocked(getOrganizationAIKeys).mockResolvedValue(mockOrganization as any);
     });
 
@@ -178,7 +178,7 @@ describe("Survey Editor Library Tests", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               alias: null,
-              projectId: "project1",
+              workspaceId: "workspace1",
             },
             default: true,
             enabled: true,
@@ -190,7 +190,7 @@ describe("Survey Editor Library Tests", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               alias: null,
-              projectId: "project1",
+              workspaceId: "workspace1",
             },
             default: false,
             enabled: true,
@@ -231,7 +231,7 @@ describe("Survey Editor Library Tests", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               alias: null,
-              projectId: "project1",
+              workspaceId: "workspace1",
             },
             default: true,
             enabled: true,
@@ -277,7 +277,7 @@ describe("Survey Editor Library Tests", () => {
         id: "segment1",
         title: "Test Segment",
         isPrivate: true,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         surveys: ["survey123"],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -315,7 +315,7 @@ describe("Survey Editor Library Tests", () => {
         id: "segment1",
         title: "Test Segment",
         isPrivate: false,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         surveys: ["survey123"],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -524,7 +524,7 @@ describe("Survey Editor Library Tests", () => {
           id: "segment1",
           title: "Test Segment",
           isPrivate: false,
-          environmentId: "env123",
+          workspaceId: "workspace-id-mock",
           surveys: ["survey123"],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -545,7 +545,7 @@ describe("Survey Editor Library Tests", () => {
           id: "segment1",
           title: "Test Segment",
           isPrivate: false,
-          environmentId: "env123",
+          workspaceId: "workspace-id-mock",
           surveys: ["survey123"],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -565,7 +565,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 1",
         description: "Test Action 1",
         type: "code" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -576,7 +576,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 2",
         description: "Test Action 2",
         type: "noCode" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -589,7 +589,7 @@ describe("Survey Editor Library Tests", () => {
       name: `Action ${id}`,
       description: `Test Action ${id}`,
       type,
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdAt: new Date(),
       updatedAt: new Date(),
       key: null,
@@ -637,7 +637,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 1",
         description: "Test Action 1",
         type: "code" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -648,7 +648,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 2",
         description: "Test Action 2",
         type: "noCode" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -659,7 +659,7 @@ describe("Survey Editor Library Tests", () => {
         name: "Action 3",
         description: "Test Action 3",
         type: "noCode" as const,
-        environmentId: "env123",
+        workspaceId: "workspace-id-mock",
         createdAt: new Date(),
         updatedAt: new Date(),
         key: null,
@@ -672,7 +672,7 @@ describe("Survey Editor Library Tests", () => {
       name: `Action ${id}`,
       description: `Test Action ${id}`,
       type,
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdAt: new Date(),
       updatedAt: new Date(),
       key: null,
@@ -758,7 +758,7 @@ describe("Survey Editor Library Tests", () => {
       updatedAt: new Date(),
       name: "Draft Survey",
       type: "app",
-      environmentId: "env123",
+      workspaceId: "workspace-id-mock",
       createdBy: "user123",
       status: "draft",
       displayOption: "displayOnce",
@@ -782,7 +782,7 @@ describe("Survey Editor Library Tests", () => {
       hiddenFields: { enabled: false },
       delay: 0,
       autoComplete: null,
-      projectOverwrites: null,
+      workspaceOverwrites: null,
       styling: null,
       showLanguageSwitch: false,
       segment: null,

@@ -57,7 +57,7 @@ export const getResponseForPipeline = async (
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                environmentId: true,
+                workspaceId: true,
               },
             },
           },
@@ -109,7 +109,11 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
       return { ok: false, error: surveyQuestionsResult.error as ApiErrorResponseV2 };
     }
 
-    await findAndDeleteUploadedFilesInResponse(deletedResponse.data, surveyQuestionsResult.data.questions);
+    await findAndDeleteUploadedFilesInResponse(
+      deletedResponse.data,
+      surveyQuestionsResult.data.questions,
+      surveyQuestionsResult.data.workspaceId
+    );
 
     return ok(deletedResponse);
   } catch (error) {

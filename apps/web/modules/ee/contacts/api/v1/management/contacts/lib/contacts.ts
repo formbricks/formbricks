@@ -6,12 +6,12 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { TContact } from "@/modules/ee/contacts/types/contact";
 
-export const getContacts = reactCache(async (environmentIds: string[]): Promise<TContact[]> => {
-  validateInputs([environmentIds, ZId.array()]);
+export const getContacts = reactCache(async (workspaceIds: string[]): Promise<TContact[]> => {
+  validateInputs([workspaceIds, ZId.array()]);
 
   try {
     const contacts = await prisma.contact.findMany({
-      where: { environmentId: { in: environmentIds } },
+      where: { workspaceId: { in: workspaceIds } },
     });
 
     return contacts;

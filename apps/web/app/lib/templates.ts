@@ -1647,7 +1647,7 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: "What's your primary goal for using $[projectName]?",
+              headline: "What's your primary goal for using $[workspaceName]?",
               required: true,
               shuffleOption: "none",
               choices: [
@@ -4815,14 +4815,14 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
   };
 };
 
-export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
+export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
   return {
     id: "cltxxaa6x0000g8hacxdxejeu",
     createdAt: new Date(),
     updatedAt: new Date(),
     name: t("templates.preview_survey_name"),
     type: "link" as const,
-    environmentId: "cltwumfcz0009echxg02fh7oa",
+    workspaceId: "cmnh38nzx00003b6r3svd9pv2",
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress" as const,
     welcomeCard: {
@@ -4878,7 +4878,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
               id: "lbdxozwikh838yc6a8vbwuju",
               range: 5,
               scale: "star",
-              headline: t("templates.preview_survey_question_1_headline", { projectName }),
+              headline: t("templates.preview_survey_question_1_headline", { workspaceName }),
               required: true,
               subheader: t("templates.preview_survey_question_1_subheader"),
               lowerLabel: t("templates.preview_survey_question_1_lower_label"),
@@ -4914,7 +4914,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
     autoComplete: 50,
     isVerifyEmailEnabled: false,
     isSingleResponsePerEmailEnabled: false,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     surveyClosedMessage: null,
     singleUse: {
       enabled: false,
@@ -4926,6 +4926,7 @@ export const previewSurvey = (projectName: string, t: TFunction): TSurvey => {
     showLanguageSwitch: false,
     followUps: [],
     isBackButtonHidden: false,
+    isAutoProgressingEnabled: true,
     isCaptureIpEnabled: false,
     metadata: {},
     questions: [], // Required for build-time type checking (Zod defaults to [] at runtime)

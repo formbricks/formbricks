@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -22,7 +23,7 @@ import { SecondaryLanguageSelect } from "./secondary-language-select";
 
 interface MultiLanguageCardProps {
   localSurvey: TSurvey;
-  projectLanguages: Language[];
+  workspaceLanguages: Language[];
   setLocalSurvey: (survey: TSurvey) => void;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
@@ -44,12 +45,13 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   localSurvey,
   setActiveElementId,
   setLocalSurvey,
-  projectLanguages,
+  workspaceLanguages,
   setSelectedLanguageCode,
   locale,
 }) => {
   const { t } = useTranslation();
-  const environmentId = localSurvey.environmentId;
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const open = activeElementId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
@@ -115,7 +117,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const handleDefaultLanguageChange = (languageCode: string) => {
-    const language = projectLanguages.find((lang) => lang.code === languageCode);
+    const language = workspaceLanguages.find((lang) => lang.code === languageCode);
     if (language) {
       let languageExists = false;
 
@@ -148,9 +150,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       if (localSurvey.languages.length > 0) {
         setConfirmationModalInfo({
           open: true,
-          title: t("environments.surveys.edit.remove_translations"),
-          body: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
-          buttonText: t("environments.surveys.edit.remove_translations"),
+          title: t("workspace.surveys.edit.remove_translations"),
+          body: t("workspace.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
+          buttonText: t("workspace.surveys.edit.remove_translations"),
           buttonVariant: "destructive",
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
@@ -213,7 +215,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
               <Switch
                 checked={isMultiLanguageActivated}
-                disabled={projectLanguages.length === 0}
+                disabled={workspaceLanguages.length === 0}
                 id="multi-lang-toggle"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -225,27 +227,27 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <div className="space-y-6 pt-3">
-            {projectLanguages.length === 0 && (
+            {workspaceLanguages.length === 0 && (
               <div className="mb-4 text-sm italic text-slate-500">
-                {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
+                {t("workspace.surveys.edit.no_languages_found_add_first_one_to_get_started")}
               </div>
             )}
-            {projectLanguages.length > 0 && (
+            {workspaceLanguages.length > 0 && (
               <div className="space-y-6">
                 {isMultiLanguageActivated ? (
                   <div className="space-y-6">
                     <DefaultLanguageSelect
                       defaultLanguage={defaultLanguage}
                       handleDefaultLanguageChange={handleDefaultLanguageChange}
-                      projectLanguages={projectLanguages}
+                      workspaceLanguages={workspaceLanguages}
                       setConfirmationModalInfo={setConfirmationModalInfo}
                       locale={locale}
                     />
-                    {defaultLanguage && projectLanguages.length > 1 ? (
+                    {defaultLanguage && workspaceLanguages.length > 1 ? (
                       <SecondaryLanguageSelect
                         defaultLanguage={defaultLanguage}
                         localSurvey={localSurvey}
-                        projectLanguages={projectLanguages}
+                        workspaceLanguages={workspaceLanguages}
                         setActiveElementId={setActiveElementId}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         updateSurveyLanguages={updateSurveyLanguages}
@@ -255,15 +257,15 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   </div>
                 ) : (
                   <div className="text-sm italic text-slate-500">
-                    {t("environments.surveys.edit.switch_multi_language_on_to_get_started")}
+                    {t("workspace.surveys.edit.switch_multi_language_on_to_get_started")}
                   </div>
                 )}
               </div>
             )}
 
             <Button asChild size="sm" variant="secondary">
-              <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
-                {t("environments.surveys.edit.manage_languages")}
+              <Link href={`${workspaceBasePath}/languages`} target="_blank">
+                {t("workspace.surveys.edit.manage_languages")}
                 <ArrowUpRight />
               </Link>
             </Button>
@@ -274,9 +276,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 disabled={enabledLanguages.length <= 1}
                 isChecked={!!localSurvey.showLanguageSwitch}
                 onToggle={handleLanguageSwitchToggle}
-                title={t("environments.surveys.edit.show_language_switch")}
+                title={t("workspace.surveys.edit.show_language_switch")}
                 description={t(
-                  "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
+                  "workspace.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
                 )}
                 childBorder={true}></AdvancedOptionToggle>
             )}

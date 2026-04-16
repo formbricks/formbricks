@@ -1,221 +1,151 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircleIcon } from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
-import { TUserProject } from "@/modules/survey/list/types/projects";
-import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@/modules/survey/list/types/surveys";
+import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { TSurvey } from "@/modules/survey/list/types/surveys";
+import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 
+const ZCopyFormData = z.object({
+  selectedWorkspaceIds: z.array(z.string()),
+});
+
+type TCopyFormData = z.infer<typeof ZCopyFormData>;
+
 interface CopySurveyFormProps {
-  readonly defaultProjects: TUserProject[];
+  readonly defaultWorkspaces: TUserWorkspace[];
   readonly survey: TSurvey;
   readonly onCancel: () => void;
   readonly setOpen: (value: boolean) => void;
 }
 
-interface EnvironmentCheckboxProps {
-  readonly environmentId: string;
-  readonly environmentType: string;
-  readonly fieldValue: string[];
-  readonly onChange: (value: string[]) => void;
-}
-
-function EnvironmentCheckbox({
-  environmentId,
-  environmentType,
-  fieldValue,
-  onChange,
-}: EnvironmentCheckboxProps) {
-  const handleCheckedChange = () => {
-    if (fieldValue.includes(environmentId)) {
-      onChange(fieldValue.filter((id) => id !== environmentId));
-    } else {
-      onChange([...fieldValue, environmentId]);
-    }
-  };
-
-  return (
-    <FormItem>
-      <div className="flex items-center">
-        <FormControl>
-          <div className="flex items-center">
-            <Checkbox
-              type="button"
-              checked={fieldValue.includes(environmentId)}
-              onCheckedChange={handleCheckedChange}
-              className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
-              id={environmentId}
-            />
-            <Label htmlFor={environmentId}>
-              <p className="text-sm font-medium capitalize text-slate-900">{environmentType}</p>
-            </Label>
-          </div>
-        </FormControl>
-      </div>
-    </FormItem>
-  );
-}
-
-interface EnvironmentCheckboxGroupProps {
-  readonly project: TUserProject;
-  readonly form: ReturnType<typeof useForm<TSurveyCopyFormData>>;
-  readonly projectIndex: number;
-}
-
-function EnvironmentCheckboxGroup({ project, form, projectIndex }: EnvironmentCheckboxGroupProps) {
-  return (
-    <div className="flex flex-col gap-4">
-      {project.environments.map((environment) => (
-        <FormField
-          key={environment.id}
-          control={form.control}
-          name={`projects.${projectIndex}.environments`}
-          render={({ field }) => (
-            <EnvironmentCheckbox
-              environmentId={environment.id}
-              environmentType={environment.type}
-              fieldValue={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      ))}
-    </div>
-  );
-}
-
-export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: CopySurveyFormProps) => {
+export const CopySurveyForm = ({ defaultWorkspaces, survey, onCancel, setOpen }: CopySurveyFormProps) => {
   const { t } = useTranslation();
 
-  const filteredProjects = defaultProjects.map((project) => ({
-    ...project,
-    environments: project.environments.filter((env) => env.id !== survey.environmentId),
-  }));
+  // Filter out the current survey's workspace so you can't copy to the same workspace
+  const filteredWorkspaces = defaultWorkspaces.filter((ws) => ws.id !== survey.workspaceId);
 
-  const form = useForm<TSurveyCopyFormData>({
-    resolver: zodResolver(ZSurveyCopyFormValidation),
+  const form = useForm<TCopyFormData>({
+    resolver: zodResolver(ZCopyFormData),
     defaultValues: {
-      projects: filteredProjects.map((project) => ({
-        project: project.id,
-        environments: [],
-      })),
+      selectedWorkspaceIds: [],
     },
   });
 
-  const formFields = useFieldArray({
-    name: "projects",
-    control: form.control,
-  });
+  const { control, handleSubmit } = form;
 
-  async function onSubmit(data: TSurveyCopyFormData) {
-    const filteredData = data.projects.filter((project) => project.environments.length > 0);
-
+  async function onSubmit(data: TCopyFormData) {
     try {
-      const copyOperationsWithMetadata = filteredData.flatMap((projectData) => {
-        const project = filteredProjects.find((p) => p.id === projectData.project);
-        return projectData.environments.map((environmentId) => {
-          const environment =
-            project?.environments[0]?.id === environmentId
-              ? project?.environments[0]
-              : project?.environments[1];
+      const results: Awaited<ReturnType<typeof copySurveyToOtherWorkspaceAction>>[] = [];
 
-          return {
-            projectName: project?.name ?? "Unknown Project",
-            environmentType: environment?.type ?? "unknown",
-            environmentId,
-          };
-        });
-      });
-
-      const results: Awaited<ReturnType<typeof copySurveyToOtherEnvironmentAction>>[] = [];
-      for (const item of copyOperationsWithMetadata) {
-        const result = await copySurveyToOtherEnvironmentAction({
+      for (const targetWorkspaceId of data.selectedWorkspaceIds) {
+        const result = await copySurveyToOtherWorkspaceAction({
           surveyId: survey.id,
-          targetEnvironmentId: item.environmentId,
+          targetWorkspaceId,
         });
         results.push(result);
       }
 
       let successCount = 0;
       let errorCount = 0;
-      const errorsIndexes: number[] = [];
 
-      results.forEach((result, index) => {
+      results.forEach((result) => {
         if (result?.data) {
           successCount++;
         } else {
-          errorsIndexes.push(index);
           errorCount++;
         }
       });
 
       if (successCount > 0) {
         if (errorCount === 0) {
-          toast.success(t("environments.surveys.copy_survey_success"));
+          toast.success(t("workspace.surveys.copy_survey_success"));
         } else {
           toast.error(
-            t("environments.surveys.copy_survey_partially_success", {
+            t("workspace.surveys.copy_survey_partially_success", {
               success: successCount,
               error: errorCount,
-            }),
-            {
-              icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-            }
+            })
           );
         }
       }
 
-      if (errorsIndexes.length > 0) {
-        errorsIndexes.forEach((index, idx) => {
-          const { projectName, environmentType } = copyOperationsWithMetadata[index];
-          const result = results[index];
-
+      results.forEach((result, idx) => {
+        if (!result?.data) {
           const errorMessage = getFormattedErrorMessage(result);
-          toast.error(`[${projectName}] - [${environmentType}] - ${errorMessage}`, {
+          const ws = filteredWorkspaces[idx];
+          toast.error(`[${ws?.name ?? "Unknown"}] - ${errorMessage}`, {
             duration: 2000 + 2000 * idx,
           });
-        });
-      }
-    } catch (error) {
-      toast.error(t("environments.surveys.copy_survey_error"));
+        }
+      });
+    } catch {
+      toast.error(t("workspace.surveys.copy_survey_error"));
     } finally {
       setOpen(false);
     }
   }
 
+  if (filteredWorkspaces.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <p className="text-sm text-slate-500">{t("workspace.surveys.copy_survey_no_workspaces")}</p>
+      </div>
+    );
+  }
+
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
-        <div className="flex-1 space-y-8 overflow-y-auto">
-          {formFields.fields.map((field, projectIndex) => {
-            const project = filteredProjects.find((project) => project.id === field.project);
-            if (!project) return null;
-
-            return (
-              <div key={project.id}>
-                <div className="flex flex-col gap-4">
-                  <div className="w-fit">
-                    <p className="text-base font-semibold text-slate-900">{project.name}</p>
-                  </div>
-                  <EnvironmentCheckboxGroup project={project} form={form} projectIndex={projectIndex} />
-                </div>
-              </div>
-            );
-          })}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
+        <div className="flex-1 space-y-4 overflow-y-auto">
+          <FormField
+            control={control}
+            name="selectedWorkspaceIds"
+            render={({ field: formField }) => (
+              <>
+                {filteredWorkspaces.map((workspace) => (
+                  <FormItem key={workspace.id}>
+                    <div className="flex items-center">
+                      <FormControl>
+                        <div className="flex items-center">
+                          <Checkbox
+                            type="button"
+                            checked={formField.value.includes(workspace.id)}
+                            onCheckedChange={() => {
+                              if (formField.value.includes(workspace.id)) {
+                                formField.onChange(formField.value.filter((id) => id !== workspace.id));
+                              } else {
+                                formField.onChange([...formField.value, workspace.id]);
+                              }
+                            }}
+                            className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+                            id={workspace.id}
+                          />
+                          <Label htmlFor={workspace.id}>
+                            <p className="text-sm font-medium text-slate-900">{workspace.name}</p>
+                          </Label>
+                        </div>
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                ))}
+              </>
+            )}
+          />
         </div>
         <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
           <Button type="button" onClick={onCancel} variant="secondary">
             {t("common.cancel")}
           </Button>
-          <Button type="submit">{t("environments.surveys.copy_survey")}</Button>
+          <Button type="submit">{t("workspace.surveys.copy_survey")}</Button>
         </div>
       </form>
     </FormProvider>

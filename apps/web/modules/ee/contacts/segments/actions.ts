@@ -9,14 +9,11 @@ import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getEnvironmentIdFromSegmentId,
-  getEnvironmentIdFromSurveyId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromSegmentId,
-  getProjectIdFromSurveyId,
+  getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSegmentId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
@@ -48,14 +45,15 @@ const checkAdvancedTargetingPermission = async (organizationId: string) => {
 export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmentCreateInput).action(
   withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
     if (parsedInput.surveyId) {
-      const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+      const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      if (surveyEnvironmentId !== parsedInput.environmentId) {
-        throw new Error("Survey and segment are not in the same environment");
+      if (surveyWorkspaceId !== parsedInput.workspaceId) {
+        throw new Error("Survey and segment are not in the same workspace");
       }
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const workspaceId = parsedInput.workspaceId;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     // Set the organizationId in the context to be used in the audit log
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -69,9 +67,9 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });
@@ -113,9 +111,9 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
+          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -155,11 +153,11 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient
   .inputSchema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+    const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
-    if (surveyEnvironmentId !== segmentEnvironmentId) {
-      throw new Error("Segment and survey are not in the same environment");
+    if (surveyWorkspaceId !== segmentWorkspaceId) {
+      throw new Error("Segment and survey are not in the same workspace");
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
@@ -172,9 +170,9 @@ export const loadNewSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
+          workspaceId: surveyWorkspaceId,
         },
       ],
     });
@@ -191,11 +189,11 @@ const ZCloneSegmentAction = z.object({
 
 export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSegmentAction).action(
   withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
-    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+    const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
-    if (surveyEnvironmentId !== segmentEnvironmentId) {
-      throw new Error("Segment and survey are not in the same environment");
+    if (surveyWorkspaceId !== segmentWorkspaceId) {
+      throw new Error("Segment and survey are not in the same workspace");
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
@@ -209,9 +207,9 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
+          workspaceId: surveyWorkspaceId,
         },
       ],
     });
@@ -244,9 +242,9 @@ export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDelete
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
+          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -280,9 +278,9 @@ export const resetSegmentFiltersAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           },
         ],
       });
@@ -301,25 +299,26 @@ export const resetSegmentFiltersAction = authenticatedActionClient
   );
 
 const ZGetDistinctAttributeValuesAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   attributeKeyId: ZId,
 });
 
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = parsedInput.workspaceId;
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
       access: [
         {
           type: "organization",
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          workspaceId,
         },
       ],
     });

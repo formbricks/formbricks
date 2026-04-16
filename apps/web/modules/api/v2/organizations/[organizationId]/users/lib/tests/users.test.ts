@@ -15,7 +15,7 @@ const mockUser = {
   isActive: true,
   role: "admin",
   memberships: [{ organizationId: "org456", role: "admin" }],
-  teamUsers: [{ team: { name: "Test Team", id: "team123", projectTeams: [{ projectId: "proj789" }] } }],
+  teamUsers: [{ team: { name: "Test Team", id: "team123", workspaceTeams: [{ workspaceId: "proj789" }] } }],
 };
 
 vi.mock("@formbricks/database", () => ({
@@ -98,14 +98,11 @@ describe("Users Lib", () => {
 
     test("returns conflict error if user with email already exists", async () => {
       (prisma.user.create as any).mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError(
-          "Unique constraint failed on the fields: (`email`)",
-          {
-            code: PrismaErrorType.UniqueConstraintViolation,
-            clientVersion: "1.0.0",
-            meta: { target: ["email"] },
-          }
-        )
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed on the fields: (`email`)", {
+          code: PrismaErrorType.UniqueConstraintViolation,
+          clientVersion: "1.0.0",
+          meta: { target: ["email"] },
+        })
       );
       const result = await createUser(
         { name: "Duplicate", email: "test@example.com", role: "member" },
@@ -177,7 +174,7 @@ describe("Users Lib", () => {
   describe("createUser with teams", () => {
     test("creates user with existing teams", async () => {
       (prisma.team.findMany as any).mockResolvedValueOnce([
-        { id: "team123", name: "MyTeam", projectTeams: [{ projectId: "proj789" }] },
+        { id: "team123", name: "MyTeam", workspaceTeams: [{ workspaceId: "proj789" }] },
       ]);
       (prisma.user.create as any).mockResolvedValueOnce({
         ...mockUser,
@@ -198,17 +195,19 @@ describe("Users Lib", () => {
     test("removes a team and adds new team", async () => {
       (prisma.user.findUnique as any).mockResolvedValueOnce({
         ...mockUser,
-        teamUsers: [{ team: { id: "team123", name: "OldTeam", projectTeams: [{ projectId: "proj789" }] } }],
+        teamUsers: [
+          { team: { id: "team123", name: "OldTeam", workspaceTeams: [{ workspaceId: "proj789" }] } },
+        ],
       });
       (prisma.team.findMany as any).mockResolvedValueOnce([
-        { id: "team456", name: "NewTeam", projectTeams: [] },
+        { id: "team456", name: "NewTeam", workspaceTeams: [] },
       ]);
       (prisma.$transaction as any).mockResolvedValueOnce([
         // deleted OldTeam from user
-        { team: { id: "team123", name: "OldTeam", projectTeams: [{ projectId: "proj789" }] } },
+        { team: { id: "team123", name: "OldTeam", workspaceTeams: [{ workspaceId: "proj789" }] } },
         // created teamUsers for NewTeam
         {
-          team: { id: "team456", name: "NewTeam", projectTeams: [] },
+          team: { id: "team456", name: "NewTeam", workspaceTeams: [] },
         },
         // updated user
         { ...mockUser, name: "Updated Name" },

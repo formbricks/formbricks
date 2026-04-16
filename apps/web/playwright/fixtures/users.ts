@@ -28,12 +28,14 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
 
 export const createUserFixture = (
   user: Prisma.UserGetPayload<{ include: { memberships: true } }>,
-  page: Page
+  page: Page,
+  ids?: { workspaceId: string }
 ) => {
   return {
     login: async () => {
       await login(user, page);
     },
+    workspaceId: ids?.workspaceId,
   };
 };
 
@@ -44,8 +46,8 @@ export type UsersFixture = {
     name?: string;
     email?: string;
     organizationName?: string;
-    projectName?: string;
-    withoutProject?: boolean;
+    workspaceName?: string;
+    withoutWorkspace?: boolean;
   }) => Promise<UserFixture>;
   get: () => UserFixture[];
 };
@@ -60,8 +62,8 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       name?: string;
       email?: string;
       organizationName?: string;
-      projectName?: string;
-      withoutProject?: boolean;
+      workspaceName?: string;
+      withoutWorkspace?: boolean;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
@@ -81,81 +83,15 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                   name: params?.organizationName ?? "My Organization",
                   billing: {
                     create: {
-                      limits: { projects: 3, monthly: { responses: 1500 } },
+                      limits: { workspaces: 3, monthly: { responses: 1500 } },
                       stripeCustomerId: null,
                       usageCycleAnchor: new Date(),
                     },
                   },
-                  ...(!params?.withoutProject && {
-                    projects: {
+                  ...(!params?.withoutWorkspace && {
+                    workspaces: {
                       create: {
-                        name: params?.projectName ?? "My Workspace",
-                        environments: {
-                          create: [
-                            {
-                              type: "development",
-                              attributeKeys: {
-                                create: [
-                                  {
-                                    name: "Email",
-                                    key: "email",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "First Name",
-                                    key: "firstName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "Last Name",
-                                    key: "lastName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "userId",
-                                    key: "userId",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                ],
-                              },
-                            },
-                            {
-                              type: "production",
-                              attributeKeys: {
-                                create: [
-                                  {
-                                    name: "Email",
-                                    key: "email",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "First Name",
-                                    key: "firstName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "Last Name",
-                                    key: "lastName",
-                                    isUnique: false,
-                                    type: "default",
-                                  },
-                                  {
-                                    name: "userId",
-                                    key: "userId",
-                                    isUnique: true,
-                                    type: "default",
-                                  },
-                                ],
-                              },
-                            },
-                          ],
-                        },
+                        name: params?.workspaceName ?? "My Workspace",
                       },
                     },
                   }),
@@ -168,7 +104,33 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
         include: { memberships: true },
       });
 
-      const userFixture = createUserFixture(user, page);
+      // Collect workspace ID for tests
+      let ids: { workspaceId: string } | undefined;
+      if (!params?.withoutWorkspace) {
+        const workspace = await prisma.workspace.findFirst({
+          where: { organizationId: user.memberships[0].organizationId },
+        });
+
+        if (workspace) {
+          const defaultKeys = [
+            { name: "Email", key: "email", isUnique: true, type: "default" as const },
+            { name: "First Name", key: "firstName", isUnique: false, type: "default" as const },
+            { name: "Last Name", key: "lastName", isUnique: false, type: "default" as const },
+            { name: "userId", key: "userId", isUnique: true, type: "default" as const },
+          ];
+
+          await prisma.contactAttributeKey.createMany({
+            data: defaultKeys.map((k) => ({
+              ...k,
+              workspaceId: workspace.id,
+            })),
+          });
+
+          ids = { workspaceId: workspace.id };
+        }
+      }
+
+      const userFixture = createUserFixture(user, page, ids);
 
       store.users.push(userFixture);
 

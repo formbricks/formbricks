@@ -1,6 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -9,11 +10,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
-import {
-  createResponseWithQuotaEvaluation,
-  getResponses,
-  getResponsesByEnvironmentIds,
-} from "./lib/response";
+import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -36,7 +33,7 @@ export const GET = withV1ApiWrapper({
             response: responses.notFoundResponse("Survey", surveyId, true),
           };
         }
-        if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+        if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
           return {
             response: responses.unauthorizedResponse(),
           };
@@ -44,11 +41,11 @@ export const GET = withV1ApiWrapper({
         const surveyResponses = await getResponses(surveyId, limit, offset);
         allResponses.push(...surveyResponses);
       } else {
-        const environmentIds = authentication.environmentPermissions.map(
-          (permission) => permission.environmentId
-        );
-        const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
-        allResponses.push(...environmentResponses);
+        const workspaceIds = [
+          ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+        ];
+        const workspaceResponses = await getResponsesByWorkspaceIds(workspaceIds, limit, offset);
+        allResponses.push(...workspaceResponses);
       }
       return {
         response: responses.successResponse(
@@ -66,41 +63,18 @@ export const GET = withV1ApiWrapper({
   },
 });
 
-const validateInput = async (request: Request) => {
-  let jsonInput;
-  try {
-    jsonInput = await request.json();
-  } catch (err) {
-    logger.error({ error: err, url: request.url }, "Error parsing JSON input");
-    return { error: responses.badRequestResponse("Malformed JSON input, please check your request body") };
-  }
-
-  const inputValidation = ZResponseInput.safeParse(jsonInput);
-  if (!inputValidation.success) {
-    return {
-      error: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
-    };
-  }
-
-  return { data: inputValidation.data };
-};
-
-const validateSurvey = async (responseInput: TResponseInput, environmentId: string) => {
+const validateSurvey = async (responseInput: TResponseInput, workspaceId: string) => {
   const survey = await getSurvey(responseInput.surveyId);
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", responseInput.surveyId, true) };
   }
-  if (survey.environmentId !== environmentId) {
+  if (survey.workspaceId !== workspaceId) {
     return {
       error: responses.badRequestResponse(
-        "Survey is part of another environment",
+        "Survey is part of another workspace",
         {
-          "survey.environmentId": survey.environmentId,
-          environmentId,
+          "survey.workspaceId": survey.workspaceId,
+          workspaceId,
         },
         true
       ),
@@ -116,23 +90,41 @@ export const POST = withV1ApiWrapper({
     }
 
     try {
-      const inputResult = await validateInput(req);
-      if (inputResult.error) {
+      let jsonInput;
+      try {
+        jsonInput = await req.json();
+      } catch (error) {
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
-          response: inputResult.error,
+          response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
 
-      const responseInput = inputResult.data;
-      const environmentId = responseInput.environmentId;
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveBodyIds(jsonInput, authentication.workspacePermissions, "POST");
+      if (!resolved.ok) return { response: resolved.response };
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      const inputValidation = ZResponseInput.safeParse(resolved.body);
+      if (!inputValidation.success) {
         return {
-          response: responses.unauthorizedResponse(),
+          response: responses.badRequestResponse(
+            "Fields are missing or incorrectly formatted",
+            transformErrorToDetails(inputValidation.error),
+            true
+          ),
         };
       }
 
-      const surveyResult = await validateSurvey(responseInput, environmentId);
+      const responseInput = inputValidation.data;
+
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.workspacePermissions, responseInput.workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
+
+      const surveyResult = await validateSurvey(responseInput, responseInput.workspaceId);
       if (surveyResult.error) {
         return {
           response: surveyResult.error,
@@ -176,7 +168,7 @@ export const POST = withV1ApiWrapper({
 
         sendToPipeline({
           event: "responseCreated",
-          environmentId: surveyResult.survey.environmentId,
+          workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
         });
@@ -184,7 +176,7 @@ export const POST = withV1ApiWrapper({
         if (response.finished) {
           sendToPipeline({
             event: "responseFinished",
-            environmentId: surveyResult.survey.environmentId,
+            workspaceId: surveyResult.survey.workspaceId,
             surveyId: response.surveyId,
             response: response,
           });

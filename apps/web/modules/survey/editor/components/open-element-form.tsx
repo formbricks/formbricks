@@ -54,7 +54,7 @@ export const OpenElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -101,7 +101,7 @@ export const OpenElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -135,8 +135,8 @@ export const OpenElementForm = ({
               });
             }}
             htmlId={`longAnswer-${element.id}`}
-            title={t("environments.surveys.edit.long_answer")}
-            description={t("environments.surveys.edit.long_answer_toggle_description")}
+            title={t("workspace.surveys.edit.long_answer")}
+            description={t("workspace.surveys.edit.long_answer_toggle_description")}
             disabled={element.inputType !== "text"}
             customContainerClass="p-0"
           />

@@ -1,6 +1,15 @@
 import { S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 // Mock the AWS SDK S3Client
 vi.mock("@aws-sdk/client-s3", () => ({
   S3Client: vi.fn(function MockS3Client(

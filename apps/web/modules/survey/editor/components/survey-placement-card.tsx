@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
-import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyWorkspaceOverwrites } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { Placement } from "@/modules/survey/editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -15,30 +16,27 @@ import { Switch } from "@/modules/ui/components/switch";
 interface SurveyPlacementCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  environmentId: string;
 }
 
-export const SurveyPlacementCard = ({
-  localSurvey,
-  setLocalSurvey,
-  environmentId,
-}: SurveyPlacementCardProps) => {
+export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlacementCardProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
-  const { projectOverwrites } = localSurvey ?? {};
-  const { placement, clickOutsideClose, overlay } = projectOverwrites ?? {};
+  const { workspaceOverwrites } = localSurvey ?? {};
+  const { placement, clickOutsideClose, overlay } = workspaceOverwrites ?? {};
 
-  const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites | null) => {
-    setLocalSurvey({ ...localSurvey, projectOverwrites: projectOverwrites });
+  const setWorkspaceOverwrites = (workspaceOverwrites: TSurveyWorkspaceOverwrites | null) => {
+    setLocalSurvey({ ...localSurvey, workspaceOverwrites: workspaceOverwrites });
   };
 
   const togglePlacement = () => {
-    if (setProjectOverwrites) {
+    if (setWorkspaceOverwrites) {
       if (placement) {
-        setProjectOverwrites(null);
+        setWorkspaceOverwrites(null);
       } else {
-        setProjectOverwrites({
+        setWorkspaceOverwrites({
           placement: "bottomRight",
           clickOutsideClose: false,
           overlay: "none",
@@ -48,27 +46,27 @@ export const SurveyPlacementCard = ({
   };
 
   const handlePlacementChange = (placement: TPlacement) => {
-    if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
+    if (setWorkspaceOverwrites) {
+      setWorkspaceOverwrites({
+        ...workspaceOverwrites,
         placement,
       });
     }
   };
 
   const handleOverlay = (overlayValue: TOverlay) => {
-    if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
+    if (setWorkspaceOverwrites) {
+      setWorkspaceOverwrites({
+        ...workspaceOverwrites,
         overlay: overlayValue,
       });
     }
   };
 
   const handleClickOutsideClose = (clickOutsideClose: boolean) => {
-    if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
+    if (setWorkspaceOverwrites) {
+      setWorkspaceOverwrites({
+        ...workspaceOverwrites,
         clickOutsideClose,
       });
     }
@@ -96,9 +94,9 @@ export const SurveyPlacementCard = ({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.survey_placement")}</p>
+            <p className="font-semibold text-slate-800">{t("workspace.surveys.edit.survey_placement")}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.overwrite_the_global_placement_of_the_survey")}
+              {t("workspace.surveys.edit.overwrite_the_global_placement_of_the_survey")}
             </p>
           </div>
         </div>
@@ -113,11 +111,11 @@ export const SurveyPlacementCard = ({
                 <div className="ml-2">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-slate-700">
-                      {t("environments.surveys.edit.overwrite_placement")}
+                      {t("workspace.surveys.edit.overwrite_placement")}
                     </h3>
                   </div>
                   <p className="text-xs font-normal text-slate-500">
-                    {t("environments.surveys.edit.change_the_placement_of_this_survey")}
+                    {t("workspace.surveys.edit.change_the_placement_of_this_survey")}
                   </p>
                 </div>
               </Label>
@@ -141,10 +139,10 @@ export const SurveyPlacementCard = ({
 
             <div>
               <p className="text-xs text-slate-500">
-                {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`/environments/${environmentId}/workspace/look`} target="_blank">
+                {t("workspace.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
+                <Link href={`${workspaceBasePath}/look`} target="_blank">
                   <span className="underline">
-                    {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
+                    {t("workspace.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>
                 </Link>
               </p>

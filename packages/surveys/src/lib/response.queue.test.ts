@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { TResponseUpdate } from "@formbricks/types/responses";
@@ -52,7 +52,7 @@ const getSurveyState: () => SurveyState = () => ({
 
 const getConfig = (overrides = {}) => ({
   appUrl: "http://localhost",
-  environmentId: "env1",
+  workspaceId: "ws1",
   retryAttempts: 2,
   setSurveyState: vi.fn(),
   onResponseSendingFailed: vi.fn(),

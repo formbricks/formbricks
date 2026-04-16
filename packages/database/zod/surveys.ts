@@ -71,7 +71,7 @@ const ZSurveyBase = z.object({
   displayProgressBar: z.boolean().nullable().describe("Whether to display the progress bar"),
   pin: z.string().nullable().describe("The pin of the survey"),
   createdBy: z.string().nullable().describe("The user who created the survey"),
-  environmentId: z.cuid2().describe("The environment ID of the survey"),
+  workspaceId: z.cuid2().describe("The workspace ID of the survey"),
   questions: z.array(ZSurveyQuestion).describe("The questions of the survey"),
   blocks: ZSurveyBlocks.prefault([]).describe("The blocks of the survey"),
   endings: z.array(ZSurveyEnding).prefault([]).describe("The endings of the survey"),
@@ -99,7 +99,7 @@ const ZSurveyBase = z.object({
     .nullable()
     .describe("Message shown when survey is closed"),
   segmentId: z.string().nullable().describe("ID of the segment"),
-  projectOverwrites: z
+  workspaceOverwrites: z
     .object({
       brandColor: ZColor.nullish(),
       highlightBorderColor: ZColor.nullish(),
@@ -108,7 +108,7 @@ const ZSurveyBase = z.object({
       overlay: ZOverlay.nullish(),
     })
     .nullable()
-    .describe("Project specific overwrites"),
+    .describe("Workspace specific overwrites"),
   styling: z
     .object({
       brandColor: ZStylingColor.nullish(),
@@ -138,6 +138,7 @@ const ZSurveyBase = z.object({
   isSingleResponsePerEmailEnabled: z.boolean().describe("Whether single response per email is enabled"),
   inlineTriggers: z.array(z.any()).nullable().describe("Inline triggers configuration"),
   isBackButtonHidden: z.boolean().describe("Whether the back button is hidden"),
+  isAutoProgressingEnabled: z.boolean().describe("Whether auto-progress is enabled for eligible questions"),
   recaptcha: ZSurveyRecaptcha.describe("Google reCAPTCHA configuration"),
   metadata: ZSurveyMetadata.describe("Custom link metadata for social sharing"),
   displayPercentage: z.number().nullable().describe("The display percentage of the survey"),

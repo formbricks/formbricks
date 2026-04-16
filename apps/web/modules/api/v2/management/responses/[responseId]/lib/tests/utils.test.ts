@@ -1,4 +1,4 @@
-import { environmentId, fileUploadQuestion, openTextQuestion, responseData } from "./__mocks__/utils.mock";
+import { fileUploadQuestion, openTextQuestion, responseData, workspaceId } from "./__mocks__/utils.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
@@ -26,8 +26,8 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
 
     expect(deleteFile).toHaveBeenCalledTimes(2);
-    expect(deleteFile).toHaveBeenCalledWith(environmentId, "private", "file1.png");
-    expect(deleteFile).toHaveBeenCalledWith(environmentId, "private", "file2.pdf");
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file1.png", undefined);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file2.pdf", undefined);
     expect(result).toEqual(okVoid());
   });
 
@@ -61,8 +61,8 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
 
     expect(deleteFile).toHaveBeenCalledTimes(2);
-    expect(deleteFile).toHaveBeenNthCalledWith(1, environmentId, "private", "file1.png");
-    expect(deleteFile).toHaveBeenNthCalledWith(2, environmentId, "private", "file2.pdf");
+    expect(deleteFile).toHaveBeenNthCalledWith(1, workspaceId, "private", "file1.png", undefined);
+    expect(deleteFile).toHaveBeenNthCalledWith(2, workspaceId, "private", "file2.pdf", undefined);
     expect(result).toEqual(okVoid());
   });
 });

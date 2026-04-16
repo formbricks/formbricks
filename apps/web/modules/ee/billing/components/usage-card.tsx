@@ -32,7 +32,7 @@ export const UsageCard = ({ metric, currentCount, limit, isUnlimited, unlimitedL
         <p className="text-sm font-semibold text-slate-700">{metric}</p>
         <p className="text-sm text-slate-600">
           {currentCount.toLocaleString()} / {limit.toLocaleString()}{" "}
-          <span className="text-slate-400">{t("environments.settings.billing.used")}</span>
+          <span className="text-slate-400">{t("workspace.settings.billing.used")}</span>
         </p>
       </div>
       <BillingSlider value={currentCount} max={limit} />

@@ -34,7 +34,7 @@ export const getContactsInSegment = reactCache(async (segmentId: string) => {
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
       segment.id,
       segment.filters,
-      segment.environmentId
+      segment.workspaceId
     );
 
     if (!segmentFilterToPrismaQueryResult.ok) {
@@ -97,7 +97,7 @@ const selectContact = {
   id: true,
   createdAt: true,
   updatedAt: true,
-  environmentId: true,
+  workspaceId: true,
   attributes: {
     select: {
       value: true,
@@ -114,8 +114,8 @@ const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-export const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
-  const whereClause: Prisma.ContactWhereInput = { environmentId };
+export const buildContactWhereClause = (workspaceId: string, search?: string): Prisma.ContactWhereInput => {
+  const whereClause: Prisma.ContactWhereInput = { workspaceId };
 
   if (search) {
     whereClause.OR = [
@@ -142,12 +142,12 @@ export const buildContactWhereClause = (environmentId: string, search?: string):
 };
 
 export const getContacts = reactCache(
-  async (environmentId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
-    validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
+  async (workspaceId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
+    validateInputs([workspaceId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
 
     try {
       const contacts = await prisma.contact.findMany({
-        where: buildContactWhereClause(environmentId, searchValue),
+        where: buildContactWhereClause(workspaceId, searchValue),
         select: selectContact,
         take: ITEMS_PER_PAGE,
         skip: offset,
@@ -220,7 +220,7 @@ const contactAttributesInclude = {
 // Helper to create attribute objects for Prisma create operations with typed columns
 const createAttributeConnections = (
   record: Record<string, string>,
-  environmentId: string,
+  workspaceId: string,
   attributeTypeMap: Map<string, TAttributeTypeInfo>
 ) =>
   Object.entries(record).map(([key, value]) => {
@@ -229,7 +229,7 @@ const createAttributeConnections = (
 
     return {
       attributeKey: {
-        connect: { key_environmentId: { key, environmentId } },
+        connect: { key_workspaceId: { key, workspaceId } },
       },
       value: columns.value,
       valueNumber: columns.valueNumber,
@@ -398,7 +398,7 @@ const createMissingAttributeKeys = async (
   lowercaseToActualKeyMap: Map<string, string>,
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  environmentId: string
+  workspaceId: string
 ): Promise<void> => {
   const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
 
@@ -426,7 +426,7 @@ const createMissingAttributeKeys = async (
       key,
       name: formatSnakeCaseToTitleCase(key),
       dataType: attributeTypeMap.get(key)?.dataType ?? "string",
-      environmentId,
+      workspaceId,
     })),
     skipDuplicates: true,
   });
@@ -435,7 +435,7 @@ const createMissingAttributeKeys = async (
   const newAttributeKeys = await prisma.contactAttributeKey.findMany({
     where: {
       key: { in: Array.from(uniqueMissingKeys.values()) },
-      environmentId,
+      workspaceId,
     },
     select: { key: true, id: true, dataType: true },
   });
@@ -460,7 +460,7 @@ type TCsvProcessingContext = {
   attributeKeyMap: Map<string, string>;
   attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
-  environmentId: string;
+  workspaceId: string;
 };
 
 /**
@@ -477,7 +477,7 @@ const processCsvRecord = async (
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
-    environmentId,
+    workspaceId,
   } = ctx;
   // Map CSV keys to actual DB keys (case-insensitive matching)
   const mappedRecord: Record<string, string> = {};
@@ -499,9 +499,9 @@ const processCsvRecord = async (
     // Create new contact
     return prisma.contact.create({
       data: {
-        environmentId,
+        workspaceId,
         attributes: {
-          create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
+          create: createAttributeConnections(mappedRecord, workspaceId, attributeTypeMap),
         },
       },
       include: contactAttributesInclude,
@@ -516,7 +516,7 @@ const processCsvRecord = async (
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
-    environmentId
+    workspaceId
   );
 };
 
@@ -530,7 +530,7 @@ const handleDuplicateContact = async (
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
   duplicateContactsAction: "skip" | "update" | "overwrite",
-  environmentId: string
+  workspaceId: string
 ): Promise<TContact | null> => {
   if (duplicateContactsAction === "skip") {
     return null;
@@ -585,7 +585,7 @@ const handleDuplicateContact = async (
     where: { id: existingContact.id },
     data: {
       attributes: {
-        create: createAttributeConnections(recordToProcess, environmentId, attributeTypeMap),
+        create: createAttributeConnections(recordToProcess, workspaceId, attributeTypeMap),
       },
     },
     include: contactAttributesInclude,
@@ -598,26 +598,26 @@ export type TCreateContactsFromCSVResult =
 
 export const createContactsFromCSV = async (
   csvData: Record<string, string>[],
-  environmentId: string,
+  workspaceId: string,
   duplicateContactsAction: "skip" | "update" | "overwrite",
   attributeMap: Record<string, string>
 ): Promise<TCreateContactsFromCSVResult> => {
   validateInputs(
     [csvData, ZContactCSVUploadResponse],
-    [environmentId, ZId],
+    [workspaceId, ZId],
     [duplicateContactsAction, ZContactCSVDuplicateAction],
     [attributeMap, ZContactCSVAttributeMap]
   );
 
   try {
-    // Step 1: Extract metadata from CSV data
+    // Step 2: Extract metadata from CSV data
     const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
 
-    // Step 2: Fetch existing data from database
+    // Step 3: Fetch existing data from database
     const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
-          environmentId,
+          workspaceId,
           attributes: { some: { attributeKey: { key: "email" }, value: { in: csvEmails } } },
         },
         select: {
@@ -626,11 +626,11 @@ export const createContactsFromCSV = async (
         },
       }),
       prisma.contactAttribute.findMany({
-        where: { attributeKey: { key: "userId", environmentId }, value: { in: csvUserIds } },
+        where: { attributeKey: { key: "userId", workspaceId }, value: { in: csvUserIds } },
         select: { value: true, contactId: true },
       }),
       prisma.contactAttributeKey.findMany({
-        where: { environmentId },
+        where: { workspaceId },
         select: { key: true, id: true, dataType: true },
       }),
     ]);
@@ -668,7 +668,7 @@ export const createContactsFromCSV = async (
       lowercaseToActualKeyMap,
       attributeKeyMap,
       attributeTypeMap,
-      environmentId
+      workspaceId
     );
 
     // Step 6: Process each CSV record
@@ -679,7 +679,7 @@ export const createContactsFromCSV = async (
       attributeKeyMap,
       attributeTypeMap,
       duplicateContactsAction,
-      environmentId,
+      workspaceId,
     };
 
     const CHUNK_SIZE = 50;

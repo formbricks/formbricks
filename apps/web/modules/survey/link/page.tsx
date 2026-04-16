@@ -8,8 +8,8 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 
 interface LinkSurveyPageProps {
@@ -93,16 +93,16 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      // Need to fetch project for error page - fetch environmentContext for it
-      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-      return <SurveyInactive status="link invalid" project={environmentContext.project} />;
+      // Need to fetch workspace for error page - fetch environmentContext for it
+      const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
     }
     singleUseId = validatedSingleUseId;
   }
 
   // Stage 2: Parallel fetch of all remaining data
-  const [environmentContext, locale, singleUseResponse] = await Promise.all([
-    getEnvironmentContextForLinkSurvey(survey.environmentId),
+  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+    getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Only fetch single-use response if we have a validated ID
     isSingleUseSurvey && singleUseId
@@ -122,7 +122,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     singleUseId,
     singleUseResponse: singleUseResponse ?? undefined,
     isPreview,
-    environmentContext,
+    workspaceContext,
     locale,
     responseCount,
   });

@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { wrapThrows } from "@formbricks/types/error-handlers";
-import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getSurveysAction } from "@/modules/survey/list/actions";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -19,22 +19,22 @@ import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   publicDomain: string;
   userId: string;
   surveysPerPage: number;
-  currentProjectChannel: TProjectConfigChannel;
+  currentWorkspaceChannel: TWorkspaceConfigChannel;
   locale: TUserLocale;
 }
 
 export const SurveysList = ({
-  environmentId,
+  workspaceId,
   isReadOnly,
   publicDomain,
   userId,
   surveysPerPage: surveysLimit,
-  currentProjectChannel,
+  currentWorkspaceChannel,
   locale,
 }: SurveysListProps) => {
   const router = useRouter();
@@ -83,7 +83,7 @@ export const SurveysList = ({
     const fetchFilteredSurveys = async () => {
       setIsFetching(true);
       const res = await getSurveysAction({
-        environmentId,
+        workspaceId,
         limit: surveysLimit,
         offset: undefined,
         filterCriteria: filters,
@@ -100,12 +100,12 @@ export const SurveysList = ({
     };
     fetchFilteredSurveys();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environmentId, surveysLimit, filters, refreshTrigger, isFilterInitialized]);
+  }, [workspaceId, surveysLimit, filters, refreshTrigger, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
     const res = await getSurveysAction({
-      environmentId,
+      workspaceId,
       limit: surveysLimit,
       offset: surveys.length,
       filterCriteria: filters,
@@ -120,7 +120,7 @@ export const SurveysList = ({
       setSurveys([...surveys, ...res.data]);
       setIsFetching(false);
     }
-  }, [environmentId, surveys, surveysLimit, filters]);
+  }, [workspaceId, surveys, surveysLimit, filters]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
@@ -140,7 +140,7 @@ export const SurveysList = ({
       <SurveyFilters
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
-        currentProjectChannel={currentProjectChannel}
+        currentWorkspaceChannel={currentWorkspaceChannel}
       />
       {surveys.length > 0 ? (
         <div>
@@ -159,7 +159,6 @@ export const SurveysList = ({
                 <SurveyCard
                   key={survey.id}
                   survey={survey}
-                  environmentId={environmentId}
                   isReadOnly={isReadOnly}
                   publicDomain={publicDomain}
                   deleteSurvey={handleDeleteSurvey}

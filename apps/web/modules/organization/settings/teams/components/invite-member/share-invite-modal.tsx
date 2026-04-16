@@ -28,10 +28,10 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
       <DialogContent>
         <DialogHeader>
           <CheckIcon />
-          <DialogTitle>{t("environments.settings.general.organization_invite_link_ready")}</DialogTitle>
+          <DialogTitle>{t("workspace.settings.general.organization_invite_link_ready")}</DialogTitle>
           <DialogDescription>
             {t(
-              "environments.settings.general.share_this_link_to_let_your_organization_member_join_your_organization"
+              "workspace.settings.general.share_this_link_to_let_your_organization_member_join_your_organization"
             )}
           </DialogDescription>
         </DialogHeader>
@@ -50,7 +50,7 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
                 );
                 toast.success(t("common.copied_to_clipboard"));
               }}
-              title={t("environments.settings.general.copy_invite_link_to_clipboard")}
+              title={t("workspace.settings.general.copy_invite_link_to_clipboard")}
               aria-label="Copy invite link to clipboard">
               {t("common.copy_link")}
               <CopyIcon />

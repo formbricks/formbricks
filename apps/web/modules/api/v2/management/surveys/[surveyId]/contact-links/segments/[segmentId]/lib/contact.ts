@@ -2,11 +2,11 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
-import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
-import { getSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment";
-import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { getContactAttributeKeys } from "./contact-attribute-key";
+import { getSegment } from "./segment";
+import { getSurvey } from "./surveys";
 
 export const getContactsInSegment = reactCache(
   async (surveyId: string, segmentId: string, limit: number, skip: number, attributeKeys?: string) => {
@@ -34,8 +34,8 @@ export const getContactsInSegment = reactCache(
 
       const segment = segmentResult.data;
 
-      if (survey.environmentId !== segment.environmentId) {
-        logger.error({ surveyId, segmentId }, "Survey and segment are not in the same environment");
+      if (survey.workspaceId !== segment.workspaceId) {
+        logger.error({ surveyId, segmentId }, "Survey and segment are not in the same workspace");
         const error: ApiErrorResponseV2 = {
           type: "bad_request",
           details: [{ field: "segmentId", issue: "Environment mismatch" }],
@@ -46,7 +46,7 @@ export const getContactsInSegment = reactCache(
       const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
         segment.id,
         segment.filters,
-        segment.environmentId
+        segment.workspaceId
       );
 
       if (!segmentFilterToPrismaQueryResult.ok) {
@@ -55,7 +55,7 @@ export const getContactsInSegment = reactCache(
 
       const { whereClause } = segmentFilterToPrismaQueryResult.data;
 
-      const contactAttributeKeysResult = await getContactAttributeKeys(segment.environmentId);
+      const contactAttributeKeysResult = await getContactAttributeKeys(segment.workspaceId);
       if (!contactAttributeKeysResult.ok) {
         return err(contactAttributeKeysResult.error);
       }

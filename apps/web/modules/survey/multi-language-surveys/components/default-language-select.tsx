@@ -17,7 +17,7 @@ import type { ConfirmationModalProps } from "./multi-language-card";
 interface DefaultLanguageSelectProps {
   defaultLanguage?: Language;
   handleDefaultLanguageChange: (languageCode: string) => void;
-  projectLanguages: Language[];
+  workspaceLanguages: Language[];
   setConfirmationModalInfo: (confirmationModal: ConfirmationModalProps) => void;
   locale: string;
 }
@@ -25,14 +25,14 @@ interface DefaultLanguageSelectProps {
 export function DefaultLanguageSelect({
   defaultLanguage,
   handleDefaultLanguageChange,
-  projectLanguages,
+  workspaceLanguages,
   setConfirmationModalInfo,
   locale,
 }: DefaultLanguageSelectProps) {
   const { t } = useTranslation();
   return (
     <div className="space-y-2">
-      <Label>{t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}</Label>
+      <Label>{t("workspace.surveys.edit.1_choose_the_default_language_for_this_survey")}</Label>
       <div className="flex items-center space-x-2">
         <div className="w-48">
           <Select
@@ -42,11 +42,11 @@ export function DefaultLanguageSelect({
               setConfirmationModalInfo({
                 open: true,
                 title:
-                  t("environments.surveys.edit.confirm_default_language") +
+                  t("workspace.surveys.edit.confirm_default_language") +
                   ": " +
                   getLanguageLabel(languageCode, locale),
                 body: t(
-                  "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
+                  "workspace.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
                 ),
                 buttonText: t("common.confirm"),
                 onConfirm: () => {
@@ -60,7 +60,7 @@ export function DefaultLanguageSelect({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {projectLanguages.map((language) => (
+              {workspaceLanguages.map((language) => (
                 <SelectItem
                   className="px-0.5 py-1 text-sm text-slate-800"
                   key={language.id}

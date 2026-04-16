@@ -10,11 +10,9 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromProjectId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromSurveyId,
+  getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
@@ -25,7 +23,7 @@ import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/ut
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getProject } from "./lib/project";
+import { getWorkspace } from "./lib/workspace";
 
 /**
  * Checks if survey follow-ups can be added for the given organization.
@@ -67,8 +65,8 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(survey.id),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(survey.id),
           minPermission: "readWrite",
         },
       ],
@@ -99,7 +97,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
@@ -117,8 +115,8 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.id),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.id),
           minPermission: "readWrite",
         },
       ],
@@ -167,36 +165,36 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       }
     }
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
 );
 
-const ZRefetchProjectAction = z.object({
-  projectId: z.cuid2(),
+const ZRefetchWorkspaceAction = z.object({
+  workspaceId: z.cuid2(),
 });
 
-export const refetchProjectAction = authenticatedActionClient
-  .inputSchema(ZRefetchProjectAction)
+export const refetchWorkspaceAction = authenticatedActionClient
+  .inputSchema(ZRefetchWorkspaceAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
+      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
       access: [
         {
           type: "organization",
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: parsedInput.projectId,
+          workspaceId: parsedInput.workspaceId,
         },
       ],
     });
 
-    return await getProject(parsedInput.projectId);
+    return await getWorkspace(parsedInput.workspaceId);
   });
 
 const ZGetImagesFromUnsplashAction = z.object({
@@ -290,7 +288,8 @@ const ZCreateActionClassAction = z.object({
 
 export const createActionClassAction = authenticatedActionClient.inputSchema(ZCreateActionClassAction).action(
   withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId);
+    const workspaceId = parsedInput.action.workspaceId;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
@@ -300,15 +299,15 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.action.environmentId),
+          workspaceId,
         },
       ],
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+    const result = await createActionClass(workspaceId, parsedInput.action);
     ctx.auditLoggingCtx.actionClassId = result.id;
     ctx.auditLoggingCtx.newObject = result;
     return result;

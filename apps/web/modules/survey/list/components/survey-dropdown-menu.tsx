@@ -15,12 +15,13 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
-  copySurveyToOtherEnvironmentAction,
+  copySurveyToOtherWorkspaceAction,
   deleteSurveyAction,
   getSurveyAction,
 } from "@/modules/survey/list/actions";
@@ -36,7 +37,6 @@ import {
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
-  environmentId: string;
   survey: TSurvey;
   publicDomain: string;
   disabled?: boolean;
@@ -46,7 +46,6 @@ interface SurveyDropDownMenuProps {
 }
 
 export const SurveyDropDownMenu = ({
-  environmentId,
   survey,
   publicDomain,
   disabled,
@@ -54,6 +53,8 @@ export const SurveyDropDownMenu = ({
   deleteSurvey,
   onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -75,9 +76,9 @@ export const SurveyDropDownMenu = ({
         return;
       }
       deleteSurvey(surveyId);
-      toast.success(t("environments.surveys.survey_deleted_successfully"));
+      toast.success(t("workspace.surveys.survey_deleted_successfully"));
     } catch (error) {
-      toast.error(t("environments.surveys.error_deleting_survey"));
+      toast.error(t("workspace.surveys.error_deleting_survey"));
     } finally {
       setLoading(false);
     }
@@ -93,16 +94,16 @@ export const SurveyDropDownMenu = ({
       toast.success(t("common.copied_to_clipboard"));
     } catch (error) {
       logger.error(error);
-      toast.error(t("environments.surveys.summary.failed_to_copy_link"));
+      toast.error(t("workspace.surveys.summary.failed_to_copy_link"));
     }
   };
 
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+      const duplicatedSurveyResponse = await copySurveyToOtherWorkspaceAction({
         surveyId,
-        targetEnvironmentId: environmentId,
+        targetWorkspaceId: survey.workspaceId,
       });
 
       if (duplicatedSurveyResponse?.serverError) {
@@ -114,13 +115,13 @@ export const SurveyDropDownMenu = ({
         if (transformedDuplicatedSurvey?.data) {
           onSurveysCopied?.();
         }
-        toast.success(t("environments.surveys.survey_duplicated_successfully"));
+        toast.success(t("workspace.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(t("environments.surveys.survey_duplication_error"));
+      toast.error(t("workspace.surveys.survey_duplication_error"));
     }
     setLoading(false);
   };
@@ -142,7 +143,7 @@ export const SurveyDropDownMenu = ({
               "rounded-lg border bg-white p-2",
               disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
             )}>
-            <span className="sr-only">{t("environments.surveys.open_options")}</span>
+            <span className="sr-only">{t("workspace.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
@@ -153,7 +154,7 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                    href={`${workspaceBasePath}/surveys/${survey.id}/edit`}
                     onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
                     <SquarePenIcon className="mr-2 size-4" />
                     {t("common.edit")}
@@ -252,7 +253,7 @@ export const SurveyDropDownMenu = ({
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
-          text={t("environments.surveys.delete_survey_and_responses_warning")}
+          text={t("workspace.surveys.delete_survey_and_responses_warning")}
           isDeleting={loading}
         />
       )}
@@ -267,9 +268,7 @@ export const SurveyDropDownMenu = ({
             setIsCautionDialogOpen(false);
           }}
           primaryButtonText={t("common.duplicate")}
-          secondaryButtonAction={() =>
-            router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)
-          }
+          secondaryButtonAction={() => router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`)}
           secondaryButtonText={t("common.edit")}
         />
       )}

@@ -4,21 +4,21 @@ import { useEffect, useRef } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface CustomScriptsInjectorProps {
-  projectScripts?: string | null;
+  workspaceScripts?: string | null;
   surveyScripts?: string | null;
   scriptsMode?: TSurvey["customHeadScriptsMode"];
 }
 
 /**
  * Injects custom HTML scripts into the document head for link surveys.
- * Supports merging project and survey scripts or replacing project scripts with survey scripts.
+ * Supports merging workspace and survey scripts or replacing workspace scripts with survey scripts.
  *
- * @param projectScripts - Scripts configured at the workspace/project level
+ * @param workspaceScripts - Scripts configured at the workspace level
  * @param surveyScripts - Scripts configured at the survey level
  * @param scriptsMode - "add" merges both, "replace" uses only survey scripts
  */
 export const CustomScriptsInjector = ({
-  projectScripts,
+  workspaceScripts,
   surveyScripts,
   scriptsMode,
 }: CustomScriptsInjectorProps) => {
@@ -35,8 +35,8 @@ export const CustomScriptsInjector = ({
       // Replace mode: only use survey scripts
       scriptsToInject = surveyScripts;
     } else {
-      // Add mode (default): merge project and survey scripts
-      scriptsToInject = [projectScripts, surveyScripts].filter(Boolean).join("\n");
+      // Add mode (default): merge workspace and survey scripts
+      scriptsToInject = [workspaceScripts, surveyScripts].filter(Boolean).join("\n");
     }
 
     if (!scriptsToInject.trim()) return;
@@ -76,7 +76,7 @@ export const CustomScriptsInjector = ({
       // Log error but don't break the survey - self-hosted admins can check console
       console.warn("[Formbricks] Error injecting custom scripts:", error);
     }
-  }, [projectScripts, surveyScripts, scriptsMode]);
+  }, [workspaceScripts, surveyScripts, scriptsMode]);
 
   return null;
 };

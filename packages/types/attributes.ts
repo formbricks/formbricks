@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const ZAttributeUpdateInput = z.object({
-  environmentId: z.cuid2(),
   userId: z.string(),
   attributes: z.record(z.string(), z.union([z.string(), z.number()])),
 });

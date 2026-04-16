@@ -1,7 +1,7 @@
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
@@ -19,7 +19,7 @@ interface WelcomeCardProps {
   videoUrl?: string;
   buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   languageCode: string;
   responseCount?: number;
   autoFocusEnabled: boolean;
@@ -147,8 +147,10 @@ export function WelcomeCard({
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div>
-        {fileUrl || videoUrl ? (
-          <ElementMedia imgUrl={fileUrl} videoUrl={videoUrl} altText={t("common.company_logo")} />
+        {fileUrl ? (
+          <ElementMedia imgUrl={fileUrl} altText={t("common.company_logo")} className="mb-8 min-h-0 w-1/4" />
+        ) : videoUrl ? (
+          <ElementMedia videoUrl={videoUrl} altText={t("common.welcome_video")} />
         ) : null}
 
         <Headline
