@@ -355,6 +355,45 @@ describe("handleSsoCallback", () => {
     expect(createUser).not.toHaveBeenCalled();
   });
 
+  test("starts recovery for a legacy SSO-only user when the stored provider account id is stale", async () => {
+    vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      identityProvider: "google",
+      identityProviderAccountId: "legacy-google-subject",
+      emailVerified: new Date(),
+      password: null,
+    } as any);
+
+    const result = await handleSsoCallback({
+      user: mockUser,
+      account: {
+        ...mockAccount,
+        provider: "google",
+        providerAccountId: "new-google-subject",
+      },
+      callbackUrl: "http://localhost:3000",
+    });
+
+    expect(result).toBe("/auth/verification-requested?token=email-token");
+    expect(startSsoRecovery).toHaveBeenCalledWith({
+      existingUser: expect.objectContaining({
+        id: mockUser.id,
+        email: mockUser.email,
+        identityProvider: "google",
+        identityProviderAccountId: "legacy-google-subject",
+      }),
+      provider: "google",
+      account: expect.objectContaining({
+        provider: "google",
+        providerAccountId: "new-google-subject",
+      }),
+      callbackUrl: "http://localhost:3000",
+    });
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
   test("creates a new SSO user with canonical provider state when no existing user is found", async () => {
     vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
