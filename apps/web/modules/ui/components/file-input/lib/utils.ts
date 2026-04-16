@@ -21,7 +21,7 @@ export const getAllowedFiles = async (
   const convertedFiles: File[] = [];
 
   for (const file of files) {
-    if (!file || !file.type) {
+    if (!file) {
       continue;
     }
 
