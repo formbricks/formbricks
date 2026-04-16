@@ -32,16 +32,25 @@ const ACCOUNT_TOKEN_FIELDS = [
 ] as const;
 
 type TAccountTokenField = (typeof ACCOUNT_TOKEN_FIELDS)[number];
+type TAccountTokenUpdate = Partial<Pick<TSsoAccountLinkInput, TAccountTokenField>>;
 
-const getAccountTokenUpdate = (
-  account: TSsoAccountLinkInput
-): Partial<Pick<TSsoAccountLinkInput, TAccountTokenField>> => {
-  const accountTokenUpdate: Partial<Pick<TSsoAccountLinkInput, TAccountTokenField>> = {};
+const setAccountTokenField = <TField extends TAccountTokenField>(
+  accountTokenUpdate: TAccountTokenUpdate,
+  account: TSsoAccountLinkInput,
+  field: TField
+) => {
+  const value = account[field];
+
+  if (value !== undefined) {
+    accountTokenUpdate[field] = value;
+  }
+};
+
+const getAccountTokenUpdate = (account: TSsoAccountLinkInput): TAccountTokenUpdate => {
+  const accountTokenUpdate: TAccountTokenUpdate = {};
 
   for (const field of ACCOUNT_TOKEN_FIELDS) {
-    if (account[field] !== undefined) {
-      accountTokenUpdate[field] = account[field];
-    }
+    setAccountTokenField(accountTokenUpdate, account, field);
   }
 
   return accountTokenUpdate;
