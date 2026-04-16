@@ -38,6 +38,13 @@ vi.mock("@formbricks/database", () => ({
     workspaceTeam: {
       createMany: vi.fn(),
     },
+    feedbackRecordDirectory: {
+      upsert: vi.fn(),
+    },
+    feedbackRecordDirectoryWorkspace: {
+      count: vi.fn(),
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -94,10 +101,14 @@ describe("workspace lib", () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackRecordDirectory.upsert).mockResolvedValueOnce({ id: "frd-1" } as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.count).mockResolvedValueOnce(0);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.create).mockResolvedValueOnce({} as any);
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
       expect(result).toEqual(createdWorkspace);
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
+      expect(prisma.feedbackRecordDirectory.upsert).toHaveBeenCalled();
     });
 
     test("throws ValidationError if name is missing", async () => {

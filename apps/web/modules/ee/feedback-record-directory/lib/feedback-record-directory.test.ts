@@ -10,6 +10,12 @@ import {
   updateFeedbackRecordDirectory,
 } from "./feedback-record-directory";
 
+vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     feedbackRecordDirectory: {
@@ -18,8 +24,14 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    feedbackRecordDirectoryWorkspace: {
+      findMany: vi.fn(),
+    },
     workspace: {
       count: vi.fn(),
+    },
+    connector: {
+      count: vi.fn().mockResolvedValue(0),
     },
   },
 }));
@@ -33,7 +45,7 @@ const mockDirectoryDbRow = {
   id: mockDirectoryId,
   name: "Test Directory",
   isArchived: false,
-  _count: { workspaces: 2 },
+  _count: { workspaces: 2, connectors: 1 },
 };
 
 const mockDirectoryDetailsDbRow = {
@@ -45,6 +57,7 @@ const mockDirectoryDetailsDbRow = {
     { workspaceId: mockWorkspaceId1, workspace: { name: "Workspace A" } },
     { workspaceId: mockWorkspaceId2, workspace: { name: "Workspace B" } },
   ],
+  connectors: [],
 };
 
 describe("FeedbackRecordDirectory Service", () => {
@@ -64,6 +77,7 @@ describe("FeedbackRecordDirectory Service", () => {
           name: "Test Directory",
           isArchived: false,
           workspaceCount: 2,
+          connectorCount: 1,
         },
       ]);
       expect(prisma.feedbackRecordDirectory.findMany).toHaveBeenCalledWith({
@@ -72,7 +86,7 @@ describe("FeedbackRecordDirectory Service", () => {
           id: true,
           name: true,
           isArchived: true,
-          _count: { select: { workspaces: true } },
+          _count: { select: { workspaces: true, connectors: true } },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -121,6 +135,7 @@ describe("FeedbackRecordDirectory Service", () => {
           { workspaceId: mockWorkspaceId1, workspaceName: "Workspace A" },
           { workspaceId: mockWorkspaceId2, workspaceName: "Workspace B" },
         ],
+        connectors: [],
       });
     });
 

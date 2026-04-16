@@ -565,14 +565,14 @@ describe("Service Functions", () => {
     const connectorId = "connector123";
 
     test("returns the connector when found", async () => {
-      const mockConnector = { environmentId: "env123" };
+      const mockConnector = { workspaceId: "ws123" };
       vi.mocked(prisma.connector.findUnique).mockResolvedValue(mockConnector);
 
       const result = await getConnector(connectorId);
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.connector.findUnique).toHaveBeenCalledWith({
         where: { id: connectorId },
-        select: { environmentId: true },
+        select: { workspaceId: true },
       });
       expect(result).toEqual(mockConnector);
     });
