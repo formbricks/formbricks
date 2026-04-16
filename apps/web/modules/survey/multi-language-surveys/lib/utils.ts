@@ -1,9 +1,9 @@
-import { TI18nString } from "@formbricks/types/i18n";
+import { type TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { isI18nObject } from "@/lib/i18n/utils";
-import { type DeduplicatedString, type TranslatableString, type TranslationProgress } from "./types";
+import type { TranslatableString, TranslationProgress } from "./types";
 
 const RICH_TEXT_FIELDS = new Set(["headline", "subheader", "html"]);
 
@@ -34,18 +34,25 @@ const pushIfI18n = (
   }
 };
 
-export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[] => {
+export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): TranslatableString[] => {
   const result: TranslatableString[] = [];
 
   // Welcome card
   if (survey.welcomeCard.enabled) {
-    const wc = survey.welcomeCard;
     const base = "welcomeCard";
     const did = "W";
     const eid = "start";
-    pushIfI18n(result, wc, "headline", base, did, "Headline", eid);
-    pushIfI18n(result, wc, "subheader", base, did, "Subheader", eid);
-    pushIfI18n(result, wc, "buttonLabel", base, did, "Button Label", eid);
+    pushIfI18n(result, survey.welcomeCard, "headline", base, did, t("common.headline"), eid);
+    pushIfI18n(result, survey.welcomeCard, "subheader", base, did, t("common.subheader"), eid);
+    pushIfI18n(
+      result,
+      survey.welcomeCard,
+      "buttonLabel",
+      base,
+      did,
+      t("environments.surveys.edit.button_label"),
+      eid
+    );
   }
 
   // Blocks → elements
@@ -57,7 +64,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
       "buttonLabel",
       `blocks.${blockIdx}`,
       `${blockIdx + 1}`,
-      "Button Label",
+      t("environments.surveys.edit.button_label"),
       block.id
     );
     pushIfI18n(
@@ -66,7 +73,7 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
       "backButtonLabel",
       `blocks.${blockIdx}`,
       `${blockIdx + 1}`,
-      "Back Button Label",
+      t("environments.surveys.edit.back_button_label"),
       block.id
     );
 
@@ -76,72 +83,96 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
       const eid = element.id;
 
       // Common fields
-      pushIfI18n(result, element, "headline", base, did, "Headline", eid);
-      pushIfI18n(result, element, "subheader", base, did, "Subheader", eid);
+      pushIfI18n(result, element, "headline", base, did, t("common.headline"), eid);
+      pushIfI18n(result, element, "subheader", base, did, t("common.subheader"), eid);
 
       // Type-specific fields
       switch (element.type) {
         case TSurveyElementTypeEnum.OpenText:
-          pushIfI18n(result, element, "placeholder", base, did, "Placeholder", eid);
+          pushIfI18n(result, element, "placeholder", base, did, t("common.placeholder"), eid);
           break;
         case TSurveyElementTypeEnum.Consent:
-          pushIfI18n(result, element, "label", base, did, "Label", eid);
+          pushIfI18n(result, element, "label", base, did, t("common.label"), eid);
           break;
         case TSurveyElementTypeEnum.MultipleChoiceSingle:
         case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-          const el = element as {
-            choices?: Array<{ label: TI18nString }>;
-            otherOptionPlaceholder?: TI18nString;
-          };
-          el.choices?.forEach((choice, ci) => {
+          element.choices?.forEach((choice, ci) => {
             if (isI18nObject(choice.label) && (choice.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.choices.${ci}.label`,
                 displayId: did,
-                fieldLabel: `Choice ${ci + 1}`,
+                fieldLabel: t("common.choice_n", { n: ci + 1 }),
                 value: choice.label,
                 isRichText: false,
                 elementId: eid,
               });
             }
           });
-          pushIfI18n(result, element, "otherOptionPlaceholder", base, did, "Other Placeholder", eid);
+          pushIfI18n(
+            result,
+            element,
+            "otherOptionPlaceholder",
+            base,
+            did,
+            t("common.other_placeholder"),
+            eid
+          );
           break;
         }
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating:
-          pushIfI18n(result, element, "lowerLabel", base, did, "Lower Label", eid);
-          pushIfI18n(result, element, "upperLabel", base, did, "Upper Label", eid);
+          pushIfI18n(
+            result,
+            element,
+            "lowerLabel",
+            base,
+            did,
+            t("environments.surveys.edit.lower_label"),
+            eid
+          );
+          pushIfI18n(
+            result,
+            element,
+            "upperLabel",
+            base,
+            did,
+            t("environments.surveys.edit.upper_label"),
+            eid
+          );
           break;
         case TSurveyElementTypeEnum.CTA:
-          pushIfI18n(result, element, "ctaButtonLabel", base, did, "CTA Button Label", eid);
+          pushIfI18n(
+            result,
+            element,
+            "ctaButtonLabel",
+            base,
+            did,
+            t("environments.surveys.edit.cta_button_label"),
+            eid
+          );
           break;
         case TSurveyElementTypeEnum.Date:
-          pushIfI18n(result, element, "html", base, did, "HTML", eid);
+          pushIfI18n(result, element, "html", base, did, t("common.html"), eid);
           break;
         case TSurveyElementTypeEnum.Matrix: {
-          const matEl = element as {
-            rows?: Array<{ label: TI18nString }>;
-            columns?: Array<{ label: TI18nString }>;
-          };
-          matEl.rows?.forEach((row, ri) => {
+          element.rows?.forEach((row, ri) => {
             if (isI18nObject(row.label) && (row.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.rows.${ri}.label`,
                 displayId: did,
-                fieldLabel: `Row ${ri + 1}`,
+                fieldLabel: t("common.row_n", { n: ri + 1 }),
                 value: row.label,
                 isRichText: false,
                 elementId: eid,
               });
             }
           });
-          matEl.columns?.forEach((col, ci) => {
+          element.columns?.forEach((col, ci) => {
             if (isI18nObject(col.label) && (col.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.columns.${ci}.label`,
                 displayId: did,
-                fieldLabel: `Column ${ci + 1}`,
+                fieldLabel: t("common.column_n", { n: ci + 1 }),
                 value: col.label,
                 isRichText: false,
                 elementId: eid,
@@ -153,12 +184,12 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
         case TSurveyElementTypeEnum.Address: {
           const addrFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"] as const;
           addrFields.forEach((f) => {
-            const sub = (element as unknown as Record<string, { placeholder?: TI18nString }>)[f];
+            const sub = element[f];
             if (sub?.placeholder && isI18nObject(sub.placeholder) && (sub.placeholder.default ?? "").trim()) {
               result.push({
                 path: `${base}.${f}.placeholder`,
                 displayId: did,
-                fieldLabel: `${f} Placeholder`,
+                fieldLabel: t("common.field_placeholder", { field: f }),
                 value: sub.placeholder,
                 isRichText: false,
                 elementId: eid,
@@ -170,12 +201,12 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
         case TSurveyElementTypeEnum.ContactInfo: {
           const contactFields = ["firstName", "lastName", "email", "phone", "company"] as const;
           contactFields.forEach((f) => {
-            const sub = (element as unknown as Record<string, { placeholder?: TI18nString }>)[f];
+            const sub = element[f];
             if (sub?.placeholder && isI18nObject(sub.placeholder) && (sub.placeholder.default ?? "").trim()) {
               result.push({
                 path: `${base}.${f}.placeholder`,
                 displayId: did,
-                fieldLabel: `${f} Placeholder`,
+                fieldLabel: t("common.field_placeholder", { field: f }),
                 value: sub.placeholder,
                 isRichText: false,
                 elementId: eid,
@@ -185,23 +216,27 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
           break;
         }
         case TSurveyElementTypeEnum.Ranking: {
-          const rankEl = element as {
-            choices?: Array<{ label: TI18nString }>;
-            otherOptionPlaceholder?: TI18nString;
-          };
-          rankEl.choices?.forEach((choice, ci) => {
+          element.choices?.forEach((choice, ci) => {
             if (isI18nObject(choice.label) && (choice.label.default ?? "").trim()) {
               result.push({
                 path: `${base}.choices.${ci}.label`,
                 displayId: did,
-                fieldLabel: `Choice ${ci + 1}`,
+                fieldLabel: t("common.choice_n", { n: ci + 1 }),
                 isRichText: false,
                 value: choice.label,
                 elementId: eid,
               });
             }
           });
-          pushIfI18n(result, element, "otherOptionPlaceholder", base, did, "Other Placeholder", eid);
+          pushIfI18n(
+            result,
+            element,
+            "otherOptionPlaceholder",
+            base,
+            did,
+            t("common.other_placeholder"),
+            eid
+          );
           break;
         }
       }
@@ -214,9 +249,9 @@ export const extractTranslatableStrings = (survey: TSurvey): TranslatableString[
       const base = `endings.${endingIdx}`;
       const did = `E${endingIdx + 1}`;
       const eid = ending.id;
-      pushIfI18n(result, ending, "headline", base, did, "Headline", eid);
-      pushIfI18n(result, ending, "subheader", base, did, "Subheader", eid);
-      pushIfI18n(result, ending, "buttonLabel", base, did, "Button Label", eid);
+      pushIfI18n(result, ending, "headline", base, did, t("common.headline"), eid);
+      pushIfI18n(result, ending, "subheader", base, did, t("common.subheader"), eid);
+      pushIfI18n(result, ending, "buttonLabel", base, did, t("environments.surveys.edit.button_label"), eid);
     }
   });
 
@@ -255,28 +290,6 @@ export const getProgressTextColor = (percentage: number): string => {
   return "text-green-600";
 };
 
-export const deduplicateStrings = (strings: TranslatableString[]): DeduplicatedString[] => {
-  const map = new Map<string, DeduplicatedString>();
-
-  for (const s of strings) {
-    const key = s.value.default ?? "";
-    const existing = map.get(key);
-    if (existing) {
-      existing.duplicatePaths.push(s.path);
-    } else {
-      map.set(key, {
-        key: s.path,
-        displayId: s.displayId,
-        fieldLabel: s.fieldLabel,
-        value: s.value,
-        duplicatePaths: [s.path],
-      });
-    }
-  }
-
-  return Array.from(map.values());
-};
-
 export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: string): TSurvey => {
   const clone = structuredClone(survey);
 
@@ -306,6 +319,37 @@ type Traversable = Record<string, unknown> | unknown[];
 
 const isTraversable = (val: unknown): val is Traversable => val !== null && typeof val === "object";
 
+/**
+ * Mutates the given survey in-place, setting a translation value at the
+ * specified path. Use this inside a loop after cloning once upfront.
+ */
+export const setTranslationAtPathMutable = (
+  survey: TSurvey,
+  path: string,
+  languageCode: string,
+  value: string
+): void => {
+  const parts = path.split(".");
+  if (parts.length === 0) return;
+
+  let current: Traversable = survey;
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    const next: unknown = Array.isArray(current) ? current[Number(part)] : current[part];
+    if (!isTraversable(next)) return;
+    current = next;
+  }
+
+  const lastPart = parts.at(-1);
+  if (!lastPart || Array.isArray(current)) return;
+
+  const target = current[lastPart];
+  if (isTraversable(target) && !Array.isArray(target) && "default" in target) {
+    (target as Record<string, string>)[languageCode] = value;
+  }
+};
+
 export const setTranslationAtPath = (
   survey: TSurvey,
   path: string,
@@ -313,25 +357,6 @@ export const setTranslationAtPath = (
   value: string
 ): TSurvey => {
   const clone = structuredClone(survey);
-  const parts = path.split(".");
-  if (parts.length === 0) return survey;
-
-  let current: Traversable = clone;
-
-  for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i];
-    const next: unknown = Array.isArray(current) ? current[Number(part)] : current[part];
-    if (!isTraversable(next)) return survey;
-    current = next;
-  }
-
-  const lastPart = parts.at(-1);
-  if (!lastPart || Array.isArray(current)) return survey;
-
-  const target = current[lastPart];
-  if (isTraversable(target) && !Array.isArray(target) && "default" in target) {
-    (target as Record<string, string>)[languageCode] = value;
-  }
-
+  setTranslationAtPathMutable(clone, path, languageCode, value);
   return clone;
 };

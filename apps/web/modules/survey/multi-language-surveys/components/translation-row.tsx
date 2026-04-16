@@ -1,5 +1,6 @@
 "use client";
 
+import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Input } from "@/modules/ui/components/input";
@@ -28,7 +29,12 @@ const DefaultTextCell = ({
   }
 
   if (isRichText) {
-    return <div className="text-sm text-slate-700" dangerouslySetInnerHTML={{ __html: text }} />;
+    return (
+      <div
+        className="text-sm text-slate-700"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text) }}
+      />
+    );
   }
 
   return <div className="text-sm text-slate-700">{text}</div>;
@@ -36,6 +42,7 @@ const DefaultTextCell = ({
 
 export const TranslationRow = ({ s, value, onChange, localSurvey, languageCode }: TranslationRowProps) => {
   const { t } = useTranslation();
+
   const defaultText = s.value.default || "";
 
   return (

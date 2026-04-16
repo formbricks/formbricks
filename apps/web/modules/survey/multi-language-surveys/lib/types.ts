@@ -14,11 +14,3 @@ export interface TranslationProgress {
   total: number;
   percentage: number;
 }
-
-export interface DeduplicatedString {
-  key: string;
-  displayId: string;
-  fieldLabel: string;
-  value: TI18nString;
-  duplicatePaths: string[];
-}

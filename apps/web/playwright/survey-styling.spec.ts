@@ -206,8 +206,8 @@ test.describe("Survey Styling", async () => {
     await setColor(page, "Brand color", "e11d48");
     await page.waitForTimeout(500);
 
-    // Click "Suggest colors" button
-    await page.getByRole("button", { name: "Suggest colors" }).click();
+    // Click "Suggest colors" button (the top-level one, not the disabled one inside FormStylingSettings)
+    await page.getByRole("button", { name: "Suggest colors" }).first().click();
 
     // Confirm the dialog
     await page.getByRole("button", { name: "Generate" }).click();

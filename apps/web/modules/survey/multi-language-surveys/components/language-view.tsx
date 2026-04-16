@@ -81,7 +81,7 @@ export const LanguageView = ({
     [localSurvey.languages]
   );
 
-  const translatableStrings = useMemo(() => extractTranslatableStrings(localSurvey), [localSurvey]);
+  const translatableStrings = useMemo(() => extractTranslatableStrings(localSurvey, t), [localSurvey, t]);
 
   const enabledLanguages = getEnabledLanguages(localSurvey.languages);
 

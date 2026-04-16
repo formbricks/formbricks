@@ -26,7 +26,7 @@ import {
   extractTranslatableStrings,
   getProgressColor,
   getProgressTextColor,
-  setTranslationAtPath,
+  setTranslationAtPathMutable,
 } from "../lib/utils";
 import { TranslationRow } from "./translation-row";
 
@@ -51,7 +51,7 @@ export const ManageTranslationsModal = ({
 }: ManageTranslationsModalProps) => {
   const { t } = useTranslation();
 
-  const strings = useMemo(() => extractTranslatableStrings(localSurvey), [localSurvey]);
+  const strings = useMemo(() => extractTranslatableStrings(localSurvey, t), [localSurvey, t]);
 
   const [draftTranslations, setDraftTranslations] = useState<Record<string, string>>({});
   const [missingFirst, setMissingFirst] = useState(false);
@@ -103,14 +103,14 @@ export const ManageTranslationsModal = ({
   // Merge draft translations into localSurvey so that the recall dropdown
   // can see in-progress translations (e.g. translated headlines).
   const mergedSurvey = useMemo(() => {
-    let survey = localSurvey;
+    const clone = structuredClone(localSurvey);
     for (const s of strings) {
       const val = draftTranslations[s.path] ?? "";
       if (val) {
-        survey = setTranslationAtPath(survey, s.path, languageCode, val);
+        setTranslationAtPathMutable(clone, s.path, languageCode, val);
       }
     }
-    return survey;
+    return clone;
   }, [localSurvey, strings, draftTranslations, languageCode]);
 
   const handleDraftChange = useCallback((path: string, value: string) => {
@@ -118,10 +118,10 @@ export const ManageTranslationsModal = ({
   }, []);
 
   const handleSave = () => {
-    let updatedSurvey = localSurvey;
+    const updatedSurvey = structuredClone(localSurvey);
     for (const s of strings) {
       const val = draftTranslations[s.path] ?? "";
-      updatedSurvey = setTranslationAtPath(updatedSurvey, s.path, languageCode, val);
+      setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val);
     }
     setLocalSurvey(updatedSurvey);
     setOpen(false);
@@ -180,7 +180,7 @@ export const ManageTranslationsModal = ({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-slate-500">
-                <th className="w-16 py-2 pr-2 font-medium">ID</th>
+                <th className="w-16 py-2 pr-2 font-medium">{t("common.id")}</th>
                 <th className="w-1/3 py-2 pr-2 font-medium">{defaultLanguageName}</th>
                 <th className="py-2 font-medium">{languageName}</th>
               </tr>
