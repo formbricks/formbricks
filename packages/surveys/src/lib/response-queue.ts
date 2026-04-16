@@ -32,16 +32,32 @@ export const delay = (ms: number): Promise<void> => {
   });
 };
 
+// Module-level locks keyed by surveyId.
+// Survive ResponseQueue instance recreation (e.g. React useMemo recomputation)
+// so that only one sync/send runs at a time per survey, even across instances.
+const syncingBySurvey = new Map<string, boolean>();
+const requestInProgressBySurvey = new Map<string, boolean>();
+
+/** @internal Exposed for tests only. */
+export const _syncLocks = {
+  clear: () => {
+    syncingBySurvey.clear();
+    requestInProgressBySurvey.clear();
+  },
+  set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
+  get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
+  setRequestInProgress: (surveyId: string, value: boolean) => requestInProgressBySurvey.set(surveyId, value),
+  getRequestInProgress: (surveyId: string) => requestInProgressBySurvey.get(surveyId) ?? false,
+};
+
 export class ResponseQueue {
   readonly queue: TResponseUpdate[] = [];
   readonly config: QueueConfig;
   private surveyState: SurveyState;
-  private isRequestInProgress = false;
   readonly api: ApiClient;
   private responseRecaptchaToken?: string;
   // Maps in-memory queue index → IndexedDB id for cleanup after successful send
   private readonly pendingDbIds: Map<TResponseUpdate, number> = new Map();
-  private isSyncing = false;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
@@ -50,6 +66,26 @@ export class ResponseQueue {
       appUrl: config.appUrl,
       environmentId: config.environmentId,
     });
+  }
+
+  private get isSyncing(): boolean {
+    return this.config.surveyId ? (syncingBySurvey.get(this.config.surveyId) ?? false) : false;
+  }
+
+  private set isSyncing(value: boolean) {
+    if (this.config.surveyId) {
+      syncingBySurvey.set(this.config.surveyId, value);
+    }
+  }
+
+  private get isRequestInProgress(): boolean {
+    return this.config.surveyId ? (requestInProgressBySurvey.get(this.config.surveyId) ?? false) : false;
+  }
+
+  private set isRequestInProgress(value: boolean) {
+    if (this.config.surveyId) {
+      requestInProgressBySurvey.set(this.config.surveyId, value);
+    }
   }
 
   setResponseRecaptchaToken(token?: string) {
@@ -111,9 +147,26 @@ export class ResponseQueue {
       return { success: false };
     }
 
-    this.isRequestInProgress = true;
-    const responseUpdate = this.queue[0];
+    // When offline support is active and there are multiple pending entries in
+    // IndexedDB, defer to syncPersistedResponses which drains them in order.
+    // This prevents processQueue and syncPersistedResponses from racing to
+    // create the same response concurrently (duplicate POSTs).
+    if (this.config.persistOffline && this.config.surveyId) {
+      const pendingCount = await countPendingResponses(this.config.surveyId);
 
+      // Re-check after await — another processQueue/sync may have started during the yield
+      if (this.isSyncing || this.isRequestInProgress || this.queue.length === 0) {
+        return { success: false };
+      }
+
+      if (pendingCount > 1) {
+        void this.syncPersistedResponses();
+        return { success: false };
+      }
+    }
+
+    const responseUpdate = this.queue[0];
+    this.isRequestInProgress = true;
     const result = await this.sendResponseWithRetry(responseUpdate);
 
     if (result.success) {
@@ -169,6 +222,11 @@ export class ResponseQueue {
 
     // Concurrency guard: prevent duplicate syncs from online/offline flicker
     if (this.isSyncing) return { success: false, syncedCount: 0 };
+
+    // If processQueue already has a request in flight, don't start syncing —
+    // let it finish first to avoid both paths creating the same response.
+    if (this.isRequestInProgress) return { success: false, syncedCount: 0 };
+
     this.isSyncing = true;
 
     try {
