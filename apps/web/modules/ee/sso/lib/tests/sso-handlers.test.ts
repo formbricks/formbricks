@@ -113,10 +113,14 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/constants", () => ({
-  SKIP_INVITE_FOR_SSO: 0,
-  DEFAULT_TEAM_ID: "team-123",
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    SKIP_INVITE_FOR_SSO: 0,
+    DEFAULT_TEAM_ID: "team-123",
+  };
+});
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),

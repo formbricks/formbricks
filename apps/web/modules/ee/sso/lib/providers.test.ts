@@ -2,21 +2,25 @@ import { describe, expect, test, vi } from "vitest";
 import { getSSOProviders } from "./providers";
 
 // Mock environment variables
-vi.mock("@/lib/constants", () => ({
-  GITHUB_ID: "test-github-id",
-  GITHUB_SECRET: "test-github-secret",
-  GOOGLE_CLIENT_ID: "test-google-client-id",
-  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
-  AZUREAD_CLIENT_ID: "test-azure-client-id",
-  AZUREAD_CLIENT_SECRET: "test-azure-client-secret",
-  AZUREAD_TENANT_ID: "test-azure-tenant-id",
-  OIDC_CLIENT_ID: "test-oidc-client-id",
-  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
-  OIDC_DISPLAY_NAME: "Test OIDC",
-  OIDC_ISSUER: "https://test-issuer.com",
-  OIDC_SIGNING_ALGORITHM: "RS256",
-  WEBAPP_URL: "https://test-app.com",
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    GITHUB_ID: "test-github-id",
+    GITHUB_SECRET: "test-github-secret",
+    GOOGLE_CLIENT_ID: "test-google-client-id",
+    GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+    AZUREAD_CLIENT_ID: "test-azure-client-id",
+    AZUREAD_CLIENT_SECRET: "test-azure-client-secret",
+    AZUREAD_TENANT_ID: "test-azure-tenant-id",
+    OIDC_CLIENT_ID: "test-oidc-client-id",
+    OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+    OIDC_DISPLAY_NAME: "Test OIDC",
+    OIDC_ISSUER: "https://test-issuer.com",
+    OIDC_SIGNING_ALGORITHM: "RS256",
+    WEBAPP_URL: "https://test-app.com",
+  };
+});
 
 describe("SSO Providers", () => {
   test("should return all configured providers", () => {

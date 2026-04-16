@@ -22,9 +22,13 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/constants", () => ({
-  WEBAPP_URL: "http://localhost:3000",
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    WEBAPP_URL: "http://localhost:3000",
+  };
+});
 
 vi.mock("@/lib/jwt", () => ({
   createEmailToken: mocks.createEmailToken,

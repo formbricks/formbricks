@@ -29,9 +29,13 @@ vi.mock("@/modules/email", () => ({
   sendVerificationEmail: vi.fn(),
 }));
 
-vi.mock("@/lib/constants", () => ({
-  WEBAPP_URL: "http://localhost:3000",
-}));
+vi.mock("@/lib/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/constants")>();
+  return {
+    ...actual,
+    WEBAPP_URL: "http://localhost:3000",
+  };
+});
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
