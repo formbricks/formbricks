@@ -23,14 +23,14 @@ export const captureSignIn = async ({
   try {
     const membershipCountPromise = prisma.membership.count({ where: { userId } });
     const resolvedPreviousLastLoginAt =
-      previousLastLoginAt !== undefined
-        ? previousLastLoginAt
-        : (
+      previousLastLoginAt === undefined
+        ? (
             await prisma.user.findUnique({
               where: { id: userId },
               select: { lastLoginAt: true },
             })
-          )?.lastLoginAt;
+          )?.lastLoginAt
+        : previousLastLoginAt;
     const membershipCount = await membershipCountPromise;
 
     capturePostHogEvent(userId, "user_signed_in", {
