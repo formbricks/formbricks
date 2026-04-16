@@ -18,12 +18,12 @@ export function AnalysisSecondaryNavigation({ environmentId }: Readonly<Analysis
     {
       id: "dashboards",
       label: t("common.dashboards"),
-      href: `/environments/${environmentId}/analysis/dashboards`,
+      href: `/environments/${environmentId}/dashboards`,
     },
     {
       id: "charts",
       label: t("common.charts"),
-      href: `/environments/${environmentId}/analysis/charts`,
+      href: `/environments/${environmentId}/charts`,
     },
   ];
 

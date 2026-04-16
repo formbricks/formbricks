@@ -39,19 +39,14 @@ export const DashboardsTable = async ({
               key={dashboard.id}
               className="grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
               <Link
-                href={`/environments/${environmentId}/analysis/dashboards/${dashboard.id}`}
+                href={`/environments/${environmentId}/dashboards/${dashboard.id}`}
                 className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">
                 <div className="col-span-3 flex items-center pl-6 text-sm">
                   <div className="flex items-center gap-4">
                     <div className="w-8 flex-shrink-0 text-slate-500">
                       <BarChart3Icon className="h-5 w-5" />
                     </div>
-                    <div className="flex flex-col">
-                      <div className="font-medium text-slate-900">{dashboard.name}</div>
-                      {dashboard.description && (
-                        <div className="text-xs font-medium text-slate-500">{dashboard.description}</div>
-                      )}
-                    </div>
+                    <div className="font-medium text-slate-900">{dashboard.name}</div>
                   </div>
                 </div>
                 <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">

@@ -19,8 +19,6 @@ interface CreateDashboardDialogProps {
   onOpenChange: (open: boolean) => void;
   dashboardName: string;
   onDashboardNameChange: (name: string) => void;
-  dashboardDescription: string;
-  onDashboardDescriptionChange: (description: string) => void;
   onCreate: () => void;
   isCreating: boolean;
 }
@@ -30,8 +28,6 @@ export const CreateDashboardDialog = ({
   onOpenChange,
   dashboardName,
   onDashboardNameChange,
-  dashboardDescription,
-  onDashboardDescriptionChange,
   onCreate,
   isCreating,
 }: Readonly<CreateDashboardDialogProps>) => {
@@ -64,17 +60,6 @@ export const CreateDashboardDialog = ({
                 value={dashboardName}
                 onChange={(e) => onDashboardNameChange(e.target.value)}
                 autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dashboard-description">
-                {t("environments.analysis.dashboards.description_optional")}
-              </Label>
-              <Input
-                id="dashboard-description"
-                placeholder={t("environments.analysis.dashboards.description_placeholder")}
-                value={dashboardDescription}
-                onChange={(e) => onDashboardDescriptionChange(e.target.value)}
               />
             </div>
           </DialogBody>

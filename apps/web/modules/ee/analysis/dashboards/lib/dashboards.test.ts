@@ -18,13 +18,22 @@ var mockTxChart: { findFirst: ReturnType<typeof vi.fn> }; // NOSONAR / test code
 var mockTxWidget: {
   // NOSONAR / test code
   aggregate: ReturnType<typeof vi.fn>;
+  findMany: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  deleteMany: ReturnType<typeof vi.fn>;
 };
 
 vi.mock("@formbricks/database", () => {
   const txDash = { findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
   const txChart = { findFirst: vi.fn() };
-  const txWidget = { aggregate: vi.fn(), create: vi.fn() };
+  const txWidget = {
+    aggregate: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    deleteMany: vi.fn(),
+  };
   mockTxDashboard = txDash;
   mockTxChart = txChart;
   mockTxWidget = txWidget;
@@ -64,7 +73,6 @@ const mockChartId = "chart-abc-123";
 const selectDashboard = {
   id: true,
   name: true,
-  description: true,
   createdAt: true,
   updatedAt: true,
   createdBy: true,
@@ -73,7 +81,6 @@ const selectDashboard = {
 const mockDashboard = {
   id: mockDashboardId,
   name: "Test Dashboard",
-  description: "A test dashboard",
   createdAt: new Date("2025-01-01"),
   updatedAt: new Date("2025-01-01"),
   createdBy: mockUserId,
@@ -95,7 +102,6 @@ describe("Dashboard Service", () => {
       const result = await createDashboard({
         projectId: mockProjectId,
         name: "Test Dashboard",
-        description: "A test dashboard",
         createdBy: mockUserId,
       });
 
@@ -103,30 +109,6 @@ describe("Dashboard Service", () => {
       expect(prisma.dashboard.create).toHaveBeenCalledWith({
         data: {
           name: "Test Dashboard",
-          description: "A test dashboard",
-          projectId: mockProjectId,
-          createdBy: mockUserId,
-        },
-        select: selectDashboard,
-      });
-    });
-
-    test("creates a dashboard without description", async () => {
-      const dashboardNoDesc = { ...mockDashboard, description: undefined };
-      vi.mocked(prisma.dashboard.create).mockResolvedValue(dashboardNoDesc as any);
-      const { createDashboard } = await import("./dashboards");
-
-      const result = await createDashboard({
-        projectId: mockProjectId,
-        name: "Test Dashboard",
-        createdBy: mockUserId,
-      });
-
-      expect(result).toEqual(dashboardNoDesc);
-      expect(prisma.dashboard.create).toHaveBeenCalledWith({
-        data: {
-          name: "Test Dashboard",
-          description: undefined,
           projectId: mockProjectId,
           createdBy: mockUserId,
         },
@@ -183,7 +165,7 @@ describe("Dashboard Service", () => {
       });
       expect(mockTxDashboard.update).toHaveBeenCalledWith({
         where: { id: mockDashboardId },
-        data: { name: "Updated Dashboard", description: undefined },
+        data: { name: "Updated Dashboard" },
         select: selectDashboard,
       });
     });
@@ -264,14 +246,12 @@ describe("Dashboard Service", () => {
       {
         id: "widget-1",
         chartId: mockChartId,
-        title: "Widget 1",
         layout: { x: 0, y: 0, w: 4, h: 3 },
         order: 0,
       },
       {
         id: "widget-2",
         chartId: "chart-2",
-        title: null,
         layout: { x: 4, y: 0, w: 4, h: 3 },
         order: 1,
       },
@@ -299,20 +279,17 @@ describe("Dashboard Service", () => {
       expect(mockTxDashboard.create).toHaveBeenCalledWith({
         data: {
           name: "Test Dashboard (copy)",
-          description: mockDashboard.description,
           projectId: mockProjectId,
           createdBy: mockUserId,
           widgets: {
             create: [
               {
                 chartId: mockChartId,
-                title: "Widget 1",
                 layout: { x: 0, y: 0, w: 4, h: 3 },
                 order: 0,
               },
               {
                 chartId: "chart-2",
-                title: null,
                 layout: { x: 4, y: 0, w: 4, h: 3 },
                 order: 1,
               },
@@ -483,13 +460,100 @@ describe("Dashboard Service", () => {
     });
   });
 
+  describe("updateWidgetLayouts", () => {
+    const existingWidgets = [{ id: "widget-1" }, { id: "widget-2" }, { id: "widget-3" }];
+
+    const widgetUpdates = [
+      { id: "widget-1", layout: { x: 0, y: 0, w: 6, h: 3 }, order: 0 },
+      { id: "widget-2", layout: { x: 6, y: 0, w: 6, h: 3 }, order: 1 },
+    ];
+
+    test("updates layouts and removes widgets not in the update list", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue({
+        ...mockDashboard,
+        widgets: existingWidgets,
+      });
+      mockTxWidget.update.mockResolvedValue(undefined);
+      mockTxWidget.deleteMany.mockResolvedValue({ count: 1 });
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      const result = await updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates);
+
+      expect(result).toEqual({ widgetCount: 2 });
+      expect(mockTxWidget.update).toHaveBeenCalledTimes(2);
+      expect(mockTxWidget.update).toHaveBeenCalledWith({
+        where: { id: "widget-1" },
+        data: { layout: { x: 0, y: 0, w: 6, h: 3 }, order: 0 },
+      });
+      expect(mockTxWidget.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ["widget-3"] } },
+      });
+    });
+
+    test("skips deleteMany when no widgets are removed", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue({
+        ...mockDashboard,
+        widgets: [{ id: "widget-1" }],
+      });
+      mockTxWidget.update.mockResolvedValue(undefined);
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await updateWidgetLayouts(mockDashboardId, mockProjectId, [
+        { id: "widget-1", layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
+      ]);
+
+      expect(mockTxWidget.deleteMany).not.toHaveBeenCalled();
+    });
+
+    test("throws ResourceNotFoundError when dashboard does not exist", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue(null);
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates)).rejects.toMatchObject({
+        name: "ResourceNotFoundError",
+        resourceType: "Dashboard",
+        resourceId: mockDashboardId,
+      });
+      expect(mockTxWidget.update).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when widget IDs do not belong to dashboard", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue({
+        ...mockDashboard,
+        widgets: [{ id: "widget-1" }],
+      });
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(
+        updateWidgetLayouts(mockDashboardId, mockProjectId, [
+          { id: "widget-1", layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
+          { id: "widget-unknown", layout: { x: 4, y: 0, w: 4, h: 3 }, order: 1 },
+        ])
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+      expect(mockTxWidget.update).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError on Prisma errors", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(makePrismaError("P9999"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+  });
+
   describe("addChartToDashboard", () => {
     const mockLayout = { x: 0, y: 0, w: 4, h: 3 };
     const mockWidget = {
       id: "widget-abc-123",
       dashboardId: mockDashboardId,
       chartId: mockChartId,
-      title: "My Widget",
       layout: mockLayout,
       order: 0,
     };
@@ -498,6 +562,7 @@ describe("Dashboard Service", () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
       mockTxWidget.create.mockResolvedValue(mockWidget);
       const { addChartToDashboard } = await import("./dashboards");
 
@@ -505,7 +570,6 @@ describe("Dashboard Service", () => {
         dashboardId: mockDashboardId,
         chartId: mockChartId,
         projectId: mockProjectId,
-        title: "My Widget",
         layout: mockLayout,
       });
 
@@ -514,7 +578,6 @@ describe("Dashboard Service", () => {
         data: {
           dashboardId: mockDashboardId,
           chartId: mockChartId,
-          title: "My Widget",
           layout: mockLayout,
           order: 0,
         },
@@ -525,6 +588,7 @@ describe("Dashboard Service", () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 2 } });
+      mockTxWidget.findMany.mockResolvedValue([{ layout: { y: 0, h: 3 } }]);
       mockTxWidget.create.mockResolvedValue({ ...mockWidget, order: 3 });
       const { addChartToDashboard } = await import("./dashboards");
 
@@ -584,6 +648,7 @@ describe("Dashboard Service", () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
       mockTxWidget.create.mockRejectedValue(makePrismaError(PrismaErrorType.UniqueConstraintViolation));
       vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
         cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })

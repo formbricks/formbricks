@@ -3,7 +3,6 @@
 import { useTranslation } from "react-i18next";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
-import { ChartBuilderGuide } from "@/modules/ee/analysis/charts/components/chart-builder-guide";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
@@ -111,7 +110,6 @@ export function EditChartView({
               />
             </div>
             <div className="space-y-2">
-              <ChartBuilderGuide />
               <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
             </div>
             <AdvancedChartBuilder

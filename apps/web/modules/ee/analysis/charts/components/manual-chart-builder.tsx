@@ -19,7 +19,7 @@ export function ManualChartBuilder({
   return (
     <div className="space-y-2">
       <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-5 gap-4">
           {chartTypes.map((chart) => {
             const isSelected = selectedChartType === chart.id;
             return (

@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { FEEDBACK_FIELDS, getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
@@ -38,7 +39,9 @@ export function DimensionsPanel({
           onChange={onDimensionsChange}
           placeholder={t("environments.analysis.charts.select_dimensions")}
         />
-        <p className="text-sm text-gray-500">{t("environments.analysis.charts.group_by_description")}</p>
+        <Alert variant="info" size="small">
+          <AlertTitle>{t("environments.analysis.charts.group_by_description")}</AlertTitle>
+        </Alert>
       </div>
     </div>
   );

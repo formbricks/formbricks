@@ -1055,21 +1055,19 @@ model Chart {
 ///
 /// @property id - Unique identifier for the dashboard
 /// @property name - Display name of the dashboard
-/// @property description - Optional description
 /// @property project - The project this dashboard belongs to
 /// @property widgets - Charts on this dashboard
 /// @property createdBy - User who created the dashboard
 model Dashboard {
-  id          String            @id @default(cuid())
-  createdAt   DateTime          @default(now()) @map(name: "created_at")
-  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
-  name        String
-  description String?
-  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
-  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy   String?
-  widgets     DashboardWidget[]
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now()) @map(name: "created_at")
+  updatedAt DateTime          @updatedAt @map(name: "updated_at")
+  name      String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  creator   User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy String?
+  widgets   DashboardWidget[]
 
   @@unique([projectId, name])
   @@index([projectId, createdAt])
@@ -1080,8 +1078,7 @@ model Dashboard {
 ///
 /// @property id - Unique identifier for the widget
 /// @property dashboard - The dashboard this widget belongs to
-/// @property title - Optional title for the widget
-/// @property chart - The chart displayed in this widget
+/// @property chart - The chart displayed in this widget (chart name is used for display)
 /// @property layout - Grid layout configuration (x, y, width, height)
 /// @property order - Display order within the dashboard
 model DashboardWidget {
@@ -1090,7 +1087,6 @@ model DashboardWidget {
   updatedAt   DateTime  @updatedAt @map(name: "updated_at")
   dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
   dashboardId String
-  title       String?
   chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
   chartId     String
   /// [WidgetLayout] - Grid layout: { x, y, w, h }

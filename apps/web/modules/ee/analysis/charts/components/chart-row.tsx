@@ -18,7 +18,7 @@ interface ChartRowProps {
 export function ChartRow({ chart, environmentId, isReadOnly }: Readonly<ChartRowProps>) {
   const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const IconComponent = CHART_TYPE_ICONS[chart.type as keyof typeof CHART_TYPE_ICONS] ?? BarChart3Icon;
+  const IconComponent = CHART_TYPE_ICONS[chart.type] ?? BarChart3Icon;
 
   const handleChartClick = () => {
     if (!isReadOnly) {

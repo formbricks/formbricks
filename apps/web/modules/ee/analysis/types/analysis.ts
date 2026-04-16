@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
+import { TWidgetLayout, ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
 export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number"] as const;
@@ -31,7 +31,7 @@ export type TChartUpdateInput = z.infer<typeof ZChartUpdateInput>;
 export const ZChart = z.object({
   id: ZId,
   name: z.string(),
-  type: z.string(),
+  type: ZChartType,
   query: ZChartQuery,
   config: ZChartConfig,
   createdAt: z.date(),
@@ -58,14 +58,12 @@ export type TChartWithWidgets = z.infer<typeof ZChartWithWidgets>;
 export const ZDashboardCreateInput = z.object({
   projectId: ZId,
   name: z.string().min(1),
-  description: z.string().optional(),
   createdBy: ZId,
 });
 export type TDashboardCreateInput = z.infer<typeof ZDashboardCreateInput>;
 
 export const ZDashboardUpdateInput = z.object({
   name: z.string().min(1).optional(),
-  description: z.string().optional().nullable(),
 });
 export type TDashboardUpdateInput = z.infer<typeof ZDashboardUpdateInput>;
 
@@ -74,7 +72,6 @@ export type TDashboardUpdateInput = z.infer<typeof ZDashboardUpdateInput>;
 export type TDashboard = {
   id: string;
   name: string;
-  description: string | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string | null;
@@ -91,11 +88,24 @@ export const ZAddWidgetInput = z.object({
   dashboardId: ZId,
   chartId: ZId,
   projectId: ZId,
-  title: z.string().optional(),
   layout: ZWidgetLayout,
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 
+// ── Widget output type (matches getDashboard widget include) ────────────────
+
+export type TDashboardWidget = {
+  id: string;
+  dashboardId: string;
+  chartId: string;
+  layout: TWidgetLayout;
+  order: number;
+  chart: TChart;
+};
+
+export type TDashboardDetail = TDashboard & {
+  widgets: TDashboardWidget[];
+};
 // ── Charts UI (query execution, AI response) ─────────────────────────────────
 
 /** Row from Cube.js tablePivot - keys are measure/dimension names, values are primitives */

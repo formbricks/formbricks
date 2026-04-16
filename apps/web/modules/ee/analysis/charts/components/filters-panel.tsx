@@ -113,7 +113,7 @@ export function FiltersPanel({
   return (
     <div className="w-full space-y-2">
       {hasMultipleFilters && (
-        <div className={`flex items-center ${hideTitle ? "justify-end" : "justify-between"}`}>
+        <div className={`flex items-center ${hideTitle ? "justify-start" : "justify-between"}`}>
           {!hideTitle && (
             <h3 className="text-md font-semibold text-gray-900">
               {t("environments.analysis.charts.filters")}
@@ -124,7 +124,7 @@ export function FiltersPanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="and">{t("common.and")}</SelectItem>
+              <SelectItem value="and">{t("environments.analysis.charts.and_filter_logic")}</SelectItem>
               <SelectItem value="or">{t("environments.analysis.charts.or_filter_logic")}</SelectItem>
             </SelectContent>
           </Select>

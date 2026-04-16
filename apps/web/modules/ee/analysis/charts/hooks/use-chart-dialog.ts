@@ -271,7 +271,6 @@ export function useChartDialog({
         environmentId,
         chartId: chartIdToUse,
         dashboardId: selectedDashboardId,
-        title: chartName.trim(),
       });
 
       if (!widgetResult?.data) {
