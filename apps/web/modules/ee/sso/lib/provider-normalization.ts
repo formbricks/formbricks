@@ -13,10 +13,16 @@ const LEGACY_SSO_PROVIDER_ALIASES: Partial<Record<IdentityProvider, string[]>> =
   azuread: ["azure-ad"],
 };
 
-export const normalizeSsoProvider = (provider: string): IdentityProvider | null => {
-  const normalizedProvider = SSO_PROVIDER_MAP[provider.toLowerCase()];
+const isSupportedSsoProvider = (provider: string): provider is keyof typeof SSO_PROVIDER_MAP =>
+  provider in SSO_PROVIDER_MAP;
 
-  return normalizedProvider ?? null;
+export const normalizeSsoProvider = (provider: string): IdentityProvider | null => {
+  const normalizedProviderKey = provider.toLowerCase();
+  if (!isSupportedSsoProvider(normalizedProviderKey)) {
+    return null;
+  }
+
+  return SSO_PROVIDER_MAP[normalizedProviderKey];
 };
 
 export const getLegacySsoProviderAliases = (provider: IdentityProvider): string[] =>
