@@ -141,7 +141,6 @@ function DropdownVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
-  required,
   searchPlaceholder,
   searchNoResultsText,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
@@ -330,7 +329,6 @@ function ListVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
-  required,
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
 
