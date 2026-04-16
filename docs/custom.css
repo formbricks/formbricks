@@ -1,0 +1,5 @@
+/* Fix Formbricks survey radio/checkbox inputs showing grey on dark mode sites */
+#formbricks-modal-container [data-slot="radio-group-item"],
+#formbricks-modal-container [data-slot="checkbox"] {
+  background-color: white !important;
+}
