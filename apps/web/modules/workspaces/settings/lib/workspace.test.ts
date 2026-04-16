@@ -111,6 +111,42 @@ describe("workspace lib", () => {
       expect(prisma.feedbackRecordDirectory.upsert).toHaveBeenCalled();
     });
 
+    test("creates workspace and links default FRD when first workspace", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p3" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.feedbackRecordDirectory.upsert).mockResolvedValueOnce({ id: "frd-1" } as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.count).mockResolvedValueOnce(0);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.create).mockResolvedValueOnce({} as any);
+
+      await createWorkspace("org1", { name: "Workspace No Teams" });
+
+      expect(prisma.feedbackRecordDirectory.upsert).toHaveBeenCalledWith({
+        where: {
+          organizationId_name: { organizationId: "org1", name: "Default Feedback Record Directory" },
+        },
+        create: { name: "Default Feedback Record Directory", organizationId: "org1" },
+        update: {},
+        select: { id: true },
+      });
+      expect(prisma.feedbackRecordDirectoryWorkspace.count).toHaveBeenCalledWith({
+        where: { feedbackRecordDirectoryId: "frd-1" },
+      });
+      expect(prisma.feedbackRecordDirectoryWorkspace.create).toHaveBeenCalledWith({
+        data: { feedbackRecordDirectoryId: "frd-1", workspaceId: "p3" },
+      });
+    });
+
+    test("skips FRD link when default FRD already has links", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p4" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.feedbackRecordDirectory.upsert).mockResolvedValueOnce({ id: "frd-1" } as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.count).mockResolvedValueOnce(1);
+
+      await createWorkspace("org1", { name: "Second Workspace" });
+
+      expect(prisma.feedbackRecordDirectoryWorkspace.create).not.toHaveBeenCalled();
+    });
+
     test("throws ValidationError if name is missing", async () => {
       await expect(createWorkspace("org1", {})).rejects.toThrow(ValidationError);
     });
