@@ -16,13 +16,6 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
-import {
   FEEDBACK_RECORD_FIELDS,
   SAMPLE_CSV_COLUMNS,
   TFieldMapping,

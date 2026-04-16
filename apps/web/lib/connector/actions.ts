@@ -168,7 +168,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
       where: { id: parsedInput.connectorInput.feedbackRecordDirectoryId },
       select: { organizationId: true },
     });
-    if (!frd || frd.organizationId !== organizationId) {
+    if (frd?.organizationId !== organizationId) {
       throw new AuthorizationError("Invalid feedback record directory");
     }
 
