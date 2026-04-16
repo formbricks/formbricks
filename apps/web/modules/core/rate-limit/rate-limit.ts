@@ -82,6 +82,7 @@ export const checkRateLimit = async (
 
     const response: TRateLimitResponse = {
       allowed: isAllowed === 1,
+      retryAfter: isAllowed === 1 ? undefined : ttlSeconds,
     };
 
     // Log rate limit violations for security monitoring

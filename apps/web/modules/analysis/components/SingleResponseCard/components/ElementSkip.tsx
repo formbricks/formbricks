@@ -5,7 +5,9 @@ import { useTranslation } from "react-i18next";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getSurveyDateFormatMap } from "@/lib/utils/date-display";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
@@ -15,6 +17,7 @@ interface ElementSkipProps {
   elements: TSurveyElement[];
   isFirstElementAnswered?: boolean;
   responseData: TResponseData;
+  locale: TUserLocale;
 }
 
 export const ElementSkip = ({
@@ -23,8 +26,10 @@ export const ElementSkip = ({
   elements,
   isFirstElementAnswered,
   responseData,
+  locale,
 }: ElementSkipProps) => {
   const { t } = useTranslation();
+  const dateFormats = getSurveyDateFormatMap(elements);
   return (
     <div>
       {skippedElements && (
@@ -62,7 +67,7 @@ export const ElementSkip = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p data-testid="tooltip-respondent_skipped_questions">
-                          {t("environments.surveys.responses.respondent_skipped_questions")}
+                          {t("workspace.surveys.responses.respondent_skipped_questions")}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -81,7 +86,11 @@ export const ElementSkip = ({
                             },
                             "default"
                           ),
-                          responseData
+                          responseData,
+                          undefined,
+                          false,
+                          locale,
+                          dateFormats
                         )
                       )}
                     </p>
@@ -106,7 +115,7 @@ export const ElementSkip = ({
                 <p
                   data-testid="tooltip-survey_closed"
                   className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
-                  {t("environments.surveys.responses.survey_closed")}
+                  {t("workspace.surveys.responses.survey_closed")}
                 </p>
                 {skippedElements &&
                   skippedElements.map((questionId) => {
@@ -120,7 +129,11 @@ export const ElementSkip = ({
                               },
                               "default"
                             ),
-                            responseData
+                            responseData,
+                            undefined,
+                            false,
+                            locale,
+                            dateFormats
                           )
                         )}
                       </p>

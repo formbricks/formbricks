@@ -2,29 +2,27 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
-import { updateProjectBranding } from "@/modules/ee/whitelabel/remove-branding/lib/project";
-import { ZProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
-import { getProject } from "@/modules/survey/editor/lib/project";
+import { updateWorkspaceBranding } from "@/modules/ee/whitelabel/remove-branding/lib/workspace";
+import { ZWorkspaceUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/workspace";
+import { getWorkspace } from "@/modules/survey/editor/lib/workspace";
 
-const ZUpdateProjectAction = z.object({
-  projectId: ZId,
-  data: ZProjectUpdateBrandingInput,
+const ZUpdateWorkspaceAction = z.object({
+  workspaceId: ZId,
+  data: ZWorkspaceUpdateBrandingInput,
 });
 
-export const updateProjectBrandingAction = authenticatedActionClient.schema(ZUpdateProjectAction).action(
-  withAuditLogging(
-    "updated",
-    "project",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
+export const updateWorkspaceBrandingAction = authenticatedActionClient
+  .inputSchema(ZUpdateWorkspaceAction)
+  .action(
+    withAuditLogging("updated", "workspace", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -35,8 +33,8 @@ export const updateProjectBrandingAction = authenticatedActionClient.schema(ZUpd
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
-            projectId: parsedInput.projectId,
+            type: "workspaceTeam",
+            workspaceId: parsedInput.workspaceId,
             minPermission: "manage",
           },
         ],
@@ -49,9 +47,9 @@ export const updateProjectBrandingAction = authenticatedActionClient.schema(ZUpd
         const organization = await getOrganization(organizationId);
 
         if (!organization) {
-          throw new Error("Organization not found");
+          throw new ResourceNotFoundError("Organization", organizationId);
         }
-        const canRemoveBranding = await getRemoveBrandingPermission(organization.billing.plan);
+        const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
 
         if (parsedInput.data.inAppSurveyBranding !== undefined) {
           if (!canRemoveBranding) {
@@ -67,11 +65,10 @@ export const updateProjectBrandingAction = authenticatedActionClient.schema(ZUpd
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.projectId = parsedInput.projectId;
-      ctx.auditLoggingCtx.oldObject = await getProject(parsedInput.projectId);
-      const result = await updateProjectBranding(parsedInput.projectId, parsedInput.data);
-      ctx.auditLoggingCtx.newObject = await getProject(parsedInput.projectId);
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      ctx.auditLoggingCtx.oldObject = await getWorkspace(parsedInput.workspaceId);
+      const result = await updateWorkspaceBranding(parsedInput.workspaceId, parsedInput.data);
+      ctx.auditLoggingCtx.newObject = await getWorkspace(parsedInput.workspaceId);
       return result;
-    }
-  )
-);
+    })
+  );

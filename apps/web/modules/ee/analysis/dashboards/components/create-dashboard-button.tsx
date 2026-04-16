@@ -11,10 +11,10 @@ import { CreateDashboardDialog } from "@/modules/ee/analysis/dashboards/componen
 import { Button } from "@/modules/ui/components/button";
 
 interface CreateDashboardButtonProps {
-  environmentId: string;
+  workspaceId: string;
 }
 
-export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboardButtonProps>) => {
+export const CreateDashboardButton = ({ workspaceId }: Readonly<CreateDashboardButtonProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -30,14 +30,14 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
 
   const handleCreate = async () => {
     if (!dashboardName.trim()) {
-      toast.error(t("environments.analysis.dashboards.please_enter_name"));
+      toast.error(t("workspace.analysis.dashboards.please_enter_name"));
       return;
     }
 
     setIsCreating(true);
     try {
       const result = await createDashboardAction({
-        environmentId,
+        workspaceId,
         name: dashboardName.trim(),
       });
 
@@ -47,11 +47,11 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
         return;
       }
 
-      toast.success(t("environments.analysis.dashboards.create_success"));
+      toast.success(t("workspace.analysis.dashboards.create_success"));
       handleOpenChange(false);
-      router.push(`/environments/${environmentId}/dashboards/${result.data.id}`);
+      router.push(`/workspaces/${workspaceId}/dashboards/${result.data.id}`);
     } catch {
-      toast.error(t("environments.analysis.dashboards.create_failed"));
+      toast.error(t("workspace.analysis.dashboards.create_failed"));
     } finally {
       setIsCreating(false);
     }
@@ -61,7 +61,7 @@ export const CreateDashboardButton = ({ environmentId }: Readonly<CreateDashboar
     <>
       <Button size="sm" onClick={() => handleOpenChange(true)}>
         <PlusIcon className="mr-2 h-4 w-4" />
-        {t("environments.analysis.dashboards.create_dashboard")}
+        {t("workspace.analysis.dashboards.create_dashboard")}
       </Button>
       <CreateDashboardDialog
         open={isCreateDialogOpen}

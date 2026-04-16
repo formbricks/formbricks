@@ -4,7 +4,12 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
@@ -40,11 +45,13 @@ export const EditWelcomeCard = ({
   const { t } = useTranslation();
 
   const path = usePathname();
-  const environmentId = path?.split("/environments/")[1]?.split("/")[0];
+  // Parse workspace ID from path to build the base path for file uploads
+  const workspaceId =
+    path?.split("/environments/")[1]?.split("/")[0] ?? path?.split("/workspaces/")[1]?.split("/")[0];
 
   let open = activeElementId == "start";
 
-  const setOpen = (e) => {
+  const setOpen = (e: boolean) => {
     if (e) {
       setActiveElementId("start");
     } else {
@@ -52,7 +59,9 @@ export const EditWelcomeCard = ({
     }
   };
 
-  const updateSurvey = (data: Partial<TSurveyWelcomeCard>) => {
+  const updateSurvey = (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => {
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -114,17 +123,28 @@ export const EditWelcomeCard = ({
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`}>
           <form>
             <div className="mt-2">
-              <Label htmlFor="companyLogo">{t("environments.surveys.edit.company_logo")}</Label>
+              <Label htmlFor="companyLogo">{t("workspace.surveys.edit.company_logo")}</Label>
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-                environmentId={environmentId}
-                onFileUpload={(url: string[]) => {
-                  updateSurvey({ fileUrl: url[0] });
+                workspaceId={workspaceId}
+                onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                  if (url?.length && url[0]) {
+                    const update =
+                      fileType === "video"
+                        ? { videoUrl: url[0], fileUrl: undefined }
+                        : { fileUrl: url[0], videoUrl: undefined };
+                    updateSurvey(update);
+                  } else {
+                    updateSurvey({ fileUrl: undefined, videoUrl: undefined });
+                  }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                videoUrl={localSurvey?.welcomeCard?.videoUrl}
+                isVideoAllowed={true}
+                maxSizeInMB={5}
                 isStorageConfigured={isStorageConfigured}
               />
             </div>
@@ -148,7 +168,7 @@ export const EditWelcomeCard = ({
               <ElementFormInput
                 id="subheader"
                 value={localSurvey.welcomeCard.subheader}
-                label={t("environments.surveys.edit.welcome_message")}
+                label={t("workspace.surveys.edit.welcome_message")}
                 localSurvey={localSurvey}
                 elementIdx={-1}
                 isInvalid={isInvalid}
@@ -175,7 +195,7 @@ export const EditWelcomeCard = ({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
-                    label={t("environments.surveys.edit.next_button_label")}
+                    label={t("workspace.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
                     isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -197,7 +217,7 @@ export const EditWelcomeCard = ({
               <div className="flex-column">
                 <Label htmlFor="timeToFinish">{t("common.time_to_finish")}</Label>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t("environments.surveys.edit.display_an_estimate_of_completion_time_for_survey")}
+                  {t("workspace.surveys.edit.display_an_estimate_of_completion_time_for_survey")}
                 </div>
               </div>
             </div>
@@ -216,7 +236,7 @@ export const EditWelcomeCard = ({
                 <div className="flex-column">
                   <Label htmlFor="showResponseCount">{t("common.show_response_count")}</Label>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {t("environments.surveys.edit.display_number_of_responses_for_survey")}
+                    {t("workspace.surveys.edit.display_number_of_responses_for_survey")}
                   </div>
                 </div>
               </div>

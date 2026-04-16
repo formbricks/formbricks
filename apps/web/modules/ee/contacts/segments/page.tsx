@@ -4,25 +4,21 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attri
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
-export const SegmentsPage = async ({
-  params: paramsProps,
-}: {
-  params: Promise<{ environmentId: string }>;
-}) => {
+export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
   const params = await paramsProps;
   const t = await getTranslate();
 
-  const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [segments, contactAttributeKeys] = await Promise.all([
-    getSegments(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
+    getSegments(workspace.id),
+    getContactAttributeKeys(workspace.id),
   ]);
 
-  const isContactsEnabled = await getIsContactsEnabled();
+  const isContactsEnabled = await getIsContactsEnabled(organization.id);
 
   if (!segments) {
     throw new Error("Failed to fetch segments");
@@ -34,19 +30,21 @@ export const SegmentsPage = async ({
     <ContactsPageLayout
       pageTitle={t("common.contacts")}
       activeId="segments"
-      environmentId={params.environmentId}
+      workspaceId={params.workspaceId}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
       cta={
         <CreateSegmentModal
-          environmentId={params.environmentId}
           contactAttributeKeys={contactAttributeKeys}
           segments={filteredSegments}
+          workspaceId={workspace.id}
         />
       }
-      upgradePromptTitle={t("environments.segments.unlock_segments_title")}
-      upgradePromptDescription={t("environments.segments.unlock_segments_description")}>
+      upgradePromptTitle={t("workspace.segments.unlock_segments_title")}
+      upgradePromptDescription={t("workspace.segments.unlock_segments_description")}
+      upgradeFeature="segments">
       <SegmentTable
+        allSegments={segments}
         segments={filteredSegments}
         contactAttributeKeys={contactAttributeKeys}
         isContactsEnabled={isContactsEnabled}

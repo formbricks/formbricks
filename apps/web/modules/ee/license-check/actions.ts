@@ -10,9 +10,10 @@ import {
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
@@ -26,13 +27,13 @@ import {
 } from "./lib/license";
 
 const ZRecheckLicenseAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export type TRecheckLicenseAction = z.infer<typeof ZRecheckLicenseAction>;
 
 export const recheckLicenseAction = authenticatedActionClient
-  .schema(ZRecheckLicenseAction)
+  .inputSchema(ZRecheckLicenseAction)
   .action(
     async ({
       ctx,
@@ -49,8 +50,9 @@ export const recheckLicenseAction = authenticatedActionClient
         throw new OperationNotAllowedError("License recheck is only available on self-hosted instances");
       }
 
-      // Get organization from environment
-      const organization = await getOrganizationByEnvironmentId(parsedInput.environmentId);
+      // Get organization from workspace
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const organization = await getOrganization(organizationId);
       if (!organization) {
         throw new ResourceNotFoundError("Organization", null);
       }
@@ -75,9 +77,13 @@ export const recheckLicenseAction = authenticatedActionClient
       try {
         freshLicense = await fetchLicenseFresh();
       } catch (error) {
-        // 400 = invalid license key — return directly so the UI shows the correct message
-        if (error instanceof LicenseApiError && error.status === 400) {
-          return { active: false, status: "invalid_license" as const };
+        // 400 = invalid license key, 403 = license bound to another instance.
+        // Return directly so the UI shows the correct message.
+        if (error instanceof LicenseApiError && (error.status === 400 || error.status === 403)) {
+          return {
+            active: false,
+            status: error.status === 400 ? ("invalid_license" as const) : ("instance_mismatch" as const),
+          };
         }
         throw error;
       }

@@ -24,7 +24,9 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
     z.object({
       type: z.literal("static"),
       value: z
-        .string({ message: "Conditional Logic: Value must be a string for text variable" })
+        .string({
+          error: "Conditional Logic: Value must be a string for text variable",
+        })
         .min(1, "Conditional Logic: Please enter a value in logic field"),
     }),
     ZDynamicLogicFieldValue,
@@ -36,14 +38,16 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   value: z.union([
     z.object({
       type: z.literal("static"),
-      value: z.number({ message: "Conditional Logic: Value must be a number for number variable" }),
+      value: z.number({
+        error: "Conditional Logic: Value must be a number for number variable",
+      }),
     }),
     ZDynamicLogicFieldValue,
   ]),
 }).superRefine((val, ctx) => {
   if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Conditional Logic: Cannot divide by zero",
       path: ["value", "value"],
     });
@@ -68,7 +72,7 @@ export const ZActionRequireAnswer = z.object({
       const idParsed = ZSurveyElementId.safeParse(id);
       if (!idParsed.success) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           // This is not possible from the UI hence we can use the term "element" instead of "question"
           message: "Conditional Logic: Target element id is not a valid element id",
           path: ["target"],
@@ -91,7 +95,7 @@ export const ZActionJumpToBlock = z.object({
       const idParsed = ZSurveyBlockId.safeParse(id);
       if (!idParsed.success) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Conditional Logic: Target block id is not a valid block id",
         });
       }
@@ -120,8 +124,12 @@ export type TSurveyBlockLogic = z.infer<typeof ZSurveyBlockLogic>;
 export const ZSurveyBlock = z
   .object({
     id: ZSurveyBlockId, // CUID
-    name: z.string().min(1, { message: "Block name is required" }), // REQUIRED for editor
-    elements: ZSurveyElements.min(1, { message: "Block must have at least one element" }),
+    name: z.string().min(1, {
+      error: "Block name is required",
+    }), // REQUIRED for editor
+    elements: ZSurveyElements.min(1, {
+      error: "Block must have at least one element",
+    }),
     logic: z.array(ZSurveyBlockLogic).optional(),
     logicFallback: ZSurveyBlockId.optional(),
     buttonLabel: ZI18nString.optional(),
@@ -133,7 +141,7 @@ export const ZSurveyBlock = z
     const uniqueElementIds = new Set(elementIds);
     if (uniqueElementIds.size !== elementIds.length) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Element IDs must be unique within a block",
         path: [elementIds.findIndex((id, index) => elementIds.indexOf(id) !== index), "id"],
       });

@@ -28,7 +28,9 @@ export const getResponse = reactCache(async (responseId: string) => {
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "response", issue: error.message }],
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -55,7 +57,7 @@ export const getResponseForPipeline = async (
                 createdAt: true,
                 updatedAt: true,
                 name: true,
-                environmentId: true,
+                workspaceId: true,
               },
             },
           },
@@ -80,7 +82,9 @@ export const getResponseForPipeline = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "response", issue: error.message }],
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -105,7 +109,11 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
       return { ok: false, error: surveyQuestionsResult.error as ApiErrorResponseV2 };
     }
 
-    await findAndDeleteUploadedFilesInResponse(deletedResponse.data, surveyQuestionsResult.data.questions);
+    await findAndDeleteUploadedFilesInResponse(
+      deletedResponse.data,
+      surveyQuestionsResult.data.questions,
+      surveyQuestionsResult.data.workspaceId
+    );
 
     return ok(deletedResponse);
   } catch (error) {
@@ -123,7 +131,9 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
     return err({
       type: "internal_server_error",
-      details: [{ field: "response", issue: error.message }],
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -157,7 +167,9 @@ export const updateResponse = async (
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "response", issue: error.message }],
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

@@ -22,14 +22,14 @@ export function getChartTypes(t: TFunction): readonly {
   label: string;
 }[] {
   return [
-    { id: "area", icon: CHART_TYPE_ICONS.area, label: t("environments.analysis.charts.chart_type_area") },
-    { id: "bar", icon: CHART_TYPE_ICONS.bar, label: t("environments.analysis.charts.chart_type_bar") },
-    { id: "line", icon: CHART_TYPE_ICONS.line, label: t("environments.analysis.charts.chart_type_line") },
-    { id: "pie", icon: CHART_TYPE_ICONS.pie, label: t("environments.analysis.charts.chart_type_pie") },
+    { id: "area", icon: CHART_TYPE_ICONS.area, label: t("workspace.analysis.charts.chart_type_area") },
+    { id: "bar", icon: CHART_TYPE_ICONS.bar, label: t("workspace.analysis.charts.chart_type_bar") },
+    { id: "line", icon: CHART_TYPE_ICONS.line, label: t("workspace.analysis.charts.chart_type_line") },
+    { id: "pie", icon: CHART_TYPE_ICONS.pie, label: t("workspace.analysis.charts.chart_type_pie") },
     {
       id: "big_number",
       icon: CHART_TYPE_ICONS.big_number,
-      label: t("environments.analysis.charts.chart_type_big_number"),
+      label: t("workspace.analysis.charts.chart_type_big_number"),
     },
   ];
 }

@@ -26,14 +26,14 @@ export const CopySurveyModal = ({ open, setOpen, survey }: CopySurveyModalProps)
       <DialogContent className="max-h-[600px]">
         <DialogHeader>
           <MousePointerClickIcon />
-          <DialogTitle>{t("environments.surveys.copy_survey")}</DialogTitle>
-          <DialogDescription>{t("environments.surveys.copy_survey_description")}</DialogDescription>
+          <DialogTitle>{t("workspace.surveys.copy_survey")}</DialogTitle>
+          <DialogDescription>{t("workspace.surveys.copy_survey_description")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody>
           <SurveyCopyOptions
             survey={survey}
-            environmentId={survey.environmentId}
+            workspaceId={survey.workspaceId}
             onCancel={() => setOpen(false)}
             setOpen={setOpen}
           />

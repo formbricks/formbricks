@@ -39,7 +39,8 @@ export const MembersInfo = ({
   isUserManagementDisabledFromUi,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   const getMembershipBadge = (member: TMember | TInvite) => {
     if (isInvitee(member)) {
@@ -47,8 +48,8 @@ export const MembersInfo = ({
         <Badge type="gray" text="Expired" size="tiny" data-testid="expired-badge" />
       ) : (
         <TooltipRenderer
-          tooltipContent={`${t("environments.settings.general.invite_expires_on", {
-            date: formatDateWithOrdinal(member.expiresAt),
+          tooltipContent={`${t("workspace.settings.general.invite_expires_on", {
+            date: formatDateWithOrdinal(member.expiresAt, locale),
           })}`}>
           <Badge type="warning" text="Pending" size="tiny" />
         </TooltipRenderer>

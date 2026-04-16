@@ -13,10 +13,10 @@ vi.mock("@formbricks/database", () => ({
 
 describe("getSurvey", () => {
   const mockSurveyId = "survey-123";
-  const mockEnvironmentId = "env-456";
+  const mockWorkspaceId = "workspace-456";
   const mockSurvey = {
     id: mockSurveyId,
-    environmentId: mockEnvironmentId,
+    workspaceId: mockWorkspaceId,
   };
 
   beforeEach(() => {
@@ -28,7 +28,9 @@ describe("getSurvey", () => {
   });
 
   test("should return survey data when survey is found", async () => {
-    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(mockSurvey);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(
+      mockSurvey as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+    );
 
     const result = await getSurvey(mockSurveyId);
 
@@ -36,7 +38,7 @@ describe("getSurvey", () => {
       where: { id: mockSurveyId },
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         status: true,
         type: true,
       },
@@ -57,7 +59,7 @@ describe("getSurvey", () => {
       where: { id: mockSurveyId },
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         status: true,
         type: true,
       },

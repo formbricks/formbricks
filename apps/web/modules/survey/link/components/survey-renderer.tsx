@@ -1,14 +1,15 @@
 import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import {
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
   IS_RECAPTCHA_CONFIGURED,
   PRIVACY_URL,
   RECAPTCHA_SITE_KEY,
+  TERMS_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
@@ -16,8 +17,8 @@ import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-cli
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
-import { TEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
   survey: TSurvey;
@@ -33,9 +34,8 @@ interface SurveyRendererProps {
   contactId?: string;
   isPreview: boolean;
   // New props - pre-fetched in parent
-  environmentContext: TEnvironmentContextForLinkSurvey;
+  workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
-  isMultiLanguageAllowed: boolean;
   responseCount?: number;
 }
 
@@ -46,9 +46,8 @@ interface SurveyRendererProps {
  * database queries. The parent (page.tsx) fetches data in parallel stages
  * to minimize latency for users geographically distant from servers.
  *
- * @param environmentContext - Pre-fetched project and organization data
+ * @param environmentContext - Pre-fetched workspace and organization data
  * @param locale - User's locale from Accept-Language header
- * @param isMultiLanguageAllowed - Calculated from organization billing plan
  * @param responseCount - Conditionally fetched if showResponseCount is enabled
  */
 export const renderSurvey = async ({
@@ -58,9 +57,8 @@ export const renderSurvey = async ({
   singleUseResponse,
   contactId,
   isPreview,
-  environmentContext,
+  workspaceContext,
   locale,
-  isMultiLanguageAllowed,
   responseCount,
 }: SurveyRendererProps) => {
   const langParam = searchParams.lang;
@@ -70,8 +68,8 @@ export const renderSurvey = async ({
     notFound();
   }
 
-  // Extract project from pre-fetched context
-  const { project } = environmentContext;
+  // Extract workspace from pre-fetched context
+  const { workspace } = workspaceContext;
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
@@ -80,14 +78,14 @@ export const renderSurvey = async ({
       <SurveyInactive
         status={survey.status}
         surveyClosedMessage={survey.surveyClosedMessage}
-        project={project}
+        workspace={workspace}
       />
     );
   }
 
   // Check if single-use survey has already been completed
   if (singleUseResponse?.finished) {
-    return <SurveyCompletedMessage singleUseMessage={survey.singleUse} project={project} />;
+    return <SurveyCompletedMessage singleUseMessage={survey.singleUse} workspace={workspace} />;
   }
 
   // Handle email verification flow if enabled
@@ -110,8 +108,8 @@ export const renderSurvey = async ({
         <VerifyEmail
           survey={survey}
           isErrorComponent={true}
-          languageCode={getLanguageCode(langParam, isMultiLanguageAllowed, survey)}
-          styling={project.styling}
+          languageCode={getLanguageCode(langParam, survey)}
+          styling={workspace.styling}
           locale={locale}
         />
       );
@@ -120,16 +118,16 @@ export const renderSurvey = async ({
       <VerifyEmail
         singleUseId={searchParams.suId ?? ""}
         survey={survey}
-        languageCode={getLanguageCode(langParam, isMultiLanguageAllowed, survey)}
-        styling={project.styling}
+        languageCode={getLanguageCode(langParam, survey)}
+        styling={workspace.styling}
         locale={locale}
       />
     );
   }
 
-  // Compute final styling based on project and survey settings
-  const styling = computeStyling(project.styling, survey.styling);
-  const languageCode = getLanguageCode(langParam, isMultiLanguageAllowed, survey);
+  // Compute final styling based on workspace and survey settings
+  const styling = computeStyling(workspace.styling, survey.styling);
+  const languageCode = getLanguageCode(langParam, survey);
   const publicDomain = getPublicDomain();
 
   // Handle PIN-protected surveys
@@ -139,11 +137,12 @@ export const renderSurvey = async ({
         surveyId={survey.id}
         styling={styling}
         publicDomain={publicDomain}
-        project={project}
+        workspace={workspace}
         singleUseId={singleUseId}
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        TERMS_URL={TERMS_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
@@ -161,7 +160,7 @@ export const renderSurvey = async ({
   return (
     <SurveyClientWrapper
       survey={survey}
-      project={project}
+      workspace={workspace}
       styling={styling}
       publicDomain={publicDomain}
       responseCount={responseCount}
@@ -176,40 +175,37 @@ export const renderSurvey = async ({
       verifiedEmail={verifiedEmail}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
+      TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );
 };
 
 /**
- * Determines which styling to use based on project and survey settings.
- * Returns survey styling if theme overwriting is enabled, otherwise returns project styling.
+ * Determines which styling to use based on workspace and survey settings.
+ * Returns survey styling if theme overwriting is enabled, otherwise returns workspace styling.
  */
 function computeStyling(
-  projectStyling: TProjectStyling,
+  workspaceStyling: TWorkspaceStyling,
   surveyStyling?: TSurveyStyling | null
-): TProjectStyling | TSurveyStyling {
-  if (!projectStyling.allowStyleOverwrite) {
-    return projectStyling;
+): TWorkspaceStyling | TSurveyStyling {
+  if (!workspaceStyling.allowStyleOverwrite) {
+    return workspaceStyling;
   }
-  return surveyStyling?.overwriteThemeStyling ? surveyStyling : projectStyling;
+  return surveyStyling?.overwriteThemeStyling ? surveyStyling : workspaceStyling;
 }
 
 /**
  * Determines the language code to use for the survey.
  * Checks URL parameter against available survey languages and returns
- * "default" if multi-language is not allowed or language is not found.
+ * "default" if language is not found or disabled.
  */
-function getLanguageCode(
-  langParam: string | undefined,
-  isMultiLanguageAllowed: boolean,
-  survey: TSurvey
-): string {
-  if (!langParam || !isMultiLanguageAllowed) return "default";
+function getLanguageCode(langParam: string | undefined, survey: TSurvey): string {
+  if (!langParam) return "default";
 
   const selectedLanguage = survey.languages.find((surveyLanguage) => {
     return (
-      surveyLanguage.language.code === langParam.toLowerCase() ||
+      surveyLanguage.language.code.toLowerCase() === langParam.toLowerCase() ||
       surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
     );
   });

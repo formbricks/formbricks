@@ -3,7 +3,7 @@ import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetResponsesFilter = ZGetFilter.extend({
-  surveyId: z.string().cuid2().optional(),
+  surveyId: z.cuid2().optional(),
   contactId: z.string().optional(),
 }).refine(
   (data) => {

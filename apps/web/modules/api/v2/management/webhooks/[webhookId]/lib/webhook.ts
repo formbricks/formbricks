@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
@@ -25,7 +27,9 @@ export const getWebhook = async (webhookId: string) => {
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -34,6 +38,23 @@ export const updateWebhook = async (
   webhookId: string,
   webhookInput: z.infer<typeof ZWebhookUpdateSchema>
 ): Promise<Result<Webhook, ApiErrorResponseV2>> => {
+  if (webhookInput.url) {
+    try {
+      await validateWebhookUrl(webhookInput.url);
+    } catch (error) {
+      if (error instanceof InvalidInputError) {
+        return err({
+          type: "bad_request",
+          details: [{ field: "url", issue: error.message }],
+        });
+      }
+      return err({
+        type: "internal_server_error",
+        details: [{ field: "url", issue: "Webhook URL validation failed unexpectedly" }],
+      });
+    }
+  }
+
   try {
     const updatedWebhook = await prisma.webhook.update({
       where: {
@@ -57,7 +78,9 @@ export const updateWebhook = async (
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };
@@ -85,7 +108,9 @@ export const deleteWebhook = async (webhookId: string): Promise<Result<Webhook, 
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "webhook", issue: error.message }],
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 };

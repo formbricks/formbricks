@@ -1,4 +1,4 @@
-import { ActionClass, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,7 +8,7 @@ import { updateSurveyInternal } from "@/lib/survey/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 
 export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -20,16 +20,18 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
+    const workspaceId = updatedSurvey.workspaceId;
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
-    const currentSurvey = await getSurvey(surveyId);
+    const [actionClasses, currentSurvey] = await Promise.all([
+      getActionClasses(workspaceId),
+      getSurvey(surveyId),
+    ]);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
-      updatedSurvey;
+    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
 
     // Validate and prepare blocks for persistence
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
@@ -118,7 +120,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             data: updatedInput,
             select: {
               surveys: { select: { id: true } },
-              environmentId: true,
+              workspaceId: true,
               id: true,
             },
           });
@@ -169,8 +171,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             segment: {
               connectOrCreate: {
                 where: {
-                  environmentId_title: {
-                    environmentId,
+                  workspaceId_title: {
+                    workspaceId,
                     title: surveyId,
                   },
                 },
@@ -178,9 +180,9 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
                   title: surveyId,
                   isPrivate: true,
                   filters: [],
-                  environment: {
+                  workspace: {
                     connect: {
-                      id: environmentId,
+                      id: workspaceId,
                     },
                   },
                 },
@@ -222,6 +224,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           newFollowUps.length > 0
             ? {
                 data: newFollowUps.map((followUp) => ({
+                  id: followUp.id,
                   name: followUp.name,
                   trigger: followUp.trigger,
                   action: followUp.action,
@@ -238,7 +241,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const organization = await getOrganizationAIKeys(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
@@ -285,18 +288,31 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 };
 
-export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
-  if (!triggers) return;
+const getTriggerIds = (triggers: unknown): string[] | null => {
+  if (!triggers) return null;
+  if (!Array.isArray(triggers)) {
+    throw new InvalidInputError("Invalid trigger id");
+  }
+
+  return triggers.map((trigger) => {
+    const actionClassId = (trigger as { actionClass?: { id?: unknown } })?.actionClass?.id;
+    if (typeof actionClassId !== "string") {
+      throw new InvalidInputError("Invalid trigger id");
+    }
+    return actionClassId;
+  });
+};
+
+export const checkTriggersValidity = (triggers: unknown, actionClasses: Array<{ id: string }>) => {
+  const triggerIds = getTriggerIds(triggers);
+  if (!triggerIds) return;
 
   // check if all the triggers are valid
-  triggers.forEach((trigger) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
+  triggerIds.forEach((triggerId) => {
+    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
       throw new InvalidInputError("Invalid trigger id");
     }
   });
-
-  // check if all the triggers are unique
-  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
 
   if (new Set(triggerIds).size !== triggerIds.length) {
     throw new InvalidInputError("Duplicate trigger id");
@@ -304,40 +320,37 @@ export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClass
 };
 
 export const handleTriggerUpdates = (
-  updatedTriggers: TSurvey["triggers"],
-  currentTriggers: TSurvey["triggers"],
-  actionClasses: ActionClass[]
+  updatedTriggers: unknown,
+  currentTriggers: unknown,
+  actionClasses: Array<{ id: string }>
 ) => {
-  if (!updatedTriggers) return {};
+  const updatedTriggerIds = getTriggerIds(updatedTriggers);
+  if (!updatedTriggerIds) return {};
+
   checkTriggersValidity(updatedTriggers, actionClasses);
 
-  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
-  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
+  const currentTriggerIds = getTriggerIds(currentTriggers) ?? [];
 
   // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggers = updatedTriggers.filter(
-    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
-  );
+  const addedTriggerIds = updatedTriggerIds.filter((triggerId) => !currentTriggerIds.includes(triggerId));
 
   // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter(
-    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
-  );
+  const deletedTriggerIds = currentTriggerIds.filter((triggerId) => !updatedTriggerIds.includes(triggerId));
 
   // Construct the triggers update object
   const triggersUpdate: TriggerUpdate = {};
 
-  if (addedTriggers.length > 0) {
-    triggersUpdate.create = addedTriggers.map((trigger) => ({
-      actionClassId: trigger.actionClass.id,
+  if (addedTriggerIds.length > 0) {
+    triggersUpdate.create = addedTriggerIds.map((triggerId) => ({
+      actionClassId: triggerId,
     }));
   }
 
-  if (deletedTriggers.length > 0) {
+  if (deletedTriggerIds.length > 0) {
     // disconnect the public triggers from the survey
     triggersUpdate.deleteMany = {
       actionClassId: {
-        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
+        in: deletedTriggerIds,
       },
     };
   }

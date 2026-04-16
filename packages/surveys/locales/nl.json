@@ -9,6 +9,7 @@
     "finish": "Voltooien",
     "language_switch": "Taalschakelaar",
     "next": "Volgende",
+    "no_results_found": "Geen resultaten gevonden",
     "open_in_new_tab": "Openen in nieuw tabblad",
     "people_responded": "{count, plural, one {1 persoon heeft gereageerd} other {{count} mensen hebben gereageerd}}",
     "please_retry_now_or_try_again_later": "Probeer het nu opnieuw of probeer het later opnieuw.",
@@ -19,8 +20,10 @@
     "question_video": "Vraagvideo",
     "required": "Verplicht",
     "respondents_will_not_see_this_card": "Respondenten zien deze kaart niet",
+    "response_saved_offline": "Je reactie is nog niet verzonden. Deze wordt automatisch verstuurd zodra je weer online bent.",
     "retry": "Opnieuw proberen",
     "retrying": "Opnieuw proberen...",
+    "search": "Zoeken...",
     "select_option": "Selecteer een optie",
     "select_options": "Selecteer opties",
     "sending_responses": "Reacties verzenden...",
@@ -30,6 +33,7 @@
     "terms_of_service": "Servicevoorwaarden",
     "the_servers_cannot_be_reached_at_the_moment": "De servers zijn momenteel niet bereikbaar.",
     "they_will_be_redirected_immediately": "Ze worden onmiddellijk doorgestuurd",
+    "welcome_video": "Welkomstkaart video",
     "your_feedback_is_stuck": "Je feedback blijft hangen :("
   },
   "errors": {
@@ -43,7 +47,9 @@
       "file_size_exceeded_alert": "Het bestand moet kleiner zijn dan {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Geen geldige bestandstypen geselecteerd. Selecteer een geldig bestandstype.",
       "only_one_file_can_be_uploaded_at_a_time": "Er kan slechts één bestand tegelijk worden geüpload.",
+      "placeholder_text": "Klik of sleep bestanden om te uploaden",
       "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
+      "uploading": "Uploaden...",
       "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
     },
     "invalid_device_error": {

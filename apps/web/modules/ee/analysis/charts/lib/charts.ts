@@ -15,7 +15,6 @@ import {
   ZChartType,
   ZChartUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 
 export const selectChart = {
   id: true,
@@ -35,7 +34,7 @@ export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
       data: {
         name: data.name,
         type: data.type,
-        projectId: data.projectId,
+        workspaceId: data.workspaceId,
         query: data.query,
         config: data.config,
         createdBy: data.createdBy,
@@ -55,15 +54,15 @@ export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
 
 export const updateChart = async (
   chartId: string,
-  projectId: string,
+  workspaceId: string,
   data: TChartUpdateInput
 ): Promise<{ chart: TChart; updatedChart: TChart }> => {
-  validateInputs([chartId, ZId], [projectId, ZId], [data, ZChartUpdateInput]);
+  validateInputs([chartId, ZId], [workspaceId, ZId], [data, ZChartUpdateInput]);
 
   try {
     return await prisma.$transaction(async (tx) => {
       const chart = await tx.chart.findFirst({
-        where: { id: chartId, projectId },
+        where: { id: chartId, workspaceId },
         select: selectChart,
       });
 
@@ -98,13 +97,13 @@ export const updateChart = async (
   }
 };
 
-const getUniqueCopyName = async (baseName: string, projectId: string): Promise<string> => {
+const getUniqueCopyName = async (baseName: string, workspaceId: string): Promise<string> => {
   const stripped = baseName.replace(/ \(copy(?: \d+)?\)$/, "");
 
   try {
     const existing = await prisma.chart.findMany({
       where: {
-        projectId,
+        workspaceId,
         name: { startsWith: `${stripped} (copy` },
       },
       select: { name: true },
@@ -132,14 +131,14 @@ const getUniqueCopyName = async (baseName: string, projectId: string): Promise<s
 
 export const duplicateChart = async (
   chartId: string,
-  projectId: string,
+  workspaceId: string,
   createdBy: string
 ): Promise<TChart> => {
-  validateInputs([chartId, ZId], [projectId, ZId], [createdBy, ZId]);
+  validateInputs([chartId, ZId], [workspaceId, ZId], [createdBy, ZId]);
 
   try {
     const sourceChart = await prisma.chart.findFirst({
-      where: { id: chartId, projectId },
+      where: { id: chartId, workspaceId },
       select: selectChart,
     });
 
@@ -147,10 +146,10 @@ export const duplicateChart = async (
       throw new ResourceNotFoundError("Chart", chartId);
     }
 
-    const uniqueName = await getUniqueCopyName(sourceChart.name, projectId);
+    const uniqueName = await getUniqueCopyName(sourceChart.name, workspaceId);
 
     return await createChart({
-      projectId,
+      workspaceId,
       name: uniqueName,
       type: ZChartType.parse(sourceChart.type),
       query: ZChartQuery.parse(sourceChart.query),
@@ -168,13 +167,13 @@ export const duplicateChart = async (
   }
 };
 
-export const deleteChart = async (chartId: string, projectId: string): Promise<TChart> => {
-  validateInputs([chartId, ZId], [projectId, ZId]);
+export const deleteChart = async (chartId: string, workspaceId: string): Promise<TChart> => {
+  validateInputs([chartId, ZId], [workspaceId, ZId]);
 
   try {
     return await prisma.$transaction(async (tx) => {
       const chart = await tx.chart.findFirst({
-        where: { id: chartId, projectId },
+        where: { id: chartId, workspaceId },
         select: selectChart,
       });
 
@@ -199,12 +198,12 @@ export const deleteChart = async (chartId: string, projectId: string): Promise<T
   }
 };
 
-export const getChart = async (chartId: string, projectId: string): Promise<TChart> => {
-  validateInputs([chartId, ZId], [projectId, ZId]);
+export const getChart = async (chartId: string, workspaceId: string): Promise<TChart> => {
+  validateInputs([chartId, ZId], [workspaceId, ZId]);
 
   try {
     const chart = await prisma.chart.findFirst({
-      where: { id: chartId, projectId },
+      where: { id: chartId, workspaceId },
       select: selectChart,
     });
 
@@ -224,16 +223,12 @@ export const getChart = async (chartId: string, projectId: string): Promise<TCha
   }
 };
 
-/**
- * Fetches all charts for the given environment (for list/dashboard UI).
- * Uses getEnvironmentAuth for access check and enriches with creator names.
- */
-export const getCharts = async (environmentId: string): Promise<TChartWithCreator[]> => {
-  try {
-    const { project } = await getEnvironmentAuth(environmentId);
+export const getCharts = async (workspaceId: string): Promise<TChartWithCreator[]> => {
+  validateInputs([workspaceId, ZId]);
 
+  try {
     const charts = await prisma.chart.findMany({
-      where: { projectId: project.id },
+      where: { workspaceId },
       orderBy: { createdAt: "desc" },
       select: {
         ...selectChart,
@@ -252,12 +247,12 @@ export const getCharts = async (environmentId: string): Promise<TChartWithCreato
   }
 };
 
-export const getChartsWithCreator = async (projectId: string): Promise<TChartWithCreator[]> => {
-  validateInputs([projectId, ZId]);
+export const getChartsWithCreator = async (workspaceId: string): Promise<TChartWithCreator[]> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     return await prisma.chart.findMany({
-      where: { projectId },
+      where: { workspaceId },
       orderBy: { createdAt: "desc" },
       select: {
         ...selectChart,

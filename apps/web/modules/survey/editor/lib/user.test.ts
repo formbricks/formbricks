@@ -21,7 +21,9 @@ describe("getUserEmail", () => {
 
   test("should return user email if user is found", async () => {
     const mockUser = { id: "test-user-id", email: "test@example.com" };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+    );
 
     const email = await getUserEmail("test-user-id");
     expect(email).toBe("test@example.com");
@@ -64,7 +66,9 @@ describe("getUserLocale", () => {
 
   test("should return user locale if user is found", async () => {
     const mockUser = { id: "test-user-id", locale: "en" as TUserLocale };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(
+      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
+    );
 
     const locale = await getUserLocale("test-user-id");
     expect(locale).toBe("en");

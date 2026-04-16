@@ -1,4 +1,4 @@
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,10 +8,13 @@ import footerLogo from "../lib/footerlogo.svg";
 
 interface SurveyCompletedMessageProps {
   singleUseMessage: TSurveySingleUse | null;
-  project?: Pick<Project, "linkSurveyBranding">;
+  workspace?: Pick<Workspace, "linkSurveyBranding">;
 }
 
-export const SurveyCompletedMessage = async ({ singleUseMessage, project }: SurveyCompletedMessageProps) => {
+export const SurveyCompletedMessage = async ({
+  singleUseMessage,
+  workspace,
+}: SurveyCompletedMessageProps) => {
   const t = await getTranslate();
   const defaultHeading = t("s.survey_already_answered_heading");
   const defaultSubheading = t("s.survey_already_answered_subheading");
@@ -25,7 +28,7 @@ export const SurveyCompletedMessage = async ({ singleUseMessage, project }: Surv
           {singleUseMessage?.subheading ?? defaultSubheading}
         </p>
       </div>
-      {(!project || project.linkSurveyBranding) && (
+      {(!workspace || workspace.linkSurveyBranding) && (
         <div>
           <Link href="https://formbricks.com">
             <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />

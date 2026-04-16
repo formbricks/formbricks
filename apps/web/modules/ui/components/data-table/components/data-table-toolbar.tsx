@@ -16,7 +16,7 @@ interface DataTableToolbarProps<T> {
   updateRowList: (rowIds: string[]) => void;
   type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
   isQuotasAllowed: boolean;
   leftContent?: React.ReactNode;
   onRefresh?: () => Promise<void>;
@@ -54,12 +54,12 @@ export const DataTableToolbar = <T,>({
       <div className="flex space-x-2">
         {type === "contact" && onRefresh ? (
           <TooltipRenderer
-            tooltipContent={t("environments.contacts.contacts_table_refresh")}
+            tooltipContent={t("workspace.contacts.contacts_table_refresh")}
             shouldRender={true}>
             <button
               onClick={async () => {
                 await onRefresh();
-                toast.success(t("environments.contacts.contacts_table_refresh_success"));
+                toast.success(t("workspace.contacts.contacts_table_refresh_success"));
               }}
               className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
               <RefreshCcwIcon strokeWidth={1.5} className={cn("m-1 h-6 w-6 p-0.5")} />

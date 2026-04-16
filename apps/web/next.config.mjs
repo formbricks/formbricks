@@ -14,7 +14,8 @@ const nextConfig = {
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
-  productionBrowserSourceMaps: true,
+  // Enable source maps only when uploading to Sentry (CI/production); skip for faster local builds
+  productionBrowserSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
   serverExternalPackages: [
     "@aws-sdk",
     "@opentelemetry/api",
@@ -32,6 +33,7 @@ const nextConfig = {
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",
+    "posthog-node",
   ],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
@@ -404,7 +406,20 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    const posthogRewrites = process.env.POSTHOG_KEY
+      ? [
+          {
+            source: "/ingest/static/:path*",
+            destination: "https://eu-assets.i.posthog.com/static/:path*",
+          },
+          {
+            source: "/ingest/:path*",
+            destination: "https://eu.i.posthog.com/:path*",
+          },
+        ]
+      : [];
     return [
+      ...posthogRewrites,
       {
         source: "/api/packages/website",
         destination: "/js/formbricks.umd.cjs",
@@ -440,6 +455,11 @@ const nextConfig = {
       {
         source: "/api/v1/management/attribute-classes/:id*",
         destination: "/api/v1/management/contact-attribute-keys/:id*",
+      },
+      // Backwards compatibility: project-teams → workspace-teams
+      {
+        source: "/api/v2/organizations/:organizationId/project-teams",
+        destination: "/api/v2/organizations/:organizationId/workspace-teams",
       },
     ];
   },

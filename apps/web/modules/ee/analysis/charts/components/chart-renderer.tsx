@@ -32,7 +32,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
   if (!data || data.length === 0) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
-        {t("environments.analysis.charts.no_data_available")}
+        {t("workspace.analysis.charts.no_data_available")}
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
   if (dataKeys.length === 0) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
-        {t("environments.analysis.charts.no_data_available")}
+        {t("workspace.analysis.charts.no_data_available")}
       </div>
     );
   }
@@ -141,7 +141,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       if (!pieResult) {
         return (
           <div className="text-muted-foreground flex h-64 items-center justify-center">
-            {t("environments.analysis.charts.no_valid_data_to_display")}
+            {t("workspace.analysis.charts.no_valid_data_to_display")}
           </div>
         );
       }
@@ -195,7 +195,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     default:
       return (
         <div className="text-muted-foreground flex h-64 items-center justify-center">
-          {t("environments.analysis.charts.chart_type_not_supported", { chartType })}
+          {t("workspace.analysis.charts.chart_type_not_supported", { chartType })}
         </div>
       );
   }

@@ -90,6 +90,17 @@ describe("endpoint-validator", () => {
   });
 
   describe("isManagementApiRoute", () => {
+    test("should return Both for v3 surveys routes", () => {
+      expect(isManagementApiRoute("/api/v3/surveys")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.Both,
+      });
+      expect(isManagementApiRoute("/api/v3/surveys/clxxxxxxxxxxxxxxxxxxxxxxxx")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.Both,
+      });
+    });
+
     test("should return correct object for management API routes with API key authentication", () => {
       expect(isManagementApiRoute("/api/v1/management/something")).toEqual({
         isManagementApi: true,
@@ -313,7 +324,7 @@ describe("endpoint-validator", () => {
       expect(isPublicDomainRoute("/c")).toBe(false);
       expect(isPublicDomainRoute("/contact/token")).toBe(false);
     });
-    
+
     test("should return true for pretty URL survey routes", () => {
       expect(isPublicDomainRoute("/p/pretty123")).toBe(true);
       expect(isPublicDomainRoute("/p/pretty-name-with-dashes")).toBe(true);

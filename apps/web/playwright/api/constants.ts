@@ -10,6 +10,6 @@ export const AUTH_CALLBACK_URL = `/api/auth/callback/credentials`;
 export const AUTH_CSRF_URL = `/api/auth/csrf`;
 
 export const TEAMS_API_URL = (organizationId: string) => `/api/v2/organizations/${organizationId}/teams`;
-export const PROJECT_TEAMS_API_URL = (organizationId: string) =>
-  `/api/v2/organizations/${organizationId}/project-teams`;
+export const WORKSPACE_TEAMS_API_URL = (organizationId: string) =>
+  `/api/v2/organizations/${organizationId}/workspace-teams`;
 export const USERS_API_URL = (organizationId: string) => `/api/v2/organizations/${organizationId}/users`;

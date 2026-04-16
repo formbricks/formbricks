@@ -4,11 +4,11 @@ import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartsListProps {
   charts: TChartWithCreator[];
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
 }
 
-export const ChartsList = async ({ charts, environmentId, isReadOnly }: Readonly<ChartsListProps>) => {
+export const ChartsList = async ({ charts, workspaceId, isReadOnly }: Readonly<ChartsListProps>) => {
   const t = await getTranslate();
 
   return (
@@ -22,11 +22,11 @@ export const ChartsList = async ({ charts, environmentId, isReadOnly }: Readonly
       </div>
       {charts.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-400">
-          {t("environments.analysis.charts.no_charts_found")}
+          {t("workspace.analysis.charts.no_charts_found")}
         </p>
       ) : (
         charts.map((chart) => (
-          <ChartRow key={chart.id} chart={chart} environmentId={environmentId} isReadOnly={isReadOnly} />
+          <ChartRow key={chart.id} chart={chart} workspaceId={workspaceId} isReadOnly={isReadOnly} />
         ))
       )}
     </div>

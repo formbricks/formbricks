@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { TChartQuery } from "@formbricks/types/analysis";
 import { type ChartBuilderState, buildCubeQuery, parseQueryToState } from "./query-builder";
 
 describe("query-builder", () => {
@@ -161,7 +162,7 @@ describe("query-builder", () => {
     });
 
     test("parses time dimension with granularity and dateRange", () => {
-      const query = {
+      const query: TChartQuery = {
         measures: ["FeedbackRecords.count"],
         timeDimensions: [
           {

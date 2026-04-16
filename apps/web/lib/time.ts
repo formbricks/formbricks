@@ -1,120 +1,33 @@
-import { formatDistance, intlFormat } from "date-fns";
+import { type Locale, formatDistance } from "date-fns";
 import { de, enUS, es, fr, hu, ja, nl, pt, ptBR, ro, ru, sv, zhCN, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
+import { formatDateForDisplay } from "./utils/datetime";
 
-export const convertDateString = (dateString: string | null) => {
-  if (dateString === null) return null;
-  if (!dateString) {
-    return dateString;
-  }
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    return "Invalid Date";
-  }
-  return intlFormat(
-    date,
-    {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    },
-    {
-      locale: "en",
-    }
-  );
+const DEFAULT_LOCALE: TUserLocale = "en-US";
+const TIME_SINCE_LOCALES: Record<TUserLocale, Locale> = {
+  "de-DE": de,
+  "en-US": enUS,
+  "es-ES": es,
+  "fr-FR": fr,
+  "hu-HU": hu,
+  "ja-JP": ja,
+  "nl-NL": nl,
+  "pt-BR": ptBR,
+  "pt-PT": pt,
+  "ro-RO": ro,
+  "ru-RU": ru,
+  "sv-SE": sv,
+  "zh-Hans-CN": zhCN,
+  "zh-Hant-TW": zhTW,
 };
 
-export const convertDateTimeString = (dateString: string) => {
-  if (!dateString) {
-    return dateString;
-  }
-  const date = new Date(dateString);
-  return intlFormat(
-    date,
-    {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
+const isUserLocale = (locale: string): locale is TUserLocale => Object.hasOwn(TIME_SINCE_LOCALES, locale);
 
-export const convertDateTimeStringShort = (dateString: string) => {
-  if (!dateString) {
-    return dateString;
-  }
-  const date = new Date(dateString);
-  return intlFormat(
-    date,
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
+/** Maps locale strings to date-fns locales and falls back to English for unsupported inputs. */
+const getLocaleForTimeSince = (locale: string): Locale =>
+  isUserLocale(locale) ? TIME_SINCE_LOCALES[locale] : enUS;
 
-export const convertTimeString = (dateString: string) => {
-  const date = new Date(dateString);
-  return intlFormat(
-    date,
-    {
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit",
-    },
-    {
-      locale: "en",
-    }
-  );
-};
-
-const getLocaleForTimeSince = (locale: TUserLocale) => {
-  switch (locale) {
-    case "de-DE":
-      return de;
-    case "en-US":
-      return enUS;
-    case "es-ES":
-      return es;
-    case "fr-FR":
-      return fr;
-    case "hu-HU":
-      return hu;
-    case "ja-JP":
-      return ja;
-    case "nl-NL":
-      return nl;
-    case "pt-BR":
-      return ptBR;
-    case "pt-PT":
-      return pt;
-    case "ro-RO":
-      return ro;
-    case "ru-RU":
-      return ru;
-    case "sv-SE":
-      return sv;
-    case "zh-Hans-CN":
-      return zhCN;
-    case "zh-Hant-TW":
-      return zhTW;
-  }
-};
-
-export const timeSince = (dateString: string, locale: TUserLocale) => {
+export const timeSince = (dateString: string, locale: string = DEFAULT_LOCALE) => {
   const date = new Date(dateString);
   return formatDistance(date, new Date(), {
     addSuffix: true,
@@ -122,25 +35,19 @@ export const timeSince = (dateString: string, locale: TUserLocale) => {
   });
 };
 
-export const timeSinceDate = (date: Date) => {
+export const timeSinceDate = (date: Date, locale: string = DEFAULT_LOCALE) => {
   return formatDistance(date, new Date(), {
     addSuffix: true,
+    locale: getLocaleForTimeSince(locale),
   });
 };
 
-export const formatDate = (date: Date) => {
-  return intlFormat(date, {
+export const formatDate = (date: Date, locale: string = DEFAULT_LOCALE) => {
+  return formatDateForDisplay(date, locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-};
-
-export const getTodaysDateFormatted = (seperator: string) => {
-  const date = new Date();
-  const formattedDate = date.toISOString().split("T")[0].split("-").join(seperator);
-
-  return formattedDate;
 };
 
 export const getTodaysDateTimeFormatted = (seperator: string) => {

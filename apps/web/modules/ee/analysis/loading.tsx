@@ -10,12 +10,12 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 export const AnalysisListLoading = () => {
   const { t } = useTranslation();
   const params = useParams();
-  const environmentId = params?.environmentId as string;
+  const workspaceId = params?.workspaceId as string;
 
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.analysis")}>
-        {environmentId ? <AnalysisSecondaryNavigation environmentId={environmentId} /> : null}
+        {workspaceId ? <AnalysisSecondaryNavigation workspaceId={workspaceId} /> : null}
       </PageHeader>
       <DashboardsListSkeleton
         columnHeaders={[

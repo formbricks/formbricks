@@ -9,6 +9,7 @@
     "finish": "समाप्त करें",
     "language_switch": "भाषा बदलें",
     "next": "अगला",
+    "no_results_found": "कोई परिणाम नहीं मिला",
     "open_in_new_tab": "नए टैब में खोलें",
     "people_responded": "{count, plural, one {1 व्यक्ति ने जवाब दिया} other {{count} लोगों ने जवाब दिया}}",
     "please_retry_now_or_try_again_later": "कृपया अभी पुनः प्रयास करें या बाद में फिर से प्रयास करें।",
@@ -19,8 +20,10 @@
     "question_video": "प्रश्न वीडियो",
     "required": "आवश्यक",
     "respondents_will_not_see_this_card": "उत्तरदाता इस कार्ड को नहीं देखेंगे",
+    "response_saved_offline": "आपका जवाब अभी तक नहीं भेजा गया है। जब आप ऑनलाइन होंगे तो यह अपने आप सबमिट हो जाएगा।",
     "retry": "पुनः प्रयास करें",
     "retrying": "पुनः प्रयास कर रहे हैं...",
+    "search": "खोजें...",
     "select_option": "एक विकल्प चुनें",
     "select_options": "विकल्प चुनें",
     "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",
@@ -30,6 +33,7 @@
     "terms_of_service": "सेवा की शर्तें",
     "the_servers_cannot_be_reached_at_the_moment": "इस समय सर्वर तक पहुंचा नहीं जा सकता है।",
     "they_will_be_redirected_immediately": "उन्हें तुरंत रीडायरेक्ट किया जाएगा",
+    "welcome_video": "स्वागत कार्ड वीडियो",
     "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
   },
   "errors": {
@@ -43,7 +47,9 @@
       "file_size_exceeded_alert": "फ़ाइल {maxSizeInMB} MB से कम होनी चाहिए",
       "no_valid_file_types_selected": "कोई मान्य फ़ाइल प्रकार नहीं चुना गया है। कृपया एक मान्य फ़ाइल प्रकार चुनें।",
       "only_one_file_can_be_uploaded_at_a_time": "एक समय में केवल एक फ़ाइल अपलोड की जा सकती है।",
+      "placeholder_text": "फ़ाइलें अपलोड करने के लिए क्लिक करें या ड्रैग करें",
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
+      "uploading": "अपलोड हो रहा है...",
       "you_can_only_upload_a_maximum_of_files": "आप अधिकतम {FILE_LIMIT} फ़ाइलें ही अपलोड कर सकते हैं।"
     },
     "invalid_device_error": {

@@ -1,6 +1,5 @@
 "use client";
 
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -13,7 +12,6 @@ interface ResponseSurveyCardProps {
   surveys: TSurvey[];
   user: TUser;
   environmentTags: TTag[];
-  environment: TEnvironment;
   updateResponseList: (responseIds: string[]) => void;
   updateResponse: (responseId: string, response: TResponseWithQuotas) => void;
   locale: TUserLocale;
@@ -25,7 +23,6 @@ export const ResponseSurveyCard = ({
   surveys,
   user,
   environmentTags,
-  environment,
   updateResponseList,
   updateResponse,
   locale,
@@ -41,7 +38,6 @@ export const ResponseSurveyCard = ({
       survey={replaceHeadlineRecall(survey, "default")}
       user={user}
       environmentTags={environmentTags}
-      environment={environment}
       updateResponseList={updateResponseList}
       updateResponse={updateResponse}
       isReadOnly={isReadOnly}

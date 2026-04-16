@@ -2,11 +2,11 @@
 
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import type { TBaseFilter, TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -16,19 +16,22 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
 import { AddFilterModal } from "./add-filter-modal";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
-  environmentId: string;
+  activitySummary: TSegmentActivitySummary;
+  workspaceId: string;
   setOpen: (open: boolean) => void;
-  initialSegment: TSegmentWithSurveyNames;
+  initialSegment: TSegmentWithSurveyRefs;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isReadOnly: boolean;
 }
 
 export function SegmentSettings({
-  environmentId,
+  activitySummary,
+  workspaceId,
   initialSegment,
   setOpen,
   contactAttributeKeys,
@@ -38,7 +41,7 @@ export function SegmentSettings({
   const router = useRouter();
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [segment, setSegment] = useState<TSegmentWithSurveyNames>(initialSegment);
+  const [segment, setSegment] = useState<TSegmentWithSurveyRefs>(initialSegment);
 
   const [isUpdatingSegment, setIsUpdatingSegment] = useState(false);
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);
@@ -68,14 +71,13 @@ export function SegmentSettings({
 
   const handleUpdateSegment = async () => {
     if (!segment.title) {
-      toast.error(t("environments.segments.title_is_required"));
+      toast.error(t("workspace.segments.title_is_required"));
       return;
     }
 
     try {
       setIsUpdatingSegment(true);
       const data = await updateSegmentAction({
-        environmentId,
         segmentId: segment.id,
         data: {
           title: segment.title,
@@ -118,7 +120,7 @@ export function SegmentSettings({
       }
 
       setIsDeletingSegment(false);
-      toast.success(t("environments.segments.segment_deleted_successfully"));
+      toast.success(t("workspace.segments.segment_deleted_successfully"));
       handleResetState();
     } catch (err: any) {
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -131,6 +133,10 @@ export function SegmentSettings({
     // check if title is empty
 
     if (!segment.title) {
+      return true;
+    }
+
+    if (segment.filters.length === 0) {
       return true;
     }
 
@@ -160,7 +166,7 @@ export function SegmentSettings({
                     }));
                   }}
                   disabled={isReadOnly}
-                  placeholder={t("environments.segments.ex_power_users")}
+                  placeholder={t("workspace.segments.ex_power_users")}
                   value={segment.title}
                 />
               </div>
@@ -178,7 +184,7 @@ export function SegmentSettings({
                     }));
                   }}
                   disabled={isReadOnly}
-                  placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
+                  placeholder={t("workspace.segments.ex_fully_activated_recurring_users")}
                   value={segment.description ?? ""}
                 />
               </div>
@@ -192,18 +198,18 @@ export function SegmentSettings({
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />
                   <h3 className="text-sm font-medium text-slate-700">
-                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                    {t("workspace.segments.add_your_first_filter_to_get_started")}
                   </h3>
                 </div>
               )}
 
               <SegmentEditor
                 contactAttributeKeys={contactAttributeKeys}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 group={segment.filters}
                 segment={segment}
                 segments={segments}
-                setSegment={setSegment}
+                setSegment={setSegment as Dispatch<SetStateAction<TSegment | null>>}
                 viewOnly={isReadOnly}
               />
 
@@ -257,9 +263,9 @@ export function SegmentSettings({
 
             {isDeleteSegmentModalOpen ? (
               <ConfirmDeleteSegmentModal
+                activitySummary={activitySummary}
                 onDelete={handleDeleteSegment}
                 open={isDeleteSegmentModalOpen}
-                segment={initialSegment}
                 setOpen={setIsDeleteSegmentModalOpen}
               />
             ) : null}

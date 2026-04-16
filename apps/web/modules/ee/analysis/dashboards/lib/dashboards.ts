@@ -35,7 +35,7 @@ export const createDashboard = async (data: TDashboardCreateInput): Promise<TDas
     return await prisma.dashboard.create({
       data: {
         name: data.name,
-        projectId: data.projectId,
+        workspaceId: data.workspaceId,
         createdBy: data.createdBy,
       },
       select: selectDashboard,
@@ -53,15 +53,15 @@ export const createDashboard = async (data: TDashboardCreateInput): Promise<TDas
 
 export const updateDashboard = async (
   dashboardId: string,
-  projectId: string,
+  workspaceId: string,
   data: TDashboardUpdateInput
 ): Promise<{ dashboard: TDashboard; updatedDashboard: TDashboard }> => {
-  validateInputs([dashboardId, ZId], [projectId, ZId], [data, ZDashboardUpdateInput]);
+  validateInputs([dashboardId, ZId], [workspaceId, ZId], [data, ZDashboardUpdateInput]);
 
   try {
     return await prisma.$transaction(async (tx) => {
       const dashboard = await tx.dashboard.findFirst({
-        where: { id: dashboardId, projectId },
+        where: { id: dashboardId, workspaceId },
         select: selectDashboard,
       });
 
@@ -93,13 +93,13 @@ export const updateDashboard = async (
   }
 };
 
-export const deleteDashboard = async (dashboardId: string, projectId: string): Promise<TDashboard> => {
-  validateInputs([dashboardId, ZId], [projectId, ZId]);
+export const deleteDashboard = async (dashboardId: string, workspaceId: string): Promise<TDashboard> => {
+  validateInputs([dashboardId, ZId], [workspaceId, ZId]);
 
   try {
     return await prisma.$transaction(async (tx) => {
       const dashboard = await tx.dashboard.findFirst({
-        where: { id: dashboardId, projectId },
+        where: { id: dashboardId, workspaceId },
         select: selectDashboard,
       });
 
@@ -124,12 +124,12 @@ export const deleteDashboard = async (dashboardId: string, projectId: string): P
   }
 };
 
-export const getDashboard = async (dashboardId: string, projectId: string) => {
-  validateInputs([dashboardId, ZId], [projectId, ZId]);
+export const getDashboard = async (dashboardId: string, workspaceId: string) => {
+  validateInputs([dashboardId, ZId], [workspaceId, ZId]);
 
   try {
     const dashboard = await prisma.dashboard.findFirst({
-      where: { id: dashboardId, projectId },
+      where: { id: dashboardId, workspaceId },
       include: {
         widgets: {
           orderBy: { order: "asc" },
@@ -158,12 +158,12 @@ export const getDashboard = async (dashboardId: string, projectId: string) => {
   }
 };
 
-export const getDashboards = async (projectId: string): Promise<TDashboardWithCount[]> => {
-  validateInputs([projectId, ZId]);
+export const getDashboards = async (workspaceId: string): Promise<TDashboardWithCount[]> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     return await prisma.dashboard.findMany({
-      where: { projectId },
+      where: { workspaceId },
       orderBy: { createdAt: "desc" },
       select: {
         ...selectDashboard,
@@ -181,15 +181,15 @@ export const getDashboards = async (projectId: string): Promise<TDashboardWithCo
 
 export const duplicateDashboard = async (
   dashboardId: string,
-  projectId: string,
+  workspaceId: string,
   createdBy: string
 ): Promise<TDashboard> => {
-  validateInputs([dashboardId, ZId], [projectId, ZId], [createdBy, ZId]);
+  validateInputs([dashboardId, ZId], [workspaceId, ZId], [createdBy, ZId]);
 
   try {
     return await prisma.$transaction(async (tx) => {
       const source = await tx.dashboard.findFirst({
-        where: { id: dashboardId, projectId },
+        where: { id: dashboardId, workspaceId },
         include: {
           widgets: { orderBy: { order: "asc" } },
         },
@@ -203,7 +203,7 @@ export const duplicateDashboard = async (
       let name = baseName;
       let suffix = 1;
 
-      while (await tx.dashboard.findFirst({ where: { projectId, name } })) {
+      while (await tx.dashboard.findFirst({ where: { workspaceId, name } })) {
         suffix++;
         if (suffix > MAX_NAME_ATTEMPTS) {
           name = `${baseName} ${suffix}`;
@@ -215,7 +215,7 @@ export const duplicateDashboard = async (
       const newDashboard = await tx.dashboard.create({
         data: {
           name,
-          projectId,
+          workspaceId,
           createdBy,
           widgets: {
             create: source.widgets.map((widget) => ({
@@ -243,16 +243,16 @@ export const duplicateDashboard = async (
 
 export const updateWidgetLayouts = async (
   dashboardId: string,
-  projectId: string,
+  workspaceId: string,
   widgets: { id: string; layout: TWidgetLayout; order: number }[]
 ): Promise<{ widgetCount: number }> => {
-  validateInputs([dashboardId, ZId], [projectId, ZId]);
+  validateInputs([dashboardId, ZId], [workspaceId, ZId]);
 
   try {
     return await prisma.$transaction(
       async (tx) => {
         const dashboard = await tx.dashboard.findFirst({
-          where: { id: dashboardId, projectId },
+          where: { id: dashboardId, workspaceId },
           include: { widgets: { select: { id: true } } },
         });
 
@@ -308,8 +308,8 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
     return await prisma.$transaction(
       async (tx) => {
         const [chart, dashboard] = await Promise.all([
-          tx.chart.findFirst({ where: { id: data.chartId, projectId: data.projectId } }),
-          tx.dashboard.findFirst({ where: { id: data.dashboardId, projectId: data.projectId } }),
+          tx.chart.findFirst({ where: { id: data.chartId, workspaceId: data.workspaceId } }),
+          tx.dashboard.findFirst({ where: { id: data.dashboardId, workspaceId: data.workspaceId } }),
         ]);
 
         if (!chart) {

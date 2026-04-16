@@ -25,7 +25,7 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
   TSegmentUpdateInput,
-  TSegmentWithSurveyNames,
+  TSegmentWithSurveyRefs,
   ZRelativeDateValue,
   ZSegmentCreateInput,
   ZSegmentFilters,
@@ -54,7 +54,7 @@ export const selectSegment = {
   updatedAt: true,
   title: true,
   description: true,
-  environmentId: true,
+  workspaceId: true,
   filters: true,
   isPrivate: true,
   surveys: {
@@ -66,14 +66,14 @@ export const selectSegment = {
   },
 } satisfies Prisma.SegmentSelect;
 
-export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyNames => {
+export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyRefs => {
   const activeSurveys = segment.surveys
     .filter((survey) => survey.status === "inProgress")
-    .map((survey) => survey.name);
+    .map((survey) => ({ id: survey.id, name: survey.name }));
 
   const inactiveSurveys = segment.surveys
     .filter((survey) => survey.status !== "inProgress")
-    .map((survey) => survey.name);
+    .map((survey) => ({ id: survey.id, name: survey.name }));
 
   return {
     ...segment,
@@ -83,7 +83,7 @@ export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurv
   };
 };
 
-export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyNames> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyRefs> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
@@ -107,12 +107,12 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (environmentId: string): Promise<TSegmentWithSurveyNames[]> => {
-  validateInputs([environmentId, ZId]);
+export const getSegments = reactCache(async (workspaceId: string): Promise<TSegmentWithSurveyRefs[]> => {
+  validateInputs([workspaceId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
       where: {
-        environmentId,
+        workspaceId,
       },
       select: selectSegment,
     });
@@ -134,24 +134,24 @@ export const getSegments = reactCache(async (environmentId: string): Promise<TSe
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
-  const { description, environmentId, filters, isPrivate, surveyId, title } = segmentCreateInput;
+  const { description, filters, isPrivate, surveyId, title, workspaceId } = segmentCreateInput;
 
   const surveyConnect = surveyId ? { surveys: { connect: { id: surveyId } } } : {};
 
   try {
     // Private segments use upsert because auto-save may have already created a
     // default (empty-filter) segment via connectOrCreate before the user publishes.
-    // Without upsert the second create hits the (environmentId, title) unique constraint.
+    // Without upsert the second create hits the (workspaceId, title) unique constraint.
     if (isPrivate) {
       const segment = await prisma.segment.upsert({
         where: {
-          environmentId_title: {
-            environmentId,
+          workspaceId_title: {
+            workspaceId,
             title,
           },
         },
         create: {
-          environmentId,
+          workspaceId,
           title,
           description,
           isPrivate,
@@ -171,7 +171,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
     const segment = await prisma.segment.create({
       data: {
-        environmentId,
+        workspaceId,
         title,
         description,
         isPrivate,
@@ -200,7 +200,11 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
-    const allSegments = await getSegments(segment.environmentId);
+    if (!segment.workspaceId) {
+      throw new DatabaseError("Segment is not associated with a workspace");
+    }
+
+    const allSegments = await getSegments(segment.workspaceId);
 
     // Find the last "Copy of" title and extract the number from it
     const lastCopyTitle = allSegments
@@ -231,7 +235,7 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
         title: clonedTitle,
         description: segment.description,
         isPrivate: segment.isPrivate,
-        environmentId: segment.environmentId,
+        workspaceId: segment.workspaceId,
         filters: segment.filters,
         surveys: {
           connect: {
@@ -327,7 +331,7 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
             isPrivate: true,
             filters: [],
             surveys: { connect: { id: surveyId } },
-            environment: { connect: { id: survey?.environmentId } },
+            workspaceId: survey.workspaceId,
           },
           select: selectSegment,
         });
@@ -385,13 +389,13 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
   }
 };
 
-export const getSegmentsByAttributeKey = reactCache(async (environmentId: string, attributeKey: string) => {
-  validateInputs([environmentId, ZId], [attributeKey, ZString]);
+export const getSegmentsByAttributeKey = reactCache(async (workspaceId: string, attributeKey: string) => {
+  validateInputs([workspaceId, ZId], [attributeKey, ZString]);
 
   try {
     const segments = await prisma.segment.findMany({
       where: {
-        environmentId,
+        workspaceId,
       },
       select: selectSegment,
     });
@@ -690,7 +694,7 @@ export const evaluateSegment = async (
 
     return finalResult;
   } catch (error) {
-    logger.error("Error evaluating segment", error);
+    logger.error(error instanceof Error ? error : new Error(String(error)), "Error evaluating segment");
 
     throw error;
   }

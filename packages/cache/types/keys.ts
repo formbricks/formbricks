@@ -16,4 +16,4 @@ export type CacheKey = z.infer<typeof ZCacheKey>;
  * Possible namespaces for custom cache keys
  * Add new namespaces here as they are introduced
  */
-export type CustomCacheNamespace = "analytics";
+export type CustomCacheNamespace = "analytics" | "billing";

@@ -58,7 +58,9 @@ export const preloadConnection = async (connectionController: ConnectionAPIContr
     try {
       newConnection = await connectionController.createSAMLConnection(connection);
     } catch (error) {
-      throw new Error(`Metadata is not valid\n${error.message}`);
+      throw new Error(
+        `Metadata is not valid\n${error instanceof Error ? error.message : "Unknown error occurred"}`
+      );
     }
     if (newConnection && existingConnection && newConnection.clientID !== existingConnection.clientID) {
       await connectionController.deleteConnections({

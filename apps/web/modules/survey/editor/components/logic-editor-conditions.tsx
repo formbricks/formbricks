@@ -7,6 +7,10 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
+import type {
+  TConditionsEditorCallbacks,
+  TConditionsEditorConfig,
+} from "@/modules/ui/components/conditions-editor/types";
 
 interface LogicEditorConditionsProps {
   conditions: TConditionGroup;
@@ -56,5 +60,12 @@ export function LogicEditorConditions({
     }
   );
 
-  return <ConditionsEditor conditions={conditions} config={config} callbacks={callbacks} depth={depth} />;
+  return (
+    <ConditionsEditor
+      conditions={conditions}
+      config={config as TConditionsEditorConfig}
+      callbacks={callbacks as TConditionsEditorCallbacks}
+      depth={depth}
+    />
+  );
 }

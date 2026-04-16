@@ -20,6 +20,7 @@ module.exports = {
         fadeOut: "fadeOut 0.2s ease-out",
         surveyLoading: "surveyLoadingAnimation 0.5s ease-out forwards",
         surveyExit: "surveyExitAnimation 0.5s ease-out forwards",
+        "logo-scroll": "logo-scroll 20s linear infinite",
       },
       blur: {
         xxs: "0.33px",
@@ -129,6 +130,10 @@ module.exports = {
         surveyExitAnimation: {
           "0%": { transform: "translateY(0)", opacity: "1" },
           "100%": { transform: "translateY(-50px)", opacity: "0" },
+        },
+        "logo-scroll": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
       width: {

@@ -1,6 +1,6 @@
 # formbricks
 
-![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.7.0](https://img.shields.io/badge/AppVersion-3.7.0-informational?style=flat-square)
 
 A Helm chart for Formbricks with PostgreSQL, Redis
 
@@ -14,10 +14,37 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 
 ## Requirements
 
-| Repository                               | Name       | Version |
-| ---------------------------------------- | ---------- | ------- |
-| oci://registry-1.docker.io/bitnamicharts | postgresql | 16.4.16 |
-| oci://registry-1.docker.io/bitnamicharts | redis      | 20.11.2 |
+| Repository                               | Name         | Version |
+| ---------------------------------------- | ------------ | ------- |
+| oci://registry-1.docker.io/bitnamicharts | postgresql   | 16.4.16 |
+| oci://registry-1.docker.io/bitnamicharts | redis        | 20.11.2 |
+| oci://docker.io/envoyproxy               | gateway-helm | v1.7.1  |
+| oci://registry-1.docker.io/bitnamicharts | redis        | 20.11.2 |
+
+## Envoy bundle modes
+
+The chart can optionally deploy Formbricks behind Envoy Gateway with a dedicated Redis HA backend for Envoy global
+rate limiting.
+
+- `envoy.enabled=true` enables the app-bound Envoy resources such as `Gateway`, `HTTPRoute`, and rate-limit policies.
+- `envoy.controller.enabled=true` installs a bundled Envoy Gateway controller with the release.
+- `envoy.controller.enabled=false` keeps the chart in external-controller mode and assumes the cluster already has
+  Gateway API CRDs plus an Envoy Gateway controller compatible with
+  `envoy.config.envoyGateway.gateway.controllerName`.
+- `envoyRedis.enabled=true` deploys a dedicated Redis replication + Sentinel bundle for Envoy RLS. It is intentionally
+  separate from the existing app `redis` dependency.
+- The bundled controller reads its Redis backend from `envoy.config.envoyGateway.rateLimit.backend.redis.url`.
+  If you enable Redis authentication or override `envoyRedis.fullnameOverride`, set that URL explicitly so the
+  controller points at the correct backend.
+- OpenTelemetry proxy metrics can target either `envoy.formbricks.proxy.telemetry.openTelemetry.host`/`port`
+  or `backendRefs`, but not both. Prefer `host`/`port` for collectors that live in another namespace.
+- When both the main app ingress and the Envoy API ingress are enabled, set `envoy.formbricks.ingress.host`
+  explicitly so the Envoy host choice is intentional.
+
+The intended defaults are:
+
+- self-hosted / single-tenant clusters: bundled controller mode
+- shared clusters with an existing platform controller: external-controller mode
 
 ## Values
 
@@ -25,6 +52,14 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | ------------------------------------------------------------------ | ------ | --------------------------------- | ----------- |
 | autoscaling.additionalLabels                                       | object | `{}`                              |             |
 | autoscaling.annotations                                            | object | `{}`                              |             |
+| autoscaling.behavior.scaleDown.policies[0].periodSeconds           | int    | `120`                             |             |
+| autoscaling.behavior.scaleDown.policies[0].type                    | string | `"Pods"`                          |             |
+| autoscaling.behavior.scaleDown.policies[0].value                   | int    | `1`                               |             |
+| autoscaling.behavior.scaleDown.stabilizationWindowSeconds          | int    | `300`                             |             |
+| autoscaling.behavior.scaleUp.policies[0].periodSeconds             | int    | `60`                              |             |
+| autoscaling.behavior.scaleUp.policies[0].type                      | string | `"Pods"`                          |             |
+| autoscaling.behavior.scaleUp.policies[0].value                     | int    | `2`                               |             |
+| autoscaling.behavior.scaleUp.stabilizationWindowSeconds            | int    | `60`                              |             |
 | autoscaling.enabled                                                | bool   | `true`                            |             |
 | autoscaling.maxReplicas                                            | int    | `10`                              |             |
 | autoscaling.metrics[0].resource.name                               | string | `"cpu"`                           |             |
@@ -37,8 +72,6 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | autoscaling.metrics[1].type                                        | string | `"Resource"`                      |             |
 | autoscaling.minReplicas                                            | int    | `1`                               |             |
 | componentOverride                                                  | string | `""`                              |             |
-| cronJob.enabled                                                    | bool   | `false`                           |             |
-| cronJob.jobs                                                       | object | `{}`                              |             |
 | deployment.additionalLabels                                        | object | `{}`                              |             |
 | deployment.additionalPodAnnotations                                | object | `{}`                              |             |
 | deployment.additionalPodLabels                                     | object | `{}`                              |             |
@@ -48,12 +81,12 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | deployment.command                                                 | list   | `[]`                              |             |
 | deployment.containerSecurityContext.readOnlyRootFilesystem         | bool   | `true`                            |             |
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                            |             |
-| deployment.env.EMAIL_VERIFICATION_DISABLED.value                   | string | `"1"`                             |             |
-| deployment.env.PASSWORD_RESET_DISABLED.value                       | string | `"1"`                             |             |
+| deployment.env                                                     | object | `{}`                              |             |
 | deployment.envFrom                                                 | string | `nil`                             |             |
 | deployment.image.digest                                            | string | `""`                              |             |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                  |             |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"` |             |
+| deployment.image.tag                                               | string | `""`                              |             |
 | deployment.imagePullSecrets                                        | string | `""`                              |             |
 | deployment.nodeSelector                                            | object | `{}`                              |             |
 | deployment.ports.http.containerPort                                | int    | `3000`                            |             |
@@ -96,6 +129,21 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | externalSecret.refreshInterval                                     | string | `"1h"`                            |             |
 | externalSecret.secretStore.kind                                    | string | `"ClusterSecretStore"`            |             |
 | externalSecret.secretStore.name                                    | string | `"aws-secrets-manager"`           |             |
+| formbricks.publicUrl                                               | string | `""`                              |             |
+| formbricks.webappUrl                                               | string | `""`                              |             |
+| hub.enabled                                                        | bool   | `true`                            |             |
+| hub.env                                                            | object | `{}`                              |             |
+| hub.existingSecret                                                 | string | `""`                              |             |
+| hub.image.pullPolicy                                               | string | `"IfNotPresent"`                  |             |
+| hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`        |             |
+| hub.image.tag                                                      | string | `"1.0.0"`                         |             |
+| hub.migration.activeDeadlineSeconds                                | int    | `900`                             |             |
+| hub.migration.backoffLimit                                         | int    | `3`                               |             |
+| hub.migration.ttlSecondsAfterFinished                              | int    | `300`                             |             |
+| hub.replicas                                                       | int    | `1`                               |             |
+| hub.resources.limits.memory                                        | string | `"512Mi"`                         |             |
+| hub.resources.requests.cpu                                         | string | `"100m"`                          |             |
+| hub.resources.requests.memory                                      | string | `"256Mi"`                         |             |
 | ingress.annotations                                                | object | `{}`                              |             |
 | ingress.enabled                                                    | bool   | `false`                           |             |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`            |             |
@@ -103,8 +151,19 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | ingress.hosts[0].paths[0].pathType                                 | string | `"Prefix"`                        |             |
 | ingress.hosts[0].paths[0].serviceName                              | string | `"formbricks"`                    |             |
 | ingress.ingressClassName                                           | string | `"alb"`                           |             |
+| migration.annotations                                              | object | `{}`                              |             |
+| migration.backoffLimit                                             | int    | `3`                               |             |
+| migration.enabled                                                  | bool   | `true`                            |             |
+| migration.resources.limits.memory                                  | string | `"512Mi"`                         |             |
+| migration.resources.requests.cpu                                   | string | `"100m"`                          |             |
+| migration.resources.requests.memory                                | string | `"256Mi"`                         |             |
+| migration.ttlSecondsAfterFinished                                  | int    | `300`                             |             |
 | nameOverride                                                       | string | `""`                              |             |
 | partOfOverride                                                     | string | `""`                              |             |
+| pdb.additionalLabels                                               | object | `{}`                              |             |
+| pdb.annotations                                                    | object | `{}`                              |             |
+| pdb.enabled                                                        | bool   | `true`                            |             |
+| pdb.minAvailable                                                   | int    | `1`                               |             |
 | postgresql.auth.database                                           | string | `"formbricks"`                    |             |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`        |             |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`       |             |
@@ -115,7 +174,7 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | postgresql.fullnameOverride                                        | string | `"formbricks-postgresql"`         |             |
 | postgresql.global.security.allowInsecureImages                     | bool   | `true`                            |             |
 | postgresql.image.repository                                        | string | `"pgvector/pgvector"`             |             |
-| postgresql.image.tag                                               | string | `"0.8.0-pg17"`                    |             |
+| postgresql.image.tag                                               | string | `"pg17"`                          |             |
 | postgresql.primary.containerSecurityContext.enabled                | bool   | `true`                            |             |
 | postgresql.primary.containerSecurityContext.readOnlyRootFilesystem | bool   | `false`                           |             |
 | postgresql.primary.containerSecurityContext.runAsUser              | int    | `1001`                            |             |
@@ -151,7 +210,3 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | serviceMonitor.endpoints[0].interval                               | string | `"5s"`                            |             |
 | serviceMonitor.endpoints[0].path                                   | string | `"/metrics"`                      |             |
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                       |             |
-
----
-
-Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

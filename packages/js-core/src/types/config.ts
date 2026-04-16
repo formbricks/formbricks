@@ -1,7 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
-import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
+import type { ActionClass, Language, Segment, Survey, SurveyLanguage, Workspace } from "@prisma/client";
 
-export type TEnvironmentStateSurvey = Pick<
+export type TWorkspaceStateSurvey = Pick<
   Survey,
   | "id"
   | "name"
@@ -18,8 +18,9 @@ export type TEnvironmentStateSurvey = Pick<
   | "displayOption"
   | "hiddenFields"
   | "delay"
-  | "projectOverwrites"
+  | "workspaceOverwrites"
   | "isBackButtonHidden"
+  | "isAutoProgressingEnabled"
   | "recaptcha"
 > & {
   languages: (SurveyLanguage & { language: Language })[];
@@ -30,21 +31,21 @@ export type TEnvironmentStateSurvey = Pick<
   styling?: TSurveyStyling;
 };
 
-export type TEnvironmentStateProject = Pick<
-  Project,
-  "id" | "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
+export type TWorkspaceStateSettings = Pick<
+  Workspace,
+  "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
 > & {
-  styling: TProjectStyling;
+  styling: TWorkspaceStyling;
 };
 
-export type TEnvironmentStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
+export type TWorkspaceStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
 
-export interface TEnvironmentState {
+export interface TWorkspaceState {
   expiresAt: Date;
   data: {
-    surveys: TEnvironmentStateSurvey[];
-    actionClasses: TEnvironmentStateActionClass[];
-    project: TEnvironmentStateProject;
+    surveys: TWorkspaceStateSurvey[];
+    actionClasses: TWorkspaceStateActionClass[];
+    settings: TWorkspaceStateSettings;
     recaptchaSiteKey?: string;
   };
 }
@@ -63,11 +64,11 @@ export interface TUserState {
 }
 
 export interface TConfig {
-  environmentId: string;
+  workspaceId: string;
   appUrl: string;
-  environment: TEnvironmentState;
+  workspace: TWorkspaceState;
   user: TUserState;
-  filteredSurveys: TEnvironmentStateSurvey[];
+  filteredSurveys: TWorkspaceStateSurvey[];
   status: {
     value: "success" | "error";
     expiresAt: Date | null;
@@ -84,7 +85,9 @@ export type TConfigUpdateInput = Omit<TConfig, "status"> & {
 export type TAttributes = Record<string, string | number>;
 
 export interface TConfigInput {
-  environmentId: string;
+  /** @deprecated Use `workspaceId` instead. Still works as a backward-compatible alias. */
+  environmentId?: string;
+  workspaceId?: string;
   appUrl: string;
 }
 
@@ -116,7 +119,7 @@ export interface TBaseStyling {
   isLogoHidden?: boolean | null;
 }
 
-export interface TProjectStyling extends TBaseStyling {
+export interface TWorkspaceStyling extends TBaseStyling {
   allowStyleOverwrite: boolean;
 }
 
@@ -138,7 +141,8 @@ export interface TLegacyConfigInput {
 
 export type TLegacyConfig = TConfig & {
   apiHost?: string;
-  environmentState?: TEnvironmentState;
-  personState?: TUserState;
   attributes?: TAttributes;
+  // Intermediate format fields (pre-workspace rename)
+  environmentId?: string;
+  environment?: TWorkspaceState;
 };

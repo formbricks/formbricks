@@ -66,7 +66,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/charts", () => ({
 }));
 
 const mockDashboardId = "dashboard-abc-123";
-const mockProjectId = "project-abc-123";
+const mockWorkspaceId = "workspace-abc-123";
 const mockUserId = "user-abc-123";
 const mockChartId = "chart-abc-123";
 
@@ -100,7 +100,7 @@ describe("Dashboard Service", () => {
       const { createDashboard } = await import("./dashboards");
 
       const result = await createDashboard({
-        projectId: mockProjectId,
+        workspaceId: mockWorkspaceId,
         name: "Test Dashboard",
         createdBy: mockUserId,
       });
@@ -109,7 +109,7 @@ describe("Dashboard Service", () => {
       expect(prisma.dashboard.create).toHaveBeenCalledWith({
         data: {
           name: "Test Dashboard",
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           createdBy: mockUserId,
         },
         select: selectDashboard,
@@ -124,7 +124,7 @@ describe("Dashboard Service", () => {
 
       await expect(
         createDashboard({
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           name: "Duplicate",
           createdBy: mockUserId,
         })
@@ -139,7 +139,7 @@ describe("Dashboard Service", () => {
 
       await expect(
         createDashboard({
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           name: "Test",
           createdBy: mockUserId,
         })
@@ -156,11 +156,11 @@ describe("Dashboard Service", () => {
       mockTxDashboard.update.mockResolvedValue(updatedDashboard);
       const { updateDashboard } = await import("./dashboards");
 
-      const result = await updateDashboard(mockDashboardId, mockProjectId, { name: "Updated Dashboard" });
+      const result = await updateDashboard(mockDashboardId, mockWorkspaceId, { name: "Updated Dashboard" });
 
       expect(result).toEqual({ dashboard: mockDashboard, updatedDashboard });
       expect(mockTxDashboard.findFirst).toHaveBeenCalledWith({
-        where: { id: mockDashboardId, projectId: mockProjectId },
+        where: { id: mockDashboardId, workspaceId: mockWorkspaceId },
         select: selectDashboard,
       });
       expect(mockTxDashboard.update).toHaveBeenCalledWith({
@@ -175,7 +175,7 @@ describe("Dashboard Service", () => {
       const { updateDashboard } = await import("./dashboards");
 
       await expect(
-        updateDashboard(mockDashboardId, mockProjectId, { name: "Updated" })
+        updateDashboard(mockDashboardId, mockWorkspaceId, { name: "Updated" })
       ).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Dashboard",
@@ -193,7 +193,7 @@ describe("Dashboard Service", () => {
       const { updateDashboard } = await import("./dashboards");
 
       await expect(
-        updateDashboard(mockDashboardId, mockProjectId, { name: "Taken Name" })
+        updateDashboard(mockDashboardId, mockWorkspaceId, { name: "Taken Name" })
       ).rejects.toMatchObject({
         name: "InvalidInputError",
       });
@@ -206,11 +206,11 @@ describe("Dashboard Service", () => {
       mockTxDashboard.delete.mockResolvedValue(undefined);
       const { deleteDashboard } = await import("./dashboards");
 
-      const result = await deleteDashboard(mockDashboardId, mockProjectId);
+      const result = await deleteDashboard(mockDashboardId, mockWorkspaceId);
 
       expect(result).toEqual(mockDashboard);
       expect(mockTxDashboard.findFirst).toHaveBeenCalledWith({
-        where: { id: mockDashboardId, projectId: mockProjectId },
+        where: { id: mockDashboardId, workspaceId: mockWorkspaceId },
         select: selectDashboard,
       });
       expect(mockTxDashboard.delete).toHaveBeenCalledWith({ where: { id: mockDashboardId } });
@@ -220,7 +220,7 @@ describe("Dashboard Service", () => {
       mockTxDashboard.findFirst.mockResolvedValue(null);
       const { deleteDashboard } = await import("./dashboards");
 
-      await expect(deleteDashboard(mockDashboardId, mockProjectId)).rejects.toMatchObject({
+      await expect(deleteDashboard(mockDashboardId, mockWorkspaceId)).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Dashboard",
         resourceId: mockDashboardId,
@@ -235,7 +235,7 @@ describe("Dashboard Service", () => {
       );
       const { deleteDashboard } = await import("./dashboards");
 
-      await expect(deleteDashboard(mockDashboardId, mockProjectId)).rejects.toMatchObject({
+      await expect(deleteDashboard(mockDashboardId, mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -273,13 +273,13 @@ describe("Dashboard Service", () => {
       mockTxDashboard.create.mockResolvedValue(duplicatedDashboard);
       const { duplicateDashboard } = await import("./dashboards");
 
-      const result = await duplicateDashboard(mockDashboardId, mockProjectId, mockUserId);
+      const result = await duplicateDashboard(mockDashboardId, mockWorkspaceId, mockUserId);
 
       expect(result).toEqual(duplicatedDashboard);
       expect(mockTxDashboard.create).toHaveBeenCalledWith({
         data: {
           name: "Test Dashboard (copy)",
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           createdBy: mockUserId,
           widgets: {
             create: [
@@ -306,7 +306,7 @@ describe("Dashboard Service", () => {
       mockTxDashboard.create.mockResolvedValue(duplicatedDashboard);
       const { duplicateDashboard } = await import("./dashboards");
 
-      const result = await duplicateDashboard(mockDashboardId, mockProjectId, mockUserId);
+      const result = await duplicateDashboard(mockDashboardId, mockWorkspaceId, mockUserId);
 
       expect(result).toEqual(duplicatedDashboard);
       expect(mockTxDashboard.create).toHaveBeenCalledWith({
@@ -329,7 +329,7 @@ describe("Dashboard Service", () => {
       });
       const { duplicateDashboard } = await import("./dashboards");
 
-      const result = await duplicateDashboard(mockDashboardId, mockProjectId, mockUserId);
+      const result = await duplicateDashboard(mockDashboardId, mockWorkspaceId, mockUserId);
 
       expect(result.name).toBe("Test Dashboard (copy) 2");
       expect(mockTxDashboard.create).toHaveBeenCalledWith({
@@ -342,7 +342,7 @@ describe("Dashboard Service", () => {
       mockTxDashboard.findFirst.mockResolvedValue(null);
       const { duplicateDashboard } = await import("./dashboards");
 
-      await expect(duplicateDashboard(mockDashboardId, mockProjectId, mockUserId)).rejects.toMatchObject({
+      await expect(duplicateDashboard(mockDashboardId, mockWorkspaceId, mockUserId)).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Dashboard",
         resourceId: mockDashboardId,
@@ -357,7 +357,7 @@ describe("Dashboard Service", () => {
       );
       const { duplicateDashboard } = await import("./dashboards");
 
-      await expect(duplicateDashboard(mockDashboardId, mockProjectId, mockUserId)).rejects.toMatchObject({
+      await expect(duplicateDashboard(mockDashboardId, mockWorkspaceId, mockUserId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -378,11 +378,11 @@ describe("Dashboard Service", () => {
       vi.mocked(prisma.dashboard.findFirst).mockResolvedValue(dashboardWithWidgets as any);
       const { getDashboard } = await import("./dashboards");
 
-      const result = await getDashboard(mockDashboardId, mockProjectId);
+      const result = await getDashboard(mockDashboardId, mockWorkspaceId);
 
       expect(result).toEqual(dashboardWithWidgets);
       expect(prisma.dashboard.findFirst).toHaveBeenCalledWith({
-        where: { id: mockDashboardId, projectId: mockProjectId },
+        where: { id: mockDashboardId, workspaceId: mockWorkspaceId },
         include: {
           widgets: {
             orderBy: { order: "asc" },
@@ -400,7 +400,7 @@ describe("Dashboard Service", () => {
       vi.mocked(prisma.dashboard.findFirst).mockResolvedValue(null);
       const { getDashboard } = await import("./dashboards");
 
-      await expect(getDashboard(mockDashboardId, mockProjectId)).rejects.toMatchObject({
+      await expect(getDashboard(mockDashboardId, mockWorkspaceId)).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Dashboard",
         resourceId: mockDashboardId,
@@ -411,7 +411,7 @@ describe("Dashboard Service", () => {
       vi.mocked(prisma.dashboard.findFirst).mockRejectedValue(makePrismaError("P9999"));
       const { getDashboard } = await import("./dashboards");
 
-      await expect(getDashboard(mockDashboardId, mockProjectId)).rejects.toMatchObject({
+      await expect(getDashboard(mockDashboardId, mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -426,11 +426,11 @@ describe("Dashboard Service", () => {
       vi.mocked(prisma.dashboard.findMany).mockResolvedValue(dashboards as any);
       const { getDashboards } = await import("./dashboards");
 
-      const result = await getDashboards(mockProjectId);
+      const result = await getDashboards(mockWorkspaceId);
 
       expect(result).toEqual(dashboards);
       expect(prisma.dashboard.findMany).toHaveBeenCalledWith({
-        where: { projectId: mockProjectId },
+        where: { workspaceId: mockWorkspaceId },
         orderBy: { createdAt: "desc" },
         select: expect.objectContaining({
           id: true,
@@ -445,7 +445,7 @@ describe("Dashboard Service", () => {
       vi.mocked(prisma.dashboard.findMany).mockResolvedValue([]);
       const { getDashboards } = await import("./dashboards");
 
-      const result = await getDashboards(mockProjectId);
+      const result = await getDashboards(mockWorkspaceId);
 
       expect(result).toEqual([]);
     });
@@ -454,7 +454,7 @@ describe("Dashboard Service", () => {
       vi.mocked(prisma.dashboard.findMany).mockRejectedValue(makePrismaError("P9999"));
       const { getDashboards } = await import("./dashboards");
 
-      await expect(getDashboards(mockProjectId)).rejects.toMatchObject({
+      await expect(getDashboards(mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -477,7 +477,7 @@ describe("Dashboard Service", () => {
       mockTxWidget.deleteMany.mockResolvedValue({ count: 1 });
       const { updateWidgetLayouts } = await import("./dashboards");
 
-      const result = await updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates);
+      const result = await updateWidgetLayouts(mockDashboardId, mockWorkspaceId, widgetUpdates);
 
       expect(result).toEqual({ widgetCount: 2 });
       expect(mockTxWidget.update).toHaveBeenCalledTimes(2);
@@ -498,7 +498,7 @@ describe("Dashboard Service", () => {
       mockTxWidget.update.mockResolvedValue(undefined);
       const { updateWidgetLayouts } = await import("./dashboards");
 
-      await updateWidgetLayouts(mockDashboardId, mockProjectId, [
+      await updateWidgetLayouts(mockDashboardId, mockWorkspaceId, [
         { id: "widget-1", layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
       ]);
 
@@ -509,7 +509,9 @@ describe("Dashboard Service", () => {
       mockTxDashboard.findFirst.mockResolvedValue(null);
       const { updateWidgetLayouts } = await import("./dashboards");
 
-      await expect(updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates)).rejects.toMatchObject({
+      await expect(
+        updateWidgetLayouts(mockDashboardId, mockWorkspaceId, widgetUpdates)
+      ).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Dashboard",
         resourceId: mockDashboardId,
@@ -525,7 +527,7 @@ describe("Dashboard Service", () => {
       const { updateWidgetLayouts } = await import("./dashboards");
 
       await expect(
-        updateWidgetLayouts(mockDashboardId, mockProjectId, [
+        updateWidgetLayouts(mockDashboardId, mockWorkspaceId, [
           { id: "widget-1", layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
           { id: "widget-unknown", layout: { x: 4, y: 0, w: 4, h: 3 }, order: 1 },
         ])
@@ -542,7 +544,9 @@ describe("Dashboard Service", () => {
       );
       const { updateWidgetLayouts } = await import("./dashboards");
 
-      await expect(updateWidgetLayouts(mockDashboardId, mockProjectId, widgetUpdates)).rejects.toMatchObject({
+      await expect(
+        updateWidgetLayouts(mockDashboardId, mockWorkspaceId, widgetUpdates)
+      ).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -569,7 +573,7 @@ describe("Dashboard Service", () => {
       const result = await addChartToDashboard({
         dashboardId: mockDashboardId,
         chartId: mockChartId,
-        projectId: mockProjectId,
+        workspaceId: mockWorkspaceId,
         layout: mockLayout,
       });
 
@@ -595,7 +599,7 @@ describe("Dashboard Service", () => {
       await addChartToDashboard({
         dashboardId: mockDashboardId,
         chartId: mockChartId,
-        projectId: mockProjectId,
+        workspaceId: mockWorkspaceId,
         layout: mockLayout,
       });
 
@@ -613,7 +617,7 @@ describe("Dashboard Service", () => {
         addChartToDashboard({
           dashboardId: mockDashboardId,
           chartId: mockChartId,
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           layout: mockLayout,
         })
       ).rejects.toMatchObject({
@@ -633,7 +637,7 @@ describe("Dashboard Service", () => {
         addChartToDashboard({
           dashboardId: mockDashboardId,
           chartId: mockChartId,
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           layout: mockLayout,
         })
       ).rejects.toMatchObject({
@@ -659,7 +663,7 @@ describe("Dashboard Service", () => {
         addChartToDashboard({
           dashboardId: mockDashboardId,
           chartId: mockChartId,
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           layout: mockLayout,
         })
       ).rejects.toMatchObject({

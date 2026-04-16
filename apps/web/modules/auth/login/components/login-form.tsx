@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import Link from "next/dist/client/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -13,19 +13,25 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
+import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 
 const ZLoginForm = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z
     .string()
-    .min(8, { message: "Password must be at least 8 characters long" })
-    .max(128, { message: "Password must be 128 characters or less" }),
+    .min(8, {
+      error: "Password must be at least 8 characters long",
+    })
+    .max(128, {
+      error: "Password must be 128 characters or less",
+    }),
   totpCode: z.string().optional(),
   backupCode: z.string().optional(),
 });
@@ -46,6 +52,11 @@ interface LoginFormProps {
   samlSsoEnabled: boolean;
   samlTenant: string;
   samlProduct: string;
+  oauthError?: string;
+  prefilledEmail?: string;
+  inviteToken?: string | null;
+  resolvedCallbackPath: string;
+  resolvedCallbackUrl: string;
 }
 
 export const LoginForm = ({
@@ -62,16 +73,20 @@ export const LoginForm = ({
   samlSsoEnabled,
   samlTenant,
   samlProduct,
+  oauthError,
+  prefilledEmail,
+  inviteToken,
+  resolvedCallbackPath,
+  resolvedCallbackUrl,
 }: LoginFormProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-  const callbackUrl = searchParams?.get("callbackUrl") ?? "";
+  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked";
   const { t } = useTranslation();
 
   const form = useForm<TLoginForm>({
     defaultValues: {
-      email: searchParams?.get("email") ?? "",
+      email: prefilledEmail ?? "",
       password: "",
       totpCode: "",
       backupCode: "",
@@ -85,7 +100,7 @@ export const LoginForm = ({
     }
     try {
       const signInResponse = await signIn("credentials", {
-        callbackUrl: callbackUrl ?? "/",
+        callbackUrl: resolvedCallbackUrl || "/",
         email: data.email.toLowerCase(),
         password: data.password,
         ...(totpLogin && { totpCode: data.totpCode }),
@@ -101,7 +116,12 @@ export const LoginForm = ({
       if (signInResponse?.error === "Email Verification is Pending") {
         const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
         if (emailTokenActionResponse?.data) {
-          router.push(`/auth/verification-requested?token=${emailTokenActionResponse?.data}`);
+          router.push(
+            buildVerificationRequestedPath({
+              token: emailTokenActionResponse.data,
+              callbackUrl: resolvedCallbackUrl,
+            })
+          );
         } else {
           const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
           toast.error(errorMessage);
@@ -115,10 +135,10 @@ export const LoginForm = ({
       }
 
       if (!signInResponse?.error) {
-        router.push(searchParams?.get("callbackUrl") ?? "/");
+        router.push(resolvedCallbackPath || "/");
       }
     } catch (error) {
-      toast.error(error.toString());
+      toast.error(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -126,7 +146,6 @@ export const LoginForm = ({
   const [totpLogin, setTotpLogin] = useState(false);
   const [totpBackup, setTotpBackup] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
 
   useEffect(() => {
@@ -163,9 +182,17 @@ export const LoginForm = ({
     <FormProvider {...form}>
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">{formLabel}</h1>
+        {oauthAccountNotLinked && (
+          <Alert variant="error" className="mb-4 text-left">
+            <AlertTitle>{t("auth.login.oauth_account_not_linked_title")}</AlertTitle>
+            <AlertDescription>
+              <p>{t("auth.login.oauth_account_not_linked_description")}</p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="space-y-2">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+          <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             {TwoFactorComponent}
             {showLogin && (
               <div className={cn(totpLogin && "hidden", "space-y-2")}>
@@ -178,13 +205,14 @@ export const LoginForm = ({
                         <div>
                           <input
                             id="email"
+                            ref={emailRef}
                             type="email"
                             autoComplete="email"
                             required
                             value={field.value}
                             onChange={(email) => field.onChange(email)}
                             placeholder="work@email.com"
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                           />
                           {error?.message && <FormError className="text-left">{error.message}</FormError>}
                         </div>
@@ -207,7 +235,7 @@ export const LoginForm = ({
                             aria-label="password"
                             aria-required="true"
                             required
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 pr-8 shadow-sm sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 pr-8 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />
@@ -221,7 +249,7 @@ export const LoginForm = ({
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
-                      className="hover:text-brand-dark text-xs text-slate-500">
+                      className="text-xs text-slate-500 hover:text-brand-dark">
                       {t("auth.login.forgot_your_password")}
                     </Link>
                   </div>
@@ -230,6 +258,7 @@ export const LoginForm = ({
             )}
             {emailAuthEnabled && (
               <Button
+                type="button"
                 onClick={() => {
                   if (!showLogin) {
                     setShowLogin(true);
@@ -258,7 +287,7 @@ export const LoginForm = ({
               samlSsoEnabled={samlSsoEnabled}
               samlTenant={samlTenant}
               samlProduct={samlProduct}
-              callbackUrl={callbackUrl}
+              returnToUrl={resolvedCallbackUrl}
               source="signin"
             />
           )}

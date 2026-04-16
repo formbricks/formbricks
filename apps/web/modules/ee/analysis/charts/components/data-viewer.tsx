@@ -16,7 +16,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
   if (!data || data.length === 0 || Object.keys(data[0]).length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm text-gray-500">{t("environments.analysis.charts.no_data_available")}</p>
+        <p className="text-sm text-gray-500">{t("workspace.analysis.charts.no_data_available")}</p>
       </div>
     );
   }
@@ -28,9 +28,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <div className="mb-2 flex items-center gap-2">
         <DatabaseIcon className="h-4 w-4 text-gray-600" />
-        <h4 className="text-sm font-semibold text-gray-900">
-          {t("environments.analysis.charts.chart_data")}
-        </h4>
+        <h4 className="text-sm font-semibold text-gray-900">{t("workspace.analysis.charts.chart_data")}</h4>
       </div>
       <div className="max-h-64 overflow-auto rounded bg-white">
         <table className="w-full text-xs">
@@ -64,7 +62,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
         </table>
         {data.length > MAX_DISPLAY_ROWS && (
           <div className="px-3 py-2 text-xs text-gray-500">
-            {t("environments.analysis.charts.showing_first_n_of", {
+            {t("workspace.analysis.charts.showing_first_n_of", {
               n: MAX_DISPLAY_ROWS,
               count: data.length,
             })}

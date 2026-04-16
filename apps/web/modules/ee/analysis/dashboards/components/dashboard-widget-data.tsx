@@ -19,7 +19,7 @@ export function DashboardWidgetData({ dataPromise, chartType, query }: Readonly<
   if ("error" in result) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-red-500">
-        {t("environments.analysis.dashboards.failed_to_load_chart_data")}
+        {t("workspace.analysis.dashboards.failed_to_load_chart_data")}
       </div>
     );
   }

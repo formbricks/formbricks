@@ -17,20 +17,20 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkProjectAccess } from "@/modules/ee/analysis/lib/access";
+import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
-/** Client-facing chart input (projectId and createdBy are resolved server-side) */
-const ZChartCreateInputClient = ZChartCreateInput.omit({ projectId: true, createdBy: true });
+/** Client-facing chart input (workspaceId and createdBy are resolved server-side) */
+const ZChartCreateInputClient = ZChartCreateInput.omit({ workspaceId: true, createdBy: true });
 
 const ZCreateChartAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   chartInput: ZChartCreateInputClient,
 });
 
-export const createChartAction = authenticatedActionClient.schema(ZCreateChartAction).action(
+export const createChartAction = authenticatedActionClient.inputSchema(ZCreateChartAction).action(
   withAuditLogging(
     "created",
     "chart",
@@ -41,20 +41,20 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZCreateChartAction>;
     }) => {
-      const { organizationId, projectId } = await checkProjectAccess(
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         "readWrite"
       );
 
       const chart = await createChart({
         ...parsedInput.chartInput,
-        projectId,
+        workspaceId,
         createdBy: ctx.user.id,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.workspaceId = workspaceId;
       ctx.auditLoggingCtx.chartId = chart.id;
       ctx.auditLoggingCtx.newObject = chart;
       return chart;
@@ -63,12 +63,12 @@ export const createChartAction = authenticatedActionClient.schema(ZCreateChartAc
 );
 
 const ZUpdateChartAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   chartId: ZId,
   chartUpdateInput: ZChartUpdateInput,
 });
 
-export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAction).action(
+export const updateChartAction = authenticatedActionClient.inputSchema(ZUpdateChartAction).action(
   withAuditLogging(
     "updated",
     "chart",
@@ -79,20 +79,20 @@ export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZUpdateChartAction>;
     }) => {
-      const { organizationId, projectId } = await checkProjectAccess(
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         "readWrite"
       );
 
       const { chart, updatedChart } = await updateChart(
         parsedInput.chartId,
-        projectId,
+        workspaceId,
         parsedInput.chartUpdateInput
       );
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.workspaceId = workspaceId;
       ctx.auditLoggingCtx.chartId = parsedInput.chartId;
       ctx.auditLoggingCtx.oldObject = chart;
       ctx.auditLoggingCtx.newObject = updatedChart;
@@ -102,11 +102,11 @@ export const updateChartAction = authenticatedActionClient.schema(ZUpdateChartAc
 );
 
 const ZDuplicateChartAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   chartId: ZId,
 });
 
-export const duplicateChartAction = authenticatedActionClient.schema(ZDuplicateChartAction).action(
+export const duplicateChartAction = authenticatedActionClient.inputSchema(ZDuplicateChartAction).action(
   withAuditLogging(
     "created",
     "chart",
@@ -117,16 +117,16 @@ export const duplicateChartAction = authenticatedActionClient.schema(ZDuplicateC
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZDuplicateChartAction>;
     }) => {
-      const { organizationId, projectId } = await checkProjectAccess(
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         "readWrite"
       );
 
-      const duplicatedChart = await duplicateChart(parsedInput.chartId, projectId, ctx.user.id);
+      const duplicatedChart = await duplicateChart(parsedInput.chartId, workspaceId, ctx.user.id);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.workspaceId = workspaceId;
       ctx.auditLoggingCtx.chartId = duplicatedChart.id;
       ctx.auditLoggingCtx.newObject = duplicatedChart;
       return duplicatedChart;
@@ -135,11 +135,11 @@ export const duplicateChartAction = authenticatedActionClient.schema(ZDuplicateC
 );
 
 const ZDeleteChartAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   chartId: ZId,
 });
 
-export const deleteChartAction = authenticatedActionClient.schema(ZDeleteChartAction).action(
+export const deleteChartAction = authenticatedActionClient.inputSchema(ZDeleteChartAction).action(
   withAuditLogging(
     "deleted",
     "chart",
@@ -150,16 +150,16 @@ export const deleteChartAction = authenticatedActionClient.schema(ZDeleteChartAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZDeleteChartAction>;
     }) => {
-      const { organizationId, projectId } = await checkProjectAccess(
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
-        parsedInput.environmentId,
+        parsedInput.workspaceId,
         "readWrite"
       );
 
-      const chart = await deleteChart(parsedInput.chartId, projectId);
+      const chart = await deleteChart(parsedInput.chartId, workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.projectId = projectId;
+      ctx.auditLoggingCtx.workspaceId = workspaceId;
       ctx.auditLoggingCtx.chartId = parsedInput.chartId;
       ctx.auditLoggingCtx.oldObject = chart;
       return { success: true };
@@ -168,12 +168,12 @@ export const deleteChartAction = authenticatedActionClient.schema(ZDeleteChartAc
 );
 
 const ZGetChartAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   chartId: ZId,
 });
 
 export const getChartAction = authenticatedActionClient
-  .schema(ZGetChartAction)
+  .inputSchema(ZGetChartAction)
   .action(
     async ({
       ctx,
@@ -182,18 +182,18 @@ export const getChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetChartAction>;
     }) => {
-      const { projectId } = await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
+      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
 
-      return getChart(parsedInput.chartId, projectId);
+      return getChart(parsedInput.chartId, workspaceId);
     }
   );
 
 const ZGetChartsAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const getChartsAction = authenticatedActionClient
-  .schema(ZGetChartsAction)
+  .inputSchema(ZGetChartsAction)
   .action(
     async ({
       ctx,
@@ -202,8 +202,8 @@ export const getChartsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetChartsAction>;
     }) => {
-      await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
-      const charts = await getCharts(parsedInput.environmentId);
+      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const charts = await getCharts(workspaceId);
       return charts;
     }
   );
@@ -211,12 +211,12 @@ export const getChartsAction = authenticatedActionClient
 // ── Charts UI specific actions (query execution & AI generation) ─────────────
 
 const ZExecuteQueryAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   query: ZChartQuery,
 });
 
 export const executeQueryAction = authenticatedActionClient
-  .schema(ZExecuteQueryAction)
+  .inputSchema(ZExecuteQueryAction)
   .action(
     async ({
       ctx,
@@ -225,7 +225,7 @@ export const executeQueryAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZExecuteQueryAction>;
     }) => {
-      await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
+      await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
 
       validateQueryMembers(parsedInput.query);
 
@@ -275,12 +275,12 @@ const ZGenerateAIQueryResponse = z.object({
 });
 
 const ZGenerateAIChartAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   prompt: z.string().min(1).max(2000),
 });
 
 export const generateAIChartAction = authenticatedActionClient
-  .schema(ZGenerateAIChartAction)
+  .inputSchema(ZGenerateAIChartAction)
   .action(
     async ({
       ctx,
@@ -289,7 +289,7 @@ export const generateAIChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGenerateAIChartAction>;
     }) => {
-      await checkProjectAccess(ctx.user.id, parsedInput.environmentId, "read");
+      await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
 
       if (!process.env.OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY is not configured");

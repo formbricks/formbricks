@@ -5,43 +5,35 @@ import { CreateChartButton } from "@/modules/ee/analysis/charts/components/creat
 import { getChartsWithCreator } from "@/modules/ee/analysis/charts/lib/charts";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 interface ChartsListContentProps {
   chartsPromise: Promise<TChartWithCreator[]>;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
 }
 
-const ChartsListContent = ({
-  chartsPromise,
-  environmentId,
-  isReadOnly,
-}: Readonly<ChartsListContentProps>) => {
+const ChartsListContent = ({ chartsPromise, workspaceId, isReadOnly }: Readonly<ChartsListContentProps>) => {
   const charts = use(chartsPromise);
 
-  return <ChartsList charts={charts} environmentId={environmentId} isReadOnly={isReadOnly} />;
+  return <ChartsList charts={charts} workspaceId={workspaceId} isReadOnly={isReadOnly} />;
 };
 
 interface ChartsListPageProps {
-  environmentId: string;
+  workspaceId: string;
 }
 
-export async function ChartsListPage({ environmentId }: Readonly<ChartsListPageProps>) {
+export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPageProps>) {
   const t = await getTranslate();
-  const { project, isReadOnly } = await getEnvironmentAuth(environmentId);
-  const chartsPromise = getChartsWithCreator(project.id);
+  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const chartsPromise = getChartsWithCreator(workspaceId);
 
   return (
     <AnalysisPageLayout
       pageTitle={t("common.analysis")}
-      environmentId={environmentId}
-      cta={isReadOnly ? undefined : <CreateChartButton environmentId={environmentId} />}>
-      <ChartsListContent
-        chartsPromise={chartsPromise}
-        environmentId={environmentId}
-        isReadOnly={isReadOnly}
-      />
+      workspaceId={workspaceId}
+      cta={isReadOnly ? undefined : <CreateChartButton workspaceId={workspaceId} />}>
+      <ChartsListContent chartsPromise={chartsPromise} workspaceId={workspaceId} isReadOnly={isReadOnly} />
     </AnalysisPageLayout>
   );
 }

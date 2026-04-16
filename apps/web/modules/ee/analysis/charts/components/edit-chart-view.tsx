@@ -24,7 +24,7 @@ import { Input } from "@/modules/ui/components/input";
 interface EditChartViewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  environmentId: string;
+  workspaceId: string;
   chartId: string;
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
@@ -33,7 +33,7 @@ interface EditChartViewProps {
 export function EditChartView({
   open,
   onOpenChange,
-  environmentId,
+  workspaceId,
   chartId,
   initialChart,
   onSuccess,
@@ -59,7 +59,7 @@ export function EditChartView({
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
     handleClose,
-  } = useChartDialog({ open, onOpenChange, environmentId, chartId, initialChart, onSuccess });
+  } = useChartDialog({ open, onOpenChange, workspaceId, chartId, initialChart, onSuccess });
 
   if (isLoadingChart && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
@@ -92,20 +92,20 @@ export function EditChartView({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto" width="wide">
         <DialogHeader>
-          <DialogTitle>{t("environments.analysis.charts.edit_chart_title")}</DialogTitle>
-          <DialogDescription>{t("environments.analysis.charts.edit_chart_description")}</DialogDescription>
+          <DialogTitle>{t("workspace.analysis.charts.edit_chart_title")}</DialogTitle>
+          <DialogDescription>{t("workspace.analysis.charts.edit_chart_description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="grid gap-4 px-1">
             <div className="space-y-2">
               <label htmlFor="edit-chart-name" className="text-sm">
-                {t("environments.analysis.charts.chart_name")}
+                {t("workspace.analysis.charts.chart_name")}
               </label>
               <Input
                 id="edit-chart-name"
                 value={chartName}
                 onChange={(e) => setChartName(e.target.value)}
-                placeholder={t("environments.analysis.charts.chart_name_placeholder")}
+                placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
                 className="w-full"
               />
             </div>
@@ -113,7 +113,7 @@ export function EditChartView({
               <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
             </div>
             <AdvancedChartBuilder
-              environmentId={environmentId}
+              workspaceId={workspaceId}
               chartType={chartType}
               initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}

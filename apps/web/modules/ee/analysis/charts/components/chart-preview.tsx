@@ -48,7 +48,7 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
     if (!chartData) {
       return (
         <div className="flex h-48 items-center justify-center text-sm text-gray-500">
-          {t("environments.analysis.charts.no_data_available")}
+          {t("workspace.analysis.charts.no_data_available")}
         </div>
       );
     }
@@ -58,16 +58,16 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
         <div className="mb-4 flex justify-end">
           <TabsList>
             <TabsTrigger value="chart" icon={<BarChart className="h-4 w-4" />}>
-              {t("environments.analysis.charts.chart")}
+              {t("workspace.analysis.charts.chart")}
             </TabsTrigger>
             <TabsTrigger value="data" icon={<DatabaseIcon className="h-4 w-4" />}>
-              {t("environments.analysis.charts.chart_data_tab")}
+              {t("workspace.analysis.charts.chart_data_tab")}
             </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="chart" className="mt-0">
-          <ChartErrorBoundary fallbackMessage={t("environments.analysis.charts.chart_render_error")}>
+          <ChartErrorBoundary fallbackMessage={t("workspace.analysis.charts.chart_render_error")}>
             <ChartRenderer chartType={chartData.chartType} data={data} query={chartData.query} />
           </ChartErrorBoundary>
         </TabsContent>
@@ -81,7 +81,7 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="mb-4 font-semibold text-gray-900">{t("environments.analysis.charts.chart_preview")}</h3>
+      <h3 className="mb-4 font-semibold text-gray-900">{t("workspace.analysis.charts.chart_preview")}</h3>
       {renderContent()}
     </div>
   );

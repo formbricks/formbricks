@@ -139,7 +139,7 @@ describe("Response Lib", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               name: "important",
-              environmentId: "env123",
+              workspaceId: "workspace-id-mock",
             },
           },
         ],
@@ -162,7 +162,7 @@ describe("Response Lib", () => {
               createdAt: mockPrismaResponse.tags[0].tag.createdAt,
               updatedAt: mockPrismaResponse.tags[0].tag.updatedAt,
               name: "important",
-              environmentId: "env123",
+              workspaceId: "workspace-id-mock",
             },
           ],
         });
@@ -183,7 +183,7 @@ describe("Response Lib", () => {
                   createdAt: true,
                   updatedAt: true,
                   name: true,
-                  environmentId: true,
+                  workspaceId: true,
                 },
               },
             },
@@ -296,7 +296,11 @@ describe("Response Lib", () => {
       });
       expect(deleteDisplay).toHaveBeenCalledWith(response.displayId);
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
-      expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(response.data, survey.questions);
+      expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(
+        response.data,
+        survey.questions,
+        survey.workspaceId
+      );
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(response);

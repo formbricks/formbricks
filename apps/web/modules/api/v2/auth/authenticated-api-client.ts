@@ -1,3 +1,4 @@
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { buildAuditLogBaseObject } from "@/app/lib/api/with-api-logging";
 import { handleApiError, logApiRequest } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -12,6 +13,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   handler,
   action,
   targetType,
+  bodyTransform,
 }: {
   request: Request;
   schemas?: S;
@@ -20,6 +22,10 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   handler: HandlerFn<ParsedSchemas<S>>;
   action?: TAuditAction;
   targetType?: TAuditTarget;
+  bodyTransform?: (
+    body: Record<string, unknown>,
+    auth: TAuthenticationApiKey
+  ) => Promise<Record<string, unknown>> | Record<string, unknown>;
 }): Promise<Response> => {
   try {
     const auditLog =
@@ -32,6 +38,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
       rateLimit,
       handler,
       auditLog,
+      bodyTransform,
     });
 
     if (response.ok) {
@@ -43,13 +50,23 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
 
     return response;
   } catch (err) {
-    if ("type" in err) {
-      return handleApiError(request, err as ApiErrorResponseV2);
+    if (err !== null && typeof err === "object" && "type" in err) {
+      return handleApiError(request, err as ApiErrorResponseV2, undefined, err);
     }
 
-    return handleApiError(request, {
-      type: "internal_server_error",
-      details: [{ field: "error", issue: "An error occurred while processing your request." }],
-    });
+    return handleApiError(
+      request,
+      {
+        type: "internal_server_error",
+        details: [
+          {
+            field: "error",
+            issue: "An error occurred while processing your request. Please try again later.",
+          },
+        ],
+      },
+      undefined,
+      err
+    );
   }
 };

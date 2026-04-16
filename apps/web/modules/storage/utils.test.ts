@@ -5,7 +5,6 @@ import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   isAllowedFileExtension,
-  isValidFileTypeForExtension,
   isValidImageFile,
   resolveStorageUrl,
   resolveStorageUrlAuto,
@@ -185,29 +184,6 @@ describe("storage utils", () => {
     test("should handle filenames with multiple dots", () => {
       expect(isAllowedFileExtension("example.backup.pdf")).toBe(true);
       expect(isAllowedFileExtension("document.old.exe")).toBe(false);
-    });
-  });
-
-  describe("isValidFileTypeForExtension", () => {
-    test("should return false for a file with no extension", () => {
-      expect(isValidFileTypeForExtension("filename", "application/octet-stream")).toBe(false);
-    });
-
-    test("should return true for valid extension and MIME type combinations", () => {
-      expect(isValidFileTypeForExtension("image.jpg", "image/jpeg")).toBe(true);
-      expect(isValidFileTypeForExtension("image.png", "image/png")).toBe(true);
-      expect(isValidFileTypeForExtension("document.pdf", "application/pdf")).toBe(true);
-    });
-
-    test("should return false for mismatched extension and MIME type", () => {
-      expect(isValidFileTypeForExtension("image.jpg", "image/png")).toBe(false);
-      expect(isValidFileTypeForExtension("document.pdf", "image/jpeg")).toBe(false);
-      expect(isValidFileTypeForExtension("image.png", "application/pdf")).toBe(false);
-    });
-
-    test("should handle case insensitivity correctly", () => {
-      expect(isValidFileTypeForExtension("image.JPG", "image/jpeg")).toBe(true);
-      expect(isValidFileTypeForExtension("image.jpg", "IMAGE/JPEG")).toBe(true);
     });
   });
 

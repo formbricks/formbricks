@@ -6,13 +6,13 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContact",
   summary: "Create a contact",
   description:
-    "Creates a contact in the database. Each contact must have a valid email address in the attributes. All attribute keys must already exist in the environment. The email is used as the unique identifier along with the environment.",
+    "Creates a single contact in the database. This endpoint expects a top-level `attributes` object. For bulk uploads, use `PUT /management/contacts/bulk`, which expects `contacts[].attributes[]` instead. Each contact must have a valid email address in the attributes. All attribute keys must already exist in the environment. The email is used as the unique identifier along with the environment.",
   tags: ["Management API - Contacts"],
 
   requestBody: {
     required: true,
     description:
-      "The contact to create. Must include an email attribute and all attribute keys must already exist in the environment.",
+      "The single contact to create. Must include a top-level `attributes` object with an email attribute, and all attribute keys must already exist in the environment.",
     content: {
       "application/json": {
         schema: ZContactCreateRequest,

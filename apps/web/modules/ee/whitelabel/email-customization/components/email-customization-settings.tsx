@@ -9,7 +9,8 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
@@ -30,7 +31,7 @@ const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "w
 interface EmailCustomizationSettingsProps {
   organization: TOrganization;
   hasWhiteLabelPermission: boolean;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   isFormbricksCloud: boolean;
   user: TUser | null;
@@ -41,13 +42,15 @@ interface EmailCustomizationSettingsProps {
 export const EmailCustomizationSettings = ({
   organization,
   hasWhiteLabelPermission,
-  environmentId,
+  workspaceId,
   isReadOnly,
   isFormbricksCloud,
   user,
   fbLogoUrl,
   isStorageConfigured,
 }: EmailCustomizationSettingsProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -122,7 +125,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (removeLogoResponse?.data) {
-      toast.success(t("environments.settings.general.logo_removed_successfully"));
+      toast.success(t("workspace.settings.general.logo_removed_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeLogoResponse);
@@ -133,7 +136,7 @@ export const EmailCustomizationSettings = ({
   const handleSave = async () => {
     if (!logoFile) return;
     setIsSaving(true);
-    const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
+    const { url, error } = await handleFileUpload(logoFile, workspaceId, allowedFileExtensions);
 
     if (error) {
       toast.error(error);
@@ -147,7 +150,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (updateLogoResponse?.data) {
-      toast.success(t("environments.settings.general.logo_saved_successfully"));
+      toast.success(t("workspace.settings.general.logo_saved_successfully"));
       setLogoUrl(url);
       router.refresh();
     } else {
@@ -160,11 +163,11 @@ export const EmailCustomizationSettings = ({
 
   const sendTestEmail = async () => {
     if (!logoUrl) {
-      toast.error(t("environments.settings.general.please_add_a_logo"));
+      toast.error(t("workspace.settings.general.please_add_a_logo"));
       return;
     }
     if (logoUrl !== organization.whitelabel?.logoUrl && !isDefaultLogo) {
-      toast.error(t("environments.settings.general.please_save_logo_before_sending_test_email"));
+      toast.error(t("workspace.settings.general.please_save_logo_before_sending_test_email"));
       return;
     }
     const sendTestEmailResponse = await sendTestEmailAction({
@@ -172,7 +175,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (sendTestEmailResponse?.data) {
-      toast.success(t("environments.settings.general.test_email_sent_successfully"));
+      toast.success(t("workspace.settings.general.test_email_sent_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(sendTestEmailResponse);
       toast.error(errorMessage);
@@ -181,15 +184,15 @@ export const EmailCustomizationSettings = ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+      text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
     },
     {
       text: t("common.learn_more"),
       href: isFormbricksCloud
-        ? `/environments/${environmentId}/settings/billing`
+        ? `${workspaceBasePath}/settings/billing`
         : "https://formbricks.com/learn-more-self-hosting-license",
     },
   ];
@@ -197,16 +200,16 @@ export const EmailCustomizationSettings = ({
   return (
     <SettingsCard
       className="overflow-hidden pb-0"
-      title={t("environments.workspace.look.email_customization")}
-      description={t("environments.workspace.look.email_customization_description")}
+      title={t("workspace.look.email_customization")}
+      description={t("workspace.look.email_customization_description")}
       noPadding>
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
           <div className="flex items-end justify-between gap-4">
             <div className="mb-10">
-              <Small>{t("environments.settings.general.logo_in_email_header")}</Small>
+              <Small>{t("workspace.settings.general.logo_in_email_header")}</Small>
 
-              <div className="mt-2 mb-6 flex items-center gap-4">
+              <div className="mb-6 mt-2 flex items-center gap-4">
                 {logoUrl && (
                   <div className="flex flex-col gap-2">
                     <div className="flex w-max items-center justify-center rounded-lg border border-slate-200 px-4 py-2">
@@ -232,7 +235,7 @@ export const EmailCustomizationSettings = ({
                         }}
                         disabled={isReadOnly || isSaving}>
                         <RepeatIcon className="h-4 w-4" />
-                        {t("environments.settings.general.replace_logo")}
+                        {t("workspace.settings.general.replace_logo")}
                       </Button>
                       <Button
                         data-testid="remove-logo-button"
@@ -240,7 +243,7 @@ export const EmailCustomizationSettings = ({
                         variant="outline"
                         disabled={isReadOnly || isSaving}>
                         <Trash2Icon className="h-4 w-4" />
-                        {t("environments.settings.general.remove_logo")}
+                        {t("workspace.settings.general.remove_logo")}
                       </Button>
                     </div>
                   </div>
@@ -276,7 +279,7 @@ export const EmailCustomizationSettings = ({
                 </Button>
               </div>
             </div>
-            <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pt-10 pb-4">
+            <div className="min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10 shadow-card-xl">
               <Image
                 data-testid="email-customization-preview-image"
                 src={logoUrl || fbLogoUrl}
@@ -286,25 +289,26 @@ export const EmailCustomizationSettings = ({
                 height={192}
               />
               <P className="font-bold">
-                {t("environments.settings.general.email_customization_preview_email_heading", {
+                {t("workspace.settings.general.email_customization_preview_email_heading", {
                   userName: user?.name,
                 })}
               </P>
               <Muted className="text-slate-500">
-                {t("environments.settings.general.email_customization_preview_email_text")}
+                {t("workspace.settings.general.email_customization_preview_email_text")}
               </Muted>
             </div>
           </div>
         ) : (
           <UpgradePrompt
-            title={t("environments.settings.general.customize_email_with_a_higher_plan")}
-            description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
+            title={t("workspace.settings.general.customize_email_with_a_higher_plan")}
+            description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
             buttons={buttons}
+            feature="email_customization"
           />
         )}
 
         {hasWhiteLabelPermission && isReadOnly && (
-          <Alert variant="warning" className="mt-4 mb-6">
+          <Alert variant="warning" className="mb-6 mt-4">
             <AlertDescription>
               {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
             </AlertDescription>

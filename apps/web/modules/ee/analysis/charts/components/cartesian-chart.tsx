@@ -57,13 +57,10 @@ const SingleMeasureTooltip = ({ dataKey }: Readonly<{ dataKey: string }>) => {
 };
 
 /** Tooltip formatter for multi-measure charts; uses each payload item's dataKey and color. */
-const multiMeasureTooltipFormatter = (
-  value: unknown,
-  name: string,
-  item: { dataKey?: string; color?: string; payload?: { fill?: string } }
-) => {
-  const key = item?.dataKey ?? name;
-  const color = item?.color ?? item?.payload?.fill;
+const multiMeasureTooltipFormatter = (value: unknown, name: string | number, item: unknown) => {
+  const itemObj = item as { dataKey?: string; color?: string; payload?: { fill?: string } } | undefined;
+  const key = itemObj?.dataKey ?? String(name);
+  const color = itemObj?.color ?? itemObj?.payload?.fill;
   return <ChartTooltipRow value={value} dataKey={key} color={color} />;
 };
 

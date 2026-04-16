@@ -169,8 +169,7 @@ export function MultipleChoiceMultiElement({
     setOtherValue(newOtherValue);
     const baseLabels = getNormalizedSelectedLabels();
 
-    const nextValue = [...baseLabels, ""];
-    if (newOtherValue.trim()) nextValue.push(newOtherValue);
+    const nextValue = [...baseLabels, newOtherValue];
 
     onChange({ [element.id]: nextValue });
   };
@@ -227,8 +226,7 @@ export function MultipleChoiceMultiElement({
     });
 
     if (isOtherNowSelected) {
-      nextLabels.push("");
-      if (otherValue.trim()) nextLabels.push(otherValue);
+      nextLabels.push(otherValue);
     } else if (otherValue) {
       // If other was deselected, clear any stale other value
       setOtherValue("");
@@ -268,6 +266,8 @@ export function MultipleChoiceMultiElement({
         exclusiveOptionIds={noneOption ? [noneOption.id] : []}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        searchPlaceholder={t("common.search")}
+        searchNoResultsText={t("common.no_results_found")}
       />
     </form>
   );

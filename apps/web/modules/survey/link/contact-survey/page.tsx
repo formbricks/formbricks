@@ -3,16 +3,19 @@ import { notFound } from "next/navigation";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
-import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "@/modules/survey/link/lib/metadata-utils";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
+import {
+  getBasicSurveyMetadata,
+  getMetadataBrandColor,
+  getSurveyOpenGraphMetadata,
+} from "@/modules/survey/link/lib/metadata-utils";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
+import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -46,12 +49,11 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     }
 
     // Fetch organization whitelabel data for custom favicon
-    const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-    const customFaviconUrl = environmentContext.organizationWhitelabel?.faviconUrl;
+    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    const customFaviconUrl = workspaceContext.organizationWhitelabel?.faviconUrl;
 
-    // Get OpenGraph metadata
-    const surveyBrandColor = survey.styling?.brandColor?.light;
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
+    const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
 
     // Override with the custom image URL
     if (baseMetadata.openGraph) {
@@ -95,8 +97,8 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     ) {
       return <SurveyInactive surveyClosedMessage={{ heading: t("c.link_expired") }} status="link expired" />;
     }
-    // When token is invalid, we don't have survey data to get project branding settings
-    // So we show SurveyInactive without project data (shows branding by default for backward compatibility)
+    // When token is invalid, we don't have survey data to get workspace branding settings
+    // So we show SurveyInactive without workspace data (shows branding by default for backward compatibility)
     return <SurveyInactive status="link invalid" />;
   }
 
@@ -106,8 +108,8 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (existingResponse) {
     const survey = await getSurvey(surveyId);
     if (survey) {
-      const project = await getProjectByEnvironmentId(survey.environmentId);
-      return <SurveyInactive status="response submitted" project={project || undefined} />;
+      const workspace = await getWorkspaceById(survey.workspaceId);
+      return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
     }
     return <SurveyInactive status="response submitted" />;
   }
@@ -127,25 +129,20 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-      return <SurveyInactive status="link invalid" project={environmentContext.project} />;
+      const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+      return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
     }
 
     singleUseId = validatedSingleUseId;
   }
 
   // Parallel fetch of environment context and locale
-  const [environmentContext, locale, singleUseResponse] = await Promise.all([
-    getEnvironmentContextForLinkSurvey(survey.environmentId),
+  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+    getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Fetch existing response for this contact
     getExistingContactResponse(survey.id, contactId)(),
   ]);
-
-  // Get multi-language permission
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(
-    environmentContext.organizationBilling.plan
-  );
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
@@ -159,9 +156,8 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     isPreview,
     singleUseId,
     singleUseResponse,
-    environmentContext,
+    workspaceContext,
     locale,
-    isMultiLanguageAllowed,
     responseCount,
   });
 };

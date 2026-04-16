@@ -3,11 +3,11 @@ import { ApiClient } from "./api-client";
 
 describe("ApiClient", () => {
   const appUrl = "http://localhost:3000";
-  const environmentId = "env-test";
+  const workspaceId = "ws-test";
   let client: ApiClient;
 
   beforeEach(() => {
-    client = new ApiClient({ appUrl, environmentId });
+    client = new ApiClient({ appUrl, workspaceId });
     global.fetch = vi.fn();
   });
 

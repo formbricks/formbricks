@@ -1,9 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import {
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyQuestionChoice, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { validateOtherOptionLength, validateOtherOptionLengthForMultipleChoice } from "../element";
 
@@ -13,7 +10,7 @@ vi.mock("@/lib/i18n/utils", () => ({
   }),
 }));
 
-vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/recaptcha", () => ({
+vi.mock("@/app/api/v2/client/[workspaceId]/responses/lib/recaptcha", () => ({
   verifyRecaptchaToken: vi.fn(),
 }));
 
@@ -26,10 +23,6 @@ vi.mock("@/app/lib/api/response", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSpamProtectionEnabled: vi.fn(),
-}));
-
-vi.mock("@/app/api/v2/client/[environmentId]/responses/lib/organization", () => ({
-  getOrganizationBillingByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -54,7 +47,7 @@ const surveyQuestions = [
     type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
     choices: mockChoices,
   },
-] as unknown as TSurveyQuestion[];
+] as unknown as TSurveyElement[];
 
 describe("validateOtherOptionLength", () => {
   const mockChoices: TSurveyQuestionChoice[] = [

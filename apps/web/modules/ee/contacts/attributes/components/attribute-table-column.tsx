@@ -1,12 +1,12 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { TFunction } from "i18next";
 import { CalendarIcon, HashIcon, TagIcon } from "lucide-react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Badge } from "@/modules/ui/components/badge";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { HighlightedText } from "@/modules/ui/components/highlighted-text";
@@ -46,7 +46,7 @@ export const generateAttributeTableColumns = (
     cell: ({ row }) => {
       const description = row.original.description;
       return description ? (
-        <div className={isExpanded ? "break-words whitespace-normal" : "truncate"}>
+        <div className={isExpanded ? "whitespace-normal break-words" : "truncate"}>
           <HighlightedText value={description} searchValue={searchValue} />
         </div>
       ) : (
@@ -61,14 +61,22 @@ export const generateAttributeTableColumns = (
     header: t("common.created_at"),
     cell: ({ row }) => {
       const createdAt = row.original.createdAt;
-      return <span>{format(createdAt, "do 'of' MMMM, yyyy")}</span>;
+      return (
+        <span>
+          {formatDateForDisplay(createdAt, locale, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </span>
+      );
     },
   };
 
   const dataTypeColumn: ColumnDef<TContactAttributeKey> = {
     id: "dataType",
     accessorKey: "dataType",
-    header: t("environments.contacts.data_type"),
+    header: t("workspace.contacts.data_type"),
     cell: ({ row }) => {
       const dataType = row.original.dataType;
       const getIcon = () => {

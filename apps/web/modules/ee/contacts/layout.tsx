@@ -1,48 +1,20 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getAccessFlags } from "@/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const ConfigLayout = async (props) => {
+const ConfigLayout = async (props: {
+  params: Promise<{ workspaceId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;
 
-  const t = await getTranslate();
-  const [organization, session] = await Promise.all([
-    getOrganizationByEnvironmentId(params.environmentId),
-    getServerSession(authOptions),
-  ]);
-
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
-
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
-
-  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
-  if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
-  }
-
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.role);
+  const { isBilling } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
-  }
-
-  const project = await getProjectByEnvironmentId(params.environmentId);
-  if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
   }
 
   return children;

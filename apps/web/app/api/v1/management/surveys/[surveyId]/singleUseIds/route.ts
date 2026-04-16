@@ -1,7 +1,6 @@
-import { NextRequest } from "next/server";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
@@ -12,11 +11,11 @@ export const GET = withV1ApiWrapper({
     req,
     props,
     authentication,
-  }: {
-    req: NextRequest;
-    props: { params: Promise<{ surveyId: string }> };
-    authentication: NonNullable<TApiKeyAuthentication>;
-  }) => {
+  }: THandlerParams<{ params: Promise<{ surveyId: string }> }>) => {
+    if (!authentication || !("apiKeyId" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     try {
       const params = await props.params;
       const survey = await getSurvey(params.surveyId);
@@ -25,7 +24,7 @@ export const GET = withV1ApiWrapper({
           response: responses.notFoundResponse("Survey", params.surveyId),
         };
       }
-      if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
         return {
           response: responses.unauthorizedResponse(),
         };

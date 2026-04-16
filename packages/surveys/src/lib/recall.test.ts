@@ -15,8 +15,10 @@ vi.mock("./i18n", () => ({
 // Mock date-time functions as they are used internally and we want to isolate recall logic
 vi.mock("./date-time", () => ({
   isValidDateString: (val: string) => /^\d{4}-\d{2}-\d{2}$/.test(val) || /^\d{2}-\d{2}-\d{4}$/.test(val),
-  formatDateWithOrdinal: (date: Date) =>
-    `${date.getUTCFullYear()}-${("0" + (date.getUTCMonth() + 1)).slice(-2)}-${("0" + date.getUTCDate()).slice(-2)}_formatted`,
+  formatDateWithOrdinal: vi.fn(
+    (date: Date) =>
+      `${date.getUTCFullYear()}-${("0" + (date.getUTCMonth() + 1)).slice(-2)}-${("0" + date.getUTCDate()).slice(-2)}_formatted`
+  ),
 }));
 
 describe("replaceRecallInfo", () => {
@@ -69,6 +71,15 @@ describe("replaceRecallInfo", () => {
     const text = "Last login: #recall:lastLogin/fallback:N/A#.";
     const expected = "Last login: 2024-03-10_formatted.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("should pass the selected survey language to date formatting", async () => {
+    const { formatDateWithOrdinal } = await import("./date-time");
+    const text = "Registered on: #recall:registrationDate/fallback:N/A#.";
+
+    replaceRecallInfo(text, responseData, variables, "fr-FR");
+
+    expect(vi.mocked(formatDateWithOrdinal)).toHaveBeenCalledWith(expect.any(Date), "fr-FR");
   });
 
   test("should join array values with a comma and space", () => {

@@ -1,22 +1,23 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { TProjectStyling } from "@formbricks/types/project";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
+import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
   survey: TSurvey;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
-  styling: TProjectStyling | TSurveyStyling;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  styling: TWorkspaceStyling | TSurveyStyling;
   publicDomain: string;
   responseCount?: number;
   languageCode: string;
@@ -30,6 +31,7 @@ interface SurveyClientWrapperProps {
   verifiedEmail?: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
 }
 
@@ -38,7 +40,7 @@ let setResponseData = (_: TResponseData) => {};
 
 export const SurveyClientWrapper = ({
   survey,
-  project,
+  workspace,
   styling,
   publicDomain,
   responseCount,
@@ -53,10 +55,12 @@ export const SurveyClientWrapper = ({
   verifiedEmail,
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
+  const offlineSupport = searchParams.get("offlineSupport") === "true";
   const elements = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
 
   const startAt = searchParams.get("startAt");
@@ -109,6 +113,18 @@ export const SurveyClientWrapper = ({
     return null;
   }, [survey.isVerifyEmailEnabled, verifiedEmail]);
 
+  const [offlineStatus, setOfflineStatus] = useState({
+    isOnline: true,
+    isSyncing: false,
+    pendingSyncCount: 0,
+  });
+  const handleOfflineStatusChange = useCallback(
+    (status: { isOnline: boolean; isSyncing: boolean; pendingSyncCount: number }) => {
+      setOfflineStatus(status);
+    },
+    []
+  );
+
   const handleResetSurvey = () => {
     if (survey.welcomeCard.enabled) {
       setBlockId("start");
@@ -128,13 +144,13 @@ export const SurveyClientWrapper = ({
       {/* Inject custom scripts for tracking/analytics (self-hosted only) */}
       {!IS_FORMBRICKS_CLOUD && !isPreview && (
         <CustomScriptsInjector
-          projectScripts={project.customHeadScripts}
+          workspaceScripts={workspace.customHeadScripts}
           surveyScripts={survey.customHeadScripts}
           scriptsMode={survey.customHeadScriptsMode}
         />
       )}
       <LinkSurveyWrapper
-        project={project}
+        workspace={workspace}
         surveyId={survey.id}
         isWelcomeCardEnabled={survey.welcomeCard.enabled}
         isPreview={isPreview}
@@ -146,16 +162,17 @@ export const SurveyClientWrapper = ({
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
-        isBrandingEnabled={project.linkSurveyBranding}
+        TERMS_URL={TERMS_URL}
+        isBrandingEnabled={workspace.linkSurveyBranding}
         dir={logoDir}>
         <SurveyInline
           appUrl={publicDomain}
-          environmentId={survey.environmentId}
+          workspaceId={survey.workspaceId}
           isPreviewMode={isPreview}
           survey={survey}
           styling={styling}
           languageCode={languageCode}
-          isBrandingEnabled={project.linkSurveyBranding}
+          isBrandingEnabled={workspace.linkSurveyBranding}
           shouldResetQuestionId={false}
           autoFocus={autoFocus}
           prefillResponseData={prefillValue}
@@ -179,8 +196,17 @@ export const SurveyClientWrapper = ({
           contactId={contactId}
           recaptchaSiteKey={recaptchaSiteKey}
           isSpamProtectionEnabled={isSpamProtectionEnabled}
+          offlineSupport={offlineSupport}
+          onOfflineStatusChange={offlineSupport ? handleOfflineStatusChange : undefined}
         />
       </LinkSurveyWrapper>
+      {offlineSupport && !isEmbed && (
+        <OfflineAlert
+          isOnline={offlineStatus.isOnline}
+          isSyncing={offlineStatus.isSyncing}
+          pendingSyncCount={offlineStatus.pendingSyncCount}
+        />
+      )}
     </>
   );
 };

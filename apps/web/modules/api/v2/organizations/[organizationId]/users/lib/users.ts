@@ -1,5 +1,6 @@
 import { OrganizationRole, Prisma, TeamUserRole } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
@@ -64,13 +65,16 @@ export const getUsers = async (
       },
     });
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "users", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "users", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
+    });
   }
 };
 
 export const createUser = async (
   userInput: TUserInput,
-  organizationId
+  organizationId: string
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   const { name, email, role, teams, isActive } = userInput;
 
@@ -106,7 +110,7 @@ export const createUser = async (
         },
       },
       teamUsers:
-        existingTeams?.length > 0
+        existingTeams && existingTeams.length > 0
           ? {
               create: teamUsersToCreate,
             }
@@ -139,7 +143,24 @@ export const createUser = async (
 
     return ok(returnedUser);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "user", issue: error.message }] });
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
+      const target = error.meta?.target as string[] | undefined;
+
+      if (target?.includes("email")) {
+        return err({
+          type: "conflict",
+          details: [{ field: "email", issue: "A user with this email already exists" }],
+        });
+      }
+    }
+
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "user", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
+    });
   }
 };
 
@@ -195,8 +216,8 @@ export const updateUser = async (
             include: {
               team: {
                 include: {
-                  projectTeams: {
-                    select: { projectId: true },
+                  workspaceTeams: {
+                    select: { workspaceId: true },
                   },
                 },
               },
@@ -224,8 +245,8 @@ export const updateUser = async (
             include: {
               team: {
                 include: {
-                  projectTeams: {
-                    select: { projectId: true },
+                  workspaceTeams: {
+                    select: { workspaceId: true },
                   },
                 },
               },
@@ -289,7 +310,7 @@ export const updateUser = async (
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "user", issue: error.message }],
+      details: [{ field: "user", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
     });
   }
 };
@@ -306,9 +327,9 @@ const getExistingTeamsFromInput = async (userInputTeams: string[] | undefined, o
       select: {
         id: true,
         name: true,
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
+            workspaceId: true,
           },
         },
       },

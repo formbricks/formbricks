@@ -33,9 +33,7 @@ export function AdvancedChartPreview({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-md font-semibold text-gray-900">
-        {t("environments.analysis.charts.chart_preview")}
-      </h3>
+      <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.chart_preview")}</h3>
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>
@@ -57,8 +55,7 @@ export function AdvancedChartPreview({
             <Collapsible.CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
                 <DatabaseIcon className="mr-2 h-4 w-4" />
-                {showData ? t("common.hide") : t("common.view")}{" "}
-                {t("environments.analysis.charts.data_label")}
+                {showData ? t("common.hide") : t("common.view")} {t("workspace.analysis.charts.data_label")}
               </Button>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="mt-2">
@@ -70,7 +67,7 @@ export function AdvancedChartPreview({
 
       {isEmpty && (
         <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-500">
-          {t("environments.analysis.charts.advanced_chart_builder_config_prompt")}
+          {t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
         </div>
       )}
     </div>

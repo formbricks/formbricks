@@ -35,12 +35,8 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
-vi.mock("@/modules/environments/lib/utils", () => ({
-  getEnvironmentAuth: () => Promise.resolve({ project: { id: "project-abc-123" } }),
-}));
-
 const mockChartId = "chart-abc-123";
-const mockProjectId = "project-abc-123";
+const mockWorkspaceId = "workspace-abc-123";
 const mockUserId = "user-abc-123";
 
 const selectChart = {
@@ -77,7 +73,7 @@ describe("Chart Service", () => {
       const { createChart } = await import("./charts");
 
       const result = await createChart({
-        projectId: mockProjectId,
+        workspaceId: mockWorkspaceId,
         name: "Test Chart",
         type: "bar",
         query: { measures: ["Responses.count"] },
@@ -90,7 +86,7 @@ describe("Chart Service", () => {
         data: {
           name: "Test Chart",
           type: "bar",
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           query: { measures: ["Responses.count"] },
           config: { showLegend: true },
           createdBy: mockUserId,
@@ -107,7 +103,7 @@ describe("Chart Service", () => {
 
       await expect(
         createChart({
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           name: "Duplicate",
           type: "bar",
           query: {},
@@ -125,7 +121,7 @@ describe("Chart Service", () => {
 
       await expect(
         createChart({
-          projectId: mockProjectId,
+          workspaceId: mockWorkspaceId,
           name: "Test",
           type: "bar",
           query: {},
@@ -145,11 +141,11 @@ describe("Chart Service", () => {
       mockTxChart.update.mockResolvedValue(updatedChart);
       const { updateChart } = await import("./charts");
 
-      const result = await updateChart(mockChartId, mockProjectId, { name: "Updated Chart" });
+      const result = await updateChart(mockChartId, mockWorkspaceId, { name: "Updated Chart" });
 
       expect(result).toEqual({ chart: mockChart, updatedChart });
       expect(mockTxChart.findFirst).toHaveBeenCalledWith({
-        where: { id: mockChartId, projectId: mockProjectId },
+        where: { id: mockChartId, workspaceId: mockWorkspaceId },
         select: selectChart,
       });
       expect(mockTxChart.update).toHaveBeenCalledWith({
@@ -163,7 +159,7 @@ describe("Chart Service", () => {
       mockTxChart.findFirst.mockResolvedValue(null);
       const { updateChart } = await import("./charts");
 
-      await expect(updateChart(mockChartId, mockProjectId, { name: "Updated" })).rejects.toMatchObject({
+      await expect(updateChart(mockChartId, mockWorkspaceId, { name: "Updated" })).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Chart",
         resourceId: mockChartId,
@@ -177,7 +173,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
       const { updateChart } = await import("./charts");
 
-      await expect(updateChart(mockChartId, mockProjectId, { name: "Taken Name" })).rejects.toMatchObject({
+      await expect(updateChart(mockChartId, mockWorkspaceId, { name: "Taken Name" })).rejects.toMatchObject({
         name: "InvalidInputError",
       });
     });
@@ -190,10 +186,10 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.create).mockResolvedValue({ ...mockChart, name: "Test Chart (copy)" } as any);
       const { duplicateChart } = await import("./charts");
 
-      await duplicateChart(mockChartId, mockProjectId, mockUserId);
+      await duplicateChart(mockChartId, mockWorkspaceId, mockUserId);
 
       expect(prisma.chart.findFirst).toHaveBeenCalledWith({
-        where: { id: mockChartId, projectId: mockProjectId },
+        where: { id: mockChartId, workspaceId: mockWorkspaceId },
         select: selectChart,
       });
       expect(prisma.chart.create).toHaveBeenCalledWith({
@@ -211,7 +207,7 @@ describe("Chart Service", () => {
       } as any);
       const { duplicateChart } = await import("./charts");
 
-      await duplicateChart(mockChartId, mockProjectId, mockUserId);
+      await duplicateChart(mockChartId, mockWorkspaceId, mockUserId);
 
       expect(prisma.chart.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ name: "Test Chart (copy 2)" }),
@@ -231,7 +227,7 @@ describe("Chart Service", () => {
       } as any);
       const { duplicateChart } = await import("./charts");
 
-      await duplicateChart(mockChartId, mockProjectId, mockUserId);
+      await duplicateChart(mockChartId, mockWorkspaceId, mockUserId);
 
       expect(prisma.chart.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ name: "Test Chart (copy 3)" }),
@@ -249,10 +245,10 @@ describe("Chart Service", () => {
       } as any);
       const { duplicateChart } = await import("./charts");
 
-      await duplicateChart(mockChartId, mockProjectId, mockUserId);
+      await duplicateChart(mockChartId, mockWorkspaceId, mockUserId);
 
       expect(prisma.chart.findMany).toHaveBeenCalledWith({
-        where: { projectId: mockProjectId, name: { startsWith: "Test Chart (copy" } },
+        where: { workspaceId: mockWorkspaceId, name: { startsWith: "Test Chart (copy" } },
         select: { name: true },
       });
     });
@@ -261,7 +257,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findFirst).mockResolvedValue(null);
       const { duplicateChart } = await import("./charts");
 
-      await expect(duplicateChart(mockChartId, mockProjectId, mockUserId)).rejects.toMatchObject({
+      await expect(duplicateChart(mockChartId, mockWorkspaceId, mockUserId)).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Chart",
         resourceId: mockChartId,
@@ -275,11 +271,11 @@ describe("Chart Service", () => {
       mockTxChart.delete.mockResolvedValue(undefined);
       const { deleteChart } = await import("./charts");
 
-      const result = await deleteChart(mockChartId, mockProjectId);
+      const result = await deleteChart(mockChartId, mockWorkspaceId);
 
       expect(result).toEqual(mockChart);
       expect(mockTxChart.findFirst).toHaveBeenCalledWith({
-        where: { id: mockChartId, projectId: mockProjectId },
+        where: { id: mockChartId, workspaceId: mockWorkspaceId },
         select: selectChart,
       });
       expect(mockTxChart.delete).toHaveBeenCalledWith({ where: { id: mockChartId } });
@@ -289,7 +285,7 @@ describe("Chart Service", () => {
       mockTxChart.findFirst.mockResolvedValue(null);
       const { deleteChart } = await import("./charts");
 
-      await expect(deleteChart(mockChartId, mockProjectId)).rejects.toMatchObject({
+      await expect(deleteChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Chart",
         resourceId: mockChartId,
@@ -302,7 +298,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
       const { deleteChart } = await import("./charts");
 
-      await expect(deleteChart(mockChartId, mockProjectId)).rejects.toMatchObject({
+      await expect(deleteChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -313,11 +309,11 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findFirst).mockResolvedValue(mockChart as any);
       const { getChart } = await import("./charts");
 
-      const result = await getChart(mockChartId, mockProjectId);
+      const result = await getChart(mockChartId, mockWorkspaceId);
 
       expect(result).toEqual(mockChart);
       expect(prisma.chart.findFirst).toHaveBeenCalledWith({
-        where: { id: mockChartId, projectId: mockProjectId },
+        where: { id: mockChartId, workspaceId: mockWorkspaceId },
         select: selectChart,
       });
     });
@@ -326,7 +322,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findFirst).mockResolvedValue(null);
       const { getChart } = await import("./charts");
 
-      await expect(getChart(mockChartId, mockProjectId)).rejects.toMatchObject({
+      await expect(getChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
         name: "ResourceNotFoundError",
         resourceType: "Chart",
         resourceId: mockChartId,
@@ -337,7 +333,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findFirst).mockRejectedValue(makePrismaError("P9999"));
       const { getChart } = await import("./charts");
 
-      await expect(getChart(mockChartId, mockProjectId)).rejects.toMatchObject({
+      await expect(getChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -352,14 +348,14 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findMany).mockResolvedValue(chartsFromDb as any);
       const { getCharts } = await import("./charts");
 
-      const result = await getCharts(mockProjectId);
+      const result = await getCharts(mockWorkspaceId);
 
       expect(result).toEqual([
         { ...mockChart, creator: { name: "User 1" } },
         { ...mockChart, id: "chart-2", name: "Chart 2", creator: { name: null } },
       ]);
       expect(prisma.chart.findMany).toHaveBeenCalledWith({
-        where: { projectId: mockProjectId },
+        where: { workspaceId: mockWorkspaceId },
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -378,7 +374,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findMany).mockResolvedValue([]);
       const { getCharts } = await import("./charts");
 
-      const result = await getCharts(mockProjectId);
+      const result = await getCharts(mockWorkspaceId);
 
       expect(result).toEqual([]);
     });
@@ -387,7 +383,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findMany).mockRejectedValue(makePrismaError("P9999"));
       const { getCharts } = await import("./charts");
 
-      await expect(getCharts(mockProjectId)).rejects.toMatchObject({
+      await expect(getCharts(mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });
@@ -402,11 +398,11 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findMany).mockResolvedValue(chartsWithCreator as any);
       const { getChartsWithCreator } = await import("./charts");
 
-      const result = await getChartsWithCreator(mockProjectId);
+      const result = await getChartsWithCreator(mockWorkspaceId);
 
       expect(result).toEqual(chartsWithCreator);
       expect(prisma.chart.findMany).toHaveBeenCalledWith({
-        where: { projectId: mockProjectId },
+        where: { workspaceId: mockWorkspaceId },
         orderBy: { createdAt: "desc" },
         select: expect.objectContaining({
           creator: { select: { name: true } },
@@ -418,7 +414,7 @@ describe("Chart Service", () => {
       vi.mocked(prisma.chart.findMany).mockRejectedValue(makePrismaError("P9999"));
       const { getChartsWithCreator } = await import("./charts");
 
-      await expect(getChartsWithCreator(mockProjectId)).rejects.toMatchObject({
+      await expect(getChartsWithCreator(mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
     });

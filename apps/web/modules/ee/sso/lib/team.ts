@@ -1,16 +1,21 @@
 import "server-only";
-import { Organization, Team } from "@prisma/client";
+import { Organization, Prisma, PrismaClient, Team } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_TEAM_ID } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 
+type TSsoTeamDbClient = PrismaClient | Prisma.TransactionClient;
+
+const getDbClient = (tx?: Prisma.TransactionClient): TSsoTeamDbClient => tx ?? prisma;
+
 export const getOrganizationByTeamId = reactCache(async (teamId: string): Promise<Organization | null> => {
-  validateInputs([teamId, z.string().cuid2()]);
+  validateInputs([teamId, z.cuid2()]);
 
   try {
     const team = await prisma.team.findUnique({
@@ -41,7 +46,7 @@ const getTeam = reactCache(async (teamId: string): Promise<Team> => {
     });
 
     if (!team) {
-      throw new Error("Team not found");
+      throw new ResourceNotFoundError("Team", teamId);
     }
 
     return team;
@@ -51,8 +56,9 @@ const getTeam = reactCache(async (teamId: string): Promise<Team> => {
   }
 });
 
-export const createDefaultTeamMembership = async (userId: string) => {
+export const createDefaultTeamMembership = async (userId: string, tx?: Prisma.TransactionClient) => {
   try {
+    const prismaClient = getDbClient(tx);
     const defaultTeamId = DEFAULT_TEAM_ID;
 
     if (!defaultTeamId) {
@@ -60,7 +66,13 @@ export const createDefaultTeamMembership = async (userId: string) => {
       return;
     }
 
-    const defaultTeam = await getTeam(defaultTeamId);
+    const defaultTeam = tx
+      ? await prismaClient.team.findUnique({
+          where: {
+            id: defaultTeamId,
+          },
+        })
+      : await getTeam(defaultTeamId);
 
     if (!defaultTeam) {
       logger.error("Default team not found");
@@ -69,7 +81,8 @@ export const createDefaultTeamMembership = async (userId: string) => {
 
     const organizationMembership = await getMembershipByUserIdOrganizationId(
       userId,
-      defaultTeam.organizationId
+      defaultTeam.organizationId,
+      tx
     );
 
     if (!organizationMembership) {
@@ -85,9 +98,13 @@ export const createDefaultTeamMembership = async (userId: string) => {
         role: membershipRole,
         teamIds: [defaultTeamId],
       },
-      userId
+      userId,
+      tx
     );
   } catch (error) {
-    logger.error("Error creating default team membership", error);
+    logger.error(
+      error instanceof Error ? error : new Error(String(error)),
+      "Error creating default team membership"
+    );
   }
 };

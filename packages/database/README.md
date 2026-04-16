@@ -134,6 +134,7 @@ ALLOW_SEED=true
 ### Seeding Logic
 
 The `pnpm db:seed` script:
+
 1. **Infrastructure**: Upserts a default organization, project, and environments.
 2. **Users**: Creates default users with the following credentials (passwords are hashed):
    - **Admin**: `admin@formbricks.com` / `password123`

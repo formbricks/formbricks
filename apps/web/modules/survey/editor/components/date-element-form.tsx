@@ -4,21 +4,19 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyDateElement, TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 
 interface IDateElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyDateElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyDateElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -26,21 +24,6 @@ interface IDateElementFormProps {
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
 }
-
-const dateOptions = [
-  {
-    value: "M-d-y",
-    label: "MM-DD-YYYY",
-  },
-  {
-    value: "d-M-y",
-    label: "DD-MM-YYYY",
-  },
-  {
-    value: "y-M-d",
-    label: "YYYY-MM-DD",
-  },
-];
 
 export const DateElementForm = ({
   element,
@@ -63,7 +46,7 @@ export const DateElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -110,22 +93,9 @@ export const DateElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
-      </div>
-
-      <div className="mt-3">
-        <Label htmlFor="elementType">{t("environments.surveys.edit.date_format")}</Label>
-        <div className="mt-2 flex items-center">
-          <OptionsSwitch
-            options={dateOptions}
-            currentOption={element.format}
-            handleOptionChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>
-              updateElement(elementIdx, { format: value })
-            }
-          />
-        </div>
       </div>
 
       <ValidationRulesEditor

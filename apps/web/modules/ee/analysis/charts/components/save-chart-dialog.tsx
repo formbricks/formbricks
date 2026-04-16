@@ -36,17 +36,15 @@ export function SaveChartDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("environments.analysis.charts.save_chart_dialog_title")}</DialogTitle>
-          <DialogDescription>
-            {t("environments.analysis.charts.enter_a_name_for_your_chart")}
-          </DialogDescription>
+          <DialogTitle>{t("workspace.analysis.charts.save_chart_dialog_title")}</DialogTitle>
+          <DialogDescription>{t("workspace.analysis.charts.enter_a_name_for_your_chart")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <label htmlFor="save-chart-name" className="sr-only">
-            {t("environments.analysis.charts.chart_name")}
+            {t("workspace.analysis.charts.chart_name")}
           </label>
           <Input
-            placeholder={t("environments.analysis.charts.chart_name_placeholder")}
+            placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
             value={chartName}
             onChange={(e) => onChartNameChange(e.target.value)}
             maxLength={255}

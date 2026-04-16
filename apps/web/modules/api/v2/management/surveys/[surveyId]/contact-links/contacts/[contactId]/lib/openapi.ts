@@ -23,7 +23,7 @@ export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
           schema: makePartialSchema(
             z.object({
               data: z.object({
-                surveyUrl: z.string().url(),
+                surveyUrl: z.url(),
                 expiresAt: z
                   .string()
                   .nullable()

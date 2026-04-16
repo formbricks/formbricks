@@ -5,7 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromContactId, getProjectIdFromContactId } from "@/lib/utils/helper";
+import { getOrganizationIdFromContactId, getWorkspaceIdFromContactId } from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
@@ -15,10 +15,10 @@ const ZGeneratePersonalSurveyLinkAction = z.object({
 });
 
 export const generatePersonalSurveyLinkAction = authenticatedActionClient
-  .schema(ZGeneratePersonalSurveyLinkAction)
+  .inputSchema(ZGeneratePersonalSurveyLinkAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-    const projectId = await getProjectIdFromContactId(parsedInput.contactId);
+    const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -29,9 +29,9 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId,
+          workspaceId,
         },
       ],
     });

@@ -9,6 +9,7 @@
     "finish": "Tugatish",
     "language_switch": "Tilni almashtirish",
     "next": "Keyingisi",
+    "no_results_found": "Natijalar topilmadi",
     "open_in_new_tab": "Yangi oynada ochish",
     "people_responded": "{count, plural, one {1 kishi javob berdi} other {{count} kishi javob berdi}}",
     "please_retry_now_or_try_again_later": "Iltimos, hozir qayta urinib ko‘ring yoki keyinroq urinib ko‘ring.",
@@ -19,8 +20,10 @@
     "question_video": "Savol videosi",
     "required": "Majburiy",
     "respondents_will_not_see_this_card": "Javob beruvchilar ushbu kartani ko'rmaydi",
+    "response_saved_offline": "Javobingiz hali yuborilmadi. Internetga ulanganingizdan so'ng avtomatik ravishda yuboriladi.",
     "retry": "Qayta urinib ko'ring",
     "retrying": "Qayta urinilmoqda...",
+    "search": "Qidirish...",
     "select_option": "Variantni tanla",
     "select_options": "Variantlarni tanla",
     "sending_responses": "Javoblar yuborilmoqda...",
@@ -30,6 +33,7 @@
     "terms_of_service": "Xizmat ko'rsatish shartlari",
     "the_servers_cannot_be_reached_at_the_moment": "Hozirda serverlarga ulanish imkoni yo'q.",
     "they_will_be_redirected_immediately": "Ular darhol yo'naltiriladi",
+    "welcome_video": "Xush kelibsiz kartasi videosi",
     "your_feedback_is_stuck": "Sizning fikr-mulohazangiz qotib qoldi :("
   },
   "errors": {
@@ -43,7 +47,9 @@
       "file_size_exceeded_alert": "Fayl hajmi {maxSizeInMB} MB dan kam bo'lishi kerak",
       "no_valid_file_types_selected": "Hech qanday yaroqli fayl turi tanlanmadi. Iltimos, yaroqli fayl turini tanlang.",
       "only_one_file_can_be_uploaded_at_a_time": "Bir vaqtning o'zida faqat bitta fayl yuklanishi mumkin.",
+      "placeholder_text": "Fayllarni yuklash uchun bosing yoki sudrab olib keling",
       "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
+      "uploading": "Yuklanmoqda...",
       "you_can_only_upload_a_maximum_of_files": "Siz faqat {FILE_LIMIT} ta faylni maksimal yuklashingiz mumkin."
     },
     "invalid_device_error": {

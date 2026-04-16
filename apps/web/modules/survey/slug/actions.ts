@@ -6,16 +6,16 @@ import { ZSurveySlug } from "@formbricks/types/surveys/types";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { updateSurveySlug } from "@/modules/survey/lib/slug";
 
 const ZUpdateSurveySlugAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
   slug: ZSurveySlug,
 });
 
 export const updateSurveySlugAction = authenticatedActionClient
-  .schema(ZUpdateSurveySlugAction)
+  .inputSchema(ZUpdateSurveySlugAction)
   .action(async ({ ctx, parsedInput }) => {
     if (IS_FORMBRICKS_CLOUD) {
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");
@@ -28,8 +28,8 @@ export const updateSurveySlugAction = authenticatedActionClient
       access: [
         { type: "organization", roles: ["owner", "manager"] },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -39,11 +39,11 @@ export const updateSurveySlugAction = authenticatedActionClient
   });
 
 const ZRemoveSurveySlugAction = z.object({
-  surveyId: z.string().cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export const removeSurveySlugAction = authenticatedActionClient
-  .schema(ZRemoveSurveySlugAction)
+  .inputSchema(ZRemoveSurveySlugAction)
   .action(async ({ ctx, parsedInput }) => {
     if (IS_FORMBRICKS_CLOUD) {
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");
@@ -56,8 +56,8 @@ export const removeSurveySlugAction = authenticatedActionClient
       access: [
         { type: "organization", roles: ["owner", "manager"] },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],

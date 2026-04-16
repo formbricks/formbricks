@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
+import { TSurveyCTAElement, type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -18,7 +18,7 @@ interface CTAElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyCTAElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyCTAElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -50,7 +50,7 @@ export const CTAElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -97,7 +97,7 @@ export const CTAElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -107,15 +107,15 @@ export const CTAElementForm = ({
           isChecked={element.buttonExternal}
           onToggle={() => updateElement(elementIdx, { buttonExternal: !element.buttonExternal })}
           htmlId="buttonExternal"
-          title={t("environments.surveys.edit.button_external")}
-          description={t("environments.surveys.edit.button_external_description")}
+          title={t("workspace.surveys.edit.button_external")}
+          description={t("workspace.surveys.edit.button_external_description")}
           childBorder
           customContainerClass="p-0 mt-4">
-          <div className="flex flex-1 flex-col gap-2 px-4 pt-1 pb-4">
+          <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
             <ElementFormInput
               id="ctaButtonLabel"
               value={element.ctaButtonLabel}
-              label={t("environments.surveys.edit.cta_button_label")}
+              label={t("workspace.surveys.edit.cta_button_label")}
               localSurvey={localSurvey}
               elementIdx={elementIdx}
               maxLength={48}
@@ -129,7 +129,7 @@ export const CTAElementForm = ({
             />
 
             <div>
-              <Label htmlFor="buttonLabel">{t("environments.surveys.edit.button_url")}</Label>
+              <Label htmlFor="buttonLabel">{t("workspace.surveys.edit.button_url")}</Label>
               <Input
                 id="buttonUrl"
                 name="buttonUrl"

@@ -30,7 +30,7 @@ describe("getAddressFields", () => {
       "zip",
       "country",
     ]);
-    expect(fields[0].label).toBe("environments.surveys.edit.address_line_1");
+    expect(fields[0].label).toBe("workspace.surveys.edit.address_line_1");
   });
 });
 
@@ -39,7 +39,7 @@ describe("getContactInfoFields", () => {
     const fields = getContactInfoFields(mockT);
     expect(fields).toHaveLength(5);
     expect(fields.map((f) => f.value)).toEqual(["firstName", "lastName", "email", "phone", "company"]);
-    expect(fields[0].label).toBe("environments.surveys.edit.first_name");
+    expect(fields[0].label).toBe("workspace.surveys.edit.first_name");
   });
 });
 
@@ -79,9 +79,9 @@ describe("getRuleLabels", () => {
 
   test("should return correct translation keys", () => {
     const labels = getRuleLabels(mockT);
-    expect(labels.min_length).toBe("environments.surveys.edit.validation.min_length");
-    expect(labels.email).toBe("environments.surveys.edit.validation.email");
-    expect(labels.rank_all_options).toBe("environments.surveys.edit.validation.rank_all_options");
+    expect(labels.min_length).toBe("workspace.surveys.edit.validation.min_length");
+    expect(labels.email).toBe("workspace.surveys.edit.validation.email");
+    expect(labels.rank_all_options).toBe("workspace.surveys.edit.validation.rank_all_options");
   });
 });
 
@@ -107,7 +107,7 @@ describe("getDefaultRuleValue", () => {
         { id: "opt2", label: { default: "Option 2" } },
         { id: "other", label: { default: "Other" } },
       ],
-    } as TSurveyMultipleChoiceElement;
+    } as unknown as TSurveyMultipleChoiceElement;
 
     const config = RULE_TYPE_CONFIG.equals;
     const value = getDefaultRuleValue(config, element);
@@ -124,7 +124,7 @@ describe("getDefaultRuleValue", () => {
         { id: "none", label: { default: "None" } },
         { id: "opt1", label: { default: "Option 1" } },
       ],
-    } as TSurveyMultipleChoiceElement;
+    } as unknown as TSurveyMultipleChoiceElement;
 
     const config = RULE_TYPE_CONFIG.equals;
     const value = getDefaultRuleValue(config, element);
@@ -140,7 +140,7 @@ describe("getDefaultRuleValue", () => {
         { id: "other", label: { default: "Other" } },
         { id: "none", label: { default: "None" } },
       ],
-    } as TSurveyMultipleChoiceElement;
+    } as unknown as TSurveyMultipleChoiceElement;
 
     const config = RULE_TYPE_CONFIG.equals;
     const value = getDefaultRuleValue(config, element);
@@ -161,7 +161,7 @@ describe("getDefaultRuleValue", () => {
         { id: "opt1", label: { default: "Option 1" } },
         { id: "opt2", label: { default: "Option 2" } },
       ],
-    } as TSurveyRankingElement;
+    } as unknown as TSurveyRankingElement;
 
     const config = RULE_TYPE_CONFIG.minRanked;
     const value = getDefaultRuleValue(config, element);

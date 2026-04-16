@@ -9,12 +9,13 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRTL = isRTLLanguage(props.survey, props.languageCode);
-  const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "auto");
+  const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
 
   useEffect(() => {
     const isRTL = isRTLLanguage(props.survey, props.languageCode);
-    setDir(isRTL ? "rtl" : "auto");
-  }, [props.languageCode, props.survey]);
+    setDir(isRTL ? "rtl" : "ltr");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate direction when languageCode changes, not on survey auto-save
+  }, [props.languageCode]);
 
   const close = () => {
     if (onFinishedTimeoutRef.current) {

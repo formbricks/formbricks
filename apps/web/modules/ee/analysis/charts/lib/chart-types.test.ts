@@ -7,12 +7,12 @@ describe("chart-types", () => {
   });
 
   test("getChartTypes returns chart types with translated labels", () => {
-    const t = vi.fn((key: string) => key);
+    const t = vi.fn((key: string) => key) as unknown as Parameters<typeof getChartTypes>[0];
     const result = getChartTypes(t);
 
     expect(result).toHaveLength(5);
     expect(result.map((r) => r.id)).toEqual(["area", "bar", "line", "pie", "big_number"]);
-    expect(t).toHaveBeenCalledWith("environments.analysis.charts.chart_type_area");
-    expect(result[0].label).toBe("environments.analysis.charts.chart_type_area");
+    expect(t).toHaveBeenCalledWith("workspace.analysis.charts.chart_type_area");
+    expect(result[0].label).toBe("workspace.analysis.charts.chart_type_area");
   });
 });

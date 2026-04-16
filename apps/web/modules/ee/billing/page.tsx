@@ -1,41 +1,47 @@
 import { notFound } from "next/navigation";
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
-import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
-} from "@/lib/organization/service";
-import { getOrganizationProjectsCount } from "@/lib/project/service";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
+import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
+import { getStripeBillingCatalogDisplay } from "@/modules/ee/billing/lib/stripe-billing-catalog";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { PricingTable } from "./components/pricing-table";
 
-export const PricingPage = async (props) => {
+export const PricingPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { organization, isMember, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
+  const { organization, isMember, currentUserMembership } = await getWorkspaceAuth(params.workspaceId);
 
   if (!IS_FORMBRICKS_CLOUD) {
     notFound();
   }
 
-  const [peopleCount, responseCount, projectCount] = await Promise.all([
-    getMonthlyActiveOrganizationPeopleCount(organization.id),
+  const [cloudBillingDisplayContext, billingCatalog] = await Promise.all([
+    getCloudBillingDisplayContext(organization.id),
+    getStripeBillingCatalogDisplay(),
+  ]);
+
+  const organizationWithSyncedBilling = {
+    ...organization,
+    billing: cloudBillingDisplayContext.billing,
+  };
+
+  const [responseCount, workspaceCount] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
-    getOrganizationProjectsCount(organization.id),
+    getOrganizationWorkspacesCount(organization.id),
   ]);
 
   const hasBillingRights = !isMember;
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="billing"
@@ -43,14 +49,20 @@ export const PricingPage = async (props) => {
       </PageHeader>
 
       <PricingTable
-        organization={organization}
-        environmentId={params.environmentId}
-        peopleCount={peopleCount}
+        organization={organizationWithSyncedBilling}
+        workspaceId={params.workspaceId}
         responseCount={responseCount}
-        projectCount={projectCount}
-        stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
-        projectFeatureKeys={PROJECT_FEATURE_KEYS}
+        workspaceCount={workspaceCount}
         hasBillingRights={hasBillingRights}
+        currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
+        currentBillingInterval={cloudBillingDisplayContext.currentBillingInterval}
+        currentSubscriptionStatus={cloudBillingDisplayContext.currentSubscriptionStatus}
+        pendingChange={cloudBillingDisplayContext.pendingChange}
+        usageCycleStart={cloudBillingDisplayContext.usageCycleStart}
+        usageCycleEnd={cloudBillingDisplayContext.usageCycleEnd}
+        isStripeSetupIncomplete={!organizationWithSyncedBilling.billing.stripeCustomerId}
+        trialDaysRemaining={cloudBillingDisplayContext.trialDaysRemaining}
+        billingCatalog={billingCatalog}
       />
     </PageContentWrapper>
   );

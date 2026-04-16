@@ -6,6 +6,7 @@ import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
+import { type TWorkspaceStateActionClass } from "@/types/config";
 import { type Result } from "@/types/error";
 
 // Factory for creating context-specific tracking handlers
@@ -28,6 +29,22 @@ const trackNoCodePageViewActionHandler = createTrackNoCodeActionWithContext("pag
 const trackNoCodeClickActionHandler = createTrackNoCodeActionWithContext("click");
 const trackNoCodeExitIntentActionHandler = createTrackNoCodeActionWithContext("exit intent");
 const trackNoCodeScrollActionHandler = createTrackNoCodeActionWithContext("scroll");
+const trackNoCodeTimeOnPageActionHandler = createTrackNoCodeActionWithContext("time on page");
+
+// Time on Page timer state per action name
+interface TimeOnPageRunning {
+  status: "running";
+  pageKey: string;
+  timerId: ReturnType<typeof setTimeout>;
+}
+
+interface TimeOnPageFired {
+  status: "fired";
+  pageKey: string;
+}
+
+type TimeOnPageState = TimeOnPageRunning | TimeOnPageFired;
+const timeOnPageTimers = new Map<string, TimeOnPageState>();
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -39,6 +56,69 @@ export const setIsHistoryPatched = (value: boolean): void => {
   isHistoryPatched = value;
 };
 
+const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
+  const queue = CommandQueue.getInstance();
+  const logger = Logger.getInstance();
+  const timeoutStack = TimeoutStack.getInstance();
+
+  const noCodeTimeOnPageActionClasses = actionClasses.filter(
+    (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageDwell"
+  );
+
+  const currentPageKey = window.location.href;
+  const matchingTimeOnPageActionNames = new Set<string>();
+
+  for (const event of noCodeTimeOnPageActionClasses) {
+    const config = event.noCodeConfig as Extract<typeof event.noCodeConfig, { type: "pageDwell" }>;
+
+    const { urlFilters, urlFiltersConnector: connector } = config;
+    const isValidUrl = handleUrlFilters(urlFilters, connector ?? "or");
+
+    if (!isValidUrl) continue;
+
+    matchingTimeOnPageActionNames.add(event.name);
+
+    const existing = timeOnPageTimers.get(event.name);
+    if (existing?.pageKey === currentPageKey) continue;
+
+    if (existing?.status === "running") {
+      logger.debug(`Time on page timer for "${event.name}" restarting — page changed to ${currentPageKey}`);
+      clearTimeout(existing.timerId);
+    }
+
+    const { timeInSeconds } = config;
+    const actionName = event.name;
+
+    logger.debug(`Starting time on page timer for "${actionName}" (${timeInSeconds.toString()}s)`);
+    const timerId = globalThis.setTimeout(() => {
+      logger.debug(
+        `Time on page timer for "${actionName}" completed after ${timeInSeconds.toString()}s — firing action`
+      );
+      timeOnPageTimers.set(actionName, { status: "fired", pageKey: currentPageKey });
+      void queue.add(trackNoCodeTimeOnPageActionHandler, CommandType.GeneralAction, true, actionName);
+    }, timeInSeconds * 1000);
+    timeOnPageTimers.set(actionName, { status: "running", pageKey: currentPageKey, timerId });
+  }
+
+  for (const [actionName, entry] of timeOnPageTimers) {
+    if (matchingTimeOnPageActionNames.has(actionName)) continue;
+
+    if (entry.status === "running") {
+      logger.debug(
+        `Time on page timer for "${actionName}" interrupted — user navigated away before completion`
+      );
+      clearTimeout(entry.timerId);
+    }
+    timeOnPageTimers.delete(actionName);
+
+    const scheduledTimeout = timeoutStack.getTimeouts().find((t) => t.event === actionName);
+    if (!scheduledTimeout) continue;
+
+    timeoutStack.remove(scheduledTimeout.timeoutId);
+    setIsSurveyRunning(false);
+  }
+};
+
 export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
@@ -46,7 +126,7 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const timeoutStack = TimeoutStack.getInstance();
 
   logger.debug(`Checking page url: ${window.location.href}`);
-  const actionClasses = appConfig.get().environment.data.actionClasses;
+  const actionClasses = appConfig.get().workspace.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
@@ -71,6 +151,8 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
     }
   }
 
+  checkTimeOnPage(actionClasses);
+
   return { ok: true, data: undefined };
 };
 
@@ -90,6 +172,16 @@ export const addPageUrlEventListeners = (): void => {
     history.pushState = function (...args) {
       originalPushState.apply(this, args);
       const event = new Event("pushstate");
+      window.dispatchEvent(event);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- We need to access the original method
+    const originalReplaceState = history.replaceState;
+
+    // eslint-disable-next-line func-names -- We need an anonymous function here
+    history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args);
+      const event = new Event("replacestate");
       window.dispatchEvent(event);
     };
 
@@ -117,9 +209,9 @@ const checkClickMatch = async (event: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
-  const { environment } = appConfig.get();
+  const { workspace } = appConfig.get();
 
-  const { actionClasses = [] } = environment.data;
+  const { actionClasses = [] } = workspace.data;
 
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
@@ -157,8 +249,8 @@ const checkExitIntent = async (e: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
 
-  const { environment } = appConfig.get();
-  const { actionClasses = [] } = environment.data;
+  const { workspace } = appConfig.get();
+  const { actionClasses = [] } = workspace.data;
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
@@ -216,8 +308,8 @@ const checkScrollDepth = async (): Promise<void> => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
-    const { environment } = appConfig.get();
-    const { actionClasses = [] } = environment.data;
+    const { workspace } = appConfig.get();
+    const { actionClasses = [] } = workspace.data;
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"
@@ -257,4 +349,14 @@ export const removeScrollDepthListener = (): void => {
     window.removeEventListener("scroll", checkScrollDepthWrapper as EventListener);
     scrollDepthListenerAdded = false;
   }
+};
+
+// Time on Page Cleanup
+export const clearTimeOnPageTimers = (): void => {
+  for (const [, entry] of timeOnPageTimers) {
+    if (entry.status === "running") {
+      clearTimeout(entry.timerId);
+    }
+  }
+  timeOnPageTimers.clear();
 };

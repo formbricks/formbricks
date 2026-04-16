@@ -347,7 +347,7 @@ type TAttributeUpsertData = {
  */
 const prepareAttributesForNewContacts = (
   contactsToCreate: TContactToCreate[],
-  newContacts: { id: string; environmentId: string }[],
+  newContacts: { id: string }[],
   attributeKeyMap: Record<string, string>,
   attributeTypeMap: Map<string, TContactAttributeDataType>
 ): TAttributeUpsertData[] => {
@@ -405,7 +405,7 @@ const BATCH_SIZE = 10000;
 const upsertAttributeKeysInBatches = async (
   tx: Prisma.TransactionClient,
   keysToUpsert: Map<string, { key: string; name: string; dataType: TContactAttributeDataType }>,
-  environmentId: string,
+  workspaceId: string,
   attributeKeyMap: Record<string, string>
 ): Promise<void> => {
   const keysArray = Array.from(keysToUpsert.values());
@@ -414,17 +414,17 @@ const upsertAttributeKeysInBatches = async (
     const batch = keysArray.slice(i, i + BATCH_SIZE);
 
     const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
-      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "dataType", "created_at", "updated_at")
-      SELECT 
+      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "workspaceId", "dataType", "created_at", "updated_at")
+      SELECT
         unnest(${Prisma.sql`ARRAY[${batch.map(() => createId())}]`}),
         unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.key)}]`}),
         unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.name)}]`}),
-        ${environmentId},
+        ${workspaceId},
         unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.dataType)}]`}::text[]::"ContactAttributeDataType"[]),
         NOW(),
         NOW()
-      ON CONFLICT ("key", "environmentId") 
-      DO UPDATE SET 
+      ON CONFLICT ("key", "workspaceId")
+      DO UPDATE SET
         "name" = EXCLUDED."name",
         "updated_at" = NOW()
       RETURNING "id", "key"
@@ -479,7 +479,7 @@ const upsertAttributesInBatches = async (
 
 export const upsertBulkContacts = async (
   contacts: TContactBulkUploadContact[],
-  environmentId: string,
+  workspaceId: string,
   parsedEmails: string[]
 ): Promise<
   Result<
@@ -495,7 +495,7 @@ export const upsertBulkContacts = async (
   const [existingUserIds, existingContactsByEmail, existingAttributeKeys] = await Promise.all([
     prisma.contactAttribute.findMany({
       where: {
-        attributeKey: { environmentId, key: "userId" },
+        attributeKey: { workspaceId, key: "userId" },
         value: { in: userIdsInContacts },
       },
       select: { value: true },
@@ -503,7 +503,7 @@ export const upsertBulkContacts = async (
 
     prisma.contact.findMany({
       where: {
-        environmentId,
+        workspaceId,
         attributes: {
           some: {
             attributeKey: { key: EMAIL_ATTRIBUTE_KEY },
@@ -525,7 +525,7 @@ export const upsertBulkContacts = async (
     }),
 
     prisma.contactAttributeKey.findMany({
-      where: { key: { in: attributeKeys }, environmentId },
+      where: { key: { in: attributeKeys }, workspaceId },
     }),
   ]);
 
@@ -624,11 +624,11 @@ export const upsertBulkContacts = async (
 
         // Upsert attribute keys in batches
         if (keysToUpsert.size > 0) {
-          await upsertAttributeKeysInBatches(tx, keysToUpsert, environmentId, attributeKeyMap);
+          await upsertAttributeKeysInBatches(tx, keysToUpsert, workspaceId, attributeKeyMap);
         }
 
         // Create new contacts
-        const newContacts = contactsToCreate.map(() => ({ id: createId(), environmentId }));
+        const newContacts = contactsToCreate.map(() => ({ id: createId(), workspaceId }));
 
         if (newContacts.length > 0) {
           await tx.contact.createMany({ data: newContacts });

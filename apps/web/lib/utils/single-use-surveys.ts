@@ -1,10 +1,10 @@
-import cuid2 from "@paralleldrive/cuid2";
+import { createId } from "@paralleldrive/cuid2";
 import { symmetricEncrypt } from "@/lib/crypto";
 import { env } from "@/lib/env";
 
 // generate encrypted single use id for the survey
 export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
-  const cuid = cuid2.createId();
+  const cuid = createId();
   if (!isEncrypted) {
     return cuid;
   }

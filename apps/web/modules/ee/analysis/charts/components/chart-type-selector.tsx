@@ -19,7 +19,7 @@ export function ChartTypeSelector({
   return (
     <div className="space-y-2">
       <h2 className="text-md font-semibold text-gray-900">
-        {t("environments.analysis.charts.chart_builder_choose_chart_type")}
+        {t("workspace.analysis.charts.chart_builder_choose_chart_type")}
       </h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {chartTypes.map((chart) => {
@@ -31,7 +31,7 @@ export function ChartTypeSelector({
               onClick={() => onChartTypeSelect(chart.id)}
               className={`rounded-md border p-4 text-center transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 isSelected
-                  ? "border-brand-dark ring-brand-dark bg-brand-dark/5 ring-1"
+                  ? "border-brand-dark bg-brand-dark/5 ring-1 ring-brand-dark"
                   : "border-gray-200 hover:border-gray-300"
               }`}>
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded bg-gray-100">

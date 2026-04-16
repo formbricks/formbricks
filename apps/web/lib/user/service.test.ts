@@ -62,16 +62,13 @@ describe("User Service", () => {
       updatedAt: new Date(),
       billing: {
         stripeCustomerId: null,
-        plan: "free",
-        period: "monthly",
         limits: {
-          projects: 3,
+          workspaces: 3,
           monthly: {
             responses: 1500,
-            miu: 2000,
           },
         },
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
       },
       isAISmartToolsEnabled: false,
       isAIDataAnalysisEnabled: false,
@@ -83,16 +80,13 @@ describe("User Service", () => {
       updatedAt: new Date(),
       billing: {
         stripeCustomerId: null,
-        plan: "free",
-        period: "monthly",
         limits: {
-          projects: 3,
+          workspaces: 3,
           monthly: {
             responses: 1500,
-            miu: 2000,
           },
         },
-        periodStart: new Date(),
+        usageCycleAnchor: new Date(),
       },
       isAISmartToolsEnabled: false,
       isAIDataAnalysisEnabled: false,

@@ -156,7 +156,7 @@ const handleAirtableIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -197,7 +197,7 @@ const handleGoogleSheetsIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -239,7 +239,7 @@ const handleSlackIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -349,7 +349,7 @@ const handleNotionIntegration = async (
   } catch (err) {
     return {
       ok: false,
-      error: err,
+      error: err instanceof Error ? err : new Error(String(err)),
     };
   }
 };
@@ -374,8 +374,8 @@ const buildNotionPayloadProperties = (
       const pictureElement = surveyElements.find((el) => el.id === resp);
 
       responses[resp] = (pictureElement as any)?.choices
-        .filter((choice) => selectedChoiceIds.includes(choice.id))
-        .map((choice) => resolveStorageUrlAuto(choice.imageUrl));
+        .filter((choice: { id: string; imageUrl: string }) => selectedChoiceIds.includes(choice.id))
+        .map((choice: { id: string; imageUrl: string }) => resolveStorageUrlAuto(choice.imageUrl));
     }
   });
 

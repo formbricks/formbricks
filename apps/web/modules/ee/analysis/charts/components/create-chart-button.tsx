@@ -7,10 +7,10 @@ import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/creat
 import { Button } from "@/modules/ui/components/button";
 
 interface CreateChartButtonProps {
-  environmentId: string;
+  workspaceId: string;
 }
 
-export function CreateChartButton({ environmentId }: Readonly<CreateChartButtonProps>) {
+export function CreateChartButton({ workspaceId }: Readonly<CreateChartButtonProps>) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -18,9 +18,9 @@ export function CreateChartButton({ environmentId }: Readonly<CreateChartButtonP
     <>
       <Button size="sm" onClick={() => setIsDialogOpen(true)}>
         <PlusIcon className="mr-2 h-4 w-4" />
-        {t("environments.analysis.charts.create_chart")}
+        {t("workspace.analysis.charts.create_chart")}
       </Button>
-      <CreateChartDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} environmentId={environmentId} />
+      <CreateChartDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} workspaceId={workspaceId} />
     </>
   );
 }

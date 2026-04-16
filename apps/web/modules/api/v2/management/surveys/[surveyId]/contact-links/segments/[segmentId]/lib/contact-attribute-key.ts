@@ -2,10 +2,10 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
 
-export const getContactAttributeKeys = reactCache(async (environmentId: string) => {
+export const getContactAttributeKeys = reactCache(async (workspaceId: string) => {
   try {
     const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-      where: { environmentId },
+      where: { workspaceId },
       select: {
         key: true,
       },
@@ -16,7 +16,12 @@ export const getContactAttributeKeys = reactCache(async (environmentId: string) 
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "contact attribute keys", issue: error.message }],
+      details: [
+        {
+          field: "contact attribute keys",
+          issue: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+      ],
     });
   }
 });

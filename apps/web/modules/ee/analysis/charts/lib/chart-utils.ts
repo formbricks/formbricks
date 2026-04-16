@@ -1,5 +1,5 @@
 import { format, isValid, parseISO } from "date-fns";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartQuery, TCubeFilter } from "@formbricks/types/analysis";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 
@@ -47,7 +47,7 @@ export const preparePieData = (
 };
 
 /** Format a value for x-axis ticks; ISO date strings become "MMM d, yyyy", others pass through. */
-export function formatXAxisTick(value: TChartDataRow[string]): string {
+export function formatXAxisTick(value: unknown): string {
   if (value == null) return "";
   let str: string;
   if (typeof value === "string") str = value;
@@ -100,8 +100,7 @@ export function validateQueryMembers(query: TChartQuery): void {
   for (const td of query.timeDimensions ?? []) {
     if (!validateMember(td.dimension)) invalid.push(td.dimension);
   }
-  const checkFilters = (f: TChartQuery["filters"]): void => {
-    if (!f) return;
+  const checkFilters = (f: TCubeFilter[]): void => {
     for (const item of f) {
       if ("member" in item && typeof item.member === "string" && !validateMember(item.member)) {
         invalid.push(item.member);
@@ -110,7 +109,7 @@ export function validateQueryMembers(query: TChartQuery): void {
       if ("or" in item && Array.isArray(item.or)) checkFilters(item.or);
     }
   };
-  checkFilters(query.filters);
+  if (query.filters) checkFilters(query.filters);
   if (invalid.length > 0) {
     throw new Error(
       `Invalid query members (must start with FeedbackRecords. or TopicsUnnested.): ${invalid.join(", ")}`

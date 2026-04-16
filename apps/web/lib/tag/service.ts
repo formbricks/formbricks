@@ -6,18 +6,18 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
-import { TagError } from "@/modules/projects/settings/types/tag";
+import { TagError } from "../../modules/workspaces/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
-export const getTagsByEnvironmentId = reactCache(
-  async (environmentId: string, page?: number): Promise<TTag[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+export const getTagsByWorkspaceId = reactCache(
+  async (workspaceId: string, page?: number): Promise<TTag[]> => {
+    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const tags = await prisma.tag.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -47,16 +47,16 @@ export const getTag = reactCache(async (id: string): Promise<TTag | null> => {
 });
 
 export const createTag = async (
-  environmentId: string,
+  workspaceId: string,
   name: string
 ): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
-  validateInputs([environmentId, ZId], [name, ZString]);
+  validateInputs([workspaceId, ZId], [name, ZString]);
 
   try {
     const tag = await prisma.tag.create({
       data: {
         name,
-        environmentId,
+        workspaceId,
       },
     });
 
@@ -72,7 +72,7 @@ export const createTag = async (
     }
     return err({
       code: TagError.UNEXPECTED_ERROR,
-      message: error.message,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };

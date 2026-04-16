@@ -25,7 +25,7 @@ import { Button } from "@/modules/ui/components/button";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface AdvancedChartBuilderProps {
-  environmentId: string;
+  workspaceId: string;
   chartType: TChartType;
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
@@ -77,7 +77,7 @@ const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBui
 };
 
 export function AdvancedChartBuilder({
-  environmentId,
+  workspaceId,
   chartType,
   initialQuery,
   hidePreview = false,
@@ -91,7 +91,7 @@ export function AdvancedChartBuilder({
     initialQuery ? { ...initialState, ...parsedInitial } : initialState
   );
 
-  const { chartData, query, isLoading, error, runQuery } = useChartQuery(environmentId, initialQuery);
+  const { chartData, query, isLoading, error, runQuery } = useChartQuery(workspaceId, initialQuery);
 
   const currentQuery = useMemo(() => buildCubeQuery(state), [state]);
   const hasConfigChanged = useMemo(() => {
@@ -111,12 +111,12 @@ export function AdvancedChartBuilder({
 
   const handleRunQuery = async () => {
     if (state.selectedMeasures.length === 0) {
-      toast.error(t("environments.analysis.charts.please_select_at_least_one_measure"));
+      toast.error(t("workspace.analysis.charts.please_select_at_least_one_measure"));
       return;
     }
 
     if (dimensionsOpen && state.selectedDimensions.length === 0) {
-      toast.error(t("environments.analysis.charts.please_select_at_least_one_dimension"));
+      toast.error(t("workspace.analysis.charts.please_select_at_least_one_dimension"));
       return;
     }
 
@@ -125,7 +125,7 @@ export function AdvancedChartBuilder({
         (f) => f.operator !== "set" && f.operator !== "notSet" && (f.values === null || f.values.length === 0)
       );
       if (hasEmptyFilterValue) {
-        toast.error(t("environments.analysis.charts.please_enter_filter_values"));
+        toast.error(t("workspace.analysis.charts.please_enter_filter_values"));
         return;
       }
     }
@@ -165,8 +165,8 @@ export function AdvancedChartBuilder({
             if (!checked) dispatch({ type: ACTION.SET_DIMENSIONS, payload: [] });
           }}
           htmlId="chart-dimensions-toggle"
-          title={t("environments.analysis.charts.group_data")}
-          description={t("environments.analysis.charts.dimensions_toggle_description")}
+          title={t("workspace.analysis.charts.group_data")}
+          description={t("workspace.analysis.charts.dimensions_toggle_description")}
           customContainerClass="mt-2 px-0"
           childrenContainerClass="flex-col gap-3 p-4"
           childBorder>
@@ -194,8 +194,8 @@ export function AdvancedChartBuilder({
             }
           }}
           htmlId="chart-time-dimension-toggle"
-          title={t("environments.analysis.charts.time_dimension_title")}
-          description={t("environments.analysis.charts.time_dimension_toggle_description")}
+          title={t("workspace.analysis.charts.time_dimension_title")}
+          description={t("workspace.analysis.charts.time_dimension_toggle_description")}
           customContainerClass="mt-2 px-0"
           childrenContainerClass="flex-col gap-3 p-4"
           childBorder>
@@ -227,8 +227,8 @@ export function AdvancedChartBuilder({
             }
           }}
           htmlId="chart-filters-toggle"
-          title={t("environments.analysis.charts.filter_data")}
-          description={t("environments.analysis.charts.filters_toggle_description")}
+          title={t("workspace.analysis.charts.filter_data")}
+          description={t("workspace.analysis.charts.filters_toggle_description")}
           customContainerClass="mt-2 px-0"
           childrenContainerClass="flex-col gap-3 p-4"
           childBorder>
@@ -243,7 +243,7 @@ export function AdvancedChartBuilder({
 
         <div className="flex justify-end">
           <Button onClick={handleRunQuery} disabled={isLoading || !hasConfigChanged}>
-            {isLoading ? <LoadingSpinner /> : t("environments.analysis.charts.create_chart")}
+            {isLoading ? <LoadingSpinner /> : t("workspace.analysis.charts.create_chart")}
           </Button>
         </div>
       </div>

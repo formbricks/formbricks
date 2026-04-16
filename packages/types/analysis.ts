@@ -20,13 +20,13 @@ const ZCubeMemberFilter = z.object({
 
 export type TMemberFilter = z.infer<typeof ZCubeMemberFilter>;
 
-const ZCubeLogicalFilter: z.ZodType = z.union([
+export type TCubeFilter = TMemberFilter | { and: TCubeFilter[] } | { or: TCubeFilter[] };
+
+const ZCubeLogicalFilter: z.ZodType<TCubeFilter> = z.union([
   ZCubeMemberFilter,
   z.object({ and: z.array(z.lazy(() => ZCubeLogicalFilter)) }),
   z.object({ or: z.array(z.lazy(() => ZCubeLogicalFilter)) }),
 ]);
-
-export type TCubeFilter = TMemberFilter | { and: TCubeFilter[] } | { or: TCubeFilter[] };
 
 export const ZChartQuery = z.object({
   measures: z.array(z.string()).optional(),
@@ -35,7 +35,10 @@ export const ZChartQuery = z.object({
   timeDimensions: z.array(ZCubeTimeDimension).optional(),
   filters: z.array(ZCubeLogicalFilter).optional(),
   order: z
-    .union([z.array(z.tuple([z.string(), z.enum(["asc", "desc"])])), z.record(z.enum(["asc", "desc"]))])
+    .union([
+      z.array(z.tuple([z.string(), z.enum(["asc", "desc"])])),
+      z.record(z.string(), z.enum(["asc", "desc"])),
+    ])
     .optional(),
   limit: z.number().int().positive().optional(),
   total: z.boolean().optional(),

@@ -88,12 +88,12 @@ export function TimeDimensionPanel({
       <div className="space-y-2">
         {!hideTitle && (
           <h3 className="text-md font-semibold text-gray-900">
-            {t("environments.analysis.charts.time_dimension")}
+            {t("workspace.analysis.charts.time_dimension")}
           </h3>
         )}
         <div>
           <Button type="button" variant="outline" onClick={handleEnableTimeDimension}>
-            {t("environments.analysis.charts.enable_time_dimension")}
+            {t("workspace.analysis.charts.enable_time_dimension")}
           </Button>
         </div>
       </div>
@@ -104,14 +104,14 @@ export function TimeDimensionPanel({
     <div className="w-full space-y-2">
       {!hideTitle && (
         <h3 className="text-md font-semibold text-gray-900">
-          {t("environments.analysis.charts.time_dimension")}
+          {t("workspace.analysis.charts.time_dimension")}
         </h3>
       )}
 
       <div className="space-y-3">
         {/* Field Selector */}
         <div className="space-y-2">
-          <label className="text-sm">{t("environments.analysis.charts.field")}</label>
+          <label className="text-sm">{t("workspace.analysis.charts.field")}</label>
           <Select value={timeDimension.dimension} onValueChange={handleDimensionChange}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue />
@@ -128,13 +128,13 @@ export function TimeDimensionPanel({
 
         {/* Granularity Selector */}
         <div className="space-y-2">
-          <label className="text-sm">{t("environments.analysis.charts.granularity")}</label>
+          <label className="text-sm">{t("workspace.analysis.charts.granularity")}</label>
           <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">{t("environments.analysis.charts.no_grouping")}</SelectItem>
+              <SelectItem value="none">{t("workspace.analysis.charts.no_grouping")}</SelectItem>
               {TIME_GRANULARITIES.map((gran) => (
                 <SelectItem key={gran} value={gran}>
                   {getTranslatedGranularityLabel(gran, t)}
@@ -146,7 +146,7 @@ export function TimeDimensionPanel({
 
         {/* Date Range */}
         <div className="space-y-2">
-          <label className="text-sm">{t("environments.analysis.charts.date_range")}</label>
+          <label className="text-sm">{t("workspace.analysis.charts.date_range")}</label>
           <div className="space-y-2">
             <Select
               value={dateRangeType}
@@ -155,15 +155,15 @@ export function TimeDimensionPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="preset">{t("environments.analysis.charts.preset")}</SelectItem>
-                <SelectItem value="custom">{t("environments.analysis.charts.custom_range")}</SelectItem>
+                <SelectItem value="preset">{t("workspace.analysis.charts.preset")}</SelectItem>
+                <SelectItem value="custom">{t("workspace.analysis.charts.custom_range")}</SelectItem>
               </SelectContent>
             </Select>
 
             {dateRangeType === "preset" ? (
               <Select value={presetValue} onValueChange={handlePresetChange}>
                 <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder={t("environments.analysis.charts.select_preset")} />
+                  <SelectValue placeholder={t("workspace.analysis.charts.select_preset")} />
                 </SelectTrigger>
                 <SelectContent>
                   {DATE_PRESETS.map((preset) => (
@@ -186,12 +186,13 @@ export function TimeDimensionPanel({
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {customStartDate
                         ? format(customStartDate, "MMM dd, yyyy")
-                        : t("environments.analysis.charts.start_date")}
+                        : t("workspace.analysis.charts.start_date")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      onChange={(date: Date) => {
+                      onChange={(value) => {
+                        const date = value instanceof Date ? value : new Date();
                         setCustomStartDate(date);
                         const end = customEndDate ?? date;
                         if (timeDimension) {
@@ -213,12 +214,13 @@ export function TimeDimensionPanel({
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {customEndDate
                         ? format(customEndDate, "MMM dd, yyyy")
-                        : t("environments.analysis.charts.end_date")}
+                        : t("workspace.analysis.charts.end_date")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      onChange={(date: Date) => {
+                      onChange={(value) => {
+                        const date = value instanceof Date ? value : new Date();
                         setCustomEndDate(date);
                         const start = customStartDate ?? date;
                         if (timeDimension) {
