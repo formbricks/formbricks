@@ -58,10 +58,10 @@ export const SurveyCard = ({ survey, environmentId, isReadOnly, deleteSurvey, lo
       <div
         className={cn(
           "col-span-1 flex w-fit items-center gap-2 whitespace-nowrap rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-          surveyStatusLabel === "In Progress" && "bg-emerald-50",
-          surveyStatusLabel === "Completed" && "bg-slate-200",
-          surveyStatusLabel === "Draft" && "bg-slate-100",
-          surveyStatusLabel === "Paused" && "bg-slate-100"
+          survey.status === "inProgress" && "bg-emerald-50",
+          survey.status === "completed" && "bg-slate-200",
+          survey.status === "draft" && "bg-slate-100",
+          survey.status === "paused" && "bg-slate-100"
         )}>
         <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}{" "}
       </div>

@@ -323,25 +323,23 @@ function buildV3AuditLog(
   return auditLog;
 }
 
-function queueV3AuditLog(
+async function queueV3AuditLog(
   auditLog: TV3AuditLog | undefined,
   requestId: string,
   log: ReturnType<typeof logger.withContext>
-): void {
+): Promise<void> {
   if (!auditLog) {
     return;
   }
 
-  void Promise.resolve()
-    .then(() =>
-      queueAuditEvent({
-        ...auditLog,
-        ...(auditLog.status === "failure" ? { eventId: auditLog.eventId ?? requestId } : {}),
-      })
-    )
-    .catch((error) => {
-      log.error({ error }, "Failed to queue V3 audit event");
+  try {
+    await queueAuditEvent({
+      ...auditLog,
+      ...(auditLog.status === "failure" ? { eventId: auditLog.eventId ?? requestId } : {}),
     });
+  } catch (error) {
+    log.error({ error }, "Failed to queue V3 audit event");
+  }
 }
 
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
@@ -411,12 +409,12 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         }
       }
 
-      queueV3AuditLog(auditLog, requestId, log);
+      await queueV3AuditLog(auditLog, requestId, log);
       return ensureRequestIdHeader(response, requestId);
     } catch (error) {
       if (auditLog) {
         auditLog.eventId = requestId;
-        queueV3AuditLog(auditLog, requestId, log);
+        await queueV3AuditLog(auditLog, requestId, log);
       }
       log.error({ error, statusCode: 500 }, "V3 API unexpected error");
       return problemInternalError(requestId, "An unexpected error occurred.", instance);
