@@ -349,14 +349,3 @@ export const setTranslationAtPathMutable = (
     (target as Record<string, string>)[languageCode] = value;
   }
 };
-
-export const setTranslationAtPath = (
-  survey: TSurvey,
-  path: string,
-  languageCode: string,
-  value: string
-): TSurvey => {
-  const clone = structuredClone(survey);
-  setTranslationAtPathMutable(clone, path, languageCode, value);
-  return clone;
-};
