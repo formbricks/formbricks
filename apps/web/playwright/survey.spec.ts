@@ -20,8 +20,7 @@ const secondPictureChoiceAlt = "android-chrome-192x192.png";
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
   await expect(choiceImage).toBeVisible();
-
-  await pictureSelectQuestion.locator("label").filter({ has: choiceImage }).first().click();
+  await choiceImage.click();
 };
 
 test.describe("Survey Create & Submit Response without logic", async () => {
