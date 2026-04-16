@@ -89,31 +89,45 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
     });
   });
 
-  await page.route(/.*\/api\/v1\/client\/[^/]+\/storage$/, async (route) => {
-    if (route.request().method() !== "POST") {
-      await route.fallback();
-      return;
-    }
+  await page.route(
+    (url) => {
+      const pathname = url.pathname;
+      const segments = pathname.split("/").filter(Boolean);
 
-    const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
-    const fileName = payload?.fileName ?? "uploaded-file.bin";
+      return (
+        segments.length === 5 &&
+        segments[0] === "api" &&
+        segments[1] === "v1" &&
+        segments[2] === "client" &&
+        segments[4] === "storage"
+      );
+    },
+    async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
 
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        data: {
-          signedUrl: `http://localhost:3000${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
-          presignedFields: {
-            key: fileName,
+      const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
+      const fileName = payload?.fileName ?? "uploaded-file.bin";
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            signedUrl: `http://localhost:3000${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
+            presignedFields: {
+              key: fileName,
+            },
+            fileUrl: getMockStorageFileUrl(fileName, "private"),
+            signingData: null,
+            updatedFileName: fileName,
           },
-          fileUrl: getMockStorageFileUrl(fileName, "private"),
-          signingData: null,
-          updatedFileName: fileName,
-        },
-      }),
-    });
-  });
+        }),
+      });
+    }
+  );
 
   await page.route(`**${MOCK_STORAGE_UPLOAD_PATH}/**`, async (route) => {
     if (route.request().method() !== "POST") {
