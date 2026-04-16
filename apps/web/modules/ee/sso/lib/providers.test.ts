@@ -42,8 +42,10 @@ describe("SSO Providers", () => {
     const providers = getSSOProviders();
     const samlProvider = providers[4];
     const googleProvider = providers[1];
+    const azureProvider = providers[2];
 
     expect(samlProvider.id).toBe("saml");
+    expect(azureProvider.id).toBe("azuread");
     expect(samlProvider.name).toBe("BoxyHQ SAML");
     expect((samlProvider as any).version).toBe("2.0");
     expect(samlProvider.checks).toContain("pkce");

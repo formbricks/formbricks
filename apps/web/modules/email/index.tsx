@@ -128,16 +128,19 @@ export const sendVerificationEmail = async ({
   email,
   locale,
   callbackUrl,
+  purpose = "email_verification",
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
   callbackUrl?: string;
+  purpose?: "email_verification" | "sso_recovery";
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: "1d",
+      purpose,
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({
       token,
