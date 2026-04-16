@@ -2,12 +2,16 @@ import { expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import * as helper from "./utils/helper";
-import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
+import { createSurvey, createSurveyWithLogic, uploadImageChoicesForPictureSelection } from "./utils/helper";
 
 test.use({
   launchOptions: {
     slowMo: 150,
   },
+});
+
+test.beforeEach(async ({ page }) => {
+  await helper.mockStorageUploads(page);
 });
 
 test.describe("Survey Create & Submit Response without logic", async () => {
@@ -158,9 +162,8 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.description)).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
-      await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
+      await expect(page.locator("#questionCard-7 img")).toHaveCount(2);
+      await page.locator("#questionCard-7 img").first().click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
@@ -304,7 +307,7 @@ test.describe("Multi Language Survey Create", async () => {
       surveys.createAndSubmit.pictureSelectQuestion.question
     );
 
-    await uploadFileForFileUploadQuestion(page);
+    await uploadImageChoicesForPictureSelection(page);
 
     await page
       .locator("div")
@@ -839,9 +842,8 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
-      await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
+      await expect(page.locator("#questionCard-3 img")).toHaveCount(2);
+      await page.locator("#questionCard-3 img").first().click();
       await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
 
       // Rating Question

@@ -265,6 +265,146 @@ This helper:
   use local uploads.
 </Info>
 
+### MinIO To RustFS
+
+If your current self-hosted setup already uses MinIO-backed S3 storage and you want to move that bucket data to
+RustFS, there is currently **no guided Formbricks migration helper** for that path.
+
+<Warning>
+  This is a **manual migration path**. It is not automated by `migrate-to-rustfs.sh`, and it assumes you are
+  comfortable operating both object storage systems directly.
+</Warning>
+
+This manual path is usually the safest option for Formbricks because the application already uses a generic
+`S3_*` storage contract. In practice, the migration is mostly:
+
+1. Provision RustFS
+2. Copy the Formbricks bucket objects from MinIO to RustFS
+3. Point Formbricks at RustFS
+4. Verify uploads and existing assets before removing MinIO
+
+#### Recommended Migration Flow
+
+1. **Create a backup and schedule a maintenance window**
+
+   Before touching storage:
+   - Back up `docker-compose.yml`, `.env`, and your reverse-proxy configuration
+   - Back up your database
+   - Back up the MinIO data volume(s)
+
+   During the final cutover, stop Formbricks or otherwise prevent new uploads so objects do not drift while you
+   switch storage backends.
+
+2. **Provision RustFS first**
+
+   Set up RustFS separately using the normal bundled or manual RustFS instructions from our Docker and file-upload
+   docs. Reuse the same bucket name if possible, or plan the new bucket name ahead of time.
+
+   Make sure you have:
+   - A reachable RustFS S3 endpoint
+   - An admin or bootstrap credential for RustFS
+   - The target bucket name
+   - The final Formbricks runtime credentials you want to use after the cutover
+
+3. **Configure `mc` aliases for both systems**
+
+   RustFS documents using the MinIO Client (`mc`) against RustFS, which also makes it a practical tool for a
+   bucket-to-bucket copy between MinIO and RustFS.
+
+   ```bash
+   mc alias set minio  http://minio:9000  MINIO_ACCESS_KEY  MINIO_SECRET_KEY
+   mc alias set rustfs http://rustfs:9000 RUSTFS_ACCESS_KEY RUSTFS_SECRET_KEY
+   ```
+
+   Then verify access:
+
+   ```bash
+   mc ls minio
+   mc ls rustfs
+   ```
+
+4. **Create the destination bucket on RustFS**
+
+   ```bash
+   mc mb --ignore-existing rustfs/formbricks-uploads
+   ```
+
+   Replace `formbricks-uploads` with the bucket you actually use in `S3_BUCKET_NAME`.
+
+5. **Copy objects from MinIO to RustFS**
+
+   ```bash
+   mc mirror --overwrite minio/formbricks-uploads rustfs/formbricks-uploads
+   ```
+
+   For Formbricks installs, this is usually enough because the application mainly needs the current object set in
+   the bucket. If you are using advanced MinIO features outside Formbricks itself, such as site replication,
+   event notifications, or external identity integrations, recreate those separately on RustFS.
+
+   <Info>
+     `mc mirror` is a practical Formbricks-focused migration tool, but it does **not** preserve every MinIO
+     deployment feature. In particular, do not assume it migrates all MinIO-specific replication,
+     notification, or identity-management configuration automatically.
+   </Info>
+
+6. **Verify the copied data before cutover**
+
+   At minimum, compare the source and destination buckets:
+
+   ```bash
+   mc ls --recursive minio/formbricks-uploads | wc -l
+   mc ls --recursive rustfs/formbricks-uploads | wc -l
+   ```
+
+   Also spot-check a few real objects:
+
+   ```bash
+   mc stat minio/formbricks-uploads/path/to/object
+   mc stat rustfs/formbricks-uploads/path/to/object
+   ```
+
+   If you could not fully stop writes before the first copy, run one final `mc mirror --overwrite ...` pass
+   immediately before cutover.
+
+7. **Update Formbricks to use RustFS**
+
+   Change the storage environment variables in your deployment to point to RustFS:
+
+   ```bash
+   S3_ACCESS_KEY=YOUR_RUSTFS_SERVICE_USER
+   S3_SECRET_KEY=YOUR_RUSTFS_SERVICE_PASSWORD
+   S3_REGION=us-east-1
+   S3_BUCKET_NAME=formbricks-uploads
+   S3_ENDPOINT_URL=https://files.example.com
+   S3_FORCE_PATH_STYLE=1
+   ```
+
+   If you are reusing the same `files.` subdomain, cut that endpoint over to RustFS before restarting
+   Formbricks. If you are changing the subdomain, update `S3_ENDPOINT_URL` accordingly.
+
+8. **Restart and smoke-test Formbricks**
+
+   After the cutover:
+   - Open surveys that reference existing images or uploaded files
+   - Upload a new logo, image-choice asset, or file-upload response
+   - Confirm new objects land in RustFS
+   - Confirm existing objects still load correctly through Formbricks
+
+9. **Keep MinIO around until you are satisfied**
+
+   Do not immediately delete the old MinIO data. Keep it available until:
+   - Existing assets load correctly
+   - New uploads work
+   - You have a fresh backup of the RustFS-backed setup
+
+<Note>
+  If you run a standalone MinIO deployment and want a lower-level storage-engine migration, RustFS also
+  documents a direct binary-replacement path in their blog: [Drop-in Binary Replacement: Migrate from MinIO to
+  RustFS](https://rustfs.dev/binary-replacement-a-simple-way-to-migrate-from-minio-to-rustfs/). For
+  Formbricks, we recommend the bucket-copy approach above unless you specifically want to reuse the MinIO
+  storage layout directly and you understand the tradeoffs.
+</Note>
+
 ### Legacy one-click v4.0 upgrade
 
 For historical v4.0 upgrades, our original one-click migration script is still available:
