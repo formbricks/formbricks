@@ -211,6 +211,11 @@ export const EditConnectorModal = ({
     handleOpenChange(false);
   };
 
+  const assignedDirectoryName =
+    directories.find((d) => d.id === connector?.feedbackRecordDirectoryId)?.name ??
+    connector?.feedbackRecordDirectoryId ??
+    "—";
+
   const saveChangesDisbaled = useMemo(() => {
     if (!connector) return true;
     if (!connectorName.trim()) return true;
@@ -255,31 +260,11 @@ export const EditConnectorModal = ({
             />
           </div>
 
-          {directories.length > 1 && (
-            <div className="space-y-2">
-              <Label>{t("workspace.unify.feedback_record_directory")}</Label>
-              <Select value={connector.feedbackRecordDirectoryId} disabled>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {directories.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500">{t("workspace.unify.frd_cannot_be_changed")}</p>
-            </div>
-          )}
-
-          {directories.length === 1 && (
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-              {t("workspace.unify.records_will_go_to")}{" "}
-              <span className="font-medium text-slate-900">{directories[0].name}</span>
-            </div>
-          )}
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+            {t("workspace.unify.records_will_go_to")}{" "}
+            <span className="font-medium text-slate-900">{assignedDirectoryName}</span>
+            <p className="mt-1 text-xs text-slate-400">{t("workspace.unify.frd_cannot_be_changed")}</p>
+          </div>
 
           {connector.type === "formbricks" ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">

@@ -13,6 +13,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
+import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
@@ -33,23 +34,13 @@ const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
   date: <CalendarIcon className="h-3.5 w-3.5" />,
 };
 
-const formatValue = (record: FeedbackRecordData, t: TFunction, locale?: string): string => {
+const formatValue = (record: FeedbackRecordData, t: TFunction, locale: string): string => {
   if (record.value_text != null) return record.value_text;
   if (record.value_number != null) return String(record.value_number);
   if (record.value_boolean != null) return record.value_boolean ? t("common.yes") : t("common.no");
-  if (record.value_date != null) return new Date(record.value_date).toLocaleDateString(locale);
+  if (record.value_date != null) return formatDateForDisplay(new Date(record.value_date), locale);
   return "—";
 };
-
-function formatDate(isoString: string, locale: string): string {
-  return new Date(isoString).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
@@ -160,7 +151,7 @@ export const FeedbackRecordsTable = ({ workspaceId, initialRecords, frdMap }: Fe
                   <FeedbackRecordRow
                     key={record.id}
                     record={record}
-                    locale={i18n.language}
+                    locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
                     frdName={record.tenant_id ? (frdMap[record.tenant_id] ?? "—") : "—"}
                     t={t}
                   />
@@ -191,7 +182,7 @@ const FeedbackRecordRow = ({
   return (
     <tr className="text-sm text-slate-700 transition-colors hover:bg-slate-50">
       <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-        {formatDate(record.collected_at, locale)}
+        {formatDateTimeForDisplay(new Date(record.collected_at), locale)}
       </td>
       <td className="max-w-[200px] truncate px-4 py-3 text-slate-600" title={frdName}>
         {frdName}

@@ -91,8 +91,8 @@ export const FeedbackRecordDirectorySettingsModal = ({
   } = form;
 
   const closeModal = () => {
+    reset();
     setOpen(false);
-    if (!isEdit) reset();
   };
 
   const handleSubmitForm: SubmitHandler<TFeedbackRecordDirectoryUpdateInput> = async (data) => {
@@ -122,7 +122,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(newOpen) => (newOpen ? setOpen(true) : closeModal())}>
       <DialogContent>
         <DialogHeader className="pb-4">
           <DialogTitle>

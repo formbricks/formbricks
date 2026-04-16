@@ -89,18 +89,25 @@ export const createWorkspace = async (
       });
     }
 
-    // Create + link default FRD only for first workspace in org
-    const existingFrdCount = await prisma.feedbackRecordDirectory.count({ where: { organizationId } });
+    // Ensure default FRD exists + link to first workspace atomically
+    const defaultFrd = await prisma.feedbackRecordDirectory.upsert({
+      where: {
+        organizationId_name: { organizationId, name: "Default Feedback Record Directory" },
+      },
+      create: { name: "Default Feedback Record Directory", organizationId },
+      update: {},
+      select: { id: true },
+    });
 
-    if (existingFrdCount === 0) {
-      const frd = await prisma.feedbackRecordDirectory.create({
-        data: { name: "Default Feedback Record Directory", organizationId },
-        select: { id: true },
-      });
+    // Link only if this is the first workspace (no existing links for this FRD)
+    const existingLinks = await prisma.feedbackRecordDirectoryWorkspace.count({
+      where: { feedbackRecordDirectoryId: defaultFrd.id },
+    });
 
+    if (existingLinks === 0) {
       await prisma.feedbackRecordDirectoryWorkspace.create({
         data: {
-          feedbackRecordDirectoryId: frd.id,
+          feedbackRecordDirectoryId: defaultFrd.id,
           workspaceId: workspace.id,
         },
       });
