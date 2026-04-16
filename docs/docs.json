@@ -5,7 +5,6 @@
     "light": "#00C4B8",
     "primary": "#00C4B8"
   },
-  "css": "/custom.css",
   "errors": {
     "404": {
       "redirect": true
