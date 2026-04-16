@@ -1,6 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
@@ -11,7 +11,7 @@ import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn, isRTLLanguage } from "@/lib/utils";
 
 interface LanguageSwitchProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
@@ -59,7 +59,7 @@ export function LanguageSwitch({
     handleI18nLanguage(calculatedLanguageCode);
 
     if (setDir) {
-      const calculateDir = isRTLLanguage(survey, calculatedLanguageCode) ? "rtl" : "auto";
+      const calculateDir = isRTLLanguage(survey, calculatedLanguageCode) ? "rtl" : "ltr";
       setDir?.(calculateDir);
     }
 
@@ -80,7 +80,7 @@ export function LanguageSwitch({
         title={t("common.language_switch")}
         type="button"
         className={cn(
-          "text-heading focus:outline-hidden relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2"
+          "text-heading relative flex h-8 w-8 items-center justify-center rounded-md focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
         )}
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",

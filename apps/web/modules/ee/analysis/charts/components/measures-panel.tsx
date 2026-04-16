@@ -25,15 +25,15 @@ export function MeasuresPanel({
   return (
     <div className="w-full space-y-2">
       {!hideTitle && (
-        <h3 className="text-md font-semibold text-gray-900">{t("environments.analysis.charts.measures")}</h3>
+        <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.measures")}</h3>
       )}
       <div className="space-y-2">
-        <label className="text-sm">{t("environments.analysis.charts.predefined_measures")}</label>
+        <label className="text-sm">{t("workspace.analysis.charts.predefined_measures")}</label>
         <MultiSelect
           options={measureOptions}
           value={selectedMeasures}
           onChange={(selected) => onMeasuresChange(selected)}
-          placeholder={t("environments.analysis.charts.select_measures")}
+          placeholder={t("workspace.analysis.charts.select_measures")}
         />
       </div>
     </div>

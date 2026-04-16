@@ -1,6 +1,6 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -11,7 +11,7 @@ import { BlockCard } from "@/modules/survey/editor/components/block-card";
 interface BlocksDroppableProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  project: Project;
+  workspace: Workspace;
   moveElement: (elementIdx: number, up: boolean) => void;
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
   updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
@@ -51,7 +51,7 @@ export const BlocksDroppable = ({
   localSurvey,
   setLocalSurvey,
   moveElement,
-  project,
+  workspace,
   selectedLanguageCode,
   setActiveElementId,
   setSelectedLanguageCode,
@@ -88,7 +88,7 @@ export const BlocksDroppable = ({
               key={block.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              project={project}
+              workspace={workspace}
               block={block}
               blockIdx={blockIdx}
               moveElement={moveElement}

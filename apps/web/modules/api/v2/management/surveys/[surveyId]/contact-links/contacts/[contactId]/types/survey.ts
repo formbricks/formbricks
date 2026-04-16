@@ -1,23 +1,18 @@
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
-
-extendZodWithOpenApi(z);
 
 export const ZContactLinkParams = z.object({
   surveyId: z
-    .string()
     .cuid2()
-    .openapi({
-      description: "The ID of the survey",
+    .meta({
       param: { name: "surveyId", in: "path" },
-    }),
+    })
+    .describe("The ID of the survey"),
   contactId: z
-    .string()
     .cuid2()
-    .openapi({
-      description: "The ID of the contact",
+    .meta({
       param: { name: "contactId", in: "path" },
-    }),
+    })
+    .describe("The ID of the contact"),
 });
 
 export const ZContactLinkQuery = z.object({

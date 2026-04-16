@@ -1,0 +1,145 @@
+---
+title: "CDN"
+description: "Use a CDN in front of public Formbricks traffic without serving stale survey assets after upgrades."
+icon: "globe"
+---
+
+### Why a CDN is recommended
+
+A CDN is recommended for production self-hosting when you expose Formbricks surveys publicly. It helps you:
+
+- reduce latency for survey respondents in different regions
+- absorb traffic spikes on public survey links and embedded surveys
+- terminate TLS and use provider features such as DDoS protection, WAF rules, and bot filtering
+- serve static assets such as `/_next/*`, `/css/*`, and `/js/surveys.umd.cjs` closer to end users
+
+You can run Formbricks without a CDN, but it is usually the better production setup once surveys are reachable from
+the public internet.
+
+## Recommended topology
+
+The cleanest setup is to put the **public survey domain** behind the CDN and keep the **admin domain** separate:
+
+```bash
+# Private admin domain
+WEBAPP_URL=https://admin.formbricks.example.com
+NEXTAUTH_URL=https://admin.formbricks.example.com
+
+# Public survey domain
+PUBLIC_URL=https://surveys.example.com
+```
+
+In this setup:
+
+- `PUBLIC_URL` handles survey traffic, embed traffic, and public assets
+- `WEBAPP_URL` handles the admin UI, authentication, and other private routes
+
+Please refer to the [Domain Configuration](/self-hosting/configuration/domain-configuration) guide first if you have
+not set up a dedicated public domain yet.
+
+## What the CDN should do
+
+Configure your CDN to proxy requests to your Formbricks origin while preserving the original `Host` header and HTTPS
+scheme. As a baseline, the CDN should:
+
+- cache static assets and respect origin cache headers
+- forward query strings
+- bypass cache when cookies or authorization headers are present
+- avoid rewriting paths or stripping prefixes
+
+<Warning>
+  Do not enable a blanket "cache everything" rule for all Formbricks routes. That can cause stale survey pages,
+  stale client state, broken authentication flows, or outdated JavaScript bundles after an upgrade.
+</Warning>
+
+## What is safe to cache
+
+In most setups, you should only cache static public assets aggressively:
+
+- `/_next/*`
+- `/js/*`
+- `/css/*`
+- `/images/*`
+- `/fonts/*`
+- `/icons/*`
+- `/favicon.ico`
+- `/storage/{environmentId}/public/*`
+
+If you place the full public domain behind a CDN, keep HTML and API traffic proxied but not force-cached unless you
+have a very deliberate invalidation strategy.
+
+## What should bypass cache
+
+These routes should generally not be cached:
+
+- admin routes served from `WEBAPP_URL`
+- authentication routes such as `/api/auth/*`
+- public client API routes such as `/api/v1/client/*` and `/api/v2/client/*`
+- survey HTML routes such as `/s/*`, `/c/*`, and `/p/*` unless your CDN strictly honors short origin cache headers
+
+This is especially important if your CDN vendor offers features like "Cache Everything", "Edge Cache TTL", or
+"Ignore origin headers". Those features can easily keep old Formbricks responses alive longer than intended.
+
+## Important detail for upgrades
+
+Formbricks serves the survey runtime bundle from a stable public path:
+
+```text
+/js/surveys.umd.cjs
+```
+
+That bundle is used by the website/app survey SDK. If your CDN keeps serving an older copy after you deploy a new
+Formbricks version, respondents may receive outdated survey code even though the rest of the app has already been
+updated.
+
+This is the most common CDN-related upgrade issue for self-hosters: the application is updated, but the CDN still
+serves cached JavaScript from the previous release.
+
+## Upgrade checklist
+
+Every time you update Formbricks, include CDN cache handling in your rollout:
+
+<Steps>
+  <Step title="Deploy the new Formbricks version">
+    Update Formbricks as usual by following the [Migration Guide](/self-hosting/advanced/migration) or your normal
+    deployment process.
+  </Step>
+  <Step title="Purge or revalidate public assets">
+    Purge the CDN cache for at least `/js/*`, `/_next/*`, and `/css/*`. If your CDN
+    supports targeted purges, make sure `/js/surveys.umd.cjs` is included every time.
+  </Step>
+  <Step title="Check the public domain after the purge">
+    Open a survey or embedded survey through the public domain and verify in the browser network tab that the
+    JavaScript assets are fetched fresh from the updated release.
+  </Step>
+  <Step title="Hard refresh during validation">
+    Browser caches can hide CDN issues. During verification, use a hard refresh or disable the browser cache in
+    DevTools to confirm the new assets are really being served.
+  </Step>
+</Steps>
+
+## Practical setup guidance
+
+Most CDN providers can be configured safely with the following approach:
+
+1. Put only the public Formbricks domain behind the CDN.
+2. Forward all requests to your reverse proxy or load balancer.
+3. Cache static asset paths only.
+4. Bypass cache for authenticated traffic, API traffic, and survey HTML.
+5. Add a purge step to every Formbricks deployment or upgrade.
+
+If you use a single-domain deployment, the same advice still applies, but you need more careful cache rules because
+admin and public traffic share the same hostname.
+
+## Troubleshooting stale content
+
+If users still see outdated surveys or broken embeds after an upgrade, check the following:
+
+- the CDN is not overriding origin cache headers with a long fixed TTL
+- `/js/surveys.umd.cjs` has been purged or revalidated
+- the public domain in your SDK configuration points to `PUBLIC_URL`, not the admin domain
+- the browser cache is cleared during verification
+- your reverse proxy is forwarding the correct `Host` and `X-Forwarded-Proto` headers
+
+If problems remain, temporarily bypass the CDN for the public domain. If the issue disappears immediately, the CDN
+cache policy is the first place to investigate.

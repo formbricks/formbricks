@@ -1,10 +1,10 @@
 "use client";
 
-import { Project, Response } from "@prisma/client";
+import { Response, Workspace } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
@@ -13,12 +13,13 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
   surveyId: string;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
@@ -28,18 +29,19 @@ interface PinScreenProps {
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
-  styling: TProjectStyling | TSurveyStyling;
+  styling: TWorkspaceStyling | TSurveyStyling;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
-    project,
+    workspace,
     publicDomain,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
+    TERMS_URL,
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
@@ -119,7 +121,7 @@ export const PinScreen = (props: PinScreenProps) => {
   return (
     <SurveyClientWrapper
       survey={survey}
-      project={project}
+      workspace={workspace}
       styling={styling}
       publicDomain={publicDomain}
       responseCount={responseCount}
@@ -134,6 +136,7 @@ export const PinScreen = (props: PinScreenProps) => {
       verifiedEmail={verifiedEmail}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
+      TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );

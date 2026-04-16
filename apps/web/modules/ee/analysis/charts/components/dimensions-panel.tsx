@@ -27,20 +27,18 @@ export function DimensionsPanel({
   return (
     <div className="w-full space-y-2">
       {!hideTitle && (
-        <h3 className="text-md font-semibold text-gray-900">
-          {t("environments.analysis.charts.dimensions")}
-        </h3>
+        <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.dimensions")}</h3>
       )}
       <div className="space-y-2">
-        <Label className="text-sm">{t("environments.analysis.charts.group_by")}</Label>
+        <Label className="text-sm">{t("workspace.analysis.charts.group_by")}</Label>
         <MultiSelect
           options={dimensionOptions}
           value={selectedDimensions}
           onChange={onDimensionsChange}
-          placeholder={t("environments.analysis.charts.select_dimensions")}
+          placeholder={t("workspace.analysis.charts.select_dimensions")}
         />
         <Alert variant="info" size="small">
-          <AlertTitle>{t("environments.analysis.charts.group_by_description")}</AlertTitle>
+          <AlertTitle>{t("workspace.analysis.charts.group_by_description")}</AlertTitle>
         </Alert>
       </div>
     </div>

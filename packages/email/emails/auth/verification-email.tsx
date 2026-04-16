@@ -26,7 +26,7 @@ export function VerificationEmail({
         <Text className="text-sm">{t("emails.verification_email_text")}</Text>
         <EmailButton href={verifyLink} label={t("emails.verification_email_verify_email")} />
         <Text className="text-sm">{t("emails.verification_email_click_on_this_link")}</Text>
-        <Link className="text-sm break-all text-black" href={verifyLink}>
+        <Link className="break-all text-sm text-black" href={verifyLink}>
           {verifyLink}
         </Link>
         <Text className="text-sm font-bold">{t("emails.verification_email_link_valid_for_24_hours")}</Text>

@@ -47,6 +47,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   rateLimit = true,
   handler,
   auditLog,
+  bodyTransform,
 }: {
   request: Request;
   schemas?: S;
@@ -54,6 +55,10 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
   auditLog?: TApiAuditLog;
+  bodyTransform?: (
+    body: Record<string, unknown>,
+    auth: TAuthenticationApiKey
+  ) => Promise<Record<string, unknown>> | Record<string, unknown>;
 }): Promise<Response> => {
   const authentication = await authenticateRequest(request);
   if (!authentication.ok) {
@@ -82,6 +87,10 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
           },
         ],
       });
+    }
+
+    if (bodyTransform) {
+      bodyData = await bodyTransform(bodyData, authentication.data);
     }
 
     const bodyResult = schemas.body.safeParse(bodyData);
@@ -124,7 +133,12 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     try {
       await applyRateLimit(rateLimitConfigs.api.v2, authentication.data.apiKeyId);
     } catch (error) {
-      return handleApiError(request, { type: "too_many_requests", details: error.message });
+      return handleApiError(request, {
+        type: "too_many_requests",
+        details: [
+          { field: "rateLimit", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+        ],
+      });
     }
   }
 

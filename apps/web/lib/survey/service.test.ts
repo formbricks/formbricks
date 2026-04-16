@@ -10,7 +10,7 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import {
-  getOrganizationByEnvironmentId,
+  getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
@@ -38,7 +38,7 @@ import {
 
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({
-  getOrganizationByEnvironmentId: vi.fn().mockResolvedValue({
+  getOrganizationByWorkspaceId: vi.fn().mockResolvedValue({
     id: "org123",
   }),
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
@@ -259,7 +259,7 @@ describe("Tests for getSurveysByActionClassId", () => {
 
 describe("Tests for getSurveys", () => {
   describe("Happy Path", () => {
-    test("Returns an array of surveys for a given environmentId, limit(optional) and offset(optional)", async () => {
+    test("Returns an array of surveys for a given workspaceId, limit(optional) and offset(optional)", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
       const surveys = await getSurveys(mockId);
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
@@ -298,7 +298,7 @@ describe("Tests for getSurveys", () => {
 describe("Tests for updateSurvey", () => {
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
   });
 
   describe("Happy Path", () => {
@@ -371,7 +371,7 @@ describe("Tests for getSurveyCount service", () => {
 });
 
 describe("Tests for handleTriggerUpdates", () => {
-  const mockEnvironmentId = "env-123";
+  const mockWorkspaceId = "env-123";
   const mockActionClassId1 = "action-123";
   const mockActionClassId2 = "action-456";
 
@@ -380,7 +380,7 @@ describe("Tests for handleTriggerUpdates", () => {
       id: mockActionClassId1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       name: "Test Action 1",
       description: "Test action description 1",
       type: "code",
@@ -391,7 +391,7 @@ describe("Tests for handleTriggerUpdates", () => {
       id: mockActionClassId2,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       name: "Test Action 2",
       description: "Test action description 2",
       type: "code",
@@ -406,13 +406,13 @@ describe("Tests for handleTriggerUpdates", () => {
         actionClass: {
           id: mockActionClassId1,
           name: "Test Action 1",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "test-action-1",
         },
       },
     ] as TSurvey["triggers"];
-    const currentTriggers = [];
+    const currentTriggers: TSurvey["triggers"] = [];
 
     const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
@@ -421,13 +421,13 @@ describe("Tests for handleTriggerUpdates", () => {
   });
 
   test("removes deleted triggers correctly", () => {
-    const updatedTriggers = [];
+    const updatedTriggers: TSurvey["triggers"] = [];
     const currentTriggers = [
       {
         actionClass: {
           id: mockActionClassId1,
           name: "Test Action 1",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "test-action-1",
         },
@@ -446,7 +446,7 @@ describe("Tests for handleTriggerUpdates", () => {
         actionClass: {
           id: mockActionClassId2,
           name: "Test Action 2",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "test-action-2",
         },
@@ -458,7 +458,7 @@ describe("Tests for handleTriggerUpdates", () => {
         actionClass: {
           id: mockActionClassId1,
           name: "Test Action 1",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "test-action-1",
         },
@@ -485,14 +485,14 @@ describe("Tests for handleTriggerUpdates", () => {
         actionClass: {
           id: "invalid-action-id",
           name: "Invalid Action",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "invalid-action",
         },
       },
     ] as TSurvey["triggers"];
 
-    const currentTriggers = [];
+    const currentTriggers: TSurvey["triggers"] = [];
 
     expect(() => handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses)).toThrow(
       InvalidInputError
@@ -505,7 +505,7 @@ describe("Tests for handleTriggerUpdates", () => {
         actionClass: {
           id: mockActionClassId1,
           name: "Test Action 1",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "test-action-1",
         },
@@ -514,13 +514,13 @@ describe("Tests for handleTriggerUpdates", () => {
         actionClass: {
           id: mockActionClassId1, // Duplicated ID
           name: "Test Action 1",
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           type: "code",
           key: "test-action-1",
         },
       },
     ] as TSurvey["triggers"];
-    const currentTriggers = [];
+    const currentTriggers: TSurvey["triggers"] = [];
 
     expect(() => handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses)).toThrow(
       InvalidInputError
@@ -529,7 +529,7 @@ describe("Tests for handleTriggerUpdates", () => {
 });
 
 describe("Tests for createSurvey", () => {
-  const mockEnvironmentId = "env123";
+  const mockWorkspaceId = "clxxxxxxxxxxxxxxxxxxxxxxxxx";
   const mockUserId = "user123";
 
   const mockCreateSurveyInput = {
@@ -620,7 +620,7 @@ describe("Tests for createSurvey", () => {
       id: "action-123",
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       name: "Test Action",
       description: "Test action description",
       type: "code",
@@ -631,16 +631,17 @@ describe("Tests for createSurvey", () => {
 
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
+    // environment model removed - no mock needed
   });
 
   describe("Happy Path", () => {
     test("creates a survey successfully", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
 
-      const result = await createSurvey(mockEnvironmentId, mockCreateSurveyInput);
+      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput);
 
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
@@ -648,7 +649,7 @@ describe("Tests for createSurvey", () => {
     });
 
     test("creates a private segment for app surveys", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
         type: "app",
@@ -656,7 +657,7 @@ describe("Tests for createSurvey", () => {
 
       prisma.segment.create.mockResolvedValueOnce({
         id: "segment-123",
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         title: mockSurveyOutput.id,
         isPrivate: true,
         filters: [],
@@ -664,7 +665,7 @@ describe("Tests for createSurvey", () => {
         updatedAt: new Date(),
       } as unknown as TSegment);
 
-      await createSurvey(mockEnvironmentId, {
+      await createSurvey(mockWorkspaceId, {
         ...mockCreateSurveyInput,
         type: "app",
       });
@@ -674,7 +675,7 @@ describe("Tests for createSurvey", () => {
     });
 
     test("creates survey with follow-ups", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       const followUp = {
         id: "followup1",
         name: "Follow up 1",
@@ -704,7 +705,7 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockEnvironmentId, surveyWithFollowUps);
+      await createSurvey(mockWorkspaceId, surveyWithFollowUps);
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -726,21 +727,21 @@ describe("Tests for createSurvey", () => {
     testInputValidation(createSurvey, "123#", mockCreateSurveyInput);
 
     test("throws ResourceNotFoundError if organization not found", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(null);
-      await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(null);
+      await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(
         ResourceNotFoundError
       );
     });
 
     test("throws DatabaseError if there is a Prisma error", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
         code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "1.0.0",
       });
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
-      await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
+      await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
     });
   });
 });
@@ -749,7 +750,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
   const mockSurveyId = mockId;
   const mockNewSegmentId = "segment456";
   const mockCurrentSegmentId = "segment-123";
-  const mockEnvironmentId = "env-123";
+  const mockWorkspaceId = "env-123";
 
   describe("Happy Path", () => {
     test("loads new segment successfully", async () => {
@@ -760,7 +761,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       // Mock segment exists
       prisma.segment.findUnique.mockResolvedValueOnce({
         id: mockNewSegmentId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         filters: [],
         title: "Test Segment",
         isPrivate: false,
@@ -795,7 +796,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
     test("deletes private segment when changing to a new segment", async () => {
       const mockSegment = {
         id: mockCurrentSegmentId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         title: mockId, // Private segments have title = surveyId
         isPrivate: true,
         filters: [],
@@ -815,7 +816,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       prisma.segment.findUnique.mockResolvedValueOnce({
         ...mockSegment,
         id: mockNewSegmentId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
       });
 
       // Mock survey update
@@ -823,7 +824,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
         ...mockSurveyOutput,
         segment: {
           id: mockNewSegmentId,
-          environmentId: mockEnvironmentId,
+          workspaceId: mockWorkspaceId,
           title: "Test Segment",
           isPrivate: false,
           filters: [],
@@ -834,7 +835,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       // Mock segment delete
       prisma.segment.delete.mockResolvedValueOnce({
         id: mockCurrentSegmentId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         surveys: [{ id: mockSurveyId }],
       } as unknown as TSegment);
 
@@ -882,7 +883,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       //   // Mock segment exists
       prisma.segment.findUnique.mockResolvedValueOnce({
         id: mockNewSegmentId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         filters: [],
         title: "Test Segment",
         isPrivate: false,
@@ -957,7 +958,7 @@ describe("Tests for getSurveysBySegmentId", () => {
 describe("updateSurveyDraftAction", () => {
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as TActionClass[]);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganizationOutput);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(mockOrganizationOutput);
   });
 
   describe("Happy Path", () => {

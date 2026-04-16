@@ -41,13 +41,13 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       if (!member && invite) {
         // This is an invite
 
-        const result = await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
+        const result = await deleteInviteAction({ inviteId: invite?.id });
         if (result?.serverError) {
           toast.error(getFormattedErrorMessage(result));
           setIsDeleting(false);
           return;
         }
-        toast.success(t("environments.settings.general.invite_deleted_successfully"));
+        toast.success(t("workspace.settings.general.invite_deleted_successfully"));
       }
 
       if (member && !invite) {
@@ -62,7 +62,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
           setIsDeleting(false);
           return;
         }
-        toast.success(t("environments.settings.general.member_deleted_successfully"));
+        toast.success(t("workspace.settings.general.member_deleted_successfully"));
       }
 
       setIsDeleting(false);
@@ -98,7 +98,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(`${t("common.error")}: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
     }
   };
 
@@ -111,14 +111,14 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
         organizationId: organization.id,
       });
       if (resendInviteResponse?.data) {
-        toast.success(t("environments.settings.general.invitation_sent_once_more"));
+        toast.success(t("workspace.settings.general.invitation_sent_once_more"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(resendInviteResponse);
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(`${t("common.error")}: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
     }
   };
 
@@ -136,7 +136,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       </TooltipRenderer>
 
       <TooltipRenderer
-        tooltipContent={t("environments.settings.general.share_invite_link")}
+        tooltipContent={t("workspace.settings.general.share_invite_link")}
         shouldRender={!!invite}>
         <Button
           variant="secondary"
@@ -151,7 +151,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       </TooltipRenderer>
 
       <TooltipRenderer
-        tooltipContent={t("environments.settings.general.resend_invitation_email")}
+        tooltipContent={t("workspace.settings.general.resend_invitation_email")}
         shouldRender={!!invite}>
         <Button
           variant="secondary"
@@ -168,10 +168,10 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       <DeleteDialog
         open={isDeleteMemberModalOpen}
         setOpen={setDeleteMemberModalOpen}
-        deleteWhat={`${memberName} ${t("environments.settings.general.from_your_organization")}`}
+        deleteWhat={t("workspace.settings.general.from_your_organization", { memberName })}
         onDelete={handleDeleteMember}
         isDeleting={isDeleting}
-        text={t("environments.settings.general.delete_member_confirmation")}
+        text={t("workspace.settings.general.delete_member_confirmation")}
       />
 
       {showShareInviteModal && (

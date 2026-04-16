@@ -1,14 +1,9 @@
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
-extendZodWithOpenApi(z);
-
-export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({
-  environmentId: z.string().cuid2().optional().describe("The environment ID to filter by"),
-})
+export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({})
   .refine(
     (data) => {
       if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -28,7 +23,7 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
   name: true,
   description: true,
-  environmentId: true,
+  workspaceId: true,
 })
   .extend({
     dataType: ZContactAttributeKey.shape.dataType.optional(),
@@ -37,16 +32,43 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
     // Enforce safe identifier format for key
     if (!isSafeIdentifier(data.key)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message:
           "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
         path: ["key"],
       });
     }
   })
-  .openapi({
-    ref: "contactAttributeKeyInput",
+  .meta({
+    id: "contactAttributeKeyInput",
     description: "Input data for creating or updating a contact attribute",
   });
 
 export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;
+
+// Route-level schema — both IDs are required; bodyTransform resolves the missing one before validation.
+export const ZContactAttributeKeyCreateInput = ZContactAttributeKey.pick({
+  key: true,
+  name: true,
+  description: true,
+})
+  .extend({
+    workspaceId: z.cuid2(),
+    dataType: ZContactAttributeKey.shape.dataType.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!isSafeIdentifier(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+        path: ["key"],
+      });
+    }
+  })
+  .meta({
+    id: "contactAttributeKeyCreateInput",
+    description: "Input data for creating a contact attribute key",
+  });
+
+export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;

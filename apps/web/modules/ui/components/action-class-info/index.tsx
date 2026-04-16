@@ -21,7 +21,7 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
 
     return (
       <InfoItem>
-        {t("environments.surveys.edit.url_filters")}:{" "}
+        {t("workspace.surveys.edit.url_filters")}:{" "}
         {urlFilters.map((urlFilter, index) => (
           <span key={urlFilter.rule + index}>
             {urlFilter.rule} <b>{urlFilter.value}</b>
@@ -33,9 +33,14 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
   };
 
   const isNoCodeClick = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "click";
+  const isNoCodeTimeOnPage = actionClass.type === "noCode" && actionClass.noCodeConfig?.type === "pageDwell";
 
   const clickConfig = isNoCodeClick
     ? (actionClass.noCodeConfig as Extract<typeof actionClass.noCodeConfig, { type: "click" }>)
+    : null;
+
+  const timeOnPageConfig = isNoCodeTimeOnPage
+    ? (actionClass.noCodeConfig as Extract<typeof actionClass.noCodeConfig, { type: "pageDwell" }>)
     : null;
 
   return (
@@ -44,19 +49,30 @@ export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfo
 
       {actionClass.type === "code" && (
         <InfoItem>
-          {t("environments.surveys.edit.key")}: <b>{actionClass.key}</b>
+          {t("workspace.surveys.edit.key")}: <b>{actionClass.key}</b>
         </InfoItem>
       )}
 
       {clickConfig?.elementSelector.cssSelector && (
         <InfoItem>
-          {t("environments.surveys.edit.css_selector")}: <b>{clickConfig.elementSelector.cssSelector}</b>
+          {t("workspace.surveys.edit.css_selector")}: <b>{clickConfig.elementSelector.cssSelector}</b>
         </InfoItem>
       )}
 
       {clickConfig?.elementSelector.innerHtml && (
         <InfoItem>
-          {t("environments.surveys.edit.inner_text")}: <b>{clickConfig.elementSelector.innerHtml}</b>
+          {t("workspace.surveys.edit.inner_text")}: <b>{clickConfig.elementSelector.innerHtml}</b>
+        </InfoItem>
+      )}
+
+      {timeOnPageConfig && (
+        <InfoItem>
+          {t("workspace.actions.time_in_seconds")}:{" "}
+          <b>
+            {t("workspace.actions.time_in_seconds_with_unit", {
+              seconds: timeOnPageConfig.timeInSeconds,
+            })}
+          </b>
         </InfoItem>
       )}
 

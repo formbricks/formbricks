@@ -14,9 +14,9 @@ vi.mock("@formbricks/database", () => ({
 
 describe("getSegment", () => {
   const mockSegmentId = "segment-123";
-  const mockSegment: Pick<Segment, "id" | "environmentId" | "filters"> = {
+  const mockSegment: Pick<Segment, "id" | "workspaceId" | "filters"> = {
     id: mockSegmentId,
-    environmentId: "env-123",
+    workspaceId: "workspace-123",
     filters: [
       {
         id: "filter-123",
@@ -43,7 +43,9 @@ describe("getSegment", () => {
   });
 
   test("should return segment data when segment is found", async () => {
-    vi.mocked(prisma.segment.findUnique).mockResolvedValueOnce(mockSegment);
+    vi.mocked(prisma.segment.findUnique).mockResolvedValueOnce(
+      mockSegment as Awaited<ReturnType<typeof prisma.segment.findUnique>>
+    );
 
     const result = await getSegment(mockSegmentId);
 
@@ -51,7 +53,7 @@ describe("getSegment", () => {
       where: { id: mockSegmentId },
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         filters: true,
       },
     });
@@ -71,7 +73,7 @@ describe("getSegment", () => {
       where: { id: mockSegmentId },
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         filters: true,
       },
     });

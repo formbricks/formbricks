@@ -12,12 +12,15 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const environmentId = "test-env-id";
+const workspaceId = "test-workspace-id";
 const userId = "test-user-id";
 const contactId = "test-contact-id";
 
 const mockContactDbData = {
   id: contactId,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  workspaceId,
   attributes: [
     { attributeKey: { key: "userId" }, value: userId },
     { attributeKey: { key: "email" }, value: "test@example.com" },
@@ -33,9 +36,11 @@ const expectedContactAttributes: TContactAttributes = {
 
 describe("getContactByUserId", () => {
   test("should return contact with attributes when found", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactDbData);
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(
+      mockContactDbData as unknown as Awaited<ReturnType<typeof prisma.contact.findFirst>>
+    );
 
-    const contact = await getContactByUserId(environmentId, userId);
+    const contact = await getContactByUserId(workspaceId, userId);
 
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
       where: {
@@ -43,7 +48,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },
@@ -68,7 +73,7 @@ describe("getContactByUserId", () => {
   test("should return null when contact is not found", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
-    const contact = await getContactByUserId(environmentId, userId);
+    const contact = await getContactByUserId(workspaceId, userId);
 
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
       where: {
@@ -76,7 +81,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },

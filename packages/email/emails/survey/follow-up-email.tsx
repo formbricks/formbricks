@@ -57,7 +57,7 @@ export function FollowUpEmail({
                   ? `${t("emails.number_variable")}: ${variable.name}`
                   : `${t("emails.text_variable")}: ${variable.name}`}
               </Text>
-              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
+              <Text className="mt-0 whitespace-pre-wrap break-words text-sm text-slate-700">
                 {variable.value}
               </Text>
             </Column>
@@ -70,7 +70,7 @@ export function FollowUpEmail({
               <Text className="mb-2 text-sm font-semibold text-slate-900">
                 {t("emails.hidden_field")}: {hiddenField.id}
               </Text>
-              <Text className="mt-0 text-sm break-words whitespace-pre-wrap text-slate-700">
+              <Text className="mt-0 whitespace-pre-wrap break-words text-sm text-slate-700">
                 {hiddenField.value}
               </Text>
             </Column>

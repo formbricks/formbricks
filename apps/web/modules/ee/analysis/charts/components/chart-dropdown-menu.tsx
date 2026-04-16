@@ -19,12 +19,12 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 
 interface ChartDropdownMenuProps {
-  environmentId: string;
+  workspaceId: string;
   chart: TChartWithCreator;
   onEdit?: () => void;
 }
 
-export function ChartDropdownMenu({ environmentId, chart, onEdit }: Readonly<ChartDropdownMenuProps>) {
+export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<ChartDropdownMenuProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -35,14 +35,13 @@ export function ChartDropdownMenu({ environmentId, chart, onEdit }: Readonly<Cha
   const handleDeleteChart = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteChartAction({ environmentId, chartId: chart.id });
+      const result = await deleteChartAction({ workspaceId, chartId: chart.id });
       if (result?.data) {
-        toast.success(t("environments.analysis.charts.chart_deleted_successfully"));
+        toast.success(t("workspace.analysis.charts.chart_deleted_successfully"));
         setIsDeleteDialogOpen(false);
         router.refresh();
       } else {
-        const msg =
-          getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_deletion_error");
+        const msg = getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_deletion_error");
         toast.error(msg);
       }
     } catch {
@@ -55,17 +54,17 @@ export function ChartDropdownMenu({ environmentId, chart, onEdit }: Readonly<Cha
   const handleDuplicateChart = async () => {
     setIsDuplicating(true);
     try {
-      const result = await duplicateChartAction({ environmentId, chartId: chart.id });
+      const result = await duplicateChartAction({ workspaceId, chartId: chart.id });
       if (result?.data) {
-        toast.success(t("environments.analysis.charts.chart_duplicated_successfully"));
+        toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
         router.refresh();
       } else {
         toast.error(
-          getFormattedErrorMessage(result) || t("environments.analysis.charts.chart_duplication_error")
+          getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_duplication_error")
         );
       }
     } catch {
-      toast.error(t("environments.analysis.charts.chart_duplication_error"));
+      toast.error(t("workspace.analysis.charts.chart_duplication_error"));
     } finally {
       setIsDuplicating(false);
     }
@@ -76,7 +75,7 @@ export function ChartDropdownMenu({ environmentId, chart, onEdit }: Readonly<Cha
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
           <Button variant="outline" className="px-2" onClick={(e) => e.stopPropagation()}>
-            <span className="sr-only">{t("environments.analysis.charts.open_options")}</span>
+            <span className="sr-only">{t("workspace.analysis.charts.open_options")}</span>
             <MoreVertical className="size-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
@@ -121,7 +120,7 @@ export function ChartDropdownMenu({ environmentId, chart, onEdit }: Readonly<Cha
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteChart}
-        text={t("environments.analysis.charts.delete_chart_confirmation")}
+        text={t("workspace.analysis.charts.delete_chart_confirmation")}
         isDeleting={isDeleting}
       />
     </div>

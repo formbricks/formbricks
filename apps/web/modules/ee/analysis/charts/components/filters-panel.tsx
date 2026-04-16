@@ -93,7 +93,7 @@ export function FiltersPanel({
     return (
       <Input
         type={isNumericInput ? "number" : "text"}
-        placeholder={t("environments.analysis.charts.enter_value")}
+        placeholder={t("workspace.analysis.charts.enter_value")}
         value={filter.values?.[0] ?? ""}
         onChange={(e) => {
           let values: string[] | number[] | null = null;
@@ -115,17 +115,15 @@ export function FiltersPanel({
       {hasMultipleFilters && (
         <div className={`flex items-center ${hideTitle ? "justify-start" : "justify-between"}`}>
           {!hideTitle && (
-            <h3 className="text-md font-semibold text-gray-900">
-              {t("environments.analysis.charts.filters")}
-            </h3>
+            <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.filters")}</h3>
           )}
           <Select value={filterLogic} onValueChange={(value) => onFilterLogicChange(value as "and" | "or")}>
             <SelectTrigger className="w-[100px] bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="and">{t("environments.analysis.charts.and_filter_logic")}</SelectItem>
-              <SelectItem value="or">{t("environments.analysis.charts.or_filter_logic")}</SelectItem>
+              <SelectItem value="and">{t("workspace.analysis.charts.and_filter_logic")}</SelectItem>
+              <SelectItem value="or">{t("workspace.analysis.charts.or_filter_logic")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -152,7 +150,7 @@ export function FiltersPanel({
                   });
                 }}>
                 <SelectTrigger className="w-[200px] bg-white">
-                  <SelectValue placeholder={t("environments.analysis.charts.select_field")} />
+                  <SelectValue placeholder={t("workspace.analysis.charts.select_field")} />
                 </SelectTrigger>
                 <SelectContent>
                   {fieldOptions.map((option) => (
@@ -176,16 +174,16 @@ export function FiltersPanel({
                 <SelectContent>
                   {operators.map((op) => (
                     <SelectItem key={op} value={op}>
-                      {op === "equals" && t("environments.analysis.charts.equals")}
-                      {op === "notEquals" && t("environments.analysis.charts.not_equals")}
-                      {op === "contains" && t("environments.analysis.charts.contains")}
-                      {op === "notContains" && t("environments.analysis.charts.not_contains")}
-                      {op === "set" && t("environments.analysis.charts.is_set")}
-                      {op === "notSet" && t("environments.analysis.charts.is_not_set")}
-                      {op === "gt" && t("environments.analysis.charts.greater_than")}
-                      {op === "gte" && t("environments.analysis.charts.greater_than_or_equal")}
-                      {op === "lt" && t("environments.analysis.charts.less_than")}
-                      {op === "lte" && t("environments.analysis.charts.less_than_or_equal")}
+                      {op === "equals" && t("workspace.analysis.charts.equals")}
+                      {op === "notEquals" && t("workspace.analysis.charts.not_equals")}
+                      {op === "contains" && t("workspace.analysis.charts.contains")}
+                      {op === "notContains" && t("workspace.analysis.charts.not_contains")}
+                      {op === "set" && t("workspace.analysis.charts.is_set")}
+                      {op === "notSet" && t("workspace.analysis.charts.is_not_set")}
+                      {op === "gt" && t("workspace.analysis.charts.greater_than")}
+                      {op === "gte" && t("workspace.analysis.charts.greater_than_or_equal")}
+                      {op === "lt" && t("workspace.analysis.charts.less_than")}
+                      {op === "lte" && t("workspace.analysis.charts.less_than_or_equal")}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -208,7 +206,7 @@ export function FiltersPanel({
         {hasFilters && (
           <Button type="button" variant="outline" size="sm" onClick={handleAddFilter} className="h-8">
             <Plus className="h-4 w-4" />
-            {t("environments.analysis.charts.add_filter")}
+            {t("workspace.analysis.charts.add_filter")}
           </Button>
         )}
       </div>

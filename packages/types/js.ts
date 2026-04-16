@@ -1,44 +1,43 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
-import { ZAttributes } from "./attributes";
 import { ZId } from "./common";
-import { ZProject } from "./project";
-import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
-import { ZSurvey } from "./surveys/types";
+import { ZSurveyBase, surveyRefinement } from "./surveys/types";
+import { ZWorkspace } from "./workspace";
 
-export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
-  .pick({
-    id: true,
-    name: true,
-    welcomeCard: true,
-    questions: true,
-    blocks: true,
-    variables: true,
-    type: true,
-    showLanguageSwitch: true,
-    languages: true,
-    endings: true,
-    autoClose: true,
-    styling: true,
-    status: true,
-    segment: true,
-    recontactDays: true,
-    displayLimit: true,
-    displayOption: true,
-    hiddenFields: true,
-    triggers: true,
-    displayPercentage: true,
-    delay: true,
-    projectOverwrites: true,
-    isBackButtonHidden: true,
-    recaptcha: true,
-  })
-  .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
+export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
+  id: true,
+  name: true,
+  welcomeCard: true,
+  questions: true,
+  blocks: true,
+  variables: true,
+  type: true,
+  showLanguageSwitch: true,
+  languages: true,
+  endings: true,
+  autoClose: true,
+  styling: true,
+  status: true,
+  segment: true,
+  recontactDays: true,
+  displayLimit: true,
+  displayOption: true,
+  hiddenFields: true,
+  triggers: true,
+  displayPercentage: true,
+  delay: true,
+  workspaceOverwrites: true,
+  isBackButtonHidden: true,
+  isAutoProgressingEnabled: true,
+  recaptcha: true,
+}).superRefine((survey, ctx) => {
+  surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+});
 
-export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
+export type TJsWorkspaceStateSurvey = z.infer<typeof ZJsWorkspaceStateSurvey>;
 
-export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
+export const ZJsWorkspaceStateActionClass = ZActionClass.pick({
   id: true,
   key: true,
   type: true,
@@ -46,10 +45,9 @@ export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
   noCodeConfig: true,
 });
 
-export type TJsEnvironmentStateActionClass = z.infer<typeof ZJsEnvironmentStateActionClass>;
+export type TJsWorkspaceStateActionClass = z.infer<typeof ZJsWorkspaceStateActionClass>;
 
-export const ZJsEnvironmentStateProject = ZProject.pick({
-  id: true,
+export const ZJsWorkspaceStateWorkspaceSetting = ZWorkspace.pick({
   recontactDays: true,
   clickOutsideClose: true,
   overlay: true,
@@ -58,25 +56,19 @@ export const ZJsEnvironmentStateProject = ZProject.pick({
   styling: true,
 });
 
-export type TJsEnvironmentStateProject = z.infer<typeof ZJsEnvironmentStateProject>;
+export type TJsWorkspaceStateWorkspaceSetting = z.infer<typeof ZJsWorkspaceStateWorkspaceSetting>;
 
-export const ZJsEnvironmentState = z.object({
+export const ZJsWorkspaceState = z.object({
   expiresAt: z.date(),
   data: z.object({
-    surveys: z.array(ZJsEnvironmentStateSurvey),
-    actionClasses: z.array(ZJsEnvironmentStateActionClass),
-    project: ZJsEnvironmentStateProject,
+    surveys: z.array(ZJsWorkspaceStateSurvey),
+    actionClasses: z.array(ZJsWorkspaceStateActionClass),
+    workspace: ZJsWorkspaceStateWorkspaceSetting,
     recaptchaSiteKey: z.string().optional(),
   }),
 });
 
-export type TJsEnvironmentState = z.infer<typeof ZJsEnvironmentState>;
-
-export const ZJsSyncInput = z.object({
-  environmentId: z.string().cuid(),
-});
-
-export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
+export type TJsWorkspaceState = z.infer<typeof ZJsWorkspaceState>;
 
 export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),
@@ -98,84 +90,9 @@ export const ZJsPersonState = z.object({
 
 export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
-export const ZJsUserIdentifyInput = z.object({
-  environmentId: z.string().cuid(),
-  userId: z.string(),
-});
-
-export type TJsPersonIdentifyInput = z.infer<typeof ZJsUserIdentifyInput>;
-
-export const ZJsPeopleUserIdInput = z.object({
-  environmentId: z.string().cuid2(),
-  userId: z.string().min(1).max(255),
-});
-
-export const ZJsContactsUpdateAttributeInput = z.object({
-  attributes: ZAttributes,
-});
-
-export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;
-
-export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
-
-export const ZJsPeopleAttributeInput = z.object({
-  key: z.string(),
-  value: z.string(),
-});
-
-export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
-
-export const ZJsActionInput = z.object({
-  environmentId: z.string().cuid2(),
-  userId: z.string().optional(),
-  name: z.string(),
-});
-
-export type TJsActionInput = z.infer<typeof ZJsActionInput>;
-
-export const ZJsWesbiteActionInput = ZJsActionInput.omit({ userId: true });
-
-export type TJsWesbiteActionInput = z.infer<typeof ZJsWesbiteActionInput>;
-
-export const ZJsEnvironmentSyncParams = z.object({
-  environmentId: z.string().cuid(),
-  apiHost: z.string(),
-});
-
-export type TJsEnvironmentSyncParams = z.infer<typeof ZJsEnvironmentSyncParams>;
-
-export const ZJsPersonSyncParams = ZJsEnvironmentSyncParams.extend({
-  userId: z.string(),
-  attributes: ZAttributes.optional(),
-});
-
-export type TJsPersonSyncParams = z.infer<typeof ZJsPersonSyncParams>;
-
-export const ZJsWebsiteSyncParams = ZJsPersonSyncParams.omit({ userId: true });
-
-export type TJsWebsiteSyncParams = z.infer<typeof ZJsWebsiteSyncParams>;
-
-export const ZJsTrackProperties = z.object({
-  hiddenFields: ZResponseHiddenFieldValue.optional(),
-});
-
-export type TJsTrackProperties = z.infer<typeof ZJsTrackProperties>;
-
 export const ZJsFileUploadParams = z.object({
   file: z.object({ type: z.string(), name: z.string(), base64: z.string() }),
   params: ZUploadFileConfig,
 });
 
 export type TJsFileUploadParams = z.infer<typeof ZJsFileUploadParams>;
-
-export const ZJsRNWebViewOnMessageData = z.object({
-  onFinished: z.boolean().nullish(),
-  onDisplay: z.boolean().nullish(),
-  onResponse: z.boolean().nullish(),
-  responseUpdate: ZResponseUpdate.nullish(),
-  onRetry: z.boolean().nullish(),
-  onClose: z.boolean().nullish(),
-  onFileUpload: z.boolean().nullish(),
-  fileUploadParams: ZJsFileUploadParams.nullish(),
-  uploadId: z.string().nullish(),
-});

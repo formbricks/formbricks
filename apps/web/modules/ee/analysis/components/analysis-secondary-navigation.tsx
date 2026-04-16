@@ -5,10 +5,10 @@ import { useTranslation } from "react-i18next";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface AnalysisSecondaryNavigationProps {
-  environmentId: string;
+  workspaceId: string;
 }
 
-export function AnalysisSecondaryNavigation({ environmentId }: Readonly<AnalysisSecondaryNavigationProps>) {
+export function AnalysisSecondaryNavigation({ workspaceId }: Readonly<AnalysisSecondaryNavigationProps>) {
   const { t } = useTranslation();
   const pathname = usePathname();
 
@@ -18,12 +18,12 @@ export function AnalysisSecondaryNavigation({ environmentId }: Readonly<Analysis
     {
       id: "dashboards",
       label: t("common.dashboards"),
-      href: `/environments/${environmentId}/dashboards`,
+      href: `/workspaces/${workspaceId}/dashboards`,
     },
     {
       id: "charts",
       label: t("common.charts"),
-      href: `/environments/${environmentId}/charts`,
+      href: `/workspaces/${workspaceId}/charts`,
     },
   ];
 

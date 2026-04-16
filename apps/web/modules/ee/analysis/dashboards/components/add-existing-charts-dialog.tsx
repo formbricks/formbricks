@@ -23,7 +23,7 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 interface AddExistingChartsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  environmentId: string;
+  workspaceId: string;
   dashboardId: string;
   existingChartIds: string[];
   onSuccess: () => void;
@@ -37,7 +37,7 @@ interface ChartOption {
 export function AddExistingChartsDialog({
   open,
   onOpenChange,
-  environmentId,
+  workspaceId,
   dashboardId,
   existingChartIds,
   onSuccess,
@@ -55,7 +55,7 @@ export function AddExistingChartsDialog({
       setIsLoading(true);
       setSelectedChartIds([]);
       try {
-        const result = await getChartsAction({ environmentId });
+        const result = await getChartsAction({ workspaceId });
         if (result?.data) {
           const availableCharts = result.data.filter((chart) => !existingChartIds.includes(chart.id));
           setChartOptions(availableCharts.map((chart) => ({ value: chart.id, label: chart.name })));
@@ -64,14 +64,14 @@ export function AddExistingChartsDialog({
           toast.error(errorMessage);
         }
       } catch {
-        toast.error(t("environments.analysis.dashboards.charts_load_failed"));
+        toast.error(t("workspace.analysis.dashboards.charts_load_failed"));
       } finally {
         setIsLoading(false);
       }
     };
 
     loadCharts();
-  }, [open, environmentId, existingChartIds, t]);
+  }, [open, workspaceId, existingChartIds, t]);
 
   const handleAdd = async () => {
     if (selectedChartIds.length === 0) return;
@@ -79,7 +79,7 @@ export function AddExistingChartsDialog({
     setIsAdding(true);
     try {
       const results = await Promise.allSettled(
-        selectedChartIds.map((chartId) => addChartToDashboardAction({ environmentId, chartId, dashboardId }))
+        selectedChartIds.map((chartId) => addChartToDashboardAction({ workspaceId, chartId, dashboardId }))
       );
 
       const fulfilled = results.filter(
@@ -92,13 +92,13 @@ export function AddExistingChartsDialog({
 
       if (failures > 0) {
         if (successes.length > 0) {
-          toast.error(t("environments.analysis.dashboards.charts_add_partial_failure", { count: failures }));
+          toast.error(t("workspace.analysis.dashboards.charts_add_partial_failure", { count: failures }));
         } else {
-          toast.error(t("environments.analysis.dashboards.charts_add_failed"));
+          toast.error(t("workspace.analysis.dashboards.charts_add_failed"));
         }
       } else {
         toast.success(
-          t("environments.analysis.dashboards.charts_added_to_dashboard", {
+          t("workspace.analysis.dashboards.charts_added_to_dashboard", {
             count: selectedChartIds.length,
           })
         );
@@ -108,7 +108,7 @@ export function AddExistingChartsDialog({
         onSuccess();
       }
     } catch {
-      toast.error(t("environments.analysis.dashboards.charts_add_failed"));
+      toast.error(t("workspace.analysis.dashboards.charts_add_failed"));
     } finally {
       setIsAdding(false);
     }
@@ -130,9 +130,9 @@ export function AddExistingChartsDialog({
             <>
               {chartOptions.length === 0 && (
                 <Alert variant="info" className="mb-4">
-                  <AlertTitle>{t("environments.analysis.dashboards.no_charts_to_add_message")}</AlertTitle>
+                  <AlertTitle>{t("workspace.analysis.dashboards.no_charts_to_add_message")}</AlertTitle>
                   <AlertDescription>
-                    {t("environments.analysis.dashboards.no_charts_available_description")}
+                    {t("workspace.analysis.dashboards.no_charts_available_description")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -152,7 +152,7 @@ export function AddExistingChartsDialog({
           </Button>
           <Button onClick={handleAdd} loading={isAdding} disabled={selectedChartIds.length === 0 || isAdding}>
             {selectedChartIds.length > 0
-              ? t("environments.analysis.dashboards.add_count_charts", { count: selectedChartIds.length })
+              ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedChartIds.length })
               : t("common.add")}
           </Button>
         </DialogFooter>

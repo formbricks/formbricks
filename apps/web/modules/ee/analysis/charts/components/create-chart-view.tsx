@@ -22,14 +22,14 @@ import {
 interface CreateChartViewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  environmentId: string;
+  workspaceId: string;
   onSuccess?: () => void;
 }
 
 export function CreateChartView({
   open,
   onOpenChange,
-  environmentId,
+  workspaceId,
   onSuccess,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
@@ -52,7 +52,7 @@ export function CreateChartView({
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
     handleClose,
-  } = useChartDialog({ open, onOpenChange, environmentId, onSuccess });
+  } = useChartDialog({ open, onOpenChange, workspaceId, onSuccess });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
 
@@ -66,12 +66,12 @@ export function CreateChartView({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto" width="wide" disableCloseOnOutsideClick>
         <DialogHeader>
-          <DialogTitle>{t("environments.analysis.charts.create_chart")}</DialogTitle>
-          <DialogDescription>{t("environments.analysis.charts.create_chart_description")}</DialogDescription>
+          <DialogTitle>{t("workspace.analysis.charts.create_chart")}</DialogTitle>
+          <DialogDescription>{t("workspace.analysis.charts.create_chart_description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="grid gap-4">
-            <AIQuerySection environmentId={environmentId} onChartGenerated={handleChartGenerated} />
+            <AIQuerySection workspaceId={workspaceId} onChartGenerated={handleChartGenerated} />
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -79,7 +79,7 @@ export function CreateChartView({
               </div>
               <div className="relative flex justify-center">
                 <span className="bg-white px-2 text-sm text-gray-500">
-                  {t("environments.analysis.charts.OR")}
+                  {t("workspace.analysis.charts.OR")}
                 </span>
               </div>
             </div>
@@ -91,7 +91,7 @@ export function CreateChartView({
 
             {selectedChartType && (
               <AdvancedChartBuilder
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 chartType={selectedChartType}
                 initialQuery={chartData?.query}
                 hidePreview={true}

@@ -24,7 +24,7 @@ describe("checkExternalUrlsPermission", () => {
     updatedAt: new Date(),
     name: "Test Survey",
     type: "link",
-    environmentId: "env123",
+    workspaceId: "ws123",
     createdBy: "user123",
     status: "draft",
     displayOption: "displayOnce",
@@ -33,7 +33,7 @@ describe("checkExternalUrlsPermission", () => {
     hiddenFields: { enabled: false },
     delay: 0,
     autoComplete: null,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     styling: null,
     showLanguageSwitch: false,
     segment: null,
@@ -59,7 +59,6 @@ describe("checkExternalUrlsPermission", () => {
 
   const mockOrganizationBilling = {
     id: mockOrganizationId,
-    plan: "free",
   };
 
   beforeEach(() => {
@@ -67,7 +66,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should throw ResourceNotFoundError when organization billing is not found", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(null);
+    vi.mocked(getOrganizationBilling).mockRejectedValue(
+      new ResourceNotFoundError("Organization", mockOrganizationId)
+    );
 
     await expect(checkExternalUrlsPermission(mockOrganizationId, baseSurvey, null)).rejects.toThrow(
       ResourceNotFoundError
@@ -215,12 +216,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: true,
               buttonUrl: "https://example.com",
               required: false,
@@ -247,12 +249,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: true,
               buttonUrl: "https://example.com",
               required: false,
@@ -267,12 +270,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here now", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: true,
               buttonUrl: "https://example.com",
               required: false,
@@ -296,12 +300,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: false,
               buttonUrl: "",
               required: false,
@@ -316,12 +321,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: true,
               buttonUrl: "https://example.com",
               required: false,
@@ -345,12 +351,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: true,
               buttonUrl: "https://example.com",
               required: false,
@@ -365,12 +372,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: true,
               buttonUrl: "https://different-url.com",
               required: false,
@@ -394,12 +402,13 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: false,
               buttonUrl: "",
               required: false,
@@ -423,6 +432,7 @@ describe("checkExternalUrlsPermission", () => {
       blocks: [
         {
           id: "block1",
+          name: "Block 1",
           elements: [
             {
               id: "q1",
@@ -436,7 +446,7 @@ describe("checkExternalUrlsPermission", () => {
               id: "q2",
               type: TSurveyElementTypeEnum.CTA,
               headline: createI18nString("Click here", ["en"]),
-              buttonLabel: createI18nString("Visit", ["en"]),
+              ctaButtonLabel: createI18nString("Visit", ["en"]),
               buttonExternal: false,
               buttonUrl: "",
               required: false,

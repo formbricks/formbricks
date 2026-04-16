@@ -4,12 +4,14 @@ import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { type TUserLocale } from "@formbricks/types/user";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
   webhook: Webhook;
   surveys: TSurvey[];
+  locale: TUserLocale;
 }
 
 const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): string[] => {
@@ -26,17 +28,17 @@ const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): stri
 const convertTriggerIdToName = (triggerId: string, t: TFunction): string => {
   switch (triggerId) {
     case "responseCreated":
-      return t("environments.integrations.webhooks.response_created");
+      return t("workspace.integrations.webhooks.response_created");
     case "responseUpdated":
-      return t("environments.integrations.webhooks.response_updated");
+      return t("workspace.integrations.webhooks.response_updated");
     case "responseFinished":
-      return t("environments.integrations.webhooks.response_finished");
+      return t("workspace.integrations.webhooks.response_finished");
     default:
       return triggerId;
   }
 };
 
-export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
+export const WebhookOverviewTab = ({ webhook, surveys, locale }: ActivityTabProps) => {
   const { t } = useTranslation();
   return (
     <div className="grid grid-cols-3 pb-2">
@@ -48,7 +50,7 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
 
         <div>
           <Label className="text-slate-500">
-            {t("environments.integrations.webhooks.created_by_third_party")}
+            {t("workspace.integrations.webhooks.created_by_third_party")}
           </Label>
           <p className="text-sm capitalize text-slate-900">
             {webhook.source === "user" ? "No" : webhook.source}
@@ -70,7 +72,7 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
           ))}
         </div>
         <div>
-          <Label className="text-slate-500">{t("environments.integrations.webhooks.triggers")}</Label>
+          <Label className="text-slate-500">{t("workspace.integrations.webhooks.triggers")}</Label>
           {webhook.triggers.map((triggerId) => (
             <p key={triggerId} className="text-sm text-slate-900">
               {convertTriggerIdToName(triggerId, t)}
@@ -81,15 +83,11 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.created_at")}</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(webhook.createdAt?.toString())}
-          </p>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(webhook.createdAt, locale)}</p>
         </div>
         <div>
           <Label className="text-xs font-normal text-slate-500">{t("common.updated_at")}</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(webhook.updatedAt?.toString())}
-          </p>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(webhook.updatedAt, locale)}</p>
         </div>
       </div>
     </div>

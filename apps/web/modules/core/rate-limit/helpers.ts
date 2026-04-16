@@ -3,7 +3,7 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hashString } from "@/lib/hash-string";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { checkRateLimit } from "./rate-limit";
-import { type TRateLimitConfig } from "./types/rate-limit";
+import { type TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
 /**
  * Get client identifier for rate limiting with IP hashing
@@ -31,12 +31,20 @@ export const getClientIdentifier = async (): Promise<string> => {
  * @param identifier - Unique identifier for rate limiting (IP hash, user ID, API key, etc.)
  * @throws {Error} When rate limit is exceeded or rate limiting system fails
  */
-export const applyRateLimit = async (config: TRateLimitConfig, identifier: string): Promise<void> => {
+export const applyRateLimit = async (
+  config: TRateLimitConfig,
+  identifier: string
+): Promise<TRateLimitResponse> => {
   const result = await checkRateLimit(config, identifier);
 
   if (!result.ok || !result.data.allowed) {
-    throw new TooManyRequestsError("Maximum number of requests reached. Please try again later.");
+    throw new TooManyRequestsError(
+      "Maximum number of requests reached. Please try again later.",
+      result.ok ? result.data.retryAfter : undefined
+    );
   }
+
+  return result.data;
 };
 
 /**
@@ -46,7 +54,7 @@ export const applyRateLimit = async (config: TRateLimitConfig, identifier: strin
  * @param config - Rate limit configuration to apply
  * @throws {Error} When rate limit is exceeded or IP hashing fails
  */
-export const applyIPRateLimit = async (config: TRateLimitConfig): Promise<void> => {
+export const applyIPRateLimit = async (config: TRateLimitConfig): Promise<TRateLimitResponse> => {
   const identifier = await getClientIdentifier();
-  await applyRateLimit(config, identifier);
+  return await applyRateLimit(config, identifier);
 };

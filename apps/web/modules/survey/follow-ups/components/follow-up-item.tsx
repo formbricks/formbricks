@@ -110,7 +110,7 @@ export const FollowUpItem = ({
     const newFollowUp = {
       ...followUp,
       id: createId(),
-      name: `${followUp.name} (copy)`,
+      name: `${followUp.name} ${t("common.duplicate_copy")}`,
     };
 
     setLocalSurvey((prev) => ({
@@ -134,28 +134,28 @@ export const FollowUpItem = ({
               type="gray"
               text={
                 followUp.trigger.type === "response"
-                  ? t("environments.surveys.edit.follow_ups_item_response_tag")
-                  : t("environments.surveys.edit.follow_ups_item_ending_tag")
+                  ? t("workspace.surveys.edit.follow_ups_item_response_tag")
+                  : t("workspace.surveys.edit.follow_ups_item_ending_tag")
               }
             />
 
             <Badge
               size="normal"
               type="gray"
-              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
+              text={t("workspace.surveys.edit.follow_ups_item_send_email_tag")}
             />
 
             {isEmailToInvalid || isEndingInvalid ? (
               <Badge
                 size="normal"
                 type="warning"
-                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
+                text={t("workspace.surveys.edit.follow_ups_item_issue_detected_tag")}
               />
             ) : null}
           </div>
         </button>
 
-        <div className="absolute top-4 right-4 flex items-center">
+        <div className="absolute right-4 top-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"
@@ -231,8 +231,8 @@ export const FollowUpItem = ({
             };
           });
         }}
-        body={t("environments.surveys.edit.follow_ups_delete_modal_text")}
-        title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
+        body={t("workspace.surveys.edit.follow_ups_delete_modal_text")}
+        title={t("workspace.surveys.edit.follow_ups_delete_modal_title")}
         buttonVariant="destructive"
       />
     </>

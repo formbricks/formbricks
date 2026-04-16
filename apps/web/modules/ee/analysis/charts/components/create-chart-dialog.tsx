@@ -7,7 +7,7 @@ import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 export interface CreateChartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  environmentId: string;
+  workspaceId: string;
   chartId?: string;
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
@@ -16,7 +16,7 @@ export interface CreateChartDialogProps {
 export function CreateChartDialog({
   open,
   onOpenChange,
-  environmentId,
+  workspaceId,
   chartId,
   initialChart,
   onSuccess,
@@ -26,7 +26,7 @@ export function CreateChartDialog({
       <EditChartView
         open={open}
         onOpenChange={onOpenChange}
-        environmentId={environmentId}
+        workspaceId={workspaceId}
         chartId={chartId}
         initialChart={initialChart}
         onSuccess={onSuccess}
@@ -38,7 +38,7 @@ export function CreateChartDialog({
     <CreateChartView
       open={open}
       onOpenChange={onOpenChange}
-      environmentId={environmentId}
+      workspaceId={workspaceId}
       onSuccess={onSuccess}
     />
   );

@@ -6,8 +6,7 @@ import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-k
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -18,9 +17,9 @@ import {
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 
 const ZCreateContactAttributeKeyAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   key: z.string().refine((val) => isSafeIdentifier(val), {
-    message:
+    error:
       "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
   }),
   name: z.string().optional(),
@@ -28,54 +27,43 @@ const ZCreateContactAttributeKeyAction = z.object({
   dataType: ZContactAttributeDataType.optional(),
 });
 
-type TCreateContactAttributeKeyActionInput = z.infer<typeof ZCreateContactAttributeKeyAction>;
 export const createContactAttributeKeyAction = authenticatedActionClient
-  .schema(ZCreateContactAttributeKeyAction)
+  .inputSchema(ZCreateContactAttributeKeyAction)
   .action(
-    withAuditLogging(
-      "created",
-      "contactAttributeKey",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: TCreateContactAttributeKeyActionInput;
-      }) => {
-        const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+    withAuditLogging("created", "contactAttributeKey", async ({ ctx, parsedInput }) => {
+      const workspaceId = parsedInput.workspaceId;
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId,
-            },
-          ],
-        });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "readWrite",
+            workspaceId,
+          },
+        ],
+      });
 
-        ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.organizationId = organizationId;
 
-        const contactAttributeKey = await createContactAttributeKey({
-          environmentId: parsedInput.environmentId,
-          key: parsedInput.key,
-          name: parsedInput.name,
-          description: parsedInput.description,
-          dataType: parsedInput.dataType,
-        });
+      const contactAttributeKey = await createContactAttributeKey({
+        workspaceId,
+        key: parsedInput.key,
+        name: parsedInput.name,
+        description: parsedInput.description,
+        dataType: parsedInput.dataType,
+      });
 
-        ctx.auditLoggingCtx.newObject = contactAttributeKey;
+      ctx.auditLoggingCtx.newObject = contactAttributeKey;
 
-        return contactAttributeKey;
-      }
-    )
+      return contactAttributeKey;
+    })
   );
 
 const ZUpdateContactAttributeKeyAction = z.object({
@@ -83,111 +71,88 @@ const ZUpdateContactAttributeKeyAction = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
 });
-type TUpdateContactAttributeKeyActionInput = z.infer<typeof ZUpdateContactAttributeKeyAction>;
 export const updateContactAttributeKeyAction = authenticatedActionClient
-  .schema(ZUpdateContactAttributeKeyAction)
+  .inputSchema(ZUpdateContactAttributeKeyAction)
   .action(
-    withAuditLogging(
-      "updated",
-      "contactAttributeKey",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: TUpdateContactAttributeKeyActionInput;
-      }) => {
-        // Fetch existing key to check authorization and get environmentId
-        const existingKey = await getContactAttributeKeyById(parsedInput.id);
+    withAuditLogging("updated", "contactAttributeKey", async ({ ctx, parsedInput }) => {
+      // Fetch existing key to check authorization
+      const existingKey = await getContactAttributeKeyById(parsedInput.id);
 
-        if (!existingKey) {
-          throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
-        }
-
-        const organizationId = await getOrganizationIdFromEnvironmentId(existingKey.environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(existingKey.environmentId);
-
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId,
-            },
-          ],
-        });
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.oldObject = existingKey;
-
-        const updatedKey = await updateContactAttributeKey(parsedInput.id, {
-          name: parsedInput.name,
-          description: parsedInput.description,
-        });
-
-        ctx.auditLoggingCtx.newObject = updatedKey;
-
-        return updatedKey;
+      if (!existingKey) {
+        throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
       }
-    )
+
+      const workspaceId = existingKey.workspaceId;
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "readWrite",
+            workspaceId,
+          },
+        ],
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.oldObject = existingKey;
+
+      const updatedKey = await updateContactAttributeKey(parsedInput.id, {
+        name: parsedInput.name,
+        description: parsedInput.description,
+      });
+
+      ctx.auditLoggingCtx.newObject = updatedKey;
+
+      return updatedKey;
+    })
   );
 
 const ZDeleteContactAttributeKeyAction = z.object({
   id: ZId,
 });
-type TDeleteContactAttributeKeyActionInput = z.infer<typeof ZDeleteContactAttributeKeyAction>;
-
 export const deleteContactAttributeKeyAction = authenticatedActionClient
-  .schema(ZDeleteContactAttributeKeyAction)
+  .inputSchema(ZDeleteContactAttributeKeyAction)
   .action(
-    withAuditLogging(
-      "deleted",
-      "contactAttributeKey",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: TDeleteContactAttributeKeyActionInput;
-      }) => {
-        // Fetch existing key to check authorization and get environmentId
-        const existingKey = await getContactAttributeKeyById(parsedInput.id);
+    withAuditLogging("deleted", "contactAttributeKey", async ({ ctx, parsedInput }) => {
+      // Fetch existing key to check authorization
+      const existingKey = await getContactAttributeKeyById(parsedInput.id);
 
-        if (!existingKey) {
-          throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
-        }
-
-        const organizationId = await getOrganizationIdFromEnvironmentId(existingKey.environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(existingKey.environmentId);
-
-        await checkAuthorizationUpdated({
-          userId: ctx.user.id,
-          organizationId,
-          access: [
-            {
-              type: "organization",
-              roles: ["owner", "manager"],
-            },
-            {
-              type: "projectTeam",
-              minPermission: "readWrite",
-              projectId,
-            },
-          ],
-        });
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.oldObject = existingKey;
-
-        const deletedKey = await deleteContactAttributeKey(parsedInput.id);
-
-        return deletedKey;
+      if (!existingKey) {
+        throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
       }
-    )
+
+      const workspaceId = existingKey.workspaceId;
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "readWrite",
+            workspaceId,
+          },
+        ],
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.oldObject = existingKey;
+
+      const deletedKey = await deleteContactAttributeKey(parsedInput.id);
+
+      return deletedKey;
+    })
   );

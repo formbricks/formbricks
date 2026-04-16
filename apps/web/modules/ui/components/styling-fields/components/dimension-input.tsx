@@ -40,7 +40,7 @@ export const DimensionInput = ({ form, name, label, description, placeholder }: 
           <FormLabel>{label}</FormLabel>
           {description && <FormDescription>{description}</FormDescription>}
           <FormControl>
-            <div className="focus-within:border-brand-dark flex h-10 rounded-md border border-slate-300 focus-within:ring-2 focus-within:ring-slate-400 focus-within:ring-offset-2">
+            <div className="flex h-10 rounded-md border border-slate-300 focus-within:border-brand-dark focus-within:ring-2 focus-within:ring-slate-400 focus-within:ring-offset-2">
               <Input
                 type="number"
                 {...field}

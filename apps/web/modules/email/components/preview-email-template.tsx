@@ -75,6 +75,7 @@ export async function PreviewEmailTemplate({
   survey,
   surveyUrl,
   styling,
+  locale,
   t,
 }: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
   const url = `${surveyUrl}?preview=true`;
@@ -85,8 +86,20 @@ export async function PreviewEmailTemplate({
   const questions = getElementsFromBlocks(survey.blocks);
   const firstQuestion = questions[0];
 
-  const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
-  const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
+  const headline = parseRecallInfo(
+    getLocalizedValue(firstQuestion.headline, defaultLanguageCode),
+    undefined,
+    undefined,
+    false,
+    locale
+  );
+  const subheader = parseRecallInfo(
+    getLocalizedValue(firstQuestion.subheader, defaultLanguageCode),
+    undefined,
+    undefined,
+    false,
+    locale
+  );
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
@@ -95,7 +108,7 @@ export async function PreviewEmailTemplate({
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <ElementHeader headline={headline} subheader={subheader} className="mr-8" />
           <Section className="border-input-border-color rounded-custom mt-4 block h-20 w-full border border-solid bg-slate-50" />
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.Consent:
@@ -124,7 +137,7 @@ export async function PreviewEmailTemplate({
               {t("emails.accept")}
             </EmailButton>
           </Container>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.NPS:
@@ -172,7 +185,7 @@ export async function PreviewEmailTemplate({
                 </Row>
               </Section>
             </Container>
-            <EmailFooter />
+            <EmailFooter t={t} />
           </Section>
         </EmailTemplateWrapper>
       );
@@ -193,7 +206,7 @@ export async function PreviewEmailTemplate({
               </EmailButton>
             </Container>
           )}
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     }
@@ -246,7 +259,7 @@ export async function PreviewEmailTemplate({
                 </Row>
               </Section>
             </Container>
-            <EmailFooter />
+            <EmailFooter t={t} />
           </Section>
         </EmailTemplateWrapper>
       );
@@ -263,7 +276,7 @@ export async function PreviewEmailTemplate({
               </Section>
             ))}
           </Container>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.Ranking:
@@ -279,7 +292,7 @@ export async function PreviewEmailTemplate({
               </Section>
             ))}
           </Container>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
@@ -296,7 +309,7 @@ export async function PreviewEmailTemplate({
               </Link>
             ))}
           </Container>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.PictureSelection:
@@ -322,7 +335,7 @@ export async function PreviewEmailTemplate({
               )
             )}
           </Section>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.Cal:
@@ -338,7 +351,7 @@ export async function PreviewEmailTemplate({
               {t("emails.schedule_your_meeting")}
             </EmailButton>
           </Container>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.Date:
@@ -351,7 +364,7 @@ export async function PreviewEmailTemplate({
               {t("emails.select_a_date")}
             </Text>
           </Section>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.Matrix:
@@ -392,7 +405,7 @@ export async function PreviewEmailTemplate({
               })}
             </Section>
           </Container>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
     case TSurveyElementTypeEnum.Address:
@@ -407,7 +420,7 @@ export async function PreviewEmailTemplate({
               {label}
             </Section>
           ))}
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
 
@@ -421,7 +434,7 @@ export async function PreviewEmailTemplate({
               <Text className="text-slate-400">{t("emails.click_or_drag_to_upload_files")}</Text>
             </Container>
           </Section>
-          <EmailFooter />
+          <EmailFooter t={t} />
         </EmailTemplateWrapper>
       );
   }
@@ -477,11 +490,11 @@ function EmailTemplateWrapper({
   );
 }
 
-function EmailFooter(): React.JSX.Element {
+function EmailFooter({ t }: { t: TFunction }): React.JSX.Element {
   return (
     <Container className="m-auto mt-8 text-center">
       <Link className="text-signature-color text-xs" href="https://formbricks.com/" target="_blank">
-        Powered by Formbricks
+        {t("common.powered_by_formbricks")}
       </Link>
     </Container>
   );

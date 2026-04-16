@@ -6,7 +6,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { formatDateWithOrdinal, isValidDateString } from "./datetime";
+import { type TSurveyDateFormatMap, formatStoredDateForDisplay } from "./date-display";
 
 export interface fallbacks {
   [id: string]: string;
@@ -224,7 +224,9 @@ export const parseRecallInfo = (
   text: string,
   responseData?: TResponseData,
   variables?: TResponseVariables,
-  withSlash: boolean = false
+  withSlash: boolean = false,
+  locale: string = "en-US",
+  dateFormats?: TSurveyDateFormatMap
 ) => {
   let modifiedText = text;
   const questionIds = responseData ? Object.keys(responseData) : [];
@@ -254,12 +256,14 @@ export const parseRecallInfo = (
       value = responseData[recallItemId];
 
       // Apply formatting for special value types
-      if (value) {
-        if (isValidDateString(value as string)) {
-          value = formatDateWithOrdinal(new Date(value as string));
-        } else if (Array.isArray(value)) {
-          value = value.filter((item) => item).join(", ");
+      if (typeof value === "string") {
+        const formattedDate = formatStoredDateForDisplay(value, dateFormats?.[recallItemId], locale);
+
+        if (formattedDate) {
+          value = formattedDate;
         }
+      } else if (Array.isArray(value)) {
+        value = value.filter((item) => item).join(", ");
       }
     }
 

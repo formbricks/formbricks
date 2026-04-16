@@ -39,14 +39,14 @@ export function ConfigureChartDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t("environments.analysis.charts.configure_title")}</DialogTitle>
-          <DialogDescription>{t("environments.analysis.charts.configure_description")}</DialogDescription>
+          <DialogTitle>{t("workspace.analysis.charts.configure_title")}</DialogTitle>
+          <DialogDescription>{t("workspace.analysis.charts.configure_description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="space-y-6">
             <div>
               <h4 className="text-md mb-3 font-semibold text-gray-900">
-                {t("environments.analysis.charts.configure_type_label")}
+                {t("workspace.analysis.charts.configure_type_label")}
               </h4>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {chartTypes.map((chart) => {
@@ -59,7 +59,7 @@ export function ConfigureChartDialog({
                       className={cn(
                         "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all hover:bg-gray-50",
                         isSelected
-                          ? "border-brand-dark bg-brand-dark/5 ring-brand-dark ring-2"
+                          ? "border-brand-dark bg-brand-dark/5 ring-2 ring-brand-dark"
                           : "border-gray-200"
                       )}
                       aria-label={chart.label}>
@@ -73,11 +73,11 @@ export function ConfigureChartDialog({
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={onReset} className="text-sm">
-                  {t("environments.analysis.charts.reset_to_ai_suggestion")}
+                  {t("workspace.analysis.charts.reset_to_ai_suggestion")}
                 </Button>
                 {configuredChartType && (
                   <span className="text-sm text-gray-500">
-                    {t("environments.analysis.charts.original")}:{" "}
+                    {t("workspace.analysis.charts.original")}:{" "}
                     {chartTypes.find((c) => c.id === currentChartType)?.label ?? currentChartType}
                   </span>
                 )}
@@ -89,9 +89,7 @@ export function ConfigureChartDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("common.close")}
           </Button>
-          <Button onClick={() => onOpenChange(false)}>
-            {t("environments.analysis.charts.apply_changes")}
-          </Button>
+          <Button onClick={() => onOpenChange(false)}>{t("workspace.analysis.charts.apply_changes")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

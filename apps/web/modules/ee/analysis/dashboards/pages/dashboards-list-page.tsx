@@ -1,7 +1,7 @@
 import { use } from "react";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TDashboardWithCount } from "../../types/analysis";
 import { CreateDashboardButton } from "../components/create-dashboard-button";
 import { DashboardsTable } from "../components/dashboards-table";
@@ -9,38 +9,38 @@ import { getDashboards } from "../lib/dashboards";
 
 interface DashboardsListContentProps {
   dashboardsPromise: Promise<TDashboardWithCount[]>;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
 }
 
 const DashboardsListContent = ({
   dashboardsPromise,
-  environmentId,
+  workspaceId,
   isReadOnly,
 }: Readonly<DashboardsListContentProps>) => {
   const dashboards = use(dashboardsPromise);
 
-  return <DashboardsTable dashboards={dashboards} environmentId={environmentId} isReadOnly={isReadOnly} />;
+  return <DashboardsTable dashboards={dashboards} workspaceId={workspaceId} isReadOnly={isReadOnly} />;
 };
 
 interface DashboardsListPageProps {
-  environmentId: string;
+  workspaceId: string;
 }
 
-export const DashboardsListPage = async ({ environmentId }: Readonly<DashboardsListPageProps>) => {
+export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsListPageProps>) => {
   const t = await getTranslate();
-  const { project, isReadOnly } = await getEnvironmentAuth(environmentId);
+  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
 
-  const dashboardsPromise = getDashboards(project.id);
+  const dashboardsPromise = getDashboards(workspaceId);
 
   return (
     <AnalysisPageLayout
       pageTitle={t("common.analysis")}
-      environmentId={environmentId}
-      cta={isReadOnly ? undefined : <CreateDashboardButton environmentId={environmentId} />}>
+      workspaceId={workspaceId}
+      cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} />}>
       <DashboardsListContent
         dashboardsPromise={dashboardsPromise}
-        environmentId={environmentId}
+        workspaceId={workspaceId}
         isReadOnly={isReadOnly}
       />
     </AnalysisPageLayout>

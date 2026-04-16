@@ -48,10 +48,10 @@ export function AddMemberRole({
   if (isMember) return null;
 
   const rolesDescription = {
-    owner: t("environments.settings.teams.owner_role_description"),
-    manager: t("environments.settings.teams.manager_role_description"),
-    member: t("environments.settings.teams.member_role_description"),
-    billing: t("environments.settings.teams.billing_role_description"),
+    owner: t("workspace.settings.teams.owner_role_description"),
+    manager: t("workspace.settings.teams.manager_role_description"),
+    member: t("workspace.settings.teams.member_role_description"),
+    billing: t("workspace.settings.teams.billing_role_description"),
   };
 
   return (
@@ -60,7 +60,7 @@ export function AddMemberRole({
       name="role"
       render={({ field: { onChange, value } }) => (
         <div className="flex flex-col space-y-2">
-          <Label>{t("environments.settings.teams.organization_role")}</Label>
+          <Label>{t("workspace.settings.teams.organization_role")}</Label>
           <Select
             defaultValue={isAccessControlAllowed ? "member" : "owner"}
             disabled={!isAccessControlAllowed}
@@ -78,7 +78,9 @@ export function AddMemberRole({
                 {roles.map((role) => (
                   <SelectItem key={role} value={role}>
                     <P className="capitalize">{role}</P>
-                    <Muted className="text-slate-500">{rolesDescription[role]}</Muted>
+                    <Muted className="text-slate-500">
+                      {(rolesDescription as Record<string, string>)[role]}
+                    </Muted>
                   </SelectItem>
                 ))}
               </SelectGroup>

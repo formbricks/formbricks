@@ -12,11 +12,12 @@ export const ZInvitee = ZInvite.pick({
 export type TInvitee = z.infer<typeof ZInvitee>;
 
 export const ZInviteMembersFormSchema = z.record(
+  z.string(),
   ZInvite.pick({
     email: true,
     name: true,
   }).extend({
-    email: z.string().email("Invalid email address"),
+    email: z.email("Invalid email address"),
     name: ZUserName,
   })
 );

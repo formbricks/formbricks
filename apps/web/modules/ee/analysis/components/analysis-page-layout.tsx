@@ -5,21 +5,21 @@ import { AnalysisSecondaryNavigation } from "./analysis-secondary-navigation";
 
 interface AnalysisPageLayoutProps {
   pageTitle: string;
-  environmentId: string;
+  workspaceId: string;
   cta?: ReactNode;
   children: ReactNode;
 }
 
 export function AnalysisPageLayout({
   pageTitle,
-  environmentId,
+  workspaceId,
   cta,
   children,
 }: Readonly<AnalysisPageLayoutProps>) {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={pageTitle} cta={cta}>
-        <AnalysisSecondaryNavigation environmentId={environmentId} />
+        <AnalysisSecondaryNavigation workspaceId={workspaceId} />
       </PageHeader>
       {children}
     </PageContentWrapper>

@@ -6,7 +6,6 @@ import type {
   TValidationRuleParamsContains,
   TValidationRuleParamsDoesNotContain,
   TValidationRuleParamsDoesNotEqual,
-  TValidationRuleParamsEmail,
   TValidationRuleParamsEquals,
   TValidationRuleParamsFileExtensionIs,
   TValidationRuleParamsFileExtensionIsNot,
@@ -25,8 +24,6 @@ import type {
   TValidationRuleParamsMinSelections,
   TValidationRuleParamsMinValue,
   TValidationRuleParamsPattern,
-  TValidationRuleParamsPhone,
-  TValidationRuleParamsUrl,
   TValidationRuleType,
   TValidatorCheckResult,
 } from "@formbricks/types/surveys/validation-rules";
@@ -149,11 +146,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: validateEmail(value) };
     },
-    getDefaultMessage: (
-      _params: TValidationRuleParamsEmail,
-      _element: TSurveyElement,
-      t: TFunction
-    ): string => {
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       return t("errors.please_enter_a_valid_email_address");
     },
   },
@@ -166,11 +159,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: validateUrl(value) };
     },
-    getDefaultMessage: (
-      _params: TValidationRuleParamsUrl,
-      _element: TSurveyElement,
-      t: TFunction
-    ): string => {
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       return t("errors.please_enter_a_valid_url");
     },
   },
@@ -183,11 +172,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
       }
       return { valid: validatePhone(value) };
     },
-    getDefaultMessage: (
-      _params: TValidationRuleParamsPhone,
-      _element: TSurveyElement,
-      t: TFunction
-    ): string => {
+    getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       return t("errors.please_enter_a_valid_phone_number");
     },
   },

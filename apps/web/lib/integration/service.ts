@@ -19,30 +19,30 @@ const transformIntegration = (integration: TIntegration): TIntegration => {
         createdAt: new Date(data.createdAt),
       })),
     },
-  };
+  } as TIntegration;
 };
 
 export const createOrUpdateIntegration = async (
-  environmentId: string,
+  workspaceId: string,
   integrationData: TIntegrationInput
 ): Promise<TIntegration> => {
-  validateInputs([environmentId, ZId]);
+  validateInputs([workspaceId, ZId]);
 
   try {
     const integration = await prisma.integration.upsert({
       where: {
-        type_environmentId: {
-          environmentId,
+        type_workspaceId: {
+          workspaceId,
           type: integrationData.type,
         },
       },
       update: {
         ...integrationData,
-        environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: workspaceId } },
       },
       create: {
         ...integrationData,
-        environment: { connect: { id: environmentId } },
+        workspace: { connect: { id: workspaceId } },
       },
     });
     return integration;
@@ -56,13 +56,13 @@ export const createOrUpdateIntegration = async (
 };
 
 export const getIntegrations = reactCache(
-  async (environmentId: string, page?: number): Promise<TIntegration[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+  async (workspaceId: string, page?: number): Promise<TIntegration[]> => {
+    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const integrations = await prisma.integration.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -94,16 +94,14 @@ export const getIntegration = reactCache(async (integrationId: string): Promise<
 });
 
 export const getIntegrationByType = reactCache(
-  async (environmentId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> => {
-    validateInputs([environmentId, ZId], [type, ZIntegrationType]);
+  async (workspaceId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> => {
+    validateInputs([workspaceId, ZId], [type, ZIntegrationType]);
 
     try {
-      const integration = await prisma.integration.findUnique({
+      const integration = await prisma.integration.findFirst({
         where: {
-          type_environmentId: {
-            environmentId,
-            type,
-          },
+          workspaceId,
+          type,
         },
       });
       return integration ? transformIntegration(integration) : null;

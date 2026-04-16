@@ -24,50 +24,52 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn) => fn), // Mock reactCache to just execute the function
+    cache: vi.fn((fn: Function) => fn), // Mock reactCache to just execute the function
   };
 });
 
-const environmentId1 = "env1";
-const environmentId2 = "env2";
+const workspaceId1 = "env1";
+const workspaceId2 = "env2";
 const surveyId1 = "survey1";
 const surveyId2 = "survey2";
 const surveyId3 = "survey3";
 
+type PrismaSurvey = Awaited<ReturnType<typeof prisma.survey.findMany>>[number];
+
 const mockSurveyPrisma1 = {
   id: surveyId1,
-  environmentId: environmentId1,
+  workspaceId: workspaceId1,
   name: "Survey 1",
   updatedAt: new Date(),
-};
+} as unknown as PrismaSurvey;
 const mockSurveyPrisma2 = {
   id: surveyId2,
-  environmentId: environmentId1,
+  workspaceId: workspaceId1,
   name: "Survey 2",
   updatedAt: new Date(),
-};
+} as unknown as PrismaSurvey;
 const mockSurveyPrisma3 = {
   id: surveyId3,
-  environmentId: environmentId2,
+  workspaceId: workspaceId2,
   name: "Survey 3",
   updatedAt: new Date(),
-};
+} as unknown as PrismaSurvey;
 
 const mockSurveyTransformed1: TSurvey = {
   ...mockSurveyPrisma1,
   displayPercentage: null,
   segment: null,
-} as TSurvey;
+} as unknown as TSurvey;
 const mockSurveyTransformed2: TSurvey = {
   ...mockSurveyPrisma2,
   displayPercentage: null,
   segment: null,
-} as TSurvey;
+} as unknown as TSurvey;
 const mockSurveyTransformed3: TSurvey = {
   ...mockSurveyPrisma3,
   displayPercentage: null,
   segment: null,
-} as TSurvey;
+} as unknown as TSurvey;
 
 describe("getSurveys (Management API)", () => {
   beforeEach(() => {
@@ -83,20 +85,20 @@ describe("getSurveys (Management API)", () => {
     vi.resetAllMocks();
   });
 
-  test("should return surveys for a single environment ID with limit and offset", async () => {
+  test("should return surveys for a single workspace ID with limit and offset", async () => {
     const limit = 1;
     const offset = 1;
     vi.mocked(prisma.survey.findMany).mockResolvedValue([mockSurveyPrisma2]);
 
-    const surveys = await getSurveys([environmentId1], limit, offset);
+    const surveys = await getSurveys([workspaceId1], limit, offset);
 
     expect(validateInputs).toHaveBeenCalledWith(
-      [[environmentId1], expect.any(Object)],
+      [[workspaceId1], expect.any(Object)],
       [limit, expect.any(Object)],
       [offset, expect.any(Object)]
     );
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: [environmentId1] } },
+      where: { workspaceId: { in: [workspaceId1] } },
       select: selectSurvey,
       orderBy: { updatedAt: "desc" },
       take: limit,
@@ -107,22 +109,22 @@ describe("getSurveys (Management API)", () => {
     expect(surveys).toEqual([mockSurveyTransformed2]);
   });
 
-  test("should return surveys for multiple environment IDs without limit and offset", async () => {
+  test("should return surveys for multiple workspace IDs without limit and offset", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
       mockSurveyPrisma1,
       mockSurveyPrisma2,
       mockSurveyPrisma3,
     ]);
 
-    const surveys = await getSurveys([environmentId1, environmentId2]);
+    const surveys = await getSurveys([workspaceId1, workspaceId2]);
 
     expect(validateInputs).toHaveBeenCalledWith(
-      [[environmentId1, environmentId2], expect.any(Object)],
+      [[workspaceId1, workspaceId2], expect.any(Object)],
       [undefined, expect.any(Object)],
       [undefined, expect.any(Object)]
     );
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId: { in: [environmentId1, environmentId2] } },
+      where: { workspaceId: { in: [workspaceId1, workspaceId2] } },
       select: selectSurvey,
       orderBy: { updatedAt: "desc" },
       take: undefined,
@@ -135,7 +137,7 @@ describe("getSurveys (Management API)", () => {
   test("should return an empty array if no surveys are found", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
 
-    const surveys = await getSurveys([environmentId1]);
+    const surveys = await getSurveys([workspaceId1]);
 
     expect(prisma.survey.findMany).toHaveBeenCalled();
     expect(transformPrismaSurvey).not.toHaveBeenCalled();
@@ -149,7 +151,7 @@ describe("getSurveys (Management API)", () => {
     });
     vi.mocked(prisma.survey.findMany).mockRejectedValue(prismaError);
 
-    await expect(getSurveys([environmentId1])).rejects.toThrow(DatabaseError);
+    await expect(getSurveys([workspaceId1])).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting surveys");
   });
 
@@ -157,7 +159,7 @@ describe("getSurveys (Management API)", () => {
     const genericError = new Error("Something went wrong");
     vi.mocked(prisma.survey.findMany).mockRejectedValue(genericError);
 
-    await expect(getSurveys([environmentId1])).rejects.toThrow(genericError);
+    await expect(getSurveys([workspaceId1])).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
   });
 

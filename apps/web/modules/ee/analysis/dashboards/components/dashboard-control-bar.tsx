@@ -12,7 +12,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 
 interface DashboardControlBarProps {
-  environmentId: string;
+  workspaceId: string;
   dashboardId: string;
   existingChartIds: string[];
   isEditing: boolean;
@@ -26,7 +26,7 @@ interface DashboardControlBarProps {
 }
 
 export const DashboardControlBar = ({
-  environmentId,
+  workspaceId,
   dashboardId,
   existingChartIds,
   isEditing,
@@ -47,16 +47,16 @@ export const DashboardControlBar = ({
   const handleDeleteDashboard = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteDashboardAction({ environmentId, dashboardId });
+      const result = await deleteDashboardAction({ workspaceId, dashboardId });
       if (result?.data) {
-        router.push(`/environments/${environmentId}/dashboards`);
-        toast.success(t("environments.analysis.dashboards.delete_success"));
+        router.push(`/workspaces/${workspaceId}/dashboards`);
+        toast.success(t("workspace.analysis.dashboards.delete_success"));
       } else {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(errorMessage);
       }
     } catch {
-      toast.error(t("environments.analysis.dashboards.delete_failed"));
+      toast.error(t("workspace.analysis.dashboards.delete_failed"));
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
@@ -112,17 +112,17 @@ export const DashboardControlBar = ({
     <>
       <IconBar actions={isEditing ? editModeActions : viewModeActions} />
       <DeleteDialog
-        deleteWhat={t("environments.analysis.dashboards.dashboard")}
+        deleteWhat={t("workspace.analysis.dashboards.dashboard")}
         open={isDeleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         onDelete={handleDeleteDashboard}
-        text={t("environments.analysis.dashboards.dashboard_delete_confirmation")}
+        text={t("workspace.analysis.dashboards.dashboard_delete_confirmation")}
         isDeleting={isDeleting}
       />
       <AddExistingChartsDialog
         open={isAddExistingDialogOpen}
         onOpenChange={setIsAddExistingDialogOpen}
-        environmentId={environmentId}
+        workspaceId={workspaceId}
         dashboardId={dashboardId}
         existingChartIds={existingChartIds}
         onSuccess={() => {

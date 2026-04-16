@@ -37,9 +37,9 @@ export const CreateDashboardDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent width="narrow">
         <DialogHeader>
-          <DialogTitle>{t("environments.analysis.dashboards.create_dashboard")}</DialogTitle>
+          <DialogTitle>{t("workspace.analysis.dashboards.create_dashboard")}</DialogTitle>
           <DialogDescription>
-            {t("environments.analysis.dashboards.create_dashboard_description")}
+            {t("workspace.analysis.dashboards.create_dashboard_description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -53,10 +53,10 @@ export const CreateDashboardDialog = ({
           className="space-y-4">
           <DialogBody className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="dashboard-name">{t("environments.analysis.dashboards.dashboard_name")}</Label>
+              <Label htmlFor="dashboard-name">{t("workspace.analysis.dashboards.dashboard_name")}</Label>
               <Input
                 id="dashboard-name"
-                placeholder={t("environments.analysis.dashboards.dashboard_name_placeholder")}
+                placeholder={t("workspace.analysis.dashboards.dashboard_name_placeholder")}
                 value={dashboardName}
                 onChange={(e) => onDashboardNameChange(e.target.value)}
                 autoFocus

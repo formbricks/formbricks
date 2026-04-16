@@ -71,8 +71,8 @@ export const getDisplaysBySurveyIdWithContact = reactCache(
   async (surveyId: string, limit?: number, offset?: number): Promise<TDisplayWithContact[]> => {
     validateInputs(
       [surveyId, ZId],
-      [limit, z.number().int().min(1).optional()],
-      [offset, z.number().int().nonnegative().optional()]
+      [limit, z.int().min(1).optional()],
+      [offset, z.int().nonnegative().optional()]
     );
 
     try {

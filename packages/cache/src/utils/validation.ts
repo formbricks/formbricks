@@ -8,7 +8,7 @@ import { ErrorCode, err, ok } from "@/types/error";
  * @param pairs - Array of [value, schema] tuples to validate
  * @returns Result with validated data or CacheValidationError
  */
-export function validateInputs<T extends readonly [unknown, z.ZodType<unknown>][]>(
+export function validateInputs<T extends readonly [unknown, z.ZodType][]>(
   ...pairs: T
 ): Result<{ [K in keyof T]: T[K] extends readonly [unknown, z.ZodType<infer U>] ? U : never }, CacheError> {
   const results: unknown[] = [];

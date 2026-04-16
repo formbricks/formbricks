@@ -7,8 +7,11 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TI18nString } from "@formbricks/types/i18n";
-import type { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
+import type {
+  TSurveyElement,
+  TSurveyElementChoice,
+  TSurveyRankingElement,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -23,7 +26,7 @@ interface RankingElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyRankingElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyRankingElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -51,7 +54,7 @@ export const RankingElementForm = ({
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
+  const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
     if (element.choices) {
       const newChoices = element.choices.map((choice, idx) => {
         if (idx !== choiceIdx) return choice;
@@ -104,13 +107,28 @@ export const RankingElementForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: t("environments.surveys.edit.keep_current_order"),
+      label: t("workspace.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: t("environments.surveys.edit.randomize_all"),
+      label: t("workspace.surveys.edit.randomize_all"),
       show: element.choices.length > 0,
+    },
+    exceptLast: {
+      id: "exceptLast",
+      label: t("workspace.surveys.edit.randomize_all_except_last"),
+      show: true,
+    },
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
+      label: t("workspace.surveys.edit.reverse_order_occasionally"),
+      show: true,
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
+      show: true,
     },
   };
 
@@ -127,7 +145,7 @@ export const RankingElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -174,13 +192,13 @@ export const RankingElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">{t("environments.surveys.edit.options")}*</Label>
+        <Label htmlFor="choices">{t("workspace.surveys.edit.options")}</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="ranking-choices"
@@ -235,7 +253,7 @@ export const RankingElementForm = ({
               type="button"
               disabled={element.choices?.length >= 25}
               onClick={() => addOption()}>
-              {t("environments.surveys.edit.add_option")}
+              {t("workspace.surveys.edit.add_option")}
               <PlusIcon />
             </Button>
             <ShuffleOptionSelect

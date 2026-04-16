@@ -13,7 +13,7 @@ export interface QueryResult {
   data: TChartDataRow[];
 }
 
-export function useChartQuery(environmentId: string, initialQuery?: TChartQuery) {
+export function useChartQuery(workspaceId: string, initialQuery?: TChartQuery) {
   const { t } = useTranslation();
   const [chartData, setChartData] = useState<TChartDataRow[] | null>(null);
   const [query, setQuery] = useState<TChartQuery | null>(initialQuery ?? null);
@@ -25,7 +25,7 @@ export function useChartQuery(environmentId: string, initialQuery?: TChartQuery)
     setError(null);
 
     try {
-      const result = await executeQueryAction({ environmentId, query: cubeQuery });
+      const result = await executeQueryAction({ workspaceId, query: cubeQuery });
 
       if (result?.serverError) {
         const msg = getFormattedErrorMessage(result);
@@ -36,7 +36,7 @@ export function useChartQuery(environmentId: string, initialQuery?: TChartQuery)
 
       const data = Array.isArray(result?.data) ? result.data : [];
       if (data.length === 0) {
-        const msg = t("environments.analysis.charts.no_data_returned");
+        const msg = t("workspace.analysis.charts.no_data_returned");
         setError(msg);
         toast.error(msg);
         return null;
@@ -44,11 +44,10 @@ export function useChartQuery(environmentId: string, initialQuery?: TChartQuery)
 
       setChartData(data);
       setQuery(cubeQuery);
-      toast.success(t("environments.analysis.charts.query_executed_successfully"));
+      toast.success(t("workspace.analysis.charts.query_executed_successfully"));
       return { query: cubeQuery, data };
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : t("environments.analysis.charts.failed_to_execute_query");
+      const msg = err instanceof Error ? err.message : t("workspace.analysis.charts.failed_to_execute_query");
       setError(msg);
       toast.error(msg);
       return null;

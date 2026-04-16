@@ -184,22 +184,22 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
  */
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
-    "FeedbackRecords.sentiment": t("environments.analysis.charts.field_label_sentiment"),
-    "FeedbackRecords.sourceType": t("environments.analysis.charts.field_label_source_type"),
-    "FeedbackRecords.sourceName": t("environments.analysis.charts.field_label_source_name"),
-    "FeedbackRecords.fieldType": t("environments.analysis.charts.field_label_field_type"),
-    "FeedbackRecords.emotion": t("environments.analysis.charts.field_label_emotion"),
-    "FeedbackRecords.userIdentifier": t("environments.analysis.charts.field_label_user_identifier"),
-    "FeedbackRecords.responseId": t("environments.analysis.charts.field_label_response_id"),
-    "FeedbackRecords.npsValue": t("environments.analysis.charts.field_label_nps_value"),
-    "FeedbackRecords.collectedAt": t("environments.analysis.charts.field_label_collected_at"),
-    "TopicsUnnested.topic": t("environments.analysis.charts.field_label_topic"),
-    "FeedbackRecords.count": t("environments.analysis.charts.field_label_count"),
-    "FeedbackRecords.promoterCount": t("environments.analysis.charts.field_label_promoter_count"),
-    "FeedbackRecords.detractorCount": t("environments.analysis.charts.field_label_detractor_count"),
-    "FeedbackRecords.passiveCount": t("environments.analysis.charts.field_label_passive_count"),
-    "FeedbackRecords.npsScore": t("environments.analysis.charts.field_label_nps_score"),
-    "FeedbackRecords.averageScore": t("environments.analysis.charts.field_label_average_score"),
+    "FeedbackRecords.sentiment": t("workspace.analysis.charts.field_label_sentiment"),
+    "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
+    "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
+    "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
+    "FeedbackRecords.emotion": t("workspace.analysis.charts.field_label_emotion"),
+    "FeedbackRecords.userIdentifier": t("workspace.analysis.charts.field_label_user_identifier"),
+    "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
+    "FeedbackRecords.npsValue": t("workspace.analysis.charts.field_label_nps_value"),
+    "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),
+    "TopicsUnnested.topic": t("workspace.analysis.charts.field_label_topic"),
+    "FeedbackRecords.count": t("workspace.analysis.charts.field_label_count"),
+    "FeedbackRecords.promoterCount": t("workspace.analysis.charts.field_label_promoter_count"),
+    "FeedbackRecords.detractorCount": t("workspace.analysis.charts.field_label_detractor_count"),
+    "FeedbackRecords.passiveCount": t("workspace.analysis.charts.field_label_passive_count"),
+    "FeedbackRecords.npsScore": t("workspace.analysis.charts.field_label_nps_score"),
+    "FeedbackRecords.averageScore": t("workspace.analysis.charts.field_label_average_score"),
   };
   return labels[id] ?? getFieldById(id)?.label ?? id;
 }
@@ -209,12 +209,12 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
  */
 export function getTranslatedGranularityLabel(granularity: string, t: TFunction): string {
   const labels: Record<string, string> = {
-    hour: t("environments.analysis.charts.granularity_hour"),
-    day: t("environments.analysis.charts.granularity_day"),
-    week: t("environments.analysis.charts.granularity_week"),
-    month: t("environments.analysis.charts.granularity_month"),
-    quarter: t("environments.analysis.charts.granularity_quarter"),
-    year: t("environments.analysis.charts.granularity_year"),
+    hour: t("workspace.analysis.charts.granularity_hour"),
+    day: t("workspace.analysis.charts.granularity_day"),
+    week: t("workspace.analysis.charts.granularity_week"),
+    month: t("workspace.analysis.charts.granularity_month"),
+    quarter: t("workspace.analysis.charts.granularity_quarter"),
+    year: t("workspace.analysis.charts.granularity_year"),
   };
   return labels[granularity] ?? GRANULARITY_LABELS[granularity] ?? granularity;
 }
@@ -224,14 +224,14 @@ export function getTranslatedGranularityLabel(granularity: string, t: TFunction)
  */
 export function getTranslatedDatePresetLabel(value: string, t: TFunction): string {
   const labels: Record<string, string> = {
-    today: t("environments.analysis.charts.date_preset_today"),
-    yesterday: t("environments.analysis.charts.date_preset_yesterday"),
-    "last 7 days": t("environments.analysis.charts.date_preset_last_7_days"),
-    "last 30 days": t("environments.analysis.charts.date_preset_last_30_days"),
-    "this month": t("environments.analysis.charts.date_preset_this_month"),
-    "last month": t("environments.analysis.charts.date_preset_last_month"),
-    "this quarter": t("environments.analysis.charts.date_preset_this_quarter"),
-    "this year": t("environments.analysis.charts.date_preset_this_year"),
+    today: t("workspace.analysis.charts.date_preset_today"),
+    yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
+    "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
+    "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
+    "this month": t("workspace.analysis.charts.date_preset_this_month"),
+    "last month": t("workspace.analysis.charts.date_preset_last_month"),
+    "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),
+    "this year": t("workspace.analysis.charts.date_preset_this_year"),
   };
   return labels[value] ?? value;
 }

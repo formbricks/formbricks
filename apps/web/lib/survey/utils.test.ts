@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -68,7 +68,7 @@ describe("transformPrismaSurvey", () => {
       displayPercentage: "invalid",
     };
 
-    const result = transformPrismaSurvey<TJsEnvironmentStateSurvey>(surveyPrisma);
+    const result = transformPrismaSurvey<TJsWorkspaceStateSurvey>(surveyPrisma);
 
     expect(result).toEqual({
       id: "survey1",
@@ -116,7 +116,7 @@ describe("anySurveyHasFilters", () => {
           filters: [],
           createdAt: new Date(),
           description: "Segment description",
-          environmentId: "env1",
+          workspaceId: "ws1",
           isPrivate: true,
           surveys: ["survey1"],
           updatedAt: new Date(),
@@ -150,7 +150,7 @@ describe("anySurveyHasFilters", () => {
           ],
           createdAt: new Date(),
           description: "Segment description",
-          environmentId: "env1",
+          workspaceId: "ws1",
           isPrivate: true,
           surveys: ["survey2"],
           updatedAt: new Date(),

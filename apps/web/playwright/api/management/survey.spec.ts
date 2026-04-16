@@ -5,11 +5,13 @@ import { loginAndGetApiKey } from "../../lib/utils";
 import { SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests", () => {
-  let surveyId, environmentId, apiKey;
+  let surveyId: string;
+  let workspaceId: string;
+  let apiKey: string;
 
   test("API Tests", async ({ page, users, request }) => {
     try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       logger.error(error, "Error during login and getting API key");
       throw error;
@@ -22,7 +24,7 @@ test.describe("API Tests", () => {
           "x-api-key": apiKey,
         },
         data: {
-          environmentId: environmentId,
+          workspaceId: workspaceId,
           type: "link",
           name: "My new Survey from API",
           questions: [
@@ -51,7 +53,7 @@ test.describe("API Tests", () => {
       expect(response.ok()).toBeTruthy();
       const responseBody = await response.json();
       expect(responseBody.data.name).toEqual("My new Survey from API");
-      expect(responseBody.data.environmentId).toEqual(environmentId);
+      expect(responseBody.data.workspaceId).toEqual(workspaceId);
 
       surveyId = responseBody.data.id;
     });

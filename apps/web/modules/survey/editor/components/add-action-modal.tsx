@@ -18,7 +18,7 @@ import {
 interface AddActionModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  environmentId: string;
+  workspaceId: string;
   actionClasses: ActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
   isReadOnly: boolean;
@@ -34,14 +34,14 @@ export const AddActionModal = ({
   localSurvey,
   setLocalSurvey,
   isReadOnly,
-  environmentId,
+  workspaceId,
 }: AddActionModalProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = [
     {
-      title: t("environments.surveys.edit.select_saved_action"),
+      title: t("workspace.surveys.edit.select_saved_action"),
       children: (
         <SavedActionsTab
           actionClasses={actionClasses}
@@ -52,7 +52,7 @@ export const AddActionModal = ({
       ),
     },
     {
-      title: t("environments.surveys.edit.capture_new_action"),
+      title: t("workspace.surveys.edit.capture_new_action"),
       children: (
         <CreateNewActionTab
           actionClasses={actionClasses}
@@ -60,7 +60,7 @@ export const AddActionModal = ({
           setOpen={setOpen}
           isReadOnly={isReadOnly}
           setLocalSurvey={setLocalSurvey}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
         />
       ),
     },
@@ -82,7 +82,7 @@ export const AddActionModal = ({
         <DialogHeader>
           <DialogTitle>{t("common.add_action")}</DialogTitle>
           <DialogDescription>
-            {t("environments.surveys.edit.capture_a_new_action_to_trigger_a_survey_on")}
+            {t("workspace.surveys.edit.capture_a_new_action_to_trigger_a_survey_on")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
@@ -93,7 +93,7 @@ export const AddActionModal = ({
                 key={tab.title}
                 className={`mr-4 px-1 pb-3 focus:outline-none ${
                   activeTab === index
-                    ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                    ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                     : "text-slate-500 hover:text-slate-700"
                 }`}
                 onClick={() => handleTabClick(index)}>

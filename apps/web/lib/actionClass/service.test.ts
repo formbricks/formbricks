@@ -5,7 +5,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   deleteActionClass,
   getActionClass,
-  getActionClassByEnvironmentIdAndName,
+  getActionClassByWorkspaceIdAndName,
   getActionClasses,
 } from "./service";
 
@@ -31,7 +31,7 @@ describe("ActionClass Service", () => {
 
   describe("getActionClasses", () => {
     test("should return action classes for environment", async () => {
-      const mockActionClasses = [
+      const mockActionClasses: TActionClass[] = [
         {
           id: "id1",
           createdAt: new Date(),
@@ -40,8 +40,8 @@ describe("ActionClass Service", () => {
           description: "desc",
           type: "code",
           key: "key1",
-          noCodeConfig: {},
-          environmentId: "env1",
+          noCodeConfig: null,
+          workspaceId: "env1",
         },
       ];
       vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
@@ -49,7 +49,7 @@ describe("ActionClass Service", () => {
       const result = await getActionClasses("env1");
       expect(result).toEqual(mockActionClasses);
       expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
-        where: { environmentId: "env1" },
+        where: { workspaceId: "env1" },
         select: expect.any(Object),
         take: undefined,
         skip: undefined,
@@ -63,9 +63,9 @@ describe("ActionClass Service", () => {
     });
   });
 
-  describe("getActionClassByEnvironmentIdAndName", () => {
+  describe("getActionClassByWorkspaceIdAndName", () => {
     test("should return action class when found", async () => {
-      const mockActionClass = {
+      const mockActionClass: TActionClass = {
         id: "id2",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -73,16 +73,20 @@ describe("ActionClass Service", () => {
         description: "desc2",
         type: "noCode",
         key: null,
-        noCodeConfig: {},
-        environmentId: "env2",
+        noCodeConfig: {
+          type: "click",
+          elementSelector: { cssSelector: "button" },
+          urlFilters: [],
+        },
+        workspaceId: "env2",
       };
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(mockActionClass);
 
-      const result = await getActionClassByEnvironmentIdAndName("env2", "Action 2");
+      const result = await getActionClassByWorkspaceIdAndName("env2", "Action 2");
       expect(result).toEqual(mockActionClass);
       expect(prisma.actionClass.findFirst).toHaveBeenCalledWith({
-        where: { name: "Action 2", environmentId: "env2" },
+        where: { name: "Action 2", workspaceId: "env2" },
         select: expect.any(Object),
       });
     });
@@ -90,20 +94,20 @@ describe("ActionClass Service", () => {
     test("should return null when not found", async () => {
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(null);
-      const result = await getActionClassByEnvironmentIdAndName("env2", "Action 2");
+      const result = await getActionClassByWorkspaceIdAndName("env2", "Action 2");
       expect(result).toBeNull();
     });
 
     test("should throw DatabaseError when prisma throws", async () => {
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockRejectedValue(new Error("fail"));
-      await expect(getActionClassByEnvironmentIdAndName("env2", "Action 2")).rejects.toThrow(DatabaseError);
+      await expect(getActionClassByWorkspaceIdAndName("env2", "Action 2")).rejects.toThrow(DatabaseError);
     });
   });
 
   describe("getActionClass", () => {
     test("should return action class when found", async () => {
-      const mockActionClass = {
+      const mockActionClass: TActionClass = {
         id: "id3",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -111,8 +115,8 @@ describe("ActionClass Service", () => {
         description: "desc3",
         type: "code",
         key: "key3",
-        noCodeConfig: {},
-        environmentId: "env3",
+        noCodeConfig: null,
+        workspaceId: "env3",
       };
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(mockActionClass);
@@ -149,7 +153,7 @@ describe("ActionClass Service", () => {
         type: "code",
         key: "key4",
         noCodeConfig: null,
-        environmentId: "env4",
+        workspaceId: "env4",
       };
       if (!prisma.actionClass.delete) prisma.actionClass.delete = vi.fn();
       vi.mocked(prisma.actionClass.delete).mockResolvedValue(mockActionClass);

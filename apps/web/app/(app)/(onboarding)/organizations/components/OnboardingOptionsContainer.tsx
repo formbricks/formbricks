@@ -16,7 +16,7 @@ interface OnboardingOptionsContainerProps {
 }
 
 export const OnboardingOptionsContainer = ({ options }: OnboardingOptionsContainerProps) => {
-  const getOptionCard = (option) => {
+  const getOptionCard = (option: OnboardingOptionsContainerProps["options"][number]) => {
     const Icon = option.icon;
     return (
       <OptionCard

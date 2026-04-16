@@ -4,13 +4,13 @@ import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 
 export const ZContactAttributeKeyCreateInput = z.object({
   key: z.string().refine((val) => isSafeIdentifier(val), {
-    message:
+    error:
       "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
   }),
   description: z.string().optional(),
   type: z.enum(["custom"]),
   dataType: ZContactAttributeDataType.optional(),
-  environmentId: z.string(),
+  workspaceId: z.string(),
   name: z.string().optional(),
 });
 export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;
@@ -21,7 +21,7 @@ export const ZContactAttributeKeyUpdateInput = z.object({
   key: z
     .string()
     .refine((val) => isSafeIdentifier(val), {
-      message:
+      error:
         "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
     })
     .optional(),

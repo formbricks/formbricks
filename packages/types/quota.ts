@@ -24,8 +24,12 @@ export const ZSurveyQuota = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   surveyId: ZId,
-  name: z.string().min(1, { message: "Quota name is required" }),
-  limit: z.number().min(1, { message: "Limit must be greater than 0" }),
+  name: z.string().min(1, {
+    error: "Quota name is required",
+  }),
+  limit: z.number().min(1, {
+    error: "Limit must be greater than 0",
+  }),
   logic: ZSurveyQuotaLogic,
   action: ZSurveyQuotaAction,
   endingCardId: ZId.nullable(),
@@ -41,7 +45,7 @@ export const ZSurveyQuotaInput = ZSurveyQuota.omit({
   // Validate ending card when action is endSurvey
   if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["action"],
       message: "endingCardId is required when action is endSurvey",
     });

@@ -81,7 +81,11 @@ export const extractChoiceIdsFromResponse = (
 
   if (Array.isArray(responseValue)) {
     // Multiple choice case - response is an array of selected choice labels
-    return responseValue.map(findChoiceByLabel).filter((choiceId): choiceId is string => choiceId !== null);
+    // Filter out empty string sentinel used as "other" marker in multipleChoiceMulti
+    return responseValue
+      .filter((v) => v !== "")
+      .map(findChoiceByLabel)
+      .filter((choiceId): choiceId is string => choiceId !== null);
   } else if (typeof responseValue === "string") {
     // Single choice case - response is a single choice label
     const choiceId = findChoiceByLabel(responseValue);
@@ -743,8 +747,12 @@ export const getResponsesJson = (
         elementHeadline.forEach((headline, index) => {
           if (answer) {
             const row = element.rows[index];
-            if (row && row.label.default && answer[row.label.default] !== undefined) {
-              jsonData[idx][headline] = answer[row.label.default];
+            if (
+              row &&
+              row.label.default &&
+              (answer as Record<string, string>)[row.label.default] !== undefined
+            ) {
+              jsonData[idx][headline] = (answer as Record<string, string>)[row.label.default];
             } else {
               jsonData[idx][headline] = "";
             }

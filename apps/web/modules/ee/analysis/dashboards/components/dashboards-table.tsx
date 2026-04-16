@@ -1,19 +1,19 @@
 import { BarChart3Icon } from "lucide-react";
 import Link from "next/link";
-import { convertDateString, timeSinceDate } from "@/lib/time";
+import { formatDate, timeSinceDate } from "@/lib/time";
 import { getTranslate } from "@/lingodotdev/server";
 import { TDashboardWithCount } from "../../types/analysis";
 import { DashboardDropdownMenu } from "./dashboard-dropdown-menu";
 
 interface DashboardsTableProps {
   dashboards: TDashboardWithCount[];
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
 }
 
 export const DashboardsTable = async ({
   dashboards,
-  environmentId,
+  workspaceId,
   isReadOnly,
 }: Readonly<DashboardsTableProps>) => {
   const t = await getTranslate();
@@ -30,7 +30,7 @@ export const DashboardsTable = async ({
       </div>
       {dashboards.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-400">
-          {t("environments.analysis.dashboards.no_dashboards_found")}
+          {t("workspace.analysis.dashboards.no_dashboards_found")}
         </p>
       ) : (
         dashboards.map((dashboard) => {
@@ -39,7 +39,7 @@ export const DashboardsTable = async ({
               key={dashboard.id}
               className="grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
               <Link
-                href={`/environments/${environmentId}/dashboards/${dashboard.id}`}
+                href={`/workspaces/${workspaceId}/dashboards/${dashboard.id}`}
                 className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">
                 <div className="col-span-3 flex items-center pl-6 text-sm">
                   <div className="flex items-center gap-4">
@@ -56,7 +56,7 @@ export const DashboardsTable = async ({
                   <div className="text-slate-900">{dashboard.creator?.name || "-"}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
-                  <div className="text-slate-900">{convertDateString(dashboard.createdAt.toISOString())}</div>
+                  <div className="text-slate-900">{formatDate(new Date(dashboard.createdAt))}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
                   <div className="text-slate-900">{timeSinceDate(dashboard.updatedAt)}</div>
@@ -65,7 +65,7 @@ export const DashboardsTable = async ({
               <div className="col-span-1 my-auto flex items-center justify-end pr-6">
                 {!isReadOnly && (
                   <DashboardDropdownMenu
-                    environmentId={environmentId}
+                    workspaceId={workspaceId}
                     dashboardId={dashboard.id}
                     dashboardName={dashboard.name}
                   />

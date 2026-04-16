@@ -1,12 +1,12 @@
 "use client";
 
-import { Environment, Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
@@ -21,8 +21,8 @@ interface PreviewSurveyProps {
   survey: TSurvey;
   elementId?: string | null;
   previewType?: TPreviewType;
-  project: Project;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  workspace: Workspace;
+  environment: { appSetupCompleted: boolean };
   languageCode: string;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;
@@ -35,7 +35,7 @@ export const PreviewSurvey = ({
   elementId,
   survey,
   previewType,
-  project,
+  workspace,
   environment,
   languageCode,
   isSpamProtectionAllowed,
@@ -48,35 +48,35 @@ export const PreviewSurvey = ({
 
   const [previewMode, setPreviewMode] = useState("desktop");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const { projectOverwrites } = survey || {};
+  const { workspaceOverwrites } = survey || {};
 
-  const { placement: surveyPlacement } = projectOverwrites || {};
-  const { overlay: surveyOverlay } = projectOverwrites || {};
-  const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
+  const { placement: surveyPlacement } = workspaceOverwrites || {};
+  const { overlay: surveyOverlay } = workspaceOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
-  const placement = surveyPlacement || project.placement;
-  const overlay = surveyOverlay ?? project.overlay;
-  const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
+  const placement = surveyPlacement || workspace.placement;
+  const overlay = surveyOverlay ?? workspace.overlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
-  const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
-    // allow style overwrite is disabled from the project
-    if (!project.styling.allowStyleOverwrite) {
-      return project.styling;
+  const styling: TSurveyStyling | TWorkspaceStyling = useMemo(() => {
+    // allow style overwrite is disabled from the workspace
+    if (!workspace.styling.allowStyleOverwrite) {
+      return workspace.styling;
     }
 
-    // allow style overwrite is enabled from the project
-    if (project.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the workspace
+    if (workspace.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return project.styling;
+        return workspace.styling;
       }
 
       // survey style overwrite is enabled
       return survey.styling;
     }
 
-    return project.styling;
-  }, [project.styling, survey.styling]);
+    return workspace.styling;
+  }, [workspace.styling, survey.styling]);
 
   const updateElementId = useCallback(
     (newElementId: string) => {
@@ -226,7 +226,7 @@ export const PreviewSurvey = ({
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
-              Preview
+              {t("common.preview")}
             </p>
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetProgress} />
@@ -249,7 +249,7 @@ export const PreviewSurvey = ({
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={survey}
-                    isBrandingEnabled={project.inAppSurveyBranding}
+                    isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     styling={styling}
@@ -267,12 +267,7 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo
-                        environmentId={environment.id}
-                        projectLogo={project.logo}
-                        surveyLogo={styling.logo}
-                        previewSurvey
-                      />
+                      <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
@@ -280,7 +275,7 @@ export const PreviewSurvey = ({
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
-                      isBrandingEnabled={project.linkSurveyBranding}
+                      isBrandingEnabled={workspace.linkSurveyBranding}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
@@ -310,13 +305,15 @@ export const PreviewSurvey = ({
                       setIsFullScreenPreview(true);
                     }
                   }}
-                  aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
+                  aria-label={
+                    isFullScreenPreview
+                      ? t("workspace.surveys.edit.shrink_preview")
+                      : t("workspace.surveys.edit.expand_preview")
+                  }></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
-                  {previewType === "modal"
-                    ? t("environments.surveys.edit.your_web_app")
-                    : t("common.preview")}
+                  {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
                 </p>
 
                 <div className="flex items-center">
@@ -353,7 +350,7 @@ export const PreviewSurvey = ({
                   appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={survey}
-                  isBrandingEnabled={project.inAppSurveyBranding}
+                  isBrandingEnabled={workspace.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   styling={styling}
@@ -375,12 +372,7 @@ export const PreviewSurvey = ({
                 isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo
-                      environmentId={environment.id}
-                      projectLogo={project.logo}
-                      surveyLogo={styling.logo}
-                      previewSurvey
-                    />
+                    <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
@@ -388,7 +380,7 @@ export const PreviewSurvey = ({
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
-                    isBrandingEnabled={project.linkSurveyBranding}
+                    isBrandingEnabled={workspace.linkSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     responseCount={42}

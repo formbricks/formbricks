@@ -3,10 +3,11 @@ import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
+import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 import {
   getBasicSurveyMetadata,
   getBrandColorForURL,
+  getMetadataBrandColor,
   getNameForURL,
   getSurveyOpenGraphMetadata,
 } from "./metadata-utils";
@@ -16,8 +17,8 @@ vi.mock("@/modules/survey/lib/survey", () => ({
   getSurvey: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/link/lib/project", () => ({
-  getProjectByEnvironmentId: vi.fn(),
+vi.mock("@/modules/survey/link/lib/workspace", () => ({
+  getWorkspaceById: vi.fn(),
 }));
 
 // Mock constants
@@ -79,7 +80,7 @@ describe("Metadata Utils", () => {
 
   describe("getBasicSurveyMetadata", () => {
     const mockSurveyId = "survey-123";
-    const mockEnvironmentId = "env-456";
+    const mockWorkspaceId = "workspace-456";
 
     test("returns default metadata when survey is not found", async () => {
       const result = await getBasicSurveyMetadata(mockSurveyId);
@@ -96,7 +97,7 @@ describe("Metadata Utils", () => {
     test("uses welcome card headline when available", async () => {
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         welcomeCard: {
@@ -110,10 +111,10 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
-      vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ name: "Test Project" } as any);
+      vi.mocked(getWorkspaceById).mockResolvedValue({ name: "Test Workspace" } as any);
 
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
@@ -129,13 +130,13 @@ describe("Metadata Utils", () => {
     test("falls back to survey name when welcome card is not enabled", async () => {
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
@@ -157,19 +158,18 @@ describe("Metadata Utils", () => {
       }));
 
       // Re-import the function to use the updated mock
-      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } = await import(
-        "./metadata-utils"
-      );
+      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } =
+        await import("./metadata-utils");
 
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
@@ -189,7 +189,7 @@ describe("Metadata Utils", () => {
 
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         languages: [],
@@ -204,7 +204,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(getTextContent).mockReturnValue("Welcome Headline");
@@ -220,7 +220,7 @@ describe("Metadata Utils", () => {
 
       const mockSurvey = {
         id: mockSurveyId,
-        environmentId: mockEnvironmentId,
+        workspaceId: mockWorkspaceId,
         name: "Test Survey",
         metadata: {},
         languages: [],
@@ -235,7 +235,7 @@ describe("Metadata Utils", () => {
             default: "Welcome Description",
           },
         } as TSurveyWelcomeCard,
-      } as TSurvey;
+      } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(recallToHeadline).mockReturnValue({
@@ -251,6 +251,35 @@ describe("Metadata Utils", () => {
         "default"
       );
       expect(result.title).toBe("Welcome @User");
+    });
+  });
+
+  describe("getMetadataBrandColor", () => {
+    test("returns survey brand color when workspace allows override and survey overrides theme", () => {
+      const workspaceStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(workspaceStyling, surveyStyling as any)).toBe("#0000ff");
+    });
+
+    test("returns workspace brand color when survey does not override theme", () => {
+      const workspaceStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: false, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(workspaceStyling, surveyStyling as any)).toBe("#ff0000");
+    });
+
+    test("returns workspace brand color when workspace disallows style overwrite", () => {
+      const workspaceStyling = { allowStyleOverwrite: false, brandColor: { light: "#ff0000" } };
+      const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
+
+      expect(getMetadataBrandColor(workspaceStyling, surveyStyling as any)).toBe("#ff0000");
+    });
+
+    test("returns workspace brand color when survey styling is null", () => {
+      const workspaceStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
+
+      expect(getMetadataBrandColor(workspaceStyling, null)).toBe("#ff0000");
     });
   });
 
@@ -288,7 +317,7 @@ describe("Metadata Utils", () => {
       const surveyName = "Test Survey With Spaces";
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
-      expect(result.openGraph?.images?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
+      expect((result.openGraph?.images as string[])?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
     });
   });
 });

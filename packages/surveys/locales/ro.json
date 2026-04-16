@@ -9,6 +9,7 @@
     "finish": "Finalizează",
     "language_switch": "Schimbare limbă",
     "next": "Următorul",
+    "no_results_found": "Nu s-au găsit rezultate",
     "open_in_new_tab": "Deschide într-o filă nouă",
     "people_responded": "{count, plural, one {1 persoană a răspuns} other {{count} persoane au răspuns}}",
     "please_retry_now_or_try_again_later": "Te rugăm să încerci din nou acum sau mai târziu.",
@@ -19,8 +20,10 @@
     "question_video": "Video întrebare",
     "required": "Obligatoriu",
     "respondents_will_not_see_this_card": "Respondenții nu vor vedea acest card",
+    "response_saved_offline": "Răspunsul tău nu a fost trimis încă. Va fi transmis automat când vei reveni online.",
     "retry": "Reîncearcă",
     "retrying": "Se reîncearcă...",
+    "search": "Căutare...",
     "select_option": "Selectează o opțiune",
     "select_options": "Selectează opțiuni",
     "sending_responses": "Trimiterea răspunsurilor...",
@@ -30,6 +33,7 @@
     "terms_of_service": "Termeni și condiții",
     "the_servers_cannot_be_reached_at_the_moment": "Serverele nu pot fi accesate momentan.",
     "they_will_be_redirected_immediately": "Vor fi redirecționați imediat",
+    "welcome_video": "Videoclip Card de bun venit",
     "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
   },
   "errors": {
@@ -43,7 +47,9 @@
       "file_size_exceeded_alert": "Fișierul trebuie să fie mai mic de {maxSizeInMB} MB",
       "no_valid_file_types_selected": "Nu au fost selectate tipuri de fișiere valide. Te rugăm să selectezi un tip de fișier valid.",
       "only_one_file_can_be_uploaded_at_a_time": "Poți încărca doar un singur fișier odată.",
+      "placeholder_text": "Apasă sau trage pentru a încărca fișiere",
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
+      "uploading": "Se încarcă...",
       "you_can_only_upload_a_maximum_of_files": "Poți încărca un număr maxim de {FILE_LIMIT} fișiere."
     },
     "invalid_device_error": {

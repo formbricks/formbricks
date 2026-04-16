@@ -36,19 +36,19 @@ import { TabToggle } from "@/modules/ui/components/tab-toggle";
 const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFunction): string => {
   switch (rule) {
     case "exactMatch":
-      return t("environments.actions.exactly_matches");
+      return t("workspace.actions.exactly_matches");
     case "contains":
-      return t("environments.actions.contains");
+      return t("workspace.actions.contains");
     case "startsWith":
-      return t("environments.actions.starts_with");
+      return t("workspace.actions.starts_with");
     case "endsWith":
-      return t("environments.actions.ends_with");
+      return t("workspace.actions.ends_with");
     case "notMatch":
-      return t("environments.actions.does_not_exactly_match");
+      return t("workspace.actions.does_not_exactly_match");
     case "notContains":
-      return t("environments.actions.does_not_contain");
+      return t("workspace.actions.does_not_contain");
     case "matchesRegex":
-      return t("environments.actions.matches_regex");
+      return t("workspace.actions.matches_regex");
     default:
       return rule;
   }
@@ -89,10 +89,10 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
       }
 
       setIsMatch(match);
-      if (match) toast.success(t("environments.actions.your_survey_would_be_shown_on_this_url"));
-      if (!match) toast.error(t("environments.actions.your_survey_would_not_be_shown"));
+      if (match) toast.success(t("workspace.actions.your_survey_would_be_shown_on_this_url"));
+      if (!match) toast.error(t("workspace.actions.your_survey_would_not_be_shown"));
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     }
   };
 
@@ -122,9 +122,9 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
           name="noCodeConfig.urlFilters"
           render={() => (
             <div>
-              <Label className="font-semibold">{t("environments.actions.page_filter")}</Label>
+              <Label className="font-semibold">{t("workspace.actions.page_filter")}</Label>
               <p className="text-sm font-normal text-slate-500">
-                {t("environments.actions.limit_the_pages_on_which_this_action_gets_captured")}
+                {t("workspace.actions.limit_the_pages_on_which_this_action_gets_captured")}
               </p>
               <TabToggle
                 disabled={isReadOnly}
@@ -133,8 +133,8 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
                   setFilterType(value);
                 }}
                 options={[
-                  { value: "all", label: t("environments.actions.on_all_pages") },
-                  { value: "specific", label: t("environments.actions.limit_to_specific_pages") },
+                  { value: "all", label: t("workspace.actions.on_all_pages") },
+                  { value: "specific", label: t("workspace.actions.limit_to_specific_pages") },
                 ]}
                 defaultSelected={filterType}
               />
@@ -144,7 +144,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
       </div>
       {filterType === "specific" && (
         <div className="mb-2 mt-4 w-full space-y-3 pe-2">
-          <Label>{t("environments.actions.url")}</Label>
+          <Label>{t("workspace.actions.url")}</Label>
           <UrlInput
             control={form.control}
             fields={fields}
@@ -157,12 +157,12 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
           />
           <Button variant="secondary" size="sm" type="button" onClick={handleAddMore} disabled={isReadOnly}>
             <PlusIcon className="mr-2 h-4 w-4" />
-            {t("environments.actions.add_url")}
+            {t("workspace.actions.add_url")}
           </Button>
           <div className="mt-4">
-            <Label className="font-semibold">{t("environments.actions.test_your_url")}</Label>
+            <Label className="font-semibold">{t("workspace.actions.test_your_url")}</Label>
             <p className="text-sm font-normal text-slate-500">
-              {t("environments.actions.enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked")}
+              {t("workspace.actions.enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked")}
             </p>
             <div className="rounded">
               <div className="mt-1 flex items-end">
@@ -184,7 +184,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
                   onClick={() => {
                     handleMatchClick();
                   }}>
-                  {t("environments.actions.test_match")}
+                  {t("workspace.actions.test_match")}
                 </Button>
               </div>
             </div>
@@ -227,8 +227,8 @@ const UrlInput = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white">
-                <SelectItem value="or">{t("environments.actions.or")}</SelectItem>
-                <SelectItem value="and">{t("environments.actions.and")}</SelectItem>
+                <SelectItem value="or">{t("workspace.actions.or")}</SelectItem>
+                <SelectItem value="and">{t("workspace.actions.and")}</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -240,7 +240,7 @@ const UrlInput = ({
                 <FormControl>
                   <Select onValueChange={onChange} value={value} name={name} disabled={disabled}>
                     <SelectTrigger className="h-[40px] w-[250px] bg-white">
-                      <SelectValue placeholder={t("environments.actions.select_match_type")} />
+                      <SelectValue placeholder={t("workspace.actions.select_match_type")} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                       {ACTION_CLASS_PAGE_URL_RULES.map((rule) => (
@@ -270,8 +270,8 @@ const UrlInput = ({
                       {...field}
                       placeholder={
                         ruleValue === "matchesRegex"
-                          ? t("environments.actions.add_regular_expression_here")
-                          : t("environments.actions.enter_url")
+                          ? t("workspace.actions.add_regular_expression_here")
+                          : t("workspace.actions.enter_url")
                       }
                       autoComplete="off"
                       isInvalid={!!error?.message}

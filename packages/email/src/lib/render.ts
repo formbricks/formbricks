@@ -29,6 +29,7 @@ export async function renderVerificationEmail(
 export async function renderForgotPasswordEmail(
   props: {
     verifyLink: string;
+    linkValidityInMinutes: number;
     t: TFunction;
   } & TEmailTemplateLegalProps
 ): Promise<string> {
@@ -85,7 +86,7 @@ export async function renderLinkSurveyEmail(
 export async function renderEmbedSurveyPreviewEmail(
   props: {
     html: string;
-    environmentId: string;
+    workspaceId: string;
     logoUrl?: string;
     t: TFunction;
   } & TEmailTemplateLegalProps

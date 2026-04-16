@@ -23,7 +23,12 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
+import {
+  TValidateIdError,
+  TValidateIdErrorCode,
+  findLanguageCodesForDuplicateLabels,
+  getTextContent,
+} from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
@@ -150,12 +155,9 @@ export const validationRules = {
     let fieldsToValidate = ["upperLabel", "lowerLabel"];
 
     for (const field of fieldsToValidate) {
-      if (
-        element[field] &&
-        typeof element[field][defaultLanguageCode] !== "undefined" &&
-        element[field][defaultLanguageCode].trim() !== ""
-      ) {
-        isValid = isValid && isLabelValidForAllLanguages(element[field], languages);
+      const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
+      if (fieldValue?.[defaultLanguageCode] !== undefined && fieldValue[defaultLanguageCode].trim() !== "") {
+        isValid = isValid && isLabelValidForAllLanguages(fieldValue, languages);
       }
     }
 
@@ -165,7 +167,12 @@ export const validationRules = {
 
 // Main validation function
 export const validateElement = (element: TSurveyElement, surveyLanguages: TSurveyLanguage[]): boolean => {
-  const specificValidation = validationRules[element.type];
+  const specificValidation = (
+    validationRules as Record<
+      string,
+      ((element: TSurveyElement, languages: TSurveyLanguage[]) => boolean) | undefined
+    >
+  )[element.type];
   const defaultValidation = validationRules.defaultValidation;
 
   const specificValidationResult = specificValidation ? specificValidation(element, surveyLanguages) : true;
@@ -195,6 +202,16 @@ export const validateSurveyElementsInBatch = (
 
 const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {
   return !content || isLabelValidForAllLanguages(content, surveyLanguages);
+};
+
+const hasValidSurveyClosedMessageHeading = (survey: TSurvey): boolean => {
+  if (survey.type !== "link" || !survey.surveyClosedMessage) {
+    return true;
+  }
+
+  const heading = survey.surveyClosedMessage.heading?.trim() ?? "";
+
+  return heading.length > 0;
 };
 
 export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
@@ -243,7 +260,7 @@ export const isSurveyValid = (
 ) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
-    toast.error(t("environments.surveys.edit.fallback_missing"));
+    toast.error(t("workspace.surveys.edit.fallback_missing"));
     return false;
   }
 
@@ -254,7 +271,7 @@ export const isSurveyValid = (
     if (!parsedFilters.success) {
       const errMsg =
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
-        t("environments.surveys.edit.invalid_targeting");
+        t("workspace.surveys.edit.invalid_targeting");
       toast.error(errMsg);
       return false;
     }
@@ -263,13 +280,13 @@ export const isSurveyValid = (
   // Response limit validation
   if (survey.autoComplete !== null && responseCount !== undefined) {
     if (survey.autoComplete === 0) {
-      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
+      toast.error(t("workspace.surveys.edit.response_limit_can_t_be_set_to_0"));
       return false;
     }
 
     if (survey.autoComplete <= responseCount) {
       toast.error(
-        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+        t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
           responseCount,
         }),
         {
@@ -280,5 +297,34 @@ export const isSurveyValid = (
     }
   }
 
+  if (!hasValidSurveyClosedMessageHeading(survey)) {
+    toast.error(t("workspace.surveys.edit.survey_closed_message_heading_required"));
+    return false;
+  }
+
   return true;
+};
+
+export const getValidateIdErrorMessage = (
+  error: TValidateIdError,
+  type: "hiddenField" | "question",
+  t: TFunction
+): string => {
+  const localizedType =
+    type === "hiddenField" ? t("common.hidden_field") : t("workspace.surveys.edit.question");
+
+  switch (error.code) {
+    case TValidateIdErrorCode.Empty:
+      return t("workspace.surveys.edit.validate_id_empty", { type: localizedType });
+    case TValidateIdErrorCode.Duplicate:
+      return t("workspace.surveys.edit.validate_id_duplicate", { type: localizedType });
+    case TValidateIdErrorCode.Reserved:
+      return t("workspace.surveys.edit.validate_id_reserved", { type: localizedType, field: error.field });
+    case TValidateIdErrorCode.HasSpaces:
+      return t("workspace.surveys.edit.validate_id_no_spaces", { type: localizedType });
+    case TValidateIdErrorCode.InvalidChars:
+      return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+    default:
+      return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+  }
 };

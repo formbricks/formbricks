@@ -7,16 +7,16 @@ export type TEnterpriseLicenseStatus = z.infer<typeof ZEnterpriseLicenseStatus>;
 const ZEnterpriseLicenseFeatures = z.object({
   isMultiOrgEnabled: z.boolean(),
   contacts: z.boolean(),
-  projects: z.number().nullable(),
+  workspaces: z.number().nullable(),
   whitelabel: z.boolean(),
   removeBranding: z.boolean(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
   saml: z.boolean(),
   spamProtection: z.boolean(),
-  ai: z.boolean(),
+  aiSmartTools: z.boolean(),
+  aiDataAnalysis: z.boolean(),
   auditLogs: z.boolean(),
-  multiLanguageSurveys: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),
 });
@@ -30,9 +30,10 @@ export const ZEnterpriseLicenseDetails = z.object({
 
 export type TEnterpriseLicenseDetails = z.infer<typeof ZEnterpriseLicenseDetails>;
 
-export type TEnterpriseLicenseStatusReturn =
+export type TLicenseStatus =
   | "active"
   | "expired"
+  | "instance_mismatch"
   | "unreachable"
   | "invalid_license"
   | "no-license";

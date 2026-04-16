@@ -83,27 +83,24 @@ export const SurveyVariablesCardItem = ({
 
     if (elementIdx !== -1) {
       toast.error(
-        t(
-          "environments.surveys.edit.variable_is_used_in_logic_of_question_please_remove_it_from_logic_first",
-          {
-            variable: variableToDelete.name,
-            questionIndex: elementIdx + 1,
-          }
-        )
+        t("workspace.surveys.edit.variable_is_used_in_logic_of_question_please_remove_it_from_logic_first", {
+          variable: variableToDelete.name,
+          questionIndex: elementIdx + 1,
+        })
       );
       return;
     }
     const recallElementIdx = isUsedInRecall(localSurvey, variableToDelete.id);
     if (recallElementIdx === -2) {
       toast.error(
-        t("environments.surveys.edit.variable_used_in_recall_welcome", { variable: variableToDelete.name })
+        t("workspace.surveys.edit.variable_used_in_recall_welcome", { variable: variableToDelete.name })
       );
       return;
     }
 
     if (recallElementIdx === elements.length) {
       toast.error(
-        t("environments.surveys.edit.variable_used_in_recall_ending_card", {
+        t("workspace.surveys.edit.variable_used_in_recall_ending_card", {
           variable: variableToDelete.name,
         })
       );
@@ -112,7 +109,7 @@ export const SurveyVariablesCardItem = ({
 
     if (recallElementIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.variable_used_in_recall", {
+        t("workspace.surveys.edit.variable_used_in_recall", {
           variable: variableToDelete.name,
           questionIndex: recallElementIdx + 1,
         })
@@ -124,7 +121,7 @@ export const SurveyVariablesCardItem = ({
 
     if (quotaIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.variable_is_used_in_quota_please_remove_it_from_quota_first", {
+        t("workspace.surveys.edit.variable_is_used_in_quota_please_remove_it_from_quota_first", {
           variableName: variableToDelete.name,
           quotaName: quotas[quotaIdx].name,
         })
@@ -154,9 +151,7 @@ export const SurveyVariablesCardItem = ({
               editSurveyVariable(data);
             }
           })}>
-          {mode === "create" && (
-            <Label htmlFor="headline">{t("environments.surveys.edit.add_variable")}</Label>
-          )}
+          {mode === "create" && <Label htmlFor="headline">{t("workspace.surveys.edit.add_variable")}</Label>}
 
           <div className="mt-2 flex w-full items-center gap-2">
             {/* Name field: update on blur */}
@@ -167,28 +162,24 @@ export const SurveyVariablesCardItem = ({
                 pattern: {
                   value: /^[a-z0-9_]+$/,
                   message: t(
-                    "environments.surveys.edit.only_lower_case_letters_numbers_and_underscores_are_allowed"
+                    "workspace.surveys.edit.only_lower_case_letters_numbers_and_underscores_are_allowed"
                   ),
                 },
                 validate: (value) => {
                   if (mode === "create" && localSurvey.variables.find((v) => v.name === value)) {
-                    return t(
-                      "environments.surveys.edit.variable_name_is_already_taken_please_choose_another"
-                    );
+                    return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                   }
                   if (mode === "edit" && variable && variable.name !== value) {
                     if (localSurvey.variables.find((v) => v.name === value)) {
-                      return t(
-                        "environments.surveys.edit.variable_name_is_already_taken_please_choose_another"
-                      );
+                      return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                     }
                   }
                   if (!/^[a-z]/.test(value)) {
-                    return t("environments.surveys.edit.variable_name_must_start_with_a_letter");
+                    return t("workspace.surveys.edit.variable_name_must_start_with_a_letter");
                   }
                   const hiddenFieldIds = localSurvey.hiddenFields?.fieldIds ?? [];
                   if (hiddenFieldIds.some((id) => id.toLowerCase() === value.toLowerCase())) {
-                    return t("environments.surveys.edit.variable_name_conflicts_with_hidden_field");
+                    return t("workspace.surveys.edit.variable_name_conflicts_with_hidden_field");
                   }
                 },
               }}
@@ -198,7 +189,7 @@ export const SurveyVariablesCardItem = ({
                     <Input
                       {...field}
                       isInvalid={isNameError}
-                      placeholder={t("environments.surveys.edit.field_name_eg_score_price")}
+                      placeholder={t("workspace.surveys.edit.field_name_eg_score_price")}
                       onBlur={mode === "edit" ? () => form.handleSubmit(editSurveyVariable)() : undefined}
                     />
                   </FormControl>
@@ -219,7 +210,7 @@ export const SurveyVariablesCardItem = ({
                       field.onChange(value);
                     }}>
                     <SelectTrigger className="h-10 w-24">
-                      <SelectValue placeholder={t("environments.surveys.edit.select_type")} />
+                      <SelectValue placeholder={t("workspace.surveys.edit.select_type")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="number">{t("common.number")}</SelectItem>
@@ -244,7 +235,7 @@ export const SurveyVariablesCardItem = ({
                       onChange={(e) =>
                         field.onChange(variableType === "number" ? Number(e.target.value) : e.target.value)
                       }
-                      placeholder={t("environments.surveys.edit.initial_value")}
+                      placeholder={t("workspace.surveys.edit.initial_value")}
                       type={variableType === "number" ? "number" : "text"}
                       onBlur={mode === "edit" ? () => form.handleSubmit(editSurveyVariable)() : undefined}
                     />
@@ -256,7 +247,7 @@ export const SurveyVariablesCardItem = ({
             {/* Create / Delete buttons */}
             {mode === "create" && (
               <Button variant="secondary" type="submit" className="h-10 whitespace-nowrap">
-                {t("environments.surveys.edit.add_variable")}
+                {t("workspace.surveys.edit.add_variable")}
               </Button>
             )}
             {mode === "edit" && variable && (

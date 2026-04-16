@@ -208,7 +208,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-type Story = StoryObj<typeof DialogContent> & { args: StoryOptions };
+type Story = StoryObj<StoryProps>;
 
 // Create a common render function to reduce duplication
 const renderModal = (args: StoryProps) => {

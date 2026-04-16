@@ -5,7 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
+import type { TSurveyElement, TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -21,7 +21,7 @@ interface PictureSelectionFormProps {
   localSurvey: TSurvey;
   element: TSurveyPictureSelectionElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -42,7 +42,7 @@ export const PictureSelectionForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: PictureSelectionFormProps): JSX.Element => {
-  const environmentId = localSurvey.environmentId;
+  const workspaceId = localSurvey.workspaceId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
   const handleChoiceDeletion = (choiceValue: string) => {
@@ -55,7 +55,8 @@ export const PictureSelectionForm = ({
     });
   };
 
-  const handleFileInputChanges = (urls: string[]) => {
+  const handleFileInputChanges = (urls: string[] | undefined, _fileType: "image" | "video") => {
+    if (!urls) return;
     // Handle choice deletion
     if (urls.length < element.choices.length) {
       const deletedChoice = element.choices.find((choice) => !urls.includes(choice.imageUrl));
@@ -81,7 +82,7 @@ export const PictureSelectionForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -127,7 +128,7 @@ export const PictureSelectionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -138,14 +139,14 @@ export const PictureSelectionForm = ({
             className={cn("text-slate-400", {
               "text-red-600": isInvalid && element.choices?.length < 2,
             })}>
-            ({t("environments.surveys.edit.upload_at_least_2_images")})
+            ({t("workspace.surveys.edit.upload_at_least_2_images")})
           </span>
         </Label>
         <div className="mt-3 flex w-full items-center justify-center">
           <FileInput
             id="choices-file-input"
             allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             onFileUpload={handleFileInputChanges}
             fileUrl={element?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
@@ -179,10 +180,10 @@ export const PictureSelectionForm = ({
         <Label htmlFor="multi-select-toggle" className="cursor-pointer">
           <div className="ml-2">
             <h3 className="text-sm font-semibold text-slate-700">
-              {t("environments.surveys.edit.allow_multi_select")}
+              {t("workspace.surveys.edit.allow_multi_select")}
             </h3>
             <p className="text-xs font-normal text-slate-500">
-              {t("environments.surveys.edit.allow_users_to_select_more_than_one_image")}
+              {t("workspace.surveys.edit.allow_users_to_select_more_than_one_image")}
             </p>
           </div>
         </Label>

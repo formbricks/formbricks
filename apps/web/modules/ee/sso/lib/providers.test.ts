@@ -41,6 +41,7 @@ describe("SSO Providers", () => {
   test("should configure SAML provider correctly", () => {
     const providers = getSSOProviders();
     const samlProvider = providers[4];
+    const googleProvider = providers[1];
 
     expect(samlProvider.id).toBe("saml");
     expect(samlProvider.name).toBe("BoxyHQ SAML");
@@ -50,6 +51,7 @@ describe("SSO Providers", () => {
     expect((samlProvider as any).authorization?.url).toBe("https://test-app.com/api/auth/saml/authorize");
     expect(samlProvider.token).toBe("https://test-app.com/api/auth/saml/token");
     expect(samlProvider.userinfo).toBe("https://test-app.com/api/auth/saml/userinfo");
-    expect(samlProvider.allowDangerousEmailAccountLinking).toBe(true);
+    expect(googleProvider.allowDangerousEmailAccountLinking).toBeUndefined();
+    expect(samlProvider.allowDangerousEmailAccountLinking).toBeUndefined();
   });
 });

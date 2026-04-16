@@ -226,7 +226,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             tabIndex={0}
             aria-controls="options"
             aria-expanded={open}
-            className={cn("flex w-full cursor-pointer items-center justify-end bg-white pr-2 h-10", {
+            className={cn("flex h-10 w-full cursor-pointer items-center justify-end bg-white pr-2", {
               "w-10 justify-center pr-0": withInput && inputType !== "dropdown",
               "pointer-events-none": isClearing,
             })}>
@@ -272,7 +272,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
 
             <CommandList className="border-0 p-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
-                {emptyDropdownText ?? t("environments.surveys.edit.no_option_found")}
+                {emptyDropdownText ?? t("workspace.surveys.edit.no_option_found")}
               </CommandEmpty>
 
               {options && options.length > 0 && (

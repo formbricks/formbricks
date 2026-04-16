@@ -3,7 +3,7 @@
 import { BarChart3Icon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { convertDateString, timeSinceDate } from "@/lib/time";
+import { formatDate, timeSinceDate } from "@/lib/time";
 import { ChartDropdownMenu } from "@/modules/ee/analysis/charts/components/chart-dropdown-menu";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { CHART_TYPE_ICONS } from "@/modules/ee/analysis/charts/lib/chart-types";
@@ -11,11 +11,11 @@ import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartRowProps {
   chart: TChartWithCreator;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
 }
 
-export function ChartRow({ chart, environmentId, isReadOnly }: Readonly<ChartRowProps>) {
+export function ChartRow({ chart, workspaceId, isReadOnly }: Readonly<ChartRowProps>) {
   const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const IconComponent = CHART_TYPE_ICONS[chart.type] ?? BarChart3Icon;
@@ -42,9 +42,7 @@ export function ChartRow({ chart, environmentId, isReadOnly }: Readonly<ChartRow
         tabIndex={isReadOnly ? undefined : 0}
         onClick={isReadOnly ? undefined : handleChartClick}
         onKeyDown={isReadOnly ? undefined : handleRowKeyDown}
-        aria-label={
-          isReadOnly ? undefined : t("environments.analysis.charts.open_chart", { name: chart.name })
-        }
+        aria-label={isReadOnly ? undefined : t("workspace.analysis.charts.open_chart", { name: chart.name })}
         className={`grid h-12 w-full grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100 ${isReadOnly ? "" : "cursor-pointer"}`}>
         <div className="col-span-6 grid grid-cols-6 content-center">
           <div className="col-span-3 flex items-center pl-6 text-sm">
@@ -61,9 +59,7 @@ export function ChartRow({ chart, environmentId, isReadOnly }: Readonly<ChartRow
             <div className="ph-no-capture text-slate-900">{chart.creator?.name ?? "-"}</div>
           </div>
           <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
-            <div className="ph-no-capture text-slate-900">
-              {convertDateString(chart.createdAt.toISOString())}
-            </div>
+            <div className="ph-no-capture text-slate-900">{formatDate(new Date(chart.createdAt))}</div>
           </div>
           <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
             <div className="ph-no-capture text-slate-900">{timeSinceDate(new Date(chart.updatedAt))}</div>
@@ -75,7 +71,7 @@ export function ChartRow({ chart, environmentId, isReadOnly }: Readonly<ChartRow
           onKeyDown={(e) => e.stopPropagation()}>
           {!isReadOnly && (
             <ChartDropdownMenu
-              environmentId={environmentId}
+              workspaceId={workspaceId}
               chart={chart}
               onEdit={() => setIsEditDialogOpen(true)}
             />
@@ -86,7 +82,7 @@ export function ChartRow({ chart, environmentId, isReadOnly }: Readonly<ChartRow
         <CreateChartDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
           chartId={chart.id}
           initialChart={chart}
           onSuccess={() => setIsEditDialogOpen(false)}

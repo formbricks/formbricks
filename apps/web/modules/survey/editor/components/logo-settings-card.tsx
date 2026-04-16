@@ -8,8 +8,8 @@ import React, { ChangeEvent, useRef, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -24,8 +24,8 @@ import { Switch } from "@/modules/ui/components/switch";
 type LogoSettingsCardProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  environmentId: string;
-  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  workspaceId: string;
+  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   disabled?: boolean;
   isStorageConfigured: boolean;
 };
@@ -33,7 +33,7 @@ type LogoSettingsCardProps = {
 export const LogoSettingsCard = ({
   open,
   setOpen,
-  environmentId,
+  workspaceId,
   form,
   disabled = false,
   isStorageConfigured,
@@ -62,8 +62,8 @@ export const LogoSettingsCard = ({
     });
   };
 
-  const handleFileInputChange = async (files: string[]) => {
-    if (files.length > 0) {
+  const handleFileInputChange = async (files: string[] | undefined, _fileType: "image" | "video") => {
+    if (files && files.length > 0) {
       setLogoUrl(files[0]);
     }
   };
@@ -79,7 +79,7 @@ export const LogoSettingsCard = ({
 
     setIsLoading(true);
     try {
-      const uploadResult = await handleFileUpload(file, environmentId);
+      const uploadResult = await handleFileUpload(file, workspaceId);
       if (uploadResult.error) {
         toast.error(t("common.upload_failed"));
         return;
@@ -124,7 +124,7 @@ export const LogoSettingsCard = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex w-full px-4 py-4">
-          <div className="flex items-center pr-5 pl-2">
+          <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -133,11 +133,9 @@ export const LogoSettingsCard = ({
 
           <div>
             <p className="text-base font-semibold text-slate-800">
-              {t("environments.surveys.edit.logo_settings")}
+              {t("workspace.surveys.edit.logo_settings")}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.customize_survey_logo")}
-            </p>
+            <p className="mt-1 text-sm text-slate-500">{t("workspace.surveys.edit.customize_survey_logo")}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -156,10 +154,10 @@ export const LogoSettingsCard = ({
                 </FormControl>
                 <div>
                   <FormLabel className="text-base font-semibold text-slate-900">
-                    {t("environments.surveys.edit.hide_logo")}
+                    {t("workspace.surveys.edit.hide_logo")}
                   </FormLabel>
                   <FormDescription className="text-sm text-slate-800">
-                    {t("environments.surveys.edit.hide_logo_from_survey")}
+                    {t("workspace.surveys.edit.hide_logo_from_survey")}
                   </FormDescription>
                 </div>
               </FormItem>
@@ -169,7 +167,7 @@ export const LogoSettingsCard = ({
           {!isLogoHidden && (
             <div className="space-y-4">
               <div className="font-medium text-slate-800">
-                {t("environments.surveys.edit.overwrite_survey_logo")}
+                {t("workspace.surveys.edit.overwrite_survey_logo")}
               </div>
 
               {/* Hidden file input for replacing logo */}
@@ -209,7 +207,7 @@ export const LogoSettingsCard = ({
                       variant="secondary"
                       size="sm"
                       disabled={disabled || isLoading}>
-                      {t("environments.workspace.look.replace_logo")}
+                      {t("workspace.look.replace_logo")}
                     </Button>
                     <Button
                       type="button"
@@ -217,7 +215,7 @@ export const LogoSettingsCard = ({
                       size="sm"
                       onClick={handleRemoveLogo}
                       disabled={disabled}>
-                      {t("environments.workspace.look.remove_logo")}
+                      {t("workspace.look.remove_logo")}
                     </Button>
                   </div>
 
@@ -225,8 +223,8 @@ export const LogoSettingsCard = ({
                     isChecked={isBgColorEnabled}
                     onToggle={toggleBackgroundColor}
                     htmlId="surveyLogoBgColor"
-                    title={t("environments.workspace.look.add_background_color")}
-                    description={t("environments.workspace.look.add_background_color_description")}
+                    title={t("workspace.look.add_background_color")}
+                    description={t("workspace.look.add_background_color_description")}
                     childBorder
                     customContainerClass="p-0"
                     childrenContainerClass="overflow-visible"
@@ -246,7 +244,7 @@ export const LogoSettingsCard = ({
                 <FileInput
                   id="survey-logo-input"
                   allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-                  environmentId={environmentId}
+                  workspaceId={workspaceId}
                   onFileUpload={handleFileInputChange}
                   disabled={disabled}
                   maxSizeInMB={5}

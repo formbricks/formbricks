@@ -1,31 +1,23 @@
 import "server-only";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getEnvironment } from "@/lib/environment/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
-export const checkProjectAccess = async (
+export const checkWorkspaceAccess = async (
   userId: string,
-  environmentId: string,
+  workspaceId: string,
   minPermission: TTeamPermission
 ) => {
-  const environment = await getEnvironment(environmentId);
-  if (!environment) {
-    throw new ResourceNotFoundError("environment", environmentId);
-  }
-
-  const projectId = environment.projectId;
-  const organizationId = await getOrganizationIdFromProjectId(projectId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   await checkAuthorizationUpdated({
     userId,
     organizationId,
     access: [
       { type: "organization", roles: ["owner", "manager"] },
-      { type: "projectTeam", minPermission, projectId },
+      { type: "workspaceTeam", minPermission, workspaceId },
     ],
   });
 
-  return { organizationId, projectId };
+  return { organizationId, workspaceId };
 };

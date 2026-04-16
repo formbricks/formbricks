@@ -11,11 +11,11 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
 interface AIQuerySectionProps {
-  environmentId: string;
+  workspaceId: string;
   onChartGenerated: (data: AnalyticsResponse) => void;
 }
 
-export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQuerySectionProps>) {
+export function AIQuerySection({ workspaceId, onChartGenerated }: Readonly<AIQuerySectionProps>) {
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { t } = useTranslation();
@@ -26,7 +26,7 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
     setIsGenerating(true);
     try {
       const result = await generateAIChartAction({
-        environmentId,
+        workspaceId,
         prompt: userQuery.trim(),
       });
 
@@ -48,21 +48,19 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="bg-brand-dark/10 flex h-8 w-8 items-center justify-center rounded-full">
-          <ActivityIcon className="text-brand-dark h-5 w-5" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-dark/10">
+          <ActivityIcon className="h-5 w-5 text-brand-dark" />
         </div>
         <h2 className="font-semibold text-gray-900">
-          {t("environments.analysis.charts.ai_query_section_title")}
+          {t("workspace.analysis.charts.ai_query_section_title")}
         </h2>
-        <p className="text-sm text-gray-500">
-          {t("environments.analysis.charts.ai_query_section_description")}
-        </p>
+        <p className="text-sm text-gray-500">{t("workspace.analysis.charts.ai_query_section_description")}</p>
       </div>
 
       <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <Input
           autoFocus
-          placeholder={t("environments.analysis.charts.ai_query_placeholder")}
+          placeholder={t("workspace.analysis.charts.ai_query_placeholder")}
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
           maxLength={2000}
@@ -74,7 +72,7 @@ export function AIQuerySection({ environmentId, onChartGenerated }: Readonly<AIQ
           disabled={!userQuery.trim() || isGenerating}
           loading={isGenerating}>
           <WandSparklesIcon className="h-4 w-4" />
-          {t("environments.analysis.charts.create_chart_with_ai")}
+          {t("workspace.analysis.charts.create_chart_with_ai")}
         </Button>
       </form>
     </div>

@@ -32,16 +32,17 @@ vi.mock("@/lib/pollyfills/structuredClone", () => ({
   structuredClone: vi.fn((obj) => JSON.parse(JSON.stringify(obj))),
 }));
 
-vi.mock("@/lib/utils/datetime", () => ({
-  isValidDateString: vi.fn((value) => {
-    try {
-      return !isNaN(new Date(value as string).getTime());
-    } catch {
-      return false;
+vi.mock("@/lib/utils/date-display", () => ({
+  formatStoredDateForDisplay: vi.fn((value: string, format: string | undefined, locale: string) => {
+    if (value === "2023-01-01") {
+      return `formatted-${locale}-${format ?? "iso"}`;
     }
-  }),
-  formatDateWithOrdinal: vi.fn(() => {
-    return "January 1st, 2023";
+
+    if (value === "01-02-2023" && format === "M-d-y") {
+      return `legacy-${locale}-${format}`;
+    }
+
+    return null;
   }),
 }));
 
@@ -477,7 +478,20 @@ describe("recall utility functions", () => {
       };
 
       const result = parseRecallInfo(text, responseData);
-      expect(result).toBe("You joined on January 1st, 2023");
+      expect(result).toBe("You joined on formatted-en-US-iso");
+    });
+
+    test("formats legacy date values using the provided locale and stored format", () => {
+      const text = "You joined on #recall:joinDate/fallback:an-unknown-date#";
+      const responseData: TResponseData = {
+        joinDate: "01-02-2023",
+      };
+
+      const result = parseRecallInfo(text, responseData, undefined, false, "fr-FR", {
+        joinDate: "M-d-y",
+      });
+
+      expect(result).toBe("You joined on legacy-fr-FR-M-d-y");
     });
 
     test("formats array values as comma-separated list", () => {

@@ -1,19 +1,16 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
-import { getBillingPeriodStartDate } from "@/lib/utils/billing";
+import { TOrganizationBilling } from "@formbricks/types/organizations";
+import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 
-export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) => {
+export const getOrganizationIdFromWorkspaceId = reactCache(async (workspaceId: string) => {
   try {
     const organization = await prisma.organization.findFirst({
       where: {
-        projects: {
+        workspaces: {
           some: {
-            environments: {
-              some: {
-                id: environmentId,
-              },
-            },
+            id: workspaceId,
           },
         },
       },
@@ -30,7 +27,9 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -42,38 +41,47 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
         id: organizationId,
       },
       select: {
-        billing: true,
+        billing: {
+          select: {
+            stripeCustomerId: true,
+            limits: true,
+            usageCycleAnchor: true,
+            stripe: true,
+          },
+        },
       },
     });
 
-    if (!organization) {
+    if (!organization?.billing) {
       return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
     }
 
-    return ok(organization.billing);
+    return ok({
+      stripeCustomerId: organization.billing.stripeCustomerId,
+      limits: organization.billing.limits as TOrganizationBilling["limits"],
+      usageCycleAnchor: organization.billing.usageCycleAnchor,
+      ...(organization.billing.stripe === null ? {} : { stripe: organization.billing.stripe }),
+    });
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
 
-export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizationId: string) => {
+export const getAllWorkspaceIdsFromOrganizationId = reactCache(async (organizationId: string) => {
   try {
     const organization = await prisma.organization.findUnique({
       where: {
         id: organizationId,
       },
-
       select: {
-        projects: {
+        workspaces: {
           select: {
-            environments: {
-              select: {
-                id: true,
-              },
-            },
+            id: true,
           },
         },
       },
@@ -83,15 +91,15 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
       return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
     }
 
-    const environmentIds = organization.projects
-      .flatMap((project) => project.environments)
-      .map((environment) => environment.id);
+    const workspaceIds = organization.workspaces.map((workspace) => workspace.id);
 
-    return ok(environmentIds);
+    return ok(workspaceIds);
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });
@@ -103,24 +111,23 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
       return err(billing.error);
     }
 
-    // Determine the start date based on the plan type
-    const startDate = getBillingPeriodStartDate(billing.data);
+    const usageCycleWindow = getBillingUsageCycleWindow(billing.data);
 
-    // Get all environment IDs for the organization
-    const environmentIdsResult = await getAllEnvironmentsFromOrganizationId(organizationId);
-    if (!environmentIdsResult.ok) {
-      return err(environmentIdsResult.error);
+    // Get all workspace IDs for the organization
+    const workspaceIdsResult = await getAllWorkspaceIdsFromOrganizationId(organizationId);
+    if (!workspaceIdsResult.ok) {
+      return err(workspaceIdsResult.error);
     }
 
-    // Use Prisma's aggregate to count responses for all environments
+    // Use Prisma's aggregate to count responses for all workspaces
     const responseAggregations = await prisma.response.aggregate({
       _count: {
         id: true,
       },
       where: {
         AND: [
-          { survey: { environmentId: { in: environmentIdsResult.data } } },
-          { createdAt: { gte: startDate } },
+          { survey: { workspaceId: { in: workspaceIdsResult.data } } },
+          { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
         ],
       },
     });
@@ -130,7 +137,9 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
   } catch (error) {
     return err({
       type: "internal_server_error",
-      details: [{ field: "organization", issue: error.message }],
+      details: [
+        { field: "organization", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
     });
   }
 });

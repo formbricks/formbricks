@@ -50,26 +50,26 @@ export function AddToDashboardDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !isSaving && onOpenChange(open)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("environments.analysis.charts.add_chart_to_dashboard")}</DialogTitle>
+          <DialogTitle>{t("workspace.analysis.charts.add_chart_to_dashboard")}</DialogTitle>
           <DialogDescription>
-            {t("environments.analysis.charts.add_chart_to_dashboard_description")}
+            {t("workspace.analysis.charts.add_chart_to_dashboard_description")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="chart-name">{t("environments.analysis.charts.chart_name")}</Label>
+              <Label htmlFor="chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
               <Input
                 id="chart-name"
                 className="mt-2"
-                placeholder={t("environments.analysis.charts.chart_name_placeholder")}
+                placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
                 value={chartName}
                 onChange={(e) => onChartNameChange(e.target.value)}
                 maxLength={255}
               />
             </div>
             <div>
-              <Label htmlFor="dashboard-select">{t("environments.analysis.charts.dashboard")}</Label>
+              <Label htmlFor="dashboard-select">{t("workspace.analysis.charts.dashboard")}</Label>
               <Select value={selectedDashboardId} onValueChange={onDashboardSelect}>
                 <SelectTrigger
                   id="dashboard-select"
@@ -78,8 +78,8 @@ export function AddToDashboardDialog({
                   <SelectValue
                     placeholder={
                       dashboards.length === 0
-                        ? t("environments.analysis.charts.no_dashboards_available")
-                        : t("environments.analysis.charts.dashboard_select_placeholder")
+                        ? t("workspace.analysis.charts.no_dashboards_available")
+                        : t("workspace.analysis.charts.dashboard_select_placeholder")
                     }
                   />
                 </SelectTrigger>
@@ -93,7 +93,7 @@ export function AddToDashboardDialog({
               </Select>
               {dashboards.length === 0 && (
                 <p className="mt-1 text-xs text-gray-500">
-                  {t("environments.analysis.charts.no_dashboards_create_first")}
+                  {t("workspace.analysis.charts.no_dashboards_create_first")}
                 </p>
               )}
             </div>
@@ -104,7 +104,7 @@ export function AddToDashboardDialog({
             {t("common.cancel")}
           </Button>
           <Button onClick={onConfirm} loading={isSaving} disabled={!selectedDashboardId || !chartName.trim()}>
-            {t("environments.analysis.charts.add_to_dashboard")}
+            {t("workspace.analysis.charts.add_to_dashboard")}
           </Button>
         </DialogFooter>
       </DialogContent>

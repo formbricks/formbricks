@@ -1,8 +1,8 @@
 import { logger } from "@formbricks/logger";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
-import { ActionClientCtx, AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
@@ -185,18 +185,16 @@ export const queueAuditEvent = async ({
  * @param targetType - The type of target (e.g., "segment", "survey").
  * @param handler - The handler function to wrap. It can be used with both authenticated and unauthenticated actions.
  **/
-export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult = unknown>(
+export const withAuditLogging = <
+  TCtx extends ActionClientCtx = ActionClientCtx,
+  TParsedInput = Record<string, unknown>,
+  TResult = unknown,
+>(
   action: TAuditAction,
   targetType: TAuditTarget,
-  handler: (args: {
-    ctx: ActionClientCtx | AuthenticatedActionClientCtx;
-    parsedInput: TParsedInput;
-  }) => Promise<TResult>
+  handler: (args: { ctx: TCtx; parsedInput: TParsedInput }) => Promise<TResult>
 ) => {
-  return async function wrappedAction(args: {
-    ctx: ActionClientCtx | AuthenticatedActionClientCtx;
-    parsedInput: TParsedInput;
-  }): Promise<TResult> {
+  return async function wrappedAction(args: { ctx: TCtx; parsedInput: TParsedInput }): Promise<TResult> {
     const { ctx, parsedInput } = args;
     const { auditLoggingCtx } = ctx;
     let result!: TResult;
@@ -229,12 +227,12 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
           UNKNOWN_DATA;
 
         if (!organizationId) {
-          const environmentId = (parsedInput as Record<string, any>)?.environmentId;
-          if (environmentId && typeof environmentId === "string") {
+          const workspaceId = (parsedInput as Record<string, any>)?.workspaceId;
+          if (workspaceId && typeof workspaceId === "string") {
             try {
-              organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+              organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
             } catch (err) {
-              logger.error(err, "Failed to get organizationId from environmentId in audit logging");
+              logger.error(err, "Failed to get organizationId from workspaceId in audit logging");
               organizationId = UNKNOWN_DATA;
             }
           } else {
@@ -262,8 +260,8 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
           case "user":
             targetId = auditLoggingCtx.userId;
             break;
-          case "project":
-            targetId = auditLoggingCtx.projectId;
+          case "workspace":
+            targetId = auditLoggingCtx.workspaceId;
             break;
           case "language":
             targetId = auditLoggingCtx.languageId;
@@ -300,6 +298,9 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
             break;
           case "dashboardWidget":
             targetId = auditLoggingCtx.dashboardWidgetId;
+            break;
+          case "feedbackRecordDirectory":
+            targetId = auditLoggingCtx.feedbackRecordDirectoryId;
             break;
           default:
             targetId = UNKNOWN_DATA;

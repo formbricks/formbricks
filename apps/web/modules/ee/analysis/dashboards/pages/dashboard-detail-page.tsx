@@ -3,7 +3,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
 
@@ -14,7 +14,7 @@ interface WidgetQueryResult {
 
 async function executeWidgetQuery(query: TChartQuery): Promise<WidgetQueryResult | null> {
   try {
-    const data = await executeQuery(query);
+    const data = await executeQuery(query as Record<string, unknown>);
     return { data: Array.isArray(data) ? data : [], query };
   } catch {
     return null;
@@ -24,14 +24,14 @@ async function executeWidgetQuery(query: TChartQuery): Promise<WidgetQueryResult
 export async function DashboardDetailPage({
   params,
 }: Readonly<{
-  params: Promise<{ environmentId: string; dashboardId: string }>;
+  params: Promise<{ workspaceId: string; dashboardId: string }>;
 }>) {
-  const { environmentId, dashboardId } = await params;
-  const { project, isReadOnly } = await getEnvironmentAuth(environmentId);
+  const { workspaceId, dashboardId } = await params;
+  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
 
   let dashboard;
   try {
-    dashboard = await getDashboard(dashboardId, project.id);
+    dashboard = await getDashboard(dashboardId, workspaceId);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       return notFound();
@@ -57,7 +57,7 @@ export async function DashboardDetailPage({
 
   return (
     <DashboardDetailClient
-      environmentId={environmentId}
+      workspaceId={workspaceId}
       dashboard={dashboard}
       widgetDataPromises={widgetDataPromises}
       isReadOnly={isReadOnly}

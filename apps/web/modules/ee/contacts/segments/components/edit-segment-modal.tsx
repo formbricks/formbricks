@@ -4,7 +4,7 @@ import { UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
 import {
   Dialog,
@@ -15,23 +15,63 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { SegmentActivityTab } from "./segment-activity-tab";
+import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface EditSegmentModalProps {
-  environmentId: string;
+  workspaceId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  currentSegment: TSegmentWithSurveyNames;
+  currentSegment: TSegmentWithSurveyRefs;
+  activitySummary: TSegmentActivitySummary;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isContactsEnabled: boolean;
   isReadOnly: boolean;
 }
 
+const SegmentSettingsTab = ({
+  activitySummary,
+  contactAttributeKeys,
+  currentSegment,
+  workspaceId,
+  isContactsEnabled,
+  isReadOnly,
+  segments,
+  setOpen,
+}: Pick<
+  EditSegmentModalProps,
+  | "activitySummary"
+  | "contactAttributeKeys"
+  | "currentSegment"
+  | "workspaceId"
+  | "isContactsEnabled"
+  | "isReadOnly"
+  | "segments"
+  | "setOpen"
+>) => {
+  if (!isContactsEnabled) {
+    return null;
+  }
+
+  return (
+    <SegmentSettings
+      activitySummary={activitySummary}
+      contactAttributeKeys={contactAttributeKeys}
+      workspaceId={workspaceId}
+      initialSegment={currentSegment}
+      segments={segments}
+      setOpen={setOpen}
+      isReadOnly={isReadOnly}
+    />
+  );
+};
+
 export const EditSegmentModal = ({
-  environmentId,
+  workspaceId,
   open,
   setOpen,
   currentSegment,
+  activitySummary,
   contactAttributeKeys,
   segments,
   isContactsEnabled,
@@ -40,31 +80,25 @@ export const EditSegmentModal = ({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
 
-  const SettingsTab = () => {
-    if (isContactsEnabled) {
-      return (
-        <SegmentSettings
-          contactAttributeKeys={contactAttributeKeys}
-          environmentId={environmentId}
-          initialSegment={currentSegment}
-          segments={segments}
-          setOpen={setOpen}
-          isReadOnly={isReadOnly}
-        />
-      );
-    }
-
-    return null;
-  };
-
   const tabs = [
     {
       title: t("common.activity"),
-      children: <SegmentActivityTab currentSegment={currentSegment} />,
+      children: <SegmentActivityTab currentSegment={currentSegment} activitySummary={activitySummary} />,
     },
     {
       title: t("common.settings"),
-      children: <SettingsTab />,
+      children: (
+        <SegmentSettingsTab
+          activitySummary={activitySummary}
+          contactAttributeKeys={contactAttributeKeys}
+          currentSegment={currentSegment}
+          workspaceId={workspaceId}
+          isContactsEnabled={isContactsEnabled}
+          isReadOnly={isReadOnly}
+          segments={segments}
+          setOpen={setOpen}
+        />
+      ),
     },
   ];
 
@@ -93,7 +127,7 @@ export const EditSegmentModal = ({
                 key={tab.title}
                 className={`mr-4 px-1 pb-3 focus:outline-none ${
                   activeTab === index
-                    ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                    ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                     : "text-slate-500 hover:text-slate-700"
                 }`}
                 onClick={() => handleTabClick(index)}>

@@ -1,40 +1,29 @@
 "use server";
 
 import { z } from "zod";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
-import { hashPassword } from "@/lib/auth";
-import { verifyToken } from "@/lib/jwt";
+import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
-import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getUser, updateUser } from "@/modules/auth/lib/user";
+import { completePasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { sendPasswordResetNotifyEmail } from "@/modules/email";
 
 const ZResetPasswordAction = z.object({
-  token: z.string(),
+  token: z.string().min(1),
   password: ZUserPassword,
 });
 
-export const resetPasswordAction = actionClient.schema(ZResetPasswordAction).action(
-  withAuditLogging(
-    "updated",
-    "user",
-    async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
-      const hashedPassword = await hashPassword(parsedInput.password);
-      const { id } = await verifyToken(parsedInput.token);
-      const oldObject = await getUser(id);
-      if (!oldObject) {
-        throw new ResourceNotFoundError("user", id);
-      }
-      const updatedUser = await updateUser(id, { password: hashedPassword });
-
-      ctx.auditLoggingCtx.userId = id;
-      ctx.auditLoggingCtx.oldObject = oldObject;
-      ctx.auditLoggingCtx.newObject = updatedUser;
-
-      await sendPasswordResetNotifyEmail({ email: updatedUser.email, locale: updatedUser.locale });
-      return { success: true };
+export const resetPasswordAction = actionClient.inputSchema(ZResetPasswordAction).action(
+  withAuditLogging("updated", "user", async ({ ctx, parsedInput }) => {
+    if (PASSWORD_RESET_DISABLED) {
+      throw new OperationNotAllowedError("Password reset is disabled");
     }
-  )
+
+    const result = await completePasswordReset(parsedInput.token, parsedInput.password);
+    ctx.auditLoggingCtx.userId = result.userId;
+    ctx.auditLoggingCtx.oldObject = { ...result.oldUser, passwordResetMarker: false };
+    ctx.auditLoggingCtx.newObject = { ...result.updatedUser, passwordResetMarker: true };
+
+    return { success: true };
+  })
 );

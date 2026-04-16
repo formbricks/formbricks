@@ -9,9 +9,9 @@ export const getSurveyQuestions = reactCache(async (surveyId: string) => {
         id: surveyId,
       },
       select: {
-        environmentId: true,
         questions: true,
         blocks: true,
+        workspaceId: true,
       },
     });
 
@@ -21,6 +21,11 @@ export const getSurveyQuestions = reactCache(async (surveyId: string) => {
 
     return ok(survey);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "survey", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "survey", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
   }
 });

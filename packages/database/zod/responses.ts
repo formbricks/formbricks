@@ -1,69 +1,79 @@
 import type { Response } from "@prisma/client";
 import { z } from "zod";
-import { extendZodWithOpenApi } from "zod-openapi";
-
-extendZodWithOpenApi(z);
 
 export const ZResponse = z.object({
-  id: z.string().cuid2().openapi({
-    description: "The ID of the response",
-  }),
-  createdAt: z.coerce.date().openapi({
-    description: "The date and time the response was created",
-    example: "2021-01-01T00:00:00.000Z",
-  }),
-  updatedAt: z.coerce.date().openapi({
-    description: "The date and time the response was last updated",
-    example: "2021-01-01T00:00:00.000Z",
-  }),
-  finished: z.boolean().openapi({
-    description: "Whether the response is finished",
-    example: true,
-  }),
-  surveyId: z.string().cuid2().openapi({
-    description: "The ID of the survey",
-  }),
-  contactId: z.string().cuid2().nullable().openapi({
-    description: "The ID of the contact",
-  }),
-  endingId: z.string().cuid2().nullable().openapi({
-    description: "The ID of the ending",
-  }),
-  data: z.record(z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])).openapi({
-    description: "The data of the response",
-    example: {
-      question1: "answer1",
-      question2: 2,
-      question3: ["answer3", "answer4"],
-      question4: {
-        subquestion1: "answer5",
+  id: z.cuid2().describe("The ID of the response"),
+  createdAt: z.coerce
+    .date()
+    .meta({
+      example: "2021-01-01T00:00:00.000Z",
+    })
+    .describe("The date and time the response was created"),
+  updatedAt: z.coerce
+    .date()
+    .meta({
+      example: "2021-01-01T00:00:00.000Z",
+    })
+    .describe("The date and time the response was last updated"),
+  finished: z
+    .boolean()
+    .meta({
+      example: true,
+    })
+    .describe("Whether the response is finished"),
+  surveyId: z.cuid2().describe("The ID of the survey"),
+  contactId: z.cuid2().nullable().describe("The ID of the contact"),
+  endingId: z.cuid2().nullable().describe("The ID of the ending"),
+  data: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())])
+    )
+    .meta({
+      example: {
+        question1: "answer1",
+        question2: 2,
+        question3: ["answer3", "answer4"],
+        question4: {
+          subquestion1: "answer5",
+        },
       },
-    },
-  }),
-  variables: z.record(z.union([z.string(), z.number()])).openapi({
-    description: "The variables of the response",
-    example: {
-      variable1: "answer1",
-      variable2: 2,
-    },
-  }),
-  ttc: z.record(z.number()).openapi({
-    description: "The TTC of the response",
-    example: {
-      question1: 10,
-      question2: 20,
-    },
-  }),
+    })
+    .describe("The data of the response"),
+  variables: z
+    .record(z.string(), z.union([z.string(), z.number()]))
+    .meta({
+      example: {
+        variable1: "answer1",
+        variable2: 2,
+      },
+    })
+    .describe("The variables of the response"),
+  ttc: z
+    .record(z.string(), z.number())
+    .meta({
+      example: {
+        question1: 10,
+        question2: 20,
+      },
+    })
+    .describe("The TTC of the response"),
   meta: z
     .object({
-      source: z.string().optional().openapi({
-        description: "The source of the response",
-        example: "https://example.com",
-      }),
-      url: z.string().optional().openapi({
-        description: "The URL of the response",
-        example: "https://example.com",
-      }),
+      source: z
+        .string()
+        .optional()
+        .meta({
+          example: "https://example.com",
+        })
+        .describe("The source of the response"),
+      url: z
+        .string()
+        .optional()
+        .meta({
+          example: "https://example.com",
+        })
+        .describe("The URL of the response"),
       userAgent: z
         .object({
           browser: z.string().optional(),
@@ -74,8 +84,7 @@ export const ZResponse = z.object({
       country: z.string().optional(),
       action: z.string().optional(),
     })
-    .openapi({
-      description: "The meta data of the response",
+    .meta({
       example: {
         source: "https://example.com",
         url: "https://example.com",
@@ -87,30 +96,29 @@ export const ZResponse = z.object({
         country: "US",
         action: "click",
       },
-    }),
+    })
+    .describe("The meta data of the response"),
   contactAttributes: z
-    .record(z.string())
+    .record(z.string(), z.string())
     .nullable()
-    .openapi({
-      description: "The attributes of the contact",
+    .meta({
       example: {
         attribute1: "value1",
         attribute2: "value2",
       },
-    }),
-  singleUseId: z.string().nullable().openapi({
-    description: "The single use ID of the response",
-  }),
-  language: z.string().nullable().openapi({
-    description: "The language of the response",
-    example: "en",
-  }),
-  displayId: z.string().nullable().openapi({
-    description: "The display ID of the response",
-  }),
+    })
+    .describe("The attributes of the contact"),
+  singleUseId: z.string().nullable().describe("The single use ID of the response"),
+  language: z
+    .string()
+    .nullable()
+    .meta({
+      example: "en",
+    })
+    .describe("The language of the response"),
+  displayId: z.string().nullable().describe("The display ID of the response"),
 }) satisfies z.ZodType<Response>;
 
-ZResponse.openapi({
-  ref: "response",
-  description: "A response",
-});
+ZResponse.meta({
+  id: "response",
+}).describe("A response");

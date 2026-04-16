@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 import { responses } from "@/app/lib/api/response";
-import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,
@@ -10,35 +10,37 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({
-    req,
-    authentication,
-  }: {
-    req: NextRequest;
-    authentication: NonNullable<TSessionAuthentication>;
-  }) => {
+  handler: async ({ req, authentication }) => {
+    if (!authentication || !("user" in authentication)) {
+      return { response: responses.notAuthenticatedResponse() };
+    }
+
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
     const code = queryParams.get("code");
     const error = queryParams.get("error");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid workspaceId"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
+
+    const basePath = `/workspaces/${workspaceId}`;
 
     if (code && typeof code !== "string") {
       return {
@@ -91,25 +93,31 @@ export const GET = withV1ApiWrapper({
         },
       };
 
-      const existingIntegration = await getIntegrationByType(environmentId, "notion");
+      const existingIntegration = await getIntegrationByType(workspaceId, "notion");
       if (existingIntegration) {
         notionIntegration.config.data = existingIntegration.config.data as TIntegrationNotionConfigData[];
       }
 
-      const result = await createOrUpdateIntegration(environmentId, notionIntegration);
+      const result = await createOrUpdateIntegration(workspaceId, notionIntegration);
 
       if (result) {
+        try {
+          const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+          capturePostHogEvent(authentication.user.id, "integration_connected", {
+            integration_type: "notion",
+            organization_id: organizationId,
+          });
+        } catch (err) {
+          logger.error({ error: err }, "Failed to capture PostHog integration_connected event for notion");
+        }
+
         return {
-          response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion`
-          ),
+          response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/notion`),
         };
       }
     } else if (error) {
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/notion?error=${error}`
-        ),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/notion?error=${error}`),
       };
     }
 

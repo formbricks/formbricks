@@ -172,7 +172,7 @@ function NPS({
       />
 
       {/* NPS Options */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full px-[2px]" dir={dir}>
           <legend className="sr-only">NPS rating options</legend>

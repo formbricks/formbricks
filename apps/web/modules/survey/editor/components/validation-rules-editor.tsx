@@ -94,6 +94,17 @@ export const ValidationRulesEditor = ({
 
   const handleDisable = () => {
     onUpdateValidation({ rules: [], logic: validationLogic });
+    // Reset inputType to "text" when disabling validation for OpenText elements.
+    // Without this, the HTML input keeps its type (e.g. "url"), which still enforces
+    // browser-native format validation even though the user toggled validation off.
+    if (
+      elementType === TSurveyElementTypeEnum.OpenText &&
+      onUpdateInputType &&
+      inputType !== undefined &&
+      inputType !== "text"
+    ) {
+      onUpdateInputType("text");
+    }
   };
 
   const handleAddRule = (insertAfterIndex: number) => {
@@ -302,8 +313,8 @@ export const ValidationRulesEditor = ({
       isChecked={isEnabled}
       onToggle={(checked) => (checked ? handleEnable() : handleDisable())}
       htmlId="validation-rules-toggle"
-      title={t("environments.surveys.edit.validation_rules")}
-      description={t("environments.surveys.edit.validation_rules_description")}
+      title={t("workspace.surveys.edit.validation_rules")}
+      description={t("workspace.surveys.edit.validation_rules_description")}
       customContainerClass="p-0 mt-4"
       childrenContainerClass="flex-col p-3 gap-2">
       {/* Validation Logic Selector - only show when there are 2+ rules */}

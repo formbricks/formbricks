@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyConsentElement } from "@formbricks/types/surveys/elements";
+import { TSurveyConsentElement, type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -15,7 +15,7 @@ interface ConsentElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyConsentElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyConsentElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
@@ -60,7 +60,7 @@ export const ConsentElementForm = ({
         {...commonInputProps}
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
       />
 
@@ -90,7 +90,7 @@ export const ConsentElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -98,7 +98,7 @@ export const ConsentElementForm = ({
       <ElementFormInput
         {...commonInputProps}
         id="label"
-        label={t("environments.surveys.edit.checkbox_label") + "*"}
+        label={t("workspace.surveys.edit.checkbox_label") + "*"}
         placeholder="I agree to the terms and conditions"
         value={element.label}
       />

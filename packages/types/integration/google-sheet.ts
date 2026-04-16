@@ -16,14 +16,14 @@ export const ZIntegrationGoogleSheetsConfigData = z
     spreadsheetId: z.string(),
     spreadsheetName: z.string(),
   })
-  .merge(ZIntegrationBaseSurveyData);
+  .extend(ZIntegrationBaseSurveyData.shape);
 
 export type TIntegrationGoogleSheetsConfigData = z.infer<typeof ZIntegrationGoogleSheetsConfigData>;
 
 export const ZIntegrationGoogleSheetsConfig = z.object({
   key: ZGoogleCredential,
   data: z.array(ZIntegrationGoogleSheetsConfigData),
-  email: z.string().email(),
+  email: z.email(),
 });
 
 export type TIntegrationGoogleSheetsConfig = z.infer<typeof ZIntegrationGoogleSheetsConfig>;
@@ -31,7 +31,6 @@ export type TIntegrationGoogleSheetsConfig = z.infer<typeof ZIntegrationGoogleSh
 export const ZGoogleSheetIntegration = z.object({
   id: z.string(),
   type: z.literal("googleSheets"),
-  environmentId: z.string(),
   config: ZIntegrationGoogleSheetsConfig,
 });
 

@@ -21,11 +21,11 @@ export function ChartDialogFooter({
     <DialogFooter>
       <Button variant="outline" onClick={onAddToDashboardClick} disabled={isSaving}>
         <PlusIcon className="mr-2 h-4 w-4" />
-        {t("environments.analysis.charts.add_to_dashboard")}
+        {t("workspace.analysis.charts.add_to_dashboard")}
       </Button>
       <Button onClick={onSaveClick} disabled={isSaving}>
         <SaveIcon className="mr-2 h-4 w-4" />
-        {t("environments.analysis.charts.save_chart")}
+        {t("workspace.analysis.charts.save_chart")}
       </Button>
     </DialogFooter>
   );

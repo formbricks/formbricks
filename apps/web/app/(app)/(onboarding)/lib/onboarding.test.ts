@@ -19,8 +19,8 @@ describe("getTeamsByOrganizationId", () => {
 
   test("returns mapped teams", async () => {
     const mockTeams = [
-      { id: "t1", name: "Team 1" },
-      { id: "t2", name: "Team 2" },
+      { id: "t1", name: "Team 1", createdAt: new Date(), updatedAt: new Date(), organizationId: "org1" },
+      { id: "t2", name: "Team 2", createdAt: new Date(), updatedAt: new Date(), organizationId: "org1" },
     ];
     vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockTeams);
     const result = await getTeamsByOrganizationId("org1");

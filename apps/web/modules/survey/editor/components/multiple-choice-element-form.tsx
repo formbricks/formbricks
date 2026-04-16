@@ -9,9 +9,10 @@ import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
-import { TI18nString } from "@formbricks/types/i18n";
 import {
   TMultipleChoiceOptionDisplayType,
+  TSurveyElement,
+  TSurveyElementChoice,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
 } from "@formbricks/types/surveys/elements";
@@ -32,7 +33,7 @@ interface MultipleChoiceElementFormProps {
   localSurvey: TSurvey;
   element: TSurveyMultipleChoiceElement;
   elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceElement>) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -62,30 +63,40 @@ export const MultipleChoiceElementForm = ({
   const elementRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
-  const shuffleOptionsTypes = {
+  const shuffleOptionsTypes: Record<TShuffleOption, { id: TShuffleOption; label: string; show: boolean }> = {
     none: {
       id: "none",
-      label: t("environments.surveys.edit.keep_current_order"),
+      label: t("workspace.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: t("environments.surveys.edit.randomize_all"),
+      label: t("workspace.surveys.edit.randomize_all"),
       show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
     },
     exceptLast: {
       id: "exceptLast",
-      label: t("environments.surveys.edit.randomize_all_except_last"),
+      label: t("workspace.surveys.edit.randomize_all_except_last"),
+      show: true,
+    },
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
+      label: t("workspace.surveys.edit.reverse_order_occasionally"),
+      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
       show: true,
     },
   };
 
   const multipleChoiceOptionDisplayTypeOptions = [
-    { value: "list", label: t("environments.surveys.edit.list") },
-    { value: "dropdown", label: t("environments.surveys.edit.dropdown") },
+    { value: "list", label: t("workspace.surveys.edit.list") },
+    { value: "dropdown", label: t("workspace.surveys.edit.dropdown") },
   ];
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
+  const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
     let newChoices: any[] = [];
     if (element.choices) {
       newChoices = element.choices.map((choice, idx) => {
@@ -107,7 +118,7 @@ export const MultipleChoiceElementForm = ({
   // Get the display name for the selected language (for multi-language surveys)
   const bulkEditButtonLabel = useMemo(() => {
     if (localSurvey.languages.length <= 1) {
-      return t("environments.surveys.edit.bulk_edit");
+      return t("workspace.surveys.edit.bulk_edit");
     }
 
     const languageCode =
@@ -116,7 +127,7 @@ export const MultipleChoiceElementForm = ({
         : selectedLanguageCode;
 
     const languageName = languageCode ? getLanguageLabel(languageCode, locale) : "";
-    return `${t("environments.surveys.edit.bulk_edit")} (${languageName})`;
+    return `${t("workspace.surveys.edit.bulk_edit")} (${languageName})`;
   }, [localSurvey.languages, selectedLanguageCode, locale, t]);
 
   const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceElement["choices"]) => {
@@ -166,7 +177,10 @@ export const MultipleChoiceElementForm = ({
     updateElement(elementIdx, {
       choices: newChoices,
       ...(element.shuffleOption === shuffleOptionsTypes.all.id && {
-        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+        shuffleOption: shuffleOptionsTypes.exceptLast.id,
+      }),
+      ...(element.shuffleOption === shuffleOptionsTypes.reverseOrderOccasionally.id && {
+        shuffleOption: shuffleOptionsTypes.reverseOrderExceptLast.id,
       }),
     });
   };
@@ -178,7 +192,7 @@ export const MultipleChoiceElementForm = ({
       const idx = findOptionUsedInLogic(localSurvey, element.id, choiceToDelete);
       if (idx !== -1) {
         toast.error(
-          t("environments.surveys.edit.option_used_in_logic_error", {
+          t("workspace.surveys.edit.option_used_in_logic_error", {
             questionIndex: idx + 1,
           })
         );
@@ -192,8 +206,18 @@ export const MultipleChoiceElementForm = ({
       setisInvalidValue(null);
     }
 
+    const hasRemainingSpecialChoices = newChoices.some((c) => c.id === "other" || c.id === "none");
+
     updateElement(elementIdx, {
       choices: newChoices,
+      ...(!hasRemainingSpecialChoices &&
+        element.shuffleOption === "reverseOrderExceptLast" && {
+          shuffleOption: "reverseOrderOccasionally",
+        }),
+      ...(!hasRemainingSpecialChoices &&
+        element.shuffleOption === "exceptLast" && {
+          shuffleOption: "all",
+        }),
     });
   };
 
@@ -215,13 +239,13 @@ export const MultipleChoiceElementForm = ({
       id: "other",
       label: t("common.other"),
       addChoice: () => addSpecialChoice("other", t("common.other")),
-      addButtonText: t("environments.surveys.edit.add_other"),
+      addButtonText: t("workspace.surveys.edit.add_other"),
     },
     {
       id: "none",
       label: t("common.none_of_the_above"),
       addChoice: () => addSpecialChoice("none", t("common.none_of_the_above")),
-      addButtonText: t("environments.surveys.edit.add_none_of_the_above"),
+      addButtonText: t("workspace.surveys.edit.add_none_of_the_above"),
     },
   ];
 
@@ -233,7 +257,7 @@ export const MultipleChoiceElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -280,13 +304,13 @@ export const MultipleChoiceElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options*</Label>
+        <Label htmlFor="choices">{t("workspace.surveys.edit.options")}</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="multi-choice-choices"
@@ -345,8 +369,8 @@ export const MultipleChoiceElementForm = ({
         </div>
 
         <div className="mt-2">
-          <div className="mt-2 flex items-center justify-between space-x-2">
-            <div className="flex gap-2">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
               {specialChoices.map((specialChoice) => {
                 if (element.choices.some((c) => c.id === specialChoice.id)) return null;
                 return (
@@ -377,8 +401,8 @@ export const MultipleChoiceElementForm = ({
                 });
               }}>
               {element.type === TSurveyElementTypeEnum.MultipleChoiceSingle
-                ? t("environments.surveys.edit.convert_to_multiple_choice")
-                : t("environments.surveys.edit.convert_to_single_choice")}
+                ? t("workspace.surveys.edit.convert_to_multiple_choice")
+                : t("workspace.surveys.edit.convert_to_single_choice")}
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">
@@ -394,13 +418,13 @@ export const MultipleChoiceElementForm = ({
       </div>
 
       <div className="mt-3">
-        <Label>{t("environments.surveys.edit.display_type")}</Label>
+        <Label>{t("workspace.surveys.edit.display_type")}</Label>
         <div className="mt-2">
           <OptionsSwitch
             options={multipleChoiceOptionDisplayTypeOptions}
             currentOption={element.displayType ?? "list"}
-            handleOptionChange={(value: TMultipleChoiceOptionDisplayType) =>
-              updateElement(elementIdx, { displayType: value })
+            handleOptionChange={(value: string) =>
+              updateElement(elementIdx, { displayType: value as TMultipleChoiceOptionDisplayType })
             }
           />
         </div>

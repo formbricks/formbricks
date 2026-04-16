@@ -18,13 +18,13 @@ import {
 import { deleteDashboardAction, duplicateDashboardAction } from "../actions";
 
 interface DashboardDropdownMenuProps {
-  environmentId: string;
+  workspaceId: string;
   dashboardId: string;
   dashboardName: string;
 }
 
 export const DashboardDropdownMenu = ({
-  environmentId,
+  workspaceId,
   dashboardId,
   dashboardName,
 }: Readonly<DashboardDropdownMenuProps>) => {
@@ -38,16 +38,16 @@ export const DashboardDropdownMenu = ({
   const handleDuplicateDashboard = async () => {
     setIsDuplicating(true);
     try {
-      const result = await duplicateDashboardAction({ environmentId, dashboardId });
+      const result = await duplicateDashboardAction({ workspaceId, dashboardId });
       if (result?.data) {
-        toast.success(t("environments.analysis.dashboards.duplicate_success"));
+        toast.success(t("workspace.analysis.dashboards.duplicate_success"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(errorMessage);
       }
     } catch {
-      toast.error(t("environments.analysis.dashboards.duplicate_failed"));
+      toast.error(t("workspace.analysis.dashboards.duplicate_failed"));
     } finally {
       setIsDuplicating(false);
     }
@@ -56,17 +56,17 @@ export const DashboardDropdownMenu = ({
   const handleDeleteDashboard = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteDashboardAction({ environmentId, dashboardId });
+      const result = await deleteDashboardAction({ workspaceId, dashboardId });
       if (result?.data) {
         setIsDeleteDialogOpen(false);
-        toast.success(t("environments.analysis.dashboards.delete_success"));
+        toast.success(t("workspace.analysis.dashboards.delete_success"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(errorMessage);
       }
     } catch {
-      toast.error(t("environments.analysis.dashboards.delete_failed"));
+      toast.error(t("workspace.analysis.dashboards.delete_failed"));
     } finally {
       setIsDeleting(false);
     }
@@ -87,7 +87,7 @@ export const DashboardDropdownMenu = ({
               icon={<SquarePenIcon className="size-4" />}
               onClick={() => {
                 setIsDropDownOpen(false);
-                router.push(`/environments/${environmentId}/dashboards/${dashboardId}`);
+                router.push(`/workspaces/${workspaceId}/dashboards/${dashboardId}`);
               }}>
               {t("common.edit")}
             </DropdownMenuItem>
@@ -119,7 +119,7 @@ export const DashboardDropdownMenu = ({
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteDashboard}
-        text={t("environments.analysis.dashboards.delete_confirmation")}
+        text={t("workspace.analysis.dashboards.delete_confirmation")}
         isDeleting={isDeleting}
       />
     </div>

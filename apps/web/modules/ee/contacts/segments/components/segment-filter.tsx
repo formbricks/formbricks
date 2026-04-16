@@ -71,7 +71,7 @@ import { DateFilterValue } from "./date-filter-value";
 interface TSegmentFilterProps {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
-  environmentId: string;
+  workspaceId: string;
   segment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
@@ -120,13 +120,13 @@ function SegmentFilterItemConnector({
     <div className="w-[40px]">
       <button
         type="button"
-        aria-label={connector ?? t("environments.segments.where")}
+        aria-label={connector ?? t("workspace.segments.where")}
         className={cn(Boolean(connector) && "cursor-pointer underline", viewOnly && "cursor-not-allowed")}
         onClick={() => {
           if (viewOnly) return;
           onConnectorChange();
         }}>
-        {connector ?? t("environments.segments.where")}
+        {connector ?? t("workspace.segments.where")}
       </button>
     </div>
   );
@@ -162,14 +162,14 @@ function SegmentFilterItemContextMenu({
             onClick={() => {
               onAddFilterBelow();
             }}>
-            {t("environments.segments.add_filter_below")}
+            {t("workspace.segments.add_filter_below")}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => {
               onCreateGroup(filterId);
             }}>
-            {t("environments.segments.create_group")}
+            {t("workspace.segments.create_group")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
@@ -236,7 +236,7 @@ function AttributeSegmentFilter({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError(t("environments.segments.value_must_be_a_number"));
+        setValueError(t("workspace.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value, t]);
@@ -314,7 +314,7 @@ function AttributeSegmentFilter({
         return (
           <AttributeValueInput
             attributeKeyId={attributeKey.id}
-            environmentId={segment.environmentId}
+            workspaceId={segment.workspaceId}
             value={resource.value as string}
             onChange={(newValue) => {
               updateValueInLocalSurvey(resource.id, newValue);
@@ -337,7 +337,7 @@ function AttributeSegmentFilter({
             updateValueInLocalSurvey(resource.id, value);
 
             if (!value) {
-              setValueError(t("environments.segments.value_cannot_be_empty"));
+              setValueError(t("workspace.segments.value_cannot_be_empty"));
               return;
             }
 
@@ -350,7 +350,7 @@ function AttributeSegmentFilter({
                 setValueError("");
                 updateValueInLocalSurvey(resource.id, Number.parseInt(value, 10));
               } else {
-                setValueError(t("environments.segments.value_must_be_a_number"));
+                setValueError(t("workspace.segments.value_must_be_a_number"));
                 updateValueInLocalSurvey(resource.id, value);
               }
 
@@ -478,7 +478,7 @@ function PersonSegmentFilter({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError(t("environments.segments.value_must_be_a_number"));
+        setValueError(t("workspace.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value, t]);
@@ -513,7 +513,7 @@ function PersonSegmentFilter({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError(t("environments.segments.value_cannot_be_empty"));
+      setValueError(t("workspace.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -526,7 +526,7 @@ function PersonSegmentFilter({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError(t("environments.segments.value_must_be_a_number"));
+        setValueError(t("workspace.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 
@@ -828,8 +828,8 @@ function DeviceFilter({
 
         <SelectContent>
           {[
-            { id: "desktop", name: t("environments.segments.desktop") },
-            { id: "phone", name: t("environments.segments.phone") },
+            { id: "desktop", name: t("workspace.segments.desktop") },
+            { id: "phone", name: t("workspace.segments.phone") },
           ].map((operator) => (
             <SelectItem value={operator.id}>{operator.name}</SelectItem>
           ))}
@@ -851,7 +851,7 @@ function DeviceFilter({
 export function SegmentFilter({
   resource,
   connector,
-  environmentId,
+  workspaceId,
   segment,
   segments,
   contactAttributeKeys,
@@ -898,7 +898,7 @@ export function SegmentFilter({
           <AttributeSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -922,7 +922,7 @@ export function SegmentFilter({
           <PersonSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -946,7 +946,7 @@ export function SegmentFilter({
           <SegmentSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -969,7 +969,7 @@ export function SegmentFilter({
           <DeviceFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -987,6 +987,6 @@ export function SegmentFilter({
       );
 
     default:
-      return <div>{t("environments.segments.unknown_filter_type")}</div>;
+      return <div>{t("workspace.segments.unknown_filter_type")}</div>;
   }
 }

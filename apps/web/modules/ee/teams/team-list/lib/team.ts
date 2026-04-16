@@ -29,12 +29,12 @@ export const getTeamsByOrganizationId = reactCache(
         },
       });
 
-      const projectTeams = teams.map((team) => ({
+      const workspaceTeams = teams.map((team) => ({
         id: team.id,
         name: team.name,
       }));
 
-      return projectTeams;
+      return workspaceTeams;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -224,10 +224,10 @@ export const getTeamDetails = reactCache(async (teamId: string): Promise<TTeamDe
             },
           },
         },
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
-            project: {
+            workspaceId: true,
+            workspace: {
               select: {
                 name: true,
               },
@@ -251,10 +251,10 @@ export const getTeamDetails = reactCache(async (teamId: string): Promise<TTeamDe
         name: teamUser.user.name,
         role: teamUser.role,
       })),
-      projects: team.projectTeams.map((projectTeam) => ({
-        projectId: projectTeam.projectId,
-        projectName: projectTeam.project.name,
-        permission: projectTeam.permission,
+      workspaces: team.workspaceTeams.map((workspaceTeam) => ({
+        workspaceId: workspaceTeam.workspaceId,
+        workspaceName: workspaceTeam.workspace.name,
+        permission: workspaceTeam.permission,
       })),
     };
   } catch (error) {
@@ -275,9 +275,9 @@ export const deleteTeam = async (teamId: string): Promise<boolean> => {
       },
       select: {
         organizationId: true,
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
+            workspaceId: true,
           },
         },
       },
@@ -297,7 +297,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
   validateInputs([teamId, ZId], [data, ZTeamSettingsFormSchema]);
 
   try {
-    const { name, members, projects } = data;
+    const { name, members, workspaces } = data;
 
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -309,7 +309,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
 
     const currentTeamDetails = await getTeamDetails(teamId);
     if (!currentTeamDetails) {
-      throw new Error("Team not found");
+      throw new ResourceNotFoundError("Team", teamId);
     }
 
     // Check that all users exist within the organization's membership.
@@ -326,25 +326,25 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       }
     }
 
-    // Check that all specified projects belong to the same organization.
-    const projectIds = projects.map((p) => p.projectId);
-    if (projectIds.length > 0) {
-      const orgProjectsCount = await prisma.project.count({
+    // Check that all specified workspaces belong to the same organization.
+    const workspaceIds = workspaces.map((p) => p.workspaceId);
+    if (workspaceIds.length > 0) {
+      const orgWorkspacesCount = await prisma.workspace.count({
         where: {
-          id: { in: projectIds },
+          id: { in: workspaceIds },
           organizationId: team.organizationId,
         },
       });
-      if (orgProjectsCount !== projectIds.length) {
-        throw new Error("Some specified projects do not belong to the organization.");
+      if (orgWorkspacesCount !== workspaceIds.length) {
+        throw new Error("Some specified workspaces do not belong to the organization.");
       }
     }
 
     // Arrays for tracking member changes
     const deletedMembers: string[] = [];
 
-    // Arrays for tracking project changes
-    const deletedProjects: string[] = [];
+    // Arrays for tracking workspace changes
+    const deletedWorkspaces: string[] = [];
 
     // Determine deleted members (in current but not in new)
     for (const cm of currentTeamDetails.members) {
@@ -353,10 +353,10 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       }
     }
 
-    // Determine deleted projects (in current but not in new)
-    for (const cp of currentTeamDetails.projects) {
-      if (!projects.some((p) => p.projectId === cp.projectId)) {
-        deletedProjects.push(cp.projectId);
+    // Determine deleted workspaces (in current but not in new)
+    for (const cp of currentTeamDetails.workspaces) {
+      if (!workspaces.some((p) => p.workspaceId === cp.workspaceId)) {
+        deletedWorkspaces.push(cp.workspaceId);
       }
     }
 
@@ -373,14 +373,14 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
           create: { userId: m.userId, role: m.role },
         })),
       },
-      projectTeams: {
+      workspaceTeams: {
         deleteMany: {
-          projectId: { in: deletedProjects },
+          workspaceId: { in: deletedWorkspaces },
         },
-        upsert: projects.map((p) => ({
-          where: { projectId_teamId: { teamId, projectId: p.projectId } },
+        upsert: workspaces.map((p) => ({
+          where: { workspaceId_teamId: { teamId, workspaceId: p.workspaceId } },
           update: { permission: p.permission },
-          create: { projectId: p.projectId, permission: p.permission },
+          create: { workspaceId: p.workspaceId, permission: p.permission },
         })),
       },
     };
@@ -390,18 +390,6 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       data: payload,
     });
 
-    const changedProjectIds = [...projects.map((p) => p.projectId), ...deletedProjects];
-
-    await prisma.environment.findMany({
-      where: {
-        projectId: {
-          in: changedProjectIds,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

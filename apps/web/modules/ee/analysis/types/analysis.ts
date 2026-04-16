@@ -9,7 +9,7 @@ export type TChartType = z.infer<typeof ZChartType>;
 // ── Chart input schemas ─────────────────────────────────────────────────────
 
 export const ZChartCreateInput = z.object({
-  projectId: ZId,
+  workspaceId: ZId,
   name: z.string().min(1),
   type: ZChartType,
   query: ZChartQuery,
@@ -56,7 +56,7 @@ export type TChartWithWidgets = z.infer<typeof ZChartWithWidgets>;
 // ── Dashboard input schemas ─────────────────────────────────────────────────
 
 export const ZDashboardCreateInput = z.object({
-  projectId: ZId,
+  workspaceId: ZId,
   name: z.string().min(1),
   createdBy: ZId,
 });
@@ -87,7 +87,7 @@ export type TDashboardWithCount = TDashboard & {
 export const ZAddWidgetInput = z.object({
   dashboardId: ZId,
   chartId: ZId,
-  projectId: ZId,
+  workspaceId: ZId,
   layout: ZWidgetLayout,
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;

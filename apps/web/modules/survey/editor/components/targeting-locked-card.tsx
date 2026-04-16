@@ -4,14 +4,16 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { LockIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface TargetingLockedCardProps {
   isFormbricksCloud: boolean;
-  environmentId: string;
 }
 
-export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: TargetingLockedCardProps) => {
+export const TargetingLockedCard = ({ isFormbricksCloud }: TargetingLockedCardProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -30,8 +32,8 @@ export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: Target
             </div>
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("environments.segments.target_audience")}</p>
-            <p className="mt-1 text-sm text-slate-500">{t("environments.segments.pre_segment_users")}</p>
+            <p className="font-semibold text-slate-800">{t("workspace.segments.target_audience")}</p>
+            <p className="mt-1 text-sm text-slate-500">{t("workspace.segments.pre_segment_users")}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -39,19 +41,20 @@ export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: Target
         <hr className="text-slate-600" />
         <div className="flex items-center justify-center">
           <UpgradePrompt
-            title={t("environments.surveys.edit.unlock_targeting_title")}
-            description={t("environments.surveys.edit.unlock_targeting_description")}
+            title={t("workspace.surveys.edit.unlock_targeting_title")}
+            description={t("workspace.surveys.edit.unlock_targeting_description")}
+            feature="targeting"
             buttons={[
               {
-                text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+                text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
+                  ? `${workspaceBasePath}/settings/billing`
                   : "https://formbricks.com/upgrade-self-hosting-license",
               },
               {
                 text: t("common.learn_more"),
                 href: isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
+                  ? `${workspaceBasePath}/settings/billing`
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}

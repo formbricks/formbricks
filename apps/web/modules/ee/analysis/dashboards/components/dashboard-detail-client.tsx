@@ -24,7 +24,7 @@ import { updateDashboardAction, updateWidgetLayoutsAction } from "../actions";
 const ROW_HEIGHT = 80;
 
 interface DashboardDetailClientProps {
-  environmentId: string;
+  workspaceId: string;
   dashboard: TDashboardDetail;
   widgetDataPromises: Map<string, Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>>;
   isReadOnly: boolean;
@@ -131,7 +131,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
 });
 
 export function DashboardDetailClient({
-  environmentId,
+  workspaceId,
   dashboard,
   widgetDataPromises,
   isReadOnly,
@@ -179,7 +179,7 @@ export function DashboardDetailClient({
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
-      toast.error(t("environments.analysis.dashboards.dashboard_name_required"));
+      toast.error(t("workspace.analysis.dashboards.dashboard_name_required"));
       return;
     }
 
@@ -188,7 +188,7 @@ export function DashboardDetailClient({
     try {
       if (name !== dashboard.name) {
         const dashboardResult = await updateDashboardAction({
-          environmentId,
+          workspaceId,
           dashboardId: dashboard.id,
           name: name.trim(),
         });
@@ -209,7 +209,7 @@ export function DashboardDetailClient({
         }));
 
         const widgetsResult = await updateWidgetLayoutsAction({
-          environmentId,
+          workspaceId,
           dashboardId: dashboard.id,
           widgets: widgetUpdates,
         });
@@ -222,31 +222,31 @@ export function DashboardDetailClient({
         }
       }
 
-      toast.success(t("environments.analysis.dashboards.dashboard_saved"));
+      toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
       startTransition(() => {
         router.refresh();
         setDraftWidgets(null);
         setIsEditing(false);
       });
     } catch {
-      toast.error(t("environments.analysis.dashboards.dashboard_save_failed"));
+      toast.error(t("workspace.analysis.dashboards.dashboard_save_failed"));
     } finally {
       setIsSaving(false);
     }
-  }, [name, widgets, dashboard, environmentId, router, t, startTransition]);
+  }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
 
   const isEmpty = widgets.length === 0;
 
   return (
     <PageContentWrapper>
-      <GoBackButton url={`/environments/${environmentId}/dashboards`} />
+      <GoBackButton url={`/workspaces/${workspaceId}/dashboards`} />
       <DashboardPageHeader
         name={name}
         isEditing={isEditing}
         onNameChange={setName}
         cta={
           <DashboardControlBar
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             dashboardId={dashboard.id}
             existingChartIds={widgets.map((w) => w.chartId)}
             isEditing={isEditing}
@@ -267,7 +267,7 @@ export function DashboardDetailClient({
       <section>
         <div ref={containerRef} className="w-full">
           {isEmpty ? (
-            <EmptyState text={t("environments.analysis.dashboards.no_data_message")} />
+            <EmptyState text={t("workspace.analysis.dashboards.no_data_message")} />
           ) : (
             mounted && (
               <ResponsiveGridLayout

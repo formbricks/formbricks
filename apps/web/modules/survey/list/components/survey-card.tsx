@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
-import { convertDateString, timeSince } from "@/lib/time";
+import { timeSince } from "@/lib/time";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
@@ -13,7 +15,6 @@ import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
   survey: TSurvey;
-  environmentId: string;
   isReadOnly: boolean;
   publicDomain: string;
   deleteSurvey: (surveyId: string) => void;
@@ -22,7 +23,6 @@ interface SurveyCardProps {
 }
 export const SurveyCard = ({
   survey,
-  environmentId,
   isReadOnly,
   publicDomain,
   deleteSurvey,
@@ -30,6 +30,8 @@ export const SurveyCard = ({
   onSurveysCopied,
 }: SurveyCardProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const surveyStatusLabel = (() => {
     switch (survey.status) {
       case "inProgress":
@@ -49,9 +51,9 @@ export const SurveyCard = ({
 
   const linkHref = useMemo(() => {
     return survey.status === "draft"
-      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
-      : `/environments/${environmentId}/surveys/${survey.id}/summary`;
-  }, [survey.status, survey.id, environmentId]);
+      ? `${workspaceBasePath}/surveys/${survey.id}/edit`
+      : `${workspaceBasePath}/surveys/${survey.id}/summary`;
+  }, [survey.status, survey.id, workspaceBasePath]);
 
   const isDraftAndReadOnly = survey.status === "draft" && isReadOnly;
 
@@ -82,7 +84,7 @@ export const SurveyCard = ({
           <SurveyTypeIndicator type={survey.type} />
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {convertDateString(survey.createdAt.toString())}
+          {formatDateForDisplay(survey.createdAt, locale)}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {timeSince(survey.updatedAt.toString(), locale)}
@@ -95,7 +97,6 @@ export const SurveyCard = ({
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
-          environmentId={environmentId}
           publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
