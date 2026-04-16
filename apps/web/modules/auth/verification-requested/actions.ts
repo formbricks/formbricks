@@ -7,6 +7,7 @@ import { WEBAPP_URL } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getUserByEmail } from "@/modules/auth/lib/user";
+import { VERIFICATION_REQUEST_PURPOSES } from "@/modules/auth/lib/verification-links";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -15,6 +16,7 @@ import { sendVerificationEmail } from "@/modules/email";
 const ZResendVerificationEmailAction = z.object({
   email: ZUserEmail,
   callbackUrl: z.string().max(2000).optional(),
+  purpose: z.enum(VERIFICATION_REQUEST_PURPOSES).optional(),
 });
 
 export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVerificationEmailAction).action(
@@ -25,7 +27,8 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
     if (!user) {
       throw new ResourceNotFoundError("user", parsedInput.email);
     }
-    if (user.emailVerified) {
+    const purpose = parsedInput.purpose ?? "email_verification";
+    if (user.emailVerified && purpose !== "sso_recovery") {
       return {
         success: true,
       };
@@ -36,6 +39,7 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
       email: user.email,
       locale: user.locale,
       callbackUrl: getValidatedCallbackUrl(parsedInput.callbackUrl, WEBAPP_URL) ?? undefined,
+      purpose,
     });
     return {
       success: true,

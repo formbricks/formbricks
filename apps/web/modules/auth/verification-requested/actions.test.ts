@@ -150,6 +150,7 @@ describe("resendVerificationEmailAction", () => {
       expect(sendVerificationEmail).toHaveBeenCalledWith({
         ...mockUser,
         callbackUrl: undefined,
+        purpose: "email_verification",
       });
       expect(result).toEqual({ success: true });
     });
@@ -169,6 +170,7 @@ describe("resendVerificationEmailAction", () => {
       expect(sendVerificationEmail).toHaveBeenCalledWith({
         ...mockUser,
         callbackUrl: "http://localhost:3000/invite?token=invite-token",
+        purpose: "email_verification",
       });
     });
 
@@ -187,6 +189,7 @@ describe("resendVerificationEmailAction", () => {
       expect(sendVerificationEmail).toHaveBeenCalledWith({
         ...mockUser,
         callbackUrl: undefined,
+        purpose: "email_verification",
       });
     });
 
@@ -202,6 +205,32 @@ describe("resendVerificationEmailAction", () => {
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
       expect(sendVerificationEmail).not.toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    test("should resend an SSO recovery email for a verified user", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail).mockResolvedValue({
+        ...mockVerifiedUser,
+        locale: "en-US",
+      } as any);
+
+      const result = await resendVerificationEmailAction({
+        ctx: mockCtx,
+        parsedInput: {
+          ...validInput,
+          callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+          purpose: "sso_recovery",
+        },
+      } as any);
+
+      expect(sendVerificationEmail).toHaveBeenCalledWith({
+        id: mockVerifiedUser.id,
+        email: mockVerifiedUser.email,
+        locale: "en-US",
+        callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+        purpose: "sso_recovery",
+      });
       expect(result).toEqual({ success: true });
     });
 

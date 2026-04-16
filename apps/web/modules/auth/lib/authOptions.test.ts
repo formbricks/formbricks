@@ -6,7 +6,7 @@ import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { capturePostHogEvent } from "@/lib/posthog";
 // Import mocked rate limiting functions
-import { updateUserLastLoginAt } from "@/modules/auth/lib/user";
+import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { authOptions } from "./authOptions";
@@ -340,6 +340,31 @@ describe("authOptions", () => {
       );
     });
 
+    test("defers verification side effects for unverified users when the token purpose is sso_recovery", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(verifyToken).mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        purpose: "sso_recovery",
+      } as any);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
+        ...mockUser,
+        emailVerified: null,
+      } as any);
+
+      const result = await tokenProvider.options.authorize({ token: "recovery-token" }, {});
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: mockUser.id,
+          email: mockUser.email,
+          emailVerified: null,
+          authFlowPurpose: "sso_recovery",
+        })
+      );
+      expect(updateUser).not.toHaveBeenCalled();
+    });
+
     describe("Rate Limiting", () => {
       test("should apply rate limiting before token verification", async () => {
         vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
@@ -462,6 +487,23 @@ describe("authOptions", () => {
         const user = {
           ...mockUser,
           emailVerified: new Date(),
+          authFlowPurpose: "sso_recovery",
+        };
+        const account = { provider: "token" } as any;
+
+        if (authOptions.callbacks?.signIn) {
+          const result = await authOptions.callbacks.signIn({ user, account } as any);
+
+          expect(result).toBe(true);
+          expect(updateUserLastLoginAt).not.toHaveBeenCalled();
+          expect(capturePostHogEvent).not.toHaveBeenCalled();
+        }
+      });
+
+      test("should allow an unverified recovery session through until SSO completion finishes the reclaim", async () => {
+        const user = {
+          ...mockUser,
+          emailVerified: null,
           authFlowPurpose: "sso_recovery",
         };
         const account = { provider: "token" } as any;

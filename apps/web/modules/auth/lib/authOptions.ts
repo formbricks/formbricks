@@ -292,8 +292,9 @@ export const authOptions: NextAuthOptions = {
         }
 
         const authFlowPurpose = user.authFlowPurpose ?? "email_verification";
+        const isSsoRecovery = authFlowPurpose === "sso_recovery";
 
-        if (user.emailVerified && authFlowPurpose !== "sso_recovery") {
+        if (user.emailVerified && !isSsoRecovery) {
           logEmailVerificationAttempt(false, "email_already_verified", user.id, user.email);
           throw new Error("Email already verified");
         }
@@ -303,7 +304,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Your account is currently inactive. Please contact the organization admin.");
         }
 
-        if (!user.emailVerified) {
+        if (!user.emailVerified && !isSsoRecovery) {
           const updatedUser = await updateUser(user.id, { emailVerified: new Date() });
           user = {
             ...updatedUser,
@@ -353,14 +354,14 @@ export const authOptions: NextAuthOptions = {
           : undefined;
 
       if (account?.provider === "credentials" || account?.provider === "token") {
+        if (account.provider === "token" && authFlowPurpose === "sso_recovery") {
+          return true;
+        }
+
         // check if user's email is verified or not
         if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
-        }
-
-        if (account.provider === "token" && authFlowPurpose === "sso_recovery") {
-          return true;
         }
 
         await finalizeSuccessfulSignIn({

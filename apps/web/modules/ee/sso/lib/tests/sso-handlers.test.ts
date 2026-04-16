@@ -324,6 +324,37 @@ describe("handleSsoCallback", () => {
     expect(capturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  test("keeps unverified email-password users in the recovery flow instead of activating them during SSO", async () => {
+    vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      ...mockUser,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+      emailVerified: null,
+    } as any);
+
+    const result = await handleSsoCallback({
+      user: mockUser,
+      account: mockAccount,
+      callbackUrl: "http://localhost:3000/invite?token=invite-token",
+    });
+
+    expect(result).toBe("/auth/verification-requested?token=email-token");
+    expect(startSsoRecovery).toHaveBeenCalledWith({
+      existingUser: expect.objectContaining({
+        id: mockUser.id,
+        email: mockUser.email,
+        emailVerified: null,
+        identityProvider: "email",
+      }),
+      provider: "google",
+      account: mockAccount,
+      callbackUrl: "http://localhost:3000/invite?token=invite-token",
+    });
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
   test("creates a new SSO user with canonical provider state when no existing user is found", async () => {
     vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.user.findFirst).mockResolvedValue(null);

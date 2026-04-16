@@ -1,4 +1,4 @@
-import type { IdentityProvider } from "@prisma/client";
+import type { IdentityProvider, Prisma } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -57,6 +57,45 @@ const queueSsoRecoveryAuditEvent = ({
       provider,
       ...(callbackUrl ? { callbackUrl } : {}),
       ...(failureReason ? { failureReason } : {}),
+    },
+  });
+};
+
+const SSO_RECOVERY_USER_SELECT = {
+  ...LINKED_SSO_LOOKUP_SELECT,
+  backupCodes: true,
+  password: true,
+  twoFactorEnabled: true,
+  twoFactorSecret: true,
+} as const;
+
+type TSsoRecoveryUser = Prisma.UserGetPayload<{
+  select: typeof SSO_RECOVERY_USER_SELECT;
+}>;
+
+const reclaimUnverifiedLocalAuthIfNeeded = async ({
+  tx,
+  user,
+}: {
+  tx: Prisma.TransactionClient;
+  user: TSsoRecoveryUser;
+}) => {
+  if (user.identityProvider !== "email" || user.emailVerified) {
+    return;
+  }
+
+  // Inbox ownership is now proven, so strip any untrusted local auth factors before the SSO
+  // account becomes the canonical way back in.
+  await tx.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      backupCodes: null,
+      emailVerified: new Date(),
+      password: null,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
     },
   });
 };
@@ -131,6 +170,7 @@ export const startSsoRecovery = async ({
     return buildVerificationRequestedPath({
       token: createEmailToken(existingUser.email),
       callbackUrl: completionUrl,
+      purpose: "sso_recovery",
     });
   } catch (error) {
     getSsoRecoveryLogger("sso_recovery_failed").error(
@@ -205,7 +245,7 @@ export const completeSsoRecovery = async ({
     where: {
       id: intent.userId,
     },
-    select: LINKED_SSO_LOOKUP_SELECT,
+    select: SSO_RECOVERY_USER_SELECT,
   });
 
   if (!user || user.email !== intent.email) {
@@ -229,6 +269,11 @@ export const completeSsoRecovery = async ({
   }
 
   await prisma.$transaction(async (tx) => {
+    await reclaimUnverifiedLocalAuthIfNeeded({
+      tx,
+      user,
+    });
+
     const recoveryAccount: TSsoAccountLinkInput = {
       type: "oauth",
       provider,
