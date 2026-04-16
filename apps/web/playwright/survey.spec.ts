@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { type Locator, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import * as helper from "./utils/helper";
@@ -16,6 +16,13 @@ test.beforeEach(async ({ page }) => {
 
 const firstPictureChoiceAlt = "logo-transparent.png";
 const secondPictureChoiceAlt = "android-chrome-192x192.png";
+
+const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
+  const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
+  await expect(choiceImage).toBeVisible();
+
+  await pictureSelectQuestion.locator("label").filter({ has: choiceImage }).first().click();
+};
 
 test.describe("Survey Create & Submit Response without logic", async () => {
   // 5 minutes
@@ -168,7 +175,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
-      await pictureSelectQuestion.getByRole("radio", { name: firstPictureChoiceAlt }).click();
+      await selectPictureChoice(pictureSelectQuestion, firstPictureChoiceAlt);
       await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
@@ -850,7 +857,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
-      await pictureSelectQuestion.getByRole("radio", { name: firstPictureChoiceAlt }).click();
+      await selectPictureChoice(pictureSelectQuestion, firstPictureChoiceAlt);
       await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // Rating Question
