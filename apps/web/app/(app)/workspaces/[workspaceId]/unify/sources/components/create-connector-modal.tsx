@@ -24,6 +24,13 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import {
   FEEDBACK_RECORD_FIELDS,
   TCreateConnectorStep,
   TFieldMapping,
@@ -41,11 +48,13 @@ interface CreateConnectorModalProps {
   onCreateConnector: (data: {
     name: string;
     type: TConnectorType;
+    feedbackRecordDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
   surveys: TUnifySurvey[];
   workspaceId: string;
+  directories: { id: string; name: string }[];
 }
 
 const getDialogTitle = (
@@ -152,6 +161,7 @@ export const CreateConnectorModal = ({
   onCreateConnector,
   surveys,
   workspaceId,
+  directories,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
 
@@ -178,6 +188,9 @@ export const CreateConnectorModal = ({
   const [importHistoricalBySurvey, setImportHistoricalBySurvey] = useState<Record<string, boolean>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(
+    directories.length === 1 ? directories[0].id : null
+  );
 
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
@@ -214,6 +227,7 @@ export const CreateConnectorModal = ({
     setImportHistoricalBySurvey({});
     setIsImporting(false);
     setIsCreating(false);
+    setSelectedDirectoryId(directories.length === 1 ? directories[0].id : null);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -348,7 +362,7 @@ export const CreateConnectorModal = ({
   };
 
   const handleCreate = async () => {
-    if (!selectedType || !connectorName.trim()) return;
+    if (!selectedType || !connectorName.trim() || !selectedDirectoryId) return;
 
     if (selectedType === "csv" && csvParsedData.length > 0) {
       const errors = validateEnumMappings(mappings, csvParsedData);
@@ -366,6 +380,7 @@ export const CreateConnectorModal = ({
     const connectorId = await onCreateConnector({
       name: connectorName.trim(),
       type: selectedType,
+      feedbackRecordDirectoryId: selectedDirectoryId,
       surveyMappings: selectedType === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
       fieldMappings: selectedType !== "formbricks" && mappings.length > 0 ? mappings : undefined,
     });
@@ -441,6 +456,14 @@ export const CreateConnectorModal = ({
                   />
                 </div>
 
+                <FrdPicker
+                  directories={directories}
+                  selectedDirectoryId={selectedDirectoryId}
+                  onChange={setSelectedDirectoryId}
+                  workspaceId={workspaceId}
+                  t={t}
+                />
+
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <FormbricksSurveySelector
                     surveys={surveys}
@@ -491,6 +514,14 @@ export const CreateConnectorModal = ({
                     placeholder={t("workspace.unify.enter_name_for_source")}
                   />
                 </div>
+
+                <FrdPicker
+                  directories={directories}
+                  selectedDirectoryId={selectedDirectoryId}
+                  onChange={setSelectedDirectoryId}
+                  workspaceId={workspaceId}
+                  t={t}
+                />
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <CsvConnectorUI
@@ -556,6 +587,7 @@ export const CreateConnectorModal = ({
                   isCreating ||
                   isImporting ||
                   !connectorName.trim() ||
+                  !selectedDirectoryId ||
                   getCreateDisabled(selectedType, !!isFormbricksValid, isCsvValid, allRequiredMapped)
                 }>
                 {isCreating && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
@@ -566,5 +598,55 @@ export const CreateConnectorModal = ({
         </DialogContent>
       </Dialog>
     </>
+  );
+};
+
+interface FrdPickerProps {
+  directories: { id: string; name: string }[];
+  selectedDirectoryId: string | null;
+  onChange: (id: string) => void;
+  workspaceId: string;
+  t: (key: string) => string;
+}
+
+const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspaceId, t }: FrdPickerProps) => {
+  if (directories.length === 0) {
+    return (
+      <Alert variant="error" size="small">
+        <div>
+          <p>{t("workspace.unify.no_feedback_record_directory_available")}</p>
+          <a
+            className="mt-1 inline-block font-medium underline"
+            href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
+            {t("workspace.unify.go_to_feedback_record_directories")}
+          </a>
+        </div>
+      </Alert>
+    );
+  }
+  if (directories.length === 1) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+        {t("workspace.unify.records_will_go_to")}{" "}
+        <span className="font-medium text-slate-900">{directories[0].name}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="feedbackRecordDirectory">{t("workspace.unify.feedback_record_directory")}</Label>
+      <Select value={selectedDirectoryId ?? ""} onValueChange={onChange}>
+        <SelectTrigger id="feedbackRecordDirectory">
+          <SelectValue placeholder={t("workspace.unify.select_feedback_record_directory")} />
+        </SelectTrigger>
+        <SelectContent>
+          {directories.map((d) => (
+            <SelectItem key={d.id} value={d.id}>
+              {d.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };

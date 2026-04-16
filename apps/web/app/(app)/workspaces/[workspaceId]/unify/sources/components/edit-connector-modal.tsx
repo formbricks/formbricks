@@ -16,6 +16,13 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import {
   FEEDBACK_RECORD_FIELDS,
   SAMPLE_CSV_COLUMNS,
   TFieldMapping,
@@ -38,6 +45,7 @@ interface EditConnectorModalProps {
     fieldMappings?: TFieldMapping[];
   }) => Promise<void>;
   surveys: TUnifySurvey[];
+  directories: { id: string; name: string }[];
   onOpenCsvImport?: () => void;
 }
 
@@ -80,6 +88,7 @@ export const EditConnectorModal = ({
   onOpenChange,
   onUpdateConnector,
   surveys,
+  directories,
   onOpenCsvImport,
 }: EditConnectorModalProps) => {
   const { t } = useTranslation();
@@ -245,6 +254,32 @@ export const EditConnectorModal = ({
               placeholder={t("workspace.unify.enter_name_for_source")}
             />
           </div>
+
+          {directories.length > 1 && (
+            <div className="space-y-2">
+              <Label>{t("workspace.unify.feedback_record_directory")}</Label>
+              <Select value={connector.feedbackRecordDirectoryId} disabled>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {directories.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500">{t("workspace.unify.frd_cannot_be_changed")}</p>
+            </div>
+          )}
+
+          {directories.length === 1 && (
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+              {t("workspace.unify.records_will_go_to")}{" "}
+              <span className="font-medium text-slate-900">{directories[0].name}</span>
+            </div>
+          )}
 
           {connector.type === "formbricks" ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">

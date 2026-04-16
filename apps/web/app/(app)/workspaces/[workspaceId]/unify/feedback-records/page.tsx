@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslate } from "@/lingodotdev/server";
+import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./feedback-records-page-client";
@@ -22,22 +23,24 @@ export default async function UnifyFeedbackRecordsPage(props: { params: Promise<
     return notFound();
   }
 
-  const result = await listFeedbackRecords({
-    tenant_id: params.workspaceId,
-    limit: INITIAL_PAGE_SIZE,
-  });
+  const frds = await getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId);
 
-  if (result.error) {
+  const results = await Promise.all(
+    frds.map((frd) => listFeedbackRecords({ tenant_id: frd.id, limit: INITIAL_PAGE_SIZE }))
+  );
+
+  if (results.some((r) => r.error)) {
     throw new Error(t("workspace.unify.failed_to_load_feedback_records"));
   }
 
-  const initialData = result.data ?? { data: [], limit: INITIAL_PAGE_SIZE };
+  const merged = results
+    .flatMap((r) => r.data?.data ?? [])
+    .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
+    .slice(0, INITIAL_PAGE_SIZE);
+
+  const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
 
   return (
-    <FeedbackRecordsPageClient
-      workspaceId={params.workspaceId}
-      initialRecords={initialData.data}
-      initialNextCursor={initialData.next_cursor}
-    />
+    <FeedbackRecordsPageClient workspaceId={params.workspaceId} initialRecords={merged} frdMap={frdMap} />
   );
 }

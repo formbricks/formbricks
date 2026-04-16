@@ -9,7 +9,7 @@ import {
   ToggleLeftIcon,
   TypeIcon,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
@@ -59,50 +59,14 @@ function truncate(str: string, maxLen: number): string {
 interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
-  initialNextCursor?: string;
+  frdMap: Record<string, string>;
 }
 
-export const FeedbackRecordsTable = ({
-  workspaceId,
-  initialRecords,
-  initialNextCursor,
-}: FeedbackRecordsTableProps) => {
+export const FeedbackRecordsTable = ({ workspaceId, initialRecords, frdMap }: FeedbackRecordsTableProps) => {
   const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
-  const [nextCursor, setNextCursor] = useState<string | undefined>(initialNextCursor);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchRecords = useCallback(
-    async (cursor: string | undefined, append: boolean) => {
-      const setLoading = append ? setIsLoadingMore : setIsRefreshing;
-      setLoading(true);
-      setError(null);
-
-      const result = await listFeedbackRecordsAction({
-        workspaceId,
-        limit: RECORDS_PER_PAGE,
-        cursor,
-      });
-
-      if (!result?.data) {
-        setError(getFormattedErrorMessage(result) ?? t("workspace.unify.failed_to_load_feedback_records"));
-        setLoading(false);
-        return;
-      }
-
-      const response = result.data;
-      setRecords((prev) => (append ? [...prev, ...response.data] : response.data));
-      setNextCursor(response.next_cursor);
-      setLoading(false);
-    },
-    [workspaceId, t]
-  );
-
-  const handleLoadMore = () => {
-    fetchRecords(nextCursor, true);
-  };
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
@@ -125,12 +89,9 @@ export const FeedbackRecordsTable = ({
     }
 
     setRecords(result.data.data);
-    setNextCursor(result.data.next_cursor);
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
   };
-
-  const hasMore = !!nextCursor;
 
   if (error) {
     return (
@@ -153,7 +114,7 @@ export const FeedbackRecordsTable = ({
       {!isEmpty && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-500">
-            {t("workspace.unify.showing_count", { count: records.length })}
+            {t("workspace.unify.showing_count_loaded", { count: records.length })}
           </p>
           <Button
             variant="secondary"
@@ -172,6 +133,9 @@ export const FeedbackRecordsTable = ({
             <thead>
               <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
                 <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.collected_at")}</th>
+                <th className="whitespace-nowrap px-4 py-3">
+                  {t("workspace.unify.feedback_record_directory")}
+                </th>
                 <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.source_type")}</th>
                 <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.source_name")}</th>
                 <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.field_label")}</th>
@@ -183,7 +147,7 @@ export const FeedbackRecordsTable = ({
             {isEmpty ? (
               <tbody>
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className="flex h-32 items-center justify-center">
                       <p className="text-sm text-slate-500">{t("workspace.unify.no_feedback_records")}</p>
                     </div>
@@ -193,21 +157,19 @@ export const FeedbackRecordsTable = ({
             ) : (
               <tbody className="divide-y divide-slate-100">
                 {records.map((record) => (
-                  <FeedbackRecordRow key={record.id} record={record} locale={i18n.language} t={t} />
+                  <FeedbackRecordRow
+                    key={record.id}
+                    record={record}
+                    locale={i18n.language}
+                    frdName={record.tenant_id ? (frdMap[record.tenant_id] ?? "—") : "—"}
+                    t={t}
+                  />
                 ))}
               </tbody>
             )}
           </table>
         </div>
       </div>
-
-      {hasMore && (
-        <div className="flex justify-center">
-          <Button variant="secondary" size="sm" onClick={handleLoadMore} loading={isLoadingMore}>
-            {t("workspace.unify.load_more")}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
@@ -215,10 +177,12 @@ export const FeedbackRecordsTable = ({
 const FeedbackRecordRow = ({
   record,
   locale,
+  frdName,
   t,
 }: {
   record: FeedbackRecordData;
   locale: string;
+  frdName: string;
   t: TFunction;
 }) => {
   const value = formatValue(record, t, locale);
@@ -228,6 +192,9 @@ const FeedbackRecordRow = ({
     <tr className="text-sm text-slate-700 transition-colors hover:bg-slate-50">
       <td className="whitespace-nowrap px-4 py-3 text-slate-500">
         {formatDate(record.collected_at, locale)}
+      </td>
+      <td className="max-w-[200px] truncate px-4 py-3 text-slate-600" title={frdName}>
+        {frdName}
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <Badge text={record.source_type} type="gray" size="tiny" />

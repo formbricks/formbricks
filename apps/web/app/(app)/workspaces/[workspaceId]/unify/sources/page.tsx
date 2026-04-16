@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ConnectorsSection } from "./components/connectors-page-client";
 import { transformToUnifySurvey } from "./lib";
@@ -22,9 +23,10 @@ export default async function UnifySourcesPage(props: { params: Promise<{ worksp
     return notFound();
   }
 
-  const [connectors, surveys] = await Promise.all([
+  const [connectors, surveys, directories] = await Promise.all([
     getConnectorsWithMappings(params.workspaceId),
     getSurveys(params.workspaceId),
+    getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId),
   ]);
 
   const unifySurveys = surveys.map(transformToUnifySurvey);
@@ -34,6 +36,7 @@ export default async function UnifySourcesPage(props: { params: Promise<{ worksp
       workspaceId={params.workspaceId}
       initialConnectors={connectors}
       initialSurveys={unifySurveys}
+      directories={directories}
     />
   );
 }

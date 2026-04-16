@@ -41,6 +41,11 @@ ALTER TABLE "FeedbackRecordDirectoryWorkspace" ADD CONSTRAINT "FeedbackRecordDir
 -- AddForeignKey
 ALTER TABLE "FeedbackRecordDirectoryWorkspace" ADD CONSTRAINT "FeedbackRecordDirectoryWorkspace_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- Connector → FeedbackRecordDirectory FK
+ALTER TABLE "Connector" ADD COLUMN "feedbackRecordDirectoryId" TEXT NOT NULL;
+ALTER TABLE "Connector" ADD CONSTRAINT "Connector_feedbackRecordDirectoryId_fkey" FOREIGN KEY ("feedbackRecordDirectoryId") REFERENCES "FeedbackRecordDirectory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE INDEX "Connector_feedbackRecordDirectoryId_idx" ON "Connector"("feedbackRecordDirectoryId");
+
 -- RenameIndex
 ALTER INDEX "ConnectorFieldMapping_workspaceId_connectorId_source_fiel_key" RENAME TO "ConnectorFieldMapping_workspaceId_connectorId_source_field__key";
 

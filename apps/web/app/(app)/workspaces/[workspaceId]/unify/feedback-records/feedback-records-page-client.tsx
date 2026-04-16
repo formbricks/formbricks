@@ -10,13 +10,13 @@ import { FeedbackRecordsTable } from "./feedback-records-table";
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
-  initialNextCursor?: string;
+  frdMap: Record<string, string>;
 }
 
 export function FeedbackRecordsPageClient({
   workspaceId,
   initialRecords,
-  initialNextCursor,
+  frdMap,
 }: FeedbackRecordsPageClientProps) {
   const { t } = useTranslation();
 
@@ -26,11 +26,7 @@ export function FeedbackRecordsPageClient({
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
 
-      <FeedbackRecordsTable
-        workspaceId={workspaceId}
-        initialRecords={initialRecords}
-        initialNextCursor={initialNextCursor}
-      />
+      <FeedbackRecordsTable workspaceId={workspaceId} initialRecords={initialRecords} frdMap={frdMap} />
     </PageContentWrapper>
   );
 }

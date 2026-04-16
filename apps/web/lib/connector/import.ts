@@ -50,7 +50,12 @@ export const importHistoricalResponses = async (
     const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset);
     if (responses.length === 0) break;
 
-    const batch = await processBatch(responses, survey, connector.formbricksMappings, connector.workspaceId);
+    const batch = await processBatch(
+      responses,
+      survey,
+      connector.formbricksMappings,
+      connector.feedbackRecordDirectoryId
+    );
     successes += batch.successes;
     failures += batch.failures;
     skipped += batch.skipped;

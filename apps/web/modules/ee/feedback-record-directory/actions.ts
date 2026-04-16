@@ -16,6 +16,7 @@ import { ZFeedbackRecordDirectoryUpdateInput } from "@/modules/ee/feedback-recor
 const ZCreateFeedbackRecordDirectoryAction = z.object({
   organizationId: ZId,
   name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED"),
+  workspaceIds: z.array(ZId).optional(),
 });
 
 export const createFeedbackRecordDirectoryAction = authenticatedActionClient
@@ -33,7 +34,11 @@ export const createFeedbackRecordDirectoryAction = authenticatedActionClient
         ],
       });
 
-      const result = await createFeedbackRecordDirectory(parsedInput.organizationId, parsedInput.name);
+      const result = await createFeedbackRecordDirectory(
+        parsedInput.organizationId,
+        parsedInput.name,
+        parsedInput.workspaceIds
+      );
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
       ctx.auditLoggingCtx.feedbackRecordDirectoryId = result;
       ctx.auditLoggingCtx.newObject = {

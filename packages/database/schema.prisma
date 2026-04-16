@@ -1086,23 +1086,26 @@ enum HubFieldType {
 /// @property formbricksMappings - Element mappings for Formbricks connectors
 /// @property fieldMappings - Field mappings for other connector types
 model Connector {
-  id                 String                       @id @default(cuid())
-  createdAt          DateTime                     @default(now()) @map(name: "created_at")
-  updatedAt          DateTime                     @updatedAt @map(name: "updated_at")
-  name               String
-  type               ConnectorType
-  status             ConnectorStatus              @default(active)
-  workspaceId        String
-  workspace          Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  formbricksMappings ConnectorFormbricksMapping[]
-  fieldMappings      ConnectorFieldMapping[]
-  lastSyncAt         DateTime?                    @map(name: "last_sync_at")
-  createdBy          String?                      @map(name: "created_by")
-  creator            User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  id                        String                       @id @default(cuid())
+  createdAt                 DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                     @updatedAt @map(name: "updated_at")
+  name                      String
+  type                      ConnectorType
+  status                    ConnectorStatus              @default(active)
+  workspaceId               String
+  workspace                 Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackRecordDirectoryId String
+  feedbackRecordDirectory   FeedbackRecordDirectory      @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
+  formbricksMappings        ConnectorFormbricksMapping[]
+  fieldMappings             ConnectorFieldMapping[]
+  lastSyncAt                DateTime?                    @map(name: "last_sync_at")
+  createdBy                 String?                      @map(name: "created_by")
+  creator                   User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, name])
   @@index([type])
+  @@index([feedbackRecordDirectoryId])
 }
 
 /// Maps survey elements to Hub FeedbackRecords for Formbricks connectors.
@@ -1169,6 +1172,7 @@ model FeedbackRecordDirectory {
   organizationId String
   organization   Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workspaces     FeedbackRecordDirectoryWorkspace[]
+  connectors     Connector[]
 
   @@unique([organizationId, name])
 }

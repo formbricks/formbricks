@@ -373,6 +373,17 @@ async function main(): Promise<void> {
     },
   });
 
+  await prisma.feedbackRecordDirectory.upsert({
+    where: {
+      organizationId_name: { organizationId: organization.id, name: "Default Feedback Record Directory" },
+    },
+    update: {},
+    create: {
+      name: "Default Feedback Record Directory",
+      organizationId: organization.id,
+    },
+  });
+
   // Users
   const passwordHash = await bcrypt.hash(SEED_CREDENTIALS.ADMIN.password, 10);
 
