@@ -154,15 +154,23 @@ const checkRequiredField = (
     return createRequiredError(t);
   }
 
-  // For multi-select: if "other" is selected (sentinel ""), require the other text to be non-empty
+  // For multi-select: if "other" is the only selection, require the other text to be non-empty
   if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
     const sentinelIndex = value.indexOf("");
     if (sentinelIndex !== -1) {
       const otherText = value[sentinelIndex + 1];
-      if (!otherText || (typeof otherText === "string" && otherText.trim() === "")) {
+      const hasOtherText = otherText && typeof otherText === "string" && otherText.trim() !== "";
+      const otherSelectedCount = value.filter((v, i) => v !== "" && i !== sentinelIndex + 1).length;
+
+      if (otherSelectedCount === 0 && !hasOtherText) {
         return createRequiredError(t);
       }
     }
+  }
+
+  // For single-select: if "other" is selected (value is ""), require text
+  if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle && value === "") {
+    return createRequiredError(t);
   }
 
   return null;
@@ -355,6 +363,42 @@ const executeAndLogic = (
 };
 
 /**
+ * When "Other" is the only selection, require the text field to be non-empty.
+ * This runs regardless of element.required — selecting "Other" alone without
+ * providing text produces a meaningless empty response.
+ */
+const checkOtherOptionText = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): TValidationError | null => {
+  // Multi-select: value is an array; "other" is indicated by a "" sentinel
+  if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
+    const sentinelIndex = value.indexOf("");
+    if (sentinelIndex === -1) return null; // "other" not selected
+
+    const otherText = value[sentinelIndex + 1];
+    const hasOtherText = otherText && typeof otherText === "string" && otherText.trim() !== "";
+
+    // Count non-other selected options (entries that are not the sentinel and not the other text)
+    const otherSelectedCount = value.filter((v, i) => v !== "" && i !== sentinelIndex + 1).length;
+
+    if (otherSelectedCount === 0 && !hasOtherText) {
+      return createRequiredError(t);
+    }
+  }
+
+  // Single-select: value is "" when "other" is selected but text is empty
+  if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
+    if (value === "") {
+      return createRequiredError(t);
+    }
+  }
+
+  return null;
+};
+
+/**
  * Single entrypoint for validating an element's response value.
  * Called by block-conditional.tsx during form submission.
  *
@@ -376,6 +420,14 @@ export const validateElementResponse = (
   const requiredError = checkRequiredField(element, value, t);
   if (requiredError) {
     errors.push(requiredError);
+  }
+
+  // When "Other" is the only selection, the text field is mandatory (regardless of element.required)
+  if (!requiredError) {
+    const otherError = checkOtherOptionText(element, value, t);
+    if (otherError) {
+      errors.push(otherError);
+    }
   }
 
   // Validation rules apply to matrix elements regardless of required status
