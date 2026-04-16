@@ -4,16 +4,13 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { Confetti } from "@/modules/ui/components/confetti";
 
-interface SummaryMetadataProps {
-  environment: TEnvironment;
-  survey: TSurvey;
-}
-
-export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) => {
+export const SuccessMessage = () => {
+  const { environment } = useEnvironment();
+  const { survey } = useSurvey();
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
