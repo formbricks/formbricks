@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
 import { TProjectConfigChannel } from "@formbricks/types/project";
