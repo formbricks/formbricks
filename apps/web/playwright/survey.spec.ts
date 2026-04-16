@@ -304,7 +304,6 @@ test.describe("Multi Language Survey Create", async () => {
       surveys.createAndSubmit.pictureSelectQuestion.question
     );
 
-    // Handle file uploads
     await uploadFileForFileUploadQuestion(page);
 
     await page

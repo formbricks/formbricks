@@ -76,28 +76,38 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
-export const uploadFileForFileUploadQuestion = async (page: Page) => {
-  try {
-    const fileInput = page.locator('input[type="file"]');
-    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
-    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
-    const buffer1 = Buffer.from(await response1.arrayBuffer());
-    const buffer2 = Buffer.from(await response2.arrayBuffer());
+export const waitForPendingFileUploads = async (page: Page): Promise<void> => {
+  await expect(page.locator("svg.animate-spin.text-slate-700")).toHaveCount(0, { timeout: 60000 });
+  await expect(page.getByText("Some files failed to upload")).toHaveCount(0);
+  await expect(page.getByText("No files were uploaded")).toHaveCount(0);
+  await expect(page.getByText("Invalid file name, please rename your file and try again")).toHaveCount(0);
+};
 
-    await fileInput.setInputFiles([
-      {
-        name: "puppy-1-small.jpg",
-        mimeType: "image/jpeg",
-        buffer: buffer1,
-      },
-      {
-        name: "puppy-2-small.jpg",
-        mimeType: "image/jpeg",
-        buffer: buffer2,
-      },
-    ]);
+export const uploadFileForFileUploadQuestion = async (page: Page) => {
+  const fileInput = page.locator('input[type="file"]');
+  const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
+  const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
+  const buffer1 = Buffer.from(await response1.arrayBuffer());
+  const buffer2 = Buffer.from(await response2.arrayBuffer());
+
+  await fileInput.setInputFiles([
+    {
+      name: "puppy-1-small.jpg",
+      mimeType: "image/jpeg",
+      buffer: buffer1,
+    },
+    {
+      name: "puppy-2-small.jpg",
+      mimeType: "image/jpeg",
+      buffer: buffer2,
+    },
+  ]);
+
+  try {
+    await waitForPendingFileUploads(page);
   } catch (error) {
-    logger.error(error, "Error uploading files");
+    logger.error(error, "Error waiting for file uploads to finish");
+    throw error;
   }
 };
 
@@ -295,7 +305,6 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("button", { name: "Add description" }).click();
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
 
-  // Handle file uploads
   await uploadFileForFileUploadQuestion(page);
 
   // File Upload Question
@@ -466,24 +475,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await fillRichTextEditor(page, "Question*", params.pictureSelectQuestion.question);
   await page.getByRole("button", { name: "Add description" }).click();
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
-  const fileInput = page.locator('input[type="file"]');
-  const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
-  const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
-  const buffer1 = Buffer.from(await response1.arrayBuffer());
-  const buffer2 = Buffer.from(await response2.arrayBuffer());
-
-  await fileInput.setInputFiles([
-    {
-      name: "puppy-1-small.jpg",
-      mimeType: "image/jpeg",
-      buffer: buffer1,
-    },
-    {
-      name: "puppy-2-small.jpg",
-      mimeType: "image/jpeg",
-      buffer: buffer2,
-    },
-  ]);
+  await uploadFileForFileUploadQuestion(page);
 
   // Rating Question
   await page
