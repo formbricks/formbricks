@@ -53,24 +53,21 @@ const syncLinkedSsoUser = async ({
   );
 
   if (linkedUser.email === user.email) {
-    await prisma.$transaction(async (tx) => {
-      await syncSsoIdentityForUser({
-        userId: linkedUser.id,
+    await syncSsoIdentityForUser({
+      userId: linkedUser.id,
+      provider,
+      account: {
+        type: account.type,
         provider,
-        account: {
-          type: account.type,
-          provider,
-          providerAccountId: account.providerAccountId,
-          access_token: account.access_token,
-          refresh_token: account.refresh_token,
-          expires_at: account.expires_at,
-          scope: account.scope,
-          token_type: account.token_type,
-          id_token: account.id_token,
-        },
-        tx,
-        legacyAccountIdToNormalize,
-      });
+        providerAccountId: account.providerAccountId,
+        access_token: account.access_token,
+        refresh_token: account.refresh_token,
+        expires_at: account.expires_at,
+        scope: account.scope,
+        token_type: account.token_type,
+        id_token: account.id_token,
+      },
+      legacyAccountIdToNormalize,
     });
 
     contextLogger.debug(

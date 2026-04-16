@@ -1054,15 +1054,16 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
 
       test("rejects expired SSO relink intents", () => {
-        const expiredIntent = createSsoRelinkIntent(
+        const expiredIntent = jwt.sign(
           {
-            userId: mockUser.id,
-            email: mockUser.email,
+            userId: crypto.symmetricEncrypt(mockUser.id, TEST_ENCRYPTION_KEY),
+            email: crypto.symmetricEncrypt(mockUser.email, TEST_ENCRYPTION_KEY),
             provider: "google",
-            providerAccountId: "provider-123",
-            callbackUrl: "http://localhost:3000",
+            providerAccountId: crypto.symmetricEncrypt("provider-123", TEST_ENCRYPTION_KEY),
+            callbackUrl: crypto.symmetricEncrypt("http://localhost:3000", TEST_ENCRYPTION_KEY),
+            exp: Math.floor(Date.now() / 1000) - 3600,
           },
-          { expiresIn: -1 }
+          TEST_NEXTAUTH_SECRET
         );
 
         expect(() => verifySsoRelinkIntent(expiredIntent)).toThrow();

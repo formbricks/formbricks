@@ -214,10 +214,11 @@ describe("resendVerificationEmailAction", () => {
 
     test("should resend an SSO recovery email for a verified user", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue({
+      const verifiedUserWithLocale: NonNullable<Awaited<ReturnType<typeof getUserByEmail>>> = {
         ...mockVerifiedUser,
         locale: "en-US",
-      } as any);
+      };
+      vi.mocked(getUserByEmail).mockResolvedValue(verifiedUserWithLocale);
 
       const result = await resendVerificationEmailAction({
         ctx: mockCtx,

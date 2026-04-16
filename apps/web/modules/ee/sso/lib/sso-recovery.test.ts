@@ -276,6 +276,57 @@ describe("sso-recovery", () => {
     );
   });
 
+  test("rejects recovery when there is no signed-in session", async () => {
+    await expect(
+      completeSsoRecovery({
+        intentToken: "test-intent",
+      })
+    ).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_failed",
+        status: "failure",
+        userId: "user_1",
+        newObject: expect.objectContaining({
+          failureReason: "missing_session",
+        }),
+      })
+    );
+  });
+
+  test("rejects recovery when the intent provider is invalid", async () => {
+    mocks.verifySsoRelinkIntent.mockReturnValue({
+      userId: "user_1",
+      email: "john.doe@example.com",
+      provider: "unknown-provider",
+      providerAccountId: "provider-account-1",
+      callbackUrl: "http://localhost:3000/environments/env_1",
+    });
+
+    await expect(
+      completeSsoRecovery({
+        intentToken: "test-intent",
+        sessionUserId: "user_1",
+      })
+    ).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_failed",
+        status: "failure",
+        userId: "user_1",
+        newObject: expect.objectContaining({
+          failureReason: "invalid_provider",
+        }),
+      })
+    );
+  });
+
   test("rejects invalid or expired recovery intents before looking up any user", async () => {
     mocks.verifySsoRelinkIntent.mockImplementation(() => {
       throw new Error("expired");

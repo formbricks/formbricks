@@ -5,7 +5,6 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recovery";
 
 export const GET = async (request: Request) => {
-  const session = await getServerSession(authOptions);
   const url = new URL(request.url);
   const intentToken = url.searchParams.get("intent");
 
@@ -14,6 +13,7 @@ export const GET = async (request: Request) => {
   }
 
   try {
+    const session = await getServerSession(authOptions);
     const callbackUrl = await completeSsoRecovery({
       intentToken,
       sessionUserId: session?.user.id,

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     account: {
       findUnique: mocks.accountFindUnique,
       delete: mocks.accountDelete,
@@ -37,6 +38,19 @@ describe("syncSsoIdentityForUser", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback({
+        account: {
+          findUnique: mocks.accountFindUnique,
+          delete: mocks.accountDelete,
+          update: mocks.accountUpdate,
+          create: mocks.accountCreate,
+        },
+        user: {
+          update: mocks.userUpdate,
+        },
+      } as any)
+    );
     mocks.accountFindUnique.mockResolvedValue(null);
     mocks.accountDelete.mockResolvedValue(undefined);
     mocks.accountUpdate.mockResolvedValue(undefined);
@@ -125,6 +139,16 @@ describe("syncSsoIdentityForUser", () => {
       },
     });
     expect(mocks.accountCreate).not.toHaveBeenCalled();
+  });
+
+  test("wraps non-transactional calls in a prisma transaction", async () => {
+    await syncSsoIdentityForUser({
+      userId: "user_1",
+      provider: "google",
+      account,
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
   });
 
   test("uses the transaction client when one is provided", async () => {

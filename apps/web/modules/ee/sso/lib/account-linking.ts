@@ -22,51 +22,32 @@ export type TSsoAccountLinkInput = Pick<Account, "type" | "provider" | "provider
     Pick<Account, "access_token" | "refresh_token" | "expires_at" | "scope" | "token_type" | "id_token">
   >;
 
-const getDbClient = (tx?: Prisma.TransactionClient) => tx ?? prisma;
+const ACCOUNT_TOKEN_FIELDS = [
+  "access_token",
+  "refresh_token",
+  "expires_at",
+  "scope",
+  "token_type",
+  "id_token",
+] as const;
+
+type TAccountTokenField = (typeof ACCOUNT_TOKEN_FIELDS)[number];
 
 const getAccountTokenUpdate = (
   account: TSsoAccountLinkInput
-): Partial<
-  Pick<
-    TSsoAccountLinkInput,
-    "access_token" | "refresh_token" | "expires_at" | "scope" | "token_type" | "id_token"
-  >
-> => {
-  const accountTokenUpdate: Partial<
-    Pick<
-      TSsoAccountLinkInput,
-      "access_token" | "refresh_token" | "expires_at" | "scope" | "token_type" | "id_token"
-    >
-  > = {};
+): Partial<Pick<TSsoAccountLinkInput, TAccountTokenField>> => {
+  const accountTokenUpdate: Partial<Pick<TSsoAccountLinkInput, TAccountTokenField>> = {};
 
-  if (account.access_token !== undefined) {
-    accountTokenUpdate.access_token = account.access_token;
-  }
-
-  if (account.refresh_token !== undefined) {
-    accountTokenUpdate.refresh_token = account.refresh_token;
-  }
-
-  if (account.expires_at !== undefined) {
-    accountTokenUpdate.expires_at = account.expires_at;
-  }
-
-  if (account.scope !== undefined) {
-    accountTokenUpdate.scope = account.scope;
-  }
-
-  if (account.token_type !== undefined) {
-    accountTokenUpdate.token_type = account.token_type;
-  }
-
-  if (account.id_token !== undefined) {
-    accountTokenUpdate.id_token = account.id_token;
+  for (const field of ACCOUNT_TOKEN_FIELDS) {
+    if (account[field] !== undefined) {
+      accountTokenUpdate[field] = account[field];
+    }
   }
 
   return accountTokenUpdate;
 };
 
-export const syncSsoIdentityForUser = async ({
+const syncSsoIdentityForUserWithTx = async ({
   userId,
   provider,
   account,
@@ -76,11 +57,10 @@ export const syncSsoIdentityForUser = async ({
   userId: string;
   provider: IdentityProvider;
   account: TSsoAccountLinkInput;
-  tx?: Prisma.TransactionClient;
+  tx: Prisma.TransactionClient;
   legacyAccountIdToNormalize?: string;
 }) => {
-  const db = getDbClient(tx);
-  const existingCanonicalAccount = await db.account.findUnique({
+  const existingCanonicalAccount = await tx.account.findUnique({
     where: {
       provider_providerAccountId: {
         provider,
@@ -99,19 +79,19 @@ export const syncSsoIdentityForUser = async ({
 
   if (legacyAccountIdToNormalize) {
     if (existingCanonicalAccount) {
-      await db.account.delete({
+      await tx.account.delete({
         where: {
           id: legacyAccountIdToNormalize,
         },
       });
-      await db.account.update({
+      await tx.account.update({
         where: {
           id: existingCanonicalAccount.id,
         },
         data: getAccountTokenUpdate(account),
       });
     } else {
-      await db.account.update({
+      await tx.account.update({
         where: {
           id: legacyAccountIdToNormalize,
         },
@@ -125,14 +105,14 @@ export const syncSsoIdentityForUser = async ({
       });
     }
   } else if (existingCanonicalAccount) {
-    await db.account.update({
+    await tx.account.update({
       where: {
         id: existingCanonicalAccount.id,
       },
       data: getAccountTokenUpdate(account),
     });
   } else {
-    await db.account.create({
+    await tx.account.create({
       data: {
         userId,
         type: account.type,
@@ -143,7 +123,7 @@ export const syncSsoIdentityForUser = async ({
     });
   }
 
-  await db.user.update({
+  await tx.user.update({
     where: {
       id: userId,
     },
@@ -151,5 +131,40 @@ export const syncSsoIdentityForUser = async ({
       identityProvider: provider,
       identityProviderAccountId: account.providerAccountId,
     },
+  });
+};
+
+export const syncSsoIdentityForUser = async ({
+  userId,
+  provider,
+  account,
+  tx,
+  legacyAccountIdToNormalize,
+}: {
+  userId: string;
+  provider: IdentityProvider;
+  account: TSsoAccountLinkInput;
+  tx?: Prisma.TransactionClient;
+  legacyAccountIdToNormalize?: string;
+}) => {
+  if (tx) {
+    await syncSsoIdentityForUserWithTx({
+      userId,
+      provider,
+      account,
+      tx,
+      legacyAccountIdToNormalize,
+    });
+    return;
+  }
+
+  await prisma.$transaction(async (transactionTx) => {
+    await syncSsoIdentityForUserWithTx({
+      userId,
+      provider,
+      account,
+      tx: transactionTx,
+      legacyAccountIdToNormalize,
+    });
   });
 };

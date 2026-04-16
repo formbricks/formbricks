@@ -1,6 +1,23 @@
 import { describe, expect, test, vi } from "vitest";
 import { getSSOProviders } from "./providers";
 
+type TSsoProvider = ReturnType<typeof getSSOProviders>[number];
+type TOidcProvider = Extract<TSsoProvider, { id: "openid" }>;
+type TSamlProvider = Extract<TSsoProvider, { id: "saml" }>;
+type TAzureProvider = Extract<TSsoProvider, { id: "azuread" }>;
+
+const getProviderById = <TId extends TSsoProvider["id"]>(id: TId): Extract<TSsoProvider, { id: TId }> => {
+  const provider = getSSOProviders().find(
+    (candidate): candidate is Extract<TSsoProvider, { id: TId }> => candidate.id === id
+  );
+
+  if (!provider) {
+    throw new Error(`Provider with id ${id} not found`);
+  }
+
+  return provider;
+};
+
 // Mock environment variables
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
@@ -29,30 +46,27 @@ describe("SSO Providers", () => {
   });
 
   test("should configure OIDC provider correctly", () => {
-    const providers = getSSOProviders();
-    const oidcProvider = providers[3];
+    const oidcProvider = getProviderById("openid") as TOidcProvider;
 
     expect(oidcProvider.id).toBe("openid");
     expect(oidcProvider.name).toBe("Test OIDC");
-    expect((oidcProvider as any).clientId).toBe("test-oidc-client-id");
-    expect((oidcProvider as any).clientSecret).toBe("test-oidc-client-secret");
-    expect((oidcProvider as any).wellKnown).toBe("https://test-issuer.com/.well-known/openid-configuration");
-    expect((oidcProvider as any).client?.id_token_signed_response_alg).toBe("RS256");
+    expect(oidcProvider.clientId).toBe("test-oidc-client-id");
+    expect(oidcProvider.clientSecret).toBe("test-oidc-client-secret");
+    expect(oidcProvider.wellKnown).toBe("https://test-issuer.com/.well-known/openid-configuration");
+    expect(oidcProvider.client?.id_token_signed_response_alg).toBe("RS256");
     expect(oidcProvider.checks).toContain("pkce");
     expect(oidcProvider.checks).toContain("state");
   });
 
   test("should map the OIDC profile into the Formbricks user shape", () => {
-    const providers = getSSOProviders();
-    const oidcProvider = providers[3];
+    const oidcProvider = getProviderById("openid") as TOidcProvider;
+    const oidcProfile: Parameters<NonNullable<TOidcProvider["profile"]>>[0] = {
+      sub: "oidc-user-1",
+      name: "OIDC User",
+      email: "oidc@example.com",
+    };
 
-    expect(
-      oidcProvider.profile?.({
-        sub: "oidc-user-1",
-        name: "OIDC User",
-        email: "oidc@example.com",
-      } as any)
-    ).toEqual({
+    expect(oidcProvider.profile?.(oidcProfile)).toEqual({
       id: "oidc-user-1",
       name: "OIDC User",
       email: "oidc@example.com",
@@ -60,18 +74,17 @@ describe("SSO Providers", () => {
   });
 
   test("should configure SAML provider correctly", () => {
-    const providers = getSSOProviders();
-    const samlProvider = providers[4];
-    const googleProvider = providers[1];
-    const azureProvider = providers[2];
+    const samlProvider = getProviderById("saml") as TSamlProvider;
+    const googleProvider = getProviderById("google");
+    const azureProvider = getProviderById("azuread") as TAzureProvider;
 
     expect(samlProvider.id).toBe("saml");
     expect(azureProvider.id).toBe("azuread");
     expect(samlProvider.name).toBe("BoxyHQ SAML");
-    expect((samlProvider as any).version).toBe("2.0");
+    expect(samlProvider.version).toBe("2.0");
     expect(samlProvider.checks).toContain("pkce");
     expect(samlProvider.checks).toContain("state");
-    expect((samlProvider as any).authorization?.url).toBe("https://test-app.com/api/auth/saml/authorize");
+    expect(samlProvider.authorization?.url).toBe("https://test-app.com/api/auth/saml/authorize");
     expect(samlProvider.token).toBe("https://test-app.com/api/auth/saml/token");
     expect(samlProvider.userinfo).toBe("https://test-app.com/api/auth/saml/userinfo");
     expect(googleProvider.allowDangerousEmailAccountLinking).toBeUndefined();
@@ -79,17 +92,15 @@ describe("SSO Providers", () => {
   });
 
   test("should map the SAML profile and trim empty name parts", () => {
-    const providers = getSSOProviders();
-    const samlProvider = providers[4];
+    const samlProvider = getProviderById("saml") as TSamlProvider;
+    const samlProfile: Parameters<NonNullable<TSamlProvider["profile"]>>[0] = {
+      id: "saml-user-1",
+      email: "saml@example.com",
+      firstName: "Saml",
+      lastName: "",
+    };
 
-    expect(
-      samlProvider.profile?.({
-        id: "saml-user-1",
-        email: "saml@example.com",
-        firstName: "Saml",
-        lastName: "",
-      } as any)
-    ).toEqual({
+    expect(samlProvider.profile?.(samlProfile)).toEqual({
       id: "saml-user-1",
       email: "saml@example.com",
       name: "Saml",
@@ -109,7 +120,13 @@ describe("SSO Providers", () => {
     });
 
     const { getSSOProviders: getProvidersWithMissingAzureEnv } = await import("./providers");
-    const azureProvider = getProvidersWithMissingAzureEnv()[2] as any;
+    const azureProvider = getProvidersWithMissingAzureEnv().find(
+      (provider): provider is TAzureProvider => provider.id === "azuread"
+    );
+
+    if (!azureProvider) {
+      throw new Error("Azure provider not found");
+    }
 
     expect(azureProvider.id).toBe("azuread");
     expect(azureProvider.options.clientId).toBe("");

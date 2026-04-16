@@ -4,23 +4,39 @@ import { POSTHOG_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { updateUserLastLoginAt } from "@/modules/auth/lib/user";
 
-export const captureSignIn = async ({ userId, provider }: { userId: string; provider: string }) => {
+const getIsFirstLoginToday = (lastLoginAt: Date | null | undefined) =>
+  lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
+
+export const captureSignIn = async ({
+  userId,
+  provider,
+  previousLastLoginAt,
+}: {
+  userId: string;
+  provider: string;
+  previousLastLoginAt?: Date | null;
+}) => {
   if (!POSTHOG_KEY) {
     return;
   }
 
   try {
-    const [membershipCount, userData] = await Promise.all([
-      prisma.membership.count({ where: { userId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
-    ]);
-    const isFirstLoginToday =
-      userData?.lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
+    const membershipCountPromise = prisma.membership.count({ where: { userId } });
+    const resolvedPreviousLastLoginAt =
+      previousLastLoginAt !== undefined
+        ? previousLastLoginAt
+        : (
+            await prisma.user.findUnique({
+              where: { id: userId },
+              select: { lastLoginAt: true },
+            })
+          )?.lastLoginAt;
+    const membershipCount = await membershipCountPromise;
 
     capturePostHogEvent(userId, "user_signed_in", {
       auth_provider: provider,
       organization_count: membershipCount,
-      is_first_login_today: isFirstLoginToday,
+      is_first_login_today: getIsFirstLoginToday(resolvedPreviousLastLoginAt),
     });
   } catch (error) {
     logger.warn({ error }, "Failed to capture PostHog sign-in event");
@@ -36,6 +52,6 @@ export const finalizeSuccessfulSignIn = async ({
   email: string;
   provider: string;
 }) => {
-  void captureSignIn({ userId, provider });
-  await updateUserLastLoginAt(email);
+  const previousLastLoginAt = await updateUserLastLoginAt(email);
+  void captureSignIn({ userId, provider, previousLastLoginAt });
 };

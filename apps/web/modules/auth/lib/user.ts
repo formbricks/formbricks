@@ -44,15 +44,35 @@ export const updateUserLastLoginAt = async (email: string) => {
   validateInputs([email, ZUserEmail]);
 
   try {
-    await prisma.user.update({
-      where: {
-        email,
-      },
-      data: {
-        lastLoginAt: new Date(),
-      },
+    return await prisma.$transaction(async (tx) => {
+      const lockedUsers = await tx.$queryRaw<Array<{ id: string; lastLoginAt: Date | null }>>`
+        SELECT "id", "lastLoginAt"
+        FROM "User"
+        WHERE "email" = ${email}
+        FOR UPDATE
+      `;
+      const lockedUser = lockedUsers[0];
+
+      if (!lockedUser) {
+        throw new ResourceNotFoundError("email", email);
+      }
+
+      await tx.user.update({
+        where: {
+          id: lockedUser.id,
+        },
+        data: {
+          lastLoginAt: new Date(),
+        },
+      });
+
+      return lockedUser.lastLoginAt;
     });
   } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      throw error;
+    }
+
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.RecordDoesNotExist

@@ -36,6 +36,19 @@ describe("SSO recovery completion route", () => {
   test("redirects to login when the intent token is missing", async () => {
     const response = await GET(new Request("http://localhost:3000/api/auth/sso/recovery/complete"));
 
+    expect(mocks.getServerSession).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
+    );
+  });
+
+  test("redirects to login when the session is missing", async () => {
+    mocks.getServerSession.mockResolvedValue(null);
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent")
+    );
+
     expect(response.headers.get("location")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
     );

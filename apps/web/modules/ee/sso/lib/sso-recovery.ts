@@ -221,13 +221,12 @@ export const completeSsoRecovery = async ({
 
   const provider = normalizeSsoProvider(intent.provider);
 
-  if (!provider || !sessionUserId || sessionUserId !== intent.userId) {
+  if (!provider) {
     getSsoRecoveryLogger("sso_recovery_failed").error(
       {
-        userId: intent.userId,
         provider: intent.provider,
       },
-      "SSO recovery failed due to session mismatch"
+      "SSO recovery failed due to an invalid provider"
     );
     queueSsoRecoveryAuditEvent({
       action: "sso_recovery_failed",
@@ -235,6 +234,47 @@ export const completeSsoRecovery = async ({
       userId: intent.userId,
       email: intent.email,
       provider: intent.provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "invalid_provider",
+    });
+    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+  }
+
+  if (!sessionUserId) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        userId: intent.userId,
+        provider,
+      },
+      "SSO recovery failed because there is no signed-in session"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "missing_session",
+    });
+    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+  }
+
+  if (sessionUserId !== intent.userId) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        userId: intent.userId,
+        provider,
+        sessionUserId,
+      },
+      "SSO recovery failed because the signed-in user does not match the recovery intent"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider,
       callbackUrl: intent.callbackUrl,
       failureReason: "session_user_mismatch",
     });

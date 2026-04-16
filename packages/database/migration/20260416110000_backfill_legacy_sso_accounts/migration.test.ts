@@ -3,8 +3,25 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backfillLegacySsoAccounts, normalizeLegacySsoProvider } from "./migration";
 
 describe("backfill legacy SSO accounts migration", () => {
-  const queryRaw = vi.fn();
-  const executeRaw = vi.fn();
+  interface TMigrationTxMock {
+    tx: Parameters<typeof backfillLegacySsoAccounts>[0];
+    queryRaw: ReturnType<typeof vi.fn>;
+    executeRaw: ReturnType<typeof vi.fn>;
+  }
+
+  const createMigrationTxMock = (): TMigrationTxMock => {
+    const queryRaw = vi.fn();
+    const executeRaw = vi.fn();
+
+    return {
+      tx: {
+        $executeRaw: executeRaw,
+        $queryRaw: queryRaw,
+      },
+      queryRaw,
+      executeRaw,
+    };
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -21,22 +38,20 @@ describe("backfill legacy SSO accounts migration", () => {
   });
 
   test("backfills missing account rows and reports idempotent reruns as existing", async () => {
-    queryRaw
+    const firstRunMock = createMigrationTxMock();
+
+    firstRunMock.queryRaw
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
-          email: "legacy@example.com",
           id: "user_1",
           identityProvider: "google",
           identityProviderAccountId: "provider_1",
         },
-      ])
-      .mockResolvedValueOnce([]);
+      ]);
 
-    const firstRun = await backfillLegacySsoAccounts({
-      $executeRaw: executeRaw,
-      $queryRaw: queryRaw,
-    });
+    const firstRun = await backfillLegacySsoAccounts(firstRunMock.tx);
 
     expect(firstRun).toEqual({
       scanned: 1,
@@ -46,20 +61,11 @@ describe("backfill legacy SSO accounts migration", () => {
       skippedExisting: 0,
       skippedMissingId: 0,
     });
-    expect(executeRaw).toHaveBeenCalledTimes(1);
+    expect(firstRunMock.executeRaw).toHaveBeenCalledTimes(1);
 
-    vi.clearAllMocks();
-
-    queryRaw
+    const secondRunMock = createMigrationTxMock();
+    secondRunMock.queryRaw
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          email: "legacy@example.com",
-          id: "user_1",
-          identityProvider: "google",
-          identityProviderAccountId: "provider_1",
-        },
-      ])
       .mockResolvedValueOnce([
         {
           id: "account_1",
@@ -67,12 +73,16 @@ describe("backfill legacy SSO accounts migration", () => {
           providerAccountId: "provider_1",
           userId: "user_1",
         },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "user_1",
+          identityProvider: "google",
+          identityProviderAccountId: "provider_1",
+        },
       ]);
 
-    const secondRun = await backfillLegacySsoAccounts({
-      $executeRaw: executeRaw,
-      $queryRaw: queryRaw,
-    });
+    const secondRun = await backfillLegacySsoAccounts(secondRunMock.tx);
 
     expect(secondRun).toEqual({
       scanned: 1,
@@ -82,11 +92,12 @@ describe("backfill legacy SSO accounts migration", () => {
       skippedExisting: 1,
       skippedMissingId: 0,
     });
-    expect(executeRaw).not.toHaveBeenCalled();
+    expect(secondRunMock.executeRaw).not.toHaveBeenCalled();
   });
 
   test("normalizes legacy Azure accounts and skips conflicting ownership", async () => {
-    queryRaw
+    const migrationMock = createMigrationTxMock();
+    migrationMock.queryRaw
       .mockResolvedValueOnce([
         {
           id: "legacy_account",
@@ -101,7 +112,6 @@ describe("backfill legacy SSO accounts migration", () => {
           userId: "user_2",
         },
       ])
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: "canonical_conflict",
@@ -109,22 +119,6 @@ describe("backfill legacy SSO accounts migration", () => {
           providerAccountId: "azure_conflict",
           userId: "other_user",
         },
-      ])
-      .mockResolvedValueOnce([
-        {
-          email: "legacy@example.com",
-          id: "user_1",
-          identityProvider: "azuread",
-          identityProviderAccountId: "azure_subject",
-        },
-        {
-          email: "conflict@example.com",
-          id: "user_2",
-          identityProvider: "azuread",
-          identityProviderAccountId: "azure_conflict",
-        },
-      ])
-      .mockResolvedValueOnce([
         {
           id: "canonical_azure",
           provider: "azuread",
@@ -134,17 +128,18 @@ describe("backfill legacy SSO accounts migration", () => {
       ])
       .mockResolvedValueOnce([
         {
-          id: "canonical_conflict",
-          provider: "azuread",
-          providerAccountId: "azure_conflict",
-          userId: "other_user",
+          id: "user_1",
+          identityProvider: "azuread",
+          identityProviderAccountId: "azure_subject",
+        },
+        {
+          id: "user_2",
+          identityProvider: "azuread",
+          identityProviderAccountId: "azure_conflict",
         },
       ]);
 
-    const stats = await backfillLegacySsoAccounts({
-      $executeRaw: executeRaw,
-      $queryRaw: queryRaw,
-    });
+    const stats = await backfillLegacySsoAccounts(migrationMock.tx);
 
     expect(stats).toEqual({
       scanned: 2,
@@ -154,6 +149,6 @@ describe("backfill legacy SSO accounts migration", () => {
       skippedExisting: 1,
       skippedMissingId: 0,
     });
-    expect(executeRaw).toHaveBeenCalledTimes(1);
+    expect(migrationMock.executeRaw).toHaveBeenCalledTimes(1);
   });
 });
