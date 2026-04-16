@@ -59,6 +59,46 @@ function problemResponse(
   return Response.json(body, { status, headers });
 }
 
+function buildSuccessHeaders(options?: {
+  requestId?: string;
+  cache?: string;
+  headers?: Record<string, string>;
+}): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Cache-Control": options?.cache ?? CACHE_NO_STORE,
+    ...options?.headers,
+  };
+
+  if (options?.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return headers;
+}
+
+function successJsonResponse<T, TMeta extends Record<string, unknown> | undefined>(
+  status: number,
+  data: T,
+  options?: {
+    requestId?: string;
+    cache?: string;
+    meta?: TMeta;
+    headers?: Record<string, string>;
+  }
+): Response {
+  return Response.json(
+    {
+      data,
+      ...(options?.meta ? { meta: options.meta } : {}),
+    },
+    {
+      status,
+      headers: buildSuccessHeaders(options),
+    }
+  );
+}
+
 export function problemBadRequest(
   requestId: string,
   detail: string,
@@ -133,17 +173,46 @@ export function problemTooManyRequests(requestId: string, detail: string, retryA
   });
 }
 
+export function successResponse<T, TMeta extends Record<string, unknown> | undefined = undefined>(
+  data: T,
+  options?: { requestId?: string; cache?: string; meta?: TMeta }
+): Response {
+  return successJsonResponse(200, data, options);
+}
+
+export function createdResponse<T, TMeta extends Record<string, unknown> | undefined = undefined>(
+  data: T,
+  options?: {
+    requestId?: string;
+    cache?: string;
+    meta?: TMeta;
+    location?: string;
+  }
+): Response {
+  return successJsonResponse(201, data, {
+    ...options,
+    headers: options?.location ? { Location: options.location } : undefined,
+  });
+}
+
+export function noContentResponse(options?: { requestId?: string; cache?: string }): Response {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Cache-Control": options?.cache ?? CACHE_NO_STORE,
+      ...(options?.requestId ? { "X-Request-Id": options.requestId } : {}),
+    },
+  });
+}
+
 export function successListResponse<T, TMeta extends Record<string, unknown>>(
   data: T[],
   meta: TMeta,
   options?: { requestId?: string; cache?: string }
 ): Response {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Cache-Control": options?.cache ?? CACHE_NO_STORE,
-  };
-  if (options?.requestId) {
-    headers["X-Request-Id"] = options.requestId;
-  }
-  return Response.json({ data, meta }, { status: 200, headers });
+  return successJsonResponse(200, data, {
+    requestId: options?.requestId,
+    cache: options?.cache,
+    meta,
+  });
 }

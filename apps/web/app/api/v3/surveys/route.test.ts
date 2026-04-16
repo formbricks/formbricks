@@ -1,11 +1,17 @@
+import { createId } from "@paralleldrive/cuid2";
 import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { createSurvey } from "@/lib/survey/service";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
-import { GET } from "./route";
+import { buildV3SurveyCreateInput, buildV3SurveyPreview } from "./adapters";
+import { GET, POST } from "./route";
+import { ZV3SurveyCreateBody } from "./schemas";
 
 const { mockAuthenticateRequest } = vi.hoisted(() => ({
   mockAuthenticateRequest: vi.fn(),
@@ -33,6 +39,22 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
+
+vi.mock("@/lib/survey/service", () => ({
+  createSurvey: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/editor/lib/check-external-urls-permission", () => ({
+  checkExternalUrlsPermission: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
+  return {
+    ...actual,
+    queueAuditEvent: vi.fn(),
+  };
+});
 
 vi.mock("@/modules/survey/list/lib/survey-page", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/survey/list/lib/survey-page")>();
@@ -63,6 +85,27 @@ const getServerSession = vi.mocked((await import("next-auth")).getServerSession)
 
 const validWorkspaceId = "clxx1234567890123456789012";
 const resolvedEnvironmentId = "clzz9876543210987654321098";
+const surveyId = "clsv1234567890123456789012";
+
+const createBody = {
+  workspaceId: validWorkspaceId,
+  name: "API Survey",
+  blocks: [
+    {
+      id: createId(),
+      name: "Intro",
+      elements: [
+        {
+          id: "question_1",
+          type: "openText",
+          headline: { default: "How can we help?" },
+          required: true,
+        },
+      ],
+    },
+  ],
+};
+const parsedCreateBody = ZV3SurveyCreateBody.parse(createBody);
 
 function createRequest(url: string, requestId?: string, extraHeaders?: Record<string, string>): NextRequest {
   const headers: Record<string, string> = { ...extraHeaders };
@@ -124,6 +167,15 @@ describe("GET /api/v3/surveys", () => {
     });
     vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null });
     vi.mocked(getSurveyCount).mockResolvedValue(0);
+    vi.mocked(checkExternalUrlsPermission).mockResolvedValue(undefined);
+    vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
+    vi.mocked(createSurvey).mockResolvedValue(
+      buildV3SurveyPreview(
+        resolvedEnvironmentId,
+        buildV3SurveyCreateInput(parsedCreateBody, "user_1"),
+        surveyId
+      )
+    );
   });
 
   afterEach(() => {
@@ -353,5 +405,111 @@ describe("GET /api/v3/surveys", () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.code).toBe("internal_server_error");
+  });
+});
+
+describe("POST /api/v3/surveys", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    getServerSession.mockResolvedValue({
+      user: { id: "user_1", name: "User", email: "u@example.com" },
+      expires: "2026-01-01",
+    } as any);
+    mockAuthenticateRequest.mockResolvedValue(null);
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
+      environmentId: resolvedEnvironmentId,
+      projectId: "proj_1",
+      organizationId: "org_1",
+    } as any);
+    vi.mocked(checkExternalUrlsPermission).mockResolvedValue(undefined);
+    vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
+    vi.mocked(createSurvey).mockResolvedValue(
+      buildV3SurveyPreview(
+        resolvedEnvironmentId,
+        buildV3SurveyCreateInput(parsedCreateBody, "user_1"),
+        surveyId
+      )
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("creates a survey and returns 201 with location header", async () => {
+    const requestId = "req-create";
+    const req = new NextRequest("http://localhost/api/v3/surveys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": requestId,
+      },
+      body: JSON.stringify(createBody),
+    });
+
+    const res = await POST(req, {} as any);
+
+    expect(res.status).toBe(201);
+    expect(res.headers.get("Location")).toBe(`/api/v3/surveys/${surveyId}`);
+    expect(res.headers.get("X-Request-Id")).toBe(requestId);
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
+      expect.objectContaining({ user: expect.any(Object) }),
+      validWorkspaceId,
+      "readWrite",
+      requestId,
+      "/api/v3/surveys"
+    );
+    expect(checkExternalUrlsPermission).toHaveBeenCalled();
+    expect(createSurvey).toHaveBeenCalledWith(
+      resolvedEnvironmentId,
+      buildV3SurveyCreateInput(parsedCreateBody, "user_1")
+    );
+    expect(queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "created",
+        targetType: "survey",
+        organizationId: "org_1",
+        targetId: surveyId,
+        status: "success",
+      })
+    );
+  });
+
+  test("returns 400 when unsupported top-level fields are provided", async () => {
+    const req = new NextRequest("http://localhost/api/v3/surveys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...createBody,
+        questions: [],
+      }),
+    });
+
+    const res = await POST(req, {} as any);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.invalid_params).toContainEqual({
+      name: "questions",
+      reason: "Unsupported field",
+    });
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("returns 403 when external url permission blocks creation", async () => {
+    vi.mocked(checkExternalUrlsPermission).mockRejectedValueOnce(
+      new OperationNotAllowedError("External URLs are not enabled")
+    );
+    const req = new NextRequest("http://localhost/api/v3/surveys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(createBody),
+    });
+
+    const res = await POST(req, {} as any);
+    expect(res.status).toBe(403);
   });
 });

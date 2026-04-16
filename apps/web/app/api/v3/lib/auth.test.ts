@@ -4,7 +4,11 @@ import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/err
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { getEnvironment } from "@/lib/utils/services";
-import { requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
+import { requireSessionWorkspaceAccess, requireV3SurveyAccess, requireV3WorkspaceAccess } from "./auth";
+
+const { mockGetSurvey } = vi.hoisted(() => ({
+  mockGetSurvey: vi.fn(),
+}));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -25,6 +29,10 @@ vi.mock("@/lib/utils/services", () => ({
 
 vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
   checkAuthorizationUpdated: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/lib/survey", () => ({
+  getSurvey: mockGetSurvey,
 }));
 
 const requestId = "req-123";
@@ -270,5 +278,86 @@ describe("requireV3WorkspaceAccess", () => {
   test("401 when auth is neither session nor valid API key payload", async () => {
     const r = await requireV3WorkspaceAccess({ user: {} } as any, "env", "read", requestId);
     expect((r as Response).status).toBe(401);
+  });
+});
+
+describe("requireV3SurveyAccess", () => {
+  beforeEach(() => {
+    vi.mocked(getEnvironment).mockResolvedValue({
+      id: "env_survey",
+      projectId: "proj_survey",
+    } as any);
+    vi.mocked(getOrganizationIdFromProjectId).mockResolvedValue("org_survey");
+  });
+
+  test("returns 404 when the survey does not exist", async () => {
+    mockGetSurvey.mockResolvedValueOnce(null);
+
+    const result = await requireV3SurveyAccess(
+      { user: { id: "user_1" }, expires: "" } as any,
+      "survey_missing",
+      "read",
+      requestId
+    );
+
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(404);
+    expect(getEnvironment).not.toHaveBeenCalled();
+  });
+
+  test("returns survey context when the survey exists and the caller has access", async () => {
+    const survey = {
+      id: "survey_1",
+      environmentId: "env_survey",
+    };
+
+    mockGetSurvey.mockResolvedValueOnce(survey as any);
+    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(undefined as any);
+
+    const result = await requireV3SurveyAccess(
+      { user: { id: "user_1" }, expires: "" } as any,
+      "survey_1",
+      "readWrite",
+      requestId
+    );
+
+    expect(result).toEqual({
+      environmentId: "env_survey",
+      projectId: "proj_survey",
+      organizationId: "org_survey",
+      survey,
+    });
+  });
+
+  test("returns 403 when the survey exists but the caller lacks access", async () => {
+    mockGetSurvey.mockResolvedValueOnce({
+      id: "survey_forbidden",
+      environmentId: "env_survey",
+    } as any);
+    vi.mocked(checkAuthorizationUpdated).mockRejectedValueOnce(new AuthorizationError("Forbidden"));
+
+    const result = await requireV3SurveyAccess(
+      { user: { id: "user_1" }, expires: "" } as any,
+      "survey_forbidden",
+      "read",
+      requestId
+    );
+
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(403);
+  });
+
+  test("returns 404 when loading the survey throws ResourceNotFoundError", async () => {
+    mockGetSurvey.mockRejectedValueOnce(new ResourceNotFoundError("Survey", "survey_err"));
+
+    const result = await requireV3SurveyAccess(
+      { user: { id: "user_1" }, expires: "" } as any,
+      "survey_err",
+      "read",
+      requestId
+    );
+
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(404);
   });
 });

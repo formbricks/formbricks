@@ -25,6 +25,14 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/app/lib/api/api-error-reporter", () => ({
+  reportApiError: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
@@ -320,5 +328,68 @@ describe("withV3ApiWrapper", () => {
     const body = await response.json();
     expect(body.code).toBe("internal_server_error");
     expect(body.requestId).toBe("req-boom");
+  });
+
+  test("reports handled non-ok responses and queues audit logs when configured", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user_1" },
+      expires: "2026-01-01",
+    });
+
+    const { reportApiError } = await import("@/app/lib/api/api-error-reporter");
+    const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      action: "deleted",
+      targetType: "survey",
+      handler: async ({ auditLog }) => {
+        if (auditLog) {
+          auditLog.organizationId = "org_1";
+          auditLog.targetId = "survey_1";
+        }
+
+        return new Response(null, { status: 204 });
+      },
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys/survey_1"), {} as never);
+
+    expect(response.status).toBe(204);
+    expect(vi.mocked(reportApiError)).not.toHaveBeenCalled();
+    expect(vi.mocked(queueAuditEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetType: "survey",
+        targetId: "survey_1",
+        organizationId: "org_1",
+        userId: "user_1",
+        userType: "user",
+        status: "success",
+      })
+    );
+  });
+
+  test("reports handler error responses through reportApiError", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user_1" },
+      expires: "2026-01-01",
+    });
+
+    const { reportApiError } = await import("@/app/lib/api/api-error-reporter");
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: async () => new Response(JSON.stringify({ error: true }), { status: 403 }),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+
+    expect(response.status).toBe(403);
+    expect(vi.mocked(reportApiError)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 403,
+        apiVersion: "v3",
+      })
+    );
   });
 });

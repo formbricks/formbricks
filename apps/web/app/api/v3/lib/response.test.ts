@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  createdResponse,
+  noContentResponse,
   problemBadRequest,
   problemForbidden,
   problemInternalError,
@@ -7,6 +9,7 @@ import {
   problemTooManyRequests,
   problemUnauthorized,
   successListResponse,
+  successResponse,
 } from "./response";
 
 describe("v3 problem responses", () => {
@@ -67,6 +70,37 @@ describe("v3 problem responses", () => {
   test("problemTooManyRequests without Retry-After", async () => {
     const res = problemTooManyRequests("r6", "nope");
     expect(res.headers.get("Retry-After")).toBeNull();
+  });
+});
+
+describe("item success responses", () => {
+  test("successResponse sets request id and omits meta by default", async () => {
+    const res = successResponse({ id: "survey_1" }, { requestId: "req-success" });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Request-Id")).toBe("req-success");
+    expect(await res.json()).toEqual({
+      data: { id: "survey_1" },
+    });
+  });
+
+  test("createdResponse sets location header", async () => {
+    const res = createdResponse(
+      { id: "survey_1" },
+      { requestId: "req-created", location: "/api/v3/surveys/survey_1" }
+    );
+    expect(res.status).toBe(201);
+    expect(res.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
+    expect(res.headers.get("X-Request-Id")).toBe("req-created");
+    expect(await res.json()).toEqual({
+      data: { id: "survey_1" },
+    });
+  });
+
+  test("noContentResponse keeps request id and no-store cache", () => {
+    const res = noContentResponse({ requestId: "req-no-content" });
+    expect(res.status).toBe(204);
+    expect(res.headers.get("X-Request-Id")).toBe("req-no-content");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
   });
 });
 
