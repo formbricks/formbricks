@@ -258,9 +258,13 @@ const getUserEmailForLegacyVerification = async (
   return { userId: decryptedId, userEmail: foundUser.email };
 };
 
+const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
+  expiresIn: "15m",
+};
+
 export const createSsoRelinkIntent = (
   payload: TSsoRelinkIntentPayload,
-  options: SignOptions = { expiresIn: "15m" }
+  options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
 ): string => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");

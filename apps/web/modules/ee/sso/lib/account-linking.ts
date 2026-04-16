@@ -24,14 +24,47 @@ export type TSsoAccountLinkInput = Pick<Account, "type" | "provider" | "provider
 
 const getDbClient = (tx?: Prisma.TransactionClient) => tx ?? prisma;
 
-const getAccountTokenUpdate = (account: TSsoAccountLinkInput) => ({
-  ...(account.access_token !== undefined ? { access_token: account.access_token } : {}),
-  ...(account.refresh_token !== undefined ? { refresh_token: account.refresh_token } : {}),
-  ...(account.expires_at !== undefined ? { expires_at: account.expires_at } : {}),
-  ...(account.scope !== undefined ? { scope: account.scope } : {}),
-  ...(account.token_type !== undefined ? { token_type: account.token_type } : {}),
-  ...(account.id_token !== undefined ? { id_token: account.id_token } : {}),
-});
+const getAccountTokenUpdate = (
+  account: TSsoAccountLinkInput
+): Partial<
+  Pick<
+    TSsoAccountLinkInput,
+    "access_token" | "refresh_token" | "expires_at" | "scope" | "token_type" | "id_token"
+  >
+> => {
+  const accountTokenUpdate: Partial<
+    Pick<
+      TSsoAccountLinkInput,
+      "access_token" | "refresh_token" | "expires_at" | "scope" | "token_type" | "id_token"
+    >
+  > = {};
+
+  if (account.access_token !== undefined) {
+    accountTokenUpdate.access_token = account.access_token;
+  }
+
+  if (account.refresh_token !== undefined) {
+    accountTokenUpdate.refresh_token = account.refresh_token;
+  }
+
+  if (account.expires_at !== undefined) {
+    accountTokenUpdate.expires_at = account.expires_at;
+  }
+
+  if (account.scope !== undefined) {
+    accountTokenUpdate.scope = account.scope;
+  }
+
+  if (account.token_type !== undefined) {
+    accountTokenUpdate.token_type = account.token_type;
+  }
+
+  if (account.id_token !== undefined) {
+    accountTokenUpdate.id_token = account.id_token;
+  }
+
+  return accountTokenUpdate;
+};
 
 export const syncSsoIdentityForUser = async ({
   userId,

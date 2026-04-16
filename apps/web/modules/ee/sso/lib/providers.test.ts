@@ -42,6 +42,23 @@ describe("SSO Providers", () => {
     expect(oidcProvider.checks).toContain("state");
   });
 
+  test("should map the OIDC profile into the Formbricks user shape", () => {
+    const providers = getSSOProviders();
+    const oidcProvider = providers[3];
+
+    expect(
+      oidcProvider.profile?.({
+        sub: "oidc-user-1",
+        name: "OIDC User",
+        email: "oidc@example.com",
+      } as any)
+    ).toEqual({
+      id: "oidc-user-1",
+      name: "OIDC User",
+      email: "oidc@example.com",
+    });
+  });
+
   test("should configure SAML provider correctly", () => {
     const providers = getSSOProviders();
     const samlProvider = providers[4];
@@ -59,5 +76,44 @@ describe("SSO Providers", () => {
     expect(samlProvider.userinfo).toBe("https://test-app.com/api/auth/saml/userinfo");
     expect(googleProvider.allowDangerousEmailAccountLinking).toBeUndefined();
     expect(samlProvider.allowDangerousEmailAccountLinking).toBeUndefined();
+  });
+
+  test("should map the SAML profile and trim empty name parts", () => {
+    const providers = getSSOProviders();
+    const samlProvider = providers[4];
+
+    expect(
+      samlProvider.profile?.({
+        id: "saml-user-1",
+        email: "saml@example.com",
+        firstName: "Saml",
+        lastName: "",
+      } as any)
+    ).toEqual({
+      id: "saml-user-1",
+      email: "saml@example.com",
+      name: "Saml",
+    });
+  });
+
+  test("falls back to empty Azure credentials when legacy env vars are unset", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("@/lib/constants")>();
+      return {
+        ...actual,
+        AZUREAD_CLIENT_ID: undefined,
+        AZUREAD_CLIENT_SECRET: undefined,
+        AZUREAD_TENANT_ID: undefined,
+      };
+    });
+
+    const { getSSOProviders: getProvidersWithMissingAzureEnv } = await import("./providers");
+    const azureProvider = getProvidersWithMissingAzureEnv()[2] as any;
+
+    expect(azureProvider.id).toBe("azuread");
+    expect(azureProvider.options.clientId).toBe("");
+    expect(azureProvider.options.clientSecret).toBe("");
+    expect(azureProvider.options.tenantId).toBe("");
   });
 });

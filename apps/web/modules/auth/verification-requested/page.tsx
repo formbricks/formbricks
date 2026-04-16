@@ -10,8 +10,10 @@ import { TVerificationRequestPurpose } from "@/modules/auth/lib/verification-lin
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
 
-const getVerificationRequestPurpose = (purpose?: string | string[]): TVerificationRequestPurpose =>
-  (Array.isArray(purpose) ? purpose[0] : purpose) === "sso_recovery" ? "sso_recovery" : "email_verification";
+const getVerificationRequestPurpose = (purpose?: string | string[]): TVerificationRequestPurpose => {
+  const resolvedPurpose = Array.isArray(purpose) ? purpose[0] : purpose;
+  return resolvedPurpose === "sso_recovery" ? "sso_recovery" : "email_verification";
+};
 
 export const VerificationRequestedPage = async ({
   searchParams,

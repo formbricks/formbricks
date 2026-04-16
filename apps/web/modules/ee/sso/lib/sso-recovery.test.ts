@@ -4,7 +4,7 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
-import { completeSsoRecovery, startSsoRecovery } from "./sso-recovery";
+import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery } from "./sso-recovery";
 
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(),
@@ -143,6 +143,43 @@ describe("sso-recovery", () => {
     expect(result).toBe("/auth/verification-requested?token=email-token&purpose=sso_recovery");
   });
 
+  test("records a failed recovery start when the verification email cannot be sent", async () => {
+    vi.mocked(sendVerificationEmail).mockRejectedValue(new Error("smtp unavailable"));
+
+    await expect(
+      startSsoRecovery({
+        existingUser: {
+          id: "user_1",
+          email: "john.doe@example.com",
+          locale: "en-US",
+          emailVerified: null,
+          isActive: true,
+          identityProvider: "email",
+          identityProviderAccountId: null,
+        },
+        provider: "google",
+        account: {
+          type: "oauth",
+          provider: "google",
+          providerAccountId: "provider-account-1",
+        } as any,
+        callbackUrl: "https://evil.example/phish",
+      })
+    ).rejects.toThrow("smtp unavailable");
+
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_failed",
+        status: "failure",
+        userId: "user_1",
+        newObject: expect.objectContaining({
+          callbackUrl: "http://localhost:3000",
+          failureReason: "smtp unavailable",
+        }),
+      })
+    );
+  });
+
   test("reclaims unverified local auth factors before linking SSO", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user_1",
@@ -215,5 +252,123 @@ describe("sso-recovery", () => {
 
     expect(txUserUpdate).not.toHaveBeenCalled();
     expect(syncSsoIdentityForUser).toHaveBeenCalledOnce();
+  });
+
+  test("rejects recovery when the signed-in user does not match the intent owner", async () => {
+    await expect(
+      completeSsoRecovery({
+        intentToken: "test-intent",
+        sessionUserId: "user_2",
+      })
+    ).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_failed",
+        status: "failure",
+        userId: "user_1",
+        newObject: expect.objectContaining({
+          failureReason: "session_user_mismatch",
+        }),
+      })
+    );
+  });
+
+  test("rejects invalid or expired recovery intents before looking up any user", async () => {
+    mocks.verifySsoRelinkIntent.mockImplementation(() => {
+      throw new Error("expired");
+    });
+
+    await expect(
+      completeSsoRecovery({
+        intentToken: "expired-intent",
+        sessionUserId: "user_1",
+      })
+    ).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_failed",
+        status: "failure",
+        userId: "unknown",
+        newObject: expect.objectContaining({
+          failureReason: "invalid_or_expired_intent",
+        }),
+      })
+    );
+  });
+
+  test("rejects recovery when the verified user no longer matches the intended email", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "different@example.com",
+      locale: "en-US",
+      emailVerified: new Date("2024-01-01T00:00:00.000Z"),
+      isActive: true,
+      identityProvider: "google",
+      identityProviderAccountId: "provider-account-1",
+      password: null,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      backupCodes: null,
+    } as any);
+
+    await expect(
+      completeSsoRecovery({
+        intentToken: "test-intent",
+        sessionUserId: "user_1",
+      })
+    ).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "sso_recovery_failed",
+        status: "failure",
+        userId: "user_1",
+        newObject: expect.objectContaining({
+          failureReason: "user_mismatch",
+        }),
+      })
+    );
+  });
+
+  test("still completes recovery when sign-in finalization fails", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: new Date("2024-01-01T00:00:00.000Z"),
+      isActive: true,
+      identityProvider: "google",
+      identityProviderAccountId: "provider-account-1",
+      password: null,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      backupCodes: null,
+    } as any);
+    vi.mocked(finalizeSuccessfulSignIn).mockRejectedValue(new Error("tracking unavailable"));
+
+    await expect(
+      completeSsoRecovery({
+        intentToken: "test-intent",
+        sessionUserId: "user_1",
+      })
+    ).resolves.toBe("http://localhost:3000/environments/env_1");
+
+    expect(syncSsoIdentityForUser).toHaveBeenCalledOnce();
+  });
+
+  test("preserves only safe callback URLs in the failure redirect", () => {
+    expect(getSsoRecoveryFailureRedirectUrl("http://localhost:3000/invite?token=invite-token")).toBe(
+      "http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Finvite%3Ftoken%3Dinvite-token"
+    );
+    expect(getSsoRecoveryFailureRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
+    );
   });
 });

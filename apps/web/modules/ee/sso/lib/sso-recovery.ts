@@ -248,7 +248,7 @@ export const completeSsoRecovery = async ({
     select: SSO_RECOVERY_USER_SELECT,
   });
 
-  if (!user || user.email !== intent.email) {
+  if (user?.email !== intent.email) {
     getSsoRecoveryLogger("sso_recovery_failed").error(
       {
         userId: intent.userId,
