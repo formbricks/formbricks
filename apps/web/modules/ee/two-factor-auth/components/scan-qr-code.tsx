@@ -20,17 +20,17 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
     <div>
       <div className="p-6">
         <h1 className="text-lg font-semibold">
-          {t("environments.settings.profile.enable_two_factor_authentication")}
+          {t("workspace.settings.profile.enable_two_factor_authentication")}
         </h1>
         <h3 className="text-sm text-slate-700">
-          {t("environments.settings.profile.scan_the_qr_code_below_with_your_authenticator_app")}
+          {t("workspace.settings.profile.scan_the_qr_code_below_with_your_authenticator_app")}
         </h3>
       </div>
 
       <div className="mb-4 flex flex-col items-center justify-center space-y-4">
         <Image src={dataUri} alt="QR code" width={200} height={200} />
         <p className="text-sm text-slate-700">
-          {t("environments.settings.profile.or_enter_the_following_code_manually")}
+          {t("workspace.settings.profile.or_enter_the_following_code_manually")}
         </p>
         <div className="flex items-center space-x-2">
           <p className="text-sm font-medium text-slate-700">{secret}</p>

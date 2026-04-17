@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
-import { templates } from "@/app/lib/templates";
+import { customSurveyTemplate, templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
@@ -17,7 +17,7 @@ import { TemplateFilters } from "./components/template-filters";
 
 interface TemplateListProps {
   userId: string;
-  environmentId: string;
+  workspaceId: string;
   workspace: Workspace;
   templateSearch?: string;
   showFilters?: boolean;
@@ -28,12 +28,13 @@ interface TemplateListProps {
 export const TemplateList = ({
   userId,
   workspace,
-  environmentId,
+  workspaceId,
   showFilters = true,
   templateSearch,
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
@@ -58,13 +59,15 @@ export const TemplateList = ({
       type: surveyType,
       createdBy: userId,
     };
+    const isBlank = activeTemplate.name === customSurveyTemplate(t).name;
     const createSurveyResponse = await createSurveyAction({
-      environmentId: environmentId,
+      workspaceId: workspaceId,
       surveyBody: augmentedTemplate,
+      createdFrom: isBlank ? "blank" : "template",
     });
 
     if (createSurveyResponse?.data) {
-      router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit`);
+      router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
       toast.error(errorMessage);

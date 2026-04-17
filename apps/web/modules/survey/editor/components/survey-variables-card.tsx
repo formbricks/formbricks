@@ -82,7 +82,7 @@ export const SurveyVariablesCard = ({
               ))
             ) : (
               <p className="mt-2 text-sm italic text-slate-500">
-                {t("environments.surveys.edit.no_variables_yet_add_first_one_below")}
+                {t("workspace.surveys.edit.no_variables_yet_add_first_one_below")}
               </p>
             )}
           </div>

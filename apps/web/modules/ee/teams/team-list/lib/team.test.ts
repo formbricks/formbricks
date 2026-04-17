@@ -29,7 +29,6 @@ vi.mock("@formbricks/database", () => ({
     },
     membership: { findUnique: vi.fn(), count: vi.fn() },
     workspace: { count: vi.fn() },
-    environment: { findMany: vi.fn() },
   },
 }));
 
@@ -275,16 +274,6 @@ describe("updateTeamDetails", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.environment.findMany).mockResolvedValueOnce([
-      {
-        id: "env1",
-        type: "production" as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        workspaceId: "p1",
-        appSetupCompleted: false,
-      },
-    ]);
     const result = await updateTeamDetails("t1", data);
     expect(result).toBe(true);
   });
@@ -301,7 +290,7 @@ describe("updateTeamDetails", () => {
       updatedAt: new Date(),
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
-    await expect(updateTeamDetails("t1", data)).rejects.toThrow("Team not found");
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow("Team with ID t1 not found");
   });
   test("throws error if user not in org membership", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({

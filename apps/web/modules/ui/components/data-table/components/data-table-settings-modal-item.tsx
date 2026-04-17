@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Column, Table, flexRender } from "@tanstack/react-table";
+import { Column, HeaderContext, Table, flexRender } from "@tanstack/react-table";
 import { GripVertical } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Switch } from "@/modules/ui/components/switch";
@@ -24,11 +24,10 @@ export const DataTableSettingsModalItem = <T,>({ column, table }: DataTableSetti
     zIndex: isDragging ? 10 : 1,
   };
 
-  // Find the header for this column from the table's header groups
-  const header = table
-    .getHeaderGroups()
-    .flatMap((headerGroup) => headerGroup.headers)
-    .find((h) => h.column.id === column.id);
+  // Build a minimal header context so we can render the column's header definition regardless of
+  // whether the column is currently visible. getHeaderGroups() only includes visible columns, so
+  // hidden columns would fall back to rendering the raw column ID without this approach.
+  const headerContext = { column, header: null, table } as unknown as HeaderContext<any, unknown>;
 
   return (
     <div ref={setNodeRef} style={style} id={column.id}>
@@ -40,7 +39,7 @@ export const DataTableSettingsModalItem = <T,>({ column, table }: DataTableSetti
             <button type="button" aria-label="Reorder column" onClick={(e) => e.preventDefault()}>
               <GripVertical className="h-4 w-4" />
             </button>
-            {header ? flexRender(column.columnDef.header, header.getContext()) : column.id}
+            {flexRender(column.columnDef.header, headerContext)}
           </div>
           <Switch
             id={column.id}

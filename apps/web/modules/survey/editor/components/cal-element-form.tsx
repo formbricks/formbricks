@@ -57,7 +57,7 @@ export const CalElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -103,12 +103,12 @@ export const CalElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
         <div className="mt-5 flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <Label htmlFor="calUserName">{t("environments.surveys.edit.cal_username")}</Label>
+            <Label htmlFor="calUserName">{t("workspace.surveys.edit.cal_username")}</Label>
             <div>
               <Input
                 id="calUserName"
@@ -123,13 +123,13 @@ export const CalElementForm = ({
             isChecked={isCalHostEnabled}
             onToggle={(checked: boolean) => setIsCalHostEnabled(checked)}
             htmlId="calHost"
-            description={t("environments.surveys.edit.needed_for_self_hosted_cal_com_instance")}
+            description={t("workspace.surveys.edit.needed_for_self_hosted_cal_com_instance")}
             childBorder
-            title={t("environments.surveys.edit.custom_hostname")}
+            title={t("workspace.surveys.edit.custom_hostname")}
             customContainerClass="p-0">
             <div className="p-4">
               <div className="flex items-center gap-2">
-                <Label htmlFor="calHost">{t("environments.surveys.edit.hostname")}</Label>
+                <Label htmlFor="calHost">{t("workspace.surveys.edit.hostname")}</Label>
                 <Input
                   id="calHost"
                   name="calHost"

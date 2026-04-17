@@ -9,20 +9,16 @@ type WorkspaceWithTeam = Workspace & {
   teamIds: string[];
 };
 
-export const getWorkspaceWithTeamIdsByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<WorkspaceWithTeam | null> => {
+export const getWorkspaceWithTeamIds = reactCache(
+  async (workspaceId: string): Promise<WorkspaceWithTeam | null> => {
     let workspacePrisma: Prisma.WorkspaceGetPayload<{
       include: { workspaceTeams: { select: { teamId: true } } };
     }> | null = null;
 
     try {
-      workspacePrisma = await prisma.workspace.findFirst({
+      workspacePrisma = await prisma.workspace.findUnique({
         where: {
-          environments: {
-            some: {
-              id: environmentId,
-            },
-          },
+          id: workspaceId,
         },
         include: {
           workspaceTeams: {
@@ -45,7 +41,7 @@ export const getWorkspaceWithTeamIdsByEnvironmentId = reactCache(
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error fetching workspace by environment id");
+        logger.error(error, "Error fetching workspace by id");
         throw new DatabaseError(error.message);
       }
       throw error;

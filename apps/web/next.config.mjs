@@ -35,6 +35,7 @@ const nextConfig = {
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",
+    "posthog-node",
   ],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],

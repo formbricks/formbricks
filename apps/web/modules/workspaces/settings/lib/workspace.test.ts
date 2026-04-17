@@ -3,18 +3,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
-import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
-import { ZWorkspace } from "@formbricks/types/workspace";
-import { createEnvironment } from "@/lib/environment/service";
-import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
+import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
+
+vi.mock("server-only", () => ({}));
 
 const baseWorkspace = {
   id: "p1",
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Workspace 1",
+  appSetupCompleted: false,
   organizationId: "org1",
   languages: [],
   recontactDays: 0,
@@ -24,24 +24,6 @@ const baseWorkspace = {
   placement: "bottomRight",
   clickOutsideClose: false,
   overlay: "none",
-  environments: [
-    {
-      id: "cmi2sra0j000004l73fvh7lhe",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      type: "production" as TEnvironment["type"],
-      workspaceId: "p1",
-      appSetupCompleted: false,
-    },
-    {
-      id: "cmi2srt9q000104l7127e67v7",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      type: "development" as TEnvironment["type"],
-      workspaceId: "p1",
-      appSetupCompleted: false,
-    },
-  ],
   styling: { allowStyleOverwrite: true },
   logo: null,
 };
@@ -65,12 +47,12 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/modules/storage/service", () => ({
-  deleteFilesByEnvironmentId: vi.fn(),
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
 }));
 
-vi.mock("@/lib/environment/service", () => ({
-  createEnvironment: vi.fn(),
+vi.mock("@/modules/storage/service", () => ({
+  deleteFilesByWorkspaceId: vi.fn(),
 }));
 
 describe("workspace lib", () => {
@@ -83,9 +65,8 @@ describe("workspace lib", () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace as any);
       const result = await updateWorkspace("p1", {
         name: "Workspace 1",
-        environments: baseWorkspace.environments,
       });
-      expect(result).toEqual(ZWorkspace.parse(baseWorkspace));
+      expect(result).toEqual(baseWorkspace);
       expect(prisma.workspace.update).toHaveBeenCalled();
     });
 
@@ -101,26 +82,22 @@ describe("workspace lib", () => {
       await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow();
     });
 
-    test("throws ValidationError on Zod error", async () => {
+    test("returns workspace data without Zod validation", async () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, id: 123 } as any);
-      await expect(
-        updateWorkspace("p1", { name: "Workspace 1", environments: baseWorkspace.environments })
-      ).rejects.toThrow(ValidationError);
+      const result = await updateWorkspace("p1", { name: "Workspace 1" });
+      expect(result).toEqual({ ...baseWorkspace, id: 123 });
     });
   });
 
   describe("createWorkspace", () => {
-    test("creates workspace, environments, and revalidates cache", async () => {
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p2" } as any);
+    test("creates workspace and revalidates cache", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p2" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
-      vi.mocked(createEnvironment).mockResolvedValueOnce(baseWorkspace.environments[0] as any);
-      vi.mocked(createEnvironment).mockResolvedValueOnce(baseWorkspace.environments[1] as any);
-      vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace as any);
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
-      expect(result).toEqual(baseWorkspace);
+      expect(result).toEqual(createdWorkspace);
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
-      expect(createEnvironment).toHaveBeenCalled();
     });
 
     test("throws ValidationError if name is missing", async () => {
@@ -155,15 +132,15 @@ describe("workspace lib", () => {
     test("deletes workspace, deletes files, and revalidates cache", async () => {
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
 
-      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({ ok: true, data: undefined });
+      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
-      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("cmi2sra0j000004l73fvh7lhe");
+      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
     });
 
     test("logs error if file deletion fails", async () => {
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
-      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({
+      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({
         ok: false,
         error: { code: StorageErrorCode.Unknown },
       } as any);

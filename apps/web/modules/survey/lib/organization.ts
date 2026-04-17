@@ -4,40 +4,35 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 
-export const getOrganizationIdFromEnvironmentId = reactCache(
-  async (environmentId: string): Promise<string> => {
-    const organization = await prisma.organization.findFirst({
-      where: {
-        workspaces: {
-          some: {
-            environments: {
-              some: { id: environmentId },
-            },
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
+export const getOrganizationIdFromWorkspaceId = reactCache(async (workspaceId: string): Promise<string> => {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { organizationId: true },
+  });
 
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", null);
-    }
-
-    return organization.id;
+  if (!workspace) {
+    throw new ResourceNotFoundError("Workspace", workspaceId);
   }
-);
+
+  return workspace.organizationId;
+});
 
 export const getOrganizationAIKeys = reactCache(
-  async (organizationId: string): Promise<{ isAIEnabled: boolean; billing: TOrganizationBilling } | null> => {
+  async (
+    organizationId: string
+  ): Promise<{
+    isAISmartToolsEnabled: boolean;
+    isAIDataAnalysisEnabled: boolean;
+    billing: TOrganizationBilling;
+  } | null> => {
     try {
       const organization = await prisma.organization.findUnique({
         where: {
           id: organizationId,
         },
         select: {
-          isAIEnabled: true,
+          isAISmartToolsEnabled: true,
+          isAIDataAnalysisEnabled: true,
           billing: {
             select: {
               stripeCustomerId: true,
@@ -54,7 +49,8 @@ export const getOrganizationAIKeys = reactCache(
       }
 
       return {
-        isAIEnabled: organization.isAIEnabled,
+        isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
+        isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
         billing: {
           stripeCustomerId: organization.billing.stripeCustomerId,
           limits: organization.billing.limits as TOrganizationBilling["limits"],

@@ -34,7 +34,8 @@ export const select = {
       stripe: true,
     },
   },
-  isAIEnabled: true,
+  isAISmartToolsEnabled: true,
+  isAIDataAnalysisEnabled: true,
   whitelabel: true,
 } satisfies Prisma.OrganizationSelect;
 
@@ -72,14 +73,13 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
   updatedAt: organization.updatedAt,
   name: organization.name,
   billing: mapOrganizationBilling(organization.billing),
-  isAIEnabled: organization.isAIEnabled,
+  isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
+  isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
   whitelabel: organization.whitelabel as TOrganization["whitelabel"],
 });
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;
 export const getOrganizationsByUserIdCacheTag = (userId: string) => `users-${userId}-organizations`;
-export const getOrganizationByEnvironmentIdCacheTag = (environmentId: string) =>
-  `environments-${environmentId}-organization`;
 
 export const getOrganizationsByUserId = reactCache(
   async (userId: string, page?: number): Promise<TOrganization[]> => {
@@ -112,30 +112,26 @@ export const getOrganizationsByUserId = reactCache(
   }
 );
 
-export const getOrganizationByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TOrganization | null> => {
-    validateInputs([environmentId, ZId]);
+export const getOrganizationByWorkspaceId = reactCache(
+  async (workspaceId: string): Promise<TOrganization | null> => {
+    validateInputs([workspaceId, ZId]);
 
     try {
       const organization = await prisma.organization.findFirst({
         where: {
           workspaces: {
             some: {
-              environments: {
-                some: {
-                  id: environmentId,
-                },
-              },
+              id: workspaceId,
             },
           },
         },
-        select: { ...select, memberships: true }, // include memberships
+        select: { ...select, memberships: true },
       });
 
       return organization ? mapOrganization(organization) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting organization by environment id");
+        logger.error(error, "Error getting organization by workspace id");
         throw new DatabaseError(error.message);
       }
 
@@ -247,7 +243,7 @@ export const updateOrganization = async (
         where: {
           id: organizationId,
         },
-        select: { ...select, memberships: true, workspaces: { select: { environments: true } } }, // include memberships & environments
+        select: { ...select, memberships: true, workspaces: { select: { id: true } } }, // include memberships & workspaces
       });
     });
 
@@ -296,11 +292,6 @@ export const deleteOrganization = async (organizationId: string) => {
         workspaces: {
           select: {
             id: true,
-            environments: {
-              select: {
-                id: true,
-              },
-            },
           },
         },
       },
@@ -331,18 +322,18 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
-      // Get all environment IDs for the organization
+      // Get all workspace IDs for the organization
       const workspaces = await getWorkspaces(organizationId);
-      const environmentIds = workspaces.flatMap((workspace) => workspace.environments.map((env) => env.id));
+      const workspaceIds = workspaces.map((workspace) => workspace.id);
 
-      // Use Prisma's aggregate to count responses for all environments
+      // Use Prisma's aggregate to count responses for all workspaces
       const responseAggregations = await prisma.response.aggregate({
         _count: {
           id: true,
         },
         where: {
           AND: [
-            { survey: { environmentId: { in: environmentIds } } },
+            { survey: { workspaceId: { in: workspaceIds } } },
             { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
           ],
         },
@@ -365,35 +356,34 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
   createdBy: string,
   organizationId: string
 ): Promise<void> => {
-  try {
-    const surveyCreator = await prisma.user.findUnique({
-      where: {
-        id: createdBy,
-      },
-    });
+  const surveyCreator = await prisma.user.findUnique({
+    where: {
+      id: createdBy,
+    },
+  });
 
-    if (!surveyCreator) {
-      throw new ResourceNotFoundError("User", createdBy);
-    }
-
-    if (surveyCreator.notificationSettings?.unsubscribedOrganizationIds?.includes(organizationId)) {
-      return;
-    }
-
-    const defaultSettings = { alert: {} };
-    const updatedNotificationSettings: TUserNotificationSettings = {
-      ...defaultSettings,
-      ...surveyCreator.notificationSettings,
-    };
-
-    updatedNotificationSettings.alert[surveyId] = true;
-
-    await updateUser(surveyCreator.id, {
-      notificationSettings: updatedNotificationSettings,
-    });
-  } catch (error) {
-    throw error;
+  if (!surveyCreator) {
+    throw new ResourceNotFoundError("User", createdBy);
   }
+
+  if (surveyCreator.notificationSettings?.unsubscribedOrganizationIds?.includes(organizationId)) {
+    return;
+  }
+
+  const defaultSettings = { alert: {} as NonNullable<TUserNotificationSettings["alert"]> };
+  const updatedNotificationSettings: TUserNotificationSettings = {
+    ...defaultSettings,
+    ...surveyCreator.notificationSettings,
+    alert: surveyCreator.notificationSettings?.alert
+      ? { ...surveyCreator.notificationSettings.alert }
+      : defaultSettings.alert,
+  };
+
+  updatedNotificationSettings.alert[surveyId] = true;
+
+  await updateUser(surveyCreator.id, {
+    notificationSettings: updatedNotificationSettings,
+  });
 };
 
 export const getOrganizationsWhereUserIsSingleOwner = reactCache(

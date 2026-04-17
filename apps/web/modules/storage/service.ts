@@ -1,6 +1,8 @@
 import { randomUUID } from "crypto";
 import { logger } from "@formbricks/logger";
 import {
+  type FileStreamResult,
+  type StorageError,
   StorageErrorCode,
   deleteFile as deleteFileFromS3,
   deleteFilesByPrefix,
@@ -11,28 +13,9 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
 
-type TStorageError = {
-  code: (typeof StorageErrorCode)[keyof typeof StorageErrorCode];
-};
-type TGetFileStreamResult = Result<
-  {
-    body: ReadableStream<Uint8Array>;
-    contentType: string;
-    contentLength: number;
-  },
-  TStorageError
->;
-
-const normalizeStorageError = (error: { code?: unknown }): TStorageError => ({
-  code:
-    typeof error.code === "string"
-      ? (error.code as (typeof StorageErrorCode)[keyof typeof StorageErrorCode])
-      : StorageErrorCode.Unknown,
-});
-
 export const getSignedUrlForUpload = async (
   fileName: string,
-  environmentId: string,
+  workspaceId: string,
   fileType: string,
   accessType: TAccessType,
   maxFileUploadSize: number = 1024 * 1024 * 10 // 10MB
@@ -43,7 +26,7 @@ export const getSignedUrlForUpload = async (
       presignedFields: Record<string, string>;
       fileUrl: string;
     },
-    TStorageError
+    StorageError
   >
 > => {
   try {
@@ -59,19 +42,19 @@ export const getSignedUrlForUpload = async (
     const signedUrlResult = await getSignedUploadUrl(
       updatedFileName,
       fileType,
-      `${environmentId}/${accessType}`,
+      `${workspaceId}/${accessType}`,
       maxFileUploadSize
     );
 
-    if ("error" in signedUrlResult) {
-      return err(normalizeStorageError(signedUrlResult.error));
+    if (!signedUrlResult.ok) {
+      return signedUrlResult;
     }
 
     // Return relative path - can be resolved to absolute URL at runtime when needed
     return ok({
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
-      fileUrl: `/storage/${environmentId}/${accessType}/${encodeURIComponent(updatedFileName)}`,
+      fileUrl: `/storage/${workspaceId}/${accessType}/${encodeURIComponent(updatedFileName)}`,
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");
@@ -83,25 +66,31 @@ export const getSignedUrlForUpload = async (
 };
 
 /**
- * Get a file stream for downloading/streaming files directly
- * Use this instead of signed URL redirect for Next.js Image component compatibility
+ * Get a file stream for downloading/streaming files directly.
+ * Use this instead of signed URL redirect for Next.js Image component compatibility.
+ *
+ * Tries the primary ID path first. If the file is not found and a fallbackId is provided,
+ * retries with the fallback path. This supports backwards compatibility: new uploads use
+ * workspaceId paths while old files may still live under environmentId paths.
  */
 export const getFileStreamForDownload = async (
   fileName: string,
-  environmentId: string,
-  accessType: TAccessType
-): Promise<TGetFileStreamResult> => {
+  primaryId: string,
+  accessType: TAccessType,
+  fallbackId?: string
+): Promise<Result<FileStreamResult, StorageError>> => {
   try {
     const fileNameDecoded = decodeURIComponent(fileName);
-    const fileKey = `${environmentId}/${accessType}/${fileNameDecoded}`;
+    const primaryKey = `${primaryId}/${accessType}/${fileNameDecoded}`;
 
-    const streamResult = await getFileStream(fileKey);
+    const streamResult = await getFileStream(primaryKey);
 
-    if ("error" in streamResult) {
-      return err(normalizeStorageError(streamResult.error));
+    if (!streamResult.ok && streamResult.error.code === StorageErrorCode.FileNotFoundError && fallbackId) {
+      const fallbackKey = `${fallbackId}/${accessType}/${fileNameDecoded}`;
+      return await getFileStream(fallbackKey);
     }
 
-    return ok(streamResult.data);
+    return streamResult;
   } catch (error) {
     logger.error({ error }, "Error getting file stream for download");
 
@@ -111,30 +100,37 @@ export const getFileStreamForDownload = async (
   }
 };
 
-// We don't need to return or throw any errors, even if the file doesn't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFile function
+// Deletes a file from S3. Tries the primary ID path first; if the file is not found and a
+// fallbackId is provided, retries with the fallback path (backwards compat for old environmentId paths).
 export const deleteFile = async (
-  environmentId: string,
+  primaryId: string,
   accessType: TAccessType,
-  fileName: string
-): Promise<Result<void, TStorageError>> => {
-  const result = await deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+  fileName: string,
+  fallbackId?: string
+) => {
+  const result = await deleteFileFromS3(`${primaryId}/${accessType}/${fileName}`);
 
-  if ("error" in result) {
-    return err(normalizeStorageError(result.error));
+  if (!result.ok && result.error.code === StorageErrorCode.FileNotFoundError && fallbackId) {
+    return await deleteFileFromS3(`${fallbackId}/${accessType}/${fileName}`);
   }
 
-  return ok(undefined);
+  return result;
 };
 
-// We don't need to return or throw any errors, even if the files don't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFilesByPrefix function
-export const deleteFilesByEnvironmentId = async (
-  environmentId: string
-): Promise<Result<void, TStorageError>> => {
-  const result = await deleteFilesByPrefix(environmentId);
+// Deletes all files for a workspace — cleans up both workspaceId-prefixed (new uploads) and
+// environmentId-prefixed (legacy uploads) paths. Errors are not thrown; callers should check results.
+export const deleteFilesByWorkspaceId = async (workspaceId: string, environmentIds: string[]) => {
+  const results = await Promise.all([
+    deleteFilesByPrefix(workspaceId),
+    ...environmentIds.map((envId) => deleteFilesByPrefix(envId)),
+  ]);
 
-  if ("error" in result) {
-    return err(normalizeStorageError(result.error));
+  // Return the first error if any, otherwise success
+  for (const result of results) {
+    if (!result.ok) {
+      return result;
+    }
   }
 
-  return ok(undefined);
+  return results[0];
 };

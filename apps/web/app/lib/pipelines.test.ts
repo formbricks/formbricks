@@ -1,304 +1,113 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { TResponse } from "@formbricks/types/responses";
-import { enqueueResponsePipelineEvents, scheduleResponsePipelineEvents } from "./pipelines";
+import { PipelineTriggers } from "@prisma/client";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import { TResponse } from "@formbricks/types/responses";
+import { TPipelineInput } from "@/app/lib/types/pipelines";
+import { sendToPipeline } from "./pipelines";
 
-const {
-  mockAfter,
-  mockDebug,
-  mockEnqueueResponsePipeline,
-  mockError,
-  mockGetJobsQueueingConfig,
-  mockGetResponseSnapshotForPipeline,
-  mockWarn,
-} = vi.hoisted(() => ({
-  mockAfter: vi.fn(),
-  mockDebug: vi.fn(),
-  mockEnqueueResponsePipeline: vi.fn(),
-  mockError: vi.fn(),
-  mockGetJobsQueueingConfig: vi.fn(),
-  mockGetResponseSnapshotForPipeline: vi.fn(),
-  mockWarn: vi.fn(),
+// Mock the constants module
+vi.mock("@/lib/constants", () => ({
+  CRON_SECRET: "mocked-cron-secret",
+  WEBAPP_URL: "https://test.formbricks.com",
 }));
 
-vi.mock("next/server", () => ({
-  after: mockAfter,
-}));
-
-vi.mock("@formbricks/jobs", () => ({
-  getBackgroundJobProducer: () => ({
-    enqueueResponsePipeline: mockEnqueueResponsePipeline,
-  }),
-}));
-
-vi.mock("@/lib/jobs/config", () => ({
-  getJobsQueueingConfig: mockGetJobsQueueingConfig,
-}));
-
-vi.mock("@/lib/response/service", () => ({
-  getResponseSnapshotForPipeline: mockGetResponseSnapshotForPipeline,
-}));
-
+// Mock the logger
 vi.mock("@formbricks/logger", () => ({
   logger: {
-    debug: mockDebug,
-    error: mockError,
-    info: vi.fn(),
-    warn: mockWarn,
+    error: vi.fn(),
   },
 }));
 
-const mockResponse = {
-  contact: null,
-  contactAttributes: null,
-  createdAt: new Date("2026-04-08T10:00:00.000Z"),
-  data: {},
-  displayId: null,
-  endingId: null,
-  finished: false,
-  id: "cm9-response-id",
-  language: null,
-  meta: {},
-  singleUseId: null,
-  surveyId: "cm9-survey-id",
-  tags: [],
-  updatedAt: new Date("2026-04-08T10:00:00.000Z"),
-  variables: {},
-} satisfies TResponse;
+// Mock global fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
-describe("enqueueResponsePipelineEvents", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useRealTimers();
-  });
-
-  test("skips enqueueing when jobs queueing is disabled", async () => {
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: false,
-      redisUrl: null,
-    });
-
-    await enqueueResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseCreated"],
-      responseId: "cm9-response-id",
-      surveyId: "cm9-survey-id",
-    });
-
-    expect(mockGetResponseSnapshotForPipeline).not.toHaveBeenCalled();
-    expect(mockEnqueueResponsePipeline).not.toHaveBeenCalled();
-    expect(mockDebug).toHaveBeenCalledWith(
-      {
-        environmentId: "env_123",
-        events: ["responseCreated"],
-        responseId: "cm9-response-id",
-        surveyId: "cm9-survey-id",
-      },
-      "BullMQ response pipeline enqueue skipped"
-    );
-  });
-
-  test("throws when the response snapshot lookup still fails after retries", async () => {
-    vi.useFakeTimers();
-
-    const snapshotError = new Error("db down");
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockGetResponseSnapshotForPipeline.mockRejectedValue(snapshotError);
-
-    const enqueueExpectation = expect(
-      enqueueResponsePipelineEvents({
-        environmentId: "env_123",
-        events: ["responseCreated"],
-        responseId: "cm9-response-id",
-        surveyId: "cm9-survey-id",
-      })
-    ).rejects.toThrow("db down");
-
-    await vi.runAllTimersAsync();
-
-    await enqueueExpectation;
-    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledTimes(3);
-    expect(mockError).toHaveBeenCalledWith(
-      {
-        environmentId: "env_123",
-        err: snapshotError,
-        events: ["responseCreated"],
-        responseId: "cm9-response-id",
-        surveyId: "cm9-survey-id",
-      },
-      "Failed to hydrate response snapshot for BullMQ response pipeline"
-    );
-  });
-
-  test("uses the provided response snapshot without loading it again", async () => {
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockEnqueueResponsePipeline.mockResolvedValue({ jobId: "job-1" });
-
-    await enqueueResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseCreated"],
-      response: mockResponse,
-      responseId: mockResponse.id,
-      surveyId: mockResponse.surveyId,
-    });
-
-    expect(mockGetResponseSnapshotForPipeline).not.toHaveBeenCalled();
-    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({
-      environmentId: "env_123",
-      event: "responseCreated",
-      response: mockResponse,
-      surveyId: "cm9-survey-id",
-    });
-  });
-
-  test("falls back to an uncached snapshot lookup when the provided response id mismatches", async () => {
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockGetResponseSnapshotForPipeline.mockResolvedValue(mockResponse);
-    mockEnqueueResponsePipeline.mockResolvedValue({ jobId: "job-1" });
-
-    await enqueueResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseCreated"],
-      response: {
-        ...mockResponse,
-        id: "other-response-id",
-      },
-      responseId: mockResponse.id,
-      surveyId: mockResponse.surveyId,
-    });
-
-    expect(mockWarn).toHaveBeenCalledWith(
-      {
-        environmentId: "env_123",
-        events: ["responseCreated"],
-        providedResponseId: "other-response-id",
-        responseId: mockResponse.id,
-        surveyId: "cm9-survey-id",
-      },
-      "BullMQ response pipeline enqueue ignored a mismatched provided response snapshot"
-    );
-    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledWith(mockResponse.id);
-    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({
-      environmentId: "env_123",
-      event: "responseCreated",
-      response: mockResponse,
-      surveyId: "cm9-survey-id",
-    });
-  });
-
-  test("hydrates one response snapshot and enqueues unique events", async () => {
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockGetResponseSnapshotForPipeline.mockResolvedValue(mockResponse);
-    mockEnqueueResponsePipeline
-      .mockResolvedValueOnce({ jobId: "job-1" })
-      .mockResolvedValueOnce({ jobId: "job-2" });
-
-    await enqueueResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseCreated", "responseFinished", "responseFinished"],
-      responseId: "cm9-response-id",
-      surveyId: "cm9-survey-id",
-    });
-
-    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledTimes(1);
-    expect(mockEnqueueResponsePipeline).toHaveBeenCalledTimes(2);
-    expect(mockEnqueueResponsePipeline).toHaveBeenNthCalledWith(1, {
-      environmentId: "env_123",
-      event: "responseCreated",
-      response: mockResponse,
-      surveyId: "cm9-survey-id",
-    });
-    expect(mockEnqueueResponsePipeline).toHaveBeenNthCalledWith(2, {
-      environmentId: "env_123",
-      event: "responseFinished",
-      response: mockResponse,
-      surveyId: "cm9-survey-id",
-    });
-  });
-
-  test("throws when enqueueing still fails after retries", async () => {
-    vi.useFakeTimers();
-
-    const enqueueError = new Error("redis unavailable");
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockGetResponseSnapshotForPipeline.mockResolvedValue(mockResponse);
-    mockEnqueueResponsePipeline.mockRejectedValue(enqueueError);
-
-    const enqueueExpectation = expect(
-      enqueueResponsePipelineEvents({
-        environmentId: "env_123",
-        events: ["responseFinished"],
-        responseId: "cm9-response-id",
-        surveyId: "cm9-survey-id",
-      })
-    ).rejects.toThrow("Failed to enqueue BullMQ response pipeline events: responseFinished");
-
-    await vi.runAllTimersAsync();
-
-    await enqueueExpectation;
-    expect(mockEnqueueResponsePipeline).toHaveBeenCalledTimes(4);
-    expect(mockError).toHaveBeenCalledWith(
-      {
-        environmentId: "env_123",
-        err: enqueueError,
-        event: "responseFinished",
-        responseId: "cm9-response-id",
-        surveyId: "cm9-survey-id",
-      },
-      "Failed to enqueue BullMQ response pipeline job"
-    );
-  });
-});
-
-describe("scheduleResponsePipelineEvents", () => {
+describe("pipelines", () => {
+  // Reset mocks before each test
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("defers the BullMQ enqueue work until after the response is sent", async () => {
-    let scheduledCallback: (() => Promise<void>) | undefined;
+  // Clean up after each test
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
-    mockAfter.mockImplementation((callback: () => Promise<void>) => {
-      scheduledCallback = callback;
-    });
-    mockGetJobsQueueingConfig.mockReturnValue({
-      enabled: true,
-      redisUrl: "redis://localhost:6379",
-    });
-    mockEnqueueResponsePipeline.mockResolvedValue({ jobId: "job-1" });
-
-    scheduleResponsePipelineEvents({
-      environmentId: "env_123",
-      events: ["responseCreated"],
-      response: mockResponse,
-      responseId: mockResponse.id,
-      surveyId: mockResponse.surveyId,
+  test("sendToPipeline should call fetch with correct parameters", async () => {
+    // Mock the fetch implementation to return a successful response
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true }),
     });
 
-    expect(mockAfter).toHaveBeenCalledTimes(1);
-    expect(mockEnqueueResponsePipeline).not.toHaveBeenCalled();
+    // Create sample data for testing
+    const testData: TPipelineInput = {
+      event: PipelineTriggers.responseCreated,
+      surveyId: "cm8ckvchx000008lb710n0gdn",
+      workspaceId: "cm8cnq2hp000008jf7l570abc",
+      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
+    };
 
-    await scheduledCallback?.();
+    // Call the function with test data
+    await sendToPipeline(testData);
 
-    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({
-      environmentId: "env_123",
-      event: "responseCreated",
-      response: mockResponse,
-      surveyId: "cm9-survey-id",
+    // Check that fetch was called with the correct arguments
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith("https://test.formbricks.com/api/pipeline", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "mocked-cron-secret",
+      },
+      body: JSON.stringify({
+        workspaceId: testData.workspaceId,
+        surveyId: testData.surveyId,
+        event: testData.event,
+        response: testData.response,
+      }),
     });
+  });
+
+  test("sendToPipeline should handle fetch errors", async () => {
+    // Mock fetch to throw an error
+    const testError = new Error("Network error");
+    mockFetch.mockRejectedValueOnce(testError);
+
+    // Create sample data for testing
+    const testData: TPipelineInput = {
+      event: PipelineTriggers.responseCreated,
+      surveyId: "cm8ckvchx000008lb710n0gdn",
+      workspaceId: "cm8cnq2hp000008jf7l570abc",
+      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
+    };
+
+    // Call the function
+    await sendToPipeline(testData);
+
+    // Check that the error was logged using logger
+    expect(logger.error).toHaveBeenCalledWith(testError, "Error sending event to pipeline");
+  });
+
+  test("sendToPipeline should throw error if CRON_SECRET is not set", async () => {
+    // For this test, we need to mock CRON_SECRET as undefined
+    // Let's use a more compatible approach to reset the mocks
+    const originalModule = await import("@/lib/constants");
+    const mockConstants = { ...originalModule, CRON_SECRET: undefined };
+
+    vi.doMock("@/lib/constants", () => mockConstants);
+
+    // Re-import the module to get the new mocked values
+    const { sendToPipeline: sendToPipelineNoSecret } = await import("./pipelines");
+
+    // Create sample data for testing
+    const testData: TPipelineInput = {
+      event: PipelineTriggers.responseCreated,
+      surveyId: "cm8ckvchx000008lb710n0gdn",
+      workspaceId: "cm8cnq2hp000008jf7l570abc",
+      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
+    };
+
+    // Expect the function to throw an error
+    await expect(sendToPipelineNoSecret(testData)).rejects.toThrow("CRON_SECRET is not set");
   });
 });

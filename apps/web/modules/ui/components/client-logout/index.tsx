@@ -12,7 +12,7 @@ export const ClientLogout = () => {
       redirectUrl: "/auth/login",
       redirect: false,
       callbackUrl: "/auth/login",
-      clearEnvironmentId: true,
+      clearWorkspaceId: true,
     });
   });
   return null;

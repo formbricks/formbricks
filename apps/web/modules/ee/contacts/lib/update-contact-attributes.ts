@@ -17,13 +17,13 @@ export const updateContactAttributes = async (
   contactId: string,
   attributes: TContactAttributesInput
 ): Promise<UpdateContactAttributesResult> => {
-  // Load contact to get environmentId and current attributes
+  // Load contact to get workspaceId and current attributes
   const contact = await getContact(contactId);
   if (!contact) {
     throw new ResourceNotFoundError("contact", contactId);
   }
 
-  const environmentId = contact.environmentId;
+  const workspaceId = contact.workspaceId;
 
   // Extract userId from attributes (required by updateAttributes)
   // If missing, pass empty string but note it in messages
@@ -32,12 +32,12 @@ export const updateContactAttributes = async (
   const messages: TAttributeUpdateMessage[] = [];
 
   // Get current attribute keys before update to detect new ones
-  const currentAttributeKeys = await getContactAttributeKeys(environmentId);
+  const currentAttributeKeys = await getContactAttributeKeys(workspaceId);
   const currentKeysSet = new Set(currentAttributeKeys.map((key) => key.key));
 
   // Call updateAttributes with deleteRemovedAttributes: true
   // UI forms submit all attributes, so any missing attribute should be deleted
-  const updateResult = await updateAttributes(contactId, userId, environmentId, attributes, true);
+  const updateResult = await updateAttributes(contactId, userId, workspaceId, attributes, true);
 
   // Merge any messages from updateAttributes
   if (updateResult.messages) {
@@ -48,7 +48,7 @@ export const updateContactAttributes = async (
   const updatedAttributes = await getContactAttributes(contactId);
 
   // Detect if new keys were created by comparing before/after
-  const updatedAttributeKeys = await getContactAttributeKeys(environmentId);
+  const updatedAttributeKeys = await getContactAttributeKeys(workspaceId);
   const newKeys = updatedAttributeKeys.filter((key) => !currentKeysSet.has(key.key));
 
   return {

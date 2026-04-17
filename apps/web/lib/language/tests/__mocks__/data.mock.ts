@@ -22,4 +22,3 @@ export const mockLanguageInput = {
   code: "en",
   alias: null,
 };
-export const mockEnvironmentId = "clt2h31iz000h08l3acuwcqvp";

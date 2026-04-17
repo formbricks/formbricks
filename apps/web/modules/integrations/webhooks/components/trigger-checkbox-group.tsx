@@ -23,15 +23,15 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
     value: PipelineTriggers;
   }[] = [
     {
-      title: t("environments.integrations.webhooks.response_created"),
+      title: t("workspace.integrations.webhooks.response_created"),
       value: "responseCreated",
     },
     {
-      title: t("environments.integrations.webhooks.response_updated"),
+      title: t("workspace.integrations.webhooks.response_updated"),
       value: "responseUpdated",
     },
     {
-      title: t("environments.integrations.webhooks.response_finished"),
+      title: t("workspace.integrations.webhooks.response_finished"),
       value: "responseFinished",
     },
   ];

@@ -35,27 +35,23 @@ export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) =>
           variant="secondary"
           size="sm"
           className="font-medium text-slate-900 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent">
-          {t("environments.workspace.tags.merge")}
+          {t("workspace.tags.merge")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
         <Command>
           <div className="p-1">
             <CommandInput
-              placeholder={t("environments.workspace.tags.search_tags")}
+              placeholder={t("workspace.tags.search_tags")}
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
           <CommandList className="border-0">
             <CommandEmpty>
-              <div className="p-2 text-sm text-slate-500">
-                {t("environments.workspace.tags.no_tag_found")}
-              </div>
+              <div className="p-2 text-sm text-slate-500">{t("workspace.tags.no_tag_found")}</div>
             </CommandEmpty>
             <CommandGroup>
-              {tags?.length === 0 ? (
-                <CommandItem>{t("environments.workspace.tags.no_tag_found")}</CommandItem>
-              ) : null}
+              {tags?.length === 0 ? <CommandItem>{t("workspace.tags.no_tag_found")}</CommandItem> : null}
 
               {tags?.map((tag) => (
                 <CommandItem

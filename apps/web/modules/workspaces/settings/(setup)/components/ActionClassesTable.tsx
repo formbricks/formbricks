@@ -3,27 +3,20 @@
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
-  environmentId: string;
   actionClasses: TActionClass[];
-  environment: TEnvironment;
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
-  otherEnvironment: TEnvironment;
   otherEnvActionClasses: TActionClass[];
 }
 
 export const ActionClassesTable = ({
-  environmentId,
   actionClasses,
-  environment,
   children: [TableHeading, actionRows],
   isReadOnly,
   otherEnvActionClasses,
-  otherEnvironment,
 }: ActionClassesTableProps) => {
   const { t } = useTranslation();
   const [isActionDetailModalOpen, setIsActionDetailModalOpen] = useState(false);
@@ -65,15 +58,12 @@ export const ActionClassesTable = ({
       </div>
       {activeActionClass && (
         <ActionDetailModal
-          environmentId={environmentId}
-          environment={environment}
           open={isActionDetailModalOpen}
           setOpen={setIsActionDetailModalOpen}
           actionClasses={actionClasses}
           actionClass={activeActionClass}
           isReadOnly={isReadOnly}
           otherEnvActionClasses={otherEnvActionClasses}
-          otherEnvironment={otherEnvironment}
         />
       )}
     </>

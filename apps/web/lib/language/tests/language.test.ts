@@ -31,7 +31,6 @@ vi.mock("@/lib/workspace/service", () => ({
 
 const fakeWorkspace = {
   id: mockWorkspaceId,
-  environments: [{ id: "env1" }, { id: "env2" }],
 } as TWorkspace;
 
 const testInputValidation = async (

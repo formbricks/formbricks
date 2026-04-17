@@ -12,9 +12,9 @@ import {
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentIds: string[], params: TGetContactAttributeKeysFilter) => {
+  async (workspaceIds: string[], params: TGetContactAttributeKeysFilter) => {
     try {
-      const query = getContactAttributeKeysQuery(environmentIds, params);
+      const query = getContactAttributeKeysQuery(workspaceIds, params);
 
       const [keys, count] = await prisma.$transaction([
         prisma.contactAttributeKey.findMany({
@@ -43,13 +43,13 @@ export const getContactAttributeKeys = reactCache(
 export const createContactAttributeKey = async (
   contactAttributeKey: TContactAttributeKeyInput
 ): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
-  const { environmentId, name, description, key, dataType } = contactAttributeKey;
+  const { workspaceId, name, description, key, dataType } = contactAttributeKey;
 
   try {
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {
-      environment: {
+      workspace: {
         connect: {
-          id: environmentId,
+          id: workspaceId,
         },
       },
       name: name ?? formatSnakeCaseToTitleCase(key),

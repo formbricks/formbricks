@@ -15,7 +15,7 @@ const createSurvey = (overrides: Partial<TSurvey>): TSurvey =>
     updatedAt: new Date(),
     name: "Survey 1",
     type: "app",
-    environmentId: "env_1",
+    workspaceId: "workspace_1",
     status: "inProgress",
     welcomeCard: {
       enabled: false,
@@ -65,7 +65,7 @@ const createSegment = (overrides: Partial<TSegment>): TSegment =>
     title: "Segment 1",
     description: null,
     isPrivate: false,
-    environmentId: "env_1",
+    workspaceId: "workspace_1",
     createdAt: new Date(),
     updatedAt: new Date(),
     surveys: [],

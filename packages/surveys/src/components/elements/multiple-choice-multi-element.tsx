@@ -169,8 +169,7 @@ export function MultipleChoiceMultiElement({
     setOtherValue(newOtherValue);
     const baseLabels = getNormalizedSelectedLabels();
 
-    const nextValue = [...baseLabels, ""];
-    if (newOtherValue.trim()) nextValue.push(newOtherValue);
+    const nextValue = [...baseLabels, newOtherValue];
 
     onChange({ [element.id]: nextValue });
   };
@@ -227,8 +226,7 @@ export function MultipleChoiceMultiElement({
     });
 
     if (isOtherNowSelected) {
-      nextLabels.push("");
-      if (otherValue.trim()) nextLabels.push(otherValue);
+      nextLabels.push(otherValue);
     } else if (otherValue) {
       // If other was deselected, clear any stale other value
       setOtherValue("");

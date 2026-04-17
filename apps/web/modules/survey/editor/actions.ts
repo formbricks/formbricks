@@ -5,14 +5,13 @@ import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
-import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
+import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromEnvironmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -21,6 +20,7 @@ import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-e
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
 import { ZSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getWorkspace } from "./lib/workspace";
@@ -97,7 +97,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
@@ -145,7 +145,27 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+    if (POSTHOG_KEY && result.status !== "draft") {
+      const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
+
+      const posthogEventMetadata = {
+        survey_id: result.id,
+        survey_type: result.type,
+        question_count: getElementsFromBlocks(result.blocks).length,
+        organization_id: organizationId,
+        has_targeting: result.segment ? !result.segment.isPrivate : false,
+        language_count: result.languages?.length ?? 0,
+      };
+
+      if (isPublish) {
+        capturePostHogEvent(ctx.user.id, "survey_published", posthogEventMetadata);
+        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+      } else {
+        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+      }
+    }
+
+    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
   })
@@ -260,8 +280,6 @@ export const triggerDownloadUnsplashImageAction = actionClient
       const errorData = await response.json();
       throw new Error(errorData.error || "Failed to download image from Unsplash");
     }
-
-    return;
   });
 
 const ZCreateActionClassAction = z.object({
@@ -270,7 +288,8 @@ const ZCreateActionClassAction = z.object({
 
 export const createActionClassAction = authenticatedActionClient.inputSchema(ZCreateActionClassAction).action(
   withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId);
+    const workspaceId = parsedInput.action.workspaceId;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
@@ -282,13 +301,13 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(parsedInput.action.environmentId),
+          workspaceId,
         },
       ],
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+    const result = await createActionClass(workspaceId, parsedInput.action);
     ctx.auditLoggingCtx.actionClassId = result.id;
     ctx.auditLoggingCtx.newObject = result;
     return result;

@@ -48,7 +48,7 @@ export const MembersInfo = ({
         <Badge type="gray" text="Expired" size="tiny" data-testid="expired-badge" />
       ) : (
         <TooltipRenderer
-          tooltipContent={`${t("environments.settings.general.invite_expires_on", {
+          tooltipContent={`${t("workspace.settings.general.invite_expires_on", {
             date: formatDateWithOrdinal(member.expiresAt, locale),
           })}`}>
           <Badge type="warning" text="Pending" size="tiny" />

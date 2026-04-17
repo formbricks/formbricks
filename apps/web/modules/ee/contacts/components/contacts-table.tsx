@@ -18,7 +18,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -39,7 +41,7 @@ interface ContactsTableProps {
   hasMore: boolean;
   updateContactList: (contactIds: string[]) => void;
   isDataLoaded: boolean;
-  environmentId: string;
+  workspaceId: string;
   searchValue: string;
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
@@ -53,13 +55,15 @@ export const ContactsTable = ({
   hasMore,
   updateContactList,
   isDataLoaded,
-  environmentId,
+  workspaceId,
   searchValue,
   setSearchValue,
   isReadOnly,
   isQuotasAllowed,
   refreshContacts,
 }: ContactsTableProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
@@ -78,9 +82,9 @@ export const ContactsTable = ({
 
   // Load saved settings from localStorage
   useEffect(() => {
-    const savedColumnOrder = localStorage.getItem(`${environmentId}-columnOrder`);
-    const savedColumnVisibility = localStorage.getItem(`${environmentId}-columnVisibility`);
-    const savedExpandedSettings = localStorage.getItem(`${environmentId}-rowExpand`);
+    const savedColumnOrder = localStorage.getItem(`${workspaceId}-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${workspaceId}-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${workspaceId}-rowExpand`);
 
     let savedColumnOrderParsed: string[] = [];
     if (savedColumnOrder) {
@@ -139,22 +143,22 @@ export const ContactsTable = ({
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environmentId]);
+  }, [workspaceId]);
 
   // Save settings to localStorage when they change
   useEffect(() => {
     if (columnOrder.length > 0) {
-      localStorage.setItem(`${environmentId}-columnOrder`, JSON.stringify(columnOrder));
+      localStorage.setItem(`${workspaceId}-columnOrder`, JSON.stringify(columnOrder));
     }
 
     if (Object.keys(columnVisibility).length > 0) {
-      localStorage.setItem(`${environmentId}-columnVisibility`, JSON.stringify(columnVisibility));
+      localStorage.setItem(`${workspaceId}-columnVisibility`, JSON.stringify(columnVisibility));
     }
 
     if (isExpanded !== null) {
-      localStorage.setItem(`${environmentId}-rowExpand`, JSON.stringify(isExpanded));
+      localStorage.setItem(`${workspaceId}-rowExpand`, JSON.stringify(isExpanded));
     }
-  }, [columnOrder, columnVisibility, isExpanded, environmentId]);
+  }, [columnOrder, columnVisibility, isExpanded, workspaceId]);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -220,7 +224,10 @@ export const ContactsTable = ({
   };
 
   const deleteContact = async (contactId: string) => {
-    await deleteContactAction({ contactId });
+    const result = await deleteContactAction({ contactId });
+    if (result?.serverError) {
+      throw new Error(getFormattedErrorMessage(result));
+    }
   };
 
   return (
@@ -245,7 +252,7 @@ export const ContactsTable = ({
               <SearchBar
                 value={searchValue}
                 onChange={setSearchValue}
-                placeholder={t("environments.contacts.search_contact")}
+                placeholder={t("workspace.contacts.search_contact")}
               />
             </div>
           }
@@ -280,7 +287,7 @@ export const ContactsTable = ({
                       key={cell.id}
                       onClick={() => {
                         if (cell.column.id === "select") return;
-                        router.push(`/environments/${environmentId}/contacts/${row.id}`);
+                        router.push(`${workspaceBasePath}/contacts/${row.id}`);
                       }}
                       style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                       className={cn(

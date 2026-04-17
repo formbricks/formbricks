@@ -45,12 +45,12 @@ export const ContactInfoElementForm = ({
   const fields = [
     {
       id: "firstName",
-      label: t("environments.surveys.edit.first_name"),
+      label: t("workspace.surveys.edit.first_name"),
       ...element.firstName,
     },
     {
       id: "lastName",
-      label: t("environments.surveys.edit.last_name"),
+      label: t("workspace.surveys.edit.last_name"),
       ...element.lastName,
     },
     {
@@ -65,7 +65,7 @@ export const ContactInfoElementForm = ({
     },
     {
       id: "company",
-      label: t("environments.surveys.edit.company"),
+      label: t("workspace.surveys.edit.company"),
       ...element.company,
     },
   ];
@@ -93,7 +93,7 @@ export const ContactInfoElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -140,7 +140,7 @@ export const ContactInfoElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
 

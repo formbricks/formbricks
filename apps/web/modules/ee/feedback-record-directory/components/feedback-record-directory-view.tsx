@@ -1,5 +1,5 @@
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackRecordDirectoryTable } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-table";
 import { getFeedbackRecordDirectories } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
@@ -23,8 +23,8 @@ export const FeedbackRecordDirectoryView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.feedback_record_directories.title")}
-      description={t("environments.settings.feedback_record_directories.description")}>
+      title={t("workspace.settings.feedback_record_directories.title")}
+      description={t("workspace.settings.feedback_record_directories.description")}>
       <FeedbackRecordDirectoryTable
         directories={directories}
         organizationId={organizationId}

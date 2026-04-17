@@ -21,6 +21,7 @@ export default defineConfig({
         "lib/**/*.ts",
         "lingodotdev/**/*.ts",
         "instrumentation-jobs.ts",
+        "proxy.ts",
       ],
       exclude: [
         // Build and configuration files

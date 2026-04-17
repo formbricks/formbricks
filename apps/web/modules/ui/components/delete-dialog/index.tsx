@@ -53,9 +53,7 @@ export const DeleteDialog = ({
             <CircleAlert className="h-4 w-4" />
             <div>
               <DialogTitle>{title || t("common.delete_what", { deleteWhat })}</DialogTitle>
-              <DialogDescription>
-                {t("environments.workspace.general.this_action_cannot_be_undone")}
-              </DialogDescription>
+              <DialogDescription>{t("workspace.general.this_action_cannot_be_undone")}</DialogDescription>
             </div>
           </div>
         </DialogHeader>

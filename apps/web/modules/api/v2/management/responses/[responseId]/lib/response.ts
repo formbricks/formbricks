@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { TResponse } from "@formbricks/types/responses";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
@@ -34,6 +35,60 @@ export const getResponse = reactCache(async (responseId: string) => {
   }
 });
 
+export const getResponseForPipeline = async (
+  responseId: string
+): Promise<Result<TResponse, ApiErrorResponseV2>> => {
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      include: {
+        contact: {
+          select: {
+            id: true,
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                name: true,
+                workspaceId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!responsePrisma) {
+      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
+    }
+
+    return ok({
+      ...responsePrisma,
+      contact: responsePrisma.contact
+        ? {
+            id: responsePrisma.contact.id,
+            userId: responsePrisma.contactAttributes?.userId,
+          }
+        : null,
+      tags: responsePrisma.tags.map((t) => t.tag),
+    });
+  } catch (error) {
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "response", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
+  }
+};
+
 export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const deletedResponse = await prisma.response.delete({
@@ -54,7 +109,11 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
       return { ok: false, error: surveyQuestionsResult.error as ApiErrorResponseV2 };
     }
 
-    await findAndDeleteUploadedFilesInResponse(deletedResponse.data, surveyQuestionsResult.data.questions);
+    await findAndDeleteUploadedFilesInResponse(
+      deletedResponse.data,
+      surveyQuestionsResult.data.questions,
+      surveyQuestionsResult.data.workspaceId
+    );
 
     return ok(deletedResponse);
   } catch (error) {

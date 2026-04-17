@@ -58,7 +58,7 @@ const hiddenFieldId = "hidden1";
 const variableId = "var1";
 
 const mockPipelineInput = {
-  environmentId: "env1",
+  workspaceId: "env1",
   surveyId: surveyId,
   response: {
     id: "response1",
@@ -158,7 +158,7 @@ const mockSurvey = {
   updatedAt: new Date(),
   displayOption: "displayOnce",
   displayPercentage: null,
-  environmentId: "env1",
+  workspaceId: "env1",
   singleUse: null,
   surveyClosedMessage: null,
   pin: null,
@@ -167,7 +167,7 @@ const mockSurvey = {
 const mockAirtableIntegration: TIntegrationAirtable = {
   id: "int_airtable",
   type: "airtable",
-  environmentId: "env1",
+  workspaceId: "env1",
   config: {
     key: { access_token: "airtable_key" } as TIntegrationAirtableCredential,
     data: [
@@ -189,7 +189,7 @@ const mockAirtableIntegration: TIntegrationAirtable = {
 const mockGoogleSheetsIntegration: TIntegrationGoogleSheets = {
   id: "int_gsheets",
   type: "googleSheets",
-  environmentId: "env1",
+  workspaceId: "env1",
   config: {
     key: { refresh_token: "gsheet_key" } as TIntegrationGoogleSheetsCredential,
     data: [
@@ -212,7 +212,7 @@ const mockGoogleSheetsIntegration: TIntegrationGoogleSheets = {
 const mockSlackIntegration: TIntegrationSlack = {
   id: "int_slack",
   type: "slack",
-  environmentId: "env1",
+  workspaceId: "env1",
   config: {
     key: { access_token: "slack_key", app_id: "A1" } as TIntegrationSlackCredential,
     data: [
@@ -235,7 +235,7 @@ const mockSlackIntegration: TIntegrationSlack = {
 const mockNotionIntegration: TIntegrationNotion = {
   id: "int_notion",
   type: "notion",
-  environmentId: "env1",
+  workspaceId: "env1",
   config: {
     key: {
       access_token: "notion_key",

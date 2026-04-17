@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import {
   TSurvey,
-  TSurveyCreateInputWithEnvironmentId,
+  TSurveyCreateInputWithWorkspaceId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
@@ -49,10 +50,11 @@ const mockOrganization: TOrganization = {
     },
     usageCycleAnchor: new Date(),
   },
-  isAIEnabled: false,
+  isAISmartToolsEnabled: false,
+  isAIDataAnalysisEnabled: false,
 };
 
-const mockFollowUp: TSurveyCreateInputWithEnvironmentId["followUps"][number] = {
+const mockFollowUp: TSurveyCreateInputWithWorkspaceId["followUps"][number] = {
   id: "followup1",
   surveyId: "mockSurveyId",
   name: "Test Follow-up",
@@ -73,7 +75,7 @@ const mockFollowUp: TSurveyCreateInputWithEnvironmentId["followUps"][number] = {
   },
 };
 
-const mockLanguage: TSurveyCreateInputWithEnvironmentId["languages"][number] = {
+const mockLanguage: TSurveyCreateInputWithWorkspaceId["languages"][number] = {
   language: {
     id: "lang1",
     code: "en",
@@ -86,9 +88,9 @@ const mockLanguage: TSurveyCreateInputWithEnvironmentId["languages"][number] = {
   enabled: true,
 };
 
-const baseSurveyData: TSurveyCreateInputWithEnvironmentId = {
+const baseSurveyData: TSurveyCreateInputWithWorkspaceId = {
   name: "Test Survey",
-  environmentId: "test-env",
+  workspaceId: "mockWorkspaceId",
   questions: [
     {
       id: "q1",
@@ -135,7 +137,7 @@ describe("checkFeaturePermissions", () => {
 
   test("should return null if recaptcha is enabled and permission granted", async () => {
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
-    const surveyData: TSurveyCreateInputWithEnvironmentId = {
+    const surveyData: TSurveyCreateInputWithWorkspaceId = {
       ...baseSurveyData,
       recaptcha: { enabled: true, threshold: 0.5 },
     };
@@ -333,7 +335,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -345,7 +347,7 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
     expect(responses.forbiddenResponse).toHaveBeenCalledWith(
@@ -364,7 +366,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -384,7 +386,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -397,7 +399,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });
@@ -413,7 +415,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -433,7 +435,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -446,7 +448,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeNull();
   });
 
@@ -461,7 +463,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -473,7 +475,7 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
     expect(result).toBeNull();
   });
 
@@ -488,7 +490,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -508,7 +510,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: false,
@@ -521,7 +523,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });

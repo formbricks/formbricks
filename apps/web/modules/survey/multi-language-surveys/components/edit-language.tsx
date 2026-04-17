@@ -40,19 +40,19 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
     .map((language) => language.alias!.toLowerCase().trim());
 
   if (languageCodes.includes("")) {
-    toast.error(t("environments.workspace.languages.please_select_a_language"), { duration: 2000 });
+    toast.error(t("workspace.languages.please_select_a_language"), { duration: 2000 });
     return false;
   }
 
   // Check for duplicates within the languageCodes and languageAliases
   if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
-    toast.error(t("environments.workspace.languages.duplicate_language_or_language_id"), { duration: 4000 });
+    toast.error(t("workspace.languages.duplicate_language_or_language_id"), { duration: 4000 });
     return false;
   }
 
   // Check if any alias matches the identifier of any added languages
   if (languageCodes.some((code) => languageAliases.includes(code))) {
-    toast.error(t("environments.workspace.languages.conflict_between_identifier_and_alias"), {
+    toast.error(t("workspace.languages.conflict_between_identifier_and_alias"), {
       duration: 6000,
     });
     return false;
@@ -64,12 +64,9 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
   // dropdowns that rely on ISO identifiers.
   for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.code === alias && !languageCodes.includes(alias))) {
-      toast.error(
-        t("environments.workspace.languages.conflict_between_selected_alias_and_another_language"),
-        {
-          duration: 6000,
-        }
-      );
+      toast.error(t("workspace.languages.conflict_between_selected_alias_and_another_language"), {
+        duration: 6000,
+      });
       return false;
     }
   }
@@ -113,7 +110,9 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         languageId,
       });
 
-      if (surveysUsingLanguageResponse?.data) {
+      if (surveysUsingLanguageResponse?.serverError) {
+        toast.error(getFormattedErrorMessage(surveysUsingLanguageResponse));
+      } else if (surveysUsingLanguageResponse?.data) {
         if (surveysUsingLanguageResponse.data.length > 0) {
           const surveyList = surveysUsingLanguageResponse.data
             .map((surveyName) => `• ${surveyName}`)
@@ -121,14 +120,14 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: `${t("environments.workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
+            text: `${t("workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
             isButtonDisabled: true,
           });
         } else {
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: t("environments.workspace.languages.delete_language_confirmation"),
+            text: t("workspace.languages.delete_language_confirmation"),
             isButtonDisabled: false,
           });
         }
@@ -150,7 +149,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         return;
       }
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
-      toast.success(t("environments.workspace.languages.language_deleted_successfully"));
+      toast.success(t("workspace.languages.language_deleted_successfully"));
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     } catch {
@@ -185,7 +184,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       toast.error(getFormattedErrorMessage(errorResult));
       return;
     }
-    toast.success(t("environments.workspace.languages.languages_updated_successfully"));
+    toast.success(t("workspace.languages.languages_updated_successfully"));
     router.refresh();
     setIsEditing(false);
   };
@@ -212,9 +211,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
             ))}
           </>
         ) : (
-          <p className="text-sm italic text-slate-500">
-            {t("environments.workspace.languages.no_language_found")}
-          </p>
+          <p className="text-sm italic text-slate-500">{t("workspace.languages.no_language_found")}</p>
         )}
 
         <AddLanguageButton
@@ -242,7 +239,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         </Alert>
       )}
       <ConfirmationModal
-        buttonText={t("environments.workspace.languages.remove_language")}
+        buttonText={t("workspace.languages.remove_language")}
         isButtonDisabled={confirmationModal.isButtonDisabled}
         onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
         open={confirmationModal.isOpen}
@@ -250,7 +247,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
         }}
         body={confirmationModal.text}
-        title={t("environments.workspace.languages.remove_language")}
+        title={t("workspace.languages.remove_language")}
       />
     </div>
   );
@@ -275,6 +272,6 @@ const EditSaveButtons: React.FC<{
     </div>
   ) : (
     <Button className="w-fit" onClick={onEdit} size="sm" disabled={disabled}>
-      {t("environments.workspace.languages.edit_languages")}
+      {t("workspace.languages.edit_languages")}
     </Button>
   );

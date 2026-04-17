@@ -138,7 +138,7 @@ export const TeamSettingsModal = ({
     });
 
     if (updatedTeamActionResponse?.data) {
-      toast.success(t("environments.settings.teams.team_updated_successfully"));
+      toast.success(t("workspace.settings.teams.team_updated_successfully"));
       closeSettingsModal();
       router.refresh();
     } else {
@@ -215,11 +215,11 @@ export const TeamSettingsModal = ({
       <DialogContent>
         <DialogHeader className="pb-4">
           <DialogTitle>
-            {t("environments.settings.teams.team_name_settings_title", {
+            {t("workspace.settings.teams.team_name_settings_title", {
               teamName: team.name,
             })}
           </DialogTitle>
-          <DialogDescription>{t("environments.settings.teams.team_settings_description")}</DialogDescription>
+          <DialogDescription>{t("workspace.settings.teams.team_settings_description")}</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <form className="contents space-y-4" onSubmit={handleSubmit(handleUpdateTeam)}>
@@ -250,7 +250,7 @@ export const TeamSettingsModal = ({
                 <div className="flex flex-col space-y-1">
                   <FormLabel>{t("common.members")}</FormLabel>
                   <Muted className="block text-slate-500">
-                    {t("environments.settings.teams.add_members_description")}
+                    {t("workspace.settings.teams.add_members_description")}
                   </Muted>
                 </div>
                 <FormField
@@ -290,8 +290,8 @@ export const TeamSettingsModal = ({
                   triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyMember
-                      ? t("environments.settings.teams.please_fill_all_member_fields")
-                      : t("environments.settings.teams.all_members_added")
+                      ? t("workspace.settings.teams.please_fill_all_member_fields")
+                      : t("workspace.settings.teams.all_members_added")
                   }>
                   <Button
                     size="sm"
@@ -314,7 +314,7 @@ export const TeamSettingsModal = ({
                 <div className="flex flex-col space-y-1">
                   <FormLabel>{t("common.workspaces")}</FormLabel>
                   <Muted className="block text-slate-500">
-                    {t("environments.settings.teams.add_workspaces_description")}
+                    {t("workspace.settings.teams.add_workspaces_description")}
                   </Muted>
                 </div>
                 <FormField
@@ -349,8 +349,8 @@ export const TeamSettingsModal = ({
                   triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyWorkspace
-                      ? t("environments.settings.teams.please_fill_all_workspace_fields")
-                      : t("environments.settings.teams.all_workspaces_added")
+                      ? t("workspace.settings.teams.please_fill_all_workspace_fields")
+                      : t("workspace.settings.teams.all_workspaces_added")
                   }>
                   <Button
                     size="sm"

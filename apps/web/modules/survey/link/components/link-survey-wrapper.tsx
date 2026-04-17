@@ -22,6 +22,7 @@ interface LinkSurveyWrapperProps {
   handleResetSurvey: () => void;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   publicDomain: string;
   isBrandingEnabled: boolean;
@@ -40,6 +41,7 @@ export const LinkSurveyWrapper = ({
   handleResetSurvey,
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
   publicDomain,
   isBrandingEnabled,
@@ -90,7 +92,7 @@ export const LinkSurveyWrapper = ({
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
-                  {t("environments.surveys.edit.survey_preview")}
+                  {t("workspace.surveys.edit.survey_preview")}
                   <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}
@@ -101,6 +103,7 @@ export const LinkSurveyWrapper = ({
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
+          TERMS_URL={TERMS_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           surveyUrl={publicDomain + "/s/" + surveyId}
         />

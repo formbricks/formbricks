@@ -48,17 +48,17 @@ export const CardArrangementTabs = ({
         options={[
           {
             value: "simple",
-            label: t("environments.surveys.edit.simple"),
+            label: t("workspace.surveys.edit.simple"),
             icon: getCardArrangementIcon("simple"),
           },
           {
             value: "straight",
-            label: t("environments.surveys.edit.straight"),
+            label: t("workspace.surveys.edit.straight"),
             icon: getCardArrangementIcon("straight"),
           },
           {
             value: "casual",
-            label: t("environments.surveys.edit.casual"),
+            label: t("workspace.surveys.edit.casual"),
             icon: getCardArrangementIcon("casual"),
           },
         ]}

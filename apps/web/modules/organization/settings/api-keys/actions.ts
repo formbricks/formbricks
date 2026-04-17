@@ -26,7 +26,7 @@ export const deleteApiKeyAction = authenticatedActionClient.inputSchema(ZDeleteA
       access: [
         {
           type: "organization",
-          roles: ["owner"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -53,7 +53,7 @@ export const createApiKeyAction = authenticatedActionClient.inputSchema(ZCreateA
       access: [
         {
           type: "organization",
-          roles: ["owner"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -81,7 +81,7 @@ export const updateApiKeyAction = authenticatedActionClient.inputSchema(ZUpdateA
       access: [
         {
           type: "organization",
-          roles: ["owner"],
+          roles: ["owner", "manager"],
         },
       ],
     });

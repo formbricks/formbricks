@@ -63,7 +63,7 @@ describe("WorkspaceTeams Lib", () => {
       const result = await createWorkspaceTeam({
         workspaceId: "p1",
         teamId: "t1",
-      } as TWorkspaceTeamInput);
+      } as TWorkspaceTeamInput & { workspaceId: string });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect((result.data as any).id).toBe("ptx");
@@ -75,7 +75,7 @@ describe("WorkspaceTeams Lib", () => {
       const result = await createWorkspaceTeam({
         workspaceId: "p1",
         teamId: "t1",
-      } as TWorkspaceTeamInput);
+      } as TWorkspaceTeamInput & { workspaceId: string });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
