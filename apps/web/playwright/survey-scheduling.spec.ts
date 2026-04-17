@@ -1,7 +1,5 @@
 import { type Page, expect } from "@playwright/test";
-import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
-import { createSurvey } from "./utils/helper";
 
 const formatSelectedDate = (date: Date): string =>
   new Intl.DateTimeFormat("en-US", {
@@ -28,6 +26,12 @@ const expandScheduleCard = async (page: Page) => {
   }
 
   return { scheduleCard, scheduleCardTrigger };
+};
+
+const createMinimalSurvey = async (page: Page) => {
+  await page.getByText("Start from scratch").click();
+  await page.getByRole("button", { name: "Create survey", exact: true }).click();
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 };
 
 const pickDate = async (page: Page, dayOffset: number, pickerIndex: number) => {
@@ -72,8 +76,8 @@ test.describe("Survey scheduling settings", () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await createSurvey(page, surveys.createAndSubmit);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await createMinimalSurvey(page);
 
     await page
       .locator('nav[aria-label="Tabs"]')
@@ -91,8 +95,13 @@ test.describe("Survey scheduling settings", () => {
     await expect(page.getByRole("button", { name: formatSelectedDate(publishDate) })).toBeVisible();
     await expect(page.getByRole("button", { name: formatSelectedDate(pauseDate) })).toBeVisible();
 
-    await page.getByRole("button", { name: "Save as draft" }).click();
-    await expect(page.getByText("Changes saved.")).toBeVisible();
+    const saveSurveyRequest = page.waitForRequest((request) => {
+      const { pathname } = new URL(request.url());
+      return request.method() === "POST" && /\/surveys\/[^/]+\/edit$/.test(pathname);
+    });
+
+    await page.getByRole("button", { name: "Save as draft", exact: true }).click();
+    await saveSurveyRequest;
 
     await page.reload();
     await page

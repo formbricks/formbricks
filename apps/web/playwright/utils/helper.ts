@@ -75,6 +75,18 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
+export const isWorkspaceStorageConfigured = async (page: Page, workspaceId: string): Promise<boolean> => {
+  const response = await page.context().request.post("/api/v1/management/storage", {
+    data: {
+      fileName: "e2e-storage-check.png",
+      fileType: "image/png",
+      workspaceId,
+    },
+  });
+
+  return response.ok();
+};
+
 export const uploadFileForFileUploadQuestion = async (page: Page) => {
   try {
     const fileInput = page.locator('input[type="file"]');
@@ -313,17 +325,17 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
   await page.getByRole("button", { name: "Add row" }).click();
-  await page.locator("#row-2").click();
+  await expect(page.locator("#row-2")).toBeEditable();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-2").click();
+  await expect(page.locator("#column-2")).toBeEditable();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-3").click();
+  await expect(page.locator("#column-3")).toBeEditable();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // Fill Address Question
@@ -537,17 +549,17 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
   await page.getByRole("button", { name: "Add row" }).click();
-  await page.locator("#row-2").click();
+  await expect(page.locator("#row-2")).toBeEditable();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-2").click();
+  await expect(page.locator("#column-2")).toBeEditable();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-3").click();
+  await expect(page.locator("#column-3")).toBeEditable();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // CTA Question
