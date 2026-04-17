@@ -11,13 +11,16 @@ import {
 import {
   createJobsQueue,
   enqueueResponsePipelineJob,
+  enqueueSurveySchedulingJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
   getJobsQueue,
   resetJobsQueueFactory,
   scheduleResponsePipelineJobAt,
+  scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,
   upsertRecurringResponsePipelineJobSchedule,
+  upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 import { getRecurringJobSchedulerId } from "./schedules";
@@ -66,6 +69,10 @@ const responsePipelineJobData = {
     variables: {},
   },
   surveyId: "survey_123",
+};
+
+const surveySchedulingJobData = {
+  scope: "global" as const,
 };
 
 vi.mock("@formbricks/logger", () => ({
@@ -149,6 +156,16 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.responsePipeline, responsePipelineJobData, undefined);
   });
 
+  test("enqueues the survey scheduling job with the shared queue", async () => {
+    const mockJob = { id: "job-scheduling-1" };
+    mockQueueAdd.mockResolvedValue(mockJob);
+
+    const job = await enqueueSurveySchedulingJob(surveySchedulingJobData);
+
+    expect(job).toBe(mockJob);
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, undefined);
+  });
+
   test("exposes an engine-neutral producer interface", async () => {
     const producer = getBackgroundJobProducer();
     mockQueueAdd.mockResolvedValue({
@@ -207,6 +224,19 @@ describe("@formbricks/jobs queue helpers", () => {
     );
 
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.responsePipeline, responsePipelineJobData, {
+      delay: 5000,
+    });
+  });
+
+  test("schedules a delayed survey scheduling job", async () => {
+    mockQueueAdd.mockResolvedValue({ id: "job-scheduling-2" });
+
+    await scheduleSurveySchedulingJobAt(
+      { runAt: new Date("2026-04-07T10:00:05.000Z") },
+      surveySchedulingJobData
+    );
+
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, {
       delay: 5000,
     });
   });
@@ -301,6 +331,26 @@ describe("@formbricks/jobs queue helpers", () => {
     });
   });
 
+  test("exposes survey scheduling through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueAdd.mockResolvedValue({
+      id: "job-6c",
+      name: JOB_NAMES.surveyScheduling,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await producer.scheduleSurveySchedulingAt(
+      { runAt: new Date("2026-04-07T10:00:05.000Z") },
+      surveySchedulingJobData
+    );
+
+    expect(scheduledJob).toEqual({
+      jobId: "job-6c",
+      jobName: JOB_NAMES.surveyScheduling,
+      queueName: JOBS_QUEUE_NAME,
+    });
+  });
+
   test("exposes test log scheduling through the engine-neutral producer interface", async () => {
     const producer = getBackgroundJobProducer();
     mockQueueAdd.mockResolvedValue({
@@ -386,6 +436,78 @@ describe("@formbricks/jobs queue helpers", () => {
       queueName: JOBS_QUEUE_NAME,
       scheduleId: "response-pipeline-recurring-producer",
       scope: "environment_123",
+    });
+  });
+
+  test("upserts recurring survey scheduling schedules", async () => {
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-7c",
+      name: JOB_NAMES.surveyScheduling,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await upsertRecurringSurveySchedulingJobSchedule(
+      {
+        scheduleId: "daily-survey-scheduling",
+        scope: "global",
+      },
+      {
+        cronPattern: "0 0 * * *",
+        kind: "cron",
+        timeZone: "Etc/GMT-1",
+      },
+      surveySchedulingJobData
+    );
+
+    expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
+      getRecurringJobSchedulerId(JOB_NAMES.surveyScheduling, {
+        scheduleId: "daily-survey-scheduling",
+        scope: "global",
+      }),
+      {
+        endDate: undefined,
+        immediately: undefined,
+        limit: undefined,
+        pattern: "0 0 * * *",
+        startDate: undefined,
+        tz: "Etc/GMT-1",
+      },
+      {
+        data: surveySchedulingJobData,
+        name: JOB_NAMES.surveyScheduling,
+        opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
+      }
+    );
+    expect(scheduledJob.id).toBe("job-7c");
+  });
+
+  test("exposes recurring survey scheduling through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-7d",
+      name: JOB_NAMES.surveyScheduling,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const scheduledJob = await producer.upsertRecurringSurveySchedulingSchedule(
+      {
+        scheduleId: "daily-survey-scheduling",
+        scope: "global",
+      },
+      {
+        cronPattern: "0 0 * * *",
+        kind: "cron",
+        timeZone: "Etc/GMT-1",
+      },
+      surveySchedulingJobData
+    );
+
+    expect(scheduledJob).toEqual({
+      jobId: "job-7d",
+      jobName: JOB_NAMES.surveyScheduling,
+      queueName: JOBS_QUEUE_NAME,
+      scheduleId: "daily-survey-scheduling",
+      scope: "global",
     });
   });
 

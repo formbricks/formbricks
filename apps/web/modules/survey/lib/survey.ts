@@ -29,6 +29,8 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
+  publishOn: true,
+  pauseOn: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isCaptureIpEnabled: true,

@@ -378,6 +378,8 @@ model Survey {
   autoClose           Int?
   autoComplete        Int?
   delay               Int                     @default(0)
+  publishOn           DateTime?
+  pauseOn             DateTime?
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   segmentId           String?
@@ -413,6 +415,8 @@ model Survey {
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
+  @@index([status, publishOn])
+  @@index([status, pauseOn])
 }
 
 /// Represents a quota configuration for a survey.

@@ -1,53 +1,69 @@
 "use client";
 
-import { format } from "date-fns";
 import { CalendarCheckIcon, CalendarIcon, XIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Calendar from "react-calendar";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import "./styles.css";
 
-const getOrdinalSuffix = (day: number) => {
-  if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
-  switch (day % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
+const DEFAULT_LOCALE = "en-US";
+
+const getDisplayDate = (date: Date | null, locale: string): string | undefined => {
+  if (!date) {
+    return undefined;
   }
+
+  return formatDateForDisplay(date, locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const getDefaultMinDate = (): Date => {
+  const now = new Date();
+
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
 };
 
 interface DatePickerProps {
   date: Date | null;
+  clearButtonId?: string;
+  clearButtonLabel?: string;
+  locale?: string;
   updateSurveyDate: (date: Date) => void;
   minDate?: Date;
   onClearDate?: () => void;
 }
 
-export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: DatePickerProps) => {
+export const DatePicker = ({
+  date,
+  clearButtonId,
+  clearButtonLabel,
+  locale = DEFAULT_LOCALE,
+  updateSurveyDate,
+  minDate,
+  onClearDate,
+}: DatePickerProps) => {
   const { t } = useTranslation();
   const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
-  const [formattedDate, setFormattedDate] = useState<string | undefined>(
-    date ? format(new Date(date), "do MMM, yyyy") : undefined
-  );
+  const [formattedDate, setFormattedDate] = useState<string | undefined>(getDisplayDate(date, locale));
   const [isOpen, setIsOpen] = useState(false);
-
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    onChange(date ? new Date(date) : undefined);
+    setFormattedDate(getDisplayDate(date, locale));
+  }, [date, locale]);
 
   const onDateChange = (date: Date) => {
     if (date) {
       updateSurveyDate(date);
-      const day = date.getDate();
-      const ordinalSuffix = getOrdinalSuffix(day);
-      const formatted = format(date, `d'${ordinalSuffix}' MMM, yyyy`);
-      setFormattedDate(formatted);
+      setFormattedDate(getDisplayDate(date, locale));
       onChange(date);
       setIsOpen(false);
     }
@@ -92,18 +108,21 @@ export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: Dat
         </PopoverTrigger>
         <PopoverContent align="start" className="min-w-96 rounded-lg px-4 py-3">
           <Calendar
+            locale={locale}
             value={value}
             onChange={(date) => onDateChange(date as Date)}
-            minDate={minDate || new Date()}
+            minDate={minDate || getDefaultMinDate()}
             className="!border-0"
             tileClassName={({ date }: { date: Date }) => {
               const baseClass =
                 "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+              const today = getDefaultMinDate();
+
               // today's date class
               if (
-                date.getDate() === new Date().getDate() &&
-                date.getMonth() === new Date().getMonth() &&
-                date.getFullYear() === new Date().getFullYear()
+                date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear()
               ) {
                 return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
               }
@@ -124,6 +143,8 @@ export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: Dat
       </Popover>
       {formattedDate && onClearDate && (
         <Button
+          aria-label={clearButtonLabel}
+          data-testid={clearButtonId}
           variant="outline"
           size="sm"
           onClick={handleClearDate}

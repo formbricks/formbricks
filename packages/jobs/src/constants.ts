@@ -6,6 +6,7 @@ export const JOBS_PREFIX = "formbricks:jobs";
 export const JOB_NAMES = {
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
+  surveyScheduling: "survey-scheduling.reconcile",
 } as const;
 
 export const JOBS_DEFAULT_JOB_OPTIONS: JobsOptions = {

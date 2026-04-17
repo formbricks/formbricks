@@ -4,6 +4,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -11,6 +12,7 @@ import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-ca
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
+import { SurveySchedulingCard } from "@/modules/survey/editor/components/survey-scheduling-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 
@@ -29,6 +31,7 @@ interface SettingsViewProps {
   isFormbricksCloud: boolean;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  locale: TUserLocale;
 }
 
 export const SettingsView = ({
@@ -46,6 +49,7 @@ export const SettingsView = ({
   workspacePermission,
   isFormbricksCloud,
   quotas,
+  locale,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -107,6 +111,8 @@ export const SettingsView = ({
           environmentId={environment.id}
         />
       )}
+
+      <SurveySchedulingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} locale={locale} />
     </div>
   );
 };

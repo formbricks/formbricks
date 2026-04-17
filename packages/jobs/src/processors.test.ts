@@ -26,6 +26,7 @@ describe("@formbricks/jobs processor registry", () => {
   test("returns registered processors", () => {
     expect(getJobProcessor(JOB_NAMES.testLog)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.responsePipeline)).toBeDefined();
+    expect(getJobProcessor(JOB_NAMES.surveyScheduling)).toBeDefined();
     expect(getBackgroundJobDefinition(JOB_NAMES.testLog)).toBeDefined();
   });
 
@@ -218,6 +219,30 @@ describe("@formbricks/jobs processor registry", () => {
       expect.objectContaining({
         jobId: "job-serialized",
       })
+    );
+  });
+
+  test("fails fast for the unimplemented survey scheduling processor", async () => {
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: {
+          scope: "global",
+        },
+        id: "job-survey-scheduling",
+        name: JOB_NAMES.surveyScheduling,
+        opts: { attempts: 3 },
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow("BullMQ survey scheduling processor override missing");
+
+    expect(mockError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: "job-survey-scheduling",
+        jobName: JOB_NAMES.surveyScheduling,
+        scope: "global",
+      }),
+      "BullMQ survey scheduling processor override is not registered"
     );
   });
 

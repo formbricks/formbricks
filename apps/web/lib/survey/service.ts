@@ -12,6 +12,11 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
+import {
+  isSurveySchedulingDue,
+  normalizeSurveyScheduling,
+  reconcileDueSurveySchedules,
+} from "@/modules/survey/scheduling/lib/survey-scheduling";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -45,6 +50,8 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
+  publishOn: true,
+  pauseOn: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
@@ -174,6 +181,47 @@ export const handleTriggerUpdates = (
   }
 
   return triggersUpdate;
+};
+
+const reconcilePersistedSurveySchedulingIfDue = async ({
+  environmentId,
+  logSource,
+  survey,
+}: {
+  environmentId: string;
+  logSource: "survey-create" | "survey-update";
+  survey: TSurvey;
+}): Promise<TSurvey> => {
+  const now = new Date();
+
+  if (!isSurveySchedulingDue(survey, now)) {
+    return survey;
+  }
+
+  const reconciliationResult = await reconcileDueSurveySchedules({
+    logContext: {
+      environmentId,
+      source: logSource,
+      surveyId: survey.id,
+    },
+    now,
+    surveyId: survey.id,
+  });
+
+  if (!reconciliationResult.surveyUpdated) {
+    return survey;
+  }
+
+  const reconciledSurvey = await prisma.survey.findUnique({
+    where: { id: survey.id },
+    select: selectSurvey,
+  });
+
+  if (!reconciledSurvey) {
+    throw new ResourceNotFoundError("Survey", survey.id);
+  }
+
+  return transformPrismaSurvey<TSurvey>(reconciledSurvey);
 };
 
 export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | null> => {
@@ -542,7 +590,16 @@ export const updateSurveyInternal = async (
       throw new ResourceNotFoundError("Organization", null);
     }
 
+    const normalizedScheduling = normalizeSurveyScheduling({
+      currentStatus: currentSurvey.status,
+      pauseOn: surveyData.pauseOn,
+      publishOn: surveyData.publishOn,
+      status: updatedSurvey.status,
+    });
+
     surveyData.updatedAt = new Date();
+    surveyData.publishOn = normalizedScheduling.publishOn;
+    surveyData.pauseOn = normalizedScheduling.pauseOn;
 
     data = {
       ...surveyData,
@@ -551,28 +608,17 @@ export const updateSurveyInternal = async (
     };
 
     delete data.createdBy;
-    const prismaSurvey = await prisma.survey.update({
+    const persistedSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
       select: selectSurvey,
     });
 
-    let surveySegment: TSegment | null = null;
-    if (prismaSurvey.segment) {
-      surveySegment = {
-        ...prismaSurvey.segment,
-        surveys: prismaSurvey.segment.surveys.map((survey) => survey.id),
-      };
-    }
-
-    const modifiedSurvey: TSurvey = {
-      ...prismaSurvey, // Properties from prismaSurvey
-      displayPercentage: Number(prismaSurvey.displayPercentage) || null,
-      segment: surveySegment,
-      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
-    };
-
-    return modifiedSurvey;
+    return await reconcilePersistedSurveySchedulingIfDue({
+      environmentId,
+      logSource: "survey-update",
+      survey: transformPrismaSurvey<TSurvey>(persistedSurvey),
+    });
   } catch (error) {
     logger.error(error, "Error updating survey");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -607,6 +653,11 @@ export const createSurvey = async (
 
     let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...restSurveyBody,
+      ...normalizeSurveyScheduling({
+        pauseOn: restSurveyBody.pauseOn ?? null,
+        publishOn: restSurveyBody.publishOn ?? null,
+        status: restSurveyBody.status ?? "draft",
+      }),
       // @ts-expect-error - languages would be undefined in case of empty array
       languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers
@@ -704,11 +755,17 @@ export const createSurvey = async (
       }),
     };
 
+    const reconciledSurvey = await reconcilePersistedSurveySchedulingIfDue({
+      environmentId: parsedEnvironmentId,
+      logSource: "survey-create",
+      survey: transformedSurvey,
+    });
+
     if (createdBy) {
-      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
+      await subscribeOrganizationMembersToSurveyResponses(reconciledSurvey.id, createdBy, organization.id);
     }
 
-    return transformedSurvey;
+    return reconciledSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error creating survey");

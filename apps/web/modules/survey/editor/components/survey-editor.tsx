@@ -248,6 +248,7 @@ export const SurveyEditor = ({
               isFormbricksCloud={isFormbricksCloud}
               isQuotasAllowed={isQuotasAllowed}
               quotas={quotas}
+              locale={locale}
             />
           )}
 

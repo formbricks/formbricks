@@ -1,21 +1,27 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockStartJobsRuntime = vi.fn();
+const mockUpsertRecurringSurveySchedulingJobSchedule = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
+const mockGetJobsQueueingConfig = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
+const mockProcessSurveySchedulingJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
+
 const slowTest = (name: string, fn: () => Promise<void>): void => {
   test(name, fn, TEST_TIMEOUT_MS);
 };
 
 vi.mock("@formbricks/jobs", () => ({
   startJobsRuntime: mockStartJobsRuntime,
+  upsertRecurringSurveySchedulingJobSchedule: mockUpsertRecurringSurveySchedulingJobSchedule,
 }));
 
 vi.mock("@/lib/jobs/config", () => ({
+  getJobsQueueingConfig: mockGetJobsQueueingConfig,
   getJobsWorkerBootstrapConfig: mockGetJobsWorkerBootstrapConfig,
 }));
 
@@ -32,11 +38,19 @@ vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => (
   processResponsePipelineJob: mockProcessResponsePipelineJob,
 }));
 
+vi.mock("@/modules/survey/scheduling/lib/process-survey-scheduling-job", () => ({
+  processSurveySchedulingJob: mockProcessSurveySchedulingJob,
+}));
+
 describe("instrumentation-jobs", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.useFakeTimers();
+    mockGetJobsQueueingConfig.mockReturnValue({
+      enabled: false,
+      redisUrl: null,
+    });
   });
 
   afterEach(async () => {
@@ -56,10 +70,11 @@ describe("instrumentation-jobs", () => {
 
     expect(result).toBeNull();
     expect(mockStartJobsRuntime).not.toHaveBeenCalled();
+    expect(mockUpsertRecurringSurveySchedulingJobSchedule).not.toHaveBeenCalled();
     expect(mockDebug).toHaveBeenCalledWith("BullMQ worker startup skipped");
   });
 
-  slowTest("starts the worker only once", async () => {
+  slowTest("starts the worker once and registers handlers", async () => {
     const mockRuntime = {
       close: vi.fn().mockResolvedValue(undefined),
     };
@@ -78,7 +93,6 @@ describe("instrumentation-jobs", () => {
     });
 
     mockStartJobsRuntime.mockResolvedValue(mockRuntime);
-
     const { registerJobsWorker } = await import("./instrumentation-jobs");
     const first = await registerJobsWorker();
     const second = await registerJobsWorker();
@@ -89,17 +103,16 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
       concurrency: 4,
       jobHandlerOverrides: {
-        "test-log.process": mockExistingOverride,
         "response-pipeline.process": expect.any(Function),
+        "survey-scheduling.reconcile": expect.any(Function),
+        "test-log.process": mockExistingOverride,
       },
       redisUrl: "redis://localhost:6379",
       workerCount: 2,
     });
-
     const overrides = mockStartJobsRuntime.mock.calls[0]?.[0]?.jobHandlerOverrides;
     const responsePipelineOverride = overrides?.["response-pipeline.process"];
-
-    expect(responsePipelineOverride).toBeTypeOf("function");
+    const surveySchedulingOverride = overrides?.["survey-scheduling.reconcile"];
 
     await responsePipelineOverride?.(
       {
@@ -116,6 +129,18 @@ describe("instrumentation-jobs", () => {
         queueName: "background-jobs",
       }
     );
+    await surveySchedulingOverride?.(
+      {
+        scope: "global",
+      },
+      {
+        attempt: 1,
+        jobId: "job_456",
+        jobName: "survey-scheduling.reconcile",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
 
     expect(mockProcessResponsePipelineJob).toHaveBeenCalledWith(
       {
@@ -128,6 +153,18 @@ describe("instrumentation-jobs", () => {
         attempt: 1,
         jobId: "job_123",
         jobName: "response-pipeline.process",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+    expect(mockProcessSurveySchedulingJob).toHaveBeenCalledWith(
+      {
+        scope: "global",
+      },
+      {
+        attempt: 1,
+        jobId: "job_456",
+        jobName: "survey-scheduling.reconcile",
         maxAttempts: 3,
         queueName: "background-jobs",
       }
@@ -154,7 +191,6 @@ describe("instrumentation-jobs", () => {
         resolveRuntime = resolve;
       })
     );
-
     const { registerJobsWorker } = await import("./instrumentation-jobs");
     const firstPromise = registerJobsWorker();
     const secondPromise = registerJobsWorker();
@@ -207,7 +243,6 @@ describe("instrumentation-jobs", () => {
     });
 
     mockStartJobsRuntime.mockRejectedValueOnce(startupError).mockResolvedValueOnce(recoveredRuntime);
-
     const { registerJobsWorker } = await import("./instrumentation-jobs");
 
     await expect(registerJobsWorker()).rejects.toThrow("startup failed");
@@ -215,6 +250,79 @@ describe("instrumentation-jobs", () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);
+  });
+
+  slowTest(
+    "registers recurring schedules once when queueing is enabled without an in-process worker",
+    async () => {
+      mockGetJobsQueueingConfig.mockReturnValue({
+        enabled: true,
+        redisUrl: "redis://localhost:6379",
+      });
+      mockGetJobsWorkerBootstrapConfig.mockReturnValue({
+        enabled: false,
+        runtimeOptions: null,
+      });
+      mockUpsertRecurringSurveySchedulingJobSchedule.mockResolvedValue({
+        id: "schedule-job-1",
+        name: "survey-scheduling.reconcile",
+        queueName: "background-jobs",
+      });
+
+      const { registerRecurringJobs } = await import("./instrumentation-jobs");
+
+      await registerRecurringJobs();
+      await registerRecurringJobs();
+
+      expect(mockStartJobsRuntime).not.toHaveBeenCalled();
+      expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(1);
+      expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledWith(
+        {
+          scheduleId: "daily-survey-scheduling",
+          scope: "global",
+        },
+        {
+          cronPattern: "0 0 * * *",
+          kind: "cron",
+          timeZone: "Etc/GMT-1",
+        },
+        {
+          scope: "global",
+        }
+      );
+    }
+  );
+
+  slowTest("retries recurring schedule registration after a transient failure", async () => {
+    const scheduleError = new Error("schedule failed");
+
+    mockGetJobsQueueingConfig.mockReturnValue({
+      enabled: true,
+      redisUrl: "redis://localhost:6379",
+    });
+    mockUpsertRecurringSurveySchedulingJobSchedule
+      .mockRejectedValueOnce(scheduleError)
+      .mockResolvedValueOnce({
+        id: "schedule-job-1",
+        name: "survey-scheduling.reconcile",
+        queueName: "background-jobs",
+      });
+
+    const { registerRecurringJobs } = await import("./instrumentation-jobs");
+
+    await expect(registerRecurringJobs()).rejects.toThrow("schedule failed");
+    expect(mockError).toHaveBeenCalledWith(
+      { err: scheduleError },
+      "BullMQ recurring job registration failed"
+    );
+    expect(mockWarn).toHaveBeenCalledWith(
+      { retryDelayMs: 30_000 },
+      "BullMQ recurring job registration retry scheduled"
+    );
+
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(2);
   });
 
   slowTest("clears registration state even when reset close fails", async () => {
@@ -235,7 +343,6 @@ describe("instrumentation-jobs", () => {
     });
 
     mockStartJobsRuntime.mockResolvedValueOnce(failingRuntime).mockResolvedValueOnce(nextRuntime);
-
     const { registerJobsWorker, resetJobsWorkerRegistrationForTests } =
       await import("./instrumentation-jobs");
 
