@@ -37,11 +37,9 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
 
   const scheduleSummary = [
     publishOn
-      ? `${t("environments.surveys.edit.publish_on_date")}: ${formatDateForDisplay(publishOn, locale)}`
+      ? `${t("workspace.surveys.edit.publish_on_date")}: ${formatDateForDisplay(publishOn, locale)}`
       : null,
-    pauseOn
-      ? `${t("environments.surveys.edit.pause_on_date")}: ${formatDateForDisplay(pauseOn, locale)}`
-      : null,
+    pauseOn ? `${t("workspace.surveys.edit.pause_on_date")}: ${formatDateForDisplay(pauseOn, locale)}` : null,
   ].filter((value): value is string => value !== null);
 
   return (
@@ -53,9 +51,9 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
         <button
           type="button"
           className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left"
-          aria-label={t("environments.surveys.edit.survey_schedule")}>
+          aria-label={t("workspace.surveys.edit.survey_schedule")}>
           <div className="space-y-1">
-            <h3 className="font-semibold text-slate-800">{t("environments.surveys.edit.survey_schedule")}</h3>
+            <h3 className="font-semibold text-slate-800">{t("workspace.surveys.edit.survey_schedule")}</h3>
             {scheduleSummary.length > 0 ? (
               scheduleSummary.map((summaryLine) => (
                 <p key={summaryLine} className="text-sm text-slate-500">
@@ -64,7 +62,7 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
               ))
             ) : (
               <p className="text-sm text-slate-500">
-                {t("environments.surveys.edit.schedule_survey_publish_and_pause_dates")}
+                {t("workspace.surveys.edit.schedule_survey_publish_and_pause_dates")}
               </p>
             )}
           </div>
@@ -79,16 +77,16 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
           <div className="space-y-3">
             <div className="space-y-1">
               <p className="text-sm font-medium text-slate-800">
-                {t("environments.surveys.edit.publish_on_date")}
+                {t("workspace.surveys.edit.publish_on_date")}
               </p>
               <p className="text-xs text-slate-500">
-                {t("environments.surveys.edit.survey_will_be_published_at_midnight_cet")}
+                {t("workspace.surveys.edit.survey_will_be_published_at_midnight_cet")}
               </p>
             </div>
 
             <DatePicker
               clearButtonId="clear-publish-on-date"
-              clearButtonLabel={t("environments.surveys.edit.clear_publish_on_date")}
+              clearButtonLabel={t("workspace.surveys.edit.clear_publish_on_date")}
               date={publishOn}
               locale={locale}
               minDate={minDate}
@@ -110,16 +108,16 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
           <div className="space-y-3">
             <div className="space-y-1">
               <p className="text-sm font-medium text-slate-800">
-                {t("environments.surveys.edit.pause_on_date")}
+                {t("workspace.surveys.edit.pause_on_date")}
               </p>
               <p className="text-xs text-slate-500">
-                {t("environments.surveys.edit.survey_will_be_paused_at_midnight_cet")}
+                {t("workspace.surveys.edit.survey_will_be_paused_at_midnight_cet")}
               </p>
             </div>
 
             <DatePicker
               clearButtonId="clear-pause-on-date"
-              clearButtonLabel={t("environments.surveys.edit.clear_pause_on_date")}
+              clearButtonLabel={t("workspace.surveys.edit.clear_pause_on_date")}
               date={pauseOn}
               locale={locale}
               minDate={minDate}
